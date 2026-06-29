@@ -2,25 +2,34 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CatoInsightsHub, CatoInsightsMegaMenu } from '../src/components/cato/CatoInsights';
+import {
+  CatoInsightDetail,
+  CatoInsightsArchive,
+  CatoInsightsHub,
+  CatoInsightsMegaMenu
+} from '../src/components/cato/CatoInsights';
 import { CatoNavigation } from '../src/components/cato/CatoNavigation';
 
-test('renders the restored mega menu browse options', () => {
+test('renders the reviewed mega menu browse options', () => {
   const html = renderToStaticMarkup(<CatoInsightsMegaMenu />);
 
-  assert.match(html, />Insights Home</);
   assert.match(html, /Resiliency Report Alerts/);
   assert.match(html, /Cato Research/);
-  assert.match(html, /Resource Library/);
   assert.match(html, /Newsroom/);
+  assert.doesNotMatch(html, />Insights Home</);
+  assert.doesNotMatch(html, /Resource Library/);
   assert.doesNotMatch(html, /Whitepapers/);
   assert.doesNotMatch(html, /Explore Our Insights/);
   assert.doesNotMatch(html, /Access Our Insights/);
 });
 
 test('only renders the right-side mega menu feature CTA when explicitly enabled', () => {
-  const hiddenHtml = renderToStaticMarkup(<CatoInsightsMegaMenu featureCta="Access Our Insights" />);
-  const visibleHtml = renderToStaticMarkup(<CatoInsightsMegaMenu featureCta="Access Our Insights" showFeatureCta />);
+  const hiddenHtml = renderToStaticMarkup(
+    <CatoInsightsMegaMenu featureCta="Access Our Insights" />
+  );
+  const visibleHtml = renderToStaticMarkup(
+    <CatoInsightsMegaMenu featureCta="Access Our Insights" showFeatureCta />
+  );
 
   assert.doesNotMatch(hiddenHtml, /Access Our Insights/);
   assert.match(visibleHtml, /Access Our Insights/);
@@ -36,9 +45,9 @@ test('allows editors to customize the right-side mega menu feature through navig
       showFeatureCta
       featureHref="/resiliency-reports"
       featureItemsJson={JSON.stringify([
-        { title: 'Gowns and drapes alert', resourceType: 'Resiliency Report' },
+        { title: 'Gowns and drapes alert', resourceType: 'Resiliency Report' }
       ])}
-    />,
+    />
   );
 
   assert.match(html, /Launch feature/);
@@ -60,14 +69,46 @@ test('renders Cato Insights Hub with editable Webflow link overrides', () => {
       researchLink={{ href: '/custom-research' }}
       whitepapersLink={{ href: '/custom-whitepapers' }}
       newsroomLink={{ href: '/custom-newsroom' }}
-    />,
+    />
   );
 
   assert.match(html, /href="\/custom-panel" target="_blank" rel="noreferrer"/);
   assert.match(html, /href="\/custom-insights" class="cato-cc-filter" data-active="true"/);
-  assert.match(html, /class="cato-cc-card-grid" data-count="4"/);
+  assert.match(html, /Review signals/);
+  assert.match(html, /class="cato-cc-card-grid" data-count="3"/);
   assert.match(html, /href="\/custom-resiliency" class="cato-cc-card" data-category="resiliency"/);
   assert.match(html, /href="\/custom-research" class="cato-cc-card" data-category="research"/);
-  assert.match(html, /href="\/custom-whitepapers" class="cato-cc-card" data-category="resources"/);
   assert.match(html, /href="\/custom-newsroom" class="cato-cc-card" data-category="newsroom"/);
+  assert.doesNotMatch(
+    html,
+    /href="\/custom-whitepapers" class="cato-cc-card" data-category="resources"/
+  );
+  assert.doesNotMatch(html, /Whitepapers/);
+});
+
+test('shows resiliency archive entries before the subscribe block', () => {
+  const html = renderToStaticMarkup(<CatoInsightsArchive />);
+  const archiveIndex = html.indexOf('Latest Resiliency Reports');
+  const subscribeIndex = html.indexOf('Subscribe for Resiliency Report Alerts.');
+
+  assert.ok(archiveIndex > -1);
+  assert.ok(subscribeIndex > -1);
+  assert.ok(archiveIndex < subscribeIndex);
+});
+
+test('renders Insight Detail related rail with current dates and collection links', () => {
+  const html = renderToStaticMarkup(
+    <CatoInsightDetail
+      slug="vascular-angiographic-dialysis-kits-shortages"
+      title="Vascular, Angiographic, and Dialysis Kits Shortages"
+    />
+  );
+
+  assert.match(html, /href="\/insights\/nasal-oral-ett-backorders"/);
+  assert.match(html, /Nasal Oral Endotracheal Tubes Backorders/);
+  assert.match(html, /Resiliency Report - May 7, 2026/);
+  assert.match(html, /href="\/insights\/neurosponges-disruption"/);
+  assert.match(html, /Resiliency Report - May 1, 2026/);
+  assert.doesNotMatch(html, /href="\/nasal-oral-ett-backorders"/);
+  assert.doesNotMatch(html, /Resiliency Report - May 26, 2026/);
 });

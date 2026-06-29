@@ -7,102 +7,96 @@ export default declareComponent(CatoInsightsMegaMenu, {
   description: 'Self-contained Insights mega menu content from the exported Cato navigation.',
   group: 'Cato Supply',
   options: {
-    applyTagSelectors: true,
+    applyTagSelectors: true
   },
   props: {
     introKicker: props.Text({
       name: 'Intro Kicker',
-      defaultValue: '',
+      defaultValue: ''
     }),
     heading: props.Text({
       name: 'Heading',
-      defaultValue: 'Procurement Intelligence for Resilient Care',
+      defaultValue: 'Procurement Intelligence for Resilient Care'
     }),
     summary: props.Text({
       name: 'Summary',
-      defaultValue: '',
+      defaultValue: ''
     }),
     introCtaLabel: props.Text({
       name: 'Intro CTA Label',
-      defaultValue: 'Explore Cato Insights',
+      defaultValue: 'Explore Cato Insights'
     }),
     browseKicker: props.Text({
       name: 'Browse Kicker',
-      defaultValue: '',
-    }),
-    insightsHomeTitle: props.Text({
-      name: 'Insights Home Title',
-      defaultValue: 'Insights Home',
-    }),
-    insightsHomeSummary: props.Text({
-      name: 'Insights Home Summary',
-      defaultValue: 'All reports, research, resources, and newsroom updates.',
+      defaultValue: ''
     }),
     featureTitle: props.Text({
       name: 'Feature Title',
-      defaultValue: 'Resiliency Report Alerts',
+      defaultValue: 'Resiliency Report Alerts'
     }),
     featureSummary: props.Text({
       name: 'Feature Summary',
-      defaultValue: 'Active supply disruptions and market signals for care continuity.',
+      defaultValue: 'Active supply disruptions and market signals for care continuity.'
     }),
     featureCta: props.Text({
       name: 'Feature CTA',
-      defaultValue: '',
+      defaultValue: ''
     }),
     showFeatureCta: props.Boolean({
       name: 'Show Feature CTA',
       defaultValue: false,
-      tooltip: 'Keep off unless the green feature card should show a bottom text CTA.',
+      tooltip: 'Keep off unless the green feature card should show a bottom text CTA.'
     }),
     featureLabel: props.Text({
       name: 'Feature Label',
-      defaultValue: 'Featured',
+      defaultValue: 'Featured'
     }),
     featureHref: props.Text({
       name: 'Feature URL',
       defaultValue: '',
-      tooltip: 'Optional override URL for the green feature card.',
+      tooltip: 'Optional override URL for the green feature card.'
     }),
     featureItemsJson: props.Text({
       name: 'Feature Items JSON',
       defaultValue: '',
-      tooltip: 'Optional JSON array for the green feature card list: [{title, resourceType}].',
+      tooltip: 'Optional JSON array for the green feature card list: [{title, resourceType}].'
     }),
     showFeatureItems: props.Boolean({
       name: 'Show Feature Items',
-      defaultValue: true,
+      defaultValue: true
     }),
     featureItemLimit: props.Number({
       name: 'Feature Item Limit',
-      defaultValue: 4,
+      defaultValue: 3
     }),
     categoriesJson: props.Text({
       name: 'Categories JSON',
-      defaultValue: '',
+      defaultValue: ''
     }),
     itemsJson: props.Text({
       name: 'Items JSON',
-      defaultValue: '',
+      defaultValue: ''
     }),
     itemsEndpointUrl: props.Text({
       name: 'Items Endpoint URL',
-      defaultValue: '',
-      tooltip: 'Public JSON endpoint that returns normalized Insight items. Do not use a secret Webflow API URL here.',
+      defaultValue:
+        'https://cato-supply-insights-cms.createsomething.workers.dev/api/cato/insights',
+      tooltip:
+        'Public JSON endpoint that returns normalized Insight items. Do not use a secret Webflow API URL here.'
     }),
     fetchItems: props.Boolean({
       name: 'Fetch Endpoint Items',
       defaultValue: true,
-      tooltip: 'Fetch Items Endpoint URL in the browser and render returned menu items.',
+      tooltip: 'Fetch Items Endpoint URL in the browser and render returned menu items.'
     }),
     linkMode: props.Variant({
       name: 'Link Mode',
       options: ['webflow', 'export'],
-      defaultValue: 'webflow',
+      defaultValue: 'webflow'
     }),
     pathPrefix: props.Text({
       name: 'Path Prefix',
-      defaultValue: '',
-    }),
-  },
+      defaultValue: ''
+    })
+  }
 });

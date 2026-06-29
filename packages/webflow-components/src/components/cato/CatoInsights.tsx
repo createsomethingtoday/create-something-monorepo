@@ -112,7 +112,10 @@ export interface CatoInsightRelatedItem {
   date?: string;
 }
 
-export interface CatoInsightCmsCardProps extends Pick<CatoInsightsDataProps, 'linkMode' | 'pathPrefix'> {
+export interface CatoInsightCmsCardProps extends Pick<
+  CatoInsightsDataProps,
+  'linkMode' | 'pathPrefix'
+> {
   title?: string;
   summary?: string;
   resourceType?: string;
@@ -162,8 +165,6 @@ export interface CatoInsightsMegaMenuProps extends CatoInsightsDataProps {
   summary?: string;
   introCtaLabel?: string;
   browseKicker?: string;
-  insightsHomeTitle?: string;
-  insightsHomeSummary?: string;
   featureLabel?: string;
   featureTitle?: string;
   featureSummary?: string;
@@ -194,11 +195,13 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
       "Subscribe for recurring healthcare supply risk alerts and browse Cato's archive of disruption reports, sourcing signals, and care continuity analysis.",
     panelLabel: 'Subscribe + archive',
     panelTitle: 'Built for recurring supply risk reports.',
-    panelSummary: 'Use this page as the entry point for Resiliency Report Alerts and the archive for recurring healthcare supply risk analysis.',
+    panelSummary:
+      'Use this page as the entry point for Resiliency Report Alerts and the archive for recurring healthcare supply risk analysis.',
     archiveEyebrow: 'Archive',
     archiveTitle: 'Latest Resiliency Reports',
-    archiveSummary: 'Published reports collect here so supply chain, procurement, and clinical operations teams can scan recent disruption signals.',
-    hasSubscribe: true,
+    archiveSummary:
+      'Published reports collect here so supply chain, procurement, and clinical operations teams can scan recent disruption signals.',
+    hasSubscribe: true
   },
   {
     id: 'research',
@@ -209,13 +212,16 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     cardTitle: 'Procurement strategy unpacked.',
     cardSummary: 'Explore supply chain resilience best practices.',
     cardCta: 'Browse research',
-    heroSummary: 'Whitepapers and research on intelligent procurement, supply optionality, and healthcare supply chain resilience.',
+    heroSummary:
+      'Whitepapers and research on intelligent procurement, supply optionality, and healthcare supply chain resilience.',
     panelLabel: 'Research archive',
     panelTitle: "A home for Cato's procurement point of view.",
-    panelSummary: "Approved research, whitepapers, and annual reports collect here as Cato's market perspective grows.",
+    panelSummary:
+      "Approved research, whitepapers, and annual reports collect here as Cato's market perspective grows.",
     archiveEyebrow: 'Research archive',
     archiveTitle: 'Latest Cato Research',
-    archiveSummary: 'Whitepapers and analysis organized for executives, procurement leaders, and supply chain operators.',
+    archiveSummary:
+      'Whitepapers and analysis organized for executives, procurement leaders, and supply chain operators.'
   },
   {
     id: 'resources',
@@ -226,13 +232,16 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     cardTitle: 'Executive thought leadership.',
     cardSummary: 'Implement sourcing frameworks for operational continuity.',
     cardCta: 'Learn best practices',
-    heroSummary: 'Guides, explainers, and operational resources for healthcare procurement, supply chain, and clinical value teams.',
+    heroSummary:
+      'Guides, explainers, and operational resources for healthcare procurement, supply chain, and clinical value teams.',
     panelLabel: 'Resource archive',
     panelTitle: 'A practical library for supply gap response.',
-    panelSummary: 'Guides, explainers, and briefings collect here for teams managing substitution, shortage, and backorder response.',
+    panelSummary:
+      'Guides, explainers, and briefings collect here for teams managing substitution, shortage, and backorder response.',
     archiveEyebrow: 'Resource library',
     archiveTitle: 'Latest Operational Resources',
-    archiveSummary: 'Practical resources for procurement, supply chain, and clinical value teams protecting care continuity.',
+    archiveSummary:
+      'Practical resources for procurement, supply chain, and clinical value teams protecting care continuity.'
   },
   {
     id: 'newsroom',
@@ -240,17 +249,19 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     title: 'Newsroom',
     filterLabel: 'News',
     cardLabel: 'Newsroom',
-    cardTitle: 'Press releases, events, and company updates.',
+    cardTitle: 'Newsroom',
     cardSummary: 'Follow Cato launches, events, press notes, and milestones.',
     cardCta: 'Visit newsroom',
     heroSummary: 'Company news, launch updates, events, and announcements from Cato.',
     panelLabel: 'Latest updates',
     panelTitle: 'Launches, events, and company milestones.',
-    panelSummary: 'Track Cato announcements, event field notes, media mentions, and product milestones in one newsroom archive.',
+    panelSummary:
+      'Track Cato announcements, event field notes, media mentions, and product milestones in one newsroom archive.',
     archiveEyebrow: 'Newsroom archive',
     archiveTitle: 'Latest Company Updates',
-    archiveSummary: 'Launch notes, event recaps, media mentions, and company announcements collect here as approved Newsroom entries are published.',
-  },
+    archiveSummary:
+      'Launch notes, event recaps, media mentions, and company announcements collect here as approved Newsroom entries are published.'
+  }
 ];
 
 const REVIEW_ITEMS: CatoInsightItem[] = [
@@ -261,7 +272,8 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Resiliency Report',
     pill: 'Featured report',
     title: '2026 Supply Disruption Preparedness Brief',
-    summary: 'A planning brief for healthcare procurement teams preparing for supplier shortages, backorders, and regional disruption risk.',
+    summary:
+      'A planning brief for healthcare procurement teams preparing for supplier shortages, backorders, and regional disruption risk.',
     date: 'May 8, 2026',
     ctaLabel: 'Read report',
     featured: true,
@@ -272,20 +284,32 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
         heading: 'Why this matters',
         paragraphs: [
           'Healthcare supply disruption planning is moving from exception handling to routine operating discipline. Teams need a repeatable way to identify pressure, evaluate alternatives, and decide when clinical partners should be involved.',
-          'This brief gives procurement and supply chain teams a shared frame for reviewing shortage exposure before backorders turn into care continuity risk.',
-        ],
+          'This brief gives procurement and supply chain teams a shared frame for reviewing shortage exposure before backorders turn into care continuity risk.'
+        ]
       },
       {
         heading: 'What to watch',
-        paragraphs: ['Monitor supplier concentration, substitute availability, contract constraints, regional logistics pressure, and product categories with known recall or allocation patterns.'],
-        bullets: ['Identify SKUs with limited clinical substitutes.', 'Track lead-time changes before formal backorder notices arrive.', 'Document escalation owners for high-risk categories.'],
+        paragraphs: [
+          'Monitor supplier concentration, substitute availability, contract constraints, regional logistics pressure, and product categories with known recall or allocation patterns.'
+        ],
+        bullets: [
+          'Identify SKUs with limited clinical substitutes.',
+          'Track lead-time changes before formal backorder notices arrive.',
+          'Document escalation owners for high-risk categories.'
+        ]
       },
       {
         heading: 'How teams can use it',
-        paragraphs: ['Use the checklist as a meeting artifact for sourcing reviews, value analysis conversations, and recurring supply continuity planning.'],
-      },
+        paragraphs: [
+          'Use the checklist as a meeting artifact for sourcing reviews, value analysis conversations, and recurring supply continuity planning.'
+        ]
+      }
     ],
-    takeaways: ['Use recurring signals, not one-off alerts.', 'Prioritize categories that affect clinical workflows.', 'Keep substitute paths visible before disruption.'],
+    takeaways: [
+      'Use recurring signals, not one-off alerts.',
+      'Prioritize categories that affect clinical workflows.',
+      'Keep substitute paths visible before disruption.'
+    ]
   },
   {
     id: 'backorder-response-planning',
@@ -294,22 +318,35 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Alert',
     pill: 'Alert',
     title: 'Backorder Response Planning for Clinical Teams',
-    summary: 'A rapid-response note for care teams evaluating disrupted items, substitutions, and timing risk.',
+    summary:
+      'A rapid-response note for care teams evaluating disrupted items, substitutions, and timing risk.',
     date: 'May 8, 2026',
     ctaLabel: 'View alert',
     audience: 'Clinical value analysis, procurement, and supply chain teams.',
     body: [
       {
         heading: 'Response planning frame',
-        paragraphs: ['Backorder response works best when procurement, supply chain, and clinical teams share the same decision sequence. Start with patient impact, then evaluate substitution quality, cost, availability, and training requirements.'],
+        paragraphs: [
+          'Backorder response works best when procurement, supply chain, and clinical teams share the same decision sequence. Start with patient impact, then evaluate substitution quality, cost, availability, and training requirements.'
+        ]
       },
       {
         heading: 'Operational checks',
-        paragraphs: ['A response plan should show who owns supplier outreach, who approves clinical substitutions, and when the team will revisit the risk.'],
-        bullets: ['Confirm projected available inventory.', 'Separate clinically acceptable substitutes from purchasing alternatives.', 'Record communication needs for affected departments.'],
-      },
+        paragraphs: [
+          'A response plan should show who owns supplier outreach, who approves clinical substitutions, and when the team will revisit the risk.'
+        ],
+        bullets: [
+          'Confirm projected available inventory.',
+          'Separate clinically acceptable substitutes from purchasing alternatives.',
+          'Record communication needs for affected departments.'
+        ]
+      }
     ],
-    takeaways: ['Make clinical acceptance visible.', 'Separate temporary substitutions from standardization decisions.', 'Set a review date for every disruption response.'],
+    takeaways: [
+      'Make clinical acceptance visible.',
+      'Separate temporary substitutions from standardization decisions.',
+      'Set a review date for every disruption response.'
+    ]
   },
   {
     id: 'regional-sourcing-signal-watchlist',
@@ -318,21 +355,30 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Watchlist',
     pill: 'Watchlist',
     title: 'Regional Sourcing Signal Watchlist',
-    summary: 'A focused scan of sourcing pressure, alternate supply paths, and continuity considerations for healthcare teams.',
+    summary:
+      'A focused scan of sourcing pressure, alternate supply paths, and continuity considerations for healthcare teams.',
     date: 'May 8, 2026',
     ctaLabel: 'Open watchlist',
     audience: 'Healthcare supply chain and sourcing teams.',
     body: [
       {
         heading: 'Signals to monitor',
-        paragraphs: ['Regional sourcing pressure often appears first as pricing volatility, delayed confirmations, or tighter substitute availability. Watchlist reporting gives teams a simple place to track those early indicators.'],
+        paragraphs: [
+          'Regional sourcing pressure often appears first as pricing volatility, delayed confirmations, or tighter substitute availability. Watchlist reporting gives teams a simple place to track those early indicators.'
+        ]
       },
       {
         heading: 'Suggested review rhythm',
-        paragraphs: ['Review the watchlist weekly during active pressure periods, then move to a monthly rhythm once supplier confirmations and substitute paths stabilize.'],
-      },
+        paragraphs: [
+          'Review the watchlist weekly during active pressure periods, then move to a monthly rhythm once supplier confirmations and substitute paths stabilize.'
+        ]
+      }
     ],
-    takeaways: ['Watch regional availability patterns.', 'Keep alternate supply paths current.', 'Review sourcing pressure on a recurring cadence.'],
+    takeaways: [
+      'Watch regional availability patterns.',
+      'Keep alternate supply paths current.',
+      'Review sourcing pressure on a recurring cadence.'
+    ]
   },
   {
     id: 'intelligent-procurement-optionality',
@@ -341,22 +387,35 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Cato Research',
     pill: 'Cato Research',
     title: 'How Intelligent Procurement Expands Supply Optionality',
-    summary: 'Cato research on how better market visibility helps care teams evaluate alternatives before shortages become operational blockers.',
+    summary:
+      'Cato research on how better market visibility helps care teams evaluate alternatives before shortages become operational blockers.',
     date: 'May 8, 2026',
     ctaLabel: 'Read research',
     audience: 'Executives, procurement leaders, and supply chain operators.',
     body: [
       {
         heading: 'Research premise',
-        paragraphs: ['Supply optionality depends on visibility. Teams that can see alternative items, supplier paths, and clinical constraints earlier are better positioned to respond without forcing rushed purchasing decisions.'],
+        paragraphs: [
+          'Supply optionality depends on visibility. Teams that can see alternative items, supplier paths, and clinical constraints earlier are better positioned to respond without forcing rushed purchasing decisions.'
+        ]
       },
       {
         heading: 'Procurement implications',
-        paragraphs: ['The strongest procurement programs treat intelligence as an operating layer that connects sourcing, value analysis, and clinical planning.'],
-        bullets: ['Map equivalent products before disruption.', 'Use demand and availability signals together.', 'Treat supplier optionality as resilience infrastructure.'],
-      },
+        paragraphs: [
+          'The strongest procurement programs treat intelligence as an operating layer that connects sourcing, value analysis, and clinical planning.'
+        ],
+        bullets: [
+          'Map equivalent products before disruption.',
+          'Use demand and availability signals together.',
+          'Treat supplier optionality as resilience infrastructure.'
+        ]
+      }
     ],
-    takeaways: ['Visibility creates optionality.', 'Optionality reduces rushed substitutions.', 'Procurement intelligence should be shared across functions.'],
+    takeaways: [
+      'Visibility creates optionality.',
+      'Optionality reduces rushed substitutions.',
+      'Procurement intelligence should be shared across functions.'
+    ]
   },
   {
     id: 'healthcare-supply-optionality-outlook',
@@ -365,21 +424,30 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Whitepaper',
     pill: 'Whitepaper',
     title: 'Healthcare Supply Optionality Outlook',
-    summary: 'A research perspective on how healthcare organizations can build resilience by widening safe sourcing options.',
+    summary:
+      'A research perspective on how healthcare organizations can build resilience by widening safe sourcing options.',
     date: 'May 8, 2026',
     ctaLabel: 'Read whitepaper',
     audience: 'Healthcare executives and procurement leaders.',
     body: [
       {
         heading: 'Outlook summary',
-        paragraphs: ['Healthcare systems are rethinking sourcing resilience as margin pressure, supplier volatility, and clinical standardization requirements converge.'],
+        paragraphs: [
+          'Healthcare systems are rethinking sourcing resilience as margin pressure, supplier volatility, and clinical standardization requirements converge.'
+        ]
       },
       {
         heading: 'What changes',
-        paragraphs: ['The next phase of procurement intelligence will favor teams that can evaluate availability, clinical acceptance, and financial impact in one repeatable workflow.'],
-      },
+        paragraphs: [
+          'The next phase of procurement intelligence will favor teams that can evaluate availability, clinical acceptance, and financial impact in one repeatable workflow.'
+        ]
+      }
     ],
-    takeaways: ['Optionality is a strategic capability.', 'Sourcing decisions need clinical and financial context.', 'Repeatable workflows scale better than ad hoc workarounds.'],
+    takeaways: [
+      'Optionality is a strategic capability.',
+      'Sourcing decisions need clinical and financial context.',
+      'Repeatable workflows scale better than ad hoc workarounds.'
+    ]
   },
   {
     id: 'medical-supply-sourcing-checklist',
@@ -388,42 +456,60 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Resource Library',
     pill: 'Resource Library',
     title: 'Medical Supply Sourcing Checklist',
-    summary: 'A practical checklist for teams evaluating disrupted SKUs, substitution options, supplier readiness, and delivery timelines.',
+    summary:
+      'A practical checklist for teams evaluating disrupted SKUs, substitution options, supplier readiness, and delivery timelines.',
     date: 'May 8, 2026',
     ctaLabel: 'View resource',
     audience: 'Procurement, supply chain, and clinical value teams.',
     body: [
       {
         heading: 'When to use this checklist',
-        paragraphs: ['Use this checklist when a product disruption requires a fast, repeatable comparison of alternate SKUs, supplier paths, clinical constraints, and timing risk.'],
+        paragraphs: [
+          'Use this checklist when a product disruption requires a fast, repeatable comparison of alternate SKUs, supplier paths, clinical constraints, and timing risk.'
+        ]
       },
       {
         heading: 'Triage the disruption',
-        paragraphs: ['Start with the facts that determine urgency and decision ownership before comparing substitutions.'],
+        paragraphs: [
+          'Start with the facts that determine urgency and decision ownership before comparing substitutions.'
+        ],
         bullets: [
           'Current item, manufacturer, contract status, and affected facilities.',
           'Known inventory, open orders, backorder timing, and supplier confidence.',
           'Clinical use case, frequency of use, and potential patient-care impact.',
-          'Teams that need to approve substitutions before a switch can happen.',
-        ],
+          'Teams that need to approve substitutions before a switch can happen.'
+        ]
       },
       {
         heading: 'Compare viable alternatives',
-        paragraphs: ['A substitute should be evaluated against supply availability and adoption risk together, not as a purchasing-only decision.'],
+        paragraphs: [
+          'A substitute should be evaluated against supply availability and adoption risk together, not as a purchasing-only decision.'
+        ],
         bullets: [
           'Functional match, sizing, sterility, packaging, and documentation requirements.',
           'Training impact for clinical teams and any change in workflow.',
           'Pricing variance, freight impact, contract constraints, and approval path.',
-          'Supplier reliability, delivery confidence, and contingency options.',
-        ],
+          'Supplier reliability, delivery confidence, and contingency options.'
+        ]
       },
       {
         heading: 'Create the decision record',
-        paragraphs: ['Close the review with a clear recommendation, named owners, and the trigger that would cause the team to revisit the decision.'],
-        bullets: ['Recommended path and backup option.', 'Approvers and implementation owner.', 'Expected review date or inventory threshold.', 'Open questions for sourcing, clinical, or supplier teams.'],
-      },
+        paragraphs: [
+          'Close the review with a clear recommendation, named owners, and the trigger that would cause the team to revisit the decision.'
+        ],
+        bullets: [
+          'Recommended path and backup option.',
+          'Approvers and implementation owner.',
+          'Expected review date or inventory threshold.',
+          'Open questions for sourcing, clinical, or supplier teams.'
+        ]
+      }
     ],
-    takeaways: ['Use one repeatable checklist for every disruption review.', 'Document clinical constraints before purchasing substitutes.', 'Compare availability, cost, and adoption risk in the same decision.'],
+    takeaways: [
+      'Use one repeatable checklist for every disruption review.',
+      'Document clinical constraints before purchasing substitutes.',
+      'Compare availability, cost, and adoption risk in the same decision.'
+    ]
   },
   {
     id: 'supply-continuity-briefing',
@@ -432,21 +518,30 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Webinar',
     pill: 'Webinar',
     title: 'Supply Continuity Briefing: Preparing for Backorder Risk',
-    summary: 'A briefing format for procurement, supply chain, and clinical operations teams monitoring supply pressure.',
+    summary:
+      'A briefing format for procurement, supply chain, and clinical operations teams monitoring supply pressure.',
     date: 'May 8, 2026',
     ctaLabel: 'Watch briefing',
     audience: 'Supply chain, sourcing, and clinical operations leaders.',
     body: [
       {
         heading: 'Briefing format',
-        paragraphs: ['This briefing model helps teams move from raw supply updates to coordinated operational decisions.'],
+        paragraphs: [
+          'This briefing model helps teams move from raw supply updates to coordinated operational decisions.'
+        ]
       },
       {
         heading: 'Discussion prompts',
-        paragraphs: ['Each briefing should answer what changed, what categories are exposed, what alternatives are viable, and which decisions need clinical input.'],
-      },
+        paragraphs: [
+          'Each briefing should answer what changed, what categories are exposed, what alternatives are viable, and which decisions need clinical input.'
+        ]
+      }
     ],
-    takeaways: ['Make the briefing recurring.', 'Tie every signal to an owner.', 'Capture decisions for future reviews.'],
+    takeaways: [
+      'Make the briefing recurring.',
+      'Tie every signal to an owner.',
+      'Capture decisions for future reviews.'
+    ]
   },
   {
     id: 'procurement-intelligence-hub-launch',
@@ -455,21 +550,30 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Company update',
     pill: 'Company update',
     title: 'Cato Launches Expanded Procurement Intelligence Hub',
-    summary: "A company update introducing Cato's expanded Insights structure for reports, research, resources, and launch news.",
+    summary:
+      "A company update introducing Cato's expanded Insights structure for reports, research, resources, and launch news.",
     date: 'May 8, 2026',
     ctaLabel: 'Read update',
     audience: 'Customers, partners, investors, and media contacts.',
     body: [
       {
         heading: 'Launch summary',
-        paragraphs: ["Cato is expanding its Insights experience to give healthcare procurement teams a clearer home for recurring reports, research, practical resources, and company news."],
+        paragraphs: [
+          'Cato is expanding its Insights experience to give healthcare procurement teams a clearer home for recurring reports, research, practical resources, and company news.'
+        ]
       },
       {
         heading: 'Why it matters',
-        paragraphs: ['The new structure makes it easier to publish high-priority updates once and surface them across the hub, category pages, and navigation feature areas.'],
-      },
+        paragraphs: [
+          'The new structure makes it easier to publish high-priority updates once and surface them across the hub, category pages, and navigation feature areas.'
+        ]
+      }
     ],
-    takeaways: ["Insights becomes the hub for Cato's publishing system.", 'Category pages can grow as content volume increases.', 'Featured items can be promoted in the menu and hub.'],
+    takeaways: [
+      "Insights becomes the hub for Cato's publishing system.",
+      'Category pages can grow as content volume increases.',
+      'Featured items can be promoted in the menu and hub.'
+    ]
   },
   {
     id: 'idm-summit-field-notes',
@@ -478,21 +582,30 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Event recap',
     pill: 'Event recap',
     title: 'IDM Summit Field Notes for Healthcare Sourcing Teams',
-    summary: 'Event takeaways, customer conversations, and procurement themes worth surfacing for the wider Cato audience.',
+    summary:
+      'Event takeaways, customer conversations, and procurement themes worth surfacing for the wider Cato audience.',
     date: 'May 8, 2026',
     ctaLabel: 'Read recap',
     audience: 'Healthcare sourcing leaders, customers, and partners.',
     body: [
       {
         heading: 'Field notes',
-        paragraphs: ['The IDM Summit surfaced recurring questions around supply visibility, substitution planning, and how procurement teams can make better use of market signals.'],
+        paragraphs: [
+          'The IDM Summit surfaced recurring questions around supply visibility, substitution planning, and how procurement teams can make better use of market signals.'
+        ]
       },
       {
         heading: 'What Cato heard',
-        paragraphs: ['Teams want fewer disconnected updates and more practical intelligence that supports sourcing decisions before a shortage becomes urgent.'],
-      },
+        paragraphs: [
+          'Teams want fewer disconnected updates and more practical intelligence that supports sourcing decisions before a shortage becomes urgent.'
+        ]
+      }
     ],
-    takeaways: ['Event recaps can become durable audience content.', 'Customer questions should feed future research topics.', 'The newsroom should connect events back to the Insights hub.'],
+    takeaways: [
+      'Event recaps can become durable audience content.',
+      'Customer questions should feed future research topics.',
+      'The newsroom should connect events back to the Insights hub.'
+    ]
   },
   {
     id: 'capstone-launch-brief',
@@ -501,21 +614,30 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Launch brief',
     pill: 'Launch brief',
     title: 'Capstone Launch Brief',
-    summary: 'A short launch brief on how Cato is expanding procurement intelligence for healthcare supply teams.',
+    summary:
+      'A short launch brief on how Cato is expanding procurement intelligence for healthcare supply teams.',
     date: 'May 8, 2026',
     ctaLabel: 'Read brief',
     audience: 'Customers, partners, and healthcare procurement leaders.',
     body: [
       {
         heading: 'Launch context',
-        paragraphs: ['Capstone gives Cato a way to package product and market updates as concise launch briefs for audiences that need the operational context, not just the announcement.'],
+        paragraphs: [
+          'Capstone gives Cato a way to package product and market updates as concise launch briefs for audiences that need the operational context, not just the announcement.'
+        ]
       },
       {
         heading: 'Publishing use',
-        paragraphs: ['This format can support future partner launches, product milestones, and market-facing announcements.'],
-      },
+        paragraphs: [
+          'This format can support future partner launches, product milestones, and market-facing announcements.'
+        ]
+      }
     ],
-    takeaways: ['Launch briefs should stay concise.', 'Each brief should connect announcement value to user impact.', 'The newsroom can preserve launch history over time.'],
+    takeaways: [
+      'Launch briefs should stay concise.',
+      'Each brief should connect announcement value to user impact.',
+      'The newsroom can preserve launch history over time.'
+    ]
   },
   {
     id: 'healthcare-procurement-coverage',
@@ -524,22 +646,31 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Media note',
     pill: 'Media note',
     title: 'Cato Supply Featured in Healthcare Procurement Coverage',
-    summary: "Media notes and partner mentions for teams tracking Cato's work across healthcare supply and procurement resilience.",
+    summary:
+      "Media notes and partner mentions for teams tracking Cato's work across healthcare supply and procurement resilience.",
     date: 'May 8, 2026',
     ctaLabel: 'Read note',
     audience: 'Media, partners, customers, and investors.',
     body: [
       {
         heading: 'Coverage note',
-        paragraphs: ['Media notes give Cato a lightweight format for collecting third-party mentions, partner coverage, and relevant market commentary.'],
+        paragraphs: [
+          'Media notes give Cato a lightweight format for collecting third-party mentions, partner coverage, and relevant market commentary.'
+        ]
       },
       {
         heading: 'How to use it',
-        paragraphs: ['Use this content type when an update is externally visible but does not need a full launch announcement or research treatment.'],
-      },
+        paragraphs: [
+          'Use this content type when an update is externally visible but does not need a full launch announcement or research treatment.'
+        ]
+      }
     ],
-    takeaways: ['Keep media notes short and attributable.', 'Link back to coverage when available.', 'Use the newsroom archive for discoverability.'],
-  },
+    takeaways: [
+      'Keep media notes short and attributable.',
+      'Link back to coverage when available.',
+      'Use the newsroom archive for discoverability.'
+    ]
+  }
 ];
 
 const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
@@ -550,17 +681,24 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     resourceType: 'Resiliency Report',
     pill: 'Alert',
     title: 'Vascular, Angiographic, and Dialysis Kits Shortages',
-    summary: 'Resiliency report alert tracking vascular, angiographic, and dialysis kits shortages, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
-    date: 'May 26, 2026',
-    ctaLabel: 'View alert',
+    summary:
+      'Vascular access, angiographic, and dialysis procedure kit backorders are being driven by recalls and quarantines across sheath introducers, control syringes, sizing catheters, and bloodlines.',
+    date: 'May 14, 2026',
+    ctaLabel: 'Read report',
     audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
     body: [
       {
         heading: 'Alert context',
-        paragraphs: ['This resiliency report alert tracks vascular, angiographic, and dialysis kits shortages as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
-      },
+        paragraphs: [
+          'Health systems are reporting prolonged allocation constraints on vascular access, angiographic, and dialysis procedure kits.'
+        ]
+      }
     ],
-    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+    takeaways: [
+      'Map affected procedure kit SKUs against recall and quarantine scope before deciding what remains usable.',
+      'Evaluate clinical equivalents with visibility into kit bill-of-materials dependencies.',
+      'Use secondary channels to find matching or functionally equivalent kit options when primary channels are constrained.'
+    ]
   },
   {
     id: 'nasal-oral-ett-backorders',
@@ -568,18 +706,14 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     category: 'resiliency',
     resourceType: 'Resiliency Report',
     pill: 'Alert',
-    title: 'Nasal Oral ETT Backorders',
-    summary: 'Resiliency report alert tracking nasal and oral ETT backorders, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
-    date: 'May 26, 2026',
-    ctaLabel: 'View alert',
+    title: 'Nasal Oral Endotracheal Tubes Backorders',
+    summary:
+      'Nasal and oral/nasal endotracheal tube allocation pressure is concentrated in pediatric and small adult sizes due to recalls, market exits, and limited manufacturing surge capacity.',
+    date: 'May 7, 2026',
+    ctaLabel: 'Read report',
     audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
-    body: [
-      {
-        heading: 'Alert context',
-        paragraphs: ['This resiliency report alert tracks nasal and oral ETT backorders as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
-      },
-    ],
-    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+    body: [],
+    takeaways: []
   },
   {
     id: 'neurosponges-disruption',
@@ -588,49 +722,13 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     resourceType: 'Resiliency Report',
     pill: 'Alert',
     title: 'Neurosponges Disruption',
-    summary: 'Resiliency report alert tracking neurosponges disruption, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
-    date: 'May 26, 2026',
-    ctaLabel: 'View alert',
+    summary:
+      'Neuro sponge and neuro strip constraints are tightening after recall activity, thinned secondary supply, and allocation pressure across Medline, Integra, and remaining suppliers.',
+    date: 'May 1, 2026',
+    ctaLabel: 'Read report',
     audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
-    body: [
-      {
-        heading: 'Alert context',
-        paragraphs: ['This resiliency report alert tracks neurosponges disruption as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
-      },
-    ],
-    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
-  },
-  {
-    id: 'capstone-partnership-copy',
-    slug: 'capstone-partnership-copy',
-    category: 'newsroom',
-    resourceType: 'News',
-    pill: 'News',
-    title: 'Capstone Partnership Copy',
-    summary: 'Cato announced a partnership with Capstone Health Alliance to support supply chain resiliency, sourcing initiatives, care continuity, and cost-saving opportunities for Capstone members.',
-    date: 'May 26, 2026',
-    ctaLabel: 'Read announcement',
-    audience: 'Customers, partners, media contacts, and healthcare procurement leaders.',
-    body: [
-      {
-        heading: 'Partnership announcement',
-        paragraphs: [
-          'Cato announced a new partnership with Capstone Health Alliance, a leading regional group purchasing organization that collaborates with hundreds of hospitals and thousands of healthcare providers across the nation.',
-          'The partnership is focused on driving collaboration, sharing best practices, and launching innovative sourcing initiatives to strengthen supply chain resiliency for Capstone members. Together, Cato and Capstone aim to improve patient outcomes while expanding access to meaningful cost-saving opportunities for stakeholders.',
-          'Cato was built to bring transparency and reliability to healthcare procurement during times of disruption. Partnering with Capstone represents an opportunity to advance that mission and expand access to essential medical supplies across a broader network of health systems nationwide.',
-          "Cato looks forward to supporting Capstone's members in keeping patient care moving without interruption.",
-        ],
-      },
-      {
-        heading: 'Capstone announcement',
-        paragraphs: ['Capstone also announced the partnership, noting that Cato will bring members a healthcare procurement platform designed to make supply chains nimbler and help guarantee care continuity.'],
-      },
-    ],
-    takeaways: [
-      'Cato and Capstone Health Alliance are partnering to support stronger healthcare supply chain resiliency.',
-      'The collaboration focuses on best practices, innovative sourcing initiatives, and broader access to essential medical supplies.',
-      'Capstone members gain access to a procurement platform designed to improve agility and continuity of care.',
-    ],
+    body: [],
+    takeaways: []
   },
   {
     id: 'capstone-partnership',
@@ -639,17 +737,13 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     resourceType: 'Newsroom',
     pill: 'Company update',
     title: 'Capstone Partnership',
-    summary: 'Company update from Cato covering the Capstone partnership for customers, partners, and healthcare procurement teams.',
-    date: 'May 26, 2026',
-    ctaLabel: 'Read update',
+    summary:
+      'Cato announced a partnership with Capstone Health Alliance to support supply chain resiliency, sourcing initiatives, care continuity, and cost-saving opportunities for Capstone members.',
+    date: 'Apr 14, 2026',
+    ctaLabel: 'Read announcement',
     audience: 'Customers, partners, media contacts, and healthcare procurement leaders.',
-    body: [
-      {
-        heading: 'Announcement context',
-        paragraphs: ["This newsroom entry captures Cato's update on the Capstone partnership for audiences following healthcare procurement intelligence and company milestones."],
-      },
-    ],
-    takeaways: ['Track the company update in the Newsroom archive.', "Connect the announcement back to Cato's broader procurement intelligence story.", 'Use the source link for original context.'],
+    body: [],
+    takeaways: []
   },
   {
     id: 'nbr-medical-supplies',
@@ -658,17 +752,13 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     resourceType: 'Resiliency Report',
     pill: 'Alert',
     title: 'NBR Medical Supplies',
-    summary: 'Resiliency report alert tracking NBR medical supplies, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
-    date: 'May 26, 2026',
-    ctaLabel: 'View alert',
+    summary:
+      'Conflict-driven volatility in petroleum-derived polymer inputs may pressure medical consumables including gloves, PPE, syringes, IV bags, and wound care supplies.',
+    date: 'Apr 7, 2026',
+    ctaLabel: 'Read report',
     audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
-    body: [
-      {
-        heading: 'Alert context',
-        paragraphs: ['This resiliency report alert tracks NBR medical supplies as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
-      },
-    ],
-    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+    body: [],
+    takeaways: []
   },
   {
     id: 'avagard-shortage',
@@ -677,17 +767,13 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     resourceType: 'Resiliency Report',
     pill: 'Alert',
     title: 'Avagard Shortage',
-    summary: 'Resiliency report alert tracking Avagard shortage, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
-    date: 'May 26, 2026',
-    ctaLabel: 'View alert',
+    summary:
+      'Extended rolling backorders on Avagard surgical hand antiseptics are tied to upstream chemical disruption, validation timelines, and constrained production capacity.',
+    date: 'Mar 19, 2026',
+    ctaLabel: 'Read report',
     audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
-    body: [
-      {
-        heading: 'Alert context',
-        paragraphs: ['This resiliency report alert tracks Avagard shortage as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
-      },
-    ],
-    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+    body: [],
+    takeaways: []
   },
   {
     id: 'stryker-cyberattack',
@@ -696,17 +782,13 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     resourceType: 'Resiliency Report',
     pill: 'Alert',
     title: 'Stryker Cyberattack',
-    summary: 'Resiliency report alert tracking the Stryker cyberattack, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
-    date: 'May 26, 2026',
-    ctaLabel: 'View alert',
+    summary:
+      "Stryker's cyberattack and global network disruption are affecting electronic ordering workflows, creating supply continuity risk for health systems that rely on Stryker products.",
+    date: 'Mar 13, 2026',
+    ctaLabel: 'Read report',
     audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
-    body: [
-      {
-        heading: 'Alert context',
-        paragraphs: ['This resiliency report alert tracks the Stryker cyberattack as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
-      },
-    ],
-    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+    body: [],
+    takeaways: []
   },
   {
     id: 'iv-sets-allocation',
@@ -715,38 +797,13 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     resourceType: 'Resiliency Report',
     pill: 'Alert',
     title: 'IV Sets Allocation',
-    summary: 'Procurement teams are managing tight allocations on Baxter IV administration sets, particularly ClearLink and Continu-Flo product lines.',
-    date: 'May 26, 2026',
-    ctaLabel: 'View alert',
+    summary:
+      'Procurement teams are managing tight allocations on Baxter IV administration sets, particularly ClearLink and Continu-Flo product lines.',
+    date: 'Mar 12, 2026',
+    ctaLabel: 'Read report',
     audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
-    body: [
-      {
-        heading: 'Supply gap analysis',
-        paragraphs: [
-          'Procurement teams are managing increasingly tight allocations on Baxter IV administration sets, particularly ClearLink and Continu-Flo product lines.',
-          'The shortage pressure is tied to compounding quality events and recall activity related to manufacturing process controls. ClearLink recalls involved active leaks that can create contamination, therapy interruption, and serious harm risks, while prior Continu-Flo recalls involved inverted slide clamps that could cause pumps to draw blood back from patients.',
-          'Root cause analysis pointed to manufacturing process drift from validated parameters, including bonding temperatures and assembly torques. Corrective action can require slower line speeds, more inspection, and tighter acceptance criteria before product release.',
-          'The Baxter North Cove, NC plant shutdown after Hurricane Helene also increased broader IV ecosystem strain, compressing recovery timelines and quality bandwidth across related production programs.',
-        ],
-      },
-      {
-        heading: 'What health systems can do',
-        paragraphs: [
-          'For facilities using Baxter Sigma Spectrum infusion pumps, the current disruption creates a critical bottleneck because the platform relies on proprietary channel-detection systems.',
-          'There are currently no FDA-cleared third-party IV sets compatible with that hardware, which means teams need to protect available tubing for the highest-acuity cases while creating secondary paths for flexible clinical areas.',
-        ],
-        bullets: [
-          'Audit pump utilization and rebalance flexible areas toward gravity infusions or syringe pumps where clinically appropriate.',
-          'Evaluate secondary pump platforms, such as B. Braun Infusomat or ICU Medical Plum 360, to create an independent consumable pipeline.',
-          'Monitor daily availability because tubing often sits outside major drug shortage reserve programs.',
-        ],
-      },
-      {
-        heading: 'How Cato can support',
-        paragraphs: ['Cato can review specifications and quantities, monitor the IV ecosystem as inventory shifts, and respond with viable sourcing options or mitigation pathways for affected care teams.'],
-      },
-    ],
-    takeaways: ['Protect constrained Baxter tubing for highest-acuity use cases.', 'Build secondary platform coverage where clinical workflows allow.', 'Use Risk Radar and Cato sourcing support to monitor constrained categories as inventory moves.'],
+    body: [],
+    takeaways: []
   },
   {
     id: 'bair-hugger-backorders',
@@ -755,37 +812,13 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     resourceType: 'Resiliency Report',
     pill: 'Alert',
     title: 'Bair Hugger Backorders',
-    summary: 'Health systems are reporting prolonged allocation constraints on Bair Hugger warming blankets, including the 55000, 63000, and 63500 series.',
-    date: 'May 26, 2026',
-    ctaLabel: 'View alert',
+    summary:
+      'Health systems are reporting prolonged allocation constraints on Bair Hugger warming blankets, including the 55000, 63000, and 63500 series.',
+    date: 'Mar 7, 2026',
+    ctaLabel: 'Read report',
     audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
-    body: [
-      {
-        heading: 'Supply gap analysis',
-        paragraphs: [
-          'Health systems are reporting prolonged allocation constraints on Bair Hugger warming blankets, specifically the 55000, 63000, and 63500 series.',
-          'Cato sourcing intelligence indicates the disruption is not only a traditional demand spike. Constraints arose from a quality containment event that required requalification of upstream materials, validation runs, updated documentation, and stability testing.',
-          'The gap has been exacerbated by the manufacturer spinoff into Solventum, multiple ERP cutovers since 2025, allocation logic changes, safety stock resets, and a cost-savings plan that includes manufacturing consolidation.',
-        ],
-      },
-      {
-        heading: 'Single-source exposure',
-        paragraphs: [
-          'The product design compounds risk for operating rooms because Bair Hugger functions as a two-part system: a heating blower connected to proprietary disposable blankets used in each case.',
-          'Because hose fittings and air distribution are physically incompatible with competitor blankets, many ORs are locked into a single consumable supplier during backorders.',
-        ],
-      },
-      {
-        heading: 'Mitigation paths',
-        paragraphs: ['Cato is supporting health systems with spot buys, cross-reference review, secondary-channel inventory searches, and equipment diversification planning.'],
-        bullets: [
-          'Review functional cross-overs and available inventory while manufacturer lots stabilize.',
-          'Evaluate secondary warming platforms, including Gentherm, Stryker Mistral-Air, or conductive systems such as HotDog.',
-          'Track actual fill rates across 30-, 60-, and 90-day windows rather than relying only on moving recovery dates.',
-        ],
-      },
-    ],
-    takeaways: ['Treat proprietary blanket dependency as an operational risk, not only a purchasing issue.', 'Diversify a portion of warming platforms to keep cases moving during allocation periods.', 'Send SKUs and case volumes to Cato for real-time availability checks.'],
+    body: [],
+    takeaways: []
   },
   {
     id: 'gowns-drapes-disruption',
@@ -794,38 +827,19 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     resourceType: 'Resiliency Report',
     pill: 'Alert',
     title: 'Gowns and Drapes Disruption',
-    summary: 'Sterile surgical gown and drape supply is seeing disruption from recalls, distributor allocations, and raw material and capacity constraints.',
-    date: 'May 26, 2026',
-    ctaLabel: 'View alert',
+    summary:
+      'Sterile surgical gown and drape supply is seeing disruption from recalls, distributor allocations, and raw material and capacity constraints.',
+    date: 'Feb 10, 2026',
+    ctaLabel: 'Read report',
     audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
-    body: [
-      {
-        heading: 'Supply gap analysis',
-        paragraphs: [
-          'Cato is seeing increasing disruption in the sterile surgical gown and drape market.',
-          'The fluctuations trace to a combination of recent recalls affecting certain sterile SMS and meltblown nonwoven textile products, distributor allocation effects, and raw material and capacity constraints that are creating near-term gaps.',
-          'These events have led to rising backorders, tighter allocation limits, and increased last-minute substitution requests across health systems. Market intelligence suggests some issues may continue through the spring and into the summer window.',
-        ],
-      },
-      {
-        heading: 'Current support paths',
-        paragraphs: ['Cato can support procurement teams with immediate inventory visibility across multiple OEMs and brands, functional cross-over review, and real-time availability confirmation.'],
-        bullets: [
-          'Surgical gowns: current availability includes Cardinal, Halyard, Medline, and select Regard options.',
-          'Surgical drapes: current availability includes Halyard, Cardinal, Solventum/3M, and Dukal options.',
-          'AAMI Level 3 substitutes can provide brand-agnostic and cost-conscious alternatives when name-brand items are constrained.',
-        ],
-      },
-      {
-        heading: 'How to respond',
-        paragraphs: ['Teams facing gaps should send SKUs, specifications, and quantities so Cato can confirm real-time availability and respond with specific matches or viable substitutes. Risk Radar can also surface impacted SKUs and constrained categories with active availability.'],
-      },
-    ],
-    takeaways: ['Plan for last-minute substitution demand across sterile gowns and drapes.', 'Compare brand-name availability with AAMI Level 3 alternatives when appropriate.', 'Use Risk Radar and Cato sourcing support for current SKU-level visibility.'],
-  },
+    body: [],
+    takeaways: []
+  }
 ];
 
 const DEFAULT_ITEMS = PUBLISHED_CMS_ITEMS.length ? PUBLISHED_CMS_ITEMS : REVIEW_ITEMS;
+const DEFAULT_ITEMS_ENDPOINT_URL =
+  'https://cato-supply-insights-cms.createsomething.workers.dev/api/cato/insights';
 
 const CATO_CSS = `
   .cato-cc {
@@ -840,7 +854,7 @@ const CATO_CSS = `
     --cato-green-bright: var(--base-color-green--green-400, #18a56d);
     --cato-white: var(--base-color-charcoal--white, #ffffff);
     color: var(--cato-text);
-    background: var(--cato-bg-soft);
+    background: var(--cato-bg);
     font-family: "Inter Variable", Inter, Arial, sans-serif;
     font-size: 1rem;
     line-height: 1.5;
@@ -849,8 +863,9 @@ const CATO_CSS = `
   .cato-cc a { color: inherit; }
   .cato-cc-card-component { background: transparent; }
   .cato-cc-card-component .cato-cc-cms-card { height: 100%; min-height: 15rem; }
-  .cato-cc-section { padding: 4rem 2.5rem; }
-  .cato-cc-hero { position: relative; overflow: hidden; background: var(--cato-bg-soft); padding-top: 10rem; }
+  .cato-cc-section { background: var(--cato-bg); padding: 4rem 2.5rem; }
+  .cato-cc-section--compact { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+  .cato-cc-hero { position: relative; overflow: hidden; background: var(--cato-bg); padding-top: 10rem; }
   .cato-cc-container { width: min(100%, 80rem); margin: 0 auto; }
   .cato-cc-hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr); gap: 2rem; align-items: stretch; margin-bottom: 3rem; }
   .cato-cc-copy { display: flex; flex-direction: column; gap: 1.25rem; justify-content: center; max-width: 58rem; }
@@ -880,7 +895,7 @@ const CATO_CSS = `
   .cato-cc-card-grid[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cato-cc-card, .cato-cc-cms-card, .cato-cc-detail-card, .cato-cc-sidebar-card { border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; box-shadow: 0 1px 2px rgba(17,16,15,.04); }
   .cato-cc-card, .cato-cc-cms-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 1rem; color: var(--cato-text); text-decoration: none; transition: transform .18s, border-color .18s, box-shadow .18s; }
-  .cato-cc-card { min-height: 21rem; padding: 2rem; }
+  .cato-cc-card { align-items: center; justify-content: center; min-height: 16rem; padding: 1.75rem; text-align: center; }
   .cato-cc-card[data-category="resiliency"] .cato-cc-pill { color: #0a452e; background: rgba(10,69,46,.07); border-color: rgba(10,69,46,.18); }
   .cato-cc-card[data-category="research"] .cato-cc-pill { color: #245082; background: rgba(36,80,130,.08); border-color: rgba(36,80,130,.18); }
   .cato-cc-card[data-category="resources"] .cato-cc-pill { color: #775321; background: rgba(119,83,33,.09); border-color: rgba(119,83,33,.18); }
@@ -891,9 +906,10 @@ const CATO_CSS = `
   .cato-cc-card[data-category="newsroom"] h3 { color: #61456d; }
   .cato-cc-card:hover, .cato-cc-cms-card:hover { border-color: var(--cato-border-strong); transform: translate3d(0, -.25rem, 0); box-shadow: 0 1rem 2rem rgba(17,16,15,.08); }
   .cato-cc-card p, .cato-cc-cms-card p { color: var(--cato-muted); margin: 0; line-height: 1.5; }
+  .cato-cc-card p { max-width: 18rem; }
   .cato-cc-link { color: var(--cato-green); margin-top: auto; font-weight: 600; display: inline-block; transition: transform .18s, color .18s; }
   .cato-cc-card:hover .cato-cc-link, .cato-cc-cms-card:hover .cato-cc-link { transform: translate3d(.18rem, 0, 0); }
-  .cato-cc-preview-header { display: flex; flex-direction: column; gap: 1rem; max-width: 54rem; margin-bottom: 2rem; }
+  .cato-cc-preview-header { display: flex; flex-direction: column; align-items: center; gap: 1rem; max-width: 54rem; margin: 0 auto 2rem; text-align: center; }
   .cato-cc-layout { display: grid; grid-template-columns: minmax(14rem, .34fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
   .cato-cc-filter-rail { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 7rem; border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; padding: 1.25rem; }
   .cato-cc-filter-title { font-weight: 800; }
@@ -916,7 +932,7 @@ const CATO_CSS = `
   .cato-cc-card-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 2rem; width: 100%; }
   .cato-cc-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; color: var(--cato-muted); font-size: .875rem; line-height: 1.35; }
   .cato-cc-system-band { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 3rem; border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; padding: 3rem; }
-  .cato-cc-system-band[data-subscribe="true"] { align-items: stretch; }
+  .cato-cc-system-band[data-subscribe="true"] { grid-template-columns: minmax(0, .85fr) minmax(0, 1fr); align-items: stretch; gap: 1.5rem; padding: 1.5rem; }
   .cato-cc-system-band[data-archive="true"] { align-items: start; }
   .cato-cc-system-band[data-archive-shell="true"] { grid-template-columns: 1fr; }
   .cato-cc-system-band[data-archive-shell="true"] .cato-cc-system-copy { max-width: 56rem; }
@@ -924,8 +940,8 @@ const CATO_CSS = `
   .cato-cc-system-list { display: flex; flex-direction: column; gap: .75rem; }
   .cato-cc-system-card { display: flex; flex-direction: column; gap: .35rem; background: rgba(10,69,46,.055); border: 0; border-radius: .625rem; box-shadow: none; padding: 1.25rem; }
   .cato-cc-system-card p { margin: 0; color: var(--cato-muted); line-height: 1.5; }
-  .cato-cc-archive-list { display: flex; flex-direction: column; gap: .875rem; }
-  .cato-cc-archive-list .cato-cc-cms-card { min-height: auto; padding: 1.25rem; }
+  .cato-cc-archive-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .cato-cc-archive-list .cato-cc-cms-card { min-height: 15rem; padding: 1.25rem; }
   .cato-cc-back-link { color: var(--cato-green); margin-top: .25rem; font-weight: 700; text-decoration: none; display: inline-block; }
   .cato-cc-hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .25rem; }
   .cato-cc-share-link { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; border: 1px solid rgba(10,69,46,.18); border-radius: .5rem; background: rgba(10,69,46,.055); color: var(--cato-green); padding: .7rem 1rem; font-weight: 800; line-height: 1.2; text-decoration: none; }
@@ -979,7 +995,7 @@ const CATO_CSS = `
   .cato-cc-form-status { border-radius: .5rem; margin: .75rem 0 0; padding: .8rem .95rem; font-weight: 700; line-height: 1.4; }
   .cato-cc-form-status[data-status="success"] { color: var(--cato-green); background: rgba(10,69,46,.08); border: 1px solid rgba(10,69,46,.16); }
   .cato-cc-form-status[data-status="error"] { color: #8f332b; background: rgba(143,51,43,.08); border: 1px solid rgba(143,51,43,.16); }
-  .cato-cc-archive-cta { display: flex; align-items: center; justify-content: space-between; gap: 1rem; position: relative; z-index: 1; isolation: isolate; border: 1px solid rgba(10,69,46,.14); background: rgba(10,69,46,.05); border-radius: .75rem; margin-top: 1.75rem; padding: 1.25rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 .75rem 1.5rem rgba(10,69,46,.05); }
+  .cato-cc-archive-cta { display: flex; grid-column: 1 / -1; align-items: center; justify-content: space-between; gap: 1rem; position: relative; z-index: 1; isolation: isolate; border: 1px solid rgba(10,69,46,.14); background: rgba(10,69,46,.05); border-radius: .75rem; margin-top: .75rem; padding: 1.25rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 .75rem 1.5rem rgba(10,69,46,.05); }
   .cato-cc-archive-cta span { display: block; color: var(--cato-muted); margin-top: .2rem; line-height: 1.45; }
   .cato-cc-archive-cta .cato-cc-cta { flex: none; padding: .75rem 1rem; font-weight: 800; }
   .cato-cc-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, .38fr); align-items: start; gap: 2.5rem; }
@@ -1062,29 +1078,33 @@ const CATO_CSS = `
   .cato-cc-takeaways-html ul, .cato-cc-takeaways-html ol { display: flex; flex-direction: column; gap: .65rem; margin: 0; padding-left: 1.25rem; }
   .cato-cc-takeaways-html p { margin: 0 0 .75rem; line-height: 1.5; }
   .cato-cc-mega { background: var(--cato-bg); color: var(--cato-text); border-top: 1px solid rgba(40,39,35,.08); border-bottom: 1px solid rgba(40,39,35,.12); box-shadow: 0 28px 70px rgba(46,34,27,.16); }
-  .cato-cc-mega-inner { display: grid; grid-template-columns: .78fr 1.4fr .82fr; gap: 2.5rem; align-items: stretch; width: min(100%, 80rem); min-height: 25.5rem; margin: 0 auto; padding: 2.5rem; }
+  .cato-cc-mega-inner { display: grid; grid-template-columns: .78fr 1.32fr .82fr; gap: 2.25rem; align-items: stretch; width: min(100%, 80rem); min-height: 23rem; margin: 0 auto; padding: 2.5rem; }
   .cato-cc-mega-intro { border-right: 1px solid rgba(40,39,35,.10); padding-right: 2rem; }
   .cato-cc-mega-kicker { color: var(--cato-muted); text-transform: uppercase; margin: 0 0 1rem; font-size: .76rem; font-weight: 800; }
-  .cato-cc-mega-title { max-width: 23rem; margin: 0 0 1.35rem; font-size: clamp(1.8rem, 2.5vw, 2.55rem); line-height: 1.06; font-weight: 800; }
+  .cato-cc-mega-title { max-width: 23rem; margin: 0 0 2.2rem; font-size: clamp(1.8rem, 2.5vw, 2.55rem); line-height: 1.06; font-weight: 800; }
   .cato-cc-mega-copy { color: var(--cato-muted); max-width: 18rem; margin: 0 0 1.6rem; font-size: .95rem; line-height: 1.5; }
   .cato-cc-mega-home { font-weight: 800; text-decoration: none; }
-  .cato-cc-mega-links { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 1.25rem 2rem; }
+  .cato-cc-mega-links { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 1rem 1.5rem; }
   .cato-cc-mega-link { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; border-radius: .5rem; padding: .75rem 1rem; text-decoration: none; }
   .cato-cc-mega-link:hover { background: var(--base-color-cream--cream-200, #f2eee8); }
   .cato-cc-mega-link strong { font-size: .98rem; line-height: 1.2; }
   .cato-cc-mega-link span { color: var(--cato-muted); font-size: .86rem; line-height: 1.4; }
-  .cato-cc-mega-feature { display: flex; flex-direction: column; gap: 1.5rem; min-height: 20rem; background: var(--cato-green-mid); color: var(--cato-white); border-radius: .5rem; padding: 2rem; text-decoration: none; }
+  .cato-cc-mega-feature { display: flex; flex-direction: column; gap: 1rem; min-height: 18rem; background: var(--cato-green-mid); color: var(--cato-white); border-radius: .5rem; padding: 1.5rem; text-decoration: none; }
   .cato-cc-mega-feature span, .cato-cc-mega-feature p, .cato-cc-mega-feature strong, .cato-cc-mega-feature h3 { color: var(--cato-white); }
+  .cato-cc-mega-feature h3 { font-size: 1.2rem; line-height: 1.3; }
+  .cato-cc-mega-feature p { font-size: .92rem; line-height: 1.42; }
   .cato-cc-mega-feature .cato-cc-pill { color: var(--cato-white); border-color: rgba(255,255,255,.35); background: transparent; }
-  .cato-cc-mega-feature-list { display: flex; flex-direction: column; gap: .45rem; border-top: 1px solid rgba(255,255,255,.16); border-bottom: 1px solid rgba(255,255,255,.16); padding: .9rem 0; }
-  .cato-cc-mega-feature-list span { opacity: .72; text-transform: uppercase; font-size: .78rem; }
+  .cato-cc-mega-feature-list { display: flex; flex-direction: column; gap: .35rem; border-top: 1px solid rgba(255,255,255,.16); border-bottom: 1px solid rgba(255,255,255,.16); padding: .7rem 0; }
+  .cato-cc-mega-feature-list strong { display: block; font-size: .9rem; line-height: 1.16; }
+  .cato-cc-mega-feature-list span { opacity: .72; text-transform: uppercase; font-size: .7rem; line-height: 1.2; }
+  .cato-cc-mega-feature-cta { margin-top: .25rem; font-weight: 800; }
   .cato-cc a:focus-visible, .cato-cc button:focus-visible { outline: 2px solid var(--cato-green-bright); outline-offset: 3px; }
   @media (prefers-reduced-motion: reduce) {
     .cato-cc *, .cato-cc *::before, .cato-cc *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
   }
   @media (max-width: 991px) {
     .cato-cc-hero-grid, .cato-cc-system-band, .cato-cc-layout, .cato-cc-detail-layout { grid-template-columns: 1fr; }
-    .cato-cc-card-grid, .cato-cc-cms-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cato-cc-card-grid, .cato-cc-cms-grid, .cato-cc-archive-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .cato-cc-filter-rail, .cato-cc-sidebar { position: static; }
     .cato-cc-filter-list { flex-flow: row wrap; }
     .cato-cc-hero { padding-top: 8rem; }
@@ -1099,7 +1119,7 @@ const CATO_CSS = `
     .cato-cc-preview-header h2,
     .cato-cc-system-copy > h2 { font-size: 2rem; }
     .cato-cc h3 { font-size: 1.25rem; }
-    .cato-cc-card-grid, .cato-cc-cms-grid, .cato-cc-card-body { grid-template-columns: 1fr; }
+    .cato-cc-card-grid, .cato-cc-cms-grid, .cato-cc-card-body, .cato-cc-archive-list { grid-template-columns: 1fr; }
     .cato-cc-card, .cato-cc-cms-card, .cato-cc-cms-card[data-featured="true"], .cato-cc-panel, .cato-cc-detail-card, .cato-cc-sidebar-card { min-height: auto; padding: 1.25rem; }
     .cato-cc-system-band { padding: 1.25rem; }
     .cato-cc-form-row, .cato-cc-archive-cta { grid-template-columns: 1fr; flex-direction: column; align-items: stretch; }
@@ -1218,7 +1238,8 @@ function normalizeTextContent(value: string): string {
 }
 
 function richTextHasContent(value: unknown): boolean {
-  if (typeof value === 'string') return Boolean(normalizeTextContent(value)) || /<(img|video|iframe|figure)\b/i.test(value);
+  if (typeof value === 'string')
+    return Boolean(normalizeTextContent(value)) || /<(img|video|iframe|figure)\b/i.test(value);
   if (typeof value === 'number' || typeof value === 'boolean') return true;
   if (React.isValidElement(value)) {
     const props = value.props as Record<string, unknown> | undefined;
@@ -1232,12 +1253,14 @@ function richTextHasContent(value: unknown): boolean {
 
   if (value && typeof value === 'object') {
     const record = value as Record<string, unknown>;
-    return richTextHasContent(record.html) ||
+    return (
+      richTextHasContent(record.html) ||
       richTextHasContent(record.innerHTML) ||
       richTextHasContent(record.children) ||
       richTextHasContent(record.innerText) ||
       richTextHasContent(record.text) ||
-      richTextHasContent((record.props as Record<string, unknown> | undefined)?.children);
+      richTextHasContent((record.props as Record<string, unknown> | undefined)?.children)
+    );
   }
 
   return false;
@@ -1259,7 +1282,12 @@ function richTextToPlain(value: unknown): string {
   if (Array.isArray(value)) return value.map(richTextToPlain).filter(Boolean).join(' ');
   if (value && typeof value === 'object' && !React.isValidElement(value)) {
     const record = value as Record<string, unknown>;
-    return richTextToPlain(record.innerText ?? record.text ?? record.children ?? (record.props as Record<string, unknown> | undefined)?.children);
+    return richTextToPlain(
+      record.innerText ??
+        record.text ??
+        record.children ??
+        (record.props as Record<string, unknown> | undefined)?.children
+    );
   }
   return '';
 }
@@ -1269,7 +1297,9 @@ function displayText(value: unknown, fallback = ''): string {
   return text || fallback;
 }
 
-function normalizeInsightImage(image?: CatoInsightImageValue | string | null): Partial<CatoInsightImageValue> {
+function normalizeInsightImage(
+  image?: CatoInsightImageValue | string | null
+): Partial<CatoInsightImageValue> {
   if (!image) return {};
   if (typeof image === 'string') return { src: image };
   return image;
@@ -1286,7 +1316,7 @@ function displayDate(value: unknown, fallback = ''): string {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-    timeZone: 'UTC',
+    timeZone: 'UTC'
   }).format(date);
 }
 
@@ -1318,7 +1348,7 @@ function RichHtml({ html, className }: { html?: unknown; className?: string }) {
 function resolveData({ categoriesJson, itemsJson }: CatoInsightsDataProps) {
   return {
     categories: parseJsonArray<CatoInsightCategory>(categoriesJson, DEFAULT_CATEGORIES),
-    items: parseJsonArray<CatoInsightItem>(itemsJson, DEFAULT_ITEMS),
+    items: parseJsonArray<CatoInsightItem>(itemsJson, DEFAULT_ITEMS)
   };
 }
 
@@ -1366,23 +1396,65 @@ function normalizeEndpointItem(raw: unknown): CatoInsightItem | null {
   if (!raw || typeof raw !== 'object') return null;
 
   const rawRecord = raw as Record<string, unknown>;
-  const fieldData = rawRecord.fieldData && typeof rawRecord.fieldData === 'object' ? (rawRecord.fieldData as Record<string, unknown>) : {};
+  const fieldData =
+    rawRecord.fieldData && typeof rawRecord.fieldData === 'object'
+      ? (rawRecord.fieldData as Record<string, unknown>)
+      : {};
   const record = { ...rawRecord, ...fieldData };
   const title = pickRecordString(record, ['title', 'Title', 'name', 'Name']);
   const slug = pickRecordString(record, ['slug', 'Slug']);
   if (!title && !slug) return null;
 
-  const summary = pickRecordString(record, ['summary', 'Summary', 'shortSummary', 'short-summary', 'Short Summary', 'short_summary']);
-  const resourceType = pickRecordString(record, ['resourceType', 'resource-type', 'Resource Type', 'resource_type', 'type']);
-  const contentLabel = pickRecordString(record, ['contentLabel', 'content-label', 'Content Label', 'content_label', 'pill', 'Pill']);
+  const summary = pickRecordString(record, [
+    'summary',
+    'Summary',
+    'shortSummary',
+    'short-summary',
+    'Short Summary',
+    'short_summary'
+  ]);
+  const resourceType = pickRecordString(record, [
+    'resourceType',
+    'resource-type',
+    'Resource Type',
+    'resource_type',
+    'type'
+  ]);
+  const contentLabel = pickRecordString(record, [
+    'contentLabel',
+    'content-label',
+    'Content Label',
+    'content_label',
+    'pill',
+    'Pill'
+  ]);
   const label = contentLabel || resourceType || 'Insight';
-  const category = pickRecordString(record, ['category', 'categoryId', 'category-id', 'archive', 'Archive']) || categoryKeyFromResourceType(label) || 'resources';
-  const date = pickRecordString(record, ['date', 'Date', 'publishDate', 'publish-date', 'Publish Date', 'publishedOn', 'lastPublished', 'createdOn']);
-  const ctaLabel = pickRecordString(record, ['ctaLabel', 'cta-label', 'CTA Label', 'cta_label']) || (category === 'newsroom' ? 'Read update' : 'Read report');
+  const category =
+    pickRecordString(record, ['category', 'categoryId', 'category-id', 'archive', 'Archive']) ||
+    categoryKeyFromResourceType(label) ||
+    'resources';
+  const date = pickRecordString(record, [
+    'date',
+    'Date',
+    'publishDate',
+    'publish-date',
+    'Publish Date',
+    'publishedOn',
+    'lastPublished',
+    'createdOn'
+  ]);
+  const ctaLabel =
+    pickRecordString(record, ['ctaLabel', 'cta-label', 'CTA Label', 'cta_label']) ||
+    (category === 'newsroom' ? 'Read update' : 'Read report');
 
   return {
     id: pickRecordString(record, ['id', '_id', 'itemId', 'item-id']) || slug || title,
-    slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+    slug:
+      slug ||
+      title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, ''),
     category,
     resourceType: resourceType || label,
     pill: label,
@@ -1393,19 +1465,24 @@ function normalizeEndpointItem(raw: unknown): CatoInsightItem | null {
     featured: pickRecordBoolean(record, ['featured', 'Featured']),
     audience: pickRecordString(record, ['audience', 'Audience']),
     body: [],
-    takeaways: [],
+    takeaways: []
   };
 }
 
 function normalizeEndpointItems(payload: unknown) {
-  return recordsFromEndpointPayload(payload).map(normalizeEndpointItem).filter((item): item is CatoInsightItem => Boolean(item));
+  return recordsFromEndpointPayload(payload)
+    .map(normalizeEndpointItem)
+    .filter((item): item is CatoInsightItem => Boolean(item));
 }
 
 function useInsightItems(dataProps: CatoInsightsDataProps) {
   const { items } = resolveData(dataProps);
   const [remoteItems, setRemoteItems] = useState<CatoInsightItem[] | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const endpointUrl = dataProps.itemsEndpointUrl?.trim() || '';
+  const configuredEndpointUrl = dataProps.itemsEndpointUrl?.trim() || '';
+  const hasConfiguredItems = Boolean(dataProps.itemsJson?.trim());
+  const endpointUrl =
+    configuredEndpointUrl || (hasConfiguredItems ? '' : DEFAULT_ITEMS_ENDPOINT_URL);
   const shouldFetch = dataProps.fetchItems !== false && Boolean(endpointUrl);
 
   useEffect(() => {
@@ -1449,7 +1526,7 @@ function useInsightsData(dataProps: CatoInsightsDataProps) {
 
   return {
     categories,
-    ...itemsState,
+    ...itemsState
   };
 }
 
@@ -1458,17 +1535,25 @@ function normalizePrefix(prefix = '') {
   return prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
 }
 
-function hrefForPage(page: string, linkMode: CatoInsightsDataProps['linkMode'] = 'webflow', pathPrefix = '') {
+function hrefForPage(
+  page: string,
+  linkMode: CatoInsightsDataProps['linkMode'] = 'webflow',
+  pathPrefix = ''
+) {
   const prefix = normalizePrefix(pathPrefix);
   const clean = linkMode === 'export' ? page : page.replace(/\.html$/, '');
   return `${prefix}/${clean}`.replace(/\/{2,}/g, '/');
 }
 
-function hrefForItem(item: CatoInsightItem, linkMode: CatoInsightsDataProps['linkMode'] = 'webflow', pathPrefix = '') {
+function hrefForItem(
+  item: CatoInsightItem,
+  linkMode: CatoInsightsDataProps['linkMode'] = 'webflow',
+  pathPrefix = ''
+) {
   if (item.href) return item.href;
 
   const suffix = linkMode === 'export' ? '.html' : '';
-  const prefix = normalizePrefix(pathPrefix);
+  const prefix = normalizePrefix(linkMode === 'webflow' ? pathPrefix || '/insights' : pathPrefix);
   return `${prefix}/${item.slug}${suffix}`.replace(/\/{2,}/g, '/');
 }
 
@@ -1481,11 +1566,17 @@ function relForTarget(target?: string) {
 }
 
 function normalizeCategoryKey(value?: string) {
-  return value?.trim().toLowerCase().replace(/\.html$/, '').replace(/^\/+|\/+$/g, '');
+  return value
+    ?.trim()
+    .toLowerCase()
+    .replace(/\.html$/, '')
+    .replace(/^\/+|\/+$/g, '');
 }
 
 function slugifyCategoryTitle(value?: string) {
-  return normalizeCategoryKey(value)?.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return normalizeCategoryKey(value)
+    ?.replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 function categoryKeyFromResourceType(value?: string) {
@@ -1493,8 +1584,20 @@ function categoryKeyFromResourceType(value?: string) {
   if (!normalized) return '';
   if (normalized.includes('research') || normalized.includes('whitepaper')) return 'research';
   if (normalized.includes('resource') || normalized.includes('webinar')) return 'resources';
-  if (normalized.includes('news') || normalized.includes('event') || normalized.includes('announcement') || normalized.includes('launch')) return 'newsroom';
-  if (normalized.includes('resiliency') || normalized.includes('report') || normalized.includes('alert') || normalized.includes('watchlist')) return 'resiliency';
+  if (
+    normalized.includes('news') ||
+    normalized.includes('event') ||
+    normalized.includes('announcement') ||
+    normalized.includes('launch')
+  )
+    return 'newsroom';
+  if (
+    normalized.includes('resiliency') ||
+    normalized.includes('report') ||
+    normalized.includes('alert') ||
+    normalized.includes('watchlist')
+  )
+    return 'resiliency';
   return '';
 }
 
@@ -1510,7 +1613,11 @@ function inferItemSlugFromLocation() {
   return parts[parts.length - 1]?.replace(/\.html$/, '') || '';
 }
 
-function categoryByKey(categories: CatoInsightCategory[], primaryKey?: string, fallbackKey?: string) {
+function categoryByKey(
+  categories: CatoInsightCategory[],
+  primaryKey?: string,
+  fallbackKey?: string
+) {
   const keys = [primaryKey, fallbackKey].map(normalizeCategoryKey).filter(Boolean);
   const match = categories.find((category) => {
     const candidates = [
@@ -1518,7 +1625,7 @@ function categoryByKey(categories: CatoInsightCategory[], primaryKey?: string, f
       category.page,
       category.page.replace(/\.html$/, ''),
       slugifyCategoryTitle(category.title),
-      slugifyCategoryTitle(category.cardLabel),
+      slugifyCategoryTitle(category.cardLabel)
     ].map(normalizeCategoryKey);
 
     return keys.some((key) => candidates.includes(key));
@@ -1539,7 +1646,7 @@ function Hero({
   panelRel,
   backLink,
   actions,
-  children,
+  children
 }: {
   title: string;
   summary: string;
@@ -1570,7 +1677,12 @@ function Hero({
             <h2>{panelTitle}</h2>
             <p>{panelSummary}</p>
             {panelCta && panelHref ? (
-              <a className="cato-cc-panel-link" href={panelHref} target={panelTarget} rel={panelRel}>
+              <a
+                className="cato-cc-panel-link"
+                href={panelHref}
+                target={panelTarget}
+                rel={panelRel}
+              >
                 {panelCta}
               </a>
             ) : null}
@@ -1582,10 +1694,19 @@ function Hero({
   );
 }
 
-function CategoryCard({ category, href, target, rel }: { category: CatoInsightCategory; href: string; target?: string; rel?: string }) {
+function CategoryCard({
+  category,
+  href,
+  target,
+  rel
+}: {
+  category: CatoInsightCategory;
+  href: string;
+  target?: string;
+  rel?: string;
+}) {
   return (
     <a href={href} className="cato-cc-card" data-category={category.id} target={target} rel={rel}>
-      <span className="cato-cc-pill">{category.cardLabel}</span>
       <h3>{category.cardTitle}</h3>
       <p>{category.cardSummary}</p>
       <span className="cato-cc-link">{category.cardCta}</span>
@@ -1598,7 +1719,7 @@ function InsightCard({
   href,
   featured = false,
   target,
-  rel,
+  rel
 }: {
   item: CatoInsightItem;
   href: string;
@@ -1607,7 +1728,13 @@ function InsightCard({
   rel?: string;
 }) {
   return (
-    <a href={href} className="cato-cc-cms-card" data-featured={featured ? 'true' : undefined} target={target} rel={rel}>
+    <a
+      href={href}
+      className="cato-cc-cms-card"
+      data-featured={featured ? 'true' : undefined}
+      target={target}
+      rel={rel}
+    >
       {featured ? (
         <>
           <div className="cato-cc-card-top">
@@ -1656,13 +1783,7 @@ function TakeawaysBox({ html, items }: { html?: React.ReactNode; items: string[]
   );
 }
 
-function RelatedRail({
-  title,
-  items,
-}: {
-  title: string;
-  items: CatoInsightRelatedItem[];
-}) {
+function RelatedRail({ title, items }: { title: string; items: CatoInsightRelatedItem[] }) {
   if (items.length === 0) return null;
 
   return (
@@ -1670,9 +1791,15 @@ function RelatedRail({
       <p className="cato-cc-eyebrow">{title}</p>
       <div className="cato-cc-sidebar-list">
         {items.map((item) => (
-          <a key={`${item.title}-${item.href || ''}`} className="cato-cc-sidebar-link" href={displayText(item.href, '#')}>
+          <a
+            key={`${item.title}-${item.href || ''}`}
+            className="cato-cc-sidebar-link"
+            href={displayText(item.href, '#')}
+          >
             <strong>{item.title}</strong>
-            {item.resourceType || item.date ? <span>{[item.resourceType, item.date].filter(Boolean).join(' - ')}</span> : null}
+            {item.resourceType || item.date ? (
+              <span>{[item.resourceType, item.date].filter(Boolean).join(' - ')}</span>
+            ) : null}
           </a>
         ))}
       </div>
@@ -1685,7 +1812,7 @@ function FeaturedImage({
   url,
   alt,
   caption,
-  fit = 'cover',
+  fit = 'cover'
 }: {
   image?: CatoInsightImageValue | string;
   url?: CatoInsightImageValue | string;
@@ -1705,7 +1832,9 @@ function FeaturedImage({
       <div className="cato-cc-featured-image-frame">
         <img src={src} alt={altText} loading="lazy" style={{ objectFit: fit }} />
       </div>
-      {displayText(caption) ? <figcaption className="cato-cc-featured-caption">{caption}</figcaption> : null}
+      {displayText(caption) ? (
+        <figcaption className="cato-cc-featured-caption">{caption}</figcaption>
+      ) : null}
     </figure>
   );
 }
@@ -1715,7 +1844,7 @@ function ArchiveItemList({
   status,
   linkMode,
   pathPrefix,
-  shouldShowSubscribe,
+  shouldShowSubscribe
 }: {
   items: CatoInsightItem[];
   status: 'idle' | 'loading' | 'ready' | 'error';
@@ -1728,11 +1857,16 @@ function ArchiveItemList({
       {items.map((item) => (
         <InsightCard key={item.id} item={item} href={hrefForItem(item, linkMode, pathPrefix)} />
       ))}
-      {status === 'loading' && items.length === 0 ? <div className="cato-cc-system-card">Loading latest insights...</div> : null}
+      {status === 'loading' && items.length === 0 ? (
+        <div className="cato-cc-system-card">Loading latest insights...</div>
+      ) : null}
       {status === 'error' ? (
         <div className="cato-cc-system-card cato-cc-note-card">
           <strong>Showing cached archive items.</strong>
-          <p>The live CMS endpoint did not respond, so this component is using its configured fallback data.</p>
+          <p>
+            The live CMS endpoint did not respond, so this component is using its configured
+            fallback data.
+          </p>
         </div>
       ) : null}
       {items.length === 0 && status !== 'loading' ? (
@@ -1772,20 +1906,26 @@ function SubscribeBlock() {
   }
 
   return (
-    <section className="cato-cc-section" id="cato-resiliency-alerts">
+    <section className="cato-cc-section cato-cc-section--compact" id="cato-resiliency-alerts">
       <div className="cato-cc-container">
         <div className="cato-cc-system-band" data-subscribe="true">
           <div className="cato-cc-system-copy">
             <p className="cato-cc-eyebrow">Resiliency Report Alerts</p>
             <h2>Subscribe for Resiliency Report Alerts.</h2>
-            <p className="cato-cc-lede">Receive updates when Cato publishes new healthcare supply risk signals, disruption analysis, and report archive entries.</p>
+            <p className="cato-cc-lede">
+              Receive updates when Cato publishes new healthcare supply risk signals, disruption
+              analysis, and report archive entries.
+            </p>
           </div>
           <div className="cato-cc-system-list">
             <div className="cato-cc-system-card cato-cc-subscribe-card">
               <div className="cato-cc-form-intro">
                 <span className="cato-cc-pill">Email alerts</span>
                 <h3>Receive new Resiliency Report Alerts.</h3>
-                <p>Get healthcare supply risk signals, disruption reports, and sourcing notes as they publish.</p>
+                <p>
+                  Get healthcare supply risk signals, disruption reports, and sourcing notes as they
+                  publish.
+                </p>
               </div>
               <ul className="cato-cc-benefits">
                 <li>New report releases</li>
@@ -1795,7 +1935,14 @@ function SubscribeBlock() {
               <form className="cato-cc-form" method="get" onSubmit={submit} noValidate>
                 <label htmlFor={emailId}>Work email address</label>
                 <div className="cato-cc-form-row">
-                  <input id={emailId} className="cato-cc-input" type="email" name="email" placeholder="you@organization.com" required />
+                  <input
+                    id={emailId}
+                    className="cato-cc-input"
+                    type="email"
+                    name="email"
+                    placeholder="you@organization.com"
+                    required
+                  />
                   <button className="cato-cc-button" type="submit">
                     Subscribe to alerts
                   </button>
@@ -1815,7 +1962,10 @@ function SubscribeBlock() {
             </div>
             <div className="cato-cc-system-card cato-cc-note-card">
               <strong>Archive status</strong>
-              <p>Browse published resiliency reports below as the archive grows from recurring market signals and care continuity analysis.</p>
+              <p>
+                Browse published resiliency reports below as the archive grows from recurring market
+                signals and care continuity analysis.
+              </p>
             </div>
           </div>
         </div>
@@ -1830,7 +1980,7 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
   featuredPanelLabel = 'Featured now',
   featuredPanelTitle = 'Relevant disruptions and strategic resources.',
   featuredPanelSummary = 'Use this area to feature the market signals, research, and company updates that matter most from a business perspective.',
-  featuredPanelCta = '',
+  featuredPanelCta = 'Access these reports',
   filterRailNote = 'Use these filters to scan current reports, research, and newsroom updates by content type.',
   insightsHomeLink,
   featuredPanelLink,
@@ -1849,18 +1999,24 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
   ...dataProps
 }) => {
   const { categories, items } = useInsightsData(dataProps);
-  const hubCategories = categories;
+  const hubCategories = categories.filter((category) => category.id !== 'resources');
   const hubCategoryIds = new Set(hubCategories.map((category) => category.id));
   const hubItems = items.filter((item) => hubCategoryIds.has(item.category));
   const categoryLinkOverrides: Record<string, CatoInsightLinkProp | undefined> = {
     resiliency: resiliencyLink,
     research: researchLink,
     resources: whitepapersLink,
-    newsroom: newsroomLink,
+    newsroom: newsroomLink
   };
-  const insightsHomeHref = hrefFromLink(insightsHomeLink, hrefForPage('insights.html', linkMode, pathPrefix));
+  const insightsHomeHref = hrefFromLink(
+    insightsHomeLink,
+    hrefForPage('insights.html', linkMode, pathPrefix)
+  );
   const panelLink = featuredPanelLink || resiliencyLink;
-  const panelHref = hrefFromLink(panelLink, hrefForPage('resiliency-reports.html', linkMode, pathPrefix));
+  const panelHref = hrefFromLink(
+    panelLink,
+    hrefForPage('resiliency-reports.html', linkMode, pathPrefix)
+  );
   const linkForCategory = (category: CatoInsightCategory) => categoryLinkOverrides[category.id];
   const hrefForCategory = (category: CatoInsightCategory) =>
     hrefFromLink(linkForCategory(category), hrefForPage(category.page, linkMode, pathPrefix));
@@ -1887,7 +2043,15 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
         <div className="cato-cc-card-grid" data-count={hubCategories.length}>
           {hubCategories.map((category) => {
             const link = linkForCategory(category);
-            return <CategoryCard key={category.id} category={category} href={hrefForCategory(category)} target={link?.target} rel={relForTarget(link?.target)} />;
+            return (
+              <CategoryCard
+                key={category.id}
+                category={category}
+                href={hrefForCategory(category)}
+                target={link?.target}
+                rel={relForTarget(link?.target)}
+              />
+            );
           })}
         </div>
       </Hero>
@@ -1916,25 +2080,45 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
                   {hubCategories.map((category) => {
                     const link = linkForCategory(category);
                     return (
-                      <a key={category.id} href={hrefForCategory(category)} className="cato-cc-filter" data-category={category.id} target={link?.target} rel={relForTarget(link?.target)}>
+                      <a
+                        key={category.id}
+                        href={hrefForCategory(category)}
+                        className="cato-cc-filter"
+                        data-category={category.id}
+                        target={link?.target}
+                        rel={relForTarget(link?.target)}
+                      >
                         <span>{category.filterLabel}</span>
-                        <span className="cato-cc-filter-count">{items.filter((item) => item.category === category.id).length}</span>
+                        <span className="cato-cc-filter-count">
+                          {items.filter((item) => item.category === category.id).length}
+                        </span>
                       </a>
                     );
                   })}
                 </div>
-                {displayText(filterRailNote) ? <p className="cato-cc-filter-note">{filterRailNote}</p> : null}
+                {displayText(filterRailNote) ? (
+                  <p className="cato-cc-filter-note">{filterRailNote}</p>
+                ) : null}
               </aside>
               <div className="cato-cc-cms-grid">
                 {previewItems.map((item, index) => (
-                  <InsightCard key={item.id} item={item} href={hrefForItem(item, linkMode, pathPrefix)} featured={index === 0} />
+                  <InsightCard
+                    key={item.id}
+                    item={item}
+                    href={hrefForItem(item, linkMode, pathPrefix)}
+                    featured={index === 0}
+                  />
                 ))}
               </div>
             </div>
           ) : (
             <div className="cato-cc-cms-grid">
               {previewItems.map((item) => (
-                <InsightCard key={item.id} item={item} href={hrefForItem(item, linkMode, pathPrefix)} />
+                <InsightCard
+                  key={item.id}
+                  item={item}
+                  href={hrefForItem(item, linkMode, pathPrefix)}
+                />
               ))}
             </div>
           )}
@@ -1947,20 +2131,33 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
               <div className="cato-cc-system-copy">
                 <p className="cato-cc-eyebrow">CMS model</p>
                 <h2>A local preview of the Webflow collection shape.</h2>
-                <p className="cato-cc-lede">This component mirrors the exported fields needed in Webflow: title, slug, type, category, summary, body, date, featured state, menu feature state, CTA label, audience, and archive routing.</p>
+                <p className="cato-cc-lede">
+                  This component mirrors the exported fields needed in Webflow: title, slug, type,
+                  category, summary, body, date, featured state, menu feature state, CTA label,
+                  audience, and archive routing.
+                </p>
               </div>
               <div className="cato-cc-system-list">
                 <div className="cato-cc-system-card">
                   <strong>Collection</strong>
-                  <p>Insights entries power the hub, focused archive pages, detail pages, and featured navigation content.</p>
+                  <p>
+                    Insights entries power the hub, focused archive pages, detail pages, and
+                    featured navigation content.
+                  </p>
                 </div>
                 <div className="cato-cc-system-card">
                   <strong>Focused archives</strong>
-                  <p>Resiliency Reports, Newsroom, Research, and Resources can each filter the same collection by category.</p>
+                  <p>
+                    Resiliency Reports, Newsroom, and Research can each filter the same collection
+                    by category.
+                  </p>
                 </div>
                 <div className="cato-cc-system-card">
                   <strong>Native target</strong>
-                  <p>Drop the component into Webflow now; replace JSON props with CMS-bound fields when the live collection is ready.</p>
+                  <p>
+                    Drop the component into Webflow now; replace JSON props with CMS-bound fields
+                    when the live collection is ready.
+                  </p>
                 </div>
               </div>
             </div>
@@ -1986,7 +2183,11 @@ export const CatoInsightsArchive: React.FC<CatoInsightsArchiveProps> = ({
     return <CatoInsightDetail linkMode={linkMode} pathPrefix={pathPrefix} {...dataProps} />;
   }
 
-  const category = categoryByKey(categories, categorySlug || inferCategorySlugFromLocation(), categoryId);
+  const category = categoryByKey(
+    categories,
+    categorySlug || inferCategorySlugFromLocation(),
+    categoryId
+  );
   const categoryItems = items.filter((item) => item.category === category.id);
   const shouldShowSubscribe = showSubscribe && category.hasSubscribe;
 
@@ -2000,12 +2201,14 @@ export const CatoInsightsArchive: React.FC<CatoInsightsArchiveProps> = ({
         panelTitle={category.panelTitle}
         panelSummary={category.panelSummary}
         backLink={
-          <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-back-link">
+          <a
+            href={hrefForPage('insights.html', linkMode, pathPrefix)}
+            className="cato-cc-back-link"
+          >
             Back to all Insights
           </a>
         }
       />
-      {shouldShowSubscribe ? <SubscribeBlock /> : null}
       <section className="cato-cc-section">
         <div className="cato-cc-container">
           <div className="cato-cc-system-band" data-archive="true">
@@ -2014,10 +2217,17 @@ export const CatoInsightsArchive: React.FC<CatoInsightsArchiveProps> = ({
               <h2>{category.archiveTitle}</h2>
               <p className="cato-cc-lede">{category.archiveSummary}</p>
             </div>
-            <ArchiveItemList items={categoryItems} status={status} linkMode={linkMode} pathPrefix={pathPrefix} shouldShowSubscribe={shouldShowSubscribe} />
+            <ArchiveItemList
+              items={categoryItems}
+              status={status}
+              linkMode={linkMode}
+              pathPrefix={pathPrefix}
+              shouldShowSubscribe={false}
+            />
           </div>
         </div>
       </section>
+      {shouldShowSubscribe ? <SubscribeBlock /> : null}
     </div>
   );
 };
@@ -2034,7 +2244,11 @@ export const CatoInsightsArchiveShell: React.FC<CatoInsightsArchiveShellProps> =
   ...dataProps
 }) => {
   const { categories, items, status } = useInsightsData(dataProps);
-  const category = categoryByKey(categories, categorySlug || inferCategorySlugFromLocation(), categoryId);
+  const category = categoryByKey(
+    categories,
+    categorySlug || inferCategorySlugFromLocation(),
+    categoryId
+  );
   const categoryItems = items.filter((item) => item.category === category.id);
   const shouldShowSubscribe = showSubscribe && category.hasSubscribe;
   const shouldRenderItems = showItems && (categoryItems.length > 0 || status !== 'idle');
@@ -2050,27 +2264,42 @@ export const CatoInsightsArchiveShell: React.FC<CatoInsightsArchiveShellProps> =
           panelTitle={category.panelTitle}
           panelSummary={category.panelSummary}
           backLink={
-            <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-back-link">
+            <a
+              href={hrefForPage('insights.html', linkMode, pathPrefix)}
+              className="cato-cc-back-link"
+            >
               Back to all Insights
             </a>
           }
         />
       ) : null}
-      {shouldShowSubscribe ? <SubscribeBlock /> : null}
       {showArchiveIntro ? (
         <section className="cato-cc-section">
           <div className="cato-cc-container">
-            <div className="cato-cc-system-band" data-archive="true" data-archive-shell={shouldRenderItems ? undefined : 'true'}>
+            <div
+              className="cato-cc-system-band"
+              data-archive="true"
+              data-archive-shell={shouldRenderItems ? undefined : 'true'}
+            >
               <div className="cato-cc-system-copy">
                 <p className="cato-cc-eyebrow">{category.archiveEyebrow}</p>
                 <h2>{category.archiveTitle}</h2>
                 <p className="cato-cc-lede">{category.archiveSummary}</p>
               </div>
-              {showItems ? <ArchiveItemList items={categoryItems} status={status} linkMode={linkMode} pathPrefix={pathPrefix} shouldShowSubscribe={shouldShowSubscribe} /> : null}
+              {showItems ? (
+                <ArchiveItemList
+                  items={categoryItems}
+                  status={status}
+                  linkMode={linkMode}
+                  pathPrefix={pathPrefix}
+                  shouldShowSubscribe={false}
+                />
+              ) : null}
             </div>
           </div>
         </section>
       ) : null}
+      {shouldShowSubscribe ? <SubscribeBlock /> : null}
     </div>
   );
 };
@@ -2086,11 +2315,17 @@ export const CatoInsightCmsCard: React.FC<CatoInsightCmsCardProps> = ({
   itemLink,
   featured = false,
   linkMode = 'webflow',
-  pathPrefix = '/insights',
+  pathPrefix = '/insights'
 }) => {
   const titleText = displayText(title, 'Insight title');
   const label = displayText(contentLabel) || displayText(resourceType) || 'Insight';
-  const normalizedSlug = displayText(slug, titleText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''));
+  const normalizedSlug = displayText(
+    slug,
+    titleText
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+  );
   const item: CatoInsightItem = {
     id: normalizedSlug || titleText,
     slug: normalizedSlug,
@@ -2104,7 +2339,7 @@ export const CatoInsightCmsCard: React.FC<CatoInsightCmsCardProps> = ({
     featured,
     audience: '',
     body: [],
-    takeaways: [],
+    takeaways: []
   };
   const fallbackHref = item.slug ? hrefForItem(item, linkMode, pathPrefix) : '#';
   const href = hrefFromLink(itemLink, fallbackHref);
@@ -2112,7 +2347,13 @@ export const CatoInsightCmsCard: React.FC<CatoInsightCmsCardProps> = ({
   return (
     <div className="cato-cc cato-cc-card-component">
       <style>{CATO_CSS}</style>
-      <InsightCard item={item} href={href} featured={featured} target={itemLink?.target} rel={relForTarget(itemLink?.target)} />
+      <InsightCard
+        item={item}
+        href={href}
+        featured={featured}
+        target={itemLink?.target}
+        rel={relForTarget(itemLink?.target)}
+      />
     </div>
   );
 };
@@ -2160,12 +2401,17 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
   const fallbackItem =
     items.find((candidate) => candidate.slug === selectedSlug) ||
     items.find((candidate) => candidate.slug === configuredSlug) ||
-    (normalizedTitle ? items.find((candidate) => candidate.title.toLowerCase() === normalizedTitle) : undefined) ||
+    (normalizedTitle
+      ? items.find((candidate) => candidate.title.toLowerCase() === normalizedTitle)
+      : undefined) ||
     items[0] ||
     DEFAULT_ITEMS[0];
   const resourceTypeText = displayText(resourceType, fallbackItem.resourceType);
   const inferredCategory = categoryKeyFromResourceType(resourceTypeText);
-  const category = categoryByKey(categories, inferredCategory || categoryId || fallbackItem.category);
+  const category = categoryByKey(
+    categories,
+    inferredCategory || categoryId || fallbackItem.category
+  );
   const body = parseJsonArray<CatoInsightBodySection>(bodyJson, fallbackItem.body);
   const takeaways = parseJsonArray<string>(takeawaysJson, fallbackItem.takeaways);
   const item = {
@@ -2177,18 +2423,34 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
     pill: displayText(pill, fallbackItem.pill),
     audience: displayText(audience, fallbackItem.audience),
     body,
-    takeaways,
+    takeaways
   };
   const selectedFeaturedImage = featuredImage || item.featuredImage || item.featuredImageUrl;
-  const selectedFeaturedImageUrl = featuredImageUrl || (typeof item.featuredImageUrl === 'string' ? item.featuredImageUrl : undefined);
-  const selectedFeaturedImageAlt = displayText(featuredImageAlt, displayText(item.featuredImageAlt, item.title));
-  const selectedFeaturedImageCaption = displayText(featuredImageCaption, displayText(item.featuredImageCaption));
+  const selectedFeaturedImageUrl =
+    featuredImageUrl ||
+    (typeof item.featuredImageUrl === 'string' ? item.featuredImageUrl : undefined);
+  const selectedFeaturedImageAlt = displayText(
+    featuredImageAlt,
+    displayText(item.featuredImageAlt, item.title)
+  );
+  const selectedFeaturedImageCaption = displayText(
+    featuredImageCaption,
+    displayText(item.featuredImageCaption)
+  );
   const selectedFeaturedImageFit = featuredImageFit === 'contain' ? 'contain' : 'cover';
-  const audienceContext = item.audience ? `Designed for ${item.audience.toLowerCase()}` : 'Designed for healthcare procurement teams';
+  const audienceContext = item.audience
+    ? `Designed for ${item.audience.toLowerCase()}`
+    : 'Designed for healthcare procurement teams';
   const heroCardCtaText = displayText(heroCardCta);
-  const normalizedTakeawaysPlacement = ['main', 'sidebar', 'both', 'hidden'].includes(takeawaysPlacement) ? takeawaysPlacement : 'main';
-  const showMainTakeaways = normalizedTakeawaysPlacement === 'main' || normalizedTakeawaysPlacement === 'both';
-  const showSidebarTakeaways = normalizedTakeawaysPlacement === 'sidebar' || normalizedTakeawaysPlacement === 'both';
+  const normalizedTakeawaysPlacement = ['main', 'sidebar', 'both', 'hidden'].includes(
+    takeawaysPlacement
+  )
+    ? takeawaysPlacement
+    : 'main';
+  const showMainTakeaways =
+    normalizedTakeawaysPlacement === 'main' || normalizedTakeawaysPlacement === 'both';
+  const showSidebarTakeaways =
+    normalizedTakeawaysPlacement === 'sidebar' || normalizedTakeawaysPlacement === 'both';
   const shareLabel = displayText(shareCtaLabel);
   const shareHref = displayText(shareCtaHref, `mailto:?subject=${encodeURIComponent(item.title)}`);
   const fallbackRelatedItems: CatoInsightRelatedItem[] = items
@@ -2198,12 +2460,18 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
       title: candidate.title,
       href: hrefForItem(candidate, linkMode, pathPrefix),
       resourceType: candidate.resourceType,
-      date: candidate.date,
+      date: candidate.date
     }));
-  const relatedItems = parseJsonArray<CatoInsightRelatedItem>(relatedItemsJson, fallbackRelatedItems)
+  const relatedItems = parseJsonArray<CatoInsightRelatedItem>(
+    relatedItemsJson,
+    fallbackRelatedItems
+  )
     .filter((candidate) => displayText(candidate.title))
     .slice(0, 5);
-  const relatedTitle = displayText(relatedRailTitle, item.category === 'resiliency' ? 'Latest alerts' : `More in ${category.title}`);
+  const relatedTitle = displayText(
+    relatedRailTitle,
+    item.category === 'resiliency' ? 'Latest alerts' : `More in ${category.title}`
+  );
 
   return (
     <div className="cato-cc">
@@ -2216,7 +2484,11 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
         panelTitle={displayText(heroCardTitle, category.title)}
         panelSummary={displayText(heroCardSummary, audienceContext)}
         panelCta={heroCardCtaText}
-        panelHref={heroCardCtaText ? displayText(heroCardHref, hrefForPage(category.page, linkMode, pathPrefix)) : undefined}
+        panelHref={
+          heroCardCtaText
+            ? displayText(heroCardHref, hrefForPage(category.page, linkMode, pathPrefix))
+            : undefined
+        }
         actions={
           shareLabel ? (
             <a className="cato-cc-share-link" href={shareHref}>
@@ -2238,8 +2510,16 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
                 <span className="cato-cc-pill">{item.pill}</span>
                 <span>{item.date}</span>
               </div>
-              <FeaturedImage image={selectedFeaturedImage} url={selectedFeaturedImageUrl} alt={selectedFeaturedImageAlt} caption={selectedFeaturedImageCaption} fit={selectedFeaturedImageFit} />
-              {showMainTakeaways ? <TakeawaysBox html={takeawaysHtml} items={item.takeaways} /> : null}
+              <FeaturedImage
+                image={selectedFeaturedImage}
+                url={selectedFeaturedImageUrl}
+                alt={selectedFeaturedImageAlt}
+                caption={selectedFeaturedImageCaption}
+                fit={selectedFeaturedImageFit}
+              />
+              {showMainTakeaways ? (
+                <TakeawaysBox html={takeawaysHtml} items={item.takeaways} />
+              ) : null}
               <div className="cato-cc-rich">
                 {richTextHasContent(bodyHtml) ? (
                   <RichHtml html={bodyHtml} className="cato-cc-rich-content" />
@@ -2285,7 +2565,9 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
                   </div>
                 </div>
               ) : null}
-              {showSidebarTakeaways ? <TakeawaysBox html={takeawaysHtml} items={item.takeaways} /> : null}
+              {showSidebarTakeaways ? (
+                <TakeawaysBox html={takeawaysHtml} items={item.takeaways} />
+              ) : null}
             </aside>
           </div>
         </div>
@@ -2300,8 +2582,6 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
   summary = '',
   introCtaLabel = 'Explore Cato Insights',
   browseKicker = '',
-  insightsHomeTitle = 'Insights Home',
-  insightsHomeSummary = 'All reports, research, resources, and newsroom updates.',
   featureLabel = 'Featured',
   featureTitle = 'Resiliency Report Alerts',
   featureSummary = 'Active supply disruptions and market signals for care continuity.',
@@ -2310,7 +2590,7 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
   featureItemsJson = '',
   showFeatureItems = true,
   showFeatureCta = false,
-  featureItemLimit = 4,
+  featureItemLimit = 3,
   insightsHomeLink,
   resiliencyLink,
   researchLink,
@@ -2321,19 +2601,33 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
   ...dataProps
 }) => {
   const { categories, items } = useInsightsData(dataProps);
-  const configuredFeatureItems = parseJsonArray<Pick<CatoInsightItem, 'title' | 'resourceType'>>(featureItemsJson, []);
+  const menuCategories = categories.filter((category) => category.id !== 'resources');
+  const configuredFeatureItems = parseJsonArray<Pick<CatoInsightItem, 'title' | 'resourceType'>>(
+    featureItemsJson,
+    []
+  );
   const fallbackFeatureItems = items.filter((item) => item.category === 'resiliency');
-  const featureItems = (configuredFeatureItems.length ? configuredFeatureItems : fallbackFeatureItems).slice(0, Math.max(1, featureItemLimit));
-  const insightsHomeHref = hrefFromLink(insightsHomeLink, hrefForPage('insights.html', linkMode, pathPrefix));
+  const featureItems = (
+    configuredFeatureItems.length ? configuredFeatureItems : fallbackFeatureItems
+  ).slice(0, Math.max(1, featureItemLimit));
+  const insightsHomeHref = hrefFromLink(
+    insightsHomeLink,
+    hrefForPage('insights.html', linkMode, pathPrefix)
+  );
   const categoryLinkOverrides: Record<string, CatoInsightLinkProp | undefined> = {
     resiliency: resiliencyLink,
     research: researchLink,
     resources: whitepapersLink,
-    newsroom: newsroomLink,
+    newsroom: newsroomLink
   };
   const hrefForCategory = (category: CatoInsightCategory) =>
-    hrefFromLink(categoryLinkOverrides[category.id], hrefForPage(category.page, linkMode, pathPrefix));
-  const resiliencyHref = displayText(featureHref) || hrefFromLink(resiliencyLink, hrefForPage('resiliency-reports.html', linkMode, pathPrefix));
+    hrefFromLink(
+      categoryLinkOverrides[category.id],
+      hrefForPage(category.page, linkMode, pathPrefix)
+    );
+  const resiliencyHref =
+    displayText(featureHref) ||
+    hrefFromLink(resiliencyLink, hrefForPage('resiliency-reports.html', linkMode, pathPrefix));
 
   return (
     <div className="cato-cc">
@@ -2344,18 +2638,19 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
             {introKicker ? <p className="cato-cc-mega-kicker">{introKicker}</p> : null}
             <h2 className="cato-cc-mega-title">{heading}</h2>
             {summary ? <p className="cato-cc-mega-copy">{summary}</p> : null}
-            <a href={insightsHomeHref} target={insightsHomeLink?.target} rel={relForTarget(insightsHomeLink?.target)} className="cato-cc-mega-home">
+            <a
+              href={insightsHomeHref}
+              target={insightsHomeLink?.target}
+              rel={relForTarget(insightsHomeLink?.target)}
+              className="cato-cc-mega-home"
+            >
               {introCtaLabel}
             </a>
           </section>
           <section aria-label="Insights navigation">
             {browseKicker ? <p className="cato-cc-mega-kicker">{browseKicker}</p> : null}
             <div className="cato-cc-mega-links">
-              <a href={insightsHomeHref} target={insightsHomeLink?.target} rel={relForTarget(insightsHomeLink?.target)} className="cato-cc-mega-link">
-                <strong>{insightsHomeTitle}</strong>
-                <span>{insightsHomeSummary}</span>
-              </a>
-              {categories.map((category) => {
+              {menuCategories.map((category) => {
                 const categoryLink = categoryLinkOverrides[category.id];
                 return (
                   <a
@@ -2372,7 +2667,12 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
               })}
             </div>
           </section>
-          <a href={resiliencyHref} target={resiliencyLink?.target} rel={relForTarget(resiliencyLink?.target)} className="cato-cc-mega-feature">
+          <a
+            href={resiliencyHref}
+            target={resiliencyLink?.target}
+            rel={relForTarget(resiliencyLink?.target)}
+            className="cato-cc-mega-feature"
+          >
             {featureLabel ? <span className="cato-cc-pill">{featureLabel}</span> : null}
             <div>
               <h3>{featureTitle}</h3>
@@ -2387,7 +2687,9 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
                   ))}
                 </div>
               ) : null}
-              {showFeatureCta && featureCta ? <strong>{featureCta}</strong> : null}
+              {showFeatureCta && featureCta ? (
+                <strong className="cato-cc-mega-feature-cta">{featureCta}</strong>
+              ) : null}
             </div>
           </a>
         </div>
@@ -2398,5 +2700,5 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
 
 export const catoInsightsDefaults = {
   categories: DEFAULT_CATEGORIES,
-  items: DEFAULT_ITEMS,
+  items: DEFAULT_ITEMS
 };
