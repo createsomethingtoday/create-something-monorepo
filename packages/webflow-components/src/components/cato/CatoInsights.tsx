@@ -866,6 +866,7 @@ const CATO_CSS = `
   .cato-cc-section { background: var(--cato-bg); padding: 4rem 2.5rem; }
   .cato-cc-section--compact { padding-top: 2.5rem; padding-bottom: 2.5rem; }
   .cato-cc-hero { position: relative; overflow: hidden; background: var(--cato-bg); padding-top: 10rem; }
+  .cato-cc-hero[data-variant="detail"] { padding-top: 6.25rem; }
   .cato-cc-container { width: min(100%, 80rem); margin: 0 auto; }
   .cato-cc-hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr); gap: 2rem; align-items: stretch; margin-bottom: 3rem; }
   .cato-cc-hero-grid[data-variant="detail"] { grid-template-columns: minmax(0, 1.45fr) minmax(18rem, .55fr); align-items: center; }
@@ -1114,12 +1115,14 @@ const CATO_CSS = `
     .cato-cc-filter-rail, .cato-cc-sidebar { position: static; }
     .cato-cc-filter-list { flex-flow: row wrap; }
     .cato-cc-hero { padding-top: 8rem; }
+    .cato-cc-hero[data-variant="detail"] { padding-top: 5.5rem; }
     .cato-cc-mega-inner { grid-template-columns: 1fr; min-height: auto; }
     .cato-cc-mega-intro { border-right: 0; padding-right: 0; }
   }
   @media (max-width: 767px) {
     .cato-cc-section { padding: 4rem 1.25rem; }
     .cato-cc-hero { padding-top: 7rem; }
+    .cato-cc-hero[data-variant="detail"] { padding-top: 4.75rem; }
     .cato-cc h1 { font-size: 3.5rem; line-height: 1.2; }
     .cato-cc h2 { font-size: 1.65rem; line-height: 1.25; }
     .cato-cc-preview-header h2,
@@ -1672,7 +1675,10 @@ function Hero({
   variant?: 'default' | 'detail';
 }) {
   return (
-    <section className="cato-cc-section cato-cc-hero">
+    <section
+      className="cato-cc-section cato-cc-hero"
+      data-variant={variant === 'detail' ? 'detail' : undefined}
+    >
       <div className="cato-cc-container">
         <div
           className="cato-cc-hero-grid"
