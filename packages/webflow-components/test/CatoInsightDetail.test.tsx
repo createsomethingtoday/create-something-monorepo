@@ -14,7 +14,7 @@ test('allows the Cato Insight Detail hero card to be edited from props', () => {
       heroCardSummary="Custom hero card summary for editors."
       heroCardCta="Review the archive"
       heroCardHref="/resiliency-reports"
-    />,
+    />
   );
 
   assert.match(html, /Detail page title/);
@@ -22,12 +22,15 @@ test('allows the Cato Insight Detail hero card to be edited from props', () => {
   assert.match(html, /Resiliency Report/);
   assert.match(html, /Custom report card title/);
   assert.match(html, /Custom hero card summary for editors\./);
+  assert.match(html, /class="cato-cc-hero-grid" data-variant="detail"/);
   assert.match(html, /Review the archive/);
   assert.match(html, /href="\/resiliency-reports"/);
 });
 
 test('renders the launch alert detail layout with top takeaways and related rail', () => {
-  const html = renderToStaticMarkup(<CatoInsightDetail slug="baxter-clearlink-continu-flo-iv-tubing-recall-shortage" />);
+  const html = renderToStaticMarkup(
+    <CatoInsightDetail slug="baxter-clearlink-continu-flo-iv-tubing-recall-shortage" />
+  );
 
   assert.match(html, /Share/);
   assert.match(html, /Key takeaways/);
@@ -48,11 +51,11 @@ test('allows editors to control takeaways placement and related rail content', (
           title: 'Featured shortage update',
           href: '/featured-shortage-update',
           resourceType: 'Alert',
-          date: 'June 23, 2026',
-        },
+          date: 'June 23, 2026'
+        }
       ])}
       showResourceDetails
-    />,
+    />
   );
 
   assert.match(html, /Editable alert layout/);
@@ -67,11 +70,14 @@ test('renders the Insight Detail featured image from image props', () => {
   const html = renderToStaticMarkup(
     <CatoInsightDetail
       title="Image-backed alert"
-      featuredImage={{ src: 'https://assets.example.com/alert-image.jpg', alt: 'Sterile supplies on a shelf' }}
+      featuredImage={{
+        src: 'https://assets.example.com/alert-image.jpg',
+        alt: 'Sterile supplies on a shelf'
+      }}
       featuredImageAlt="Configured alt text"
       featuredImageCaption="Image courtesy of Cato Supply."
       featuredImageFit="contain"
-    />,
+    />
   );
 
   assert.match(html, /class="cato-cc-featured-image"/);

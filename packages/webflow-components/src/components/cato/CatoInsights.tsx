@@ -868,6 +868,7 @@ const CATO_CSS = `
   .cato-cc-hero { position: relative; overflow: hidden; background: var(--cato-bg); padding-top: 10rem; }
   .cato-cc-container { width: min(100%, 80rem); margin: 0 auto; }
   .cato-cc-hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr); gap: 2rem; align-items: stretch; margin-bottom: 3rem; }
+  .cato-cc-hero-grid[data-variant="detail"] { grid-template-columns: minmax(0, 1.45fr) minmax(18rem, .55fr); align-items: center; }
   .cato-cc-copy { display: flex; flex-direction: column; gap: 1.25rem; justify-content: center; max-width: 58rem; }
   .cato-cc-eyebrow { color: var(--cato-green); margin: 0; font-weight: 600; }
   .cato-cc h1, .cato-cc h2, .cato-cc h3 { margin: 0; color: var(--cato-text); font-family: Switzer, Arial, sans-serif; font-weight: 400; }
@@ -882,9 +883,12 @@ const CATO_CSS = `
   }
   .cato-cc-lede { color: var(--cato-muted); max-width: 54rem; margin: 0; font-size: 1.125rem; line-height: 1.55; }
   .cato-cc-panel { display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem; min-height: 100%; padding: 2rem; overflow: hidden; border-radius: .75rem; color: var(--cato-white); background: var(--background-color--background-tertiary, var(--cato-green)); }
+  .cato-cc-hero-grid[data-variant="detail"] .cato-cc-panel { align-self: center; justify-content: flex-start; gap: 1.15rem; width: 100%; max-width: 25rem; min-height: auto; margin-left: auto; padding: 1.9rem; }
   .cato-cc-panel h2, .cato-cc-panel h3, .cato-cc-panel p { color: var(--cato-white); margin: 0; }
   .cato-cc-panel h2, .cato-cc-panel h3 { font-size: 1.5rem; line-height: 1.4; letter-spacing: -.03rem; }
+  .cato-cc-hero-grid[data-variant="detail"] .cato-cc-panel h2 { font-size: 1.35rem; line-height: 1.32; }
   .cato-cc-panel p:not(.cato-cc-panel-label) { font-size: 1rem; line-height: 1.5; }
+  .cato-cc-hero-grid[data-variant="detail"] .cato-cc-panel p:not(.cato-cc-panel-label) { line-height: 1.45; opacity: .92; }
   .cato-cc-panel-link { color: var(--cato-white); font-weight: 600; text-decoration: none; margin-top: auto; }
   .cato-cc-panel-link:hover { text-decoration: underline; }
   .cato-cc-panel-label, .cato-cc-pill { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; border-radius: 999rem; line-height: 1; }
@@ -1650,7 +1654,8 @@ function Hero({
   panelRel,
   backLink,
   actions,
-  children
+  children,
+  variant = 'default'
 }: {
   title: string;
   summary: string;
@@ -1664,11 +1669,15 @@ function Hero({
   backLink?: React.ReactNode;
   actions?: React.ReactNode;
   children?: React.ReactNode;
+  variant?: 'default' | 'detail';
 }) {
   return (
     <section className="cato-cc-section cato-cc-hero">
       <div className="cato-cc-container">
-        <div className="cato-cc-hero-grid">
+        <div
+          className="cato-cc-hero-grid"
+          data-variant={variant === 'detail' ? 'detail' : undefined}
+        >
           <div className="cato-cc-copy">
             <p className="cato-cc-eyebrow">Insights</p>
             <h1>{title}</h1>
@@ -2482,6 +2491,7 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
       <style>{CATO_CSS}</style>
       <CatoDetailGlobalStyles />
       <Hero
+        variant="detail"
         title={item.title}
         summary={item.summary}
         panelLabel={displayText(heroCardLabel, item.resourceType)}
