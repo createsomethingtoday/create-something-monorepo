@@ -13,6 +13,7 @@ pi install npm:@create-something/pi-policy-os
 ### Extension
 
 A lightweight quality gate extension that:
+
 - Warns when code files lack basic quality signals (missing types, untested exports)
 - Provides a `/policy-check` command to audit any codebase against Policy OS patterns
 - Shows governance status in the Pi footer
@@ -20,6 +21,8 @@ A lightweight quality gate extension that:
 ### Skills
 
 - `/skill:policy-os-starter` — What Policy OS is, how contract bundles work, the MCP-First Thesis
+- `/skill:debug-feedback-loop` — Repro-first debugging for bugs, failing checks, and performance regressions
+- `/skill:tdd-vertical-slice` — Test-first vertical-slice development through public interfaces
 
 ### Prompt Templates
 

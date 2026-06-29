@@ -1,0 +1,139 @@
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { existsSync, lstatSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import test from 'node:test';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
+
+const skills = [
+  {
+    name: 'debug-feedback-loop',
+    codex: 'packages/dotfiles/codex/skills/debug-feedback-loop/SKILL.md',
+    pi: 'packages/pi-policy-os/skills/debug-feedback-loop/SKILL.md',
+    expectations: [
+      /red-capable/i,
+      /Database/,
+      /Automation/,
+      /Judgment/,
+      /Linear/,
+      /pnpm exports/,
+      /Context7/,
+      /Ground/
+    ]
+  },
+  {
+    name: 'tdd-vertical-slice',
+    codex: 'packages/dotfiles/codex/skills/tdd-vertical-slice/SKILL.md',
+    pi: 'packages/pi-policy-os/skills/tdd-vertical-slice/SKILL.md',
+    expectations: [
+      /public interface/i,
+      /Red/i,
+      /Green/i,
+      /Refactor/i,
+      /Linear/,
+      /pnpm exports/,
+      /Context7/,
+      /Do not write all tests first|Never write a batch/i
+    ]
+  },
+  {
+    name: 'deep-module-design',
+    codex: 'packages/dotfiles/codex/skills/deep-module-design/SKILL.md',
+    pi: 'packages/pi-three-tier-framework/skills/deep-module-design/SKILL.md',
+    expectations: [
+      /Database/,
+      /Automation/,
+      /Judgment/,
+      /leverage/i,
+      /locality/i,
+      /testability/i,
+      /deletion test/i,
+      /Do not refactor on taste alone/i,
+      /Linear/
+    ]
+  }
+];
+
+function read(relPath) {
+  return readFileSync(path.join(REPO_ROOT, relPath), 'utf8');
+}
+
+function assertSkillFrontmatter(skillName, relPath) {
+  const body = read(relPath);
+  const match = body.match(/^---\n([\s\S]+?)\n---/);
+  assert(match, `${relPath} is missing YAML frontmatter`);
+  assert.match(match[1], new RegExp(`^name:\\s*${skillName}$`, 'm'));
+  assert.match(match[1], /^description:\s*\S/m);
+  return body;
+}
+
+test('adapted skills are present in Codex and Pi/package surfaces', () => {
+  for (const skill of skills) {
+    assert(existsSync(path.join(REPO_ROOT, skill.codex)), `${skill.codex} missing`);
+    assert(existsSync(path.join(REPO_ROOT, skill.pi)), `${skill.pi} missing`);
+    assertSkillFrontmatter(skill.name, skill.codex);
+    assertSkillFrontmatter(skill.name, skill.pi);
+  }
+});
+
+test('adapted skills retain the behavioral contracts that make them effective', () => {
+  for (const skill of skills) {
+    for (const relPath of [skill.codex, skill.pi]) {
+      const body = read(relPath);
+      for (const expectation of skill.expectations) {
+        assert.match(body, expectation, `${relPath} missing ${expectation}`);
+      }
+    }
+  }
+});
+
+test('skills remain wired into Codex installation and Pi discovery docs', () => {
+  const codexReadme = read('packages/dotfiles/codex/README.md');
+  const piSystem = read('.pi/APPEND_SYSTEM.md');
+  const piPolicyReadme = read('packages/pi-policy-os/README.md');
+  const piFrameworkReadme = read('packages/pi-three-tier-framework/README.md');
+  const piSettings = JSON.parse(read('.pi/settings.json'));
+  const piSkillPaths = piSettings.skills.join('\n');
+
+  assert.match(piSkillPaths, /packages\/pi-policy-os\/skills/);
+  assert.match(piSkillPaths, /packages\/pi-three-tier-framework\/skills/);
+
+  for (const skill of skills) {
+    assert.match(codexReadme, new RegExp(`\\b${skill.name}\\b`));
+    assert.match(piSystem, new RegExp(`/skill:${skill.name}\\b`));
+  }
+
+  assert.match(piPolicyReadme, /\/skill:debug-feedback-loop/);
+  assert.match(piPolicyReadme, /\/skill:tdd-vertical-slice/);
+  assert.match(piFrameworkReadme, /\/skill:deep-module-design/);
+});
+
+test('repo-owned Codex skill installer links the adapted skills', (t) => {
+  const codexHome = mkdtempSync(path.join(tmpdir(), 'codex-skills-effectiveness-'));
+  t.after(() => rmSync(codexHome, { recursive: true, force: true }));
+
+  const result = spawnSync(
+    'pnpm',
+    ['--filter', '@create-something/dotfiles', 'install-codex-skills'],
+    {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        CODEX_HOME: codexHome
+      }
+    }
+  );
+
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+
+  for (const skill of skills) {
+    const linkedPath = path.join(codexHome, 'skills', skill.name);
+    assert(lstatSync(linkedPath).isSymbolicLink(), `${linkedPath} is not a symlink`);
+    assert.match(result.stdout, new RegExp(`Linked ${skill.name}\\b`));
+  }
+});

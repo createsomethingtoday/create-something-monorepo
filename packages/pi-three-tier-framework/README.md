@@ -13,6 +13,7 @@ pi install npm:@create-something/pi-three-tier-framework
 ### Skills
 
 - `/skill:three-tier-framework` — Load the full framework reference, tier definitions, debugging heuristic, and MCP mapping
+- `/skill:deep-module-design` — Design modules for leverage, locality, testability, and clear tier ownership
 
 ### Prompt Templates
 
@@ -24,11 +25,11 @@ pi install npm:@create-something/pi-three-tier-framework
 
 Every agent system has three tiers, mapped to MCP's three primitives:
 
-| Tier | What | MCP Primitive | Control Model |
-|------|------|---------------|---------------|
-| **Database** | What exists (state, records) | Resources | Application-controlled |
-| **Automation** | What happens (tools, skills) | Tools | Model-controlled |
-| **Judgment** | What should happen (policy) | Prompts | User-controlled |
+| Tier           | What                         | MCP Primitive | Control Model          |
+| -------------- | ---------------------------- | ------------- | ---------------------- |
+| **Database**   | What exists (state, records) | Resources     | Application-controlled |
+| **Automation** | What happens (tools, skills) | Tools         | Model-controlled       |
+| **Judgment**   | What should happen (policy)  | Prompts       | User-controlled        |
 
 **Debug order**: Always check tiers in sequence — Database → Automation → Judgment. Lower-tier failures cascade upward.
 
