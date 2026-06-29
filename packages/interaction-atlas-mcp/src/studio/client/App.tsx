@@ -80,6 +80,7 @@ import type {
 } from '../types.js';
 import {
   detailModeForZoom,
+  focusedStoryNodeSummaries,
   nodeWidthForMode,
   type CanvasDetailMode
 } from './layout.js';
@@ -229,7 +230,9 @@ function toFlowNodes(
     data: {
       detailMode,
       isAgentActive: activeNodeIds.has(node.id),
-      isStoryDimmed: Boolean(story?.dimUnfocused && focusNodeIds.size && !focusNodeIds.has(node.id)),
+      isStoryDimmed: Boolean(
+        story?.dimUnfocused && focusNodeIds.size && !focusNodeIds.has(node.id)
+      ),
       isStoryFocused: focusNodeIds.has(node.id),
       node,
       storyCalloutSeverity: calloutByNode.get(node.id),
@@ -252,7 +255,9 @@ function toFlowEdge(
   const connectedFocus =
     focusNodeIds.size > 0 && focusNodeIds.has(edge.source) && focusNodeIds.has(edge.target);
   const isFocused = explicitlyFocused || connectedFocus;
-  const isDimmed = Boolean(story?.dimUnfocused && (focusNodeIds.size || focusEdgeIds.size) && !isFocused);
+  const isDimmed = Boolean(
+    story?.dimUnfocused && (focusNodeIds.size || focusEdgeIds.size) && !isFocused
+  );
   const style = isFocused
     ? { stroke: '#0048ff', strokeWidth: 2.25 }
     : isDimmed
@@ -296,7 +301,9 @@ function toStableFlowEdges(
     cache.set(edge.id, { edge: next, signature });
     return next;
   });
-  const signature = nextEdges.map((edge) => cache.get(edge.id)?.signature ?? edgeSignature(edge)).join('\n');
+  const signature = nextEdges
+    .map((edge) => cache.get(edge.id)?.signature ?? edgeSignature(edge))
+    .join('\n');
 
   if (previousList?.signature === signature) return previousList;
   return { edges: nextEdges, signature };
@@ -355,7 +362,12 @@ function writeStoredStoryPanelOffset(sessionId: string, offset: StoryPanelOffset
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   const tagName = target.tagName.toLowerCase();
-  return target.isContentEditable || tagName === 'input' || tagName === 'select' || tagName === 'textarea';
+  return (
+    target.isContentEditable ||
+    tagName === 'input' ||
+    tagName === 'select' ||
+    tagName === 'textarea'
+  );
 }
 
 function CubeMark({ className = '' }: { className?: string }): React.ReactElement {
@@ -426,7 +438,8 @@ function summarizeOperatorState(session: AtlasSession | null): OperatorStateSumm
   const nodes = session.canvas.nodes;
   const latestProposal = session.proposals?.[0];
   const queuedSuggestions = session.suggestions.filter((item) => item.status === 'queued').length;
-  const openQuestions = session.story?.questions.filter((question) => question.status === 'open').length ?? 0;
+  const openQuestions =
+    session.story?.questions.filter((question) => question.status === 'open').length ?? 0;
   const stoppedNodes = nodes.filter((node) => node.status === 'stop').length;
   const waitingNodes = nodes.filter((node) => node.status === 'wait').length;
   const syncIssues = nodes.filter((node) =>
@@ -444,7 +457,11 @@ function summarizeOperatorState(session: AtlasSession | null): OperatorStateSumm
   const approvedActions = latestProposal?.summary.approved ?? 0;
 
   const reviewCount = approvalActions + queuedSuggestions + openQuestions;
-  const tone: OperatorStateTone = stoppedNodes ? 'blocked' : reviewCount || syncIssues ? 'review' : 'ready';
+  const tone: OperatorStateTone = stoppedNodes
+    ? 'blocked'
+    : reviewCount || syncIssues
+      ? 'review'
+      : 'ready';
   const state = stoppedNodes
     ? `${pluralize(stoppedNodes, 'blocked node')}`
     : reviewCount
@@ -547,12 +564,18 @@ function StoryPanel({
   const steps = story.steps ?? [];
   const activeStepIndex = steps.findIndex((step) => step.id === story.activeStepId);
   const activeStep = steps[activeStepIndex] ?? steps.find((step) => step.status === 'current');
+  const focusedNodes = session ? focusedStoryNodeSummaries(session) : [];
   const canGoPrevious = activeStepIndex > 0;
   const canGoNext = activeStepIndex >= 0 && activeStepIndex < steps.length - 1;
-  const detailCount = story.callouts.length + openQuestions.length + (story.nextAction ? 1 : 0);
+  const detailCount =
+    focusedNodes.length + story.callouts.length + openQuestions.length + (story.nextAction ? 1 : 0);
   return (
     <aside className={`story-panel ${story.active ? 'active' : 'quiet'}`}>
-      <div className="story-panel-header" onPointerDown={onDragStart} title="Drag to move story panel">
+      <div
+        className="story-panel-header"
+        onPointerDown={onDragStart}
+        title="Drag to move story panel"
+      >
         <span className="title-lockup">
           <span className="title-icon">
             <Sparkles aria-hidden="true" />
@@ -614,7 +637,8 @@ function StoryPanel({
       {steps.length ? (
         <div className="story-steps" aria-label="Walkthrough steps">
           {steps.map((step, index) => {
-            const isActive = step.id === story.activeStepId || (!story.activeStepId && step.status === 'current');
+            const isActive =
+              step.id === story.activeStepId || (!story.activeStepId && step.status === 'current');
             return (
               <button
                 className={isActive ? 'active' : ''}
@@ -646,6 +670,51 @@ function StoryPanel({
               <span>Proof</span>
               {activeStep.proof}
             </p>
+          ) : null}
+          {focusedNodes.length ? (
+            <div className="story-node-review">
+              <strong>Node review · {focusedNodes.length}</strong>
+              {focusedNodes.map((node) => (
+                <article className="story-node-card" key={node.id}>
+                  <div className="story-node-card-title">
+                    <span className={`status-chip ${node.status}`}>{node.status}</span>
+                    <span>{formatKind(node.kind)}</span>
+                  </div>
+                  <strong>{node.label}</strong>
+                  <em>{node.owner}</em>
+                  {node.notes ? <p>{node.notes}</p> : null}
+                  {node.evidence ? <p className="story-node-evidence">{node.evidence}</p> : null}
+                  {node.callouts.length ? (
+                    <div className="story-node-signals">
+                      {node.callouts.map((callout, index) => (
+                        <span
+                          className={`story-signal ${callout.severity}`}
+                          key={`${node.id}-callout-${index}`}
+                        >
+                          {callout.severity}: {callout.text}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                  {node.questions.length ? (
+                    <div className="story-node-questions">
+                      {node.questions.map((question, index) => (
+                        <p key={`${node.id}-question-${index}`}>
+                          {question.owner ? <span>{question.owner}: </span> : null}
+                          {question.question}
+                        </p>
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className="story-review-actions" aria-label={`Review ${node.label}`}>
+                    <span>Confirmed</span>
+                    <span>Clarify</span>
+                    <span>Revise</span>
+                    <span>Defer</span>
+                  </div>
+                </article>
+              ))}
+            </div>
           ) : null}
           {story.callouts.length ? (
             <div className="story-callouts">
@@ -788,8 +857,8 @@ function Rail({
                 </div>
                 <p>
                   {latestProposal.summary.drift} mapped node
-                  {latestProposal.summary.drift === 1 ? '' : 's'} need sync attention before
-                  any production change is prepared.
+                  {latestProposal.summary.drift === 1 ? '' : 's'} need sync attention before any
+                  production change is prepared.
                 </p>
               </article>
               {latestProposal.actions.slice(0, 8).map((action) => (
@@ -835,9 +904,7 @@ function Rail({
             </>
           ) : (
             <article className="rail-item proposal-summary">
-              <p>
-                Check production bindings, then create a review plan before anything changes.
-              </p>
+              <p>Check production bindings, then create a review plan before anything changes.</p>
               <button className="subtle-button" onClick={onCreateProposal} type="button">
                 <FileText aria-hidden="true" />
                 <span>Create review plan</span>
@@ -1075,9 +1142,7 @@ function Inspector({
                   })}
                 </div>
               ) : (
-                <p className="empty">
-                  No production binding has been attached to this node yet.
-                </p>
+                <p className="empty">No production binding has been attached to this node yet.</p>
               )}
             </div>
           </div>
@@ -1152,7 +1217,8 @@ function AtlasStudio(): React.ReactElement {
   const [railOpen, setRailOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [presenterMode, setPresenterMode] = useState(false);
-  const [storyPanelOffset, setStoryPanelOffset] = useState<StoryPanelOffset>(initialStoryPanelOffset);
+  const [storyPanelOffset, setStoryPanelOffset] =
+    useState<StoryPanelOffset>(initialStoryPanelOffset);
   const [draft, setDraft] = useState<NodeDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [healSummary, setHealSummary] = useState<string | null>(null);
@@ -1165,6 +1231,7 @@ function AtlasStudio(): React.ReactElement {
   const nodeSignatures = useRef<Map<string, string>>(new Map());
   const activityTimer = useRef<number | null>(null);
   const storyFrameKey = useRef<string | null>(null);
+  const storySelectionKey = useRef<string | null>(null);
   const storyPanelDrag = useRef<{
     originX: number;
     originY: number;
@@ -1259,7 +1326,8 @@ function AtlasStudio(): React.ReactElement {
     (event: ReactPointerEvent<HTMLElement>) => {
       if (event.button !== 0) return;
       const target = event.target;
-      if (target instanceof HTMLElement && target.closest('button, a, input, textarea, select')) return;
+      if (target instanceof HTMLElement && target.closest('button, a, input, textarea, select'))
+        return;
 
       event.preventDefault();
       event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -1299,9 +1367,11 @@ function AtlasStudio(): React.ReactElement {
 
   useEffect(() => {
     void loadSession();
-    void requestJson<Palette>('/api/palette').then(setPalette).catch((err: unknown) => {
-      setError(err instanceof Error ? err.message : String(err));
-    });
+    void requestJson<Palette>('/api/palette')
+      .then(setPalette)
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : String(err));
+      });
   }, [loadSession]);
 
   useEffect(() => {
@@ -1310,7 +1380,13 @@ function AtlasStudio(): React.ReactElement {
       presenterModeInitialized.current = true;
       setPresenterMode(true);
     }
-    const nextNodes = toFlowNodes(session, selectedNodeId, activeNodeIds, detailMode, presenterMode);
+    const nextNodes = toFlowNodes(
+      session,
+      selectedNodeId,
+      activeNodeIds,
+      detailMode,
+      presenterMode
+    );
 
     setNodes((current) => {
       const currentById = new Map(current.map((node) => [node.id, node]));
@@ -1402,7 +1478,8 @@ function AtlasStudio(): React.ReactElement {
 
   const onConnect = useCallback(
     async (connection: Connection) => {
-      if (!connection.source || !connection.target || connection.source === connection.target) return;
+      if (!connection.source || !connection.target || connection.source === connection.target)
+        return;
       const next = await requestJson<AtlasSession>(
         `/api/sessions/${encodeURIComponent(sessionId)}/edges`,
         {
@@ -1551,7 +1628,9 @@ function AtlasStudio(): React.ReactElement {
     async (nodeId: string) => {
       const node = session?.canvas.nodes.find((item) => item.id === nodeId);
       const label = node?.label ?? nodeId;
-      if (!window.confirm(`Remove "${label}" from this canvas? Connected edges will also be removed.`)) {
+      if (
+        !window.confirm(`Remove "${label}" from this canvas? Connected edges will also be removed.`)
+      ) {
         return;
       }
 
@@ -1621,6 +1700,21 @@ function AtlasStudio(): React.ReactElement {
   useEffect(() => {
     fitStoryFocus();
   }, [fitStoryFocus, nodes]);
+
+  useEffect(() => {
+    const story = session?.story;
+    if (!presenterMode || !story?.active || !story.focusNodeIds.length) {
+      storySelectionKey.current = null;
+      return;
+    }
+
+    const firstFocusedNodeId = story.focusNodeIds[0];
+    const key = [story.activeStepId ?? 'story', firstFocusedNodeId].join('|');
+    if (storySelectionKey.current === key) return;
+    storySelectionKey.current = key;
+    setSelectedNodeId(firstFocusedNodeId);
+    setInspectorOpen(true);
+  }, [presenterMode, session?.story]);
 
   const tidyCanvas = useCallback(async () => {
     const viewportWidth = canvasStageRef.current?.clientWidth ?? window.innerWidth;
@@ -1719,10 +1813,13 @@ function AtlasStudio(): React.ReactElement {
     [applySession, sessionId]
   );
 
-  const onInit = useCallback((instance: ReactFlowInstance<FlowNode, Edge>) => {
-    flowRef.current = instance;
-    updateDetailModeForViewport(instance.getViewport());
-  }, [updateDetailModeForViewport]);
+  const onInit = useCallback(
+    (instance: ReactFlowInstance<FlowNode, Edge>) => {
+      flowRef.current = instance;
+      updateDetailModeForViewport(instance.getViewport());
+    },
+    [updateDetailModeForViewport]
+  );
 
   const copyCommand = useCallback(async () => {
     const command = `pnpm atlas:studio observe --session ${sessionId} --suggest --text "client says..."`;
@@ -1772,7 +1869,11 @@ function AtlasStudio(): React.ReactElement {
           <IconButton icon={Rows3} onClick={() => void tidyCanvas()} title="Arrange map">
             Arrange
           </IconButton>
-          <IconButton icon={ScanLine} onClick={() => void healCanvas()} title="Check production bindings">
+          <IconButton
+            icon={ScanLine}
+            onClick={() => void healCanvas()}
+            title="Check production bindings"
+          >
             Check
           </IconButton>
           <IconButton
@@ -1873,7 +1974,9 @@ function AtlasStudio(): React.ReactElement {
                 <Panel
                   className="story-panel-wrap"
                   position="bottom-left"
-                  style={{ transform: `translate(${storyPanelOffset.x}px, ${storyPanelOffset.y}px)` }}
+                  style={{
+                    transform: `translate(${storyPanelOffset.x}px, ${storyPanelOffset.y}px)`
+                  }}
                 >
                   <StoryPanel
                     onClear={() => void clearStoryFocus()}
@@ -1916,7 +2019,10 @@ function AtlasStudio(): React.ReactElement {
       </main>
 
       <footer className="studio-footer">
-        <div className={`operator-summary tone-${operatorSummary.tone}`} aria-label="Operator state">
+        <div
+          className={`operator-summary tone-${operatorSummary.tone}`}
+          aria-label="Operator state"
+        >
           <span className="operator-state">
             <ShieldAlert aria-hidden="true" />
             <strong>{operatorSummary.state}</strong>
@@ -1927,7 +2033,9 @@ function AtlasStudio(): React.ReactElement {
         </div>
         <div className="output-summary">
           <strong>{counts}</strong>
-          <span>{session ? `Updated ${new Date(session.updatedAt).toLocaleTimeString()}` : ''}</span>
+          <span>
+            {session ? `Updated ${new Date(session.updatedAt).toLocaleTimeString()}` : ''}
+          </span>
           {healSummary ? <span>{healSummary}</span> : null}
           {proposalSummary ? <span>{proposalSummary}</span> : null}
           {error ? <span className="error">{error}</span> : null}
