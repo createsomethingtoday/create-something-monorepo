@@ -38,7 +38,7 @@
       icon: 'folder',
       title: 'Agency Ops PM Cockpit',
       detail:
-        'Notion is the PM and operator-facing layer while Linear stays the engineering tracker and canonical state stays outside Notion.'
+        'Notion is the PM and operator-facing layer for timelines, risks, decisions, and evidence while Linear and canonical systems keep their own ownership.'
     },
     {
       eyebrow: 'Developer surface',
@@ -59,7 +59,7 @@
       icon: 'check',
       title: 'Agent Evals And Review',
       detail:
-        'A Notion-native human review layer with raw traces, costs, and evaluator output kept in external systems.'
+        'A Notion-native human review layer with approved next actions visible and raw traces, costs, and evaluator output kept in external systems.'
     }
   ];
 
@@ -81,46 +81,27 @@
     }
   ];
 
-  const audienceCards: ClearCardItem[] = [
-    {
-      eyebrow: 'Operators',
-      icon: 'user',
-      title: 'Turn Notion into the reviewable operating layer.',
-      detail:
-        'Give PMs and client teams views for timelines, risks, decisions, evidence, and approved next actions.'
-    },
-    {
-      eyebrow: 'Builders',
-      icon: 'settings',
-      title: 'Use Notion Workers only where they fit.',
-      detail: 'Pilot narrow read-only Custom Agent tools before adding approved writes or managed syncs.'
-    },
-    {
-      eyebrow: 'Teams',
-      icon: 'users',
-      title: 'Keep source-of-truth boundaries legible.',
-      detail: 'Make it explicit what Notion owns, what Linear owns, and what canonical systems own.'
-    }
-  ];
-
   const routeSteps: ClearCardItem[] = [
     {
       eyebrow: 'Apply',
       icon: 'document',
       title: 'Consulting first',
-      detail: 'Lead with consulting, implementation, training, optimization, and measurable operating outcomes.'
+      detail:
+        'Lead with consulting, implementation, training, optimization, and measurable operating outcomes.'
     },
     {
       eyebrow: 'Publish',
       icon: 'upload',
       title: 'Template and builder proof',
-      detail: 'Package sanitized systems for Agency Ops, agent evals, evidence review, and client updates.'
+      detail:
+        'Package sanitized systems for Agency Ops, agent evals, evidence review, and client updates.'
     },
     {
       eyebrow: 'Productize',
       icon: 'warning',
       title: 'Integration readiness',
-      detail: 'Wait for a public OAuth integration, public docs, a demo video, support plan, and usage evidence.'
+      detail:
+        'Wait for a public OAuth integration, public docs, a demo video, support plan, usage evidence, and approval before making official claims.'
     }
   ];
 
@@ -129,7 +110,8 @@
       eyebrow: 'Agent runtime',
       icon: 'settings',
       title: 'Dify',
-      detail: 'Client-facing agent workflows, MCP tool boundaries, eval gates, and readable evidence.',
+      detail:
+        'Client-facing agent workflows, MCP tool boundaries, eval gates, and readable evidence.',
       href: '/dify'
     },
     {
@@ -145,27 +127,6 @@
       title: 'Stack',
       detail: 'Ownership boundaries across Notion, Dify, Cloudflare, tools, and client systems.',
       href: '/stack'
-    }
-  ];
-
-  const complianceCards: ClearCardItem[] = [
-    {
-      eyebrow: 'Claim',
-      icon: 'warning',
-      title: 'No official claim before acceptance',
-      detail: 'No official Notion authorization or certified consultant claim before acceptance.'
-    },
-    {
-      eyebrow: 'Integration',
-      icon: 'warning',
-      title: 'Integration approval waits',
-      detail: 'No integration approval claim until a public integration and Notion approval exist.'
-    },
-    {
-      eyebrow: 'Privacy',
-      icon: 'folder',
-      title: 'No private workspace data',
-      detail: 'No client-private records, live page IDs, raw traces, or credential references in public templates.'
     }
   ];
 
@@ -224,7 +185,7 @@
   variant="white"
   eyebrow="Proof"
   title="Notion is useful when the operating boundary is clear."
-  description="The page should show where Notion helps humans inspect the workflow without pretending it owns every source of truth."
+  description="The page should show where Notion helps operators, builders, and teams inspect the workflow without pretending it owns every source of truth."
 >
   {#snippet after()}
     <ClearCardGrid items={proofCards} columns={4} ariaLabel="Notion proof cards" />
@@ -240,21 +201,10 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="soft"
-  eyebrow="Audience"
-  title="The workspace has to serve operators, builders, and teams."
-  description="Each group needs a different level of visibility, but the source-of-truth boundaries stay explicit."
->
-  {#snippet after()}
-    <ClearCardGrid items={audienceCards} columns={3} ariaLabel="Notion audience fit" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
   variant="white"
   eyebrow="Route"
   title="Consulting first, templates second, technology later."
-  description="The public Notion path becomes credible when the implementation and template proof exist before any integration approval claim."
+  description="The public Notion path becomes credible when implementation, template proof, privacy boundaries, and support readiness exist before any integration approval claim."
 >
   {#snippet after()}
     <ClearCardGrid items={routeSteps} columns={3} ariaLabel="Notion public route" />
@@ -269,17 +219,6 @@
 >
   {#snippet after()}
     <ClearCardGrid items={ecosystemCards} columns={3} ariaLabel="Notion ecosystem roles" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="white"
-  eyebrow="Compliance"
-  title="Keep the public claim conservative."
-  description="The page can show readiness and proof without implying Notion approval or exposing client-private workspaces."
->
-  {#snippet after()}
-    <ClearCardGrid items={complianceCards} columns={3} ariaLabel="Notion compliance guardrails" />
   {/snippet}
 </ClearPageSection>
 

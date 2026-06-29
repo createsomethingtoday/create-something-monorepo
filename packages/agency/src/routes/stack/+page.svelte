@@ -115,64 +115,13 @@
     }
   ];
 
-  const procurementTrust: ClearCardItem[] = [
-    {
-      eyebrow: 'Accounts',
-      icon: 'user',
-      title: 'Client-owned systems stay client-owned',
-      detail:
-        'Source accounts, business context, approval authority, and data rights stay with the team that operates the workflow.',
-      points: ['No hidden platform dependency', 'No forced account transfer to start']
-    },
-    {
-      eyebrow: 'Access',
-      icon: 'check',
-      title: 'Least privilege before automation',
-      detail:
-        'The build names which systems are read, which writes are allowed, and where execution must stop for approval.',
-      points: ['Scoped app permissions', 'Revocation path documented']
-    },
-    {
-      eyebrow: 'Secrets',
-      icon: 'warning',
-      title: 'Credentials stay out of prompts and docs',
-      detail:
-        'Secrets, tokens, and private evidence are handled as operational boundaries, not pasted into handoff notes or model context.',
-      points: ['Secret manager boundary', 'Client-safe public proof split']
-    },
-    {
-      eyebrow: 'Audit',
-      icon: 'document',
-      title: 'Receipts travel with the workflow',
-      detail:
-        'Validation output, deploy IDs, release notes, blocked-state records, and rollback notes stay close to the work.',
-      points: ['Readable evidence for operators', 'Private evidence for reviewers']
-    },
-    {
-      eyebrow: 'Vendors',
-      icon: 'refresh',
-      title: 'Tools can change without losing the map',
-      detail:
-        'The durable asset is the workflow boundary: objects, actions, states, owners, approvals, and evidence.',
-      points: ['Replaceable services', 'Portable operating model']
-    },
-    {
-      eyebrow: 'Authority',
-      icon: 'settings',
-      title: 'Humans keep the final risk decisions',
-      detail:
-        'Revenue, customer trust, compliance, and production-impacting work waits for named approval when the workflow scope requires it.',
-      points: ['Named owner', 'Run, wait, and stop states']
-    }
-  ];
-
   const stackRoles: ClearCardItem[] = [
     {
       eyebrow: 'Runtime',
       icon: 'settings',
       title: 'Cloudflare',
       detail:
-        'Workers, D1, Durable Objects, queues, and edge routes keep the system deployable without a heavyweight client-owned platform team.',
+        'Workers, D1, Durable Objects, queues, and edge routes keep the workflow deployable while account ownership, billing, and rollback evidence stay explicit.',
       href: '/cloudflare'
     },
     {
@@ -180,14 +129,14 @@
       icon: 'plus',
       title: 'Composio',
       detail:
-        'OAuth, connect links, and standard app actions stay commodity when the integration is not the strategic differentiator.'
+        'OAuth, connect links, and standard app actions stay commodity when the durable value is the scoped action boundary, not the connector.'
     },
     {
       eyebrow: 'Agent surface',
       icon: 'document',
       title: 'Dify',
       detail:
-        'Visible agent surfaces, repeatable server cards, and lightweight operator-facing automation when the workflow needs packaging.',
+        'Visible agent surfaces, repeatable server cards, and operator-facing automation when the workflow needs packaging with approval states attached.',
       href: '/dify'
     },
     {
@@ -195,7 +144,7 @@
       icon: 'folder',
       title: 'Notion',
       detail:
-        'PM visibility, client-readable evidence, template distribution, and human review around agent work.',
+        'PM visibility, client-readable evidence, template distribution, and human review around agent work without treating Notion as the source of truth for everything.',
       href: '/notion'
     },
     {
@@ -203,58 +152,28 @@
       icon: 'info',
       title: 'OpenAI',
       detail:
-        'Reasoning and agent hosting become useful when surrounded by scoped tools, approval behavior, evals, and traceable context.'
+        'Reasoning and agent hosting become useful when surrounded by scoped tools, approval behavior, evals, and traceable context instead of hidden authority.'
     },
     {
       eyebrow: 'Surface',
       icon: 'document',
       title: 'Webflow',
       detail:
-        'Sites, templates, apps, forms, dashboards, and marketplace-facing operator experiences become controlled interfaces.'
+        'Sites, templates, apps, forms, dashboards, and marketplace-facing operator experiences become controlled interfaces with readable handoff evidence.'
     },
     {
       eyebrow: 'Ledger',
       icon: 'check',
       title: 'Linear',
       detail:
-        'Tracked work, ownership, status, validation, release notes, and unresolved decisions become a shared evidence ledger.'
+        'Tracked work, ownership, status, validation, release notes, and unresolved decisions become the shared evidence ledger for the next operator.'
     },
     {
       eyebrow: 'Boundary',
       icon: 'warning',
       title: 'Infisical + Clerk',
       detail:
-        'Secrets and identity stay out of prompts and handoff docs, with sign-in, token issuance, entitlement checks, and revocation separated.'
-    }
-  ];
-
-  const proofPaths: ClearCardItem[] = [
-    {
-      eyebrow: 'Entry map',
-      icon: 'search',
-      title: 'Outerfields',
-      detail: 'A first technical layer without pretending the client is now the engineering team.'
-    },
-    {
-      eyebrow: 'Complete system',
-      icon: 'settings',
-      title: 'Abundance',
-      detail:
-        'Database, callable actions, tool/API surface, and explainable matching show the full operating path.'
-    },
-    {
-      eyebrow: 'Surface work',
-      icon: 'document',
-      title: 'Webflow systems',
-      detail:
-        'Templates, apps, forms, dashboards, and review tools turn the stack into something operators can use.'
-    },
-    {
-      eyebrow: 'Expansion layer',
-      icon: 'check',
-      title: 'Control layer',
-      detail:
-        'Linear evidence, identity, entitlement, approvals, blocked states, and auditability make the system serious enough to scale.'
+        'Secrets and identity stay out of prompts and handoff docs, with sign-in, token issuance, entitlement checks, and revocation separated before launch.'
     }
   ];
 
@@ -349,7 +268,7 @@
   variant="white"
   eyebrow="What your team keeps"
   title="You keep the receipts, not a mystery stack."
-  description="The technical stack can change. The durable asset is the workflow boundary: objects, actions, states, owners, approvals, runbooks, and evidence."
+  description="The technical stack can change. The durable asset is the workflow boundary: source accounts, scoped access, allowed actions, stop states, approval owners, runbooks, revocation paths, and evidence."
 >
   {#snippet after()}
     <ClearCardGrid items={deliveryArtifacts} columns={3} ariaLabel="Stack delivery artifacts" />
@@ -357,21 +276,10 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="soft"
-  eyebrow="Procurement trust"
-  title="The stack is buyable because the boundary is explicit."
-  description="A serious workflow decision needs clear account ownership, secret handling, access scope, revocation, and launch evidence."
->
-  {#snippet after()}
-    <ClearCardGrid items={procurementTrust} columns={3} ariaLabel="Procurement trust controls" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
   variant="white"
   eyebrow="Vendor roles"
   title="Vendor names are receipts, not the explanation."
-  description="Each service earns a clear job. The connected tools are replaceable infrastructure. The operating boundary is what connects, what runs, what waits, what stops, who decides, and what the operator receives."
+  description="Each service earns a clear job. The connected tools are replaceable infrastructure; the proof is the map that shows what connects, what runs, what waits, what stops, who decides, and what the operator receives."
 >
   {#snippet after()}
     <ClearCardGrid
@@ -379,17 +287,6 @@
       columns={4}
       ariaLabel="Vendor roles in the control layer stack"
     />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="soft"
-  eyebrow="Proof path"
-  title="The examples tell the whole story without tool sprawl."
-  description="Each proof surface shows a different part of the same path: connect, verify, coordinate, control, and leave evidence behind."
->
-  {#snippet after()}
-    <ClearCardGrid items={proofPaths} columns={4} ariaLabel="Stack proof paths" />
   {/snippet}
 </ClearPageSection>
 

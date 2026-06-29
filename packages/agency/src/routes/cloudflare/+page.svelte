@@ -21,7 +21,8 @@
       eyebrow: 'Account',
       icon: 'users',
       title: 'Self-Serve Agency',
-      detail: 'Client account management, tenant administration, and centralized billing when needed.'
+      detail:
+        'Client account management, tenant administration, and centralized billing when needed.'
     },
     {
       eyebrow: 'Later',
@@ -37,7 +38,7 @@
       icon: 'folder',
       title: 'Cloudflare Runtime Stack',
       detail:
-        'Workers, Pages, D1, queues, routes, and durable primitives carry the deployable workflow substrate.'
+        'Workers, Pages, D1, queues, routes, and durable primitives carry the deployable workflow substrate for operators, builders, and agencies.'
     },
     {
       eyebrow: 'Implementation proof',
@@ -58,7 +59,7 @@
       icon: 'document',
       title: 'Client Review Surfaces',
       detail:
-        'Pages and Workers support review builds, operator consoles, delivery updates, and rollback-ready handoffs.'
+        'Pages and Workers support review builds, operator consoles, delivery updates, rollback-ready handoffs, and client-safe evidence.'
     }
   ];
 
@@ -91,49 +92,28 @@
       eyebrow: '02 Gate',
       icon: 'check',
       title: 'Control check',
-      detail: 'Classify the action as allowed, approval-needed, blocked, or recoverable before execution.'
+      detail:
+        'Classify the action as allowed, approval-needed, blocked, or recoverable before execution.'
     },
     {
       eyebrow: '03 State',
       icon: 'folder',
       title: 'Durable record',
-      detail: 'Store request state, approvals, retries, and evidence in D1 or another durable primitive.'
+      detail:
+        'Store request state, approvals, retries, and evidence in D1 or another durable primitive.'
     },
     {
       eyebrow: '04 Act',
       icon: 'settings',
       title: 'Tool or API call',
-      detail: 'Execute against scoped tools or APIs with tenant, account, and bearer boundaries intact.'
+      detail:
+        'Execute against scoped tools or APIs with tenant, account, and bearer boundaries intact.'
     },
     {
       eyebrow: '05 Prove',
       icon: 'document',
       title: 'Handoff evidence',
       detail: 'Return a reviewable result, rollback note, runbook update, or escalation path.'
-    }
-  ];
-
-  const audienceCards: ClearCardItem[] = [
-    {
-      eyebrow: 'Operators',
-      icon: 'user',
-      title: 'Run controlled workflows close to the business.',
-      detail:
-        'Use Cloudflare routes for previews, approvals, status checks, and evidence before actions execute.'
-    },
-    {
-      eyebrow: 'Builders',
-      icon: 'settings',
-      title: 'Deploy tool and agent surfaces without platform weight.',
-      detail:
-        'Package Workers, Pages, D1, and durable runtime primitives into portable workflow infrastructure.'
-    },
-    {
-      eyebrow: 'Agencies',
-      icon: 'users',
-      title: 'Standardize delivery without hiding ownership.',
-      detail:
-        'Separate CREATE SOMETHING delivery receipts from client-owned zones, accounts, billing, and data rights.'
     }
   ];
 
@@ -156,29 +136,9 @@
       eyebrow: 'Vendor boundary',
       icon: 'check',
       title: 'Stack',
-      detail: 'Ownership boundaries across Cloudflare, Dify, Notion, tools, and delivery surfaces.',
+      detail:
+        'Ownership boundaries across Cloudflare, Dify, Notion, tools, delivery surfaces, account data, billing, tokens, and public proof.',
       href: '/stack'
-    }
-  ];
-
-  const complianceCards: ClearCardItem[] = [
-    {
-      eyebrow: 'Claim',
-      icon: 'warning',
-      title: 'No official claim before acceptance',
-      detail: 'No official Cloudflare authorization or certified provider claim before acceptance.'
-    },
-    {
-      eyebrow: 'Alliance',
-      icon: 'warning',
-      title: 'Technology Alliance waits',
-      detail: 'No Technology Alliance claim until a public integration and Cloudflare approval exist.'
-    },
-    {
-      eyebrow: 'Privacy',
-      icon: 'folder',
-      title: 'No private account data',
-      detail: 'No client-private account names, zones, tokens, emails, billing details, or raw traces in public proof.'
     }
   ];
 
@@ -242,7 +202,7 @@
   variant="white"
   eyebrow="Runtime proof"
   title="The runtime carries routes, tools, and evidence."
-  description="Cloudflare is strongest when workflow infrastructure needs ownership, durability, and a reviewable delivery path."
+  description="Cloudflare is strongest when workflow infrastructure needs ownership, durability, a reviewable delivery path, and clear account boundaries before anything runs."
 >
   {#snippet after()}
     <ClearCardGrid items={proofCards} columns={4} ariaLabel="Cloudflare runtime proof" />
@@ -261,35 +221,13 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="white"
-  eyebrow="Who it serves"
-  title="The same substrate helps operators, builders, and agencies."
-  description="Each audience gets a clear reason for Cloudflare without turning the page into infrastructure shopping."
->
-  {#snippet after()}
-    <ClearCardGrid items={audienceCards} columns={3} ariaLabel="Cloudflare audience fit" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
   variant="soft"
   eyebrow="Ecosystem"
   title="Cloudflare is the runtime, not the whole operating model."
-  description="The workflow tool stack works because each adjacent surface keeps a distinct role."
+  description="The workflow tool stack works because each adjacent surface keeps a distinct role. Public claims stay conservative: show readiness, proof, and client-safe evidence without implying official authorization before acceptance."
 >
   {#snippet after()}
     <ClearCardGrid items={ecosystemCards} columns={3} ariaLabel="Cloudflare ecosystem roles" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="white"
-  eyebrow="Compliance"
-  title="Keep the public claim conservative."
-  description="The public page should show readiness and proof without implying authorization before Cloudflare grants it."
->
-  {#snippet after()}
-    <ClearCardGrid items={complianceCards} columns={3} ariaLabel="Cloudflare compliance guardrails" />
   {/snippet}
 </ClearPageSection>
 

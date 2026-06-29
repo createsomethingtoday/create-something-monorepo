@@ -10,7 +10,6 @@
     type ClearCtaItem,
     type ClearProofItem
   } from '@create-something/canon';
-  import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
   import { products, type Product } from '$lib/data/services';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -19,37 +18,6 @@
   type ProofStateItem = ClearProofItem & { icon: ProofStateIconName };
 
   const featured = products.filter((product) => product.category === 'featured');
-
-  const proofReadingCards: ClearCardItem[] = [
-    {
-      eyebrow: 'Receipts',
-      icon: 'document',
-      title: 'Receipts show the operating result',
-      detail:
-        'Read the artifacts as receipts: what changed, what was verified, what stayed private, and what still needs an owner.'
-    },
-    {
-      eyebrow: 'Primitives',
-      icon: 'settings',
-      title: 'Tools show the method',
-      detail:
-        'Ground, Loom MCP, and connector work expose the control principles before they become a client-specific workflow.'
-    },
-    {
-      eyebrow: 'Boundary',
-      icon: 'check',
-      title: 'The service adds judgment states',
-      detail:
-        'The paid work turns proof primitives into run, wait, and stop paths your operator can inspect.'
-    },
-    {
-      eyebrow: 'Funnel',
-      icon: 'plus',
-      title: 'Start by mapping the first workflow',
-      detail:
-        'Use proof as evidence for the method, then map the first controlled point for your own system.'
-    }
-  ];
 
   const faqItems = [
     {
@@ -125,7 +93,7 @@
     {
       icon: 'objects',
       value: 'Stop',
-			label: 'Out-of-scope work creates a reason-coded handoff instead of pretending to finish.'
+      label: 'Out-of-scope work creates a reason-coded handoff instead of pretending to finish.'
     },
     {
       icon: 'receipts',
@@ -257,7 +225,7 @@
   variant="soft"
   eyebrow="AI workflow systems proof"
   title="Then show the run, wait, stop, and receipt states."
-  description="Every artifact on this page helps the decision owner understand what can run, what waits, what stops, who owns the decision, and which receipt proves it."
+  description="Every artifact on this page helps the decision owner understand what can run, what waits, what stops, who owns the decision, and which receipt proves it. Tools are evidence; the service is the operating path."
 >
   {#snippet after()}
     <ClearProofStrip items={proofStripItems} ariaLabel="Workflow proof states">
@@ -277,35 +245,6 @@
         </article>
       {/each}
     </div>
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="white"
-  eyebrow="Proof canvas"
-  title="Proof becomes useful when the map shows the commitment boundary."
-  description="A receipt is not just a log. It names what can run, what waits for judgment, what must stop, and what evidence lets the next owner trust the handoff."
->
-  {#snippet after()}
-    <PublicAtlasStoryCanvas
-      starterId="construction-rfi-submittal-control"
-      storyId="products-construction-proof-story"
-      eyebrow="Proof canvas"
-      title="The receipt matters because the commitment boundary is visible."
-      description="This read-only map shows proof as an operating path: collect evidence, route the packet, draft support, preserve human judgment, and stop before scope or contract commitment."
-      compact
-    />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="soft"
-  eyebrow="How to read this page"
-  title="Tools are evidence. The service is the operating path."
-  description="The free and open tools show the discipline underneath the service: grounded claims, agent continuity, constrained access, and evidence-backed decisions. The paid work turns those primitives into one delegated workflow your operator can trust."
->
-  {#snippet after()}
-    <ClearCardGrid items={proofReadingCards} columns={4} ariaLabel="How to read proof" />
   {/snippet}
 </ClearPageSection>
 

@@ -36,25 +36,29 @@
       eyebrow: 'Sanitized proof',
       icon: 'document',
       title: 'Public Guide Agent',
-      detail: 'A public Dify guide agent backed by read-only MCP cards and evidence summaries instead of private traces.'
+      detail:
+        'A public Dify guide agent backed by read-only MCP cards, evidence summaries, and no raw private traces.'
     },
     {
       eyebrow: 'Client system',
       icon: 'settings',
       title: 'Abundance Delivery',
-      detail: 'A Dify-backed delivery surface with agent inventory, eval coverage, and production-oriented evidence controls.'
+      detail:
+        'A Dify-backed delivery surface with agent inventory, eval coverage, DSL snapshots, and production-oriented evidence controls.'
     },
     {
       eyebrow: 'Workflow template',
       icon: 'refresh',
       title: 'Transcript To Notion',
-      detail: 'A repeatable Dify plus MCP workflow pattern for turning media intake into structured operating records.'
+      detail:
+        'A repeatable Dify plus MCP workflow pattern for turning media intake into structured operating records.'
     },
     {
       eyebrow: 'Review system',
       icon: 'check',
       title: 'Marketplace Creator Pipeline',
-      detail: 'A Dify-supported review workflow that keeps context, tool access, and policy boundaries inspectable.'
+      detail:
+        'A Dify-supported review workflow that keeps context, tool access, policy boundaries, and handoff receipts inspectable.'
     }
   ];
 
@@ -142,54 +146,6 @@
     }
   ];
 
-  const artifactCards: ClearCardItem[] = [
-    {
-      eyebrow: 'Runtime',
-      icon: 'folder',
-      title: 'dify_inventory.md',
-      detail: 'Codified Dify agents, server cards, manifests, DSL snapshots, and eval references.'
-    },
-    {
-      eyebrow: 'MCP',
-      icon: 'settings',
-      title: 'mcp_coverage.md',
-      detail: 'Coverage states for ready, intake-ready, brokered, dormant, and missing Dify MCP cards.'
-    },
-    {
-      eyebrow: 'Proof',
-      icon: 'document',
-      title: 'trust_catalog.md',
-      detail: 'Public proof that intentionally excludes raw traces, private hubs, and credential references.'
-    },
-    {
-      eyebrow: 'Policy',
-      icon: 'check',
-      title: 'policy_os.md',
-      detail: 'Approvals, runbooks, golden tasks, tuning, and escalation packaged as the operating rule.'
-    }
-  ];
-
-  const complianceCards: ClearCardItem[] = [
-    {
-      eyebrow: 'Claims',
-      icon: 'warning',
-      title: 'Say what the workflow does',
-      detail: 'Public copy should explain the mapped task, tool boundary, stop point, owner, and evidence.'
-    },
-    {
-      eyebrow: 'Routing',
-      icon: 'arrow-right',
-      title: 'Send readers to the next useful page',
-      detail: 'A page should route to the control model, eval gates, shipping guide, comparison, or mapping session.'
-    },
-    {
-      eyebrow: 'Private proof',
-      icon: 'folder',
-      title: 'No raw traces or credentials',
-      detail: 'Public proof excludes Braintrust traces, hub records, broad connector surfaces, and secrets.'
-    }
-  ];
-
   const ctaItems: ClearCtaItem[] = [
     {
       label: 'Runtime',
@@ -245,7 +201,7 @@
   variant="white"
   eyebrow="Proof"
   title="Dify proof should be visible without exposing private traces."
-  description="The workflow becomes easier to trust when decision owners can see the app shape, tool boundary, eval posture, and delivery evidence."
+  description="The workflow becomes easier to trust when decision owners can see the app shape, tool boundary, eval posture, sanitized artifacts, and delivery evidence."
 >
   {#snippet after()}
     <ClearCardGrid items={proofCards} columns={4} ariaLabel="Dify proof cards" />
@@ -267,32 +223,10 @@
   variant="white"
   eyebrow="Content path"
   title="Teach the control plane before asking for trust."
-  description="The guide cluster explains the operating model, validates the workflow, and routes teams to the right next action."
+  description="The guide cluster explains the operating model, validates the workflow, routes teams to the right next action, and keeps the public language focused on the task, boundary, owner, stop point, and evidence."
 >
   {#snippet after()}
     <ClearCardGrid items={funnelCards} columns={4} ariaLabel="Dify content path" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="soft"
-  eyebrow="Evidence"
-  title="The useful proof is repo-owned and sanitized."
-  description="Dify DSL snapshots, MCP coverage, trust catalogs, and Policy OS artifacts make the system reviewable without leaking client-private records."
->
-  {#snippet after()}
-    <ClearCardGrid items={artifactCards} columns={4} ariaLabel="Dify evidence artifacts" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="white"
-  eyebrow="Language"
-  title="The page should make the workflow easy to understand."
-  description="Clear public pages name the task, boundary, owner, stop point, and evidence before asking anyone to choose a tool."
->
-  {#snippet after()}
-    <ClearCardGrid items={complianceCards} columns={3} ariaLabel="Dify compliance guardrails" />
   {/snippet}
 </ClearPageSection>
 
