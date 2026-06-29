@@ -152,12 +152,12 @@ export function scoreOnaCandidate(block: ArenaBlock): OnaCandidateCard {
 }
 
 function blockTitle(block: ArenaBlock): string {
-	return (
+	return decodeBasicEntities(
 		block.title ||
-		block.generated_title ||
-		block.source?.title ||
-		block.embed?.title ||
-		`Are.na block ${block.id}`
+			block.generated_title ||
+			block.source?.title ||
+			block.embed?.title ||
+			`Are.na block ${block.id}`
 	).trim();
 }
 
@@ -196,7 +196,10 @@ function summarizeBlock(block: ArenaBlock): string {
 		.trim();
 
 	if (!summary) return `${block.class} block from Are.na.`;
-	return summary.length > 220 ? `${summary.slice(0, 217).trim()}...` : summary;
+	const decodedSummary = decodeBasicEntities(summary);
+	return decodedSummary.length > 220
+		? `${decodedSummary.slice(0, 217).trim()}...`
+		: decodedSummary;
 }
 
 function collectSignals(text: string, rules: SignalRule[]): string[] {
@@ -231,7 +234,7 @@ function decisionFor(score: number, risks: string[]): OnaCandidateDecision {
 		return { defaultAction: 'reject', actions: [...ONA_OPERATOR_ACTIONS] };
 	}
 
-	if (score >= 70 && risks.length === 0) {
+	if (score >= 85 && risks.length === 0) {
 		return { defaultAction: 'approve', actions: [...ONA_OPERATOR_ACTIONS] };
 	}
 
@@ -244,4 +247,13 @@ function decisionFor(score: number, risks: string[]): OnaCandidateDecision {
 
 function clamp(value: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, value));
+}
+
+function decodeBasicEntities(text: string): string {
+	return text
+		.replaceAll('&amp;', '&')
+		.replaceAll('&lt;', '<')
+		.replaceAll('&gt;', '>')
+		.replaceAll('&quot;', '"')
+		.replaceAll('&#39;', "'");
 }
