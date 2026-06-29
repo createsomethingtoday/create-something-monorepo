@@ -22,14 +22,14 @@
 </script>
 
 <svelte:head>
-  <title>{selectedAgent ? `${selectedAgent.label} Operator Chat` : 'Operator Chat'}</title>
+  <title>{selectedAgent ? `${selectedAgent.label} | Abundance Operator Chat` : 'Abundance Operator Chat'}</title>
 </svelte:head>
 
 {#if !data.accessAllowed || !selectedAgent}
   <section class="access-shell glass panel">
     <div class="access-copy">
       <div class="eyebrow">Operator Access</div>
-      <h1 class="section-title">Sign in through .agency to use Dify operator chat.</h1>
+      <h1 class="section-title">Sign in through .agency to use protected Abundance operator chat.</h1>
       <p class="muted">
         The chat proxy will not call Dify until staff access is active for this browser.
       </p>
@@ -307,7 +307,7 @@
     padding: 0.85rem;
     border: 1px solid var(--line);
     border-radius: var(--radius-tight);
-    background: rgba(7, 10, 16, 0.42);
+    background: var(--surface-overlay);
   }
 
   .context-list span,

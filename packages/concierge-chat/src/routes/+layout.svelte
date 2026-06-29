@@ -19,15 +19,30 @@
 	$: controlPlaneMeta = getAgencyAccessMeta(data.agencyAccess, data.user);
 	$: showInternalNavigation = data.agencyAccess.status === 'allowed';
 	$: isPublicIntakeRoute =
-		data.currentPath === '/' || data.currentPath === '/apply' || data.currentPath.startsWith('/apply/');
+		data.currentPath === '/' ||
+		data.currentPath === '/nurses' ||
+		data.currentPath === '/jobs' ||
+		data.currentPath === '/facilities' ||
+		data.currentPath === '/agents' ||
+		data.currentPath === '/style-guide' ||
+		data.currentPath === '/apply' ||
+		data.currentPath.startsWith('/apply/');
 	$: showCompactStaffAccess = isPublicIntakeRoute || !showInternalNavigation;
 	$: navItems = isPublicIntakeRoute || !showInternalNavigation
 		? [
 					{ href: '/', label: 'Home' },
+					{ href: '/nurses', label: 'Nurses' },
+					{ href: '/jobs', label: 'Jobs' },
+					{ href: '/facilities', label: 'Facilities' },
+					{ href: '/agents', label: 'Agents' },
+					{ href: '/style-guide', label: 'Style' },
 					{ href: '/apply', label: 'Start' }
 				]
 		: [
 				{ href: '/', label: 'Home' },
+				{ href: '/nurses', label: 'Nurses' },
+				{ href: '/jobs', label: 'Jobs' },
+				{ href: '/facilities', label: 'Facilities' },
 				{ href: '/apply', label: 'Apply' },
 				{ href: '/agents', label: 'Agents' },
 				{ href: '/chat', label: 'Workspace' },
@@ -38,9 +53,9 @@
 <div class="app-shell">
 	<header class="app-nav glass">
 	<div>
-		<div class="eyebrow">CREATE SOMETHING .agency</div>
-		<div class="brand">Abundance Concierge</div>
-		<div class="brand-note">Guided nurse applications</div>
+		<div class="eyebrow">Nurse Staffing</div>
+		<div class="brand">Abundance Staffing</div>
+		<div class="brand-note">Guided nurse applications and recruiter-gated staffing</div>
 	</div>
 
 		<div class="nav-cluster">

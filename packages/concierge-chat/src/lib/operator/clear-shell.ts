@@ -62,7 +62,7 @@ export interface OperatorCommandCenter {
 }
 
 export const operatorMode = {
-	label: 'Ona Operator Chat',
+	label: 'Abundance Operator Chat',
 	productLine: 'CREATE SOMETHING concierge-chat',
 	runtime: 'Dify Service API through a CREATE SOMETHING server proxy',
 	promise: 'Clear state, clear next action, clear proof before any governed write.'

@@ -71,7 +71,7 @@ function getInitialMessages(agent: DifyOperatorAgent): OperatorChatMessage[] {
   return [
     createOperatorMessage({
       role: 'assistant',
-      author: 'Ona shell',
+      author: 'Abundance operator shell',
       body: `${agent.label} is selected. Ask for the next operator action, required proof, or a concise handoff brief.`,
       state: 'ready'
     })
@@ -253,7 +253,7 @@ export const actions: Actions = {
       agent,
       query,
       conversationId,
-      user: `ona-operator-${sessionId}`,
+      user: `abundance-operator-${sessionId}`,
       platform,
       fetch
     });

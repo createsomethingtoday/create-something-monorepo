@@ -12,7 +12,7 @@ This package is the end-user conversation product. It is distinct from:
 
 Use this package for the comprehensive operator chat shell around Dify-backed agents.
 
-The internal operator UI should copy Ona's clear-communication design discipline: light operational surfaces, compact navigation, crisp borders, readable hierarchy, direct action language, and proof beside each claim. CREATE SOMETHING still owns the product identity, governance copy, evidence model, and approval surface.
+The internal operator UI can still use Ona's clear-communication design discipline: light operational surfaces, compact navigation, crisp borders, readable hierarchy, direct action language, and proof beside each claim. The public staffing website and client-facing agent roster use the Abundance brand system instead of Ona naming. CREATE SOMETHING still owns the product identity, governance copy, evidence model, and approval surface.
 
 The app should render three stable rails for staff/operator views:
 
@@ -36,8 +36,9 @@ Dify remains runtime plumbing. The browser must never receive a Dify API key or 
 - shortlist generation, recruiter review booking, recruiter review completion, staffing coordinator outreach, governed facility-submission handoff progression, facility-response capture, onboarding handoff progression, and terminal start-ready or closed-request outcomes once intake blockers clear
 - route loads and `/api/threads/*` mutations for thread creation, messaging, confirmation, consent, attachment uploads, recruiter review transitions, staffing queue transitions, facility-response transitions, onboarding transitions, reconnect recovery, and reset
 - local `/control-plane/*` bridge routes that redirect Abundance control-plane actions into real `.agency` dashboard, MCP access, and security surfaces
-- Ona-style operator shell contract in `src/lib/operator/clear-shell.ts`, surfaced on the public orientation page and staff/operator chat routes
-- staff-only `/agents` and `/agents/[agentId]` routes for the Ona-style multi-agent Dify operator shell, backed by server-side Dify `chat-messages` calls and bounded proof events
+- Abundance public staffing website routes for nurses, jobs, facilities, branded agents, and the style guide
+- Abundance operator shell contract in `src/lib/operator/clear-shell.ts`, grounded in Ona's internal clarity pattern but presented with Abundance client-facing language
+- public `/agents` route for Abundance-branded agent roles plus staff-only `/agents/[agentId]` protected Dify operator chat, backed by server-side Dify `chat-messages` calls and bounded proof events
 - root layout now reads the optional shared `.agency` browser session and live `.agency` entitlement snapshot so the Abundance shell can show whether governed staffing access is active, blocked, or unavailable
 - governed recruiter, staffing, facility-response, and onboarding actions remain read-only until `.agency` reports an active entitlement decision for the current browser session
 - anonymous `/chat` and `/settings` access now routes back into `/apply` so the candidate path stays conversation-first
