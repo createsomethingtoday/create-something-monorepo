@@ -87,6 +87,19 @@ test('renders Cato Insights Hub with editable Webflow link overrides', () => {
   assert.doesNotMatch(html, /Whitepapers/);
 });
 
+test('falls back from placeholder featured panel links to the reports archive', () => {
+  const html = renderToStaticMarkup(
+    <CatoInsightsHub
+      featuredPanelCta="Access these reports"
+      featuredPanelLink={{ href: '#' }}
+      resiliencyLink={{ href: '/resiliency-reports' }}
+    />
+  );
+
+  assert.match(html, /class="cato-cc-panel-link" href="\/resiliency-reports"/);
+  assert.match(html, /Access these reports/);
+});
+
 test('shows resiliency archive entries before the subscribe block', () => {
   const html = renderToStaticMarkup(<CatoInsightsArchive />);
   const archiveIndex = html.indexOf('Latest Resiliency Reports');

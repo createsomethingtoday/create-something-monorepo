@@ -890,12 +890,12 @@ const CATO_CSS = `
   .cato-cc-panel-label, .cato-cc-pill { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; border-radius: 999rem; line-height: 1; }
   .cato-cc-panel-label { text-transform: uppercase; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.10); padding: .38rem .75rem; font-family: Switzer, Arial, sans-serif; font-size: .8125rem; font-weight: 600; }
   .cato-cc-pill { color: rgba(40,39,35,.72); background: rgba(10,69,46,.06); border: 1px solid rgba(10,69,46,.14); padding: .38rem .75rem; font-size: .8125rem; text-transform: uppercase; }
-  .cato-cc-card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; }
+  .cato-cc-card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
   .cato-cc-card-grid[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cato-cc-card-grid[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cato-cc-card, .cato-cc-cms-card, .cato-cc-detail-card, .cato-cc-sidebar-card { border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; box-shadow: 0 1px 2px rgba(17,16,15,.04); }
   .cato-cc-card, .cato-cc-cms-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 1rem; color: var(--cato-text); text-decoration: none; transition: transform .18s, border-color .18s, box-shadow .18s; }
-  .cato-cc-card { align-items: center; justify-content: center; min-height: 16rem; padding: 1.75rem; text-align: center; }
+  .cato-cc-card { align-items: center; justify-content: center; gap: .85rem; min-height: 11.75rem; padding: 1.45rem 1.5rem; text-align: center; }
   .cato-cc-card[data-category="resiliency"] .cato-cc-pill { color: #0a452e; background: rgba(10,69,46,.07); border-color: rgba(10,69,46,.18); }
   .cato-cc-card[data-category="research"] .cato-cc-pill { color: #245082; background: rgba(36,80,130,.08); border-color: rgba(36,80,130,.18); }
   .cato-cc-card[data-category="resources"] .cato-cc-pill { color: #775321; background: rgba(119,83,33,.09); border-color: rgba(119,83,33,.18); }
@@ -904,10 +904,12 @@ const CATO_CSS = `
   .cato-cc-card[data-category="research"] h3 { color: #245082; }
   .cato-cc-card[data-category="resources"] h3 { color: #775321; }
   .cato-cc-card[data-category="newsroom"] h3 { color: #61456d; }
+  .cato-cc-card h3 { max-width: 20rem; font-size: 1.35rem; line-height: 1.32; }
   .cato-cc-card:hover, .cato-cc-cms-card:hover { border-color: var(--cato-border-strong); transform: translate3d(0, -.25rem, 0); box-shadow: 0 1rem 2rem rgba(17,16,15,.08); }
   .cato-cc-card p, .cato-cc-cms-card p { color: var(--cato-muted); margin: 0; line-height: 1.5; }
   .cato-cc-card p { max-width: 18rem; }
   .cato-cc-link { color: var(--cato-green); margin-top: auto; font-weight: 600; display: inline-block; transition: transform .18s, color .18s; }
+  .cato-cc-card .cato-cc-link { margin-top: .45rem; }
   .cato-cc-card:hover .cato-cc-link, .cato-cc-cms-card:hover .cato-cc-link { transform: translate3d(.18rem, 0, 0); }
   .cato-cc-preview-header { display: flex; flex-direction: column; align-items: center; gap: 1rem; max-width: 54rem; margin: 0 auto 2rem; text-align: center; }
   .cato-cc-layout { display: grid; grid-template-columns: minmax(14rem, .34fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
@@ -1559,7 +1561,8 @@ function hrefForItem(
 }
 
 function hrefFromLink(link: CatoInsightLinkProp | undefined, fallbackHref: string) {
-  return link?.href || fallbackHref || '#';
+  const href = link?.href?.trim();
+  return href && href !== '#' ? href : fallbackHref || '#';
 }
 
 function relForTarget(target?: string) {
