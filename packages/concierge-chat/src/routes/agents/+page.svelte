@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { abundanceAgents, trustProof } from '$lib/site/abundance';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -8,17 +9,60 @@
 </script>
 
 <svelte:head>
-  <title>Ona Operator Agents</title>
+  <title>Abundance Agents</title>
+  <meta
+    name="description"
+    content="Abundance-branded staffing agents for nurse intake, job discovery, recruiter review, facility handoff, and compliance readiness."
+  />
 </svelte:head>
 
+<section class="page-hero compact">
+  <div class="hero-copy">
+    <div class="eyebrow">Abundance Agents</div>
+    <h1 class="page-title">A staffing agent system with recruiter approval built in.</h1>
+    <p class="lede">
+      These are the client-facing Abundance agent roles. Ona remains a useful internal design
+      precedent for clear operator surfaces, but the staffing brand, naming, and public workflow
+      belong to Abundance.
+    </p>
+  </div>
+
+  <div class="proof-panel">
+    <div class="eyebrow">Protected Runtime</div>
+    <h2>Agent keys and write-capable actions stay behind staff access.</h2>
+    <ul>
+      {#each trustProof.slice(0, 4) as item}
+        <li>{item}</li>
+      {/each}
+    </ul>
+  </div>
+</section>
+
+<section class="section-band">
+  <div class="section-heading">
+    <div class="eyebrow">Public Agent Roster</div>
+    <h2>Named for the staffing workflow, not for the internal design system.</h2>
+  </div>
+  <div class="feature-grid">
+    {#each abundanceAgents as agent}
+      <article class="feature-card">
+        <span class="step-marker">{agent.lane}</span>
+        <h3>{agent.name}</h3>
+        <p>{agent.summary}</p>
+        <p><strong>{agent.proof}</strong></p>
+      </article>
+    {/each}
+  </div>
+</section>
+
 {#if !data.accessAllowed}
-  <section class="access-shell glass panel">
+  <section class="access-shell glass panel section-gap">
     <div class="access-copy">
-      <div class="eyebrow">Operator Access</div>
-      <h1 class="section-title">Sign in through .agency to use the Dify operator shell.</h1>
+      <div class="eyebrow">Staff Access</div>
+      <h2 class="section-title">Sign in through .agency to use the protected operator chat.</h2>
       <p class="muted">
-        Agent keys stay server-side. Staff access is required before agent names, credentials, or
-        chat actions are available.
+        Public pages can describe agent roles. Live Dify calls, credentials, and staffing actions
+        require staff access and remain server-side.
       </p>
     </div>
     <a class="link-button" href={data.controlPlaneHref} target="_blank" rel="noreferrer"
@@ -26,11 +70,11 @@
     >
   </section>
 {:else}
-  <section class="agents-shell">
+  <section class="agents-shell section-gap">
     <header class="agents-header glass panel">
       <div>
-        <div class="eyebrow">Ona Operator Chat</div>
-        <h1 class="section-title">Dify agents in one staff chat surface</h1>
+        <div class="eyebrow">Protected Operator Chat</div>
+        <h2 class="section-title">Dify-backed agents in one staff surface</h2>
       </div>
       <div class="header-proof" aria-label="Agent credential summary">
         <span class="status-pill good">{availableCount} ready</span>
@@ -44,7 +88,7 @@
         <a class="agent-row glass" href={`/agents/${agent.id}`}>
           <div class="agent-main">
             <div class="agent-title-line">
-              <h2>{agent.label}</h2>
+              <h3>{agent.label}</h3>
               <span
                 class={`status-pill ${agent.credentialState === 'available' ? 'good' : 'warn'}`}
               >
@@ -69,6 +113,10 @@
 {/if}
 
 <style>
+  .section-gap {
+    margin-top: 1rem;
+  }
+
   .access-shell,
   .agents-header {
     display: flex;
@@ -81,20 +129,6 @@
     display: grid;
     gap: 0.75rem;
     max-width: 42rem;
-  }
-
-  .link-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.8rem 1.1rem;
-    border-radius: 999px;
-    background: var(--button-bg);
-    color: var(--button-ink);
-    font-weight: 700;
-    text-decoration: none;
-    box-shadow: 0 16px 34px rgba(49, 92, 255, 0.22);
-    white-space: nowrap;
   }
 
   .agents-shell {
@@ -145,7 +179,7 @@
     flex-wrap: wrap;
   }
 
-  .agent-title-line h2 {
+  .agent-title-line h3 {
     margin: 0;
     font-size: 1.12rem;
     letter-spacing: 0;
@@ -172,7 +206,7 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-tight);
     padding: 0.35rem 0.5rem;
-    background: rgba(7, 10, 16, 0.42);
+    background: var(--surface-overlay);
   }
 
   .agent-proof {
