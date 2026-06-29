@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   agentActivityFromSessionChange,
   detailModeForZoom,
+  focusedStoryNodeSummaries,
   tidyNodeUpdates
 } from '../dist/studio/client/layout.js';
 
@@ -86,6 +87,77 @@ test('agent activity detects remote agent changes and ignores operator-only edit
   assert.equal(operatorOnly, null);
 });
 
+test('focused story node summaries preserve walkthrough detail context', () => {
+  const session = makeSession([
+    makeNode({
+      evidence: 'Source link and transcript excerpt.',
+      id: 'claude-cowork',
+      kind: 'ai',
+      label: 'Claude Cowork lane',
+      notes: 'Team workspace for shared execution.',
+      owner: 'Danny',
+      status: 'run'
+    }),
+    makeNode({
+      id: 'finance-boundary',
+      kind: 'constraint',
+      label: 'Finance boundary'
+    })
+  ]);
+  session.story = {
+    active: true,
+    activeStepId: 'step-1',
+    callouts: [
+      {
+        id: 'callout-1',
+        nodeId: 'claude-cowork',
+        severity: 'decision',
+        text: 'Cowork is the team workspace.'
+      }
+    ],
+    dimUnfocused: true,
+    focusEdgeIds: [],
+    focusNodeIds: ['claude-cowork', 'missing-node'],
+    questions: [
+      {
+        id: 'question-1',
+        nodeId: 'claude-cowork',
+        owner: 'Micah',
+        question: 'Which connectors are org-wide?',
+        status: 'open'
+      }
+    ],
+    steps: [],
+    updatedAt: '2026-06-17T10:00:00.000Z',
+    updatedBy: 'agent'
+  };
+
+  assert.deepEqual(focusedStoryNodeSummaries(session), [
+    {
+      callouts: [
+        {
+          severity: 'decision',
+          text: 'Cowork is the team workspace.'
+        }
+      ],
+      evidence: 'Source link and transcript excerpt.',
+      id: 'claude-cowork',
+      kind: 'ai',
+      label: 'Claude Cowork lane',
+      notes: 'Team workspace for shared execution.',
+      owner: 'Danny',
+      questions: [
+        {
+          owner: 'Micah',
+          question: 'Which connectors are org-wide?',
+          status: 'open'
+        }
+      ],
+      status: 'run'
+    }
+  ]);
+});
+
 test('tidy layout returns deterministic lane updates', () => {
   const session = makeSession([
     makeNode({ id: 'approval', kind: 'human', label: 'Approval boundary', x: 900, y: 50 }),
@@ -112,9 +184,27 @@ test('tidy layout returns deterministic lane updates', () => {
 test('tidy layout stacks node kinds that share a visual column', () => {
   const session = makeSession([
     makeNode({ id: 'asset-table', kind: 'data', label: 'Airtable Assets', x: 420, y: 120 }),
-    makeNode({ id: 'review-dashboard', kind: 'touchpoint', label: 'Review dashboard', x: 420, y: 130 }),
-    makeNode({ id: 'asset-versions', kind: 'data', label: 'Airtable Asset Versions', x: 420, y: 140 }),
-    makeNode({ id: 'template-review-hub', kind: 'system', label: 'Template Review Hub', x: 760, y: 120 }),
+    makeNode({
+      id: 'review-dashboard',
+      kind: 'touchpoint',
+      label: 'Review dashboard',
+      x: 420,
+      y: 130
+    }),
+    makeNode({
+      id: 'asset-versions',
+      kind: 'data',
+      label: 'Airtable Asset Versions',
+      x: 420,
+      y: 140
+    }),
+    makeNode({
+      id: 'template-review-hub',
+      kind: 'system',
+      label: 'Template Review Hub',
+      x: 760,
+      y: 120
+    }),
     makeNode({ id: 'feedback-runner', kind: 'ai', label: 'Feedback runner', x: 760, y: 130 })
   ]);
 

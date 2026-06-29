@@ -18,6 +18,18 @@ type TidyLayoutOptions = {
   viewportWidth?: number;
 };
 
+export type StoryFocusedNodeSummary = {
+  id: string;
+  label: string;
+  kind: AtlasCanvasNodeKind;
+  owner: string;
+  status: AtlasCanvasNode['status'];
+  notes?: string;
+  evidence?: string;
+  callouts: Array<{ severity: 'decision' | 'info' | 'risk'; text: string }>;
+  questions: Array<{ owner?: string; question: string; status: 'answered' | 'open' }>;
+};
+
 const LANE_ORDER: AtlasCanvasNodeKind[] = [
   'actor',
   'data',
@@ -39,7 +51,9 @@ const COLUMN_GAP = 64;
 
 const KIND_RANK = new Map(LANE_ORDER.map((kind, index) => [kind, index]));
 const KIND_COLUMN = new Map<AtlasCanvasNodeKind, { index: number; x: number; y: number }>(
-  VISUAL_COLUMNS.flatMap((column, index) => column.kinds.map((kind) => [kind, { index, x: column.x, y: column.y }]))
+  VISUAL_COLUMNS.flatMap((column, index) =>
+    column.kinds.map((kind) => [kind, { index, x: column.x, y: column.y }])
+  )
 );
 
 function boundedViewportWidth(width?: number): number | undefined {
@@ -66,7 +80,12 @@ function kindColumnForViewport(
     const rightX = Math.min(396, Math.max(328, width - 420));
     const columns = [
       { index: 0, kinds: ['actor', 'data', 'touchpoint'] as AtlasCanvasNodeKind[], x: 48, y: 124 },
-      { index: 1, kinds: ['system', 'ai', 'human', 'constraint'] as AtlasCanvasNodeKind[], x: rightX, y: 124 }
+      {
+        index: 1,
+        kinds: ['system', 'ai', 'human', 'constraint'] as AtlasCanvasNodeKind[],
+        x: rightX,
+        y: 124
+      }
     ];
     return new Map(columns.flatMap((column) => column.kinds.map((kind) => [kind, column])));
   }
@@ -98,7 +117,8 @@ export function nodeWidthForMode(node: AtlasCanvasNode, mode: CanvasDetailMode):
 
   const labelLength = node.label.length;
   const noteLength = (node.notes ?? node.evidence ?? '').length;
-  const base = labelLength > 42 || noteLength > 150 ? 332 : labelLength > 28 || noteLength > 92 ? 302 : 280;
+  const base =
+    labelLength > 42 || noteLength > 150 ? 332 : labelLength > 28 || noteLength > 92 ? 302 : 280;
 
   if (mode === 'detail') {
     return Math.max(316, Math.min(364, Math.max(node.width || 0, base + 24)));
@@ -139,12 +159,61 @@ export function agentActivityFromSessionChange(
   const first = changed[0];
   const action = previousNodes.has(first.id) ? 'updated' : 'added';
   const message =
-    changed.length === 1 ? `Agent ${action} ${first.label}` : `Agent updated ${changed.length} cards`;
+    changed.length === 1
+      ? `Agent ${action} ${first.label}`
+      : `Agent updated ${changed.length} cards`;
 
   return { message, nodeIds };
 }
 
-export function tidyNodeUpdates(session: AtlasSession, options: TidyLayoutOptions = {}): TidyUpdate[] {
+export function focusedStoryNodeSummaries(session: AtlasSession): StoryFocusedNodeSummary[] {
+  const story = session.story;
+  if (!story?.active || !story.focusNodeIds.length) return [];
+
+  const nodesById = new Map(session.canvas.nodes.map((node) => [node.id, node]));
+  const calloutsByNode = new Map<string, StoryFocusedNodeSummary['callouts']>();
+  for (const callout of story.callouts) {
+    if (!callout.nodeId) continue;
+    const current = calloutsByNode.get(callout.nodeId) ?? [];
+    current.push({ severity: callout.severity, text: callout.text });
+    calloutsByNode.set(callout.nodeId, current);
+  }
+
+  const questionsByNode = new Map<string, StoryFocusedNodeSummary['questions']>();
+  for (const question of story.questions) {
+    if (!question.nodeId) continue;
+    const current = questionsByNode.get(question.nodeId) ?? [];
+    current.push({
+      owner: question.owner,
+      question: question.question,
+      status: question.status
+    });
+    questionsByNode.set(question.nodeId, current);
+  }
+
+  return story.focusNodeIds.flatMap((id) => {
+    const node = nodesById.get(id);
+    if (!node) return [];
+    return [
+      {
+        id: node.id,
+        label: node.label,
+        kind: node.kind,
+        owner: node.owner ?? 'Unassigned',
+        status: node.status,
+        notes: node.notes,
+        evidence: node.evidence,
+        callouts: calloutsByNode.get(node.id) ?? [],
+        questions: questionsByNode.get(node.id) ?? []
+      }
+    ];
+  });
+}
+
+export function tidyNodeUpdates(
+  session: AtlasSession,
+  options: TidyLayoutOptions = {}
+): TidyUpdate[] {
   const cursors = new Map<number, number>();
   const singleColumn = (boundedViewportWidth(options.viewportWidth) ?? Infinity) < 760;
   const kindColumn = kindColumnForViewport(options.viewportWidth);

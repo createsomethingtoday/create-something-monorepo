@@ -1,4 +1,4 @@
-import type { AtlasCanvasNode, AtlasSession } from '../types.js';
+import type { AtlasCanvasNode, AtlasCanvasNodeKind, AtlasSession } from '../types.js';
 export type CanvasDetailMode = 'compact' | 'standard' | 'detail';
 type ActivitySummary = {
     message: string;
@@ -13,9 +13,28 @@ type TidyUpdate = {
 type TidyLayoutOptions = {
     viewportWidth?: number;
 };
+export type StoryFocusedNodeSummary = {
+    id: string;
+    label: string;
+    kind: AtlasCanvasNodeKind;
+    owner: string;
+    status: AtlasCanvasNode['status'];
+    notes?: string;
+    evidence?: string;
+    callouts: Array<{
+        severity: 'decision' | 'info' | 'risk';
+        text: string;
+    }>;
+    questions: Array<{
+        owner?: string;
+        question: string;
+        status: 'answered' | 'open';
+    }>;
+};
 export declare function detailModeForZoom(zoom: number): CanvasDetailMode;
 export declare function nodeWidthForMode(node: AtlasCanvasNode, mode: CanvasDetailMode): number;
 export declare function agentActivityFromSessionChange(previous: AtlasSession | null, next: AtlasSession): ActivitySummary | null;
+export declare function focusedStoryNodeSummaries(session: AtlasSession): StoryFocusedNodeSummary[];
 export declare function tidyNodeUpdates(session: AtlasSession, options?: TidyLayoutOptions): TidyUpdate[];
 export {};
 //# sourceMappingURL=layout.d.ts.map

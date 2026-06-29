@@ -35,7 +35,12 @@ function kindColumnForViewport(viewportWidth) {
         const rightX = Math.min(396, Math.max(328, width - 420));
         const columns = [
             { index: 0, kinds: ['actor', 'data', 'touchpoint'], x: 48, y: 124 },
-            { index: 1, kinds: ['system', 'ai', 'human', 'constraint'], x: rightX, y: 124 }
+            {
+                index: 1,
+                kinds: ['system', 'ai', 'human', 'constraint'],
+                x: rightX,
+                y: 124
+            }
         ];
         return new Map(columns.flatMap((column) => column.kinds.map((kind) => [kind, column])));
     }
@@ -94,8 +99,54 @@ export function agentActivityFromSessionChange(previous, next) {
     const nodeIds = changed.map((node) => node.id);
     const first = changed[0];
     const action = previousNodes.has(first.id) ? 'updated' : 'added';
-    const message = changed.length === 1 ? `Agent ${action} ${first.label}` : `Agent updated ${changed.length} cards`;
+    const message = changed.length === 1
+        ? `Agent ${action} ${first.label}`
+        : `Agent updated ${changed.length} cards`;
     return { message, nodeIds };
+}
+export function focusedStoryNodeSummaries(session) {
+    const story = session.story;
+    if (!story?.active || !story.focusNodeIds.length)
+        return [];
+    const nodesById = new Map(session.canvas.nodes.map((node) => [node.id, node]));
+    const calloutsByNode = new Map();
+    for (const callout of story.callouts) {
+        if (!callout.nodeId)
+            continue;
+        const current = calloutsByNode.get(callout.nodeId) ?? [];
+        current.push({ severity: callout.severity, text: callout.text });
+        calloutsByNode.set(callout.nodeId, current);
+    }
+    const questionsByNode = new Map();
+    for (const question of story.questions) {
+        if (!question.nodeId)
+            continue;
+        const current = questionsByNode.get(question.nodeId) ?? [];
+        current.push({
+            owner: question.owner,
+            question: question.question,
+            status: question.status
+        });
+        questionsByNode.set(question.nodeId, current);
+    }
+    return story.focusNodeIds.flatMap((id) => {
+        const node = nodesById.get(id);
+        if (!node)
+            return [];
+        return [
+            {
+                id: node.id,
+                label: node.label,
+                kind: node.kind,
+                owner: node.owner ?? 'Unassigned',
+                status: node.status,
+                notes: node.notes,
+                evidence: node.evidence,
+                callouts: calloutsByNode.get(node.id) ?? [],
+                questions: questionsByNode.get(node.id) ?? []
+            }
+        ];
+    });
 }
 export function tidyNodeUpdates(session, options = {}) {
     const cursors = new Map();
