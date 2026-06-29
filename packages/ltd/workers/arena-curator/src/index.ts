@@ -1,8 +1,8 @@
 /**
  * Arena Curator - Programmatic Content Discovery
  *
- * Automatically discovers and curates Are.na blocks based on
- * deterministic search queries and filter rules.
+ * Discovers candidate Are.na blocks based on deterministic search queries and
+ * filter rules. It is proposal-only: humans decide what belongs in Are.na.
  *
  * Philosophy: Reliability over magic. The tool recedes into
  * predictable, sustainable operation.
@@ -10,10 +10,7 @@
  * Cron: Weekly on Sundays at 6am UTC
  */
 
-interface Env {
-	API_BASE: string;
-	ARENA_API_TOKEN: string;
-}
+interface Env {}
 
 interface ArenaBlock {
 	id: number;
@@ -29,6 +26,10 @@ interface SearchResponse {
 	blocks: ArenaBlock[];
 	total_pages: number;
 	current_page: number;
+}
+
+interface ChannelResponse {
+	contents?: ArenaBlock[];
 }
 
 /**
@@ -57,7 +58,7 @@ const CURATION_CONFIG = {
 			'apple', 'iphone', 'macbook', 'trendy', 'gradient',
 			'colorful', 'busy', 'complex', 'maximalist'
 		],
-		// Maximum blocks to add per run
+		// Maximum blocks to propose per run
 		maxPerRun: 3
 	},
 	'motion-language-4hbfmugttwe': {
@@ -161,7 +162,7 @@ async function getChannelBlockIds(slug: string): Promise<Set<number>> {
 		return new Set();
 	}
 
-	const data = await response.json();
+	const data = await response.json() as ChannelResponse;
 	const ids = new Set<number>();
 	for (const block of data.contents || []) {
 		ids.add(block.id);
@@ -178,7 +179,8 @@ function scoreBlock(
 	config: typeof CURATION_CONFIG[ChannelSlug]
 ): number {
 	// Must be an accepted type
-	if (!config.acceptTypes.includes(block.class)) {
+	const acceptTypes: readonly string[] = config.acceptTypes;
+	if (!acceptTypes.includes(block.class)) {
 		return 0;
 	}
 
@@ -217,40 +219,13 @@ function scoreBlock(
 }
 
 /**
- * Connect a block to a channel via our API
- */
-async function connectBlock(
-	channel: string,
-	blockId: number,
-	env: Env
-): Promise<boolean> {
-	const response = await fetch(`${env.API_BASE}/api/arena/connect`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'User-Agent': 'arena-curator/1.0'
-		},
-		body: JSON.stringify({ channel, blockId })
-	});
-
-	if (!response.ok) {
-		const error = await response.text();
-		console.error(`Failed to connect block ${blockId}: ${error}`);
-		return false;
-	}
-
-	return true;
-}
-
-/**
  * Curate content for a single channel
  */
 async function curateChannel(
-	slug: ChannelSlug,
-	env: Env
-): Promise<{ discovered: number; connected: number; errors: string[] }> {
+	slug: ChannelSlug
+): Promise<{ discovered: number; proposed: number; errors: string[] }> {
 	const config = CURATION_CONFIG[slug];
-	const result = { discovered: 0, connected: 0, errors: [] as string[] };
+	const result = { discovered: 0, proposed: 0, errors: [] as string[] };
 
 	// Get existing blocks to avoid duplicates
 	const existingIds = await getChannelBlockIds(slug);
@@ -281,22 +256,13 @@ async function curateChannel(
 
 	// Sort by score and take top N
 	candidates.sort((a, b) => b.score - a.score);
-	const toConnect = candidates.slice(0, config.maxPerRun);
+	const proposed = candidates.slice(0, config.maxPerRun);
+	result.proposed = proposed.length;
 
-	console.log(`Channel ${slug}: ${candidates.length} candidates, connecting ${toConnect.length}`);
+	console.log(`Channel ${slug}: ${candidates.length} candidates, proposing ${proposed.length}`);
 
-	// Connect top candidates
-	for (const { block, score } of toConnect) {
-		console.log(`Connecting block ${block.id} (score: ${score}): ${block.title || 'Untitled'}`);
-		const success = await connectBlock(slug, block.id, env);
-		if (success) {
-			result.connected++;
-		} else {
-			result.errors.push(`Failed to connect ${block.id}`);
-		}
-
-		// Rate limiting between connections
-		await new Promise(resolve => setTimeout(resolve, 1000));
+	for (const { block, score } of proposed) {
+		console.log(`Proposed block ${block.id} (score: ${score}): ${block.title || 'Untitled'}`);
 	}
 
 	return result;
@@ -305,22 +271,22 @@ async function curateChannel(
 export default {
 	async scheduled(
 		event: ScheduledEvent,
-		env: Env,
-		ctx: ExecutionContext
+		_env: Env,
+		_ctx: ExecutionContext
 	): Promise<void> {
 		console.log(`Arena curator triggered at ${new Date().toISOString()}`);
 		console.log(`Cron: ${event.cron}`);
 
-		const results: Record<string, { discovered: number; connected: number; errors: string[] }> = {};
+		const results: Record<string, { discovered: number; proposed: number; errors: string[] }> = {};
 
 		for (const slug of Object.keys(CURATION_CONFIG) as ChannelSlug[]) {
 			try {
-				results[slug] = await curateChannel(slug, env);
+				results[slug] = await curateChannel(slug);
 			} catch (error) {
 				console.error(`Error curating ${slug}:`, error);
 				results[slug] = {
 					discovered: 0,
-					connected: 0,
+					proposed: 0,
 					errors: [error instanceof Error ? error.message : 'Unknown error']
 				};
 			}
@@ -328,32 +294,32 @@ export default {
 
 		// Summary
 		const totalDiscovered = Object.values(results).reduce((sum, r) => sum + r.discovered, 0);
-		const totalConnected = Object.values(results).reduce((sum, r) => sum + r.connected, 0);
+		const totalProposed = Object.values(results).reduce((sum, r) => sum + r.proposed, 0);
 		const totalErrors = Object.values(results).reduce((sum, r) => sum + r.errors.length, 0);
 
 		console.log(`Curation complete:`, {
 			totalDiscovered,
-			totalConnected,
+			totalProposed,
 			totalErrors,
 			channels: results
 		});
 	},
 
 	// Allow manual trigger via HTTP for testing
-	async fetch(request: Request, env: Env): Promise<Response> {
+	async fetch(request: Request, _env: Env): Promise<Response> {
 		if (request.method !== 'POST') {
 			return new Response('POST to trigger curation', { status: 405 });
 		}
 
-		const results: Record<string, { discovered: number; connected: number; errors: string[] }> = {};
+		const results: Record<string, { discovered: number; proposed: number; errors: string[] }> = {};
 
 		for (const slug of Object.keys(CURATION_CONFIG) as ChannelSlug[]) {
 			try {
-				results[slug] = await curateChannel(slug, env);
+				results[slug] = await curateChannel(slug);
 			} catch (error) {
 				results[slug] = {
 					discovered: 0,
-					connected: 0,
+					proposed: 0,
 					errors: [error instanceof Error ? error.message : 'Unknown error']
 				};
 			}
