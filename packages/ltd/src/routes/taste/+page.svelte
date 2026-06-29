@@ -3,9 +3,13 @@
   import ImageLightbox from '$lib/components/taste/ImageLightbox.svelte';
   import {
     Button,
+    ClearCardGrid,
+    ClearCtaBand,
     ClearMetadataRail,
     ClearPageSection,
     SEO,
+    type ClearCardItem,
+    type ClearCtaItem,
     type ClearMetadataGroup
   } from '@create-something/canon';
 
@@ -77,6 +81,186 @@
       ]
     }
   ]);
+
+  const tasteEvidenceGroups = $derived<ClearMetadataGroup[]>([
+    {
+      title: 'Observed corpus',
+      items: [
+        { label: 'Examples', value: String(data.stats.examples) },
+        { label: 'Resources', value: String(data.stats.resources) },
+        { label: 'Last sync', value: formatDate(data.stats.lastSync) }
+      ]
+    },
+    {
+      title: 'System posture',
+      items: [
+        { label: 'Agent context', value: 'Active', href: '/llm.txt' },
+        { label: 'Context API', value: 'Active', href: '/api/taste/context' },
+        { label: 'Ona benchmark', value: 'Required', href: '/standards' },
+        { label: 'Self healing', value: 'Partial' }
+      ]
+    }
+  ]);
+
+  const onaLoopGroups: ClearMetadataGroup[] = [
+    {
+      title: 'Reference',
+      items: [
+        { label: 'Public pattern', value: 'Ona.com', href: 'https://ona.com' },
+        { label: 'Local standard', value: 'Clear Communication UI', href: '/standards' }
+      ]
+    },
+    {
+      title: 'Review gate',
+      items: [
+        { label: 'Feed discovery', value: 'Proposal only' },
+        { label: 'Human interface', value: 'Agent and mobile first' },
+        { label: 'Copy rule', value: 'Plain, direct, outcome first' },
+        { label: 'Design rule', value: 'Light, legible, proof nearby' }
+      ]
+    }
+  ];
+
+  const sampleTasteSystemGroups: ClearMetadataGroup[] = [
+    {
+      title: 'Input',
+      items: [
+        { label: 'Client sources', value: 'product, brand, competitors' },
+        { label: 'Corpus', value: 'references and examples' }
+      ]
+    },
+    {
+      title: 'Output',
+      items: [
+        { label: 'Principles', value: 'decision language' },
+        { label: 'Standards', value: 'AI-ready context pack' },
+        { label: 'Implementation', value: 'site, product, workflow' }
+      ]
+    }
+  ];
+
+  const tasteSystemCards: ClearCardItem[] = [
+    {
+      eyebrow: '01',
+      icon: 'folder',
+      title: 'Reference corpus',
+      detail: 'Gather the visual, product, and workflow examples that show what good already means.'
+    },
+    {
+      eyebrow: '02',
+      icon: 'search',
+      title: 'Taste principles',
+      detail: 'Read the corpus for repeatable judgment: restraint, hierarchy, pacing, and proof.'
+    },
+    {
+      eyebrow: '03',
+      icon: 'document',
+      title: 'Reusable standards',
+      detail: 'Turn subjective preference into artifacts an operator, designer, or agent can follow.'
+    },
+    {
+      eyebrow: '04',
+      icon: 'settings',
+      title: 'Implementation direction',
+      detail: 'Apply the standards to a page, product surface, content system, or automation workflow.'
+    }
+  ];
+
+  const tasteEvidenceCards: ClearCardItem[] = [
+    {
+      eyebrow: 'Surface',
+      icon: 'folder',
+      title: 'Gallery informs proof',
+      detail: '/taste reads synced D1 examples and resources from the arena-taste corpus.',
+      href: '#source-channels'
+    },
+    {
+      eyebrow: 'Context',
+      icon: 'document',
+      title: 'Corpus informs agents',
+      detail: '/llm.txt and /api/taste/context expose principles, source channels, and token mappings.',
+      href: '/api/taste/context'
+    },
+    {
+      eyebrow: 'Canon',
+      icon: 'settings',
+      title: 'References inform standards',
+      detail: 'The context maps Rams, Swiss design, motion, and minimalism into reusable design language.'
+    },
+    {
+      eyebrow: 'Status',
+      icon: 'warning',
+      title: 'Self healing is partial',
+      detail: 'Sync can refresh records, but canon and product standards still need operator approval.'
+    }
+  ];
+
+  const onaLoopCards: ClearCardItem[] = [
+    {
+      eyebrow: 'Observe',
+      icon: 'search',
+      title: 'Search the feed for Ona-like signals',
+      detail: 'Use Are.na discovery to propose references with literal offers, quiet surfaces, visible proof, and direct actions.'
+    },
+    {
+      eyebrow: 'Translate',
+      icon: 'settings',
+      title: 'Convert patterns into Canon',
+      detail: 'Use owned tokens and primitives for light surfaces, crisp borders, compact navigation, and readable hierarchy.'
+    },
+    {
+      eyebrow: 'Audit',
+      icon: 'check',
+      title: 'Review from an operator phone',
+      detail: 'Give the human a mobile-first approve, reject, or redirect interface while the agent carries the full context.'
+    },
+    {
+      eyebrow: 'Improve',
+      icon: 'arrow-right',
+      title: 'Ship reviewed corrections',
+      detail: 'Let TASTE propose design and language updates, then promote them through normal checks and operator approval.'
+    }
+  ];
+
+  const principleCards: ClearCardItem[] = [
+    {
+      title: 'Negative Space',
+      detail: 'Let elements breathe. Absence is presence.'
+    },
+    {
+      title: 'Monochrome First',
+      detail: 'Color as emphasis, not decoration.'
+    },
+    {
+      title: 'Typography as Structure',
+      detail: 'Type creates hierarchy without ornament.'
+    },
+    {
+      title: 'Purposeful Motion',
+      detail: 'Animation reveals state and guides attention.'
+    }
+  ];
+
+  const businessCtaItems: ClearCtaItem[] = [
+    {
+      label: 'Audit',
+      icon: 'search',
+      title: 'Map the current taste signals',
+      detail: 'Pull the strongest internal, external, and competitor references into one corpus.'
+    },
+    {
+      label: 'System',
+      icon: 'document',
+      title: 'Package the standards',
+      detail: 'Translate the corpus into principles, source rules, and implementation criteria.'
+    },
+    {
+      label: 'Deploy',
+      icon: 'arrow-right',
+      title: 'Use it where money moves',
+      detail: 'Apply the taste system to web, product, content, and AI-assisted delivery.'
+    }
+  ];
 </script>
 
 <SEO
@@ -112,6 +296,108 @@
       groups={tasteMetadataGroups}
       tags={['human curation', 'source channels', 'derived principles']}
       ariaLabel="Taste reference metadata"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  id="taste-system"
+  variant="white"
+  layout="split"
+  eyebrow="Taste system"
+  title="Turn taste into standards a team can execute."
+  description="TASTE is the commercial angle for the Are.na corpus: a way to convert human curation into product standards, creative direction, and AI context that can shape revenue-generating work."
+>
+  {#snippet actions()}
+    <Button href="https://createsomething.agency">Build This For Your Product</Button>
+    <Button href="#source-channels" variant="secondary">Inspect The Corpus</Button>
+  {/snippet}
+
+  {#snippet aside()}
+    <ClearMetadataRail
+      eyebrow="Deliverable"
+      title="Taste system report"
+      description="A practical artifact for founders, teams, and agents."
+      groups={sampleTasteSystemGroups}
+      tags={['reference corpus', 'decision standards', 'implementation']}
+      ariaLabel="Taste system deliverable metadata"
+    />
+  {/snippet}
+
+  {#snippet after()}
+    <ClearCardGrid
+      items={tasteSystemCards}
+      columns={4}
+      density="compact"
+      ariaLabel="Taste system workflow"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  id="taste-evidence"
+  variant="soft"
+  layout="split"
+  eyebrow="Operating evidence"
+  title="How TASTE informs CREATE SOMETHING today."
+  description="TASTE is already feeding the public proof surface, the agent-readable context layer, and the canon vocabulary. It is not complete self-healing yet: the system can ingest and refresh references, but it does not automatically rewrite standards or deploy product changes without review."
+>
+  {#snippet actions()}
+    <Button href="/llm.txt">Read Agent Context</Button>
+    <Button href="/api/taste/context" variant="secondary">Inspect Context API</Button>
+  {/snippet}
+
+  {#snippet aside()}
+    <ClearMetadataRail
+      eyebrow="Observed"
+      title="Current system state"
+      description="Evidence from the live corpus and exposed context surfaces."
+      groups={tasteEvidenceGroups}
+      tags={['active context', 'partial automation', 'operator gated']}
+      ariaLabel="Taste system evidence metadata"
+    />
+  {/snippet}
+
+  {#snippet after()}
+    <ClearCardGrid
+      items={tasteEvidenceCards}
+      columns={4}
+      density="compact"
+      ariaLabel="Taste operating evidence"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  id="ona-loop"
+  variant="white"
+  layout="split"
+  eyebrow="Continuous improvement"
+  title="Use TASTE to keep Ona-level clarity alive."
+  description="The loop is not passive inspiration. TASTE should continuously compare CREATE SOMETHING surfaces against Ona.com's clear communication pattern, translate the useful parts into Canon primitives, and produce reviewed design and language corrections through an agent-first, mobile-first operator interface."
+>
+  {#snippet actions()}
+    <Button href="/standards">Read The Standard</Button>
+    <Button href="https://ona.com" variant="secondary">Inspect Ona.com</Button>
+  {/snippet}
+
+  {#snippet aside()}
+    <ClearMetadataRail
+      eyebrow="Control loop"
+      title="Ona clarity benchmark"
+      description="A reusable review path for product, site, and agent-output improvements."
+      groups={onaLoopGroups}
+      tags={['clear language', 'owned canon', 'reviewed corrections']}
+      ariaLabel="Ona clarity loop metadata"
+    />
+  {/snippet}
+
+  {#snippet after()}
+    <ClearCardGrid
+      items={onaLoopCards}
+      columns={4}
+      density="compact"
+      ariaLabel="Ona clarity continuous improvement loop"
     />
   {/snippet}
 </ClearPageSection>
@@ -215,43 +501,33 @@
   </section>
 {/if}
 
-<!-- Principles -->
-<section class="principles-section">
-  <div class="max-w-4xl mx-auto px-6">
-    <h2 class="section-title">Derived Principles</h2>
+<ClearPageSection
+  variant="soft"
+  eyebrow="Derived principles"
+  title="What the corpus teaches."
+  description="Taste is not imitation. References reveal the aesthetic; implementations express it."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={principleCards}
+      columns={4}
+      density="compact"
+      ariaLabel="Derived taste principles"
+    />
+  {/snippet}
+</ClearPageSection>
 
-    <div class="principles-grid">
-      <div class="principle-card">
-        <h3 class="principle-name">Negative Space</h3>
-        <p class="principle-desc">Let elements breathe. Absence is presence.</p>
-      </div>
-      <div class="principle-card">
-        <h3 class="principle-name">Monochrome First</h3>
-        <p class="principle-desc">Color as emphasis, not decoration.</p>
-      </div>
-      <div class="principle-card">
-        <h3 class="principle-name">Typography as Structure</h3>
-        <p class="principle-desc">Type creates hierarchy without ornament.</p>
-      </div>
-      <div class="principle-card">
-        <h3 class="principle-name">Purposeful Motion</h3>
-        <p class="principle-desc">Animation reveals state, guides attention.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Footer CTA -->
-<section class="cta-section">
-  <div class="max-w-4xl mx-auto px-6 text-center">
-    <p class="cta-text">
-      Taste is not imitation. References reveal the aesthetic; implementations express it.
-    </p>
-    <a href="https://www.are.na/create-something" target="_blank" rel="noopener" class="cta-link">
-      Inspect the source channel
-    </a>
-  </div>
-</section>
+<ClearCtaBand
+  eyebrow="Taste system sprint"
+  title="Build a taste system your team and agents can use."
+  description="Use TASTE to turn curation into direction for pages, product surfaces, content systems, and AI-assisted delivery."
+  items={businessCtaItems}
+>
+  {#snippet actions()}
+    <Button href="https://createsomething.agency">Start With A Taste System</Button>
+    <Button href="https://www.are.na/create-something" variant="secondary">Inspect The Source Channel</Button>
+  {/snippet}
+</ClearCtaBand>
 
 <!-- Image Lightbox -->
 {#if data.examples && data.examples.length > 0}
@@ -503,17 +779,6 @@
     color: var(--color-clear-ocean, #315cff);
   }
 
-  /* Principles */
-  .principles-section {
-    padding: var(--space-lg) 0;
-  }
-
-  .principles-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-md);
-  }
-
   @media (max-width: 640px) {
     :global(.taste-hero .clear-page-section__actions) {
       display: grid;
@@ -531,8 +796,7 @@
 
     .channels-section,
     .gallery-section,
-    .resources-section,
-    .principles-section {
+    .resources-section {
       padding: var(--space-md) 0;
     }
 
@@ -554,51 +818,5 @@
       width: fit-content;
       white-space: normal;
     }
-
-    .principles-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .principle-card {
-    padding: var(--space-sm);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
-  }
-
-  .principle-name {
-    font-size: var(--text-body);
-    font-weight: 600;
-    color: var(--color-fg-primary);
-    margin-bottom: 0.5rem;
-  }
-
-  .principle-desc {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
-  }
-
-  /* CTA */
-  .cta-section {
-    padding: var(--space-xl) 0;
-  }
-
-  .cta-text {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    margin-bottom: var(--space-md);
-  }
-
-  .cta-link {
-    font-size: var(--text-body);
-    font-weight: 500;
-    color: var(--color-fg-primary);
-    text-decoration: none;
-    transition: color var(--duration-micro) var(--ease-standard);
-  }
-
-  .cta-link:hover {
-    color: var(--color-clear-ocean, #315cff);
   }
 </style>
