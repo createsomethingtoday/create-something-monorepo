@@ -128,6 +128,7 @@
     "agent:solo-loop:starter": "node scripts/agent-solo-loop.mjs --starter",
     "agent:solo-loop:check": "node scripts/agent-solo-loop.mjs --check",
     "agent:solo-loop:test": "node --test scripts/test/agent-solo-loop.test.mjs",
+    "agent:skills:test": "node --test scripts/test/agent-skills-effectiveness.test.mjs",
     "agent:hermes:evaluate": "node scripts/hermes-agent-eval.mjs",
     "agent:hermes:evaluate:json": "node scripts/hermes-agent-eval.mjs --json",
     "agent:hermes:evaluate:strict": "node scripts/hermes-agent-eval.mjs --strict",
