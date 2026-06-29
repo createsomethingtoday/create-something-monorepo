@@ -8,7 +8,6 @@
     type ClearCardItem,
     type ClearCtaItem
   } from '@create-something/canon';
-  import WorkHistoryTimeline from '$lib/components/WorkHistoryTimeline.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const operatorStates = [
@@ -59,24 +58,6 @@
       label: 'Continuity',
       title: 'Care leaves a record',
       detail: 'Veterinary work made logging, ownership, and recovery paths feel concrete.'
-    }
-  ];
-
-  const dossierRows = [
-    {
-      label: 'Current role',
-      value: 'Senior Systems Architect',
-      detail: 'Marketplace Team at Webflow'
-    },
-    {
-      label: 'Primary work',
-      value: 'Workflow control layers',
-      detail: 'Scoped actions, approvals, evidence, and escalation surfaces'
-    },
-    {
-      label: 'Location',
-      value: 'Texas',
-      detail: 'Working with businesses across the US'
     }
   ];
 
@@ -186,6 +167,11 @@
       Today that shows up as calm, transparent, reliable workflow systems: fast where the rules are
       clear, visible where judgment is required, and recoverable when something goes wrong.
     </p>
+    <p>
+      I am a Senior Systems Architect on the Marketplace Team at Webflow. That work keeps the
+      problems concrete: brittle handoffs, unclear ownership, internal tools, onboarding systems,
+      integrations, and platform infrastructure that have to survive real operators.
+    </p>
   </div>
 
   {#snippet aside()}
@@ -213,56 +199,11 @@
   {/snippet}
 </ClearPageSection>
 
-<ClearPageSection variant="white" layout="split" eyebrow="Background" title="What I do now">
-  <div class="about-prose">
-    <p>
-      Micah Johnson. I am a Senior Systems Architect on the Marketplace Team at Webflow, where I
-      build internal tooling, onboarding systems, and platform infrastructure serving millions of
-      users. The problems are familiar: brittle handoffs, unclear ownership, and systems that look
-      automated until the exceptions show up.
-    </p>
-    <p>
-      I have shipped integrations across Salesforce, HubSpot, Notion, Slack, Procore, and internal
-      systems. That work informs where native tooling is enough, where MCP is the right integration path, and
-      where approvals, policies, operator briefs, and recovery paths are the difference between a
-      launch and a system people actually trust.
-    </p>
-  </div>
-
-  {#snippet aside()}
-    <aside class="operator-dossier" aria-label="Operator dossier">
-      <div class="operator-dossier__header">
-        <span>Operator</span>
-        <strong>Micah Johnson</strong>
-      </div>
-
-      <div class="dossier-rows">
-        {#each dossierRows as row}
-          <div class="dossier-row">
-            <span>{row.label}</span>
-            <strong>{row.value}</strong>
-            <p>{row.detail}</p>
-          </div>
-        {/each}
-      </div>
-
-      <div class="dossier-actions" aria-label="Contact links">
-        <a
-          href="https://www.linkedin.com/in/micahryanjohnson/"
-          target="_blank"
-          rel="noopener noreferrer">LinkedIn</a
-        >
-        <a href="mailto:micah@createsomething.agency">Email</a>
-      </div>
-    </aside>
-  {/snippet}
-</ClearPageSection>
-
 <ClearPageSection
   variant="soft"
   eyebrow="Working contract"
   title="The work stays narrow enough to trust."
-  description="The goal is not more automation. The goal is one operating path that lets the operator stop watching the dashboard until judgment is actually required."
+  description="The goal is not more automation. The goal is one operating path that lets the operator stop watching the dashboard until judgment is actually required. Salesforce, HubSpot, Notion, Slack, Procore, Webflow, MCP, and internal systems are only useful when the ownership and recovery path are clear."
 >
   {#snippet after()}
     <div class="contract-grid">
@@ -274,18 +215,6 @@
         </article>
       {/each}
     </div>
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  id="timeline"
-  variant="soft"
-  eyebrow="Timeline"
-  title="The through-line is operating trust."
-  description="The through-line is not AI. It is learning how to turn messy systems into operating paths people can trust. That pattern shows up in science, creative work, client services, marketplaces, and now automation."
->
-  {#snippet after()}
-    <WorkHistoryTimeline />
   {/snippet}
 </ClearPageSection>
 
@@ -324,11 +253,6 @@
       Client work informs the research. Research sharpens the operating model. The operating model
       raises the bar on client work.
     </p>
-  </div>
-</ClearPageSection>
-
-<ClearPageSection variant="soft" eyebrow="Also building" title="Also building">
-  <div class="about-prose">
     <p>
       I am also building <a href="https://workway.co" target="_blank" rel="noopener noreferrer"
         >WORKWAY</a
@@ -396,7 +320,6 @@
   }
 
   .signal-rail,
-  .operator-dossier,
   .contract-card {
     border: 1px solid var(--color-clear-border, #e1e1e1);
     border-radius: var(--radius-clear-sm, 4px);
@@ -412,8 +335,6 @@
 
   .rail-label,
   .signal-card span,
-  .operator-dossier__header span,
-  .dossier-row span,
   .contract-card span {
     color: var(--color-clear-grey-quiet, #818181);
     font-family: var(--font-mono);
@@ -434,7 +355,6 @@
   }
 
   .signal-card strong,
-  .dossier-row strong,
   .contract-card strong {
     font-size: 1rem;
     font-weight: var(--font-medium);
@@ -442,71 +362,11 @@
   }
 
   .signal-card p,
-  .dossier-row p,
   .contract-card p {
     margin: 0;
     color: var(--color-clear-grey, #636363);
     font-size: 0.94rem;
     line-height: 1.5;
-  }
-
-  .operator-dossier {
-    overflow: hidden;
-  }
-
-  .operator-dossier__header {
-    display: grid;
-    gap: 0.35rem;
-    padding: 1.15rem;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-    background:
-      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3.5rem
-        3.5rem,
-      var(--color-clear-panel, #ffffff);
-  }
-
-  .operator-dossier__header strong {
-    font-size: 1.34rem;
-    font-weight: var(--font-medium);
-    line-height: 1.1;
-  }
-
-  .dossier-rows {
-    display: grid;
-  }
-
-  .dossier-row {
-    display: grid;
-    gap: 0.32rem;
-    padding: 1rem 1.15rem;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-  }
-
-  .dossier-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .dossier-actions a {
-    display: inline-flex;
-    min-height: 3rem;
-    align-items: center;
-    justify-content: center;
-    border-right: 1px solid var(--color-clear-border, #e1e1e1);
-    color: var(--color-clear-onyx, #0a0e19);
-    font-size: 0.94rem;
-    font-weight: var(--font-medium);
-    text-decoration: none;
-  }
-
-  .dossier-actions a:last-child {
-    border-right: 0;
-  }
-
-  .dossier-actions a:hover {
-    background: var(--color-clear-onyx, #0a0e19);
-    color: #ffffff;
-    opacity: 1;
   }
 
   .contract-grid {
@@ -529,7 +389,6 @@
     }
 
     .signal-card,
-    .dossier-row,
     .contract-card {
       padding: 0.88rem;
     }
