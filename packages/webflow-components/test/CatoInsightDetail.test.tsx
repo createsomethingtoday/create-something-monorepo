@@ -22,6 +22,7 @@ test('allows the Cato Insight Detail hero card to be edited from props', () => {
   assert.match(html, /Resiliency Report/);
   assert.match(html, /Custom report card title/);
   assert.match(html, /Custom hero card summary for editors\./);
+  assert.match(html, /class="cato-cc-section cato-cc-hero" data-variant="detail"/);
   assert.match(html, /class="cato-cc-hero-grid" data-variant="detail"/);
   assert.match(html, /Review the archive/);
   assert.match(html, /href="\/resiliency-reports"/);
