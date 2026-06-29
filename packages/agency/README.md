@@ -115,7 +115,7 @@ The managed portfolio covers the high-intent public funnel:
 | Core services | `/services` | - |
 | Stack boundary | `/stack` | - |
 | Workflow tool stack | `/partners` | `/cloudflare`, `/notion` |
-| Dify | `/dify` | `/dify/mcp-control-plane`, `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`, `/dify/content-engine`, `/dify/n8n-vs-dify` |
+| Dify | `/dify` | `/dify/mcp-control-plane`, `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`, `/dify/n8n-vs-dify` |
 | Products | `/products` | - |
 | Business use case | `/use-cases/business` | - |
 | Enterprise use case | `/use-cases/enterprise` | - |
@@ -128,7 +128,6 @@ The Dify cluster is the first multi-page content system:
 | `/dify/mcp-control-plane` | Support | Teach the operating model: Dify surface, MCP boundary, Policy OS rule. |
 | `/dify/agent-eval-gates` | Operations | Show the gates that prove a Dify workflow can operate safely. |
 | `/dify/ship-dify-app-with-mcp-tools` | Implementation | Give a practical shipping checklist for Dify plus MCP systems. |
-| `/dify/content-engine` | Operations | Explain the routed Dify page portfolio and scoring model. |
 | `/dify/n8n-vs-dify` | Comparison | Capture comparison intent and route it toward the governed Dify workflow path. |
 
 The durable SEO/AEO strategy is:

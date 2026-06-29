@@ -347,7 +347,9 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
     <Button href="/dify" variant="secondary">Back To Dify</Button>
-    <Button href="/dify/content-engine" variant="secondary">See Dify Page Portfolio</Button>
+    <Button href="/dify/ship-dify-app-with-mcp-tools" variant="secondary"
+      >Read Shipping Guide</Button
+    >
     <Button href="https://createsomething.io/papers/eval-evidence-layer" variant="secondary">
       Read Eval Evidence Paper
     </Button>

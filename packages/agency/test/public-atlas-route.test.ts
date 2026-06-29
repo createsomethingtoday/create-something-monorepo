@@ -60,10 +60,10 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 		'/products'
 	]);
 	assert.ok(AGENCY_COMPACT_PRIVACY_PATHS.includes('/'));
-	assert.equal(AGENCY_DIFY_ARTICLE_PATHS.length, 5);
+	assert.equal(AGENCY_DIFY_ARTICLE_PATHS.length, 4);
 	assert.equal(isAgencyAtlasProofPath('/atlas/'), true);
 	assert.equal(isAgencyAtlasProofPath('/book'), false);
-	assert.equal(isAgencyDifyArticlePath('/dify/content-engine'), true);
+	assert.equal(isAgencyDifyArticlePath('/dify/content-engine'), false);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/services'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/dify/mcp-control-plane/'), true);

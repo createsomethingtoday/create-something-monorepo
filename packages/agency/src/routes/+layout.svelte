@@ -82,7 +82,6 @@
         { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
         { label: 'Dify Agent Eval Gates', href: '/dify/agent-eval-gates' },
         { label: 'Ship Dify With MCP', href: '/dify/ship-dify-app-with-mcp-tools' },
-        { label: 'Dify Page Portfolio', href: '/dify/content-engine' },
         { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
         {
           label: agencyCoreMessaging.governanceChecklistLabel,
@@ -194,30 +193,7 @@
       description: 'Dify workflow systems with MCP boundaries, eval gates, and readable evidence',
       href: '/dify',
       icon: 'D',
-      keywords: [
-        'dify',
-        'workflow systems',
-        'mcp',
-        'eval gates',
-        'agent runtime',
-        'control layer'
-      ]
-    },
-    {
-      id: 'nav-dify-content',
-      label: 'Dify Page Portfolio',
-      description:
-        'Dify page portfolio with canonical explanations, route decisions, and strength scoring',
-      href: '/dify/content-engine',
-      icon: 'DC',
-      keywords: [
-        'dify',
-        'page portfolio',
-        'content system',
-        'canonical pages',
-        'route scoring',
-        'workflow pages'
-      ]
+      keywords: ['dify', 'workflow systems', 'mcp', 'eval gates', 'agent runtime', 'control layer']
     },
     {
       id: 'nav-dify-eval-gates',
