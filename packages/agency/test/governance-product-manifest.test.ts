@@ -34,6 +34,9 @@ test('governance product manifest gives Atlas and agents stable public paths', (
 
 	assert.equal(governanceProductPublicPath('atlas'), '/atlas');
 	assert.equal(governanceProductRuntimePath('atlas'), '/api/governance/products');
+	assert.equal(manifest.attachmentGraphApi.path, '/api/governance/graph');
+	assert.equal(manifest.attachmentGraphApi.requiresCredential, true);
+	assert.deepEqual(manifest.attachmentGraphApi.attaches, ['atlas', 'signal', 'decision', 'proof']);
 	assert.equal(publicPaths.get('atlas'), '/atlas');
 	assert.equal(publicPaths.get('signal'), '/products/signal');
 	assert.equal(publicPaths.get('decision'), '/products/decision');
@@ -91,7 +94,9 @@ test('governance product manifest API returns the runtime-readable contract', as
 	assert.equal(response.status, 200);
 	assert.equal(response.headers.get('cache-control'), 'max-age=300');
 	assert.equal(payload.apiPath, '/api/governance/products');
+	assert.equal(payload.attachmentGraphApi.path, '/api/governance/graph');
 	assert.equal(payload.agentContract.primaryConsumer, 'atlas');
+	assert.equal(payload.agentContract.attachmentGraphApiPath, '/api/governance/graph');
 	assert.deepEqual(payload.agentContract.requiredLoop, ['atlas', 'signal', 'decision', 'proof']);
 	assert.equal(payload.products.length, 4);
 	assert.equal(payload.runtimeApis.length, 4);

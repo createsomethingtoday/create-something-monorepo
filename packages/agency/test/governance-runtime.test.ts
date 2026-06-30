@@ -9,7 +9,9 @@ import {
 	listGovernanceProofs,
 	listGovernanceSignals
 } from '../src/lib/server/governance-runtime.ts';
+import { buildGovernanceAttachmentGraph } from '../src/lib/server/governance-graph.ts';
 import { GET as getDecisions, POST as postDecision } from '../src/routes/api/governance/decisions/+server.ts';
+import { GET as getGraph } from '../src/routes/api/governance/graph/+server.ts';
 import { POST as postSourceUpdate } from '../src/routes/api/governance/intake/source-update/+server.ts';
 import { GET as getProofs, POST as postProof } from '../src/routes/api/governance/proofs/+server.ts';
 import { GET as getSignals, POST as postSignal } from '../src/routes/api/governance/signals/+server.ts';
@@ -187,6 +189,22 @@ function event(db: FakeD1, url = 'https://createsomething.agency/api/governance/
 	} as never;
 }
 
+function credentialedGetEvent(
+	db: FakeD1,
+	url = 'https://createsomething.agency/api/governance/graph',
+	options: { configuredKey?: string; providedKey?: string | null } = {}
+) {
+	const configuredKey = options.configuredKey ?? 'test-internal-key';
+	const providedKey = options.providedKey === undefined ? configuredKey : options.providedKey;
+	const headers = new Headers();
+	if (providedKey) headers.set('authorization', `Bearer ${providedKey}`);
+	return {
+		platform: { env: { DB: db, AGENCY_INTERNAL_API_KEY: configuredKey } },
+		request: new Request(url, { headers }),
+		url: new URL(url)
+	} as never;
+}
+
 function postEvent(
 	db: FakeD1,
 	body: Record<string, unknown>,
@@ -350,6 +368,91 @@ test('governance APIs create and filter runtime records', async () => {
 	assert.equal((await filteredSignals.json()).count, 1);
 	assert.equal((await filteredDecisions.json()).decisions[0].id, decisionPayload.decision.id);
 	assert.equal((await filteredProofs.json()).proofs[0].outcome, 'passed');
+});
+
+test('governance graph composes Atlas Signal Decision Proof attachments by canvas', async () => {
+	const db = new FakeD1();
+	const signal = await createGovernanceSignal(db as unknown as Parameters<typeof createGovernanceSignal>[0], {
+		atlasCanvasId: 'canvas_graph',
+		atlasNodeId: 'node_api',
+		source: 'slack:#api-updates',
+		title: 'API update needs review',
+		summary: 'Docs and reviewer process need a coordinated review.'
+	});
+	const decision = await createGovernanceDecision(
+		db as unknown as Parameters<typeof createGovernanceDecision>[0],
+		{
+			signalId: signal.id,
+			atlasCanvasId: signal.atlas_canvas_id,
+			atlasNodeId: signal.atlas_node_id,
+			decisionState: 'wait',
+			decisionOwner: 'docs-reviewer@example.com',
+			reason: 'Wait for docs and process review.'
+		}
+	);
+	const proof = await createGovernanceProof(db as unknown as Parameters<typeof createGovernanceProof>[0], {
+		signalId: signal.id,
+		decisionId: decision.id,
+		atlasCanvasId: signal.atlas_canvas_id,
+		atlasNodeId: signal.atlas_node_id,
+		evidence: 'Review receipt was recorded.',
+		outcome: 'documented'
+	});
+
+	const graph = await buildGovernanceAttachmentGraph(
+		db as unknown as Parameters<typeof buildGovernanceAttachmentGraph>[0],
+		{
+			atlasCanvasId: 'canvas_graph',
+			limit: 100
+		}
+	);
+
+	assert.equal(graph.schemaVersion, 1);
+	assert.equal(graph.atlas.canvas_id, 'canvas_graph');
+	assert.deepEqual(graph.product_loop, ['atlas', 'signal', 'decision', 'proof']);
+	assert.deepEqual(
+		graph.nodes.map((node) => node.id),
+		[`atlas:canvas_graph`, `signal:${signal.id}`, `decision:${decision.id}`, `proof:${proof.id}`]
+	);
+	assert.deepEqual(
+		graph.attachments.map((attachment) => [
+			attachment.source,
+			attachment.target,
+			attachment.mode,
+			attachment.label
+		]),
+		[
+			[`atlas:canvas_graph`, `signal:${signal.id}`, 'connects', 'Atlas maps where the signal enters.'],
+			[`signal:${signal.id}`, `decision:${decision.id}`, 'produces', 'Signal produces a decision requirement.'],
+			[`decision:${decision.id}`, `proof:${proof.id}`, 'produces', 'Decision produces proof of the action or pause.'],
+			[`proof:${proof.id}`, `atlas:canvas_graph`, 'records', 'Proof records back onto the Atlas map.']
+		]
+	);
+
+	const response = await getGraph(
+		credentialedGetEvent(
+			db,
+			'https://createsomething.agency/api/governance/graph?atlas_canvas_id=canvas_graph'
+		)
+	);
+	const payload = await response.json();
+
+	assert.equal(response.status, 200);
+	assert.equal(payload.graph.atlas.canvas_id, 'canvas_graph');
+	assert.equal(payload.graph.nodes.length, 4);
+	assert.equal(payload.graph.attachments.length, 4);
+
+	const unauthorized = await getGraph(
+		credentialedGetEvent(
+			db,
+			'https://createsomething.agency/api/governance/graph?atlas_canvas_id=canvas_graph',
+			{ providedKey: null }
+		)
+	);
+	const unauthorizedPayload = await unauthorized.json();
+
+	assert.equal(unauthorized.status, 401);
+	assert.match(unauthorizedPayload.error, /governance write credential/i);
 });
 
 test('governance write APIs require the internal credential', async () => {

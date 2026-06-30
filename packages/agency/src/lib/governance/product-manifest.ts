@@ -51,12 +51,22 @@ export type GovernanceProductRuntimeApi = {
 	records: 'signals' | 'decisions' | 'proofs' | 'composition';
 };
 
+export type GovernanceProductAttachmentGraphApi = {
+	product: 'atlas';
+	path: '/api/governance/graph';
+	methods: ['GET'];
+	requiresCredential: true;
+	records: 'attachment_graph';
+	attaches: GovernanceProductId[];
+};
+
 export type GovernanceProductCompositionManifest = {
 	schemaVersion: 1;
 	id: typeof SIGNAL_DECISION_PROOF_COMPOSITION.id;
 	sourceOfTruth: '@create-something/canon/governance';
 	atlasHub: GovernanceProductId;
 	apiPath: '/api/governance/products';
+	attachmentGraphApi: GovernanceProductAttachmentGraphApi;
 	products: GovernanceProductManifestProduct[];
 	runtimeApis: GovernanceProductRuntimeApi[];
 	requiredLinks: GovernanceProductManifestLink[];
@@ -74,6 +84,7 @@ export type GovernanceProductCompositionManifest = {
 		operatorSurface: 'inbox-map-proof';
 		attachmentModes: GovernanceProductAttachmentMode[];
 		requiredLoop: GovernanceProductId[];
+		attachmentGraphApiPath: '/api/governance/graph';
 	};
 };
 
@@ -168,6 +179,17 @@ function buildRuntimeApis(products: GovernanceProductManifestProduct[]): Governa
 		.filter((api): api is GovernanceProductRuntimeApi => Boolean(api));
 }
 
+function buildAttachmentGraphApi(): GovernanceProductAttachmentGraphApi {
+	return {
+		product: 'atlas',
+		path: '/api/governance/graph',
+		methods: ['GET'],
+		requiresCredential: true,
+		records: 'attachment_graph',
+		attaches: [...SIGNAL_DECISION_PROOF_COMPOSITION.products]
+	};
+}
+
 export function buildGovernanceProductCompositionManifest(): GovernanceProductCompositionManifest {
 	const products = listGovernanceProducts().map(toManifestProduct);
 	const requiredLinks = SIGNAL_DECISION_PROOF_COMPOSITION.requiredLinks.map(toManifestLink);
@@ -185,6 +207,7 @@ export function buildGovernanceProductCompositionManifest(): GovernanceProductCo
 		sourceOfTruth: '@create-something/canon/governance',
 		atlasHub: SIGNAL_DECISION_PROOF_COMPOSITION.atlasHub,
 		apiPath: '/api/governance/products',
+		attachmentGraphApi: buildAttachmentGraphApi(),
 		products,
 		runtimeApis: buildRuntimeApis(products),
 		requiredLinks,
@@ -201,7 +224,8 @@ export function buildGovernanceProductCompositionManifest(): GovernanceProductCo
 			primaryConsumer: 'atlas',
 			operatorSurface: 'inbox-map-proof',
 			attachmentModes: ['connects', 'consumes', 'produces', 'records'],
-			requiredLoop: [...SIGNAL_DECISION_PROOF_COMPOSITION.products]
+			requiredLoop: [...SIGNAL_DECISION_PROOF_COMPOSITION.products],
+			attachmentGraphApiPath: '/api/governance/graph'
 		}
 	};
 }

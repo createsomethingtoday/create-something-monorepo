@@ -58,6 +58,7 @@ const checks = [];
 
 await checkPublicRoutes();
 await checkManifest();
+await checkGraphApiAuthGate();
 await checkMonitorAuthGate();
 await checkGithubWorkflow();
 await checkGithubSecrets();
@@ -167,6 +168,7 @@ async function checkManifest() {
 		const ready =
 			response.ok &&
 			body.productionReadiness?.ready === true &&
+			body.attachmentGraphApi?.path === '/api/governance/graph' &&
 			missingProducts.length === 0 &&
 			missingLinks.length === 0;
 
@@ -180,13 +182,38 @@ async function checkManifest() {
 				required_products: REQUIRED_PRODUCTS,
 				missing_products: missingProducts,
 				required_links: REQUIRED_LINKS,
-				missing_links: missingLinks
+				missing_links: missingLinks,
+				attachment_graph_api_path: body.attachmentGraphApi?.path ?? null
 			}
 		});
 	} catch (error) {
 		addCheck({
 			id: 'composition_manifest',
 			label: 'Governance composition manifest',
+			status: 'fail',
+			details: { error: errorMessage(error) }
+		});
+	}
+}
+
+async function checkGraphApiAuthGate() {
+	try {
+		const response = await fetch(`${baseUrl}/api/governance/graph`, { redirect: 'manual' });
+		const body = await safeText(response);
+		addCheck({
+			id: 'graph_api_auth_gate',
+			label: 'Governance graph API auth gate',
+			status: response.status === 401 ? 'pass' : 'fail',
+			details: {
+				expected_status: 401,
+				observed_status: response.status,
+				response_excerpt: body.slice(0, 160)
+			}
+		});
+	} catch (error) {
+		addCheck({
+			id: 'graph_api_auth_gate',
+			label: 'Governance graph API auth gate',
 			status: 'fail',
 			details: { error: errorMessage(error) }
 		});
