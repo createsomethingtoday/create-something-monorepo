@@ -25,6 +25,18 @@ const productsRoute = readFileSync(
 	new URL('../src/routes/products/+page.svelte', import.meta.url),
 	'utf8'
 );
+const signalProductRoute = readFileSync(
+	new URL('../src/routes/products/signal/+page.svelte', import.meta.url),
+	'utf8'
+);
+const decisionProductRoute = readFileSync(
+	new URL('../src/routes/products/decision/+page.svelte', import.meta.url),
+	'utf8'
+);
+const proofProductRoute = readFileSync(
+	new URL('../src/routes/products/proof/+page.svelte', import.meta.url),
+	'utf8'
+);
 const agencyStoryCanvasWrapper = readFileSync(
 	new URL('../src/lib/components/PublicAtlasStoryCanvas.svelte', import.meta.url),
 	'utf8'
@@ -57,7 +69,10 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 		'/atlas',
 		'/methodology',
 		'/stack',
-		'/products'
+		'/products',
+		'/products/signal',
+		'/products/decision',
+		'/products/proof'
 	]);
 	assert.ok(AGENCY_COMPACT_PRIVACY_PATHS.includes('/'));
 	assert.equal(AGENCY_DIFY_ARTICLE_PATHS.length, 4);
@@ -125,12 +140,31 @@ test('stack route uses a read-only story canvas to explain the boundary', () => 
 	assert.equal(stackRoute.includes('<PublicAtlasCanvas'), false);
 });
 
-test('products route uses a read-only story canvas to explain proof', () => {
-	assert.ok(productsRoute.includes('<PublicAtlasStoryCanvas'));
-	assert.ok(productsRoute.includes('starterId="construction-rfi-submittal-control"'));
-	assert.ok(productsRoute.includes('storyId="products-construction-proof-story"'));
-	assert.ok(productsRoute.includes('eyebrow="Proof canvas"'));
+test('products route exposes the governance product contract surfaces', () => {
+	assert.ok(productsRoute.includes("from '@create-something/canon/governance'"));
+	assert.ok(productsRoute.includes('listGovernanceProducts'));
+	assert.ok(productsRoute.includes('Atlas connects Signal, Decision, and Proof.'));
+	assert.ok(productsRoute.includes("href: product.id === 'atlas' ? '/atlas' : `/products/${product.id}`"));
 	assert.equal(productsRoute.includes('<PublicAtlasCanvas'), false);
+});
+
+test('Signal Decision and Proof product pages attach back to Atlas and each other', () => {
+	for (const route of [signalProductRoute, decisionProductRoute, proofProductRoute]) {
+		assert.ok(route.includes("from '@create-something/canon/governance'"));
+		assert.ok(route.includes('<GovernanceProductPage'));
+		assert.ok(route.includes("href: '/atlas'"));
+		assert.ok(route.includes("href: '/products'"));
+	}
+
+	assert.ok(signalProductRoute.includes("getGovernanceProduct('signal')"));
+	assert.ok(signalProductRoute.includes("href: '/products/decision'"));
+	assert.ok(signalProductRoute.includes("href: '/products/proof'"));
+	assert.ok(decisionProductRoute.includes("getGovernanceProduct('decision')"));
+	assert.ok(decisionProductRoute.includes("href: '/products/signal'"));
+	assert.ok(decisionProductRoute.includes("href: '/products/proof'"));
+	assert.ok(proofProductRoute.includes("getGovernanceProduct('proof')"));
+	assert.ok(proofProductRoute.includes("href: '/products/signal'"));
+	assert.ok(proofProductRoute.includes("href: '/products/decision'"));
 });
 
 test('story canvas uses stable overridable ids instead of fixed DOM ids', () => {
