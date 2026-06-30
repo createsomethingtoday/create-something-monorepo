@@ -31,7 +31,6 @@
 		data.currentPath === '/jobs' ||
 		data.currentPath === '/facilities' ||
 		data.currentPath === '/agents' ||
-		data.currentPath === '/style-guide' ||
 		data.currentPath === '/apply' ||
 		data.currentPath.startsWith('/apply/');
 	$: showCompactStaffAccess = isPublicIntakeRoute || !showInternalNavigation;
@@ -42,7 +41,6 @@
 					{ href: '/jobs', label: 'Jobs' },
 					{ href: '/facilities', label: 'Facilities' },
 					{ href: '/agents', label: 'Agents' },
-					{ href: '/style-guide', label: 'Style' },
 					{ href: '/apply', label: 'Start' }
 				]
 		: [
@@ -52,6 +50,7 @@
 				{ href: '/facilities', label: 'Facilities' },
 				{ href: '/apply', label: 'Apply' },
 				{ href: '/agents', label: 'Agents' },
+				{ href: '/style-guide', label: 'Style' },
 				{ href: '/chat', label: 'Workspace' },
 				{ href: '/settings', label: 'Settings' }
 			];
