@@ -21,6 +21,7 @@ if (args.dryRun) {
 				target_url: targetUrl,
 				key_env: keyEnv,
 				key_configured: Boolean(key?.trim()),
+				require_configured: Boolean(args.requireConfigured),
 				mode: 'dry_run'
 			},
 			null,
@@ -61,6 +62,17 @@ if (!response.ok) {
 	process.exit(1);
 }
 
+if (args.requireConfigured && isNotConfigured(body)) {
+	const message =
+		'Governance Slack monitor is deployed but not configured. Set SLACK_BOT_TOKEN and GOVERNANCE_SLACK_CHANNELS before scheduled production runs.';
+	if (args.json) {
+		console.error(message);
+	} else {
+		console.error(message);
+	}
+	process.exit(1);
+}
+
 function parseArgs(argv) {
 	const parsed = {};
 	for (let index = 0; index < argv.length; index += 1) {
@@ -73,6 +85,8 @@ function parseArgs(argv) {
 			parsed.dryRun = true;
 		} else if (arg === '--json') {
 			parsed.json = true;
+		} else if (arg === '--require-configured') {
+			parsed.requireConfigured = true;
 		} else if (arg === '--url') {
 			parsed.url = requireValue(argv, (index += 1), arg);
 		} else if (arg === '--base-url') {
@@ -115,6 +129,10 @@ function parseJson(value) {
 	}
 }
 
+function isNotConfigured(body) {
+	return Boolean(body && typeof body === 'object' && body.status === 'not_configured');
+}
+
 function printHelp() {
 	console.log(`Run the .agency governance Slack monitor.
 
@@ -128,6 +146,8 @@ Options:
   --key-env <name>   Environment variable containing the credential. Defaults to AGENCY_INTERNAL_API_KEY.
   --dry-run          Print target and credential presence without making a request.
   --json             Print a machine-readable response wrapper.
+  --require-configured
+                     Exit nonzero when the deployed monitor reports status: "not_configured".
   --help             Show this help text.
 `);
 }
