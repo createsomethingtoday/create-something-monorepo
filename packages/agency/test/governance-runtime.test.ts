@@ -10,6 +10,7 @@ import {
 	listGovernanceSignals
 } from '../src/lib/server/governance-runtime.ts';
 import { GET as getDecisions, POST as postDecision } from '../src/routes/api/governance/decisions/+server.ts';
+import { POST as postSourceUpdate } from '../src/routes/api/governance/intake/source-update/+server.ts';
 import { GET as getProofs, POST as postProof } from '../src/routes/api/governance/proofs/+server.ts';
 import { GET as getSignals, POST as postSignal } from '../src/routes/api/governance/signals/+server.ts';
 
@@ -382,6 +383,96 @@ test('governance write APIs require the internal credential', async () => {
 
 	assert.equal(notConfigured.status, 503);
 	assert.match(notConfiguredPayload.error, /AGENCY_INTERNAL_API_KEY/);
+});
+
+test('governance source intake creates Signals for documentation-impacting updates', async () => {
+	const db = new FakeD1();
+	const response = await postSourceUpdate(
+		postEvent(db, {
+			source_type: 'slack',
+			channel: '#api-updates',
+			message_url: 'https://slack.example/archives/C123/p456',
+			atlas_canvas_id: 'canvas_api_docs',
+			atlas_node_id: 'node_api_updates',
+			title: 'Checkout API added beta parameter',
+			text: 'The Checkout API added a beta response field. Public docs and OpenAPI reference need updates.',
+			payload: { slack_ts: '123.456' }
+		})
+	);
+	const payload = await response.json();
+
+	assert.equal(response.status, 201);
+	assert.equal(payload.action, 'signal_created');
+	assert.equal(payload.classification.requires_documentation_review, true);
+	assert.equal(payload.classification.requires_reviewer_process_review, false);
+	assert.equal(payload.signal.source, 'slack:#api-updates');
+	assert.equal(payload.signal.source_url, 'https://slack.example/archives/C123/p456');
+	assert.equal(payload.signal.atlas_canvas_id, 'canvas_api_docs');
+	assert.equal(payload.signal.atlas_node_id, 'node_api_updates');
+	assert.equal(payload.signal.payload.classification.requires_documentation_review, true);
+	assert.equal(payload.signal.payload.source_update.channel, '#api-updates');
+	assert.equal(payload.signal.payload.slack_ts, '123.456');
+
+	const signals = await listGovernanceSignals(db, { atlasCanvasId: 'canvas_api_docs' });
+	assert.equal(signals.length, 1);
+});
+
+test('governance source intake creates Signals for reviewer-process updates', async () => {
+	const db = new FakeD1();
+	const response = await postSourceUpdate(
+		postEvent(db, {
+			source_type: 'slack',
+			channel: '#review-ops',
+			text: 'Reviewer checklist now requires approval before marketplace submission exceptions are granted.'
+		})
+	);
+	const payload = await response.json();
+
+	assert.equal(response.status, 201);
+	assert.equal(payload.classification.requires_documentation_review, false);
+	assert.equal(payload.classification.requires_reviewer_process_review, true);
+	assert.equal(payload.signal.atlas_canvas_id, 'governance_source_updates');
+	assert.equal(payload.signal.atlas_node_id, 'watched_source_updates');
+});
+
+test('governance source intake ignores updates without governance impact', async () => {
+	const db = new FakeD1();
+	const response = await postSourceUpdate(
+		postEvent(db, {
+			source_type: 'slack',
+			channel: '#api-updates',
+			text: 'Heads up: the team lunch moved to noon.'
+		})
+	);
+	const payload = await response.json();
+
+	assert.equal(response.status, 202);
+	assert.equal(payload.action, 'ignored');
+	assert.equal(payload.signal, null);
+	assert.equal(payload.classification.requires_documentation_review, false);
+	assert.equal(payload.classification.requires_reviewer_process_review, false);
+
+	const signals = await listGovernanceSignals(db);
+	assert.equal(signals.length, 0);
+});
+
+test('governance source intake requires the internal credential', async () => {
+	const db = new FakeD1();
+	const response = await postSourceUpdate(
+		postEvent(
+			db,
+			{
+				source_type: 'slack',
+				channel: '#api-updates',
+				text: 'API endpoint changed.'
+			},
+			{ providedKey: null }
+		)
+	);
+	const payload = await response.json();
+
+	assert.equal(response.status, 401);
+	assert.match(payload.error, /governance write credential/i);
 });
 
 test('governance APIs report D1 as required runtime infrastructure', async () => {
