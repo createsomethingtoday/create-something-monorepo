@@ -7,6 +7,7 @@ import {
 	runGovernanceSlackMonitor
 } from '../src/lib/server/governance-slack-monitor.ts';
 import { POST as postSlackMonitor } from '../src/routes/api/governance/monitors/slack/+server.ts';
+import { GET as getSlackMonitorReadiness } from '../src/routes/api/governance/monitors/slack/readiness/+server.ts';
 
 type TableRow = Record<string, unknown>;
 
@@ -349,4 +350,63 @@ test('governance Slack monitor route reports missing config without throwing', a
 
 	assert.equal(response.status, 202);
 	assert.equal(payload.status, 'not_configured');
+});
+
+test('governance Slack monitor readiness route requires the internal credential', async () => {
+	const response = await getSlackMonitorReadiness(routeEvent(new FakeD1(), { providedKey: null }));
+	const payload = await response.json();
+
+	assert.equal(response.status, 401);
+	assert.match(payload.error, /governance write credential/i);
+});
+
+test('governance Slack monitor readiness route requires D1', async () => {
+	const response = await getSlackMonitorReadiness({
+		platform: {
+			env: {
+				AGENCY_INTERNAL_API_KEY: 'test-internal-key'
+			}
+		},
+		request: new Request('https://createsomething.agency/api/governance/monitors/slack/readiness', {
+			headers: { authorization: 'Bearer test-internal-key' }
+		})
+	} as never);
+	const payload = await response.json();
+
+	assert.equal(response.status, 503);
+	assert.match(payload.error, /D1 binding/i);
+});
+
+test('governance Slack monitor readiness route reports not_configured safely', async () => {
+	const response = await getSlackMonitorReadiness(
+		routeEvent(new FakeD1(), {
+			channels: '',
+			slackBotToken: ''
+		})
+	);
+	const payload = await response.json();
+
+	assert.equal(response.status, 200);
+	assert.equal(payload.readiness.status, 'not_configured');
+	assert.equal(payload.readiness.config.slack_bot_token_configured, false);
+	assert.equal(payload.readiness.config.channel_count, 0);
+	assert.equal(JSON.stringify(payload).includes('xoxb'), false);
+});
+
+test('governance Slack monitor readiness route reports configured channels without exposing token', async () => {
+	const response = await getSlackMonitorReadiness(
+		routeEvent(new FakeD1(), {
+			channels: 'C123|#api-updates|canvas_docs|node_api',
+			slackBotToken: 'xoxb-real-token'
+		})
+	);
+	const payload = await response.json();
+
+	assert.equal(response.status, 200);
+	assert.equal(payload.readiness.status, 'ready');
+	assert.equal(payload.readiness.config.slack_bot_token_configured, true);
+	assert.equal(payload.readiness.config.channel_count, 1);
+	assert.equal(payload.readiness.config.channels[0]?.channel_id, 'C123');
+	assert.equal(payload.readiness.config.channels[0]?.atlas_canvas_id, 'canvas_docs');
+	assert.equal(JSON.stringify(payload).includes('xoxb-real-token'), false);
 });

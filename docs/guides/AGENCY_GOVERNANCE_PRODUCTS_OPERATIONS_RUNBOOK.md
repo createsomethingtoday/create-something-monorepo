@@ -207,6 +207,7 @@ pnpm --filter @create-something/agency governance:readiness -- --json
 ```
 
 The audit is read-only and secret-safe. It checks public product routes, the composition manifest, the Slack monitor auth gate, the scheduled GitHub workflow, GitHub Actions secret names, Cloudflare Pages secret names, Pages vars, remote D1 migrations, and remote D1 governance tables. It prints only whether required secrets and vars are configured, never their values.
+It also checks the protected Slack monitor readiness endpoint auth gate at `/api/governance/monitors/slack/readiness`, which is the agent-readable runtime status surface for source intake configuration and cursor state.
 
 Expected production state before monitor source configuration is complete:
 
@@ -245,6 +246,7 @@ Do not manually reset `governance_source_cursors` unless the operator intentiona
 ## Source Anchors
 
 - `packages/agency/src/routes/api/governance/monitors/slack/+server.ts`
+- `packages/agency/src/routes/api/governance/monitors/slack/readiness/+server.ts`
 - `packages/agency/src/lib/server/governance-slack-monitor.ts`
 - `packages/agency/src/lib/server/governance-source-intake.ts`
 - `packages/agency/src/routes/admin/governance/+page.svelte`
