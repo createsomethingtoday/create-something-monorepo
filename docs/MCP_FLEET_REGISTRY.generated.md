@@ -8,7 +8,7 @@
 > `composio-toolkit-*` server list lives in
 > [`config/mcp-hub/registry.composio.generated.json`](../config/mcp-hub/registry.composio.generated.json).
 
-## Active (core, 47)
+## Active (core, 48)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -57,6 +57,7 @@
 | `webflow-local` | `http` | `https://webflow-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `webflow`, `review`, `plagiarism`, `frameworks`, `cs` |
 | `webflow-reviewer-exceptions-mcp` | `http` | `https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp` | `direct` | `7` | `webflow`, `review`, `airtable`, `templates`, `knowledge`, `cs` |
 | `webflow-template-review-mcp` | `http` | `https://webflow-template-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `templates`, `cs` |
+| `youtube-transcript-notion-claude-mcp` | `http` | `https://youtube-transcript-notion-claude-mcp.createsomething.workers.dev/mcp` | `direct` | `6` | `youtube`, `transcript`, `notion`, `claude`, `oauth`, `halfdozen`, `cs` |
 | `youtube-transcript-notion-mcp` | `http` | `https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `6` | `youtube`, `transcript`, `notion`, `dify`, `cs` |
 | `zendesk-mcp` | `http` | `https://zendesk-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `webflow`, `review`, `zendesk`, `support`, `cs` |
 

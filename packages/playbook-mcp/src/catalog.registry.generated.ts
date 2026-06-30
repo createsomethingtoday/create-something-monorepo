@@ -181,6 +181,18 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "authType": "bearer"
   },
   {
+    "name": "YouTube Transcript Notion Claude",
+    "slug": "youtube-transcript-notion-claude",
+    "url": "https://youtube-transcript-notion-claude-mcp.createsomething.workers.dev",
+    "description": "Claude-compatible OAuth wrapper for the existing YouTube transcript extraction and Notion transcript enrichment MCP.",
+    "category": "create-something",
+    "transports": [
+      "http"
+    ],
+    "requiresAuth": true,
+    "authType": "oauth"
+  },
+  {
     "name": "Gmail Sync",
     "slug": "gmail-sync",
     "url": "https://gmail.mcp.workway.co",

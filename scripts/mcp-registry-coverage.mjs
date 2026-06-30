@@ -252,6 +252,9 @@ const PACKAGE_COVERAGE = {
   },
   'packages/webflow-reviewer-exceptions-mcp/worker': {
     registry: ['webflow-reviewer-exceptions-mcp']
+  },
+  'packages/youtube-transcript-notion-claude-mcp': {
+    registry: ['youtube-transcript-notion-claude-mcp']
   }
 };
 

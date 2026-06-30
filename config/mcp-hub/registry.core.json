@@ -811,6 +811,25 @@
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 6
+    },
+    "youtube-transcript-notion-claude-mcp": {
+      "transport": "http",
+      "url": "https://youtube-transcript-notion-claude-mcp.createsomething.workers.dev/mcp",
+      "description": "Claude-compatible OAuth wrapper for the existing YouTube transcript extraction and Notion transcript enrichment MCP.",
+      "tags": ["youtube", "transcript", "notion", "claude", "oauth", "halfdozen", "cs"],
+      "package_path": "packages/youtube-transcript-notion-claude-mcp",
+      "catalog": {
+        "include": true,
+        "name": "YouTube Transcript Notion Claude",
+        "slug": "youtube-transcript-notion-claude",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "oauth",
+        "transports": ["http"]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 6,
+      "setupNotes": "Password-only OAuth wrapper for Claude custom connectors. Claude signs in through the wrapper authorize page with OAUTH_LOGIN_PASSWORD; the wrapper issues scoped OAuth bearer tokens and proxies /mcp to youtube-transcript-notion-mcp using the upstream bearer secret from UPSTREAM_MCP_BEARER_TOKEN. No Clerk or external identity provider is required; distribute the connector password only to approved Half Dozen users."
     }
   },
   "bundles": {

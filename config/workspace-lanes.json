@@ -101,7 +101,8 @@
       "packages/halfdozen-zoom-transcript-sync",
       "packages/notion-agent",
       "packages/notion-tools",
-      "packages/quickbooks-notion-mcp"
+      "packages/quickbooks-notion-mcp",
+      "packages/youtube-transcript-notion-claude-mcp"
     ],
     "labs": [
       "packages/agent-kit",

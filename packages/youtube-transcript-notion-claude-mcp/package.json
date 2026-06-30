@@ -1,0 +1,33 @@
+{
+  "name": "@create-something/youtube-transcript-notion-claude-mcp",
+  "version": "0.1.0",
+  "description": "Claude-compatible OAuth wrapper for the YouTube Transcript + Notion MCP.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy",
+    "tail": "node ../../scripts/run-wrangler.mjs tail",
+    "check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260621.1",
+    "@types/node": "24.10.9",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "wrangler": "4.103.0"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "oauth",
+    "youtube",
+    "transcript",
+    "notion"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}

@@ -1,0 +1,19 @@
+name = "youtube-transcript-notion-claude-mcp"
+main = "index.ts"
+compatibility_date = "2026-06-29"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[vars]
+UPSTREAM_MCP_URL = "https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp"
+OAUTH_SUBJECT = "youtube-transcript-notion-claude"
+OAUTH_DISPLAY_NAME = "YouTube Transcript + Notion MCP"
+
+# Required secrets:
+# - UPSTREAM_MCP_BEARER_TOKEN: bearer token for the existing upstream MCP.
+# - OAUTH_SIGNING_SECRET: random signing secret for wrapper-issued OAuth codes/tokens.
+# - OAUTH_LOGIN_PASSWORD: operator-shared password entered on the OAuth authorize page.

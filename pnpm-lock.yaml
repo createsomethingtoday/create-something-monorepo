@@ -4055,6 +4055,24 @@ importers:
         specifier: ^4.103.0
         version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  packages/youtube-transcript-notion-claude-mcp:
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: 4.20260621.1
+        version: 4.20260621.1
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      tsx:
+        specifier: 4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      wrangler:
+        specifier: 4.103.0
+        version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+
   packages/zendesk-mcp:
     dependencies:
       '@create-something/mcp-core':
