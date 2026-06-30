@@ -1,0 +1,351 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import {
+	createGovernanceDecision,
+	createGovernanceProof,
+	createGovernanceSignal,
+	listGovernanceDecisions,
+	listGovernanceProofs,
+	listGovernanceSignals
+} from '../src/lib/server/governance-runtime.ts';
+import { GET as getDecisions, POST as postDecision } from '../src/routes/api/governance/decisions/+server.ts';
+import { GET as getProofs, POST as postProof } from '../src/routes/api/governance/proofs/+server.ts';
+import { GET as getSignals, POST as postSignal } from '../src/routes/api/governance/signals/+server.ts';
+
+type TableRow = Record<string, unknown>;
+
+class FakeStatement {
+	constructor(
+		private readonly tables: Record<string, TableRow[]>,
+		private readonly sql: string,
+		private values: unknown[] = []
+	) {}
+
+	bind(...values: unknown[]): FakeStatement {
+		this.values = values;
+		return this;
+	}
+
+	async first<T = unknown>(): Promise<T | null> {
+		if (this.sql.includes('sqlite_master')) {
+			const table = String(this.values[0] ?? '');
+			return (this.tables[table] ? { name: table } : null) as T | null;
+		}
+
+		const results = await this.all<T>();
+		return results.results[0] ?? null;
+	}
+
+	async all<T = unknown>(): Promise<{ results: T[] }> {
+		const tableName = this.tableFromSelect();
+		if (!tableName) return { results: [] };
+
+		let rows = [...(this.tables[tableName] ?? [])];
+		const limit = Number(this.values.at(-1) ?? 100);
+		let filterIndex = 0;
+
+		for (const column of ['atlas_canvas_id', 'atlas_node_id', 'signal_id', 'decision_id']) {
+			if (!this.sql.includes(`${column} = ?`)) continue;
+			const expected = this.values[filterIndex++];
+			rows = rows.filter((row) => row[column] === expected);
+		}
+
+		rows.sort((left, right) => String(right.created_at).localeCompare(String(left.created_at)));
+		return { results: rows.slice(0, limit) as T[] };
+	}
+
+	async run(): Promise<{ success: true }> {
+		const insertTable = this.tableFromInsert();
+		if (!insertTable) return { success: true };
+
+		const row = this.rowFromInsert(insertTable);
+		this.tables[insertTable] ??= [];
+		this.tables[insertTable].push(row);
+		return { success: true };
+	}
+
+	private tableFromSelect(): string | undefined {
+		return Object.keys(this.tables).find((table) => this.sql.includes(`FROM ${table}`));
+	}
+
+	private tableFromInsert(): string | undefined {
+		return ['governance_signals', 'governance_decisions', 'governance_proofs'].find((table) =>
+			this.sql.includes(`INSERT INTO ${table}`)
+		);
+	}
+
+	private rowFromInsert(table: string): TableRow {
+		if (table === 'governance_signals') {
+			const [
+				id,
+				atlas_canvas_id,
+				atlas_node_id,
+				source,
+				source_url,
+				title,
+				summary,
+				status,
+				payload_json,
+				created_at,
+				updated_at
+			] = this.values;
+			return {
+				id,
+				atlas_canvas_id,
+				atlas_node_id,
+				source,
+				source_url,
+				title,
+				summary,
+				status,
+				payload_json,
+				created_at,
+				updated_at
+			};
+		}
+
+		if (table === 'governance_decisions') {
+			const [
+				id,
+				signal_id,
+				atlas_canvas_id,
+				atlas_node_id,
+				decision_state,
+				decision_owner,
+				reason,
+				payload_json,
+				created_at,
+				updated_at
+			] = this.values;
+			return {
+				id,
+				signal_id,
+				atlas_canvas_id,
+				atlas_node_id,
+				decision_state,
+				decision_owner,
+				reason,
+				payload_json,
+				created_at,
+				updated_at
+			};
+		}
+
+		const [
+			id,
+			signal_id,
+			decision_id,
+			atlas_canvas_id,
+			atlas_node_id,
+			evidence,
+			outcome,
+			receipt_url,
+			rollback_note,
+			payload_json,
+			created_at,
+			updated_at
+		] = this.values;
+		return {
+			id,
+			signal_id,
+			decision_id,
+			atlas_canvas_id,
+			atlas_node_id,
+			evidence,
+			outcome,
+			receipt_url,
+			rollback_note,
+			payload_json,
+			created_at,
+			updated_at
+		};
+	}
+}
+
+class FakeD1 {
+	constructor(private readonly tables: Record<string, TableRow[]> = defaultTables()) {}
+
+	prepare(sql: string): FakeStatement {
+		return new FakeStatement(this.tables, sql);
+	}
+}
+
+function defaultTables(): Record<string, TableRow[]> {
+	return {
+		governance_signals: [],
+		governance_decisions: [],
+		governance_proofs: []
+	};
+}
+
+function event(db: FakeD1, url = 'https://createsomething.agency/api/governance/signals') {
+	return {
+		platform: { env: { DB: db } },
+		url: new URL(url)
+	} as never;
+}
+
+function postEvent(db: FakeD1, body: Record<string, unknown>) {
+	return {
+		platform: { env: { DB: db } },
+		request: new Request('https://createsomething.agency/api/governance/signals', {
+			method: 'POST',
+			body: JSON.stringify(body)
+		})
+	} as never;
+}
+
+test('governance runtime records the Signal Decision Proof loop with Atlas attachments', async () => {
+	const db = new FakeD1() as unknown as Parameters<typeof createGovernanceSignal>[0];
+
+	const signal = await createGovernanceSignal(db, {
+		atlasCanvasId: 'canvas_api_docs',
+		atlasNodeId: 'node_api_updates',
+		source: 'slack:#api-updates',
+		sourceUrl: 'https://slack.example/archives/C123/p456',
+		title: 'Checkout API added beta parameter',
+		summary: 'Review whether the API docs and reviewer checklist need updates.',
+		payload: { channel: 'api-updates', docImpact: true }
+	});
+	const decision = await createGovernanceDecision(db, {
+		signalId: signal.id,
+		atlasCanvasId: signal.atlas_canvas_id,
+		atlasNodeId: signal.atlas_node_id,
+		decisionState: 'wait',
+		decisionOwner: 'docs-reviewer@example.com',
+		reason: 'Hold approval until the public docs mention the new parameter.',
+		payload: { requiresDocs: true, requiresReviewerProcess: true }
+	});
+	const proof = await createGovernanceProof(db, {
+		signalId: signal.id,
+		decisionId: decision.id,
+		atlasCanvasId: signal.atlas_canvas_id,
+		atlasNodeId: signal.atlas_node_id,
+		evidence: 'Docs PR and reviewer checklist update were both linked.',
+		outcome: 'documented',
+		receiptUrl: 'https://github.example/pr/123'
+	});
+
+	assert.equal(signal.atlas_canvas_id, 'canvas_api_docs');
+	assert.equal(signal.atlas_node_id, 'node_api_updates');
+	assert.equal(signal.payload.docImpact, true);
+	assert.equal(decision.signal_id, signal.id);
+	assert.equal(decision.decision_state, 'wait');
+	assert.equal(proof.decision_id, decision.id);
+	assert.equal(proof.signal_id, signal.id);
+
+	const canvasSignals = await listGovernanceSignals(db, { atlasCanvasId: 'canvas_api_docs' });
+	const signalDecisions = await listGovernanceDecisions(db, { signalId: signal.id });
+	const decisionProofs = await listGovernanceProofs(db, { decisionId: decision.id });
+
+	assert.equal(canvasSignals.length, 1);
+	assert.equal(signalDecisions[0]?.id, decision.id);
+	assert.equal(decisionProofs[0]?.id, proof.id);
+});
+
+test('governance runtime validates required fields and migration availability', async () => {
+	const db = new FakeD1({ governance_signals: [] }) as unknown as Parameters<
+		typeof createGovernanceDecision
+	>[0];
+
+	await assert.rejects(
+		createGovernanceSignal(db, {
+			atlasCanvasId: '',
+			source: 'slack',
+			title: 'Missing canvas',
+			summary: 'Missing canvas'
+		}),
+		/atlasCanvasId is required/
+	);
+
+	await assert.rejects(
+		createGovernanceDecision(db, {
+			signalId: 'sig_1',
+			atlasCanvasId: 'canvas_1',
+			decisionState: 'run',
+			decisionOwner: 'operator@example.com',
+			reason: 'Ready to run'
+		}),
+		/governance_decisions table is not available/
+	);
+});
+
+test('governance APIs create and filter runtime records', async () => {
+	const db = new FakeD1();
+	const signalResponse = await postSignal(
+		postEvent(db, {
+			atlas_canvas_id: 'canvas_runtime',
+			atlas_node_id: 'node_slack',
+			source: 'slack:#api-updates',
+			title: 'API field renamed',
+			summary: 'Documentation may need a rename notice.',
+			payload: { channel: 'api-updates' }
+		})
+	);
+	const signalPayload = await signalResponse.json();
+
+	assert.equal(signalResponse.status, 201);
+	assert.equal(signalPayload.signal.atlas_canvas_id, 'canvas_runtime');
+
+	const decisionResponse = await postDecision(
+		postEvent(db, {
+			signal_id: signalPayload.signal.id,
+			atlas_canvas_id: 'canvas_runtime',
+			atlas_node_id: 'node_slack',
+			decision_state: 'run',
+			decision_owner: 'reviewer@example.com',
+			reason: 'Reviewer process update is needed.'
+		})
+	);
+	const decisionPayload = await decisionResponse.json();
+	assert.equal(decisionResponse.status, 201);
+	assert.equal(decisionPayload.decision.signal_id, signalPayload.signal.id);
+
+	const proofResponse = await postProof(
+		postEvent(db, {
+			signal_id: signalPayload.signal.id,
+			decision_id: decisionPayload.decision.id,
+			atlas_canvas_id: 'canvas_runtime',
+			atlas_node_id: 'node_slack',
+			evidence: 'Reviewer checklist update shipped.',
+			outcome: 'passed',
+			receipt_url: 'https://github.example/pr/456'
+		})
+	);
+	assert.equal(proofResponse.status, 201);
+
+	const filteredSignals = await getSignals(
+		event(db, 'https://createsomething.agency/api/governance/signals?atlas_canvas_id=canvas_runtime')
+	);
+	const filteredDecisions = await getDecisions(
+		event(db, `https://createsomething.agency/api/governance/decisions?signal_id=${signalPayload.signal.id}`)
+	);
+	const filteredProofs = await getProofs(
+		event(db, `https://createsomething.agency/api/governance/proofs?decision_id=${decisionPayload.decision.id}`)
+	);
+
+	assert.equal(filteredSignals.status, 200);
+	assert.equal((await filteredSignals.json()).count, 1);
+	assert.equal((await filteredDecisions.json()).decisions[0].id, decisionPayload.decision.id);
+	assert.equal((await filteredProofs.json()).proofs[0].outcome, 'passed');
+});
+
+test('governance APIs report D1 as required runtime infrastructure', async () => {
+	const response = await postSignal({
+		platform: undefined,
+		request: new Request('https://createsomething.agency/api/governance/signals', {
+			method: 'POST',
+			body: JSON.stringify({
+				atlas_canvas_id: 'canvas_1',
+				source: 'slack',
+				title: 'Signal',
+				summary: 'Summary'
+			})
+		})
+	} as never);
+	const payload = await response.json();
+
+	assert.equal(response.status, 503);
+	assert.match(payload.error, /D1 binding/);
+});

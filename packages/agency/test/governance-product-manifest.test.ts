@@ -7,7 +7,8 @@ import {
 } from '@create-something/canon/governance';
 import {
 	buildGovernanceProductCompositionManifest,
-	governanceProductPublicPath
+	governanceProductPublicPath,
+	governanceProductRuntimePath
 } from '../src/lib/governance/product-manifest.ts';
 import { GET as getGovernanceProductManifest } from '../src/routes/api/governance/products/+server.ts';
 
@@ -32,11 +33,13 @@ test('governance product manifest gives Atlas and agents stable public paths', (
 	const publicPaths = new Map(manifest.products.map((product) => [product.id, product.publicPath]));
 
 	assert.equal(governanceProductPublicPath('atlas'), '/atlas');
+	assert.equal(governanceProductRuntimePath('atlas'), '/api/governance/products');
 	assert.equal(publicPaths.get('atlas'), '/atlas');
 	assert.equal(publicPaths.get('signal'), '/products/signal');
 	assert.equal(publicPaths.get('decision'), '/products/decision');
 	assert.equal(publicPaths.get('proof'), '/products/proof');
 	assert.ok(manifest.products.every((product) => product.manifestPath === `/api/governance/products#${product.id}`));
+	assert.equal(manifest.products.find((product) => product.id === 'signal')?.runtimePath, '/api/governance/signals');
 });
 
 test('governance product manifest preserves the required attachment loop', () => {
@@ -68,6 +71,19 @@ test('governance product manifest preserves the required attachment loop', () =>
 	}
 });
 
+test('governance product manifest exposes runtime APIs for record composition', () => {
+	const manifest = buildGovernanceProductCompositionManifest();
+	const runtimeApis = new Map(manifest.runtimeApis.map((api) => [api.product, api]));
+
+	assert.equal(runtimeApis.get('atlas')?.path, '/api/governance/products');
+	assert.equal(runtimeApis.get('signal')?.path, '/api/governance/signals');
+	assert.equal(runtimeApis.get('decision')?.path, '/api/governance/decisions');
+	assert.equal(runtimeApis.get('proof')?.path, '/api/governance/proofs');
+	assert.deepEqual(runtimeApis.get('signal')?.methods, ['GET', 'POST']);
+	assert.equal(runtimeApis.get('proof')?.attachesToAtlas, true);
+	assert.equal(runtimeApis.get('decision')?.records, 'decisions');
+});
+
 test('governance product manifest API returns the runtime-readable contract', async () => {
 	const response = await getGovernanceProductManifest({} as never);
 	const payload = await response.json();
@@ -78,4 +94,5 @@ test('governance product manifest API returns the runtime-readable contract', as
 	assert.equal(payload.agentContract.primaryConsumer, 'atlas');
 	assert.deepEqual(payload.agentContract.requiredLoop, ['atlas', 'signal', 'decision', 'proof']);
 	assert.equal(payload.products.length, 4);
+	assert.equal(payload.runtimeApis.length, 4);
 });

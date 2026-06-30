@@ -26,6 +26,7 @@ export type GovernanceProductManifestProduct = {
 	requiredForProduction: boolean;
 	publicPath: string;
 	manifestPath: string;
+	runtimePath: string | null;
 };
 
 export type GovernanceProductManifestLink = GovernanceProductLink & {
@@ -42,6 +43,14 @@ export type GovernanceProductAttachmentMatrixEntry = {
 	targetPath: string;
 };
 
+export type GovernanceProductRuntimeApi = {
+	product: GovernanceProductId;
+	path: string;
+	methods: Array<'GET' | 'POST'>;
+	attachesToAtlas: boolean;
+	records: 'signals' | 'decisions' | 'proofs' | 'composition';
+};
+
 export type GovernanceProductCompositionManifest = {
 	schemaVersion: 1;
 	id: typeof SIGNAL_DECISION_PROOF_COMPOSITION.id;
@@ -49,6 +58,7 @@ export type GovernanceProductCompositionManifest = {
 	atlasHub: GovernanceProductId;
 	apiPath: '/api/governance/products';
 	products: GovernanceProductManifestProduct[];
+	runtimeApis: GovernanceProductRuntimeApi[];
 	requiredLinks: GovernanceProductManifestLink[];
 	attachmentMatrix: GovernanceProductAttachmentMatrixEntry[];
 	productionReadiness: {
@@ -74,6 +84,13 @@ const productPaths: Record<GovernanceProductId, string> = {
 	proof: '/products/proof'
 };
 
+const runtimePaths: Record<GovernanceProductId, string | null> = {
+	atlas: '/api/governance/products',
+	signal: '/api/governance/signals',
+	decision: '/api/governance/decisions',
+	proof: '/api/governance/proofs'
+};
+
 const linkModeFallback: Record<GovernanceProductId, GovernanceProductAttachmentMode> = {
 	atlas: 'connects',
 	signal: 'produces',
@@ -85,6 +102,10 @@ export function governanceProductPublicPath(productId: GovernanceProductId): str
 	return productPaths[productId];
 }
 
+export function governanceProductRuntimePath(productId: GovernanceProductId): string | null {
+	return runtimePaths[productId];
+}
+
 function toManifestProduct(product: GovernanceProduct): GovernanceProductManifestProduct {
 	const publicPath = governanceProductPublicPath(product.id);
 	return {
@@ -94,7 +115,8 @@ function toManifestProduct(product: GovernanceProduct): GovernanceProductManifes
 		outputs: [...product.outputs],
 		attachesTo: [...product.attachesTo],
 		publicPath,
-		manifestPath: `/api/governance/products#${product.id}`
+		manifestPath: `/api/governance/products#${product.id}`,
+		runtimePath: governanceProductRuntimePath(product.id)
 	};
 }
 
@@ -123,6 +145,29 @@ function buildAttachmentMatrix(
 	);
 }
 
+function buildRuntimeApis(products: GovernanceProductManifestProduct[]): GovernanceProductRuntimeApi[] {
+	return products
+		.map((product) => {
+			const path = governanceProductRuntimePath(product.id);
+			if (!path) return null;
+			return {
+				product: product.id,
+				path,
+				methods: (product.id === 'atlas' ? ['GET'] : ['GET', 'POST']) as Array<'GET' | 'POST'>,
+				attachesToAtlas: product.id !== 'atlas',
+				records:
+					product.id === 'signal'
+						? 'signals'
+						: product.id === 'decision'
+							? 'decisions'
+							: product.id === 'proof'
+								? 'proofs'
+								: 'composition'
+			};
+		})
+		.filter((api): api is GovernanceProductRuntimeApi => Boolean(api));
+}
+
 export function buildGovernanceProductCompositionManifest(): GovernanceProductCompositionManifest {
 	const products = listGovernanceProducts().map(toManifestProduct);
 	const requiredLinks = SIGNAL_DECISION_PROOF_COMPOSITION.requiredLinks.map(toManifestLink);
@@ -141,6 +186,7 @@ export function buildGovernanceProductCompositionManifest(): GovernanceProductCo
 		atlasHub: SIGNAL_DECISION_PROOF_COMPOSITION.atlasHub,
 		apiPath: '/api/governance/products',
 		products,
+		runtimeApis: buildRuntimeApis(products),
 		requiredLinks,
 		attachmentMatrix: buildAttachmentMatrix(products),
 		productionReadiness: {
