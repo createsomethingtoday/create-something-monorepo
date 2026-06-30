@@ -1,9 +1,15 @@
 import {
+	createGovernanceDecision,
+	createGovernanceProof,
+	getGovernanceDecision,
+	getGovernanceSignal,
 	listGovernanceDecisions,
 	listGovernanceProofs,
 	listGovernanceSignals,
 	type GovernanceDecision,
+	type GovernanceDecisionState,
 	type GovernanceProof,
+	type GovernanceProofOutcome,
 	type GovernanceRecordFilters,
 	type GovernanceSignal
 } from './governance-runtime';
@@ -36,6 +42,21 @@ export type GovernanceOperatorReview = {
 	records: GovernanceOperatorRecord[];
 	unlinked_decisions: GovernanceDecision[];
 	unlinked_proofs: GovernanceProof[];
+};
+
+export type GovernanceOperatorDecisionActionInput = {
+	signalId: string;
+	decisionState: GovernanceDecisionState;
+	decisionOwner: string;
+	reason: string;
+};
+
+export type GovernanceOperatorProofActionInput = {
+	decisionId: string;
+	evidence: string;
+	outcome?: GovernanceProofOutcome;
+	receiptUrl?: string | null;
+	rollbackNote?: string | null;
 };
 
 interface D1PreparedStatementLike {
@@ -168,6 +189,55 @@ export async function buildGovernanceOperatorReview(
 		unlinked_decisions: unlinkedDecisions,
 		unlinked_proofs: unlinkedProofs
 	};
+}
+
+export async function createGovernanceOperatorDecisionAction(
+	db: D1DatabaseLike,
+	input: GovernanceOperatorDecisionActionInput
+): Promise<GovernanceDecision> {
+	const signal = await getGovernanceSignal(db, input.signalId);
+	if (!signal) {
+		throw new Error('Signal is not available for this operator action.');
+	}
+
+	return createGovernanceDecision(db, {
+		signalId: signal.id,
+		atlasCanvasId: signal.atlas_canvas_id,
+		atlasNodeId: signal.atlas_node_id,
+		decisionState: input.decisionState,
+		decisionOwner: input.decisionOwner,
+		reason: input.reason,
+		payload: {
+			operator_surface: '/admin/governance',
+			source_signal_status: signal.status
+		}
+	});
+}
+
+export async function createGovernanceOperatorProofAction(
+	db: D1DatabaseLike,
+	input: GovernanceOperatorProofActionInput
+): Promise<GovernanceProof> {
+	const decision = await getGovernanceDecision(db, input.decisionId);
+	if (!decision) {
+		throw new Error('Decision is not available for this operator action.');
+	}
+
+	return createGovernanceProof(db, {
+		signalId: decision.signal_id,
+		decisionId: decision.id,
+		atlasCanvasId: decision.atlas_canvas_id,
+		atlasNodeId: decision.atlas_node_id,
+		evidence: input.evidence,
+		outcome: input.outcome,
+		receiptUrl: input.receiptUrl,
+		rollbackNote: input.rollbackNote,
+		payload: {
+			operator_surface: '/admin/governance',
+			source_decision_state: decision.decision_state,
+			source_decision_owner: decision.decision_owner
+		}
+	});
 }
 
 export function normalizeGovernanceOperatorFilters(params: URLSearchParams): GovernanceOperatorReview['filters'] {

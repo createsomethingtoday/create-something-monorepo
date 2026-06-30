@@ -188,6 +188,23 @@ export async function listGovernanceSignals(
 	return rows.map(serializeSignal);
 }
 
+export async function getGovernanceSignal(
+	db: D1DatabaseLike,
+	id: string
+): Promise<GovernanceSignal | null> {
+	await assertTableAvailable(db, 'governance_signals');
+	const row = await db
+		.prepare(
+			`SELECT id, atlas_canvas_id, atlas_node_id, source, source_url, title, summary,
+			        status, payload_json, created_at, updated_at
+			   FROM governance_signals
+			  WHERE id = ?`
+		)
+		.bind(requiredText(id, 'signalId', 160))
+		.first<GovernanceSignalRow>();
+	return row ? serializeSignal(row) : null;
+}
+
 export async function createGovernanceDecision(
 	db: D1DatabaseLike,
 	input: GovernanceDecisionInput
@@ -254,6 +271,23 @@ export async function listGovernanceDecisions(
 	);
 	const rows = await queryAll<GovernanceDecisionRow>(db, sql, values);
 	return rows.map(serializeDecision);
+}
+
+export async function getGovernanceDecision(
+	db: D1DatabaseLike,
+	id: string
+): Promise<GovernanceDecision | null> {
+	await assertTableAvailable(db, 'governance_decisions');
+	const row = await db
+		.prepare(
+			`SELECT id, signal_id, atlas_canvas_id, atlas_node_id, decision_state, decision_owner,
+			        reason, payload_json, created_at, updated_at
+			   FROM governance_decisions
+			  WHERE id = ?`
+		)
+		.bind(requiredText(id, 'decisionId', 160))
+		.first<GovernanceDecisionRow>();
+	return row ? serializeDecision(row) : null;
 }
 
 export async function createGovernanceProof(
