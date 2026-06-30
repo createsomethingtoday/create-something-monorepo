@@ -10,6 +10,7 @@
     type ClearCtaItem,
     type ClearProofItem
   } from '@create-something/canon';
+  import { listGovernanceProducts } from '@create-something/canon/governance';
   import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
   import { products, type Product } from '$lib/data/services';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -18,6 +19,7 @@
   type ProofStateItem = ClearProofItem & { icon: ProofStateIconName };
 
   const featured = products.filter((product) => product.category === 'featured');
+  const governanceProducts = listGovernanceProducts();
 
   const faqItems = [
     {
@@ -142,6 +144,26 @@
     }
   ];
 
+  const governanceProductCards: ClearCardItem[] = governanceProducts.map((product) => ({
+    eyebrow: product.surface,
+    icon:
+      product.id === 'signal'
+        ? 'plus'
+        : product.id === 'decision'
+          ? 'check'
+          : product.id === 'proof'
+            ? 'document'
+            : 'folder',
+    title: product.name,
+    detail: product.description,
+    href: product.id === 'atlas' ? '/atlas' : `/products/${product.id}`,
+    points: [
+      product.headline,
+      `Owns: ${product.owns.slice(0, 2).join(', ')}`,
+      product.requiredForProduction ? 'Required for production' : 'Optional'
+    ]
+  }));
+
   function productCard(product: Product): ClearCardItem {
     const points = [product.tagline, product.npmPackage, product.client, product.timeline].filter(
       Boolean
@@ -245,6 +267,21 @@
         </article>
       {/each}
     </div>
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
+  eyebrow="Governance products"
+  title="Atlas connects Signal, Decision, and Proof."
+  description="Signal is the inbox, Decision is the queue, Proof is the ledger, and Atlas is the map that lets each surface attach to the same workflow."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={governanceProductCards}
+      columns={4}
+      ariaLabel="Composable governance product surfaces"
+    />
   {/snippet}
 </ClearPageSection>
 

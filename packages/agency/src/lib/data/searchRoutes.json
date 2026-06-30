@@ -113,15 +113,33 @@
     "priority": "0.75",
     "lastmod": "2026-06-28"
   },
-  {
-    "path": "/products/ground",
-    "changefreq": "monthly",
-    "priority": "0.65",
-    "lastmod": "2026-06-28"
-  },
-  {
-    "path": "/use-cases/business",
-    "changefreq": "monthly",
+	{
+		"path": "/products/ground",
+		"changefreq": "monthly",
+		"priority": "0.65",
+		"lastmod": "2026-06-28"
+	},
+	{
+		"path": "/products/signal",
+		"changefreq": "monthly",
+		"priority": "0.68",
+		"lastmod": "2026-06-30"
+	},
+	{
+		"path": "/products/decision",
+		"changefreq": "monthly",
+		"priority": "0.68",
+		"lastmod": "2026-06-30"
+	},
+	{
+		"path": "/products/proof",
+		"changefreq": "monthly",
+		"priority": "0.68",
+		"lastmod": "2026-06-30"
+	},
+	{
+		"path": "/use-cases/business",
+		"changefreq": "monthly",
     "priority": "0.8",
     "lastmod": "2026-06-19"
   },

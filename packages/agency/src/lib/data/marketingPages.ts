@@ -452,6 +452,63 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
   {
+    path: '/products/signal',
+    cluster: 'products',
+    role: 'support',
+    decision: 'index',
+    audience: 'Teams that need proactive notification when product, API, or process updates affect reviewers.',
+    funnelStage: 'evaluate',
+    intent: 'Explain Signal as the app governance inbox that routes updates into Atlas, Decision, and Proof.',
+    primaryAction: 'Start Workflow Map',
+    requiredTerms: ['Signal', 'inbox', 'API updates', 'Atlas', 'Proof'],
+    requiredLinks: ['/atlas', '/products/decision', '/products/proof', '/products'],
+    schema: 'faq',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.68',
+      lastmod: '2026-06-30'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
+    path: '/products/decision',
+    cluster: 'products',
+    role: 'support',
+    decision: 'index',
+    audience: 'Teams designing human-in-the-loop review queues for agents and governed workflow actions.',
+    funnelStage: 'evaluate',
+    intent: 'Explain Decision as the queue that turns Signals into approval, policy action, stop states, and Proof.',
+    primaryAction: 'Start Workflow Map',
+    requiredTerms: ['Decision', 'queue', 'human-in-the-loop', 'Signal', 'Proof'],
+    requiredLinks: ['/products/signal', '/atlas', '/products/proof', '/products'],
+    schema: 'faq',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.68',
+      lastmod: '2026-06-30'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
+    path: '/products/proof',
+    cluster: 'products',
+    role: 'support',
+    decision: 'index',
+    audience: 'Teams that need an inspectable ledger for app governance decisions and workflow outcomes.',
+    funnelStage: 'evaluate',
+    intent: 'Explain Proof as the ledger surface that records evidence, outcomes, receipts, and rollback notes.',
+    primaryAction: 'Start Workflow Map',
+    requiredTerms: ['Proof', 'ledger', 'audit trail', 'Atlas', 'Decision'],
+    requiredLinks: ['/products/signal', '/products/decision', '/atlas', '/products'],
+    schema: 'faq',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.68',
+      lastmod: '2026-06-30'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
     path: '/products/loom',
     cluster: 'products',
     role: 'support',

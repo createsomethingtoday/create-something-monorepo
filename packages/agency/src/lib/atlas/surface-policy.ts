@@ -10,7 +10,10 @@ export const AGENCY_ATLAS_PROOF_PATHS = [
   '/atlas',
   '/methodology',
   '/stack',
-  '/products'
+  '/products',
+  '/products/signal',
+  '/products/decision',
+  '/products/proof'
 ] as const;
 
 export const AGENCY_COMPACT_PRIVACY_PATHS = ['/', ...AGENCY_ATLAS_PROOF_PATHS] as const;
