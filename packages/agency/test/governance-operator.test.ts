@@ -140,7 +140,8 @@ test('buildGovernanceOperatorReview groups decisions and proofs under their Atla
 				title: 'API update',
 				summary: 'Docs need review.',
 				status: 'new',
-				payload_json: '{"channel":"api-updates"}',
+				payload_json:
+					'{"classification":{"requires_documentation_review":true,"requires_reviewer_process_review":true,"reasons":["API surface changed","Reviewer workflow was mentioned"]}}',
 				created_at: now,
 				updated_at: now
 			}
@@ -212,7 +213,15 @@ test('buildGovernanceOperatorReview groups decisions and proofs under their Atla
 	assert.equal(review.summary.decisions, 2);
 	assert.equal(review.summary.proofs, 1);
 	assert.equal(review.summary.records_ready_for_proof, 1);
+	assert.equal(review.summary.records_requiring_docs_review, 1);
+	assert.equal(review.summary.records_requiring_reviewer_process_review, 1);
 	assert.equal(review.records[0]?.signal.id, 'sig_docs');
+	assert.equal(review.records[0]?.classification?.requires_documentation_review, true);
+	assert.equal(review.records[0]?.classification?.requires_reviewer_process_review, true);
+	assert.deepEqual(review.records[0]?.classification?.reasons, [
+		'API surface changed',
+		'Reviewer workflow was mentioned'
+	]);
 	assert.equal(review.records[0]?.decisions[0]?.id, 'dec_docs');
 	assert.equal(review.records[0]?.proofs[0]?.id, 'proof_docs');
 	assert.equal(review.unlinked_decisions[0]?.id, 'dec_unlinked');

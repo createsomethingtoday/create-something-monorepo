@@ -16,8 +16,15 @@ import {
 
 export type GovernanceOperatorRecord = {
 	signal: GovernanceSignal;
+	classification: GovernanceOperatorSignalClassification | null;
 	decisions: GovernanceDecision[];
 	proofs: GovernanceProof[];
+};
+
+export type GovernanceOperatorSignalClassification = {
+	requires_documentation_review: boolean;
+	requires_reviewer_process_review: boolean;
+	reasons: string[];
 };
 
 export type GovernanceOperatorReview = {
@@ -36,6 +43,8 @@ export type GovernanceOperatorReview = {
 		decisions: number;
 		proofs: number;
 		records_ready_for_proof: number;
+		records_requiring_docs_review: number;
+		records_requiring_reviewer_process_review: number;
 		unlinked_decisions: number;
 		unlinked_proofs: number;
 	};
@@ -86,6 +95,8 @@ export function emptyGovernanceOperatorReview(
 			decisions: 0,
 			proofs: 0,
 			records_ready_for_proof: 0,
+			records_requiring_docs_review: 0,
+			records_requiring_reviewer_process_review: 0,
 			unlinked_decisions: 0,
 			unlinked_proofs: 0
 		},
@@ -160,6 +171,7 @@ export async function buildGovernanceOperatorReview(
 		const proofsForSignal = uniqueBy([...signalProofs, ...decisionProofs], (proof) => proof.id);
 		return {
 			signal,
+			classification: classificationFromSignal(signal),
 			decisions: signalDecisions,
 			proofs: proofsForSignal
 		};
@@ -182,12 +194,40 @@ export async function buildGovernanceOperatorReview(
 			decisions: decisions.length,
 			proofs: proofs.length,
 			records_ready_for_proof: decisionsReadyForProof.length,
+			records_requiring_docs_review: records.filter(
+				(record) => record.classification?.requires_documentation_review
+			).length,
+			records_requiring_reviewer_process_review: records.filter(
+				(record) => record.classification?.requires_reviewer_process_review
+			).length,
 			unlinked_decisions: unlinkedDecisions.length,
 			unlinked_proofs: unlinkedProofs.length
 		},
 		records,
 		unlinked_decisions: unlinkedDecisions,
 		unlinked_proofs: unlinkedProofs
+	};
+}
+
+function classificationFromSignal(signal: GovernanceSignal): GovernanceOperatorSignalClassification | null {
+	const classification = signal.payload.classification;
+	if (!classification || typeof classification !== 'object' || Array.isArray(classification)) {
+		return null;
+	}
+
+	const record = classification as Record<string, unknown>;
+	const requiresDocumentationReview = record.requires_documentation_review === true;
+	const requiresReviewerProcessReview = record.requires_reviewer_process_review === true;
+	if (!requiresDocumentationReview && !requiresReviewerProcessReview) {
+		return null;
+	}
+
+	return {
+		requires_documentation_review: requiresDocumentationReview,
+		requires_reviewer_process_review: requiresReviewerProcessReview,
+		reasons: Array.isArray(record.reasons)
+			? record.reasons.filter((reason): reason is string => typeof reason === 'string').slice(0, 6)
+			: []
 	};
 }
 

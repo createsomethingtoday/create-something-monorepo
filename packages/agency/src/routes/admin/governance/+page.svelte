@@ -114,6 +114,14 @@
 			<span class="metric-value">{data.review.summary.records_ready_for_proof}</span>
 			<span class="metric-label">Need proof</span>
 		</div>
+		<div class="metric">
+			<span class="metric-value">{data.review.summary.records_requiring_docs_review}</span>
+			<span class="metric-label">Docs review</span>
+		</div>
+		<div class="metric">
+			<span class="metric-value">{data.review.summary.records_requiring_reviewer_process_review}</span>
+			<span class="metric-label">Process review</span>
+		</div>
 	</section>
 
 	<form class="filters" method="GET" action="/admin/governance">
@@ -155,6 +163,19 @@
 							<p class="source">{record.signal.source}</p>
 							<h3>{record.signal.title}</h3>
 							<p>{record.signal.summary}</p>
+							{#if record.classification}
+								<div class="classification" aria-label="Signal classification">
+									{#if record.classification.requires_documentation_review}
+										<span class="pill warning">Docs review</span>
+									{/if}
+									{#if record.classification.requires_reviewer_process_review}
+										<span class="pill info">Process review</span>
+									{/if}
+									{#if record.classification.reasons.length > 0}
+										<span class="classification-reason">{record.classification.reasons.join(' · ')}</span>
+									{/if}
+								</div>
+							{/if}
 						</div>
 						<span class="pill info">{record.signal.status}</span>
 					</header>
@@ -412,7 +433,7 @@
 
 	.summary-grid {
 		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
+		grid-template-columns: repeat(6, minmax(0, 1fr));
 		gap: 12px;
 		margin: 24px 0;
 	}
@@ -545,6 +566,20 @@
 		font-size: 0.74rem;
 		font-weight: 800;
 		text-transform: uppercase;
+	}
+
+	.classification {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		margin-top: 10px;
+	}
+
+	.classification-reason {
+		color: #64748b;
+		font-size: 0.82rem;
+		font-weight: 700;
 	}
 
 	.success {
