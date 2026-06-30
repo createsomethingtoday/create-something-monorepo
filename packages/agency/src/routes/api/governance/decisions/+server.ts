@@ -7,6 +7,7 @@ import {
 	listGovernanceDecisions,
 	normalizeDecisionRequestBody
 } from '../../../../lib/server/governance-runtime';
+import { verifyGovernanceWriteCredential } from '../../../../lib/server/governance-api-auth';
 
 export const GET: RequestHandler = async ({ platform, url }) => {
 	if (!platform?.env?.DB) {
@@ -40,6 +41,14 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 
 	if (!platform?.env?.DB) {
 		return json({ error: 'Governance decisions require the Cloudflare D1 binding.' }, { status: 503 });
+	}
+
+	const credential = verifyGovernanceWriteCredential({
+		request,
+		expectedKey: platform.env.AGENCY_INTERNAL_API_KEY
+	});
+	if (!credential.ok) {
+		return json({ error: credential.error }, { status: credential.status });
 	}
 
 	try {

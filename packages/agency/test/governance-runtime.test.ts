@@ -186,11 +186,31 @@ function event(db: FakeD1, url = 'https://createsomething.agency/api/governance/
 	} as never;
 }
 
-function postEvent(db: FakeD1, body: Record<string, unknown>) {
+function postEvent(
+	db: FakeD1,
+	body: Record<string, unknown>,
+	options: { configuredKey?: string; providedKey?: string | null } = {}
+) {
+	const configuredKey = options.configuredKey ?? 'test-internal-key';
+	const providedKey = options.providedKey === undefined ? configuredKey : options.providedKey;
+	const headers = new Headers({ 'content-type': 'application/json' });
+	if (providedKey) headers.set('authorization', `Bearer ${providedKey}`);
+	return {
+		platform: { env: { DB: db, AGENCY_INTERNAL_API_KEY: configuredKey } },
+		request: new Request('https://createsomething.agency/api/governance/signals', {
+			method: 'POST',
+			headers,
+			body: JSON.stringify(body)
+		})
+	} as never;
+}
+
+function postEventWithoutConfiguredKey(db: FakeD1, body: Record<string, unknown>) {
 	return {
 		platform: { env: { DB: db } },
 		request: new Request('https://createsomething.agency/api/governance/signals', {
 			method: 'POST',
+			headers: { authorization: 'Bearer test-internal-key' },
 			body: JSON.stringify(body)
 		})
 	} as never;
@@ -329,6 +349,39 @@ test('governance APIs create and filter runtime records', async () => {
 	assert.equal((await filteredSignals.json()).count, 1);
 	assert.equal((await filteredDecisions.json()).decisions[0].id, decisionPayload.decision.id);
 	assert.equal((await filteredProofs.json()).proofs[0].outcome, 'passed');
+});
+
+test('governance write APIs require the internal credential', async () => {
+	const db = new FakeD1();
+	const unauthorized = await postSignal(
+		postEvent(
+			db,
+			{
+				atlas_canvas_id: 'canvas_runtime',
+				source: 'slack:#api-updates',
+				title: 'API field renamed',
+				summary: 'Documentation may need a rename notice.'
+			},
+			{ providedKey: null }
+		)
+	);
+	const unauthorizedPayload = await unauthorized.json();
+
+	assert.equal(unauthorized.status, 401);
+	assert.match(unauthorizedPayload.error, /governance write credential/i);
+
+	const notConfigured = await postSignal(
+		postEventWithoutConfiguredKey(db, {
+			atlas_canvas_id: 'canvas_runtime',
+			source: 'slack:#api-updates',
+			title: 'API field renamed',
+			summary: 'Documentation may need a rename notice.'
+		})
+	);
+	const notConfiguredPayload = await notConfigured.json();
+
+	assert.equal(notConfigured.status, 503);
+	assert.match(notConfiguredPayload.error, /AGENCY_INTERNAL_API_KEY/);
 });
 
 test('governance APIs report D1 as required runtime infrastructure', async () => {
