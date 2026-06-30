@@ -255,6 +255,23 @@ test('buildGovernanceOperatorReview groups decisions and proofs under their Atla
 	assert.equal(review.records[0]?.decisions[0]?.id, 'dec_docs');
 	assert.equal(review.records[0]?.proofs[0]?.id, 'proof_docs');
 	assert.equal(review.unlinked_decisions[0]?.id, 'dec_unlinked');
+	assert.deepEqual(
+		review.graph.nodes.map((node) => node.id),
+		['atlas:canvas_docs', 'signal:sig_docs', 'decision:dec_docs', 'decision:dec_docs_missing_proof', 'proof:proof_docs']
+	);
+	assert.deepEqual(
+		review.graph.attachments.map((attachment) => `${attachment.source}->${attachment.target}:${attachment.mode}`),
+		[
+			'atlas:canvas_docs->signal:sig_docs:connects',
+			'signal:sig_docs->decision:dec_docs:produces',
+			'signal:sig_docs->decision:dec_docs_missing_proof:produces',
+			'decision:dec_docs->proof:proof_docs:produces',
+			'proof:proof_docs->atlas:canvas_docs:records'
+		]
+	);
+	assert.equal(review.graph.summary.signals, 1);
+	assert.equal(review.graph.summary.decisions, 2);
+	assert.equal(review.graph.summary.proofs, 1);
 });
 
 test('governance operator actions record decisions and proofs from source attachments', async () => {

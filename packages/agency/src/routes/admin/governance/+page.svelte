@@ -6,12 +6,22 @@
 	type GovernanceRecord = PageData['review']['records'][number];
 	type Decision = PageData['review']['unlinked_decisions'][number];
 	type Proof = PageData['review']['unlinked_proofs'][number];
+	type GraphNode = PageData['review']['graph']['nodes'][number];
+	type GraphAttachment = PageData['review']['graph']['attachments'][number];
 
 	let { data, form }: { data: PageData; form?: ActionData } = $props();
 
 	const records = $derived(data.review.records as GovernanceRecord[]);
 	const unlinkedDecisions = $derived(data.review.unlinked_decisions as Decision[]);
 	const unlinkedProofs = $derived(data.review.unlinked_proofs as Proof[]);
+	const graphNodes = $derived(data.review.graph.nodes as GraphNode[]);
+	const graphAttachments = $derived(data.review.graph.attachments as GraphAttachment[]);
+	const graphProductCounts = $derived(
+		data.review.graph.product_loop.map((productId) => ({
+			productId,
+			count: graphNodes.filter((node) => node.product_id === productId).length
+		}))
+	);
 	const activeFilterCount = $derived(
 		[
 			Boolean(data.review.filters.atlas_canvas_id),
@@ -48,6 +58,11 @@
 		return `${path}${buildQuery()}`;
 	}
 
+	function graphNodeLabel(nodeId: string): string {
+		const node = graphNodes.find((candidate) => candidate.id === nodeId);
+		return node?.label || nodeId;
+	}
+
 	function decisionTone(state: string): string {
 		if (state === 'run') return 'success';
 		if (state === 'stop') return 'danger';
@@ -81,7 +96,7 @@
 			<p>Review Signal, Decision, and Proof records attached to Atlas canvases and nodes.</p>
 		</div>
 		<nav class="actions" aria-label="Governance record APIs">
-			<a href="/api/governance/products" target="_blank">Map</a>
+			<a href="/api/governance/products" target="_blank">Products</a>
 			<a href={apiHref('/api/governance/signals')} target="_blank">Signals</a>
 			<a href={apiHref('/api/governance/decisions')} target="_blank">Decisions</a>
 			<a href={apiHref('/api/governance/proofs')} target="_blank">Proofs</a>
@@ -128,6 +143,44 @@
 			<span class="metric-value">{data.review.summary.records_requiring_reviewer_process_review}</span>
 			<span class="metric-label">Process review</span>
 		</div>
+	</section>
+
+	<section class="map-panel" aria-label="Atlas attachment map">
+		<div class="section-heading">
+			<div>
+				<p class="eyebrow">Map</p>
+				<h2>Atlas attachment graph</h2>
+			</div>
+			<span>{data.review.graph.summary.attachments} attachments</span>
+		</div>
+		<div class="map-summary" aria-label="Governance product node counts">
+			{#each graphProductCounts as product}
+				<div>
+					<span class="metric-value">{product.count}</span>
+					<span class="metric-label">{product.productId}</span>
+				</div>
+			{/each}
+		</div>
+		{#if graphAttachments.length === 0}
+			<div class="empty">No Signal, Decision, or Proof attachments match this map view.</div>
+		{:else}
+			<div class="attachment-list" aria-label="Graph attachments">
+				{#each graphAttachments as attachment}
+					<div class="attachment-edge">
+						<span class="pill info">{attachment.source_product_id}</span>
+						<div>
+							<strong>{graphNodeLabel(attachment.source)}</strong>
+							<small>{attachment.mode} · {attachment.label}</small>
+						</div>
+						<span class="edge-arrow">-&gt;</span>
+						<div>
+							<strong>{graphNodeLabel(attachment.target)}</strong>
+							<small>{attachment.target_product_id}</small>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</section>
 
 	{#if data.monitor_readiness}
@@ -577,6 +630,7 @@
 	.record,
 	.filters,
 	.monitor-panel,
+	.map-panel,
 	.manual-signal-panel,
 	.notice,
 	.empty {
@@ -594,6 +648,59 @@
 		gap: 14px;
 		margin: 24px 0;
 		padding: 18px;
+	}
+
+	.map-panel {
+		display: grid;
+		gap: 14px;
+		margin: 24px 0;
+		padding: 18px;
+	}
+
+	.map-summary {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 12px;
+	}
+
+	.map-summary div {
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		background: #f8fafc;
+		padding: 12px;
+	}
+
+	.attachment-list {
+		display: grid;
+		gap: 8px;
+	}
+
+	.attachment-edge {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+		align-items: center;
+		gap: 10px;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		padding: 10px;
+	}
+
+	.attachment-edge div {
+		display: grid;
+		gap: 3px;
+		min-width: 0;
+	}
+
+	.attachment-edge strong,
+	.attachment-edge small {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.edge-arrow {
+		color: #94a3b8;
+		font-weight: 800;
 	}
 
 	.manual-signal-panel {
@@ -851,6 +958,8 @@
 		.hero,
 		.summary-grid,
 		.monitor-grid,
+		.map-summary,
+		.attachment-edge,
 		.filters,
 		.section-heading,
 		.record-header,
