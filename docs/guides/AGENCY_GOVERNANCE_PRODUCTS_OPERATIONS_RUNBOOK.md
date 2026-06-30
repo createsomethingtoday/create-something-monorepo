@@ -63,6 +63,36 @@ JSON channel config:
 
 The Slack app must be installed in the watched channels and able to read channel history. Prefer a Pages secret for `GOVERNANCE_SLACK_CHANNELS` when the config contains internal channel IDs or private workflow names; Cloudflare exposes secrets and vars to the runtime through the same `env` binding.
 
+## Sync Monitor Configuration
+
+Use the package sync utility instead of hand-writing `gh secret set` or `wrangler pages secret put` commands. It reads values from environment variables or Infisical, refuses missing or placeholder values, prints only names/status/lengths, and passes secret values to provider CLIs through stdin.
+
+Dry-run from exported environment variables:
+
+```bash
+pnpm --filter @create-something/agency governance:sync-monitor-config -- --source env --dry-run
+```
+
+Dry-run from Infisical:
+
+```bash
+pnpm --filter @create-something/agency governance:sync-monitor-config -- --source infisical --infisical-env prod --infisical-path / --dry-run
+```
+
+Apply only after the dry-run reports `ready`:
+
+```bash
+pnpm --filter @create-something/agency governance:sync-monitor-config -- --source infisical --infisical-env prod --infisical-path / --apply
+```
+
+Sync targets:
+
+- GitHub Actions: `AGENCY_INTERNAL_API_KEY`
+- Cloudflare Pages: `AGENCY_INTERNAL_API_KEY`, `SLACK_BOT_TOKEN`, `GOVERNANCE_SLACK_CHANNELS`
+- Cloudflare Pages optional: `GOVERNANCE_SLACK_WORKSPACE_URL`
+
+The sync command intentionally fails when `SLACK_BOT_TOKEN` or `GOVERNANCE_SLACK_CHANNELS` is missing, `*not found*`, `replace-me`, or another placeholder. Do not use `--key <value>` or other inline secret flags in shell history.
+
 ## Pre-Flight
 
 Run from the monorepo root:
@@ -111,20 +141,20 @@ Expected tables:
 Use the package script instead of hand-writing `curl`:
 
 ```bash
-AGENCY_INTERNAL_API_KEY=... pnpm --filter @create-something/agency governance:slack-monitor -- --dry-run
-AGENCY_INTERNAL_API_KEY=... pnpm --filter @create-something/agency governance:slack-monitor -- --base-url https://createsomething.agency
+infisical run --env=prod --path=/ --include-imports=true -- pnpm --filter @create-something/agency governance:slack-monitor -- --dry-run
+infisical run --env=prod --path=/ --include-imports=true -- pnpm --filter @create-something/agency governance:slack-monitor -- --base-url https://createsomething.agency
 ```
 
 Production scheduler runs should require the Slack monitor to be fully configured:
 
 ```bash
-AGENCY_INTERNAL_API_KEY=... pnpm --filter @create-something/agency governance:slack-monitor -- --base-url https://createsomething.agency --require-configured
+infisical run --env=prod --path=/ --include-imports=true -- pnpm --filter @create-something/agency governance:slack-monitor -- --base-url https://createsomething.agency --require-configured
 ```
 
 For preview or local endpoints:
 
 ```bash
-AGENCY_INTERNAL_API_KEY=... pnpm --filter @create-something/agency governance:slack-monitor -- --url https://preview.example.workers.dev/api/governance/monitors/slack
+infisical run --env=prod --path=/ --include-imports=true -- pnpm --filter @create-something/agency governance:slack-monitor -- --url https://preview.example.workers.dev/api/governance/monitors/slack
 ```
 
 The response summary reports:
@@ -178,12 +208,18 @@ pnpm --filter @create-something/agency governance:readiness -- --json
 
 The audit is read-only and secret-safe. It checks public product routes, the composition manifest, the Slack monitor auth gate, the scheduled GitHub workflow, GitHub Actions secret names, Cloudflare Pages secret names, Pages vars, remote D1 migrations, and remote D1 governance tables. It prints only whether required secrets and vars are configured, never their values.
 
-Expected production state before CRE-923 is complete:
+Expected production state before monitor source configuration is complete:
 
 - product routes, composition manifest, auth gate, scheduled workflow, D1 migrations, and D1 tables pass
 - `Cloudflare Pages monitor secrets` fails until `SLACK_BOT_TOKEN` is set
 - `Cloudflare Pages monitor source config` fails until `GOVERNANCE_SLACK_CHANNELS` is set as either a Pages secret or Pages var
 - `GitHub Actions monitor credential` fails until the repository secret `AGENCY_INTERNAL_API_KEY` is set
+
+Expected production state after the credential exists but before watched Slack sources are configured:
+
+- `governance:sync-monitor-config -- --source infisical --dry-run` fails without printing values
+- `governance:readiness` reports only missing Slack monitor source configuration
+- `governance:slack-monitor -- --require-configured` exits nonzero if the API returns `status: "not_configured"`
 
 After a production monitor run:
 
@@ -215,3 +251,5 @@ Do not manually reset `governance_source_cursors` unless the operator intentiona
 - `packages/agency/migrations/0030_governance_runtime_records.sql`
 - `packages/agency/migrations/0031_governance_source_cursors.sql`
 - `packages/agency/scripts/run-governance-slack-monitor.mjs`
+- `packages/agency/scripts/sync-governance-monitor-config.mjs`
+- `packages/agency/scripts/lib/governance-monitor-config-sync.mjs`
