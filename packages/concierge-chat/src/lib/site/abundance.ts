@@ -17,8 +17,8 @@ export const staffingStats = [
 ];
 
 export const heroVisual = {
-  src: 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1200&q=82',
-  alt: 'Supportive healthcare moment with hands held in a bright clinical setting',
+  src: '/abundance/hero-handoff.png',
+  alt: 'Nurse and staffing recruiter reviewing a tablet together in a bright clinical office',
   caption: 'Guided intake. Recruiter review. Clear handoff.',
   note: 'Designed for nurses, recruiters, and coordinators.'
 };
@@ -212,5 +212,124 @@ export const sourceModel = [
   {
     title: 'Abundance differentiator',
     body: 'Agents are proof support, not autonomous staffing claims.'
+  }
+];
+
+export const staffingCareCards = [
+  {
+    title: 'Guided nurse intake',
+    body: 'Role, shift, license, timing, and preferences captured once.',
+    image: '/abundance/nurse-intake.png',
+    href: '/nurses'
+  },
+  {
+    title: 'Facility coverage requests',
+    body: 'Unit, urgency, credentials, and approval owner kept visible.',
+    image: '/abundance/facility-coverage.png',
+    href: '/facilities'
+  },
+  {
+    title: 'Recruiter review desk',
+    body: 'Fit, gaps, documents, and next action prepared for review.',
+    image: '/abundance/recruiter-review.png',
+    href: '/agents'
+  }
+];
+
+export const staffingRoles = [
+  {
+    name: 'Travel RN',
+    lane: 'ICU, ER, Med Surg',
+    image: '/abundance/nurse-intake.png'
+  },
+  {
+    name: 'Per diem nurse',
+    lane: 'Flexible coverage',
+    image: '/abundance/hero-handoff.png'
+  },
+  {
+    name: 'Facility coordinator',
+    lane: 'Shift requests',
+    image: '/abundance/facility-coverage.png'
+  },
+  {
+    name: 'Recruiter',
+    lane: 'Human review',
+    image: '/abundance/recruiter-review.png'
+  }
+];
+
+export const staffingProcess = [
+  {
+    title: 'Start',
+    body: 'Nurse or facility shares the need.'
+  },
+  {
+    title: 'Prepare',
+    body: 'Agents organize profile, role, and missing context.'
+  },
+  {
+    title: 'Review',
+    body: 'Recruiter confirms fit before staffing moves.'
+  }
+];
+
+export const staffingJournal = [
+  {
+    title: 'Public jobs stay read-only',
+    body: 'Search runs from Abundance-controlled data, not browser-paid ingest calls.',
+    href: '/jobs'
+  },
+  {
+    title: 'Private steps wait for verification',
+    body: 'Documents and protected review open only when the workflow needs them.',
+    href: '/apply'
+  },
+  {
+    title: 'Agents support, people approve',
+    body: 'The public story is clear about the recruiter decision boundary.',
+    href: '/agents'
+  }
+];
+
+export const staffingServiceHighlights = [
+  {
+    title: 'Travel and per diem placement',
+    body: 'Find roles matched to specialty, shift, location, and start window.',
+    href: '/jobs'
+  },
+  {
+    title: 'Facility shift coverage',
+    body: 'Request urgent needs with unit, credentials, and coverage window clear.',
+    href: '/facilities'
+  },
+  {
+    title: 'Recruiter-guided fit review',
+    body: 'A staffing recruiter reviews fit before submissions or next steps.',
+    href: '/agents'
+  },
+  {
+    title: 'Credential readiness',
+    body: 'Keep licenses, documents, and verification status moving when needed.',
+    href: '/apply'
+  }
+];
+
+export const staffingFaqs = [
+  {
+    question: 'Can a nurse start without an account?',
+    answer: 'Yes. Intake starts in plain language. Verification appears only for protected steps.'
+  },
+  {
+    question: 'Can facilities request coverage?',
+    answer: 'Yes. The facility path captures role, unit, shift, urgency, and credential needs.'
+  },
+  {
+    question: 'Do agents make staffing decisions?',
+    answer: 'No. Agents prepare context. Recruiters approve staffing moves.'
+  },
+  {
+    question: 'Where do job results come from?',
+    answer: 'Public discovery reads from Abundance-controlled job data behind the site.'
   }
 ];
