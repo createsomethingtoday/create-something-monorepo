@@ -23,6 +23,8 @@ test('renders the reviewed mega menu browse options', () => {
   assert.doesNotMatch(html, /Explore Our Insights/);
   assert.doesNotMatch(html, /Access Our Insights/);
   assert.match(html, /cato-cc-mega-title \{[^}]*margin: 0 0 4rem/);
+  assert.match(html, /cato-cc-mega-home \{[^}]*display: block/);
+  assert.match(html, /cato-cc-mega-title \+ .cato-cc-mega-home \{ margin-top: 1.75rem/);
   assert.match(
     html,
     /cato-cc-mega-feature-list \{[^}]*border-top: 1px solid rgba\(255,255,255,.16\)/
