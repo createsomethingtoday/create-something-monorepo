@@ -4,6 +4,7 @@ import {
 	buildGovernanceOperatorReview,
 	createGovernanceOperatorDecisionAction,
 	createGovernanceOperatorProofAction,
+	createGovernanceOperatorSignalAction,
 	emptyGovernanceOperatorReview,
 	normalizeGovernanceOperatorFilters
 } from '$lib/server/governance-operator';
@@ -48,6 +49,35 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 };
 
 export const actions: Actions = {
+	recordSignal: async ({ cookies, platform, request }) => {
+		await requireAgencyOperator({ cookies, platform });
+		const db = platform?.env?.DB;
+		if (!db) {
+			return fail(503, { error: 'Database is unavailable.' });
+		}
+
+		const data = await request.formData();
+		try {
+			await createGovernanceOperatorSignalAction(db, {
+				atlasCanvasId: requiredFormText(data, 'atlas_canvas_id'),
+				atlasNodeId: optionalFormText(data, 'atlas_node_id'),
+				source: optionalFormText(data, 'source'),
+				sourceUrl: optionalFormText(data, 'source_url'),
+				title: requiredFormText(data, 'title'),
+				summary: requiredFormText(data, 'summary'),
+				requiresDocumentationReview: checkboxValue(data, 'requires_documentation_review'),
+				requiresReviewerProcessReview: checkboxValue(data, 'requires_reviewer_process_review'),
+				reasons: optionalFormText(data, 'reasons')
+			});
+		} catch (error) {
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Failed to record Signal.'
+			});
+		}
+
+		throw redirect(303, governanceRedirectUrl(data, 'signal_created'));
+	},
+
 	recordDecision: async ({ cookies, platform, request }) => {
 		await requireAgencyOperator({ cookies, platform });
 		const db = platform?.env?.DB;
@@ -111,6 +141,11 @@ function optionalFormText(data: FormData, key: string): string | undefined {
 	return typeof value === 'string' ? value.trim() || undefined : undefined;
 }
 
+function checkboxValue(data: FormData, key: string): boolean {
+	const value = data.get(key);
+	return value === 'on' || value === 'true' || value === '1';
+}
+
 function governanceRedirectUrl(data: FormData, actionResult: string): string {
 	const params = new URLSearchParams();
 	const canvas = optionalFormText(data, 'return_atlas_canvas_id');
@@ -124,6 +159,7 @@ function governanceRedirectUrl(data: FormData, actionResult: string): string {
 }
 
 function normalizeActionResult(value: string | null): string {
+	if (value === 'signal_created') return 'Signal recorded.';
 	if (value === 'decision_created') return 'Decision recorded.';
 	if (value === 'proof_created') return 'Proof recorded.';
 	return '';

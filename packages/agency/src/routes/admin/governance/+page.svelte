@@ -184,6 +184,81 @@
 		</section>
 	{/if}
 
+	<section class="manual-signal-panel" aria-label="Manual Signal intake">
+		<div class="section-heading">
+			<div>
+				<p class="eyebrow">Inbox</p>
+				<h2>Record Signal</h2>
+			</div>
+			<span>Manual intake</span>
+		</div>
+		<form method="POST" action="?/recordSignal" class="manual-signal-form">
+			<input type="hidden" name="return_atlas_canvas_id" value={data.review.filters.atlas_canvas_id} />
+			<input type="hidden" name="return_atlas_node_id" value={data.review.filters.atlas_node_id} />
+			<input type="hidden" name="return_limit" value={data.review.filters.limit} />
+			<div class="form-row">
+				<label>
+					<span>Atlas canvas</span>
+					<input
+						name="atlas_canvas_id"
+						maxlength="160"
+						value={data.review.filters.atlas_canvas_id}
+						placeholder="governance_source_updates"
+						required
+					/>
+				</label>
+				<label>
+					<span>Atlas node</span>
+					<input
+						name="atlas_node_id"
+						maxlength="160"
+						value={data.review.filters.atlas_node_id}
+						placeholder="watched_source_updates"
+					/>
+				</label>
+			</div>
+			<div class="form-row">
+				<label>
+					<span>Source</span>
+					<input name="source" maxlength="160" placeholder="slack:#api-updates" />
+				</label>
+				<label>
+					<span>Source URL</span>
+					<input name="source_url" type="url" maxlength="500" placeholder="https://..." />
+				</label>
+			</div>
+			<label>
+				<span>Title</span>
+				<input name="title" maxlength="220" placeholder="API update needs review" required />
+			</label>
+			<label>
+				<span>Summary</span>
+				<textarea
+					name="summary"
+					rows="4"
+					maxlength="2000"
+					placeholder="What changed, why it matters, and what should be reviewed?"
+					required
+				></textarea>
+			</label>
+			<div class="checkbox-row" aria-label="Signal review classification">
+				<label>
+					<input type="checkbox" name="requires_documentation_review" />
+					<span>Docs review</span>
+				</label>
+				<label>
+					<input type="checkbox" name="requires_reviewer_process_review" />
+					<span>Process review</span>
+				</label>
+			</div>
+			<label>
+				<span>Reasons</span>
+				<input name="reasons" maxlength="1000" placeholder="API surface changed; Reviewer workflow was mentioned" />
+			</label>
+			<button type="submit">Record Signal</button>
+		</form>
+	</section>
+
 	<form class="filters" method="GET" action="/admin/governance">
 		<label>
 			<span>Atlas canvas</span>
@@ -502,6 +577,7 @@
 	.record,
 	.filters,
 	.monitor-panel,
+	.manual-signal-panel,
 	.notice,
 	.empty {
 		border: 1px solid #e2e8f0;
@@ -518,6 +594,17 @@
 		gap: 14px;
 		margin: 24px 0;
 		padding: 18px;
+	}
+
+	.manual-signal-panel {
+		margin: 24px 0;
+		padding: 18px;
+	}
+
+	.manual-signal-form {
+		display: grid;
+		gap: 12px;
+		margin-top: 14px;
 	}
 
 	.monitor-heading {
@@ -630,6 +717,22 @@
 		display: grid;
 		grid-template-columns: minmax(0, 160px) minmax(0, 1fr);
 		gap: 10px;
+	}
+
+	.checkbox-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 16px;
+	}
+
+	.checkbox-row label {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.checkbox-row input {
+		width: auto;
 	}
 
 	.filter-count {
