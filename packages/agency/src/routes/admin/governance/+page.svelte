@@ -120,8 +120,8 @@
 
 	<section class="summary-grid" aria-label="Governance record summary">
 		<div class="metric">
-			<span class="metric-value">{data.review.summary.signals}</span>
-			<span class="metric-label">Inbox</span>
+			<span class="metric-value">{data.review.summary.active_signals}</span>
+			<span class="metric-label">Open inbox</span>
 		</div>
 		<div class="metric">
 			<span class="metric-value">{data.review.summary.decisions}</span>
@@ -134,6 +134,10 @@
 		<div class="metric">
 			<span class="metric-value">{data.review.summary.records_ready_for_proof}</span>
 			<span class="metric-label">Need proof</span>
+		</div>
+		<div class="metric">
+			<span class="metric-value">{data.review.summary.closed_signals}</span>
+			<span class="metric-label">Closed</span>
 		</div>
 		<div class="metric">
 			<span class="metric-value">{data.review.summary.records_requiring_docs_review}</span>
