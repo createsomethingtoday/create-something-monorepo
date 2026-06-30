@@ -141,6 +141,53 @@ This makes pause/resume and handoff real instead of conversational.
 
 For DEV or preview work, a direct deploy with linked Linear evidence is a valid checkpoint. Use Linear comments for non-terminal checkpoints that affect handoff, review, rollback, or promotion. Do not force a commit just to manufacture state.
 
+## Fleet maintenance lane
+
+Use this lane when the work is the same class of maintenance repeated across
+many packages, routes, workers, or client surfaces: dependency updates, API
+migrations, export cleanup, policy wording alignment, generated artifact repair,
+or framework-version drift.
+
+Fleet work is not "ask an agent to touch everything." It needs a bounded batch,
+a repeatable verifier, and an evidence trail that lets reviewers see which
+surfaces changed and why.
+
+Before starting fleet maintenance:
+
+- create or claim one Linear issue for the batch
+- define the target set with repo evidence such as `rg`, `pnpm exports`,
+  package metadata, registry config, or generated maps
+- separate deterministic changes from judgment-heavy changes
+- name the package owners or review surfaces that may need human attention
+- define the rollback unit before making changes
+
+Prefer deterministic scripts for uniform edits. Use coding agents where the
+same intent appears in many local shapes and static transforms would become
+edge-case code. The agent should still work from a concrete target list, not an
+open-ended repository scan.
+
+The default loop for a fleet batch is:
+
+1. Build the target inventory and save the command output or summary in Linear.
+2. Pick the smallest representative slice and run the full verifier.
+3. Apply the change to the next bounded batch in an isolated worktree.
+4. Run package-local gates first, then broaden only when shared contracts moved.
+5. Self-review the diff for accidental scope expansion.
+6. Record changed surfaces, commands, failures, skipped targets, and rollback
+   notes in Linear.
+
+Stop and split the issue when:
+
+- the target set crosses unrelated product or client ownership boundaries
+- a package needs a different policy decision than the rest of the batch
+- verification requires production credentials, third-party writes, or manual
+  reviewer judgment
+- the change starts modifying behavior outside the named maintenance class
+
+Do not automerge fleet maintenance just because each edit is small. The safety
+property comes from target inventory, ownership, verification, and rollback
+evidence, not from line count.
+
 ## Design rules
 
 ### Prefer structure over prompting harder
