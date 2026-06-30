@@ -114,6 +114,12 @@ AGENCY_INTERNAL_API_KEY=... pnpm --filter @create-something/agency governance:sl
 AGENCY_INTERNAL_API_KEY=... pnpm --filter @create-something/agency governance:slack-monitor -- --base-url https://createsomething.agency
 ```
 
+Production scheduler runs should require the Slack monitor to be fully configured:
+
+```bash
+AGENCY_INTERNAL_API_KEY=... pnpm --filter @create-something/agency governance:slack-monitor -- --base-url https://createsomething.agency --require-configured
+```
+
 For preview or local endpoints:
 
 ```bash
@@ -130,23 +136,27 @@ The response summary reports:
 - latest cursor per channel
 
 A `202` response with `status: "not_configured"` means the endpoint is deployed but `SLACK_BOT_TOKEN` or `GOVERNANCE_SLACK_CHANNELS` is missing.
+Passing `--require-configured` makes that response exit nonzero so production automation does not silently pass without watched sources.
 
 ## Scheduling Boundary
 
-The owned automation primitive is the protected HTTPS trigger plus D1 cursor state. This repository currently deploys `.agency` as Cloudflare Pages and does not define a separate scheduled Worker for governance monitors.
+The owned automation primitive is the protected HTTPS trigger plus D1 cursor state. This repository deploys `.agency` as Cloudflare Pages and schedules the production Slack monitor through GitHub Actions.
 
-Use one of these schedulers until a dedicated Worker is added:
+Owned scheduled workflow:
 
-- GitHub Actions cron that runs `pnpm --filter @create-something/agency governance:slack-monitor`.
-- Cloudflare Worker Cron Trigger that POSTs to `/api/governance/monitors/slack`.
-- Another scheduler that can store `AGENCY_INTERNAL_API_KEY` securely and call the endpoint.
+- workflow: `Agency Governance Slack Monitor`
+- file: `.github/workflows/agency-governance-slack-monitor.yml`
+- cadence: hourly at minute 17
+- manual dispatch inputs: `base_url`, `require_configured`
 
 Scheduler rules:
 
 - run at most one monitor invocation at a time
 - use the production URL only after D1 migrations and vars are verified
-- keep `AGENCY_INTERNAL_API_KEY` in the scheduler secret store
+- keep `AGENCY_INTERNAL_API_KEY` in GitHub Actions secrets
+- keep `require_configured` enabled for production scheduled runs
 - treat channel errors as actionable operations evidence, not silent failures
+- expect scheduled runs to fail until `SLACK_BOT_TOKEN` and `GOVERNANCE_SLACK_CHANNELS` are configured in production
 
 ## Operator Workflow
 

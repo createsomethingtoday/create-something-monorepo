@@ -1,0 +1,67 @@
+name: Agency Governance Slack Monitor
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Base URL for the .agency governance monitor.'
+        required: false
+        default: 'https://createsomething.agency'
+      require_configured:
+        description: 'Fail if the monitor reports not_configured.'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agency-governance-slack-monitor
+  cancel-in-progress: false
+
+jobs:
+  run-monitor:
+    runs-on: ubuntu-latest
+    env:
+      AGENCY_GOVERNANCE_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || 'https://createsomething.agency' }}
+      REQUIRE_CONFIGURED: ${{ github.event_name == 'workflow_dispatch' && inputs.require_configured || 'true' }}
+      AGENCY_INTERNAL_API_KEY: ${{ secrets.AGENCY_INTERNAL_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify monitor credential
+        run: |
+          if [ -z "$AGENCY_INTERNAL_API_KEY" ]; then
+            echo "AGENCY_INTERNAL_API_KEY GitHub secret is required."
+            exit 1
+          fi
+
+      - name: Run governance Slack monitor
+        run: |
+          args=(--base-url "$AGENCY_GOVERNANCE_BASE_URL" --json)
+          if [ "$REQUIRE_CONFIGURED" = "true" ]; then
+            args+=(--require-configured)
+          fi
+
+          pnpm --filter @create-something/agency governance:slack-monitor -- "${args[@]}"
