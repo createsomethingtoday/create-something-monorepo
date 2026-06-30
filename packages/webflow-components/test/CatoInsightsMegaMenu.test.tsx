@@ -15,7 +15,7 @@ test('renders the reviewed mega menu browse options', () => {
   const html = renderToStaticMarkup(<CatoInsightsMegaMenu />);
 
   assert.match(html, /Resiliency Report Alerts/);
-  assert.match(html, /Cato Research/);
+  assert.match(html, /Industry Research/);
   assert.match(html, /Newsroom/);
   assert.doesNotMatch(html, />Insights Home</);
   assert.doesNotMatch(html, /Resource Library/);
@@ -117,6 +117,20 @@ test('shows resiliency archive entries before the subscribe block', () => {
   assert.ok(archiveIndex > -1);
   assert.ok(subscribeIndex > -1);
   assert.ok(archiveIndex < subscribeIndex);
+  assert.doesNotMatch(html, /Archive status/);
+});
+
+test('uses the refined visual defaults from the latest Cato feedback', () => {
+  const hubHtml = renderToStaticMarkup(<CatoInsightsHub />);
+  const navHtml = renderToStaticMarkup(<CatoNavigation />);
+
+  assert.match(
+    hubHtml,
+    /cato-cc-hero \{[^}]*background: linear-gradient\(180deg, var\(--cato-bg\) 0 72%, var\(--cato-bg-soft\) 72% 100%\)/
+  );
+  assert.match(hubHtml, /cato-cc-panel-link \{[^}]*display: inline-flex/);
+  assert.match(hubHtml, /background: linear-gradient\(135deg, var\(--cato-green-bright\)/);
+  assert.match(navHtml, /cato-nav__cta \{[^}]*background: linear-gradient\(135deg, #2f70b7/);
 });
 
 test('renders Insight Detail related rail with current dates and collection links', () => {

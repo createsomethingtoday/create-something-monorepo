@@ -206,9 +206,9 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
   {
     id: 'research',
     page: 'cato-research.html',
-    title: 'Cato Research',
+    title: 'Industry Research',
     filterLabel: 'Research',
-    cardLabel: 'Cato Research',
+    cardLabel: 'Industry Research',
     cardTitle: 'Procurement strategy unpacked.',
     cardSummary: 'Explore supply chain resilience best practices.',
     cardCta: 'Browse research',
@@ -219,7 +219,7 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     panelSummary:
       "Approved research, whitepapers, and annual reports collect here as Cato's market perspective grows.",
     archiveEyebrow: 'Research archive',
-    archiveTitle: 'Latest Cato Research',
+    archiveTitle: 'Latest Industry Research',
     archiveSummary:
       'Whitepapers and analysis organized for executives, procurement leaders, and supply chain operators.'
   },
@@ -384,8 +384,8 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     id: 'intelligent-procurement-optionality',
     slug: 'intelligent-procurement-expands-supply-optionality',
     category: 'research',
-    resourceType: 'Cato Research',
-    pill: 'Cato Research',
+    resourceType: 'Industry Research',
+    pill: 'Industry Research',
     title: 'How Intelligent Procurement Expands Supply Optionality',
     summary:
       'Cato research on how better market visibility helps care teams evaluate alternatives before shortages become operational blockers.',
@@ -865,7 +865,7 @@ const CATO_CSS = `
   .cato-cc-card-component .cato-cc-cms-card { height: 100%; min-height: 15rem; }
   .cato-cc-section { background: var(--cato-bg); padding: 4rem 2.5rem; }
   .cato-cc-section--compact { padding-top: 2.5rem; padding-bottom: 2.5rem; }
-  .cato-cc-hero { position: relative; overflow: hidden; background: var(--cato-bg); padding-top: 10rem; }
+  .cato-cc-hero { position: relative; overflow: hidden; background: linear-gradient(180deg, var(--cato-bg) 0 72%, var(--cato-bg-soft) 72% 100%); padding-top: 8rem; }
   .cato-cc-hero[data-variant="detail"] { padding-top: 6.25rem; }
   .cato-cc-container { width: min(100%, 80rem); margin: 0 auto; }
   .cato-cc-hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr); gap: 2rem; align-items: stretch; margin-bottom: 3rem; }
@@ -890,7 +890,7 @@ const CATO_CSS = `
   .cato-cc-hero-grid[data-variant="detail"] .cato-cc-panel h2 { font-size: 1.35rem; line-height: 1.32; }
   .cato-cc-panel p:not(.cato-cc-panel-label) { font-size: 1rem; line-height: 1.5; }
   .cato-cc-hero-grid[data-variant="detail"] .cato-cc-panel p:not(.cato-cc-panel-label) { line-height: 1.45; opacity: .92; }
-  .cato-cc-panel-link { color: var(--cato-white); font-weight: 600; text-decoration: none; margin-top: auto; }
+  .cato-cc-panel-link { display: inline-flex; align-items: center; width: fit-content; color: var(--cato-white); font-weight: 800; text-decoration: none; margin-top: auto; }
   .cato-cc-panel-link:hover { text-decoration: underline; }
   .cato-cc-panel-label, .cato-cc-pill { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; border-radius: 999rem; line-height: 1; }
   .cato-cc-panel-label { text-transform: uppercase; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.10); padding: .38rem .75rem; font-family: Switzer, Arial, sans-serif; font-size: .8125rem; font-weight: 600; }
@@ -939,15 +939,16 @@ const CATO_CSS = `
   .cato-cc-card-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 2rem; width: 100%; }
   .cato-cc-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; color: var(--cato-muted); font-size: .875rem; line-height: 1.35; }
   .cato-cc-system-band { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 3rem; border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; padding: 3rem; }
-  .cato-cc-system-band[data-subscribe="true"] { grid-template-columns: minmax(0, .85fr) minmax(0, 1fr); align-items: stretch; gap: 1.5rem; padding: 1.5rem; }
+  .cato-cc-system-band[data-subscribe="true"] { grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr); align-items: center; gap: 1.25rem; padding: 1.25rem; }
   .cato-cc-system-band[data-archive="true"] { align-items: start; }
+  .cato-cc-system-band[data-archive="true"] .cato-cc-system-copy { position: sticky; top: 7rem; }
   .cato-cc-system-band[data-archive-shell="true"] { grid-template-columns: 1fr; }
   .cato-cc-system-band[data-archive-shell="true"] .cato-cc-system-copy { max-width: 56rem; }
   .cato-cc-system-copy { display: flex; flex-direction: column; gap: 1rem; }
   .cato-cc-system-list { display: flex; flex-direction: column; gap: .75rem; }
   .cato-cc-system-card { display: flex; flex-direction: column; gap: .35rem; background: rgba(10,69,46,.055); border: 0; border-radius: .625rem; box-shadow: none; padding: 1.25rem; }
   .cato-cc-system-card p { margin: 0; color: var(--cato-muted); line-height: 1.5; }
-  .cato-cc-archive-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .cato-cc-archive-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
   .cato-cc-archive-list .cato-cc-cms-card { min-height: 15rem; padding: 1.25rem; }
   .cato-cc-back-link { color: var(--cato-green); margin-top: .25rem; font-weight: 700; text-decoration: none; display: inline-block; }
   .cato-cc-hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .25rem; }
@@ -976,7 +977,7 @@ const CATO_CSS = `
     min-height: 3.25rem;
     border: 1px solid var(--cato-green-mid);
     border-radius: .5rem;
-    background: var(--cato-green-mid);
+    background: linear-gradient(135deg, var(--cato-green-bright), var(--cato-green-mid) 68%, var(--cato-green));
     color: var(--cato-white) !important;
     -webkit-text-fill-color: var(--cato-white);
     padding: .85rem 1.15rem;
@@ -1933,8 +1934,7 @@ function SubscribeBlock() {
             <p className="cato-cc-eyebrow">Resiliency Report Alerts</p>
             <h2>Subscribe for Resiliency Report Alerts.</h2>
             <p className="cato-cc-lede">
-              Receive updates when Cato publishes new healthcare supply risk signals, disruption
-              analysis, and report archive entries.
+              Receive new healthcare supply risk signals and disruption reports as they publish.
             </p>
           </div>
           <div className="cato-cc-system-list">
@@ -1950,7 +1950,7 @@ function SubscribeBlock() {
               <ul className="cato-cc-benefits">
                 <li>New report releases</li>
                 <li>Supply disruption signals</li>
-                <li>Procurement response notes</li>
+                <li>Procurement notes</li>
               </ul>
               <form className="cato-cc-form" method="get" onSubmit={submit} noValidate>
                 <label htmlFor={emailId}>Work email address</label>
@@ -1979,13 +1979,6 @@ function SubscribeBlock() {
                   </div>
                 ) : null}
               </form>
-            </div>
-            <div className="cato-cc-system-card cato-cc-note-card">
-              <strong>Archive status</strong>
-              <p>
-                Browse published resiliency reports below as the archive grows from recurring market
-                signals and care continuity analysis.
-              </p>
             </div>
           </div>
         </div>
