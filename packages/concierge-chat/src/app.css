@@ -146,6 +146,343 @@ input::placeholder {
   background: var(--accent-soft);
 }
 
+.abundance-subpage-hero {
+  padding-top: clamp(74px, 8vw, 118px);
+  padding-bottom: clamp(54px, 6vw, 86px);
+  background:
+    radial-gradient(circle at 78% 18%, rgba(175, 124, 84, 0.12), transparent 30%),
+    linear-gradient(180deg, var(--background, #faf5ef), #fbf7f1);
+}
+
+.abundance-subpage-hero .hero-content-03,
+.abundance-agent-hero .hero-content-03 {
+  align-items: flex-start;
+  margin-bottom: clamp(32px, 5vw, 62px);
+}
+
+.abundance-subpage-hero .hero-content-right,
+.abundance-agent-hero .hero-content-right {
+  gap: 26px;
+}
+
+.abundance-subpage-hero .button-01,
+.abundance-agent-hero .button-01 {
+  background: var(--secondary, #af7c54);
+  color: var(--white, #fff);
+  box-shadow: 0 16px 36px rgba(175, 124, 84, 0.22);
+}
+
+.abundance-subpage-hero .button-03,
+.abundance-agent-hero .button-03 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 0 22px;
+  border: 1px solid rgba(175, 124, 84, 0.22);
+  border-radius: 999px;
+  color: var(--black, #020202);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.54);
+}
+
+.abundance-subpage-hero .button-03 .button-outside-wrap,
+.abundance-agent-hero .button-03 .button-outside-wrap {
+  border: 0;
+  background: transparent;
+}
+
+.abundance-subpage-hero .button-03 .button-text-03,
+.abundance-agent-hero .button-03 .button-text-03 {
+  color: inherit;
+}
+
+.abundance-subpage-process {
+  position: relative;
+  padding-top: clamp(78px, 8vw, 116px);
+  padding-bottom: clamp(78px, 8vw, 116px);
+  background:
+    radial-gradient(circle at 16% 18%, rgba(175, 124, 84, 0.14), transparent 31%),
+    linear-gradient(180deg, #fbf7f1 0%, #f4e7dc 100%);
+  overflow: hidden;
+}
+
+.abundance-process-head {
+  display: grid;
+  gap: 14px;
+  max-width: 760px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+
+.abundance-process-head span,
+.abundance-step-owner,
+.abundance-rule-strip span {
+  color: var(--secondary, #af7c54);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.abundance-process-head .works-title-02 {
+  margin-bottom: 0;
+}
+
+.abundance-process-head p {
+  max-width: 540px;
+  margin: 0 auto;
+  color: rgba(2, 2, 2, 0.62);
+}
+
+.abundance-step-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.abundance-facility-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.abundance-work-card {
+  position: relative;
+  min-height: 292px;
+  padding: 24px;
+  border: 1px solid rgba(175, 124, 84, 0.22);
+  border-radius: 24px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(250, 245, 239, 0.72)),
+    var(--sub-bg, #f6eee6);
+  box-shadow: 0 22px 60px rgba(67, 48, 33, 0.08);
+  color: var(--black, #020202);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.abundance-step-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.abundance-step-card:nth-child(3) {
+  background:
+    linear-gradient(145deg, rgba(2, 2, 2, 0.86), rgba(67, 48, 33, 0.82)),
+    var(--black, #020202);
+  color: var(--white, #fff);
+}
+
+.abundance-step-card:nth-child(3) .works-item-info,
+.abundance-step-card:nth-child(3) .works-itm-info-text,
+.abundance-step-card:nth-child(3) .works-item-info-title,
+.abundance-step-card:nth-child(3) .abundance-step-owner {
+  color: var(--white, #fff);
+}
+
+.abundance-work-card .works-item-info {
+  max-width: none;
+  min-height: 132px;
+  padding: 0;
+  color: var(--black, #020202);
+  gap: 14px;
+  justify-content: flex-end;
+}
+
+.abundance-work-card .works-item-info-title {
+  color: inherit;
+}
+
+.abundance-work-card .works-itm-info-text {
+  max-width: 280px;
+  color: rgba(2, 2, 2, 0.64);
+}
+
+.abundance-step-card:nth-child(3) .works-itm-info-text {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.abundance-work-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.abundance-step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  min-height: 72px;
+  padding: 0;
+  border-radius: 999px;
+  background: var(--secondary, #af7c54);
+  color: var(--white, #fff);
+  font-size: 28px;
+  box-shadow: 0 14px 28px rgba(175, 124, 84, 0.24);
+}
+
+.abundance-step-number span {
+  color: inherit;
+}
+
+.abundance-work-rule {
+  position: absolute;
+  right: -42px;
+  bottom: -42px;
+  z-index: -1;
+  width: 154px;
+  height: 154px;
+  border: 1px solid rgba(175, 124, 84, 0.18);
+  border-radius: 999px;
+}
+
+.abundance-roles {
+  padding-top: clamp(78px, 8vw, 108px);
+  padding-bottom: clamp(88px, 9vw, 124px);
+  background: linear-gradient(180deg, var(--background, #faf5ef) 0%, #fbf7f1 100%);
+}
+
+.abundance-roles .feature-doctor-content {
+  width: min(100% - 60px, 1320px);
+  margin: 0 auto;
+}
+
+.abundance-roles .feature-dr-head {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(280px, 0.45fr);
+  gap: clamp(24px, 5vw, 72px);
+  align-items: end;
+  margin-bottom: 42px;
+}
+
+.abundance-roles .feature-dr-head h2 {
+  max-width: 760px;
+  margin: 0;
+}
+
+.abundance-roles .feature-dr-text {
+  max-width: 390px;
+  margin: 0;
+  color: rgba(2, 2, 2, 0.58);
+}
+
+.abundance-job-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.abundance-job-card {
+  display: grid;
+  align-content: space-between;
+  gap: 26px;
+  min-height: 320px;
+  padding: 26px;
+  border: 1px solid rgba(175, 124, 84, 0.18);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(250, 245, 239, 0.9)),
+    var(--background, #faf5ef);
+  box-shadow: 0 18px 46px rgba(67, 48, 33, 0.06);
+}
+
+.abundance-job-card h3 {
+  margin: 16px 0 8px;
+}
+
+.abundance-job-card p {
+  margin: 0;
+  color: rgba(2, 2, 2, 0.64);
+}
+
+.abundance-job-location {
+  color: rgba(2, 2, 2, 0.82) !important;
+}
+
+.abundance-text-link {
+  align-self: end;
+  color: var(--secondary, #af7c54);
+  text-decoration: none;
+}
+
+.abundance-rule-strip {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.abundance-rule-strip span {
+  padding: 9px 12px;
+  border: 1px solid var(--secondary-20, rgba(175, 124, 84, 0.2));
+  border-radius: 999px;
+  background: var(--secondary-12, rgba(175, 124, 84, 0.12));
+}
+
+@media (max-width: 1180px) {
+  .abundance-step-grid,
+  .abundance-job-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .abundance-facility-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 991px) {
+  .abundance-subpage-hero .hero-content-03,
+  .abundance-agent-hero .hero-content-03,
+  .abundance-roles .feature-dr-head,
+  .abundance-step-grid,
+  .abundance-facility-grid,
+  .abundance-job-list {
+    grid-template-columns: 1fr;
+  }
+
+  .abundance-roles .feature-doctor-content {
+    width: min(100% - 36px, 1320px);
+  }
+
+  .abundance-work-card,
+  .abundance-job-card {
+    min-height: 0;
+  }
+
+  .abundance-work-card .works-item-info {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .abundance-subpage-hero {
+    padding-top: 56px;
+  }
+
+  .abundance-subpage-process,
+  .abundance-roles {
+    padding-top: 68px;
+    padding-bottom: 76px;
+  }
+
+  .abundance-step-number {
+    width: 58px;
+    height: 58px;
+    min-height: 58px;
+    font-size: 22px;
+  }
+
+  .abundance-work-card,
+  .abundance-job-card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+}
+
 .app-shell {
   max-width: 1340px;
   margin: 0 auto;

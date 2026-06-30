@@ -35,17 +35,25 @@
   </div>
 </section>
 
-<section class="works-02 container-full abundance-process">
+<section class="works-02 container-full abundance-process abundance-subpage-process">
   <div class="container-fluid for-works">
-    <h2 class="works-title-02 heading-01">Four simple steps</h2>
-    <div class="works-items">
+    <div class="abundance-process-head">
+      <span>Nurse path</span>
+      <h2 class="works-title-02 heading-01">A clearer start, then recruiter review.</h2>
+      <p class="p1-regular">Start with fit. Verification appears only when a protected step needs it.</p>
+    </div>
+    <div class="works-items abundance-step-grid">
       {#each nurseSteps as step}
-        <article class="works-item abundance-work-card">
-          <div class="works-item-thumb-wrap abundance-step-number"><span>{step.label}</span></div>
+        <article class="works-item abundance-work-card abundance-step-card">
+          <div class="abundance-work-top">
+            <div class="works-item-thumb-wrap abundance-step-number"><span>{step.label}</span></div>
+            <span class="abundance-step-owner">Nurse</span>
+          </div>
           <div class="works-item-info">
             <h3 class="works-item-info-title heading-05">{step.title}</h3>
             <p class="works-itm-info-text p2-regular">{step.body}</p>
           </div>
+          <span class="abundance-work-rule"></span>
         </article>
       {/each}
     </div>
