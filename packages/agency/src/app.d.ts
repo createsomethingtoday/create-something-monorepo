@@ -91,6 +91,10 @@ declare global {
 				AGENCY_INTERNAL_API_KEY?: string;
 				AGENCY_OPERATOR_EMAILS?: string;
 				CANON_OPERATOR_ORIGINS?: string;
+				// Governance source monitors
+				SLACK_BOT_TOKEN?: string;
+				GOVERNANCE_SLACK_CHANNELS?: string;
+				GOVERNANCE_SLACK_WORKSPACE_URL?: string;
 				// Public Atlas mapping agent
 				OPENAI_API_KEY?: string;
 				PUBLIC_ATLAS_AGENT_MODEL?: string;
