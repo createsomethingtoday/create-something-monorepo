@@ -6,6 +6,7 @@ import {
 	emptyGovernanceOperatorReview,
 	normalizeGovernanceOperatorFilters
 } from '../src/lib/server/governance-operator.ts';
+import { safeOperatorExternalHref } from '../src/lib/governance/operator-url.ts';
 
 type TableRow = Record<string, unknown>;
 
@@ -82,10 +83,22 @@ test('buildGovernanceOperatorReview groups decisions and proofs under their Atla
 				id: 'dec_docs',
 				signal_id: 'sig_docs',
 				atlas_canvas_id: 'canvas_docs',
-				atlas_node_id: 'node_api',
+				atlas_node_id: 'node_other',
 				decision_state: 'run',
 				decision_owner: 'reviewer@example.com',
 				reason: 'Update docs.',
+				payload_json: '{}',
+				created_at: now,
+				updated_at: now
+			},
+			{
+				id: 'dec_docs_missing_proof',
+				signal_id: 'sig_docs',
+				atlas_canvas_id: 'canvas_docs',
+				atlas_node_id: 'node_other',
+				decision_state: 'wait',
+				decision_owner: 'reviewer@example.com',
+				reason: 'Waiting for reviewer checklist.',
 				payload_json: '{}',
 				created_at: now,
 				updated_at: now
@@ -109,7 +122,7 @@ test('buildGovernanceOperatorReview groups decisions and proofs under their Atla
 				signal_id: 'sig_docs',
 				decision_id: 'dec_docs',
 				atlas_canvas_id: 'canvas_docs',
-				atlas_node_id: 'node_api',
+				atlas_node_id: 'node_other',
 				evidence: 'Docs PR merged.',
 				outcome: 'passed',
 				receipt_url: 'https://github.example/pr/456',
@@ -123,7 +136,7 @@ test('buildGovernanceOperatorReview groups decisions and proofs under their Atla
 
 	const review = await buildGovernanceOperatorReview(db, {
 		atlas_canvas_id: 'canvas_docs',
-		atlas_node_id: '',
+		atlas_node_id: 'node_api',
 		limit: 100
 	});
 
@@ -131,6 +144,7 @@ test('buildGovernanceOperatorReview groups decisions and proofs under their Atla
 	assert.equal(review.summary.signals, 1);
 	assert.equal(review.summary.decisions, 2);
 	assert.equal(review.summary.proofs, 1);
+	assert.equal(review.summary.records_ready_for_proof, 1);
 	assert.equal(review.records[0]?.signal.id, 'sig_docs');
 	assert.equal(review.records[0]?.decisions[0]?.id, 'dec_docs');
 	assert.equal(review.records[0]?.proofs[0]?.id, 'proof_docs');
@@ -155,4 +169,12 @@ test('governance operator helpers normalize filters and empty states', () => {
 	assert.equal(empty.storage.available, false);
 	assert.equal(empty.storage.error, 'Database is unavailable.');
 	assert.equal(empty.summary.signals, 0);
+});
+
+test('safeOperatorExternalHref only allows http and https links', () => {
+	assert.equal(safeOperatorExternalHref('https://example.com/path'), 'https://example.com/path');
+	assert.equal(safeOperatorExternalHref(' http://example.com/path '), 'http://example.com/path');
+	assert.equal(safeOperatorExternalHref('javascript:alert(1)'), null);
+	assert.equal(safeOperatorExternalHref('data:text/html,<script>alert(1)</script>'), null);
+	assert.equal(safeOperatorExternalHref('/relative/path'), null);
 });
