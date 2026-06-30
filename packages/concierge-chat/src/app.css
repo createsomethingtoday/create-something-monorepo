@@ -326,6 +326,17 @@ input::placeholder {
   box-shadow: 0 14px 28px rgba(175, 124, 84, 0.24);
 }
 
+.abundance-work-card .abundance-step-number.works-item-thumb-wrap {
+  flex: 0 0 72px;
+  width: 72px;
+  max-width: 72px;
+  height: 72px;
+  min-height: 72px;
+  max-height: 72px;
+  padding: 0;
+  border-radius: 999px;
+}
+
 .abundance-step-number span {
   color: inherit;
 }
@@ -471,9 +482,20 @@ input::placeholder {
 
   .abundance-step-number {
     width: 58px;
+    max-width: 58px;
     height: 58px;
     min-height: 58px;
+    max-height: 58px;
     font-size: 22px;
+  }
+
+  .abundance-work-card .abundance-step-number.works-item-thumb-wrap {
+    flex-basis: 58px;
+    width: 58px;
+    max-width: 58px;
+    height: 58px;
+    min-height: 58px;
+    max-height: 58px;
   }
 
   .abundance-work-card,
