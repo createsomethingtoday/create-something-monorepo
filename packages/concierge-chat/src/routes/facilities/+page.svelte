@@ -20,7 +20,7 @@
       <h1 class="hero-content-title display">Request coverage with the handoff clear.</h1>
       <div class="hero-content-right">
         <p class="hero-content-info-text p1-regular">
-          Capture role, schedule, credentials, urgency, owner, and review status in one place.
+          No public facility directory required. Start with the coverage need and keep the owner visible.
         </p>
         <div class="hero-content-btns-03">
           <a href="/apply" class="button-01 w-inline-block">
@@ -35,17 +35,25 @@
   </div>
 </section>
 
-<section class="works-02 container-full abundance-process">
+<section class="works-02 container-full abundance-process abundance-subpage-process">
   <div class="container-fluid for-works">
-    <h2 class="works-title-02 heading-01">From need to handoff</h2>
-    <div class="works-items">
+    <div class="abundance-process-head">
+      <span>Facility path</span>
+      <h2 class="works-title-02 heading-01">Coverage requests stay structured.</h2>
+      <p class="p1-regular">Capture the request once. Let recruiters review fit, gaps, and next steps.</p>
+    </div>
+    <div class="works-items abundance-step-grid abundance-facility-grid">
       {#each facilitySteps as step}
-        <article class="works-item abundance-work-card">
-          <div class="works-item-thumb-wrap abundance-step-number"><span>{step.label}</span></div>
+        <article class="works-item abundance-work-card abundance-step-card">
+          <div class="abundance-work-top">
+            <div class="works-item-thumb-wrap abundance-step-number"><span>{step.label}</span></div>
+            <span class="abundance-step-owner">Facility</span>
+          </div>
           <div class="works-item-info">
             <h3 class="works-item-info-title heading-05">{step.title}</h3>
             <p class="works-itm-info-text p2-regular">{step.body}</p>
           </div>
+          <span class="abundance-work-rule"></span>
         </article>
       {/each}
     </div>

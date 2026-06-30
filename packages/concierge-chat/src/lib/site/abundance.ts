@@ -76,19 +76,19 @@ export const nurseSteps = [
 
 export const facilitySteps = [
   {
-    label: 'Need',
+    label: '1',
     title: 'Role and shift request',
     body:
       'Capture role, specialty, unit, dates, shift, location, urgency, credential requirements, and budget constraints.'
   },
   {
-    label: 'Match',
+    label: '2',
     title: 'Shortlist with gaps',
     body:
       'Agents draft candidate-fit context and missing-information flags for the recruiter instead of making a final staffing call.'
   },
   {
-    label: 'Approve',
+    label: '3',
     title: 'Recruiter handoff',
     body:
       'Submission, outreach, and onboarding steps stay behind named approval and evidence trails.'

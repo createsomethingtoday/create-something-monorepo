@@ -20,7 +20,7 @@
   />
 </svelte:head>
 
-<section class="hero-03 container-full abundance-agent-hero">
+<section class="hero-03 container-full abundance-agent-hero abundance-subpage-hero">
   <div class="container-fluid for-hero01">
     <div class="hero-content-03">
       <h1 class="hero-content-title display">Agents that support the staffing desk.</h1>
@@ -139,10 +139,6 @@
 {/if}
 
 <style>
-  .abundance-agent-hero {
-    padding-top: 80px;
-  }
-
   .abundance-agent-thumb {
     border-radius: 16px;
   }
