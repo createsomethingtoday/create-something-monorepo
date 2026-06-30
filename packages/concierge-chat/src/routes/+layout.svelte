@@ -18,6 +18,13 @@
 	$: controlPlaneLabel = getAgencyAccessStatusLabel(data.agencyAccess);
 	$: controlPlaneMeta = getAgencyAccessMeta(data.agencyAccess, data.user);
 	$: showInternalNavigation = data.agencyAccess.status === 'allowed';
+	$: usesWebflowShell =
+		data.currentPath === '/' ||
+		data.currentPath === '/nurses' ||
+		data.currentPath === '/jobs' ||
+		data.currentPath === '/facilities' ||
+		data.currentPath === '/agents' ||
+		data.currentPath === '/style-guide';
 	$: isPublicIntakeRoute =
 		data.currentPath === '/' ||
 		data.currentPath === '/nurses' ||
@@ -50,43 +57,73 @@
 			];
 </script>
 
-<div class="app-shell">
-	<header class="app-nav glass">
-		<a class="brand-lockup" href="/">
-			<span class="brand-mark" aria-hidden="true">A</span>
-			<span>
-				<span class="brand">Abundance Staffing</span>
-				<span class="brand-note">Nurse staffing</span>
-			</span>
-		</a>
-
-		<div class="nav-cluster">
-			<nav>
+{#if usesWebflowShell}
+	<div class="abundance-webflow-page">
+		<header class="webflow-nav">
+			<a class="webflow-logo" href="/" aria-label="Abundance Staffing home">
+				<span class="webflow-logo-mark">A</span>
+				<span>Abundance Staffing</span>
+			</a>
+			<nav class="webflow-nav-links" aria-label="Public navigation">
 				{#each navItems as item}
 					<a href={item.href}>{item.label}</a>
 				{/each}
 			</nav>
-
-			<a
-				class={`session-link ${data.agencyAccess.status} ${showCompactStaffAccess ? 'public' : ''}`}
-				href={controlPlaneHref}
-				target="_blank"
-				rel="noreferrer"
-			>
-				{#if showCompactStaffAccess}
-					<span class="session-public-label">Staff sign-in</span>
-				{:else}
-					<span class={`status-pill ${controlPlaneTone}`}>{controlPlaneLabel}</span>
-					<span class="session-meta">{controlPlaneMeta}</span>
-				{/if}
+			<a class="button-03 w-inline-block webflow-staff-link" href={controlPlaneHref} target="_blank" rel="noreferrer">
+				<div class="button-outside-wrap">
+					<div class="btn-text-outside-03">
+						<div class="btn-text-inside-03">
+							<div class="button-text-03">Staff sign-in</div>
+							<div class="button-text-03">Staff sign-in</div>
+						</div>
+					</div>
+				</div>
 			</a>
-		</div>
-	</header>
+		</header>
 
-	<main>
-		<slot />
-	</main>
-</div>
+		<main>
+			<slot />
+		</main>
+	</div>
+{:else}
+	<div class="app-shell">
+		<header class="app-nav glass">
+			<a class="brand-lockup" href="/">
+				<span class="brand-mark" aria-hidden="true">A</span>
+				<span>
+					<span class="brand">Abundance Staffing</span>
+					<span class="brand-note">Nurse staffing</span>
+				</span>
+			</a>
+
+			<div class="nav-cluster">
+				<nav>
+					{#each navItems as item}
+						<a href={item.href}>{item.label}</a>
+					{/each}
+				</nav>
+
+				<a
+					class={`session-link ${data.agencyAccess.status} ${showCompactStaffAccess ? 'public' : ''}`}
+					href={controlPlaneHref}
+					target="_blank"
+					rel="noreferrer"
+				>
+					{#if showCompactStaffAccess}
+						<span class="session-public-label">Staff sign-in</span>
+					{:else}
+						<span class={`status-pill ${controlPlaneTone}`}>{controlPlaneLabel}</span>
+						<span class="session-meta">{controlPlaneMeta}</span>
+					{/if}
+				</a>
+			</div>
+		</header>
+
+		<main>
+			<slot />
+		</main>
+	</div>
+{/if}
 
 <style>
 	.app-nav {
@@ -215,7 +252,103 @@
 		padding-bottom: 3rem;
 	}
 
+	.abundance-webflow-page :global(.container-full) {
+		width: 100%;
+	}
+
+	.webflow-nav {
+		position: sticky;
+		top: 20px;
+		z-index: 20;
+		display: grid;
+		grid-template-columns: minmax(180px, 1fr) auto minmax(140px, 1fr);
+		align-items: center;
+		gap: 20px;
+		width: calc(100% - 60px);
+		max-width: 1340px;
+		margin: 30px auto 0;
+		padding: 10px;
+		border: 1px solid var(--black-10, #0202021a);
+		border-radius: 999px;
+		background: rgba(250, 245, 239, 0.88);
+		backdrop-filter: blur(18px);
+	}
+
+	.webflow-logo,
+	.webflow-nav-links,
+	.webflow-staff-link {
+		position: relative;
+		z-index: 1;
+	}
+
+	.webflow-logo {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		color: var(--black, #020202);
+		font-size: 16px;
+		line-height: 1;
+		font-weight: 500;
+		text-decoration: none;
+	}
+
+	.webflow-logo-mark {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 34px;
+		height: 34px;
+		border-radius: 999px;
+		background: var(--black, #020202);
+		color: white;
+	}
+
+	.webflow-nav-links {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 4px;
+	}
+
+	.webflow-nav-links a {
+		padding: 10px 14px;
+		border-radius: 999px;
+		color: var(--black, #020202);
+		font-size: 12px;
+		line-height: 1;
+		letter-spacing: 0.08em;
+		text-decoration: none;
+		text-transform: uppercase;
+	}
+
+	.webflow-nav-links a:hover {
+		background: var(--secondary-12, #af7c541f);
+	}
+
+	.webflow-staff-link {
+		justify-self: end;
+		text-decoration: none;
+	}
+
 	@media (max-width: 760px) {
+		.webflow-nav {
+			position: relative;
+			top: 0;
+			grid-template-columns: 1fr;
+			width: calc(100% - 30px);
+			margin-top: 15px;
+			border-radius: 20px;
+		}
+
+		.webflow-nav-links {
+			justify-content: flex-start;
+			flex-wrap: wrap;
+		}
+
+		.webflow-staff-link {
+			justify-self: start;
+		}
+
 		.app-nav {
 			flex-direction: column;
 			align-items: stretch;

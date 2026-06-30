@@ -3,6 +3,10 @@
 </script>
 
 <svelte:head>
+  <link
+    rel="stylesheet"
+    href="https://cdn.prod.website-files.com/6975f7e617285604fcb645f7/css/healen.webflow.shared.7df6645cf.css"
+  />
   <title>Nurse Jobs | Abundance Staffing</title>
   <meta
     name="description"
@@ -10,56 +14,38 @@
   />
 </svelte:head>
 
-<section class="page-hero compact">
-  <div class="hero-copy">
-    <div class="eyebrow">Nurse Jobs</div>
-    <h1 class="page-title">Browse roles. Start with context.</h1>
-    <p class="lede">
-      Role cards should help nurses decide fit before they enter a staffing conversation.
-    </p>
-  </div>
-  <div class="metric-stack">
-    <div>
-      <span>Serving source</span>
-      <strong>D1 public jobs</strong>
-    </div>
-    <div>
-      <span>Agent action</span>
-      <strong>Read-only discovery</strong>
-    </div>
-    <div>
-      <span>Next step</span>
-      <strong>Concierge application</strong>
+<section class="hero-03 container-full abundance-subpage-hero">
+  <div class="container-fluid">
+    <div class="hero-content-03">
+      <h1 class="hero-content-title display">Browse roles. Start with context.</h1>
+      <div class="hero-content-right">
+        <p class="hero-content-info-text p1-regular">
+          Role cards help nurses decide fit before they enter a staffing conversation.
+        </p>
+        <a href="/apply" class="button-01 w-inline-block">
+          <div class="button-outside-01"><div class="button-inside"><div class="button-text-01">Start application</div><div class="button-text-01">Start application</div></div></div>
+        </a>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="section-band">
-  <div class="section-heading">
-    <div class="eyebrow">Open Role Pattern</div>
-    <h2>Sample roles.</h2>
+<section class="feature-doctors container-full abundance-roles">
+  <div class="feature-doctor-content">
+    <div class="feature-dr-head">
+      <h2 class="heading-01">Sample roles</h2>
+      <p class="feature-dr-text p1-regular">Search is public. Matching still moves through recruiter review.</p>
+    </div>
+    <div class="abundance-job-list">
+      {#each jobHighlights as job}
+        <article class="abundance-proof-card">
+          <span class="abundance-text-link">{job.term}</span>
+          <h3 class="heading-05">{job.role}</h3>
+          <p class="p2-regular">{job.location}</p>
+          <p class="p2-regular">{job.detail}</p>
+          <a href="/apply" class="abundance-text-link">Start with this role</a>
+        </article>
+      {/each}
+    </div>
   </div>
-  <div class="job-grid">
-    {#each jobHighlights as job}
-      <article class="job-card">
-        <div>
-          <span>{job.term}</span>
-          <h3>{job.role}</h3>
-          <p>{job.location}</p>
-        </div>
-        <p>{job.detail}</p>
-        <a class="link-secondary" href="/apply">Start with this role</a>
-      </article>
-    {/each}
-  </div>
-</section>
-
-<section class="split-section">
-  <div>
-    <div class="eyebrow">Production Contract</div>
-    <h2>Public search stays read-only.</h2>
-  </div>
-  <p class="lede small">
-    Job discovery reads from Abundance-controlled data. Paid refreshes stay behind staff access.
-  </p>
 </section>

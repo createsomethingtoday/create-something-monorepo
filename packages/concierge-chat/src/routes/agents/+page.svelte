@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { abundanceAgents, trustProof } from '$lib/site/abundance';
+  import { abundanceAgents, heroVisual, staffingCareCards, trustProof } from '$lib/site/abundance';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -9,6 +9,10 @@
 </script>
 
 <svelte:head>
+  <link
+    rel="stylesheet"
+    href="https://cdn.prod.website-files.com/6975f7e617285604fcb645f7/css/healen.webflow.shared.7df6645cf.css"
+  />
   <title>Abundance Agents</title>
   <meta
     name="description"
@@ -16,225 +20,237 @@
   />
 </svelte:head>
 
-<section class="page-hero compact">
-  <div class="hero-copy">
-    <div class="eyebrow">Abundance Agents</div>
-    <h1 class="page-title">Agents that support the staffing desk.</h1>
-    <p class="lede">
-      Public roles use Abundance language. Protected work stays behind staff access.
-    </p>
-  </div>
-
-  <div class="proof-panel">
-    <div class="eyebrow">Protected Runtime</div>
-    <h2>Keys and write actions stay private.</h2>
-    <ul>
-      {#each trustProof.slice(0, 4) as item}
-        <li>{item}</li>
-      {/each}
-    </ul>
+<section class="hero-03 container-full abundance-agent-hero">
+  <div class="container-fluid for-hero01">
+    <div class="hero-content-03">
+      <h1 class="hero-content-title display">Agents that support the staffing desk.</h1>
+      <div class="hero-content-right">
+        <p class="hero-content-info-text p1-regular">
+          Abundance agents prepare context. Recruiters approve staffing moves.
+        </p>
+        <div class="hero-content-btns-03">
+          <a href="/apply" class="button-01 w-inline-block">
+            <div class="button-outside-01">
+              <div class="button-inside">
+                <div class="button-text-01">Start application</div>
+                <div class="button-text-01">Start application</div>
+              </div>
+            </div>
+          </a>
+          <a href={data.controlPlaneHref} target="_blank" rel="noreferrer" class="button-03 w-inline-block">
+            <div class="button-outside-wrap">
+              <div class="btn-text-outside-03">
+                <div class="btn-text-inside-03">
+                  <div class="button-text-03">Staff sign-in</div>
+                  <div class="button-text-03">Staff sign-in</div>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="hero-thumb abundance-agent-thumb">
+      <img src={heroVisual.src} alt={heroVisual.alt} class="hero-thumb-img" />
+    </div>
   </div>
 </section>
 
-<section class="section-band">
-  <div class="section-heading">
-    <div class="eyebrow">Public Agent Roster</div>
-    <h2>Named for the work.</h2>
-  </div>
-  <div class="feature-grid">
-    {#each abundanceAgents as agent}
-      <article class="feature-card">
-        <span class="step-marker">{agent.lane}</span>
-        <h3>{agent.name}</h3>
-        <p>{agent.summary}</p>
-      </article>
-    {/each}
+<section class="works-02 container-full abundance-agent-roster">
+  <div class="container-fluid for-works">
+    <div class="works-content">
+      <h2 class="works-title-02 heading-01">Named for Abundance work</h2>
+      <div class="works-items">
+        {#each abundanceAgents as agent}
+          <article class="works-item abundance-agent-card">
+            <div class="works-item-thumb-wrap abundance-agent-lane">{agent.lane}</div>
+            <div class="works-item-info">
+              <h3 class="works-item-info-title heading-05">{agent.name}</h3>
+              <p class="works-itm-info-text p2-regular">{agent.summary}</p>
+              <span>{agent.proof}</span>
+            </div>
+          </article>
+        {/each}
+      </div>
+    </div>
   </div>
 </section>
 
-{#if !data.accessAllowed}
-  <section class="access-shell glass panel section-gap">
-    <div class="access-copy">
-      <div class="eyebrow">Staff Access</div>
-      <h2 class="section-title">Staff sign-in unlocks operator chat.</h2>
-      <p class="muted">
-        Public pages describe roles. Live actions remain server-side.
+<section class="support-02 container-full abundance-agent-boundary">
+  <div class="container-fluid">
+    <div class="support-head-02">
+      <h2 class="support-title-02 heading-01">Public story. Protected runtime.</h2>
+      <p class="support-text-02 p1-regular">
+        Public pages describe the workflow. Keys, documents, and write actions stay private.
       </p>
     </div>
-    <a class="link-button" href={data.controlPlaneHref} target="_blank" rel="noreferrer"
-      >Staff sign-in</a
-    >
-  </section>
-{:else}
-  <section class="agents-shell section-gap">
-    <header class="agents-header glass panel">
-      <div>
-        <div class="eyebrow">Protected Operator Chat</div>
-        <h2 class="section-title">Dify-backed agents in one staff surface</h2>
-      </div>
-      <div class="header-proof" aria-label="Agent credential summary">
-        <span class="status-pill good">{availableCount} ready</span>
-        <span class={`status-pill ${missingCount ? 'warn' : 'good'}`}>{missingCount} needs key</span
-        >
-      </div>
-    </header>
-
-    <div class="agent-grid">
-      {#each data.agents as agent}
-        <a class="agent-row glass" href={`/agents/${agent.id}`}>
-          <div class="agent-main">
-            <div class="agent-title-line">
-              <h3>{agent.label}</h3>
-              <span
-                class={`status-pill ${agent.credentialState === 'available' ? 'good' : 'warn'}`}
-              >
-                {agent.credentialState === 'available' ? 'Key ready' : 'Needs key'}
-              </span>
-            </div>
-            <p>{agent.operatorSummary}</p>
-            <div class="agent-meta" aria-label={`${agent.label} metadata`}>
-              <span>{agent.client}</span>
-              <span>{agent.lane}</span>
-              <span>{agent.operatorStateLabel}</span>
-            </div>
-          </div>
-          <div class="agent-proof">
-            <strong>{agent.nextAction}</strong>
-            <span>{agent.apiKeyEnv}</span>
-          </div>
+    <div class="support-list-wrap abundance-agent-proof">
+      {#each staffingCareCards as card}
+        <a class="support-thumb-item abundance-agent-proof-card" href={card.href}>
+          <img src={card.image} alt="" class="support-thumb-img" loading="lazy" />
+          <span class="abundance-card-shade"></span>
+          <span class="support-thumb-text heading-03">{card.title}</span>
         </a>
       {/each}
+    </div>
+  </div>
+</section>
+
+{#if data.accessAllowed}
+  <section class="feature-blog-04 container-full abundance-staff-runtime">
+    <div class="container-fluid">
+      <div class="feature-blog-content-04">
+        <div class="abundance-section-head">
+          <h2 class="heading-01">Protected operator chat</h2>
+          <p class="p1-regular">
+            {availableCount} agents ready. {missingCount} credential checks remain.
+          </p>
+        </div>
+        <div class="abundance-runtime-list">
+          {#each data.agents as agent}
+            <a class="abundance-runtime-row" href={`/agents/${agent.id}`}>
+              <div>
+                <h3 class="heading-05">{agent.label}</h3>
+                <p class="p2-regular">{agent.operatorSummary}</p>
+              </div>
+              <span>{agent.credentialState === 'available' ? 'Key ready' : 'Needs key'}</span>
+            </a>
+          {/each}
+        </div>
+      </div>
+    </div>
+  </section>
+{:else}
+  <section class="feature-blog-04 container-full abundance-staff-runtime">
+    <div class="container-fluid">
+      <div class="feature-blog-content-04">
+        <div class="abundance-section-head">
+          <h2 class="heading-01">Staff access unlocks operator chat</h2>
+          <p class="p1-regular">Protected staffing actions stay behind named access.</p>
+        </div>
+        <div class="abundance-rule-strip" aria-label="Trust rules">
+          {#each trustProof.slice(0, 4) as item}
+            <span>{item}</span>
+          {/each}
+        </div>
+      </div>
     </div>
   </section>
 {/if}
 
 <style>
-  .section-gap {
-    margin-top: 1rem;
+  .abundance-agent-hero {
+    padding-top: 80px;
   }
 
-  .access-shell,
-  .agents-header {
-    display: flex;
+  .abundance-agent-thumb {
+    border-radius: 16px;
+  }
+
+  .abundance-agent-roster,
+  .abundance-agent-boundary,
+  .abundance-staff-runtime {
+    padding-top: 90px;
+    padding-bottom: 90px;
+  }
+
+  .abundance-agent-card {
+    min-height: 260px;
+    padding: 22px;
+    border: 1px solid var(--black-10);
+    border-radius: 16px;
+    background: var(--sub-bg);
+  }
+
+  .abundance-agent-lane {
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .access-copy {
-    display: grid;
-    gap: 0.75rem;
-    max-width: 42rem;
-  }
-
-  .agents-shell {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .header-proof {
-    display: flex;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  .agent-grid {
-    display: grid;
-    gap: 0.85rem;
-  }
-
-  .agent-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.7fr);
-    gap: 1rem;
-    padding: 1rem;
-    text-decoration: none;
-    transition:
-      border-color 140ms ease,
-      transform 140ms ease,
-      background 140ms ease;
-  }
-
-  .agent-row:hover {
-    border-color: var(--line-strong);
-    transform: translateY(-1px);
-  }
-
-  .agent-main {
-    display: grid;
-    gap: 0.65rem;
-    min-width: 0;
-  }
-
-  .agent-title-line {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .agent-title-line h3 {
-    margin: 0;
-    font-size: 1.12rem;
-    letter-spacing: 0;
-  }
-
-  .agent-main p {
-    margin: 0;
-    color: var(--muted);
-  }
-
-  .agent-meta {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    color: var(--muted-strong);
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    text-transform: uppercase;
+    justify-content: center;
+    min-height: 58px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--secondary-12);
+    color: var(--secondary);
+    font-size: 12px;
     letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
-  .agent-meta span,
-  .agent-proof span {
-    border: 1px solid var(--line);
-    border-radius: var(--radius-tight);
-    padding: 0.35rem 0.5rem;
-    background: var(--surface-overlay);
+  .abundance-agent-card span,
+  .abundance-rule-strip span,
+  .abundance-runtime-row span {
+    color: var(--secondary);
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
-  .agent-proof {
+  .abundance-agent-proof {
+    margin-top: 40px;
+  }
+
+  .abundance-agent-proof-card {
+    text-decoration: none;
+  }
+
+  .abundance-card-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 25%, rgba(2, 2, 2, 0.62));
+  }
+
+  .abundance-section-head {
     display: grid;
-    gap: 0.65rem;
-    align-content: center;
-    color: var(--ink-soft);
+    gap: 16px;
+    margin-bottom: 34px;
   }
 
-  .agent-proof strong {
-    font-size: 0.94rem;
-    line-height: 1.45;
+  .abundance-rule-strip {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
-  .agent-proof span {
-    overflow-wrap: anywhere;
-    color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
+  .abundance-rule-strip span {
+    padding: 9px 12px;
+    border: 1px solid var(--secondary-20);
+    border-radius: 999px;
+    background: var(--secondary-12);
   }
 
-  @media (max-width: 820px) {
-    .access-shell,
-    .agents-header,
-    .agent-row {
+  .abundance-runtime-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .abundance-runtime-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid var(--black-10);
+    border-radius: 16px;
+    color: var(--black);
+    text-decoration: none;
+    background: var(--background);
+  }
+
+  @media (max-width: 991px) {
+    .hero-content-03,
+    .support-head-02,
+    .works-items,
+    .abundance-runtime-row {
       grid-template-columns: 1fr;
-      flex-direction: column;
-      align-items: stretch;
     }
 
-    .header-proof {
-      justify-content: flex-start;
+    .support-list-wrap {
+      flex-direction: column;
+    }
+
+    .support-thumb-item {
+      max-width: none;
     }
   }
 </style>
