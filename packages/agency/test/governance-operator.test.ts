@@ -57,6 +57,14 @@ class FakeStatement {
 			this.tables[table] ??= [];
 			this.tables[table].push(this.rowFromInsert(table));
 		}
+		if (this.sql.includes('UPDATE governance_signals')) {
+			const [status, updated_at, id] = this.values;
+			const signal = this.tables.governance_signals?.find((row) => row.id === id);
+			if (signal) {
+				signal.status = status;
+				signal.updated_at = updated_at;
+			}
+		}
 		return { success: true };
 	}
 
@@ -318,7 +326,53 @@ test('governance operator actions record decisions and proofs from source attach
 	assert.equal(proof.atlas_canvas_id, 'canvas_docs');
 	assert.equal(proof.atlas_node_id, 'node_api');
 	assert.equal(proof.receipt_url, 'https://github.example/pr/789');
+	assert.equal(tables.governance_signals[0]?.status, 'resolved');
 	assert.equal(tables.governance_decisions.length, 1);
+	assert.equal(tables.governance_proofs.length, 1);
+});
+
+test('governance operator proof action preserves dismissed Signal inbox state', async () => {
+	const tables: Record<string, TableRow[]> = {
+		governance_signals: [
+			{
+				id: 'sig_dismissed',
+				atlas_canvas_id: 'canvas_docs',
+				atlas_node_id: 'node_api',
+				source: 'slack:#api-updates',
+				source_url: 'https://slack.example/archives/C123/p999',
+				title: 'Duplicate API update',
+				summary: 'Duplicate signal already dismissed.',
+				status: 'dismissed',
+				payload_json: '{}',
+				created_at: now,
+				updated_at: now
+			}
+		],
+		governance_decisions: [
+			{
+				id: 'dec_dismissed',
+				signal_id: 'sig_dismissed',
+				atlas_canvas_id: 'canvas_docs',
+				atlas_node_id: 'node_api',
+				decision_state: 'stop',
+				decision_owner: 'docs-reviewer@example.com',
+				reason: 'No action needed.',
+				payload_json: '{}',
+				created_at: now,
+				updated_at: now
+			}
+		],
+		governance_proofs: []
+	};
+	const db = new FakeD1(tables) as unknown as Parameters<typeof createGovernanceOperatorProofAction>[0];
+
+	await createGovernanceOperatorProofAction(db, {
+		decisionId: 'dec_dismissed',
+		evidence: 'Duplicate confirmed; no docs update required.',
+		outcome: 'documented'
+	});
+
+	assert.equal(tables.governance_signals[0]?.status, 'dismissed');
 	assert.equal(tables.governance_proofs.length, 1);
 });
 
