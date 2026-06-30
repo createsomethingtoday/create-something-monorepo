@@ -1,13 +1,20 @@
-# CREATE SOMETHING Agent SDK
+# CREATE SOMETHING Legacy Anthropic Agent Harness
 
-Reliable Claude agents built on Anthropic's official Python SDK. The tool recedes; the work remains.
+Legacy Python harness for Claude/Anthropic-based agents. This package is not an OpenAI Agents SDK app; the repo's current OpenAI Agents SDK surfaces live in the TypeScript Half Dozen smoke runner and MCP worker packages.
+
+## Current Status
+
+- Runtime: Anthropic Python SDK with local tools and FastAPI server glue.
+- Coordination language: legacy Beads-era docs and scripts remain in this package.
+- OpenAI relationship: optional OpenAI-compatible client support exists only for Moonshot/Kimi and separate repo-level TypeScript smoke paths.
+- Quality status: alpha/legacy. Treat the dependency and test contract as needing cleanup before production use.
 
 ## Philosophy
 
-This SDK implements the **Plan → Execute → Review** pattern:
-- **Python SDK** for agent execution (battle-tested, ~95% reliability)
+This harness implements the **Plan → Execute → Review** pattern:
+- **Anthropic Python SDK** for agent execution
 - **Cloudflare** for edge routing and persistence (D1, KV, R2)
-- **Beads** for cross-session work tracking
+- **Beads** for historical cross-session work tracking
 
 ## Installation
 
@@ -205,8 +212,8 @@ ruff check src/
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Python Agent Runtime                          │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
-│  │ Agent SDK    │  │ Stop Hooks   │  │ Skills       │           │
-│  │ (official)   │  │ (Ralph)      │  │ (context)    │           │
+│  │ Anthropic    │  │ Stop Hooks   │  │ Skills       │           │
+│  │ harness      │  │ (Ralph)      │  │ (context)    │           │
 │  └──────────────┘  └──────────────┘  └──────────────┘           │
 └─────────────────────────────────────────────────────────────────┘
 ```

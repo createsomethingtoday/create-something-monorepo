@@ -1,14 +1,14 @@
 [project]
 name = "create-something-agents"
 version = "0.1.0"
-description = "CREATE SOMETHING Agent SDK - Reliable Claude agents with Anthropic's official SDK"
+description = "CREATE SOMETHING legacy Anthropic agent harness"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
     { name = "CREATE SOMETHING", email = "micah@createsomething.io" }
 ]
-keywords = ["anthropic", "claude", "agents", "ai", "automation"]
+keywords = ["anthropic", "claude", "agents", "ai", "automation", "legacy"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
