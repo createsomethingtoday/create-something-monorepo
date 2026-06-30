@@ -82,8 +82,8 @@ export default declareComponent(CatoInsightsHub, {
         'Preferred: select the Resiliency Report Alerts page used by category cards and filters.'
     }),
     researchLink: props.Link({
-      name: 'Cato Research Link',
-      tooltip: 'Preferred: select the Cato Research page used by category cards and filters.'
+      name: 'Industry Research Link',
+      tooltip: 'Preferred: select the Industry Research page used by category cards and filters.'
     }),
     newsroomLink: props.Link({
       name: 'Newsroom Link',
