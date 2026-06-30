@@ -38,6 +38,35 @@ export type GovernanceSlackMonitorResult = {
 	};
 };
 
+export type GovernanceSlackMonitorReadiness = {
+	status: 'ready' | 'not_configured' | 'error';
+	checked_at: string;
+	config: {
+		slack_bot_token_configured: boolean;
+		channels_configured: boolean;
+		channel_count: number;
+		workspace_url_configured: boolean;
+		channels: Array<{
+			channel_id: string;
+			channel_name: string;
+			atlas_canvas_id: string | null;
+			atlas_node_id: string | null;
+		}>;
+	};
+	storage: {
+		cursor_table_available: boolean;
+		error: string | null;
+	};
+	cursors: Array<{
+		source_id: string;
+		cursor_value: string | null;
+		last_seen_at: string | null;
+		updated_at: string | null;
+		channel_name: string | null;
+	}>;
+	errors: string[];
+};
+
 type SlackHistoryMessage = {
 	type?: string;
 	subtype?: string;
@@ -68,6 +97,65 @@ interface D1DatabaseLike {
 
 const DEFAULT_LIMIT = 50;
 
+export async function buildGovernanceSlackMonitorReadiness(
+	db: D1DatabaseLike,
+	input: {
+		channelsRaw?: string | null;
+		slackBotToken?: string | null;
+		workspaceUrl?: string | null;
+		cursorLimit?: number;
+	}
+): Promise<GovernanceSlackMonitorReadiness> {
+	const errors: string[] = [];
+	let channels: GovernanceSlackChannelConfig[] = [];
+	try {
+		channels = parseGovernanceSlackChannelsConfig(input.channelsRaw);
+	} catch (error) {
+		errors.push(error instanceof Error ? error.message : 'Unable to parse GOVERNANCE_SLACK_CHANNELS.');
+	}
+
+	let cursorTableAvailable = false;
+	let storageError: string | null = null;
+	let cursors: GovernanceSlackMonitorReadiness['cursors'] = [];
+	try {
+		await assertCursorTableAvailable(db);
+		cursorTableAvailable = true;
+		cursors = await listRecentSourceCursors(db, 'slack', input.cursorLimit);
+	} catch (error) {
+		storageError = error instanceof Error ? error.message : 'Unable to inspect governance source cursors.';
+		errors.push(storageError);
+	}
+
+	const slackBotTokenConfigured = Boolean(input.slackBotToken?.trim());
+	const channelsConfigured = channels.length > 0;
+	let status: GovernanceSlackMonitorReadiness['status'] = 'ready';
+	if (errors.length > 0) status = 'error';
+	else if (!slackBotTokenConfigured || !channelsConfigured) status = 'not_configured';
+
+	return {
+		status,
+		checked_at: new Date().toISOString(),
+		config: {
+			slack_bot_token_configured: slackBotTokenConfigured,
+			channels_configured: channelsConfigured,
+			channel_count: channels.length,
+			workspace_url_configured: Boolean(normalizeWorkspaceUrl(input.workspaceUrl)),
+			channels: channels.map((channel) => ({
+				channel_id: channel.id,
+				channel_name: channel.name,
+				atlas_canvas_id: channel.atlasCanvasId ?? null,
+				atlas_node_id: channel.atlasNodeId ?? null
+			}))
+		},
+		storage: {
+			cursor_table_available: cursorTableAvailable,
+			error: storageError
+		},
+		cursors,
+		errors
+	};
+}
+
 export async function runGovernanceSlackMonitor(
 	db: D1DatabaseLike,
 	config: GovernanceSlackMonitorConfig
@@ -91,7 +179,7 @@ export function parseGovernanceSlackChannelsConfig(raw: string | null | undefine
 	const value = raw?.trim();
 	if (!value) return [];
 
-	if (value.startsWith('[')) {
+	if (value.startsWith('[') || value.startsWith('{')) {
 		const parsed = JSON.parse(value) as unknown;
 		if (!Array.isArray(parsed)) {
 			throw new Error('GOVERNANCE_SLACK_CHANNELS JSON must be an array.');
@@ -242,6 +330,40 @@ async function getSourceCursor(
 	return row?.cursor_value ?? null;
 }
 
+async function listRecentSourceCursors(
+	db: D1DatabaseLike,
+	sourceType: string,
+	limit: number | undefined
+): Promise<GovernanceSlackMonitorReadiness['cursors']> {
+	const { results = [] } = await db
+		.prepare(
+			`SELECT source_id, cursor_value, last_seen_at, metadata_json, updated_at
+			   FROM governance_source_cursors
+			  WHERE source_type = ?
+			  ORDER BY updated_at DESC
+			  LIMIT ?`
+		)
+		.bind(sourceType, normalizeLimit(limit))
+		.all<{
+			source_id: string;
+			cursor_value: string | null;
+			last_seen_at: string | null;
+			metadata_json: string | null;
+			updated_at: string | null;
+		}>();
+
+	return results.map((row) => {
+		const metadata = parseJsonRecord(row.metadata_json);
+		return {
+			source_id: row.source_id,
+			cursor_value: row.cursor_value ?? null,
+			last_seen_at: row.last_seen_at ?? null,
+			updated_at: row.updated_at ?? null,
+			channel_name: text(metadata?.channel_name) ?? null
+		};
+	});
+}
+
 async function upsertSourceCursor(
 	db: D1DatabaseLike,
 	input: {
@@ -355,6 +477,17 @@ function normalizeWorkspaceUrl(value: string | null | undefined): string | null 
 		const url = new URL(value);
 		if (url.protocol !== 'https:') return null;
 		return url.origin;
+	} catch {
+		return null;
+	}
+}
+
+function parseJsonRecord(value: string | null | undefined): Record<string, unknown> | null {
+	if (!value) return null;
+	try {
+		const parsed = JSON.parse(value) as unknown;
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+		return parsed as Record<string, unknown>;
 	} catch {
 		return null;
 	}

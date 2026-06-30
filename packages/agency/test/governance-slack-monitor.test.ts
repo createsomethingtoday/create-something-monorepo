@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+	buildGovernanceSlackMonitorReadiness,
 	parseGovernanceSlackChannelsConfig,
 	runGovernanceSlackMonitor
 } from '../src/lib/server/governance-slack-monitor.ts';
@@ -40,6 +41,15 @@ class FakeStatement {
 	}
 
 	async all<T = unknown>(): Promise<{ results: T[] }> {
+		if (this.sql.includes('FROM governance_source_cursors')) {
+			const [sourceType, limit] = this.values;
+			const rows = (this.tables.governance_source_cursors ?? [])
+				.filter((row) => row.source_type === sourceType)
+				.sort((left, right) => String(right.updated_at ?? '').localeCompare(String(left.updated_at ?? '')))
+				.slice(0, Number(limit) || 50);
+			return { results: rows as T[] };
+		}
+
 		return { results: [] };
 	}
 
@@ -248,6 +258,76 @@ test('runGovernanceSlackMonitor reports not_configured without token or channels
 
 	assert.equal(noToken.status, 'not_configured');
 	assert.equal(noChannels.status, 'not_configured');
+});
+
+test('buildGovernanceSlackMonitorReadiness reports ready config and recent cursors', async () => {
+	const db = new FakeD1({
+		...defaultTables(),
+		governance_source_cursors: [
+			{
+				source_type: 'slack',
+				source_id: 'C123',
+				cursor_value: '1700000000.000100',
+				last_seen_at: '2026-06-30T18:00:00.000Z',
+				updated_at: '2026-06-30T18:00:00.000Z',
+				metadata_json: JSON.stringify({ channel_name: '#api-updates' })
+			}
+		]
+	});
+
+	const readiness = await buildGovernanceSlackMonitorReadiness(db, {
+		channelsRaw: 'C123|#api-updates|canvas_docs|node_api',
+		slackBotToken: 'xoxb-test',
+		workspaceUrl: 'https://example.slack.com'
+	});
+
+	assert.equal(readiness.status, 'ready');
+	assert.equal(readiness.config.slack_bot_token_configured, true);
+	assert.equal(readiness.config.channel_count, 1);
+	assert.equal(readiness.config.workspace_url_configured, true);
+	assert.equal(readiness.storage.cursor_table_available, true);
+	assert.equal(readiness.cursors[0]?.channel_name, '#api-updates');
+	assert.equal(readiness.cursors[0]?.cursor_value, '1700000000.000100');
+});
+
+test('buildGovernanceSlackMonitorReadiness reports not_configured without token or channels', async () => {
+	const db = new FakeD1();
+	const readiness = await buildGovernanceSlackMonitorReadiness(db, {
+		channelsRaw: '',
+		slackBotToken: ''
+	});
+
+	assert.equal(readiness.status, 'not_configured');
+	assert.equal(readiness.config.slack_bot_token_configured, false);
+	assert.equal(readiness.config.channels_configured, false);
+	assert.deepEqual(readiness.errors, []);
+});
+
+test('buildGovernanceSlackMonitorReadiness reports malformed channel config', async () => {
+	const db = new FakeD1();
+	const readiness = await buildGovernanceSlackMonitorReadiness(db, {
+		channelsRaw: '{"id":"C123"}',
+		slackBotToken: 'xoxb-test'
+	});
+
+	assert.equal(readiness.status, 'error');
+	assert.match(readiness.errors.join(' '), /JSON must be an array/i);
+});
+
+test('buildGovernanceSlackMonitorReadiness reports missing cursor table', async () => {
+	const db = new FakeD1({
+		governance_signals: [],
+		governance_decisions: [],
+		governance_proofs: []
+	});
+	const readiness = await buildGovernanceSlackMonitorReadiness(db, {
+		channelsRaw: 'C123|#api-updates',
+		slackBotToken: 'xoxb-test'
+	});
+
+	assert.equal(readiness.status, 'error');
+	assert.equal(readiness.storage.cursor_table_available, false);
+	assert.match(readiness.storage.error ?? '', /migration 0031/i);
 });
 
 test('governance Slack monitor route requires the internal credential', async () => {

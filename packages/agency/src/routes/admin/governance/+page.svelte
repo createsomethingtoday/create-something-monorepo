@@ -60,6 +60,12 @@
 		return 'info';
 	}
 
+	function readinessTone(status: string): string {
+		if (status === 'ready') return 'success';
+		if (status === 'error') return 'danger';
+		return 'warning';
+	}
+
 	function safeHref(value: string | null | undefined): string | null {
 		return safeOperatorExternalHref(value);
 	}
@@ -123,6 +129,60 @@
 			<span class="metric-label">Process review</span>
 		</div>
 	</section>
+
+	{#if data.monitor_readiness}
+		<section class="monitor-panel" aria-label="Signal intake readiness">
+			<div class="monitor-heading">
+				<div>
+					<p class="eyebrow">Signal intake</p>
+					<h2>Slack monitor</h2>
+				</div>
+				<span class={`pill ${readinessTone(data.monitor_readiness.status)}`}>{data.monitor_readiness.status}</span>
+			</div>
+			<div class="monitor-grid">
+				<div>
+					<span class="metric-value">{data.monitor_readiness.config.channel_count}</span>
+					<span class="metric-label">Watched channels</span>
+				</div>
+				<div>
+					<span class="metric-value">{data.monitor_readiness.cursors.length}</span>
+					<span class="metric-label">Active cursors</span>
+				</div>
+				<div>
+					<span class="metric-value">{data.monitor_readiness.config.slack_bot_token_configured ? 'Yes' : 'No'}</span>
+					<span class="metric-label">Bot token</span>
+				</div>
+				<div>
+					<span class="metric-value">{data.monitor_readiness.storage.cursor_table_available ? 'Yes' : 'No'}</span>
+					<span class="metric-label">Cursor table</span>
+				</div>
+			</div>
+			{#if data.monitor_readiness.config.channels.length > 0}
+				<div class="channel-list" aria-label="Configured Slack channels">
+					{#each data.monitor_readiness.config.channels as channel}
+						<span>{channel.channel_name} <small>{channel.channel_id}</small></span>
+					{/each}
+				</div>
+			{/if}
+			{#if data.monitor_readiness.cursors.length > 0}
+				<div class="cursor-list" aria-label="Recent Slack cursors">
+					{#each data.monitor_readiness.cursors as cursor}
+						<div>
+							<strong>{displayValue(cursor.channel_name ?? cursor.source_id)}</strong>
+							<small>{displayValue(cursor.cursor_value)} · {displayDate(cursor.last_seen_at)}</small>
+						</div>
+					{/each}
+				</div>
+			{/if}
+			{#if data.monitor_readiness.errors.length > 0}
+				<div class="notice danger">{data.monitor_readiness.errors.join(' ')}</div>
+			{:else if data.monitor_readiness.status === 'not_configured'}
+				<div class="notice warning">
+					Slack intake is deployed but needs SLACK_BOT_TOKEN and GOVERNANCE_SLACK_CHANNELS before it can create Signals.
+				</div>
+			{/if}
+		</section>
+	{/if}
 
 	<form class="filters" method="GET" action="/admin/governance">
 		<label>
@@ -441,6 +501,7 @@
 	.metric,
 	.record,
 	.filters,
+	.monitor-panel,
 	.notice,
 	.empty {
 		border: 1px solid #e2e8f0;
@@ -450,6 +511,46 @@
 
 	.metric {
 		padding: 18px;
+	}
+
+	.monitor-panel {
+		display: grid;
+		gap: 14px;
+		margin: 24px 0;
+		padding: 18px;
+	}
+
+	.monitor-heading {
+		display: flex;
+		align-items: start;
+		justify-content: space-between;
+		gap: 16px;
+	}
+
+	.monitor-grid {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 12px;
+	}
+
+	.channel-list,
+	.cursor-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.channel-list span,
+	.cursor-list div {
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		background: #f8fafc;
+		padding: 8px 10px;
+	}
+
+	.cursor-list div {
+		display: grid;
+		gap: 4px;
 	}
 
 	.metric-value {
@@ -646,6 +747,7 @@
 
 		.hero,
 		.summary-grid,
+		.monitor-grid,
 		.filters,
 		.section-heading,
 		.record-header,
