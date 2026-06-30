@@ -83,6 +83,8 @@ jobs:
           head="${{ github.sha }}"
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
             base="$(git merge-base "$head" "origin/main")"
+          elif ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base="$(git merge-base "$head" "origin/main")"
           fi
 
           changed_paths="$(git diff --name-only "$base" "$head")"
