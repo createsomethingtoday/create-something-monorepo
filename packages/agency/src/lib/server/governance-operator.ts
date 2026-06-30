@@ -47,6 +47,8 @@ export type GovernanceOperatorReview = {
 	};
 	summary: {
 		signals: number;
+		active_signals: number;
+		closed_signals: number;
 		decisions: number;
 		proofs: number;
 		records_ready_for_proof: number;
@@ -113,6 +115,8 @@ export function emptyGovernanceOperatorReview(
 		},
 		summary: {
 			signals: 0,
+			active_signals: 0,
+			closed_signals: 0,
 			decisions: 0,
 			proofs: 0,
 			records_ready_for_proof: 0,
@@ -204,6 +208,8 @@ export async function buildGovernanceOperatorReview(
 		(proof) => (proof.signal_id ? !signalIds.has(proof.signal_id) : true) && !decisionIds.has(proof.decision_id)
 	);
 	const decisionsReadyForProof = decisions.filter((decision) => (proofsByDecision.get(decision.id) ?? []).length === 0);
+	const activeSignals = signals.filter((signal) => signal.status === 'new' || signal.status === 'reviewing');
+	const closedSignals = signals.filter((signal) => signal.status === 'resolved' || signal.status === 'dismissed');
 
 	return {
 		generated_at: new Date().toISOString(),
@@ -214,6 +220,8 @@ export async function buildGovernanceOperatorReview(
 		},
 		summary: {
 			signals: signals.length,
+			active_signals: activeSignals.length,
+			closed_signals: closedSignals.length,
 			decisions: decisions.length,
 			proofs: proofs.length,
 			records_ready_for_proof: decisionsReadyForProof.length,

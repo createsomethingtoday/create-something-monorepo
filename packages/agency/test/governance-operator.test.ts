@@ -282,6 +282,36 @@ test('buildGovernanceOperatorReview groups decisions and proofs under their Atla
 	assert.equal(review.graph.summary.proofs, 1);
 });
 
+test('buildGovernanceOperatorReview summarizes open and closed Signal inbox state', async () => {
+	const db = new FakeD1({
+		governance_signals: ['new', 'reviewing', 'resolved', 'dismissed'].map((status) => ({
+			id: `sig_${status}`,
+			atlas_canvas_id: 'canvas_docs',
+			atlas_node_id: 'node_api',
+			source: 'slack:#api-updates',
+			source_url: null,
+			title: `${status} API update`,
+			summary: `Signal is ${status}.`,
+			status,
+			payload_json: '{}',
+			created_at: now,
+			updated_at: now
+		})),
+		governance_decisions: [],
+		governance_proofs: []
+	}) as unknown as Parameters<typeof buildGovernanceOperatorReview>[0];
+
+	const review = await buildGovernanceOperatorReview(db, {
+		atlas_canvas_id: 'canvas_docs',
+		atlas_node_id: 'node_api',
+		limit: 100
+	});
+
+	assert.equal(review.summary.signals, 4);
+	assert.equal(review.summary.active_signals, 2);
+	assert.equal(review.summary.closed_signals, 2);
+});
+
 test('governance operator actions record decisions and proofs from source attachments', async () => {
 	const tables: Record<string, TableRow[]> = {
 		governance_signals: [
