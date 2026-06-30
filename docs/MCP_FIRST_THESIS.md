@@ -75,6 +75,23 @@ The longer-lived claim is broader than MCP:
 Delegated Work Control → Workflow Trust Layer → Policy OS → MCP/Skills/runtime artifacts
 ```
 
+The simplest operating language for that hierarchy is:
+
+```text
+Signal → Decision → Proof
+```
+
+- **Signal**: a change, request, exception, tool result, message, schema diff,
+  or workflow event that may matter.
+- **Decision**: the routed judgment by a human, agent, policy, or automation:
+  ignore, approve, update docs, request changes, escalate, block, or run.
+- **Proof**: the durable record of the evidence, policy, owner, action,
+  outcome, and rollback or follow-up path.
+
+This language is the visitor-facing and operator-facing explanation. The
+technical architecture still uses Delegated Work Control, Workflow Trust Layer,
+Policy OS, MCP, Skills, and runtime artifacts underneath.
+
 ### Packaging Rule (Codex Vector)
 
 The go-to-market sequence is explicit:
@@ -221,6 +238,23 @@ not be positioned as a generic AI agency, prompt engineering shop, model
 reseller, or Webflow implementation shop. The durable value is the operating
 boundary around delegated work: objects, owners, authority, run/wait/stop
 states, receipts, and recovery paths.
+
+For humans in the loop, the product should read as an operating loop:
+
+> Signals come from the tools. Decisions route to the right human or agent.
+> Proof records what happened.
+
+The interface language that supports this loop is:
+
+| Surface | Job |
+| --- | --- |
+| **Inbox** | Shows decisions waiting for action. |
+| **Map** | Shows where the decision sits in the workflow and which systems it touches. |
+| **Proof** | Shows the evidence, policy, owner, outcome, and receipt trail. |
+
+Atlas is the preferred context surface for the Map, but the operator does not
+need to start from a blank canvas. The daily surface should feel like a governed
+inbox backed by Atlas context and Proof records.
 
 ### Ona as Communication Reference
 

@@ -51,23 +51,23 @@
 
   const heroSignals: ClearCardItem[] = [
     {
-      eyebrow: 'Map',
+      eyebrow: 'Signal',
       icon: 'folder',
-      title: '1 risky workflow',
+      title: '1 watched workflow',
       detail:
-        'The support, revenue, production, or credential-touching handoff your team protects by hand.'
+        'The support, revenue, production, API, or credential-touching change your team still has to notice by hand.'
     },
     {
-      eyebrow: 'Control',
+      eyebrow: 'Decision',
       icon: 'check',
-      title: '3 decision states',
-      detail: 'Auto-allow, approval-needed, or blocked with a reason.'
+      title: '1 routed judgment',
+      detail: 'Approve, deny, update docs, request changes, assign, escalate, block, or run.'
     },
     {
-      eyebrow: 'Surface',
+      eyebrow: 'Proof',
       icon: 'document',
-      title: 'Audit trail',
-      detail: 'The operator sees what ran, what waited, what stopped, and who decides next.'
+      title: '1 durable record',
+      detail: 'The operator sees the source evidence, decision, owner, outcome, and recovery path.'
     }
   ];
 
@@ -105,30 +105,30 @@
       summary: 'Map',
       title: 'Fixed-scope first offer',
       detail:
-        'Use this when the workflow is real but the first controlled pilot is still unclear. If the map does not show a useful path, stop there.',
+        'Use this when the workflow is real but the signals, decision owner, and proof path are still unclear. If the map does not show a useful path, stop there.',
       tone: 'review',
-      evidence: ['Workflow map', 'Owner map', 'Action boundary', 'First receipt plan'],
-      receipts: ['first-receipt-plan.md', 'pilot-recommendation.md']
+      evidence: ['Signal map', 'Owner map', 'Action boundary', 'First proof plan'],
+      receipts: ['first-proof-plan.md', 'pilot-recommendation.md']
     },
     {
       label: 'Workflow Pilot',
-      summary: 'Run',
+      summary: 'Decision',
       title: 'One workflow to production proof',
       detail:
-        'Use this when the first handoff is clear enough to rebuild and verify with real operating evidence.',
+        'Use this when the first handoff is clear enough to route real decisions and verify them with operating evidence.',
       tone: 'allow',
-      evidence: ['Implemented path', 'Operator surface', 'Runbook'],
+      evidence: ['Decision inbox', 'Implemented path', 'Operator surface', 'Runbook'],
       receipts: ['release-evidence.md', 'accepted-handoff.md']
     },
     {
       label: 'Ongoing Control',
-      summary: 'Wait',
+      summary: 'Proof',
       title: 'Monthly control around live work',
       detail:
-        'Use this when a live workflow needs approval states, blocked states, release checks, and recovery loops.',
+        'Use this when a live workflow needs signal monitoring, approval states, blocked states, release checks, and recovery loops.',
       tone: 'review',
-      evidence: ['Monitored decisions', 'Approval states', 'Recovery notes'],
-      receipts: ['incident-loop.md', 'iteration-queue.md']
+      evidence: ['Signal intake', 'Monitored decisions', 'Approval states', 'Recovery notes'],
+      receipts: ['proof-graph.md', 'incident-loop.md', 'iteration-queue.md']
     },
     {
       label: 'Enterprise Extension',
@@ -144,23 +144,23 @@
 
   const ctaItems: ClearCtaItem[] = [
     {
-      label: 'Before build',
+      label: 'Signal',
       icon: 'folder',
-      title: 'Name the workflow',
-      detail: 'Bring the handoff, owner, source systems, and risk you want out of manual rescue.'
+      title: 'Name what should be noticed',
+      detail: 'Bring the handoff, owner, source systems, and risk your team wants out of manual rescue.'
     },
     {
-      label: 'During session',
+      label: 'Decision',
       icon: 'settings',
-      title: 'Map the control path',
-      detail: 'We define what can run, what waits, what stops, and what evidence proves it.'
+      title: 'Map who decides',
+      detail: 'We define what can run, what waits, what stops, who owns it, and what evidence proves it.'
     },
     {
-      label: 'After session',
+      label: 'Proof',
       icon: 'check',
-      title: 'Leave with the first controlled path',
+      title: 'Leave with the first proof path',
       detail:
-        'You get the workflow boundary and implementation path before build work starts.'
+        'You get the workflow boundary, implementation path, and proof record before build work starts.'
     }
   ];
 
@@ -203,8 +203,8 @@
   layout="split"
   titleLevel="h1"
   eyebrow="How I Work"
-  title="Turn one messy handoff into a reliable AI-assisted workflow."
-  description="Bring the support, revenue, production, or credential-touching workflow your team still protects by hand. I map the process, connect the tools, define what AI can do, and set the approval and stop points before anything touches customers, money, production, or accounts."
+  title="Turn one messy handoff into Signals, Decisions, and Proof."
+  description="Bring the support, revenue, production, API, or credential-touching workflow your team still protects by hand. I map what should be noticed, who decides, what AI can do, and which proof records the outcome before anything touches customers, money, production, or accounts."
 >
   {#snippet actions()}
     <Button href="#atlas-warmup">
@@ -229,7 +229,7 @@
   variant="white"
   eyebrow="Fit check"
   title="Start with the handoff, not the automation wishlist."
-  description="The right starting point is one repeated handoff, one accountable owner, and one risk your team no longer wants to watch all day."
+  description="The right starting point is one repeated handoff, one accountable owner, one signal your team should not miss, and one risk your team no longer wants to watch all day."
 >
   {#snippet after()}
     <ClearCardGrid items={fitCards} columns={2} ariaLabel="Workflow fit check" />
@@ -241,7 +241,7 @@
   variant="soft"
   eyebrow="Map before booking"
   title="See the workflow before deciding to build."
-  description="The public Atlas map turns one workflow into a first plan: the systems involved, where work moves, what AI can handle, where people approve, and what evidence proves the workflow ran correctly. It does not touch production systems."
+  description="The public Atlas map turns one workflow into a first plan: the systems involved, which signals matter, what AI can handle, where people approve, and what proof records the outcome. It does not touch production systems."
 >
   {#snippet after()}
     <PublicAtlasStoryCanvas
@@ -257,7 +257,7 @@
   id="service-path"
   eyebrow="Service path"
   title="Start with a fixed-scope map before any build decision."
-  description="If the map shows a useful controlled pilot, the next move is a build. If it does not, the work stops with a useful boundary artifact instead of becoming an open-ended automation project."
+  description="If the map shows useful signals, decisions, and proof, the next move is a build. If it does not, the work stops with a useful boundary artifact instead of becoming an open-ended automation project."
   items={servicePathDecisions}
   ariaLabel="Service path from map to control layer"
 />
@@ -265,7 +265,7 @@
 <ClearCtaBand
   eyebrow="Map the workflow"
   title="Map the workflow your team still protects by hand."
-  description="We will define the handoff, owner, connected systems, AI tasks, approval pauses, stop conditions, and audit trail before any implementation work starts."
+  description="We will define the handoff, owner, connected systems, signals, AI tasks, approval pauses, stop conditions, and proof trail before any implementation work starts."
   items={ctaItems}
 >
   {#snippet actions()}

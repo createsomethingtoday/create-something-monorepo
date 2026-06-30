@@ -23,7 +23,7 @@
     {
       question: 'What counts as proof?',
       answer:
-        'Proof means delivery records, tools, connectors, and client builds that show what changed, what was verified, what stayed private, who owns the decision, and what still needs an owner.'
+        'Proof means delivery records, tools, connectors, and client builds that show which signal arrived, who decided, what evidence was used, what changed, what stayed private, and what still needs an owner.'
     },
     {
       question: 'Why are Ground and Loom MCP included?',
@@ -41,20 +41,20 @@
     {
       eyebrow: 'Delivery proof',
       icon: 'folder',
-      title: 'Delivered work shows the pattern',
+      title: 'Delivered work shows the operating loop',
       detail:
-        'A useful delivery record explains the business problem, the access boundary, visible status, private evidence, and next owner decision.',
+        'A useful delivery record explains the signal, business problem, access boundary, visible status, private evidence, and next owner decision.',
       points: [
-        'Visible: status, decisions, handoff, next action',
+        'Visible: signal, status, decisions, handoff, next action',
         'Private: credentials, logs, raw client data, sensitive proof'
       ]
     },
     {
       eyebrow: 'Control signal',
       icon: 'check',
-      title: 'Proof names what can run, wait, or stop',
+      title: 'Proof names what was decided',
       detail:
-        'The service does not sell generic autonomy. Each workflow gets action boundaries, approval-needed states, and blocked-state receipts.',
+        'The service does not sell generic autonomy. Each workflow gets signal sources, action boundaries, approval-needed states, and blocked-state receipts.',
       points: [
         'Run: bounded work can proceed',
         'Wait: owner approval is required',
@@ -72,9 +72,9 @@
     {
       eyebrow: 'Transfer signal',
       icon: 'document',
-      title: 'Handoff notes survive the build',
+      title: 'The Proof Graph survives the build',
       detail:
-        'Runbooks, validation output, release notes, and rollback paths make the workflow understandable after launch.',
+        'Signals, decisions, runbooks, validation output, release notes, and rollback paths make the workflow understandable after launch.',
       points: ['Evidence travels with the work', 'The next operator can inspect the path']
     }
   ];
@@ -82,63 +82,63 @@
   const proofStripItems: ProofStateItem[] = [
     {
       icon: 'actions',
-      value: 'Run',
-      label: 'Bounded work can proceed with named objects, actions, and receipts.'
+      value: 'Signal',
+      label: 'Slack posts, API changes, PRs, schema diffs, tool calls, and exceptions enter one queue.'
     },
     {
       icon: 'states',
-      value: 'Wait',
-      label: 'Revenue, customer-trust, or production impact pauses for owner approval.'
+      value: 'Decision',
+      label: 'Human, agent, or policy judgment routes the next action before risk moves downstream.'
     },
     {
       icon: 'objects',
-      value: 'Stop',
-      label: 'Out-of-scope work creates a reason-coded handoff instead of pretending to finish.'
+      value: 'Map',
+      label: 'Atlas shows where the decision sits, which systems it touches, and who owns the path.'
     },
     {
       icon: 'receipts',
-      value: 'Receipt',
-      label: 'Commands, decisions, links, deploy IDs, and rollback notes stay with the work.'
+      value: 'Proof',
+      label: 'Evidence, policy, owner, outcome, receipt, and rollback notes stay with the work.'
     }
   ];
 
   const proofPathItems = [
     {
-      label: 'Connect',
-      detail: 'Name the system, account owner, and authority boundary.'
+      label: 'Signal',
+      detail: 'Name the source, change, account owner, and authority boundary.'
     },
     {
-      label: 'Verify',
-      detail: 'Check the claim with commands, traces, screenshots, or live status.'
+      label: 'Decision',
+      detail: 'Route the judgment to the right human, agent, policy, or workflow state.'
     },
     {
-      label: 'Coordinate',
-      detail: 'Keep ownership, status, and evidence in Linear before the next handoff.'
+      label: 'Map',
+      detail: 'Show the affected systems, downstream impact, and review owner before action.'
     },
     {
-      label: 'Control',
-      detail: 'Ship the run, wait, stop, and rollback paths the operator can inspect.'
+      label: 'Proof',
+      detail: 'Record the evidence, outcome, receipt, and recovery path the operator can inspect.'
     }
   ];
 
   const ctaItems: ClearCtaItem[] = [
     {
-      label: 'Connect',
+      label: 'Signal',
       icon: 'plus',
-      title: 'Identify the first connection',
-      detail: 'Name the safest connection point before expanding authority.'
+      title: 'Identify the first source',
+      detail: 'Name the signal source before expanding authority.'
     },
     {
-      label: 'Verify',
+      label: 'Decision',
       icon: 'check',
-      title: 'Define the proof surface',
-      detail: 'Decide what evidence proves the workflow worked or stopped correctly.'
+      title: 'Define the decision path',
+      detail: 'Decide who acts, what can run, what waits, and what must stop.'
     },
     {
-      label: 'Control',
+      label: 'Proof',
       icon: 'settings',
-      title: 'Add the control layer',
-      detail: 'Turn the primitive into approval states, blocked states, and operator briefs.'
+      title: 'Add the proof layer',
+      detail: 'Turn the workflow into approval states, blocked states, receipts, and operator briefs.'
     }
   ];
 
@@ -175,8 +175,8 @@
 </script>
 
 <SEO
-  title="Proof and Receipts | CREATE SOMETHING .agency"
-  description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how AI workflow systems become inspectable."
+  title="Proof for AI Workflow Systems | CREATE SOMETHING .agency"
+  description="Proof behind CREATE SOMETHING .agency: Signals, Decisions, delivery records, tools, connectors, and client builds that show how AI workflow systems become inspectable."
   keywords="AI workflow systems proof, workflow control layer proof, workflow audit trails, MCP servers, grounded AI code analysis, workflow controls, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -188,7 +188,7 @@
   layout="split"
   titleLevel="h1"
   eyebrow="Proof"
-  title="See the delivery record before the framework."
+  title="Signals turn into Decisions. Decisions leave Proof."
   description="The useful proof is business-readable first: what changed, what was controlled, what stayed private, what the client kept, and which decision still belongs to an owner."
 >
   {#snippet actions()}
@@ -214,7 +214,7 @@
   variant="white"
   eyebrow="Client delivery records"
   title="Start with delivered work, not theory."
-  description="The delivery records show the method in practice: the business problem, the control boundary, what stayed private, what the client owned, and what happened next."
+  description="The delivery records show the method in practice: which signal mattered, what decision was made, the control boundary, what stayed private, what the client owned, and what happened next."
 >
   {#snippet after()}
     <ClearCardGrid items={proofLedger} columns={4} ariaLabel="Business proof ledger" />
@@ -224,8 +224,8 @@
 <ClearPageSection
   variant="soft"
   eyebrow="AI workflow systems proof"
-  title="Then show the run, wait, stop, and receipt states."
-  description="Every artifact on this page helps the decision owner understand what can run, what waits, what stops, who owns the decision, and which receipt proves it. Tools are evidence; the service is the operating path."
+  title="Then show the Inbox, Map, and Proof states."
+  description="Every artifact on this page helps the decision owner understand which signals matter, what can run, what waits, what stops, who owns the decision, and which proof record backs it. Tools are evidence; the service is the operating path."
 >
   {#snippet after()}
     <ClearProofStrip items={proofStripItems} ariaLabel="Workflow proof states">
@@ -252,7 +252,7 @@
   variant="white"
   eyebrow="Framework and tool proof"
   title="Product proof should point back to the service path."
-  description="Ground and Loom MCP are useful because they show the same operating rule in public: verify before claiming, preserve ownership, and keep evidence with the work."
+  description="Ground and Loom MCP are useful because they show the same operating rule in public: watch the signal, verify before deciding, preserve ownership, and keep evidence with the work."
 >
   {#snippet after()}
     <ClearCardGrid
@@ -266,7 +266,7 @@
 <ClearCtaBand
   eyebrow="Apply the proof"
   title="Apply the proof to the workflow your team still protects by hand."
-  description="I’ll map the first workflow, identify the safest connection point, and define when the control layer should take over."
+  description="I’ll map the first workflow, identify the safest signal source, define who decides, and name what proof the control layer should leave behind."
   items={ctaItems}
 >
   {#snippet actions()}

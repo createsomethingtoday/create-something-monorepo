@@ -53,12 +53,12 @@
     {
       question: 'What does CREATE SOMETHING build?',
       answer:
-        'CREATE SOMETHING builds AI workflow systems for business operations: mapped handoffs, connected tools, scoped AI tasks, approval points, stop conditions, and audit trails.'
+        'CREATE SOMETHING builds AI workflow systems for business operations: Signals from your tools, Decisions routed to the right human or agent, and Proof that records what happened.'
     },
     {
       question: 'What makes a workflow reliable?',
       answer:
-        'A workflow becomes reliable when the team can see what can run, what needs approval, what must stop, who owns the decision, and what evidence stays visible.'
+        'A workflow becomes reliable when the team can see which signals matter, who decides, what can run, what must stop, and what proof stays visible.'
     },
     {
       question: 'Where does CREATE SOMETHING start?',
@@ -74,60 +74,60 @@
 
   const heroProofItems: ClearPlatformHeroProof[] = [
     {
-      value: 'Run',
-      label: 'Safe actions move\ninside the lane.'
+      value: 'Signal',
+      label: 'Changes and requests\nenter one queue.'
     },
     {
-      value: 'Wait',
-      label: 'Judgment calls pause\nfor the owner.'
+      value: 'Decision',
+      label: 'Judgment routes to\nthe right owner.'
     },
     {
-      value: 'Stop',
-      label: 'Outside work stops\nwith a reason.'
+      value: 'Map',
+      label: 'Context shows systems,\nrisk, and impact.'
     },
     {
-      value: 'Receipt',
-      label: 'Evidence names the\nowner and outcome.'
+      value: 'Proof',
+      label: 'Evidence records the\nowner and outcome.'
     }
   ];
 
   const serviceFlowPillars: ClearPillarItem[] = [
     {
-      eyebrow: '01 Map',
-      title: 'Name the work',
+      eyebrow: '01 Signal',
+      title: 'Watch the signals',
       detail:
-        'Pick the support, revenue, production, or credential-touching handoff the team still protects by hand.',
-      proof: 'Output: workflow map, owner, systems, and risk.',
+        'Pick the support, revenue, production, API, or credential-touching changes the team still has to notice by hand.',
+      proof: 'Output: signal sources, workflow map, owner, systems, and risk.',
       links: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     },
     {
-      eyebrow: '02 Pilot',
-      title: 'Build the lane',
+      eyebrow: '02 Decision',
+      title: 'Route the decision',
       detail:
-        'Turn that map into scoped actions, approval pauses, blocked states, and a surface the operator can inspect.',
-      proof: 'Output: working path, runbook, and release evidence.',
+        'Turn that map into an operator inbox with scoped actions, approval pauses, blocked states, and clear owners.',
+      proof: 'Output: decision queue, working path, runbook, and release evidence.',
       links: [{ label: 'See service path', href: '/services#service-path' }]
     },
     {
-      eyebrow: '03 Control',
-      title: 'Keep it governed',
+      eyebrow: '03 Proof',
+      title: 'Leave proof behind',
       detail:
-        'Add decision rules, least-privilege access, receipts, recovery notes, and accountable ownership when the lane goes live.',
-      proof: 'Output: control plan for revenue, customer, or production risk.',
+        'Record source evidence, policy, decision, downstream action, receipt, and recovery path when the lane goes live.',
+      proof: 'Output: Proof Graph for revenue, customer, or production risk.',
       links: [{ label: 'See stack boundary', href: '/stack' }]
     }
   ];
 
   const actionFooterItems: ClearActionFooterItem[] = [
-    { label: 'Bring', value: 'One workflow your team still has to watch' },
-    { label: 'Map', value: 'Systems, owner, allowed actions, pauses, and stops' },
-    { label: 'Leave', value: 'A fixed-scope map before any build commitment' }
+    { label: 'Signal', value: 'One workflow your team still has to watch' },
+    { label: 'Decision', value: 'Owner, allowed actions, approval pauses, and stops' },
+    { label: 'Proof', value: 'A fixed-scope map and proof plan before any build commitment' }
   ];
 </script>
 
 <SEO
   title="AI Workflow Systems | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING turns one messy business handoff into a reliable AI-assisted workflow with connected tools, approvals, stop conditions, and an audit trail."
+  description="CREATE SOMETHING turns one messy business handoff into Signals, Decisions, and Proof: connected tools, approvals, stop conditions, and an audit trail."
   keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -139,7 +139,7 @@
   <ClearPlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="AI workflow systems for business operations."
-    description="Turn one messy handoff into a reliable AI-assisted workflow. CREATE SOMETHING maps the process, connects the tools, defines what AI can do, and gives your team approvals, stop conditions, and an audit trail."
+    description="Turn one messy handoff into Signals, Decisions, and Proof. CREATE SOMETHING maps the process, connects the tools, defines what AI can do, and gives your team approvals, stop conditions, and an audit trail."
     proofItems={heroProofItems}
     hideAsideOnMobile={true}
   >
@@ -157,7 +157,7 @@
     variant="white"
     eyebrow="Workflow plan"
     title="See the workflow before we build it."
-    description="Atlas turns the current process into a clear plan: the systems involved, where work moves, what AI can handle, where people approve, and what evidence proves the workflow ran correctly."
+    description="Atlas turns the current process into a clear map: which signals matter, where work moves, what AI can handle, where people approve, and what proof records the outcome."
   >
     {#snippet after()}
       <PublicAtlasStoryCanvas
@@ -165,7 +165,7 @@
         storyId="home-support-recovery-atlas-story"
         eyebrow="Workflow map"
         title="The map comes before the automation."
-        description="This read-only Atlas canvas shows the workflow in plain language: systems, allowed actions, decision owner, stop point, and audit trail."
+        description="This read-only Atlas canvas shows the workflow in plain language: signals, systems, allowed actions, decision owner, stop point, and proof trail."
         compact
       />
     {/snippet}
@@ -176,7 +176,7 @@
     variant="white"
     class="home-process-section"
     eyebrow="Service path"
-    title="Map the handoff. Build the pilot. Leave with control."
+    title="Watch signals. Route decisions. Leave proof."
     description="The work stays narrow: first understand the handoff, then build one controlled pilot, then add operating rules only when live work needs them."
   >
     {#snippet after()}
@@ -191,7 +191,7 @@
   <ClearActionFooter
     eyebrow="Fixed-scope first step"
     title={agencyCoreMessaging.workflowCtaHeading}
-    description="Start with a workflow map. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear boundary."
+    description="Start with a workflow map and proof plan. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear boundary."
     items={actionFooterItems}
   >
     {#snippet actions()}

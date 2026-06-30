@@ -17,5 +17,5 @@ export const agencyCoreMessaging = {
   engagementModelLabel: 'See the service path →',
   workflowCtaHeading: 'Bring one workflow your team wants to fix.',
   workflowCtaDetail:
-    'I show the handoff, the tools, what AI can do, where people approve, and which record proves the work.'
+    'I show the signals, handoff, tools, what AI can do, where people approve, and which proof record backs the work.'
 } as const;

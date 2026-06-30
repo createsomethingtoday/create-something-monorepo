@@ -78,7 +78,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'discover',
     intent: 'Introduce the category and route readers toward workflow mapping.',
     primaryAction: 'Start Workflow Map',
-    requiredTerms: ['workflow', 'business operations', 'map', 'approval', 'audit trail'],
+    requiredTerms: ['workflow', 'business operations', 'Signal', 'Decision', 'Proof'],
     requiredLinks: ['/services', '/partners', '/products'],
     schema: 'faq',
     search: {
@@ -97,7 +97,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'book',
     intent: 'Explain the core service path: map one workflow before build work starts.',
     primaryAction: 'Map the workflow',
-    requiredTerms: ['workflow', 'handoff', 'approval', 'stop', 'audit trail'],
+    requiredTerms: ['workflow', 'handoff', 'Signal', 'Decision', 'Proof'],
     requiredLinks: ['#atlas-warmup'],
     schema: 'faq',
     search: {
@@ -422,7 +422,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'evaluate',
     intent: 'Show proof objects that make the CREATE SOMETHING method inspectable.',
     primaryAction: 'Apply the proof',
-    requiredTerms: ['proof', 'workflow', 'evidence', 'approval', 'runbook'],
+    requiredTerms: ['proof', 'workflow', 'Signal', 'Decision', 'Proof'],
     requiredLinks: [],
     schema: 'faq',
     search: {

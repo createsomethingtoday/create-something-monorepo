@@ -18,6 +18,15 @@ We make one business workflow safe to delegate.
 | **Policy OS** | Canonical paid package for governed execution, approval rules, runbooks, golden tasks, and recurring tuning. |
 | **MCP-only** | Constrained discovery or compliance entry path, not the default paid offer. |
 
+The clearest public operating loop is:
+
+> Signals come from the tools. Decisions route to the right human or agent.
+> Proof records what happened.
+
+Use this as the first explanation when describing the system. `Inbox`, `Map`,
+and `Proof` are the operator surfaces: the Inbox shows work needing judgment,
+the Map shows workflow context, and Proof shows the evidence and outcome.
+
 Do not reposition `.agency` as a generic AI agency, prompt shop, model reseller,
 or Webflow implementation shop. The durable claim is:
 
@@ -45,14 +54,16 @@ Use this order:
 1. Name the category in plain language: `AI workflow systems`.
 2. Name the business situation: one messy handoff, repeated workflow, or live
    operating risk.
-3. State the outcome: a reliable AI-assisted workflow with approvals, stop
-   points, and an audit trail.
-4. Show the proof object: an Atlas map, Delegation Card, delivery record, or
+3. State the operating loop: Signals, Decisions, and Proof.
+4. Show the proof object: an Atlas map, decision inbox, delivery record, or
    audit trail.
 5. Explain the stack only after the workflow boundary is visible.
 
 Prefer public words like:
 
+- signal
+- decision
+- proof
 - workflow
 - handoff
 - map
