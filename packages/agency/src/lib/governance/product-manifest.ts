@@ -1,0 +1,161 @@
+import {
+	canAttachGovernanceProducts,
+	listGovernanceProducts,
+	SIGNAL_DECISION_PROOF_COMPOSITION,
+	type GovernanceProduct,
+	type GovernanceProductAttachmentMode,
+	type GovernanceProductId,
+	type GovernanceProductLink,
+	type GovernanceProductPrimitive,
+	type GovernanceProductRole,
+	type GovernanceProductSurface
+} from '@create-something/canon/governance';
+
+export type GovernanceProductManifestProduct = {
+	id: GovernanceProductId;
+	name: string;
+	role: GovernanceProductRole;
+	surface: GovernanceProductSurface;
+	primitive: GovernanceProductPrimitive;
+	headline: string;
+	description: string;
+	owns: string[];
+	inputs: GovernanceProductId[];
+	outputs: GovernanceProductId[];
+	attachesTo: GovernanceProductId[];
+	requiredForProduction: boolean;
+	publicPath: string;
+	manifestPath: string;
+};
+
+export type GovernanceProductManifestLink = GovernanceProductLink & {
+	sourcePath: string;
+	targetPath: string;
+};
+
+export type GovernanceProductAttachmentMatrixEntry = {
+	source: GovernanceProductId;
+	target: GovernanceProductId;
+	canAttach: boolean;
+	mode: GovernanceProductAttachmentMode;
+	sourcePath: string;
+	targetPath: string;
+};
+
+export type GovernanceProductCompositionManifest = {
+	schemaVersion: 1;
+	id: typeof SIGNAL_DECISION_PROOF_COMPOSITION.id;
+	sourceOfTruth: '@create-something/canon/governance';
+	atlasHub: GovernanceProductId;
+	apiPath: '/api/governance/products';
+	products: GovernanceProductManifestProduct[];
+	requiredLinks: GovernanceProductManifestLink[];
+	attachmentMatrix: GovernanceProductAttachmentMatrixEntry[];
+	productionReadiness: {
+		requiredProducts: GovernanceProductId[];
+		connectedProducts: GovernanceProductId[];
+		missingRequiredProducts: GovernanceProductId[];
+		missingRequiredLinks: string[];
+		ready: boolean;
+	};
+	agentContract: {
+		purpose: 'governance-product-discovery';
+		primaryConsumer: 'atlas';
+		operatorSurface: 'inbox-map-proof';
+		attachmentModes: GovernanceProductAttachmentMode[];
+		requiredLoop: GovernanceProductId[];
+	};
+};
+
+const productPaths: Record<GovernanceProductId, string> = {
+	atlas: '/atlas',
+	signal: '/products/signal',
+	decision: '/products/decision',
+	proof: '/products/proof'
+};
+
+const linkModeFallback: Record<GovernanceProductId, GovernanceProductAttachmentMode> = {
+	atlas: 'connects',
+	signal: 'produces',
+	decision: 'produces',
+	proof: 'records'
+};
+
+export function governanceProductPublicPath(productId: GovernanceProductId): string {
+	return productPaths[productId];
+}
+
+function toManifestProduct(product: GovernanceProduct): GovernanceProductManifestProduct {
+	const publicPath = governanceProductPublicPath(product.id);
+	return {
+		...product,
+		owns: [...product.owns],
+		inputs: [...product.inputs],
+		outputs: [...product.outputs],
+		attachesTo: [...product.attachesTo],
+		publicPath,
+		manifestPath: `/api/governance/products#${product.id}`
+	};
+}
+
+function toManifestLink(link: GovernanceProductLink): GovernanceProductManifestLink {
+	return {
+		...link,
+		sourcePath: governanceProductPublicPath(link.source),
+		targetPath: governanceProductPublicPath(link.target)
+	};
+}
+
+function buildAttachmentMatrix(
+	products: GovernanceProductManifestProduct[]
+): GovernanceProductAttachmentMatrixEntry[] {
+	return products.flatMap((source) =>
+		products
+			.filter((target) => target.id !== source.id)
+			.map((target) => ({
+				source: source.id,
+				target: target.id,
+				canAttach: canAttachGovernanceProducts(source.id, target.id),
+				mode: linkModeFallback[source.id],
+				sourcePath: source.publicPath,
+				targetPath: target.publicPath
+			}))
+	);
+}
+
+export function buildGovernanceProductCompositionManifest(): GovernanceProductCompositionManifest {
+	const products = listGovernanceProducts().map(toManifestProduct);
+	const requiredLinks = SIGNAL_DECISION_PROOF_COMPOSITION.requiredLinks.map(toManifestLink);
+	const productIds = products.map((product) => product.id);
+	const missingRequiredProducts = SIGNAL_DECISION_PROOF_COMPOSITION.products.filter(
+		(productId) => !productIds.includes(productId)
+	);
+	const missingRequiredLinks = requiredLinks
+		.filter((link) => !canAttachGovernanceProducts(link.source, link.target))
+		.map((link) => `${link.source}->${link.target}`);
+
+	return {
+		schemaVersion: 1,
+		id: SIGNAL_DECISION_PROOF_COMPOSITION.id,
+		sourceOfTruth: '@create-something/canon/governance',
+		atlasHub: SIGNAL_DECISION_PROOF_COMPOSITION.atlasHub,
+		apiPath: '/api/governance/products',
+		products,
+		requiredLinks,
+		attachmentMatrix: buildAttachmentMatrix(products),
+		productionReadiness: {
+			requiredProducts: [...SIGNAL_DECISION_PROOF_COMPOSITION.products],
+			connectedProducts: productIds,
+			missingRequiredProducts,
+			missingRequiredLinks,
+			ready: missingRequiredProducts.length === 0 && missingRequiredLinks.length === 0
+		},
+		agentContract: {
+			purpose: 'governance-product-discovery',
+			primaryConsumer: 'atlas',
+			operatorSurface: 'inbox-map-proof',
+			attachmentModes: ['connects', 'consumes', 'produces', 'records'],
+			requiredLoop: [...SIGNAL_DECISION_PROOF_COMPOSITION.products]
+		}
+	};
+}
