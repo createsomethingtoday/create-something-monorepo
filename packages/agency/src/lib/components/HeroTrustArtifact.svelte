@@ -12,26 +12,26 @@
   }> = [
     {
       icon: 'objects',
-      label: 'What it reads',
-      title: 'Named objects',
+      label: 'Signal',
+      title: 'What it reads',
       detail: ['Case, order, account', 'Shipment context']
     },
     {
       icon: 'actions',
-      label: 'What it can do',
-      title: 'Scoped actions',
+      label: 'Action',
+      title: 'What it can do',
       detail: ['Draft reply, add note', 'Assign owner']
     },
     {
       icon: 'states',
-      label: 'What must pause',
-      title: 'Decision state',
+      label: 'Decision',
+      title: 'What must pause',
       detail: ['Run, wait, or stop', 'Reason required']
     },
     {
       icon: 'receipts',
-      label: 'What proves it',
-      title: 'Receipts',
+      label: 'Proof',
+      title: 'What proves it',
       detail: ['Boundary, approval', 'Blocked state']
     }
   ];
@@ -46,16 +46,16 @@
     { tone: 'stop', label: 'Stop', detail: 'Reason logged' }
   ];
 
-  const receipts = ['action-boundary.md', 'approval-note.md', 'blocked-state.json'];
+  const receipts = ['workflow-map.md', 'owner-approval.md', 'proof-record.json'];
 </script>
 
-<aside class="hero-trust-artifact" aria-label="Delegation Card for support recovery">
+<aside class="hero-trust-artifact" aria-label="Signal Decision Proof delegation object">
   <div class="hero-trust-artifact__header">
     <div>
       <span>Delegation Card</span>
-      <strong>Support recovery boundary</strong>
+      <strong>Controlled delegation object</strong>
     </div>
-    <small>Run / Wait / Stop</small>
+    <small>Signal / Decision / Proof</small>
   </div>
 
   <div class="hero-trust-artifact__path" aria-label="Controlled workflow path">
@@ -113,7 +113,36 @@
   }
 
   .hero-trust-artifact::before {
-    content: none;
+    content: '';
+    position: absolute;
+    inset: 0.62rem;
+    z-index: 0;
+    border: 1px solid rgba(0, 72, 255, 0.1);
+    border-radius: 10px;
+    transform: translate(0.42rem, 0.42rem);
+    pointer-events: none;
+  }
+
+  .hero-trust-artifact::after {
+    content: '';
+    position: absolute;
+    top: 5.35rem;
+    right: 1rem;
+    z-index: 0;
+    width: min(11rem, 34%);
+    height: min(11rem, 34%);
+    border: 1px solid rgba(0, 72, 255, 0.14);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 18%, transparent);
+    pointer-events: none;
+  }
+
+  .hero-trust-artifact__header,
+  .hero-trust-artifact__path,
+  .hero-trust-artifact__decision,
+  .hero-trust-artifact__footer {
+    position: relative;
+    z-index: 1;
   }
 
   .hero-trust-artifact__header,

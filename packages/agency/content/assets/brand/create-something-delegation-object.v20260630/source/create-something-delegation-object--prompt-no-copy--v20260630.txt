@@ -1,0 +1,35 @@
+Model: OpenAI image generation tool
+Quality: high
+Size: 1672x941
+Surface: agency homepage hero, social crops, sales deck opener
+Image family: system-map-hero
+Owner: CREATE SOMETHING
+Review status: draft export
+Source manifest: docs/IMAGE_LANGUAGE_FOUNDATION.md, packages/agency/README.md, packages/agency/src/lib/components/HeroTrustArtifact.svelte
+
+Purpose:
+Create a reusable CREATE SOMETHING hero visual that supports the page headline
+without baking marketing copy, CTAs, navigation, or website UI into the image.
+
+Prompt:
+Create a CREATE SOMETHING system-map hero visual for an agency homepage.
+
+Use case: infographic-diagram / landing page hero background asset.
+Primary purpose: a reusable visual object that supports the page headline, but DOES NOT include the page headline or CTA buttons inside the image.
+
+Critical text constraint: Do not include large marketing headline text, paragraphs, buttons, navigation, logos, or website UI on the left side. The left 40 percent of the image must be quiet negative space for real HTML text to be placed later. Only the diagram object on the right may contain small functional labels.
+
+Scene/background: a pale porcelain or white operational workspace with generous empty space on the left.
+Subject: one single 2.5D operational object on the right, like a clear Atlas delegation artifact floating above the workspace. It should look like a mapped workflow object an operator can inspect, not like a generic AI cloud sculpture.
+
+Show three connected translucent planes or layers labeled exactly: Signal, Decision, Proof. Signal shows incoming record/request cards. Decision shows an owner gate with run, wait, and stop states. Proof shows receipt cards/files that record the outcome. Add restrained thin annotation lines with small labels exactly: RUN, WAIT, STOP, OWNER, RECEIPT.
+
+Style: CREATE SOMETHING Readable Control. Calm proof surface, near-black labels, crisp typography, restrained cobalt, moss, and stop-red accents. Clean geometry, translucent planes, small file cards, policy gates, receipt markers, thin rules. Operational, governed, inspectable, mapped, validated, handed off.
+
+Composition: wide website hero, object on the right, left side empty/quiet. Include a tiny abstract isometric cube mark only if it is very small and not a logo lockup.
+
+Avoid: any large text on the left, CTA buttons, website mockup frame, glowing robots, circuit faces, generic brains, blue AI gradients, magical automation atmosphere, fake screenshot evidence, unreadable labels, customer logos, vendor endorsement, private data, PHI, secrets, watermarks, abstract cloud-platform sculpture, copied source assets.
+
+Review notes:
+- This second-pass prompt was used because the first generated variant baked the homepage headline and buttons into the image.
+- The selected export is an explanatory generated artifact, not screenshot evidence.

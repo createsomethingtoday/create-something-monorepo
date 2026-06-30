@@ -5,6 +5,7 @@
     ClearCtaBand,
     ClearPageSection,
     ClearProofStrip,
+    ClearWorkflowMiniArtifact,
     type ClearCardItem,
     type ClearCtaItem,
     type ClearProofItem
@@ -59,6 +60,14 @@
 
     return 'receipts';
   }
+
+  function miniArtifactKind(productId: string): 'signal' | 'decision' | 'proof' | undefined {
+    if (productId === 'signal' || productId === 'decision' || productId === 'proof') {
+      return productId;
+    }
+
+    return undefined;
+  }
 </script>
 
 <ClearPageSection
@@ -91,6 +100,16 @@
   description={product.description}
 >
   {#snippet after()}
+    {@const artifactKind = miniArtifactKind(product.id)}
+    {#if artifactKind}
+      <div class="governance-product-artifact">
+        <ClearWorkflowMiniArtifact
+          kind={artifactKind}
+          ariaLabel={`${product.name} workflow mini artifact`}
+        />
+      </div>
+    {/if}
+
     <ClearProofStrip items={pathItems} ariaLabel={`${product.name} composition path`}>
       {#snippet icon(item)}
         <WorkflowSignalIcon name={proofStateIcon(item.icon)} />
@@ -140,6 +159,16 @@
 </ClearCtaBand>
 
 <style>
+  .governance-product-artifact {
+    display: grid;
+    justify-items: center;
+    margin-bottom: 0.95rem;
+    padding: 1.1rem;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
+  }
+
   .governance-product-links {
     display: flex;
     flex-wrap: wrap;

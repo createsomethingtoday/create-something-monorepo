@@ -6,6 +6,7 @@
 > Image family: atlas-story-canvas | system-map-hero | db-automation-judgment | policy-gate-chart | evidence-map | handoff-receipt | screenshot-annotation | cta-visual
 > Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable
 > Atlas graph source: existing starter map | new graph artifact | not applicable
+> TASTE packet: approved references attached | not applicable
 > Owner:
 > Review status: draft | approved | published | retired
 > Target export:
@@ -18,6 +19,7 @@ Model: gpt-image-2
 Quality: high
 Size:
 Source manifest or brief:
+TASTE packet:
 ```
 
 ## Purpose
@@ -32,6 +34,7 @@ Proof object:
 Next action:
 Canvas source:
 Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt
+TASTE references:
 ```
 
 ## Prompt
@@ -42,6 +45,10 @@ Create a CREATE SOMETHING <image family> for <surface>.
 Purpose: <what the image must prove>.
 Audience: <operator, decision owner, builder, reviewer, client>.
 Show: <workflow objects, states, proof artifacts, owners, gates>.
+
+TASTE packet: <3 to 7 approved references by title/source and the specific
+communication pattern to borrow>. Use references for judgment only. Do not copy
+source assets, brand marks, fonts, layouts, campaign language, or images.
 
 If the image explains workflow behavior, governance, an offer, a case study, a
 tool comparison, or agent behavior, use an Atlas-style canvas with nodes and
@@ -64,6 +71,8 @@ prompts, watermarks, vendor endorsement, and decorative AI atmosphere.
 
 - [ ] Text is legible at 50% size.
 - [ ] The image answers a specific operational question.
+- [ ] TASTE references are attached or explicitly marked not applicable.
+- [ ] TASTE references were used as judgment inputs and were not copied.
 - [ ] Workflow, governance, or agent-behavior visuals use an Atlas canvas unless explicitly marked not applicable.
 - [ ] The canvas shows owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
 - [ ] The claim is supported by visible proof or a real screenshot.

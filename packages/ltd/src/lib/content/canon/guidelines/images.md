@@ -18,6 +18,10 @@ states.
 CREATE SOMETHING owns the implementation language. Our images should show how AI
 work gets mapped, integrated, governed, validated, shipped, and handed off.
 
+Use `docs/IMAGE_LANGUAGE_FOUNDATION.md` when a generated, designed, captured, or
+rendered image needs TASTE-backed judgment context. TASTE references are inputs
+for review and prompting; they are not source assets to copy.
+
 ## What images should prove
 
 Every generated or designed image must answer at least one operational question:
@@ -85,6 +89,9 @@ cannot rescue a vague visual brief.
 For article, social, deck, sales, or client-update images, start from
 `packages/agency/content/templates/marketing/image-prompt.md` and store the
 completed prompt beside the generated export.
+
+Use the Image API for a single completed generation or edit. Use the Responses
+API image generation tool for conversational, multi-turn image refinement.
 
 ## Review gate
 
