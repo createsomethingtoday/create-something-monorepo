@@ -7,6 +7,7 @@ import {
 	listGovernanceDecisions,
 	listGovernanceProofs,
 	listGovernanceSignals,
+	updateGovernanceSignalStatus,
 	type GovernanceDecision,
 	type GovernanceDecisionState,
 	type GovernanceProof,
@@ -346,7 +347,7 @@ export async function createGovernanceOperatorProofAction(
 		throw new Error('Decision is not available for this operator action.');
 	}
 
-	return createGovernanceProof(db, {
+	const proof = await createGovernanceProof(db, {
 		signalId: decision.signal_id,
 		decisionId: decision.id,
 		atlasCanvasId: decision.atlas_canvas_id,
@@ -361,6 +362,13 @@ export async function createGovernanceOperatorProofAction(
 			source_decision_owner: decision.decision_owner
 		}
 	});
+
+	const signal = await getGovernanceSignal(db, decision.signal_id);
+	if (signal?.status === 'new' || signal?.status === 'reviewing') {
+		await updateGovernanceSignalStatus(db, signal.id, 'resolved');
+	}
+
+	return proof;
 }
 
 export function normalizeGovernanceOperatorFilters(params: URLSearchParams): GovernanceOperatorReview['filters'] {

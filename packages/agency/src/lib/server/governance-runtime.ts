@@ -205,6 +205,23 @@ export async function getGovernanceSignal(
 	return row ? serializeSignal(row) : null;
 }
 
+export async function updateGovernanceSignalStatus(
+	db: D1DatabaseLike,
+	id: string,
+	status: GovernanceSignalStatus
+): Promise<void> {
+	await assertTableAvailable(db, 'governance_signals');
+	await db
+		.prepare(
+			`UPDATE governance_signals
+			    SET status = ?,
+			        updated_at = ?
+			  WHERE id = ?`
+		)
+		.bind(normalizeSignalStatus(status), new Date().toISOString(), requiredText(id, 'signalId', 160))
+		.run();
+}
+
 export async function createGovernanceDecision(
 	db: D1DatabaseLike,
 	input: GovernanceDecisionInput
