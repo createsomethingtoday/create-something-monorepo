@@ -2,6 +2,23 @@ export type AtlasCanvasNodeKind = 'actor' | 'human' | 'ai' | 'system' | 'data' |
 export type AtlasCanvasNodeStatus = 'run' | 'wait' | 'stop' | 'unknown';
 export type AtlasSessionActor = 'operator' | 'agent' | 'system';
 export type AtlasSuggestionStatus = 'queued' | 'accepted' | 'rejected';
+export type AtlasGovernanceProductId = 'atlas' | 'signal' | 'decision' | 'proof';
+export type AtlasGovernanceProductSurface = 'map' | 'inbox' | 'queue' | 'proof-graph';
+export type AtlasGovernanceProductAttachmentMode = 'connects' | 'consumes' | 'produces' | 'records';
+export type AtlasGovernanceProductAttachment = {
+    productId: AtlasGovernanceProductId;
+    mode: AtlasGovernanceProductAttachmentMode;
+    surface: AtlasGovernanceProductSurface;
+    required?: boolean;
+    source?: string;
+};
+export type AtlasGovernanceProductLink = {
+    source: AtlasGovernanceProductId;
+    target: AtlasGovernanceProductId;
+    mode: AtlasGovernanceProductAttachmentMode;
+    label: string;
+    required: boolean;
+};
 export type AtlasPrimitiveBindingKind = 'airtable_table' | 'cloudflare_d1' | 'cloudflare_r2' | 'cloudflare_worker' | 'config' | 'dify_agent' | 'mcp_server' | 'policy' | 'repo_path' | 'script' | 'webflow_cloud_app' | 'webflow_code_component';
 export type AtlasPrimitiveSyncStatus = 'synced' | 'partial' | 'missing' | 'unbound' | 'unknown';
 export type AtlasPrimitiveBinding = {
@@ -80,6 +97,7 @@ export type AtlasCanvasNode = {
     status: AtlasCanvasNodeStatus;
     notes?: string;
     evidence?: string;
+    products?: AtlasGovernanceProductAttachment[];
     bindings?: AtlasPrimitiveBinding[];
     sync?: AtlasNodeSync;
     createdBy: AtlasSessionActor;
@@ -159,6 +177,8 @@ export type AtlasSession = {
     createdAt: string;
     updatedAt: string;
     canvas: AtlasSessionCanvas;
+    products?: AtlasGovernanceProductId[];
+    productLinks?: AtlasGovernanceProductLink[];
     observations: AtlasObservation[];
     story?: AtlasStoryState;
     proposals?: AtlasWritebackProposal[];

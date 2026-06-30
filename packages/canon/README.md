@@ -212,6 +212,24 @@ Property packages should supply their own starter maps, booking behavior,
 persistence, agent mutation path, and production integrations. Do not fork the
 graph/story artifact shape or move source-of-truth state into a renderer.
 
+## Governance Product Contract
+
+Canon owns the shared product contract for the app-governance system at
+`@create-something/canon/governance`:
+
+- `Atlas` is the map product. It connects every governance product attachment.
+- `Signal` is the inbox product. It captures change, source, owner, and affected
+  system context.
+- `Decision` is the judgment product. It routes run, wait, stop, and escalation
+  states.
+- `Proof` is the evidence product. It records the outcome, receipt, rollback
+  note, and audit trail in the Proof Graph.
+
+The default composition is `Atlas -> Signal -> Decision -> Proof -> Atlas`.
+Atlas graph nodes now carry product attachments so independent Signal,
+Decision, and Proof product surfaces can be composed without inventing new IDs
+or a parallel map format.
+
 Canon also carries a performance-excellence layer influenced by Nike-level product discipline:
 athletic precision, decisive contrast, measured motion, material cues from performance spaces,
 and clear pressure states. Use this as a CREATE SOMETHING design principle, not as Nike branding:

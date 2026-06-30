@@ -1,4 +1,4 @@
-import type { AtlasCanvasEdge, AtlasCanvasNode, AtlasCanvasNodeKind, AtlasCanvasNodeStatus, AtlasSession, AtlasSessionActor, AtlasStoryCallout, AtlasStoryQuestion, AtlasStoryStep } from './types.js';
+import type { AtlasCanvasEdge, AtlasCanvasNode, AtlasCanvasNodeKind, AtlasCanvasNodeStatus, AtlasGovernanceProductAttachment, AtlasSession, AtlasSessionActor, AtlasStoryCallout, AtlasStoryQuestion, AtlasStoryStep } from './types.js';
 type CreateSessionInput = {
     client: string;
     workflow: string;
@@ -14,6 +14,7 @@ type AddNodeInput = {
     status?: AtlasCanvasNodeStatus;
     notes?: string;
     evidence?: string;
+    products?: AtlasGovernanceProductAttachment[];
     createdBy?: AtlasSessionActor;
 };
 type UpdateNodeInput = Partial<Omit<AtlasCanvasNode, 'id' | 'createdBy'>>;

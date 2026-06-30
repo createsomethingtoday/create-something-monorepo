@@ -48,9 +48,65 @@ function defaultNode(input) {
         owner: input.owner,
         status: input.status ?? 'unknown',
         notes: input.notes,
+        products: input.products ?? defaultProductsForNodeKind(input.kind, input.label),
         createdBy: input.createdBy ?? 'system',
         updatedAt: now()
     };
+}
+const SESSION_PRODUCTS = ['atlas', 'signal', 'decision', 'proof'];
+const SESSION_PRODUCT_LINKS = [
+    {
+        source: 'atlas',
+        target: 'signal',
+        mode: 'connects',
+        label: 'Atlas maps where the signal enters.',
+        required: true
+    },
+    {
+        source: 'signal',
+        target: 'decision',
+        mode: 'produces',
+        label: 'Signal produces a decision requirement.',
+        required: true
+    },
+    {
+        source: 'decision',
+        target: 'proof',
+        mode: 'produces',
+        label: 'Decision produces proof of the action or pause.',
+        required: true
+    },
+    {
+        source: 'proof',
+        target: 'atlas',
+        mode: 'records',
+        label: 'Proof records back onto the Atlas map.',
+        required: true
+    }
+];
+const PRODUCT_IDS_BY_KIND = {
+    actor: ['atlas'],
+    data: ['signal'],
+    system: ['signal'],
+    ai: ['decision'],
+    human: ['decision'],
+    constraint: ['decision'],
+    touchpoint: ['proof']
+};
+const PRODUCT_SURFACE_BY_ID = {
+    atlas: 'map',
+    signal: 'inbox',
+    decision: 'queue',
+    proof: 'proof-graph'
+};
+function defaultProductsForNodeKind(kind, source) {
+    return PRODUCT_IDS_BY_KIND[kind].map((productId) => ({
+        productId,
+        mode: productId === 'proof' ? 'records' : productId === 'atlas' ? 'connects' : 'produces',
+        surface: PRODUCT_SURFACE_BY_ID[productId],
+        required: true,
+        source
+    }));
 }
 function seedCanvas(input) {
     const client = defaultNode({
@@ -133,6 +189,8 @@ export async function createSession(input, cwd = process.cwd()) {
         createdAt,
         updatedAt: createdAt,
         canvas: seedCanvas(input),
+        products: SESSION_PRODUCTS,
+        productLinks: SESSION_PRODUCT_LINKS,
         observations: [],
         suggestions: []
     };
@@ -436,9 +494,7 @@ export async function advanceStoryStep(sessionId, direction, cwd = process.cwd()
     if (!steps.length)
         throw new Error('This Atlas Studio session has no story steps.');
     const current = storyStepIndex(session);
-    const next = direction === 'next'
-        ? Math.min(current + 1, steps.length - 1)
-        : Math.max(current - 1, 0);
+    const next = direction === 'next' ? Math.min(current + 1, steps.length - 1) : Math.max(current - 1, 0);
     return writeSession(applyStoryStep(session, next), cwd);
 }
 export async function addStoryQuestion(sessionId, input, cwd = process.cwd()) {
@@ -452,7 +508,7 @@ export async function addStoryQuestion(sessionId, input, cwd = process.cwd()) {
         focusEdgeIds: existing?.focusEdgeIds ?? [],
         focusNodeIds: input.nodeId
             ? Array.from(new Set([...(existing?.focusNodeIds ?? []), input.nodeId]))
-            : existing?.focusNodeIds ?? [],
+            : (existing?.focusNodeIds ?? []),
         narration: existing?.narration,
         questions: [
             ...(existing?.questions ?? []),
@@ -499,6 +555,8 @@ export async function acceptSuggestion(sessionId, suggestionId, cwd = process.cw
     const node = {
         ...suggestion.payload,
         id: randomId(suggestion.payload.kind),
+        products: suggestion.payload.products ??
+            defaultProductsForNodeKind(suggestion.payload.kind, suggestion.payload.label),
         createdBy: 'operator',
         updatedAt: now()
     };
@@ -509,12 +567,18 @@ export async function acceptSuggestion(sessionId, suggestionId, cwd = process.cw
 }
 export function exportSessionMarkdown(session) {
     const proposals = session.proposals ?? [];
+    const products = session.products ?? SESSION_PRODUCTS;
+    const productLinks = session.productLinks ?? SESSION_PRODUCT_LINKS;
     const lines = [
         `# ${session.client} - Atlas Workflow Map`,
         '',
         `Workflow: ${session.workflow}`,
         session.owner ? `Owner: ${session.owner}` : null,
         `Updated: ${session.updatedAt}`,
+        '',
+        '## Product Composition',
+        `Products: ${products.map((product) => product[0].toUpperCase() + product.slice(1)).join(' -> ')}`,
+        ...productLinks.map((link) => `- ${link.source} -> ${link.target}: ${link.label}`),
         '',
         '## Canvas Nodes',
         ...session.canvas.nodes.map((node) => `- ${node.label} [${node.kind}, ${node.status}]${node.owner ? ` - owner: ${node.owner}` : ''}${node.notes ? ` - ${node.notes}` : ''}`),

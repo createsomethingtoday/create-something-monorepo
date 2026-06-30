@@ -1,3 +1,15 @@
+import {
+	SIGNAL_DECISION_PROOF_COMPOSITION,
+	createGovernanceProductAttachment,
+	createGovernanceProductAttachments
+} from '../governance/products.js';
+import type {
+	GovernanceProductAttachment,
+	GovernanceProductAttachmentMode,
+	GovernanceProductId,
+	GovernanceProductSurface
+} from '../governance/products.js';
+
 export type PublicAtlasNodeKind =
 	| 'actor'
 	| 'human'
@@ -16,6 +28,7 @@ export type PublicAtlasNode = {
 	owner?: string;
 	status: PublicAtlasNodeStatus;
 	notes?: string;
+	products?: GovernanceProductAttachment[];
 	x?: number;
 	y?: number;
 	width?: number;
@@ -51,6 +64,7 @@ export type PublicAtlasSemanticNode = Pick<
 > & {
 	agentRole: 'owner' | 'judgment' | 'automation' | 'memory' | 'guardrail' | 'interface';
 	agentInstruction: string;
+	products: GovernanceProductAttachment[];
 };
 
 export type PublicAtlasSemanticEdge = Pick<PublicAtlasEdge, 'id' | 'source' | 'target' | 'label'> & {
@@ -84,6 +98,12 @@ export type PublicAtlasGraphArtifact = {
 		allowedStatuses: PublicAtlasNodeStatus[];
 		requiredNodeKinds: PublicAtlasNodeKind[];
 		sourceOfTruth: 'atlas-graph';
+	};
+	productContract: {
+		compositionId: typeof SIGNAL_DECISION_PROOF_COMPOSITION.id;
+		atlasHub: GovernanceProductId;
+		requiredProducts: GovernanceProductId[];
+		connectedProducts: GovernanceProductId[];
 	};
 	nodes: PublicAtlasSemanticNode[];
 	edges: PublicAtlasSemanticEdge[];
@@ -189,6 +209,32 @@ const AGENT_INSTRUCTION_BY_KIND: Record<PublicAtlasNodeKind, string> = {
 	touchpoint: 'Keep the human inspection or action surface explicit.'
 };
 
+const GOVERNANCE_PRODUCT_IDS: GovernanceProductId[] = ['atlas', 'signal', 'decision', 'proof'];
+
+const GOVERNANCE_PRODUCT_ATTACHMENT_MODES: GovernanceProductAttachmentMode[] = [
+	'connects',
+	'consumes',
+	'produces',
+	'records'
+];
+
+const GOVERNANCE_PRODUCT_SURFACES: GovernanceProductSurface[] = [
+	'map',
+	'inbox',
+	'queue',
+	'proof-graph'
+];
+
+const PRODUCT_IDS_BY_KIND: Record<PublicAtlasNodeKind, GovernanceProductId[]> = {
+	actor: ['atlas'],
+	data: ['signal'],
+	system: ['signal'],
+	ai: ['decision'],
+	human: ['decision'],
+	constraint: ['decision'],
+	touchpoint: ['proof']
+};
+
 function now(): string {
 	return new Date().toISOString();
 }
@@ -211,6 +257,60 @@ function clampText(value: unknown, max = 180): string | undefined {
 function clampNumber(value: unknown, min: number, max: number): number | undefined {
 	if (!Number.isFinite(value)) return undefined;
 	return Math.min(max, Math.max(min, Number(value)));
+}
+
+function isGovernanceProductId(value: unknown): value is GovernanceProductId {
+	return typeof value === 'string' && GOVERNANCE_PRODUCT_IDS.includes(value as GovernanceProductId);
+}
+
+function isGovernanceProductAttachmentMode(value: unknown): value is GovernanceProductAttachmentMode {
+	return (
+		typeof value === 'string' &&
+		GOVERNANCE_PRODUCT_ATTACHMENT_MODES.includes(value as GovernanceProductAttachmentMode)
+	);
+}
+
+function isGovernanceProductSurface(value: unknown): value is GovernanceProductSurface {
+	return typeof value === 'string' && GOVERNANCE_PRODUCT_SURFACES.includes(value as GovernanceProductSurface);
+}
+
+function defaultProductAttachmentsForNode(
+	kind: PublicAtlasNodeKind,
+	source?: string
+): GovernanceProductAttachment[] {
+	return createGovernanceProductAttachments(PRODUCT_IDS_BY_KIND[kind], source);
+}
+
+function normalizeProductAttachments(
+	input: unknown,
+	kind: PublicAtlasNodeKind,
+	source?: string
+): GovernanceProductAttachment[] {
+	if (!Array.isArray(input)) return defaultProductAttachmentsForNode(kind, source);
+	const attachments = input.flatMap((item) => {
+		if (!item || typeof item !== 'object') return [];
+		const candidate = item as Partial<GovernanceProductAttachment>;
+		if (!isGovernanceProductId(candidate.productId)) return [];
+		return [
+			createGovernanceProductAttachment(candidate.productId, {
+				mode: isGovernanceProductAttachmentMode(candidate.mode) ? candidate.mode : undefined,
+				surface: isGovernanceProductSurface(candidate.surface) ? candidate.surface : undefined,
+				required: typeof candidate.required === 'boolean' ? candidate.required : undefined,
+				source: clampText(candidate.source, 90) ?? source
+			})
+		];
+	});
+
+	return attachments.length ? attachments : defaultProductAttachmentsForNode(kind, source);
+}
+
+function connectedProductIds(canvas: PublicAtlasCanvas): GovernanceProductId[] {
+	const productIds = canvas.nodes.flatMap((node) =>
+		(node.products ?? defaultProductAttachmentsForNode(node.kind, node.label)).map(
+			(product) => product.productId
+		)
+	);
+	return [...new Set([...SIGNAL_DECISION_PROOF_COMPOSITION.products, ...productIds])];
 }
 
 function classifyPublicAtlasRelationship(edge: PublicAtlasEdge): PublicAtlasSemanticEdge['relationship'] {
@@ -297,6 +397,7 @@ export function createPublicAtlasNode(
 		owner: clampText(input.owner, 90),
 		status: input.status ?? 'unknown',
 		notes: clampText(input.notes, 360),
+		products: normalizeProductAttachments(input.products, kind, input.label),
 		x: clampNumber(input.x, 0, PUBLIC_ATLAS_FLOW_SIZE.width),
 		y: clampNumber(input.y, 0, 2000),
 		width: clampNumber(input.width, 220, 380),
@@ -388,6 +489,7 @@ export function normalizePublicAtlasCanvas(
 					const normalized = createPublicAtlasNode(kind, {
 						...candidate,
 						id: clampText(candidate.id, 90) ?? randomId(kind),
+						products: normalizeProductAttachments(candidate.products, kind, candidate.label),
 						createdBy:
 							candidate.createdBy === 'agent' || candidate.createdBy === 'system'
 								? candidate.createdBy
@@ -587,6 +689,12 @@ export function createPublicAtlasGraphArtifact(
 			requiredNodeKinds,
 			sourceOfTruth: 'atlas-graph'
 		},
+		productContract: {
+			compositionId: SIGNAL_DECISION_PROOF_COMPOSITION.id,
+			atlasHub: SIGNAL_DECISION_PROOF_COMPOSITION.atlasHub,
+			requiredProducts: SIGNAL_DECISION_PROOF_COMPOSITION.products,
+			connectedProducts: connectedProductIds(canvas)
+		},
 		nodes: canvas.nodes.map((node) => ({
 			id: node.id,
 			kind: node.kind,
@@ -595,7 +703,8 @@ export function createPublicAtlasGraphArtifact(
 			status: node.status,
 			notes: node.notes,
 			agentRole: AGENT_ROLE_BY_KIND[node.kind],
-			agentInstruction: AGENT_INSTRUCTION_BY_KIND[node.kind]
+			agentInstruction: AGENT_INSTRUCTION_BY_KIND[node.kind],
+			products: node.products ?? defaultProductAttachmentsForNode(node.kind, node.label)
 		})),
 		edges: canvas.edges.map((edge) => ({
 			id: edge.id,

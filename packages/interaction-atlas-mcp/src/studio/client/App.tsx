@@ -159,6 +159,10 @@ function formatKind(kind: AtlasCanvasNodeKind): string {
   return kind === 'ai' ? 'AI' : kind;
 }
 
+function formatProductId(productId: string): string {
+  return productId[0].toUpperCase() + productId.slice(1);
+}
+
 function formatClient(client: string): string {
   const label = client.replace(/^CREATE SOMETHING\s*/i, '').trim();
   return label || client;
@@ -173,6 +177,7 @@ function nodeActivitySignature(node: AtlasCanvasNode): string {
     node.status,
     node.notes ?? '',
     node.evidence ?? '',
+    JSON.stringify(node.products ?? []),
     node.sync?.checkedAt ?? '',
     node.sync?.status ?? '',
     node.sync?.summary ?? ''
@@ -496,6 +501,7 @@ const AtlasFlowNode = memo(function AtlasFlowNode({
   const note = node.notes || node.evidence || 'Boundary and evidence can be added here.';
   const owner = node.owner || node.createdBy || 'agent';
   const sync = node.sync;
+  const products = node.products ?? [];
 
   return (
     <article
@@ -521,6 +527,15 @@ const AtlasFlowNode = memo(function AtlasFlowNode({
               {sync.status}
             </span>
           ) : null}
+          {products.map((product) => (
+            <span
+              className={`node-product product-${product.productId}`}
+              key={`${node.id}-${product.productId}-${product.surface}`}
+              title={`${formatProductId(product.productId)} · ${product.surface}`}
+            >
+              {formatProductId(product.productId)}
+            </span>
+          ))}
           <span className={`node-status ${node.status}`}>{node.status}</span>
         </span>
       </div>
