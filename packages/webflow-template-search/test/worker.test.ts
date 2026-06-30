@@ -2899,7 +2899,76 @@ describe('webflow-template-search worker', () => {
     }
   });
 
-  it('prefers the public detail thumbnail during targeted record thumbnail repairs', async () => {
+  it('prefers the CMS thumbnail over slider images even when the thumbnail filename contains 2', async () => {
+    const heliosAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recHelios',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Helios Solar',
+        '🥞CMS Slug': 'helios-website-template',
+        '🥞CMS Slug (formula)': 'helios-template-website-template',
+        '🎨Creator Name': '108 Supply',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-helios' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/helios-website-template',
+        '🔗Preview Site URL': 'https://helios-template.webflow.io',
+        '🔗Website URL': 'https://helios-template.webflow.io',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [heliosAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollections: [{ id: TEMPLATES_COLLECTION_ID, slug: 'templates', displayName: 'Templates' }],
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-helios',
+            fieldData: {
+              slug: 'helios-website-template',
+              name: 'Helios Solar',
+              thumbnail: {
+                url: 'https://cdn.prod.website-files.com/site/1782362469677_5a9692f0-6bcd-44c5-92ea-d0b801f72383_First-2.webp',
+              },
+              'slider-images': [
+                { url: 'https://cdn.prod.website-files.com/site/1780465748467_809401776_Webflow_01.webp' },
+              ],
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=helios'), env);
+      const payload = (await response.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
+      };
+
+      expect(payload.items[0]?.thumbnail_image_url).toBe(
+        'https://cdn.prod.website-files.com/site/1782362469677_5a9692f0-6bcd-44c5-92ea-d0b801f72383_First-2.webp',
+      );
+      expect(payload.items[0]?.thumbnail_image_secondary_url).toBeNull();
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('prefers the CMS thumbnail over the public detail thumbnail during targeted record repairs', async () => {
     const ecovoltAsset = {
       ...PUBLISHED_ASSETS[0],
       id: 'recEcovolt',
@@ -2957,14 +3026,14 @@ describe('webflow-template-search worker', () => {
       expect(response.status).toBe(200);
 
       const payload = (await response.json()) as { image_refreshed_records: number };
-      expect(payload.image_refreshed_records).toBe(1);
+      expect(payload.image_refreshed_records).toBe(0);
 
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=ecovolt'), env);
       const searchPayload = (await search.json()) as {
         items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
       };
 
-      expect(searchPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-public.webp');
+      expect(searchPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-stale-cms.webp');
       expect(searchPayload.items[0]?.thumbnail_image_secondary_url).toBeNull();
       expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'webflow.com')).toBe(
         true,
@@ -4036,6 +4105,152 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('sweeps missing recently modified published templates even when published date is old', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-29T12:30:00.000Z'));
+    const recentlyModifiedPublishedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recSafeHaven',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'SafeHaven',
+        '🚀📅Published Date': '2026-06-15',
+        '🥞CMS Slug': 'safehaven-website-template',
+        '🥞CMS Slug (formula)': 'safehaven-website-template',
+        '🔗Listing URL': 'https://webflow.com/templates/html/safehaven-website-template',
+        '🔗Website URL': 'https://safehaven-template.webflow.io/',
+        '📅LMT': '2026-06-29T12:22:54.000Z',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [recentlyModifiedPublishedAsset],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-06-29T05:14:45.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        fetched_records: number;
+        indexed_records: number;
+        recent_published_records?: number;
+        skipped_empty_windows?: number;
+      };
+      expect(syncPayload).toMatchObject({
+        fetched_records: 1,
+        indexed_records: 1,
+        recent_published_records: 1,
+        skipped_empty_windows: 8,
+      });
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=SafeHaven'), env);
+      const payload = (await search.json()) as { items: Array<{ id: string; template_slug: string }> };
+      expect(payload.items).toEqual([
+        expect.objectContaining({
+          id: 'recSafeHaven',
+          template_slug: 'safehaven-website-template',
+        }),
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('sweeps missing recently modified published templates while stale incremental fetches are capped', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-29T12:30:00.000Z'));
+    const bulkChangedAssets = Array.from({ length: 100 }, (_, index) => {
+      const modifiedAt = new Date(Date.parse('2026-06-29T05:18:40.000Z') + index * 1000).toISOString();
+      return {
+        ...PUBLISHED_ASSETS[0],
+        id: `recBulk${String(index).padStart(3, '0')}`,
+        fields: {
+          ...PUBLISHED_ASSETS[0].fields,
+          Name: `Bulk Changed ${index}`,
+          '🥞CMS Slug': `bulk-changed-${index}-website-template`,
+          '🥞CMS Slug (formula)': `bulk-changed-${index}-website-template`,
+          '🔗Listing URL': `https://webflow.com/templates/html/bulk-changed-${index}-website-template`,
+          '🔗Website URL': `https://bulk-changed-${index}.webflow.io/`,
+          '📅LMT': modifiedAt,
+        },
+      };
+    });
+    const recentlyModifiedPublishedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recSafeHaven',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'SafeHaven',
+        '🚀📅Published Date': '2026-06-15',
+        '🥞CMS Slug': 'safehaven-website-template',
+        '🥞CMS Slug (formula)': 'safehaven-website-template',
+        '🔗Listing URL': 'https://webflow.com/templates/html/safehaven-website-template',
+        '🔗Website URL': 'https://safehaven-template.webflow.io/',
+        '📅LMT': '2026-06-29T12:22:54.000Z',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [recentlyModifiedPublishedAsset],
+      incrementalAssets: bulkChangedAssets,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-06-29T05:18:39.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        fetched_records: number;
+        indexed_records: number;
+        recent_published_records?: number;
+        cursor?: string;
+      };
+      expect(syncPayload).toMatchObject({
+        fetched_records: 81,
+        indexed_records: 81,
+        recent_published_records: 1,
+        cursor: '2026-06-29T05:19:59.000Z',
+      });
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=SafeHaven'), env);
+      const payload = (await search.json()) as { items: Array<{ id: string; template_slug: string }> };
+      expect(payload.items).toEqual([
+        expect.objectContaining({
+          id: 'recSafeHaven',
+          template_slug: 'safehaven-website-template',
+        }),
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  }, 10_000);
+
   it('sweeps stale recent publishes even while the LMT cursor is still catching up', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-23T14:30:00.000Z'));
@@ -4356,7 +4571,7 @@ describe('webflow-template-search worker', () => {
     }
   });
 
-  it('uses the public detail thumbnail during targeted image backfill for stable rows', async () => {
+  it('uses the CMS thumbnail during targeted image backfill for stable rows', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: PUBLISHED_ASSETS,
       styles: LOOKUPS.styles,
@@ -4421,9 +4636,7 @@ describe('webflow-template-search worker', () => {
 
       const afterResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const afterPayload = (await afterResponse.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
-      expect(afterPayload.items[0]?.thumbnail_image_url).toBe(
-        'https://cdn.prod.website-files.com/site/agentflow-detail-thumbnail.webp',
-      );
+      expect(afterPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-gallery.webp');
     } finally {
       fetchMock.mockRestore();
       close();

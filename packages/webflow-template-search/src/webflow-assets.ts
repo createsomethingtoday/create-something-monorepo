@@ -57,6 +57,7 @@ interface WebflowCollectionItemsResponse {
 interface WebflowTemplateImageCandidate {
   hostedUrl: string;
   scoreName: string;
+  purpose?: 'primary' | 'secondary' | 'asset';
 }
 
 interface WebflowTemplateOffer {
@@ -284,10 +285,16 @@ function candidateScore(candidate: WebflowTemplateImageCandidate, purpose: 'prim
   const name = candidate.scoreName;
   let score = 0;
   if (purpose === 'primary') {
-    if (/\b(hover|secondary|alternate|alt|rollover|2)\b/i.test(name)) score -= 20;
+    if (candidate.purpose === 'primary') score += 100;
+    if (candidate.purpose === 'secondary') score -= 20;
+    if (candidate.purpose === 'asset') score -= 10;
+    if (/\b(hover|secondary|alternate|alt|rollover)\b/i.test(name)) score -= 20;
     if (/\b(thumbnail|thumb)\b/i.test(name)) score += 10;
     if (/\b(primary|main|default)\b/i.test(name)) score += 5;
   } else {
+    if (candidate.purpose === 'secondary') score += 100;
+    if (candidate.purpose === 'primary') score -= 40;
+    if (candidate.purpose === 'asset') score -= 80;
     if (/\b(hover|secondary|alternate|alt|rollover|2)\b/i.test(name)) score += 20;
     if (/\b(primary|main|default)\b/i.test(name)) score -= 5;
   }
@@ -295,6 +302,7 @@ function candidateScore(candidate: WebflowTemplateImageCandidate, purpose: 'prim
 }
 
 function chooseCandidate(candidates: WebflowTemplateImageCandidate[], purpose: 'primary' | 'secondary') {
+  if (purpose === 'secondary' && !candidates.some((candidate) => candidate.purpose === 'secondary')) return null;
   return [...candidates].sort((a, b) => candidateScore(b, purpose) - candidateScore(a, purpose))[0]?.hostedUrl ?? null;
 }
 
@@ -394,6 +402,31 @@ function extractImageUrls(value: unknown, depth = 0): string[] {
   return Array.from(urls);
 }
 
+function cmsImageFieldPurpose(fieldName: string): WebflowTemplateImageCandidate['purpose'] | null {
+  const normalized = fieldName.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  if (!normalized) return null;
+
+  if (
+    normalized === 'thumbnail secondary' ||
+    normalized === 'thumbnail image secondary' ||
+    normalized === 'secondary thumbnail' ||
+    normalized === 'secondary thumbnail image'
+  ) {
+    return 'secondary';
+  }
+
+  if (
+    normalized === 'thumbnail' ||
+    normalized === 'thumbnail image' ||
+    normalized === 'main thumbnail' ||
+    normalized === 'main thumbnail image'
+  ) {
+    return 'primary';
+  }
+
+  return null;
+}
+
 function collectionScore(collection: WebflowCollection) {
   const value = normalizeScoreName(
     [collection.slug, collection.displayName, collection.singularName, collection.name].filter(Boolean).join(' '),
@@ -453,10 +486,13 @@ function appendCollectionItemImages(
 
   let added = 0;
   for (const [fieldName, value] of Object.entries(fieldData)) {
+    const purpose = cmsImageFieldPurpose(fieldName);
+    if (!purpose) continue;
     for (const hostedUrl of extractImageUrls(value)) {
       appendTemplateCandidate(byTemplateKey, templateSlug, name, {
         hostedUrl,
         scoreName: normalizeScoreName(`${fieldName} ${basenameFromUrl(hostedUrl)}`),
+        purpose,
       });
       added += 1;
     }
@@ -486,19 +522,14 @@ export function buildWebflowTemplateImageIndexFromRecords(records: WebflowTempla
       appendTemplateCandidate(byTemplateKey, templateSlug, name, {
         hostedUrl: record.thumbnailImageUrl as string,
         scoreName: normalizeScoreName(`main thumbnail ${basenameFromUrl(record.thumbnailImageUrl as string)}`),
+        purpose: 'primary',
       });
     }
     if (isImageUrl(record.thumbnailImageSecondaryUrl ?? undefined)) {
       appendTemplateCandidate(byTemplateKey, templateSlug, name, {
         hostedUrl: record.thumbnailImageSecondaryUrl as string,
         scoreName: normalizeScoreName(`secondary thumbnail ${basenameFromUrl(record.thumbnailImageSecondaryUrl as string)}`),
-      });
-    }
-    for (const imageUrl of record.carouselImageUrls) {
-      if (!isImageUrl(imageUrl)) continue;
-      appendTemplateCandidate(byTemplateKey, templateSlug, name, {
-        hostedUrl: imageUrl,
-        scoreName: normalizeScoreName(`carousel image ${basenameFromUrl(imageUrl)}`),
+        purpose: 'secondary',
       });
     }
   }
@@ -598,6 +629,7 @@ async function appendWebflowAssetImages(
         const candidate: WebflowTemplateImageCandidate = {
           hostedUrl,
           scoreName: normalizeScoreName(rawNames.join(' ')),
+          purpose: 'asset',
         };
         for (const key of assetLookupKeys(asset)) {
           appendCandidate(byTemplateKey, key, candidate, { preserveExisting: true });

@@ -3,6 +3,7 @@ import {
   fetchModifiedAssetsSince,
   fetchPublishedTemplateAssets,
   fetchPublishedTemplateImageFields,
+  fetchRecentlyModifiedPublishedTemplateAssets,
   fetchRecentlyPublishedTemplateAssets,
   loadLookupMaps,
   DEFAULT_SEARCH_VISIBILITY_FIELDS,
@@ -367,7 +368,7 @@ async function resolveAndUpdateTemplateImages(
     for (const { row, webflowImages, publishedImages } of resolvedRows) {
       const currentThumbnailUrl = stableAttachmentUrl(row.thumbnailImageUrl);
       const currentSecondaryThumbnailUrl = stableAttachmentUrl(row.thumbnailImageSecondaryUrl);
-      const nextThumbnailUrl = publishedImages?.thumbnailImageUrl ?? webflowImages?.thumbnailImageUrl ?? currentThumbnailUrl;
+      const nextThumbnailUrl = webflowImages?.thumbnailImageUrl ?? publishedImages?.thumbnailImageUrl ?? currentThumbnailUrl;
       const nextSecondaryThumbnailUrl =
         webflowImages?.thumbnailImageSecondaryUrl ??
         (currentSecondaryThumbnailUrl === nextThumbnailUrl ? null : currentSecondaryThumbnailUrl);
@@ -736,6 +737,7 @@ const MAX_STALE_INCREMENTAL_FETCH_RECORDS_PER_RUN = 100;
 const MAX_STALE_INCREMENTAL_RECORDS_PER_RUN = 80;
 const INCREMENTAL_WRITE_BATCH_SIZE = 12;
 const RECENT_PUBLISHED_SWEEP_LOOKBACK_DAYS = 21;
+const RECENT_MODIFIED_PUBLISHED_SWEEP_LOOKBACK_HOURS = 24;
 const RECENT_PUBLISHED_SWEEP_LIMIT = 50;
 
 function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
@@ -758,6 +760,11 @@ function recentPublishedSweepSinceDate(now: Date): string {
   return since.toISOString().slice(0, 10);
 }
 
+function recentModifiedPublishedSweepSinceDate(now: Date): string {
+  const since = new Date(now.getTime() - RECENT_MODIFIED_PUBLISHED_SWEEP_LOOKBACK_HOURS * 60 * 60 * 1000);
+  return since.toISOString();
+}
+
 function templateLookupTargets(records: Array<AirtableRecord<AirtableAssetFields>>) {
   return records.map((record) => ({
     id: record.id,
@@ -773,12 +780,16 @@ async function fetchChangedRecentPublishedAssets(
 ): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
   const queuedIds = new Set(alreadyQueuedRecords.map((record) => record.id));
   const queuedSlugs = new Set(templateLookupTargets(alreadyQueuedRecords).map((target) => target.templateSlug).filter(Boolean));
-  const recentAssets = await fetchRecentlyPublishedTemplateAssets(
-    env,
-    recentPublishedSweepSinceDate(now),
-    RECENT_PUBLISHED_SWEEP_LIMIT,
-  );
-  const candidates = recentAssets.filter((record) => {
+  const [recentPublishedAssets, recentlyModifiedPublishedAssets] = await Promise.all([
+    fetchRecentlyPublishedTemplateAssets(env, recentPublishedSweepSinceDate(now), RECENT_PUBLISHED_SWEEP_LIMIT),
+    fetchRecentlyModifiedPublishedTemplateAssets(env, recentModifiedPublishedSweepSinceDate(now), RECENT_PUBLISHED_SWEEP_LIMIT),
+  ]);
+  const recentAssetsById = new Map<string, AirtableRecord<AirtableAssetFields>>();
+  for (const record of [...recentPublishedAssets, ...recentlyModifiedPublishedAssets]) {
+    recentAssetsById.set(record.id, record);
+  }
+
+  const candidates = [...recentAssetsById.values()].filter((record) => {
     const target = templateLookupTargets([record])[0];
     return !queuedIds.has(record.id) && (!target.templateSlug || !queuedSlugs.has(target.templateSlug));
   });
@@ -900,13 +911,11 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     if (boundedCursor) windowEnd = new Date(boundedCursor);
   }
 
-  if (!hitStaleFetchLimit) {
-    const recentPublishedAssets = await fetchChangedRecentPublishedAssets(env, now, assets);
-    await heartbeat();
-    if (recentPublishedAssets.length > 0) {
-      assets.push(...recentPublishedAssets);
-      recentPublishedRecords = recentPublishedAssets.length;
-    }
+  const recentPublishedAssets = await fetchChangedRecentPublishedAssets(env, now, assets);
+  await heartbeat();
+  if (recentPublishedAssets.length > 0) {
+    assets.push(...recentPublishedAssets);
+    recentPublishedRecords = recentPublishedAssets.length;
   }
 
   const toUpsert: TemplateDocumentInput[] = [];
