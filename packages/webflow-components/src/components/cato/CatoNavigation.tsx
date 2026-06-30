@@ -146,7 +146,7 @@ const CATO_NAV_CSS = `
     border-radius: .5rem;
     background: transparent;
     color: var(--cato-nav-muted);
-    padding: .5rem 0;
+    padding: .5rem 1rem;
     font: inherit;
     font-size: 1rem;
     line-height: 1.2;
