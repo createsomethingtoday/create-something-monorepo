@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { safeOperatorExternalHref } from '$lib/governance/operator-url';
-	import type { PageData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
 	type GovernanceRecord = PageData['review']['records'][number];
 	type Decision = PageData['review']['unlinked_decisions'][number];
 	type Proof = PageData['review']['unlinked_proofs'][number];
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData; form?: ActionData } = $props();
 
 	const records = $derived(data.review.records as GovernanceRecord[]);
 	const unlinkedDecisions = $derived(data.review.unlinked_decisions as Decision[]);
@@ -84,6 +84,12 @@
 
 	{#if data.error}
 		<div class="notice danger">{data.error}</div>
+	{/if}
+	{#if form?.error}
+		<div class="notice danger">{form.error}</div>
+	{/if}
+	{#if data.action_result}
+		<div class="notice success">{data.action_result}</div>
 	{/if}
 	{#if !data.review.storage.available}
 		<div class="notice warning">
@@ -188,9 +194,76 @@
 										<span class={`pill ${decisionTone(decision.decision_state)}`}>{decision.decision_state}</span>
 										<p>{decision.reason}</p>
 										<small>{decision.decision_owner} · {displayDate(decision.created_at)}</small>
+										<form method="POST" action="?/recordProof" class="action-form">
+											<input type="hidden" name="decision_id" value={decision.id} />
+											<input type="hidden" name="return_atlas_canvas_id" value={data.review.filters.atlas_canvas_id} />
+											<input type="hidden" name="return_atlas_node_id" value={data.review.filters.atlas_node_id} />
+											<input type="hidden" name="return_limit" value={data.review.filters.limit} />
+											<label>
+												<span>Proof</span>
+												<textarea
+													name="evidence"
+													rows="3"
+													maxlength="4000"
+													placeholder="What changed, shipped, paused, or needs rollback?"
+													required
+												></textarea>
+											</label>
+											<div class="form-row">
+												<label>
+													<span>Outcome</span>
+													<select name="outcome">
+														<option value="documented">Documented</option>
+														<option value="passed">Passed</option>
+														<option value="failed">Failed</option>
+														<option value="rolled_back">Rolled back</option>
+													</select>
+												</label>
+												<label>
+													<span>Receipt URL</span>
+													<input name="receipt_url" type="url" placeholder="https://..." />
+												</label>
+											</div>
+											<label>
+												<span>Rollback note</span>
+												<input name="rollback_note" maxlength="2000" placeholder="Optional recovery path" />
+											</label>
+											<button type="submit">Record proof</button>
+										</form>
 									</div>
 								{/each}
 							{/if}
+							<form method="POST" action="?/recordDecision" class="action-form">
+								<input type="hidden" name="signal_id" value={record.signal.id} />
+								<input type="hidden" name="return_atlas_canvas_id" value={data.review.filters.atlas_canvas_id} />
+								<input type="hidden" name="return_atlas_node_id" value={data.review.filters.atlas_node_id} />
+								<input type="hidden" name="return_limit" value={data.review.filters.limit} />
+								<div class="form-row">
+									<label>
+										<span>Decision</span>
+										<select name="decision_state" required>
+											<option value="run">Run</option>
+											<option value="wait">Wait</option>
+											<option value="stop">Stop</option>
+										</select>
+									</label>
+									<label>
+										<span>Owner</span>
+										<input name="decision_owner" maxlength="220" placeholder="reviewer or agent" required />
+									</label>
+								</div>
+								<label>
+									<span>Reason</span>
+									<textarea
+										name="reason"
+										rows="3"
+										maxlength="2000"
+										placeholder="Why this action is the right next step"
+										required
+									></textarea>
+								</label>
+								<button type="submit">Record decision</button>
+							</form>
 						</section>
 						<section>
 							<h4>Proof</h4>
@@ -382,6 +455,12 @@
 		color: #991b1b;
 	}
 
+	.notice.success {
+		background: #f0fdf4;
+		border-color: #bbf7d0;
+		color: #166534;
+	}
+
 	.filters {
 		grid-template-columns: 1fr 1fr 110px auto auto auto;
 		align-items: end;
@@ -400,12 +479,35 @@
 		font-size: 0.82rem;
 	}
 
-	input {
+	input,
+	select,
+	textarea {
 		width: 100%;
 		border: 1px solid #cbd5e1;
 		border-radius: 8px;
 		padding: 10px 12px;
 		font: inherit;
+	}
+
+	textarea {
+		min-height: 86px;
+		resize: vertical;
+	}
+
+	.action-form {
+		display: grid;
+		gap: 10px;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		background: #f8fafc;
+		margin-top: 14px;
+		padding: 12px;
+	}
+
+	.form-row {
+		display: grid;
+		grid-template-columns: minmax(0, 160px) minmax(0, 1fr);
+		gap: 10px;
 	}
 
 	.filter-count {
@@ -514,6 +616,7 @@
 		.record-header,
 		.meta,
 		.record-grid,
+		.form-row,
 		.unlinked-grid {
 			grid-template-columns: 1fr;
 		}

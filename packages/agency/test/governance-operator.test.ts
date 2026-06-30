@@ -3,6 +3,8 @@ import test from 'node:test';
 
 import {
 	buildGovernanceOperatorReview,
+	createGovernanceOperatorDecisionAction,
+	createGovernanceOperatorProofAction,
 	emptyGovernanceOperatorReview,
 	normalizeGovernanceOperatorFilters
 } from '../src/lib/server/governance-operator.ts';
@@ -37,17 +39,82 @@ class FakeStatement {
 
 		let rows = [...(this.tables[table] ?? [])];
 		let filterIndex = 0;
-		for (const column of ['atlas_canvas_id', 'atlas_node_id', 'signal_id', 'decision_id']) {
-			if (!this.sql.includes(`${column} = ?`)) continue;
+		for (const column of ['id', 'atlas_canvas_id', 'atlas_node_id', 'signal_id', 'decision_id']) {
+			if (!new RegExp(`\\b${column}\\s*=\\s*\\?`).test(this.sql)) continue;
 			const expected = this.values[filterIndex++];
 			rows = rows.filter((row) => row[column] === expected);
 		}
-		const limit = Number(this.values.at(-1) ?? 100);
+		const limit = this.sql.includes('LIMIT ?') ? Number(this.values.at(-1) ?? 100) : rows.length;
 		return { results: rows.slice(0, limit) as T[] };
 	}
 
 	async run(): Promise<{ success: true }> {
+		const table = ['governance_signals', 'governance_decisions', 'governance_proofs'].find((name) =>
+			this.sql.includes(`INSERT INTO ${name}`)
+		);
+		if (table) {
+			this.tables[table] ??= [];
+			this.tables[table].push(this.rowFromInsert(table));
+		}
 		return { success: true };
+	}
+
+	private rowFromInsert(table: string): TableRow {
+		if (table === 'governance_decisions') {
+			const [
+				id,
+				signal_id,
+				atlas_canvas_id,
+				atlas_node_id,
+				decision_state,
+				decision_owner,
+				reason,
+				payload_json,
+				created_at,
+				updated_at
+			] = this.values;
+			return {
+				id,
+				signal_id,
+				atlas_canvas_id,
+				atlas_node_id,
+				decision_state,
+				decision_owner,
+				reason,
+				payload_json,
+				created_at,
+				updated_at
+			};
+		}
+
+		const [
+			id,
+			signal_id,
+			decision_id,
+			atlas_canvas_id,
+			atlas_node_id,
+			evidence,
+			outcome,
+			receipt_url,
+			rollback_note,
+			payload_json,
+			created_at,
+			updated_at
+		] = this.values;
+		return {
+			id,
+			signal_id,
+			decision_id,
+			atlas_canvas_id,
+			atlas_node_id,
+			evidence,
+			outcome,
+			receipt_url,
+			rollback_note,
+			payload_json,
+			created_at,
+			updated_at
+		};
 	}
 }
 
@@ -149,6 +216,54 @@ test('buildGovernanceOperatorReview groups decisions and proofs under their Atla
 	assert.equal(review.records[0]?.decisions[0]?.id, 'dec_docs');
 	assert.equal(review.records[0]?.proofs[0]?.id, 'proof_docs');
 	assert.equal(review.unlinked_decisions[0]?.id, 'dec_unlinked');
+});
+
+test('governance operator actions record decisions and proofs from source attachments', async () => {
+	const tables: Record<string, TableRow[]> = {
+		governance_signals: [
+			{
+				id: 'sig_docs',
+				atlas_canvas_id: 'canvas_docs',
+				atlas_node_id: 'node_api',
+				source: 'slack:#api-updates',
+				source_url: 'https://slack.example/archives/C123/p456',
+				title: 'API update',
+				summary: 'Docs need review.',
+				status: 'new',
+				payload_json: '{}',
+				created_at: now,
+				updated_at: now
+			}
+		],
+		governance_decisions: [],
+		governance_proofs: []
+	};
+	const db = new FakeD1(tables) as unknown as Parameters<typeof createGovernanceOperatorDecisionAction>[0];
+
+	const decision = await createGovernanceOperatorDecisionAction(db, {
+		signalId: 'sig_docs',
+		decisionState: 'run',
+		decisionOwner: 'docs-reviewer@example.com',
+		reason: 'Update the public API docs.'
+	});
+	const proof = await createGovernanceOperatorProofAction(db, {
+		decisionId: decision.id,
+		evidence: 'Docs update merged and reviewer checklist linked.',
+		outcome: 'passed',
+		receiptUrl: 'https://github.example/pr/789'
+	});
+
+	assert.equal(decision.signal_id, 'sig_docs');
+	assert.equal(decision.atlas_canvas_id, 'canvas_docs');
+	assert.equal(decision.atlas_node_id, 'node_api');
+	assert.equal(decision.payload.operator_surface, '/admin/governance');
+	assert.equal(proof.signal_id, 'sig_docs');
+	assert.equal(proof.decision_id, decision.id);
+	assert.equal(proof.atlas_canvas_id, 'canvas_docs');
+	assert.equal(proof.atlas_node_id, 'node_api');
+	assert.equal(proof.receipt_url, 'https://github.example/pr/789');
+	assert.equal(tables.governance_decisions.length, 1);
+	assert.equal(tables.governance_proofs.length, 1);
 });
 
 test('governance operator helpers normalize filters and empty states', () => {
