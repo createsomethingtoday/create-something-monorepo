@@ -75,8 +75,54 @@ const skills = [
   }
 ];
 
+const intentMappingBehaviorFixtures = [
+  {
+    name: 'ambiguous workflow improvement',
+    prompt: 'I want to improve our agent workflow based on this transcript.',
+    expectedBehaviors: [
+      /Ask one question at a time/i,
+      /recommended answer/i,
+      /inspect that source instead of\s+asking the user/i,
+      /choose the correct workflow lane/i,
+      /Verification:/,
+      /Stop conditions:/
+    ]
+  },
+  {
+    name: 'shared implementation handoff',
+    prompt: 'Turn this plan into shared implementation work another agent can pick up.',
+    expectedBehaviors: [
+      /Use Linear for shared, delegated, long-running, production-bound/i,
+      /pnpm agent:claim-worktree -- --issue CRE-123/,
+      /Evidence target:/,
+      /Policy artifacts:/,
+      /before implementation starts/i
+    ]
+  },
+  {
+    name: 'solo exploratory work',
+    prompt: 'Help me explore a small local workflow idea before we create an issue.',
+    expectedBehaviors: [
+      /pnpm agent:solo-loop/,
+      /solo-loop \| claim-worktree \| PR\/promotion \| research\/no-edit/,
+      /one concrete outcome/i,
+      /observable done condition/i
+    ]
+  }
+];
+
 function read(relPath) {
   return readFileSync(path.join(REPO_ROOT, relPath), 'utf8');
+}
+
+function extractIntentPacketFields(body) {
+  const match = body.match(/```text\n([\s\S]+?)\n```/);
+  assert(match, 'intent-mapping skill is missing its Intent Packet fenced block');
+
+  return match[1]
+    .split('\n')
+    .filter((line) => /^[A-Z][A-Za-z -]+:/.test(line))
+    .map((line) => line.slice(0, line.indexOf(':') + 1));
 }
 
 function assertSkillFrontmatter(skillName, relPath) {
@@ -128,6 +174,47 @@ test('skills remain wired into Codex installation and Pi discovery docs', () => 
   assert.match(piPolicyReadme, /\/skill:tdd-vertical-slice/);
   assert.match(piPolicyReadme, /\/skill:intent-mapping/);
   assert.match(piFrameworkReadme, /\/skill:deep-module-design/);
+});
+
+test('intent-mapping has deterministic behavioral fixture coverage', () => {
+  const codexBody = read('packages/dotfiles/codex/skills/intent-mapping/SKILL.md');
+  const piBody = read('packages/pi-policy-os/skills/intent-mapping/SKILL.md');
+  const expectedPacketFields = [
+    'Linear:',
+    'Lane:',
+    'Tier:',
+    'Goal:',
+    'Decisions:',
+    'Non-goals:',
+    'Acceptance criteria:',
+    'Verification:',
+    'Stop conditions:',
+    'Policy artifacts:',
+    'Evidence target:'
+  ];
+
+  for (const [name, body] of [
+    ['Codex', codexBody],
+    ['Pi', piBody]
+  ]) {
+    assert.deepEqual(
+      extractIntentPacketFields(body),
+      expectedPacketFields,
+      `${name} intent-mapping skill has drifted from the required Intent Packet shape`
+    );
+
+    for (const fixture of intentMappingBehaviorFixtures) {
+      assert(fixture.prompt.length > 0, `${fixture.name} fixture prompt is empty`);
+
+      for (const expectation of fixture.expectedBehaviors) {
+        assert.match(
+          body,
+          expectation,
+          `${name} intent-mapping skill does not encode ${fixture.name}: ${expectation}`
+        );
+      }
+    }
+  }
 });
 
 test('repo-owned Codex skill installer links the adapted skills', (t) => {
