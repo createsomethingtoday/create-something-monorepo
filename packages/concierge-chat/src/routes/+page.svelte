@@ -276,7 +276,7 @@
                 <div class="footer-body-links">
                   <div class="footer-link-wrap"><a href="/apply" class="footer-link">Apply now</a></div>
                   <div class="footer-link-wrap"><a href="/facilities" class="footer-link">Request coverage</a></div>
-                  <div class="footer-link-wrap"><a href="/style-guide" class="footer-link">Brand guide</a></div>
+                  <div class="footer-link-wrap"><a href="/agents" class="footer-link">Agent support</a></div>
                 </div>
               </div>
               <div class="footer-body abundance-footer-trust">
@@ -294,7 +294,6 @@
           <div class="footer-copyright-wrap">
             <div class="footer-copyright-text">(c) 2026 Abundance Staffing.</div>
             <div class="abundance-footer-bottom-links">
-              <a href="/style-guide">Style</a>
               <a href="/agents">Agent system</a>
               <a href="/apply">Start</a>
             </div>
