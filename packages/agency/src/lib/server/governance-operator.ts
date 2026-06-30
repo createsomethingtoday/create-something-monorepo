@@ -15,6 +15,10 @@ import {
 	type GovernanceSignal,
 	type GovernanceSignalStatus
 } from './governance-runtime';
+import {
+	buildGovernanceAttachmentGraph,
+	type GovernanceAttachmentGraph
+} from './governance-graph';
 
 export type GovernanceOperatorRecord = {
 	signal: GovernanceSignal;
@@ -50,6 +54,7 @@ export type GovernanceOperatorReview = {
 		unlinked_decisions: number;
 		unlinked_proofs: number;
 	};
+	graph: GovernanceAttachmentGraph;
 	records: GovernanceOperatorRecord[];
 	unlinked_decisions: GovernanceDecision[];
 	unlinked_proofs: GovernanceProof[];
@@ -115,6 +120,7 @@ export function emptyGovernanceOperatorReview(
 			unlinked_decisions: 0,
 			unlinked_proofs: 0
 		},
+		graph: emptyGovernanceAttachmentGraph(filters),
 		records: [],
 		unlinked_decisions: [],
 		unlinked_proofs: []
@@ -130,6 +136,7 @@ export async function buildGovernanceOperatorReview(
 		atlasNodeId: filters.atlas_node_id || null,
 		limit: filters.limit
 	};
+	const graph = await buildGovernanceAttachmentGraph(db, runtimeFilters);
 	const signals = await listGovernanceSignals(db, runtimeFilters);
 	const signalIds = new Set(signals.map((signal) => signal.id));
 	const signalChildRows = await Promise.all(
@@ -218,9 +225,38 @@ export async function buildGovernanceOperatorReview(
 			unlinked_decisions: unlinkedDecisions.length,
 			unlinked_proofs: unlinkedProofs.length
 		},
+		graph,
 		records,
 		unlinked_decisions: unlinkedDecisions,
 		unlinked_proofs: unlinkedProofs
+	};
+}
+
+function emptyGovernanceAttachmentGraph(filters: GovernanceOperatorReview['filters']): GovernanceAttachmentGraph {
+	return {
+		schemaVersion: 1,
+		generated_at: new Date().toISOString(),
+		sourceOfTruth: 'governance_ledger',
+		product_loop: ['atlas', 'signal', 'decision', 'proof'],
+		atlas: {
+			product_id: 'atlas',
+			canvas_id: filters.atlas_canvas_id || null,
+			node_id: filters.atlas_node_id || null
+		},
+		filters: {
+			atlasCanvasId: filters.atlas_canvas_id || null,
+			atlasNodeId: filters.atlas_node_id || null,
+			limit: filters.limit
+		},
+		nodes: [],
+		attachments: [],
+		summary: {
+			atlas_canvases: 0,
+			signals: 0,
+			decisions: 0,
+			proofs: 0,
+			attachments: 0
+		}
 	};
 }
 
