@@ -1,8 +1,27 @@
 <script lang="ts">
   import { abundanceAgents, heroVisual, staffingCareCards, trustProof } from '$lib/site/abundance';
+  import { absoluteUrl, breadcrumbJsonLd, jsonLdScript, serviceJsonLd } from '$lib/site/seo';
   import type { PageData } from './$types';
 
   export let data: PageData;
+
+  const pageTitle = 'Abundance Agents | Staffing Desk Support';
+  const pageDescription =
+    'Abundance-branded staffing agents help nurses start clearly, facilities request coverage, and recruiters review prepared handoffs.';
+  const pagePath = '/agents';
+  const pageImage = absoluteUrl(heroVisual.src);
+  const structuredData = jsonLdScript([
+    serviceJsonLd({
+      name: 'Abundance staffing agent support',
+      description: pageDescription,
+      path: pagePath,
+      audience: 'Staffing recruiters and operations teams'
+    }),
+    breadcrumbJsonLd([
+      { name: 'Home', path: '/' },
+      { name: 'Agents', path: pagePath }
+    ])
+  ]);
 
   $: availableCount = data.agents.filter((agent) => agent.credentialState === 'available').length;
   $: missingCount = data.agents.length - availableCount;
@@ -13,20 +32,32 @@
     rel="stylesheet"
     href="https://cdn.prod.website-files.com/6975f7e617285604fcb645f7/css/healen.webflow.shared.7df6645cf.css"
   />
-  <title>Abundance Agents</title>
+  <title>{pageTitle}</title>
   <meta
     name="description"
-    content="Abundance-branded staffing agents for nurse intake, job discovery, recruiter review, facility handoff, and compliance readiness."
+    content={pageDescription}
   />
+  <link rel="canonical" href={absoluteUrl(pagePath)} />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Abundance Staffing" />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={pageDescription} />
+  <meta property="og:url" content={absoluteUrl(pagePath)} />
+  <meta property="og:image" content={pageImage} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={pageTitle} />
+  <meta name="twitter:description" content={pageDescription} />
+  <meta name="twitter:image" content={pageImage} />
+  {@html structuredData}
 </svelte:head>
 
 <section class="hero-03 container-full abundance-agent-hero abundance-subpage-hero">
   <div class="container-fluid for-hero01">
     <div class="hero-content-03">
-      <h1 class="hero-content-title display">Agents that support the staffing desk.</h1>
+      <h1 class="hero-content-title display">Agent support for better staffing conversations.</h1>
       <div class="hero-content-right">
         <p class="hero-content-info-text p1-regular">
-          Abundance agents prepare context. Recruiters approve staffing moves.
+          Branded agents organize the details. Nurses, facilities, and recruiters keep the human judgment.
         </p>
         <div class="hero-content-btns-03">
           <a href="/apply" class="button-01 w-inline-block">
@@ -59,16 +90,27 @@
 <section class="works-02 container-full abundance-agent-roster">
   <div class="container-fluid for-works">
     <div class="works-content">
-      <h2 class="works-title-02 heading-01">Named for Abundance work</h2>
-      <div class="works-items">
+      <div class="abundance-agent-roster-head">
+        <div>
+          <span>Abundance agent system</span>
+          <h2 class="works-title-02 heading-01">Useful support, clearly bounded.</h2>
+        </div>
+        <p class="p1-regular">
+          Each agent has a job in the service: make the request clearer, keep context together, and prepare the next human review.
+        </p>
+      </div>
+      <div class="abundance-agent-grid">
         {#each abundanceAgents as agent}
-          <article class="works-item abundance-agent-card">
-            <div class="works-item-thumb-wrap abundance-agent-lane">{agent.lane}</div>
-            <div class="works-item-info">
-              <h3 class="works-item-info-title heading-05">{agent.name}</h3>
-              <p class="works-itm-info-text p2-regular">{agent.summary}</p>
-              <span>{agent.proof}</span>
+          <article class="abundance-agent-card">
+            <div class="abundance-agent-card-top">
+              <span class="abundance-agent-lane">{agent.lane}</span>
+              <span class="abundance-agent-mark">A</span>
             </div>
+            <div class="abundance-agent-card-body">
+              <h3 class="heading-05">{agent.name}</h3>
+              <p class="p2-regular">{agent.summary}</p>
+            </div>
+            <p class="abundance-agent-proof-line">{agent.proof}</p>
           </article>
         {/each}
       </div>
@@ -79,9 +121,9 @@
 <section class="support-02 container-full abundance-agent-boundary">
   <div class="container-fluid">
     <div class="support-head-02">
-      <h2 class="support-title-02 heading-01">Public story. Protected runtime.</h2>
+      <h2 class="support-title-02 heading-01">A better experience on both sides of the desk.</h2>
       <p class="support-text-02 p1-regular">
-        Public pages describe the workflow. Keys, documents, and write actions stay private.
+        Nurses get a clearer start. Facilities get cleaner coverage requests. Recruiters get the context they need to make the call.
       </p>
     </div>
     <div class="support-list-wrap abundance-agent-proof">
@@ -125,8 +167,8 @@
     <div class="container-fluid">
       <div class="feature-blog-content-04">
         <div class="abundance-section-head">
-          <h2 class="heading-01">Staff access unlocks operator chat</h2>
-          <p class="p1-regular">Protected staffing actions stay behind named access.</p>
+          <h2 class="heading-01">Protected where staffing work needs protection.</h2>
+          <p class="p1-regular">Public pages explain the service. Documents, keys, and staffing actions stay behind staff access.</p>
         </div>
         <div class="abundance-rule-strip" aria-label="Trust rules">
           {#each trustProof.slice(0, 4) as item}
@@ -146,38 +188,164 @@
   .abundance-agent-roster,
   .abundance-agent-boundary,
   .abundance-staff-runtime {
-    padding-top: 90px;
-    padding-bottom: 90px;
+    padding-top: clamp(82px, 8vw, 116px);
+    padding-bottom: clamp(82px, 8vw, 116px);
+  }
+
+  .abundance-agent-roster {
+    background:
+      radial-gradient(circle at 78% 20%, rgba(175, 124, 84, 0.12), transparent 28%),
+      linear-gradient(180deg, var(--background, #faf5ef) 0%, #fbf7f1 100%);
+  }
+
+  .abundance-agent-roster .works-content {
+    display: grid;
+    gap: 42px;
+  }
+
+  .abundance-agent-roster-head {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(280px, 0.42fr);
+    gap: clamp(20px, 5vw, 72px);
+    align-items: end;
+  }
+
+  .abundance-agent-roster-head > div {
+    display: grid;
+    gap: 16px;
+  }
+
+  .abundance-agent-roster-head span,
+  .abundance-agent-lane {
+    color: var(--secondary, #af7c54);
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .abundance-agent-roster-head h2 {
+    max-width: 780px;
+    margin: 0;
+  }
+
+  .abundance-agent-roster-head p {
+    max-width: 430px;
+    margin: 0;
+    color: rgba(2, 2, 2, 0.62);
+  }
+
+  .abundance-agent-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
   }
 
   .abundance-agent-card {
-    min-height: 260px;
-    padding: 22px;
-    border: 1px solid var(--black-10);
-    border-radius: 16px;
-    background: var(--sub-bg);
+    display: grid;
+    align-content: space-between;
+    gap: 36px;
+    min-height: 332px;
+    padding: 28px;
+    border: 1px solid rgba(175, 124, 84, 0.18);
+    border-radius: 24px;
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(250, 245, 239, 0.74)),
+      var(--sub-bg, #f6eee6);
+    box-shadow: 0 22px 60px rgba(67, 48, 33, 0.08);
+    color: var(--black, #020202);
+    overflow: hidden;
+    position: relative;
+    isolation: isolate;
+  }
+
+  .abundance-agent-card::after {
+    content: '';
+    position: absolute;
+    right: -54px;
+    bottom: -54px;
+    z-index: -1;
+    width: 172px;
+    height: 172px;
+    border: 1px solid rgba(175, 124, 84, 0.16);
+    border-radius: 999px;
+  }
+
+  .abundance-agent-card:nth-child(3) {
+    background:
+      linear-gradient(145deg, rgba(2, 2, 2, 0.9), rgba(67, 48, 33, 0.84)),
+      var(--black, #020202);
+    color: var(--white, #fff);
+  }
+
+  .abundance-agent-card:nth-child(3) .abundance-agent-card-body p,
+  .abundance-agent-card:nth-child(3) .abundance-agent-proof-line {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .abundance-agent-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
   }
 
   .abundance-agent-lane {
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 58px;
-    padding: 0 16px;
+    max-width: 100%;
+    padding: 10px 13px;
+    border: 1px solid rgba(175, 124, 84, 0.18);
     border-radius: 999px;
-    background: var(--secondary-12);
-    color: var(--secondary);
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    background: rgba(175, 124, 84, 0.1);
+    white-space: nowrap;
   }
 
-  .abundance-agent-card span,
+  .abundance-agent-mark {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: var(--secondary, #af7c54);
+    color: var(--white, #fff);
+    font-size: 18px;
+    line-height: 1;
+    flex: 0 0 auto;
+  }
+
+  .abundance-agent-card-body {
+    display: grid;
+    gap: 18px;
+    max-width: 330px;
+  }
+
+  .abundance-agent-card-body h3 {
+    margin: 0;
+    color: inherit;
+  }
+
+  .abundance-agent-card-body p {
+    margin: 0;
+    color: rgba(2, 2, 2, 0.64);
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
   .abundance-rule-strip span,
   .abundance-runtime-row span {
     color: var(--secondary);
     font-size: 12px;
     line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .abundance-agent-proof-line {
+    max-width: 320px;
+    margin: 0;
+    color: rgba(175, 124, 84, 0.92);
+    font-size: 11px;
+    line-height: 1.35;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
@@ -236,7 +404,8 @@
   @media (max-width: 991px) {
     .hero-content-03,
     .support-head-02,
-    .works-items,
+    .abundance-agent-roster-head,
+    .abundance-agent-grid,
     .abundance-runtime-row {
       grid-template-columns: 1fr;
     }

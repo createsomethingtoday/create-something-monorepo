@@ -6,6 +6,7 @@
 		getAgencyAccessTone
 	} from '$lib/agency-access';
 	import { buildControlPlaneBridgeHref } from '$lib/control-plane';
+	import AbundanceFooter from '$lib/site/AbundanceFooter.svelte';
 	import type { LayoutData } from './$types';
 	import '../app.css';
 
@@ -24,6 +25,8 @@
 		data.currentPath === '/jobs' ||
 		data.currentPath === '/facilities' ||
 		data.currentPath === '/agents' ||
+		data.currentPath === '/apply' ||
+		data.currentPath.startsWith('/apply/') ||
 		data.currentPath === '/style-guide';
 	$: isPublicIntakeRoute =
 		data.currentPath === '/' ||
@@ -60,7 +63,9 @@
 	<div class="abundance-webflow-page">
 		<header class="webflow-nav">
 			<a class="webflow-logo" href="/" aria-label="Abundance Staffing home">
-				<span class="webflow-logo-mark">A</span>
+				<span class="webflow-logo-mark">
+					<img src="/abundance/logo-mark.svg" alt="" class="webflow-logo-image" aria-hidden="true" />
+				</span>
 				<span>Abundance Staffing</span>
 			</a>
 			<nav class="webflow-nav-links" aria-label="Public navigation">
@@ -80,7 +85,7 @@
 			</a>
 		</header>
 
-		<main>
+		<main class:public-main={isPublicIntakeRoute}>
 			<slot />
 		</main>
 	</div>
@@ -88,7 +93,9 @@
 	<div class="app-shell">
 		<header class="app-nav glass">
 			<a class="brand-lockup" href="/">
-				<span class="brand-mark" aria-hidden="true">A</span>
+				<span class="brand-mark" aria-hidden="true">
+					<img src="/abundance/logo-mark.svg" alt="" class="brand-mark-image" aria-hidden="true" />
+				</span>
 				<span>
 					<span class="brand">Abundance Staffing</span>
 					<span class="brand-note">Nurse staffing</span>
@@ -118,10 +125,14 @@
 			</div>
 		</header>
 
-		<main>
+		<main class:public-main={isPublicIntakeRoute}>
 			<slot />
 		</main>
 	</div>
+{/if}
+
+{#if isPublicIntakeRoute}
+	<AbundanceFooter />
 {/if}
 
 <style>
@@ -153,11 +164,16 @@
 		width: 2.2rem;
 		height: 2.2rem;
 		border-radius: 999px;
-		background: var(--ink);
-		color: var(--button-ink);
-		font-family: var(--font-display);
-		font-size: 1rem;
-		font-weight: var(--font-medium, 500);
+		background: #fffaf4;
+		border: 1px solid rgba(175, 124, 84, 0.18);
+		overflow: hidden;
+	}
+
+	.brand-mark-image {
+		width: 1.62rem;
+		height: 1.62rem;
+		object-fit: contain;
+		display: block;
 	}
 
 	.brand {
@@ -251,6 +267,10 @@
 		padding-bottom: 3rem;
 	}
 
+	main.public-main {
+		padding-bottom: 0;
+	}
+
 	.abundance-webflow-page :global(.container-full) {
 		width: 100%;
 	}
@@ -298,8 +318,16 @@
 		width: 34px;
 		height: 34px;
 		border-radius: 999px;
-		background: var(--black, #020202);
-		color: white;
+		background: #fffaf4;
+		border: 1px solid rgba(175, 124, 84, 0.18);
+		overflow: hidden;
+	}
+
+	.webflow-logo-image {
+		display: block;
+		width: 25px;
+		height: 25px;
+		object-fit: contain;
 	}
 
 	.webflow-nav-links {

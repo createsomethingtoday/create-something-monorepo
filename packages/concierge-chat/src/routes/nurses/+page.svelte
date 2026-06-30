@@ -1,5 +1,24 @@
 <script lang="ts">
-  import { nurseSteps, trustProof } from '$lib/site/abundance';
+  import { heroVisual, nurseSteps, trustProof } from '$lib/site/abundance';
+  import { absoluteUrl, breadcrumbJsonLd, jsonLdScript, serviceJsonLd } from '$lib/site/seo';
+
+  const pageTitle = 'For Nurses | Abundance Staffing';
+  const pageDescription =
+    'Start a nurse staffing application with Abundance, share role and shift preferences, and move into recruiter-reviewed matching when ready.';
+  const pagePath = '/nurses';
+  const pageImage = absoluteUrl(heroVisual.src);
+  const structuredData = jsonLdScript([
+    serviceJsonLd({
+      name: 'Guided nurse staffing application',
+      description: pageDescription,
+      path: pagePath,
+      audience: 'Registered nurses and travel nurses'
+    }),
+    breadcrumbJsonLd([
+      { name: 'Home', path: '/' },
+      { name: 'Nurses', path: pagePath }
+    ])
+  ]);
 </script>
 
 <svelte:head>
@@ -7,11 +26,23 @@
     rel="stylesheet"
     href="https://cdn.prod.website-files.com/6975f7e617285604fcb645f7/css/healen.webflow.shared.7df6645cf.css"
   />
-  <title>For Nurses | Abundance Staffing</title>
+  <title>{pageTitle}</title>
   <meta
     name="description"
-    content="Start a nurse staffing application with Abundance Concierge, confirm your profile, and move into recruiter review."
+    content={pageDescription}
   />
+  <link rel="canonical" href={absoluteUrl(pagePath)} />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Abundance Staffing" />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={pageDescription} />
+  <meta property="og:url" content={absoluteUrl(pagePath)} />
+  <meta property="og:image" content={pageImage} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={pageTitle} />
+  <meta name="twitter:description" content={pageDescription} />
+  <meta name="twitter:image" content={pageImage} />
+  {@html structuredData}
 </svelte:head>
 
 <section class="hero-03 container-full abundance-subpage-hero">
@@ -46,7 +77,7 @@
       {#each nurseSteps as step}
         <article class="works-item abundance-work-card abundance-step-card">
           <div class="abundance-work-top">
-            <div class="works-item-thumb-wrap abundance-step-number"><span>{step.label}</span></div>
+            <div class="abundance-step-number"><span>{step.label}</span></div>
             <span class="abundance-step-owner">Nurse</span>
           </div>
           <div class="works-item-info">

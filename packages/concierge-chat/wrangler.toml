@@ -9,6 +9,7 @@ ENVIRONMENT = "production"
 ALLOW_AGENCY_ACCESS_PREVIEW = "false"
 ABUNDANCE_REQUIRE_SIGNED_INTAKE = "true"
 AGENCY_BASE_URL = "https://createsomething.agency"
+ABUNDANCE_JOBS_MCP_URL = "https://abundance-jobs-mcp.createsomething.workers.dev/chatgpt/mcp"
 # Set `ABUNDANCE_INTAKE_SIGNING_SECRET` and `RESEND_API_KEY` with `wrangler pages secret put`
 # before enabling self-serve verification email in production.
 # Set `INDEED_MCP_BASE_URL` and `INDEED_MCP_API_KEY` with `wrangler pages secret put`
@@ -31,6 +32,11 @@ AGENCY_BASE_URL = "https://createsomething.agency"
 binding = "DB"
 database_name = "abundance-concierge-chat-db"
 database_id = "5712fa83-d823-46ba-805b-7b929d045423"
+
+[[d1_databases]]
+binding = "JOBS_DB"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
 
 [[r2_buckets]]
 binding = "UPLOADS"
