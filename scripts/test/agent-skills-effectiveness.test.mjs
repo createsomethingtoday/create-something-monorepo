@@ -41,6 +41,23 @@ const skills = [
     ]
   },
   {
+    name: 'intent-mapping',
+    codex: 'packages/dotfiles/codex/skills/intent-mapping/SKILL.md',
+    pi: 'packages/pi-policy-os/skills/intent-mapping/SKILL.md',
+    expectations: [
+      /Intent Packet/,
+      /one question at a time/i,
+      /recommended answer/i,
+      /Database/,
+      /Automation/,
+      /Judgment/,
+      /Linear/,
+      /pnpm agent:solo-loop/,
+      /pnpm agent:claim-worktree/,
+      /Stop conditions/i
+    ]
+  },
+  {
     name: 'deep-module-design',
     codex: 'packages/dotfiles/codex/skills/deep-module-design/SKILL.md',
     pi: 'packages/pi-three-tier-framework/skills/deep-module-design/SKILL.md',
@@ -109,6 +126,7 @@ test('skills remain wired into Codex installation and Pi discovery docs', () => 
 
   assert.match(piPolicyReadme, /\/skill:debug-feedback-loop/);
   assert.match(piPolicyReadme, /\/skill:tdd-vertical-slice/);
+  assert.match(piPolicyReadme, /\/skill:intent-mapping/);
   assert.match(piFrameworkReadme, /\/skill:deep-module-design/);
 });
 

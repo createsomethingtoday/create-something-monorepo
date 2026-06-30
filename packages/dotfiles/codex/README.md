@@ -17,6 +17,7 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 - `canon-public-surface` - public-page and landing-page polish without generic SaaS drift
 - `debug-feedback-loop` - repro-first debugging for bugs, failing checks, flaky behavior, and performance regressions
 - `deep-module-design` - interface and module design using leverage, locality, tests, and tier ownership
+- `intent-mapping` - decision, scope, validation, and handoff capture before ambiguous or long-running work
 - `tdd-vertical-slice` - test-first behavior slices through public interfaces
 - `webflow-template-review-reviewer`
 - `webflow-template-review-analysis-calibration`
@@ -33,5 +34,6 @@ Use $canon-design-review on this component.
 Use $canon-public-surface to tighten this hero and CTA.
 Use $debug-feedback-loop to diagnose this failing check before patching.
 Use $deep-module-design before refactoring this workflow interface.
+Use $intent-mapping before turning this ambiguous request into implementation work.
 Use $tdd-vertical-slice to add this behavior through a public interface test.
 ```

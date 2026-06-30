@@ -93,7 +93,7 @@ Pi does not use MCP. The `context7_query` and `verify_exports` custom tools repl
 
 ### Skills
 
-28 skills are available (18 Claude + 3 project-local + 7 from packages). The `.claude/memory/` files are also surfaced via resource discovery.
+29 skills are available (18 Claude + 3 project-local + 8 from packages). The `.claude/memory/` files are also surfaced via resource discovery.
 
 Pi-native and package skills:
 
@@ -104,6 +104,7 @@ Pi-native and package skills:
 - `/skill:deep-module-design` — Deep module design with leverage, locality, tests, and tier ownership
 - `/skill:policy-os-starter` — Governance patterns, Subtractive Triad, quality gate design
 - `/skill:debug-feedback-loop` — Repro-first debugging for bugs, failing checks, and performance regressions
+- `/skill:intent-mapping` — Decision, scope, validation, and handoff capture before ambiguous or long-running work
 - `/skill:tdd-vertical-slice` — Test-first behavior slices through public interfaces
 - `/skill:halfdozen-fleet` — Half Dozen client MCPs, sync patterns, telemetry
 - `/skill:webflow-fleet` — Webflow MCPs, template review, app review, dashboard
