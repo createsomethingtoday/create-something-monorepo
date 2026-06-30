@@ -60,6 +60,15 @@ export type GovernanceProductAttachmentGraphApi = {
 	attaches: GovernanceProductId[];
 };
 
+export type GovernanceProductMonitorReadinessApi = {
+	product: 'signal';
+	path: '/api/governance/monitors/slack/readiness';
+	methods: ['GET'];
+	requiresCredential: true;
+	records: 'source_monitor_readiness';
+	secretSafe: true;
+};
+
 export type GovernanceProductCompositionManifest = {
 	schemaVersion: 1;
 	id: typeof SIGNAL_DECISION_PROOF_COMPOSITION.id;
@@ -67,6 +76,7 @@ export type GovernanceProductCompositionManifest = {
 	atlasHub: GovernanceProductId;
 	apiPath: '/api/governance/products';
 	attachmentGraphApi: GovernanceProductAttachmentGraphApi;
+	monitorReadinessApi: GovernanceProductMonitorReadinessApi;
 	products: GovernanceProductManifestProduct[];
 	runtimeApis: GovernanceProductRuntimeApi[];
 	requiredLinks: GovernanceProductManifestLink[];
@@ -85,6 +95,7 @@ export type GovernanceProductCompositionManifest = {
 		attachmentModes: GovernanceProductAttachmentMode[];
 		requiredLoop: GovernanceProductId[];
 		attachmentGraphApiPath: '/api/governance/graph';
+		monitorReadinessApiPath: '/api/governance/monitors/slack/readiness';
 	};
 };
 
@@ -190,6 +201,17 @@ function buildAttachmentGraphApi(): GovernanceProductAttachmentGraphApi {
 	};
 }
 
+function buildMonitorReadinessApi(): GovernanceProductMonitorReadinessApi {
+	return {
+		product: 'signal',
+		path: '/api/governance/monitors/slack/readiness',
+		methods: ['GET'],
+		requiresCredential: true,
+		records: 'source_monitor_readiness',
+		secretSafe: true
+	};
+}
+
 export function buildGovernanceProductCompositionManifest(): GovernanceProductCompositionManifest {
 	const products = listGovernanceProducts().map(toManifestProduct);
 	const requiredLinks = SIGNAL_DECISION_PROOF_COMPOSITION.requiredLinks.map(toManifestLink);
@@ -208,6 +230,7 @@ export function buildGovernanceProductCompositionManifest(): GovernanceProductCo
 		atlasHub: SIGNAL_DECISION_PROOF_COMPOSITION.atlasHub,
 		apiPath: '/api/governance/products',
 		attachmentGraphApi: buildAttachmentGraphApi(),
+		monitorReadinessApi: buildMonitorReadinessApi(),
 		products,
 		runtimeApis: buildRuntimeApis(products),
 		requiredLinks,
@@ -225,7 +248,8 @@ export function buildGovernanceProductCompositionManifest(): GovernanceProductCo
 			operatorSurface: 'inbox-map-proof',
 			attachmentModes: ['connects', 'consumes', 'produces', 'records'],
 			requiredLoop: [...SIGNAL_DECISION_PROOF_COMPOSITION.products],
-			attachmentGraphApiPath: '/api/governance/graph'
+			attachmentGraphApiPath: '/api/governance/graph',
+			monitorReadinessApiPath: '/api/governance/monitors/slack/readiness'
 		}
 	};
 }

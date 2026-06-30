@@ -61,6 +61,7 @@ await checkPublicRoutes();
 await checkManifest();
 await checkGraphApiAuthGate();
 await checkMonitorAuthGate();
+await checkMonitorReadinessAuthGate();
 await checkGithubWorkflow();
 await checkGithubSecrets();
 await checkCloudflarePagesSecrets();
@@ -242,6 +243,32 @@ async function checkMonitorAuthGate() {
 		addCheck({
 			id: 'monitor_auth_gate',
 			label: 'Slack monitor write auth gate',
+			status: 'fail',
+			details: { error: errorMessage(error) }
+		});
+	}
+}
+
+async function checkMonitorReadinessAuthGate() {
+	try {
+		const response = await fetch(`${baseUrl}/api/governance/monitors/slack/readiness`, {
+			redirect: 'manual'
+		});
+		const body = await safeText(response);
+		addCheck({
+			id: 'monitor_readiness_auth_gate',
+			label: 'Slack monitor readiness auth gate',
+			status: response.status === 401 ? 'pass' : 'fail',
+			details: {
+				expected_status: 401,
+				observed_status: response.status,
+				response_excerpt: body.slice(0, 160)
+			}
+		});
+	} catch (error) {
+		addCheck({
+			id: 'monitor_readiness_auth_gate',
+			label: 'Slack monitor readiness auth gate',
 			status: 'fail',
 			details: { error: errorMessage(error) }
 		});
