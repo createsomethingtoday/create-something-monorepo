@@ -12,6 +12,18 @@ export type AtlasGovernanceProductAttachment = {
     required?: boolean;
     source?: string;
 };
+export type AtlasGovernanceRecordProductId = Exclude<AtlasGovernanceProductId, 'atlas'>;
+export type AtlasGovernanceRecordRef = {
+    id: string;
+    productId: AtlasGovernanceRecordProductId;
+    title: string;
+    summary?: string;
+    status?: string;
+    href?: string;
+    source?: string;
+    attachedAt: string;
+    attachedBy: AtlasSessionActor;
+};
 export type AtlasGovernanceProductLink = {
     source: AtlasGovernanceProductId;
     target: AtlasGovernanceProductId;
@@ -98,6 +110,7 @@ export type AtlasCanvasNode = {
     notes?: string;
     evidence?: string;
     products?: AtlasGovernanceProductAttachment[];
+    governanceRecords?: AtlasGovernanceRecordRef[];
     bindings?: AtlasPrimitiveBinding[];
     sync?: AtlasNodeSync;
     createdBy: AtlasSessionActor;

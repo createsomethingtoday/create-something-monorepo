@@ -8,6 +8,8 @@ import type {
   AtlasCanvasNode,
   AtlasCanvasNodeKind,
   AtlasCanvasNodeStatus,
+  AtlasGovernanceRecordProductId,
+  AtlasGovernanceRecordRef,
   AtlasGovernanceProductAttachment,
   AtlasGovernanceProductId,
   AtlasGovernanceProductLink,
@@ -41,6 +43,10 @@ type AddNodeInput = {
 };
 
 type UpdateNodeInput = Partial<Omit<AtlasCanvasNode, 'id' | 'createdBy'>>;
+
+type AttachGovernanceRecordInput = Omit<AtlasGovernanceRecordRef, 'attachedAt' | 'attachedBy'> & {
+  attachedBy?: AtlasSessionActor;
+};
 
 export type RemoveNodeResult = {
   removedEdges: AtlasCanvasEdge[];
@@ -222,6 +228,50 @@ function defaultProductsForNodeKind(
     required: true,
     source
   }));
+}
+
+function productAttachmentForGovernanceRecord(
+  productId: AtlasGovernanceRecordProductId
+): AtlasGovernanceProductAttachment {
+  return {
+    productId,
+    mode: productId === 'proof' ? 'records' : productId === 'signal' ? 'consumes' : 'produces',
+    surface: PRODUCT_SURFACE_BY_ID[productId],
+    required: false,
+    source: 'governance-record'
+  };
+}
+
+function normalizeGovernanceRecordRef(input: AttachGovernanceRecordInput): AtlasGovernanceRecordRef {
+  const id = input.id.trim();
+  const title = input.title.trim();
+  if (!id) throw new Error('Governance record id is required');
+  if (!title) throw new Error('Governance record title is required');
+  if (!['signal', 'decision', 'proof'].includes(input.productId)) {
+    throw new Error('Governance record type must be signal, decision, or proof');
+  }
+  return {
+    id,
+    productId: input.productId,
+    title,
+    summary: input.summary?.trim() || undefined,
+    status: input.status?.trim() || undefined,
+    href: normalizeRecordHref(input.href),
+    source: input.source?.trim() || undefined,
+    attachedAt: now(),
+    attachedBy: input.attachedBy ?? 'agent'
+  };
+}
+
+function normalizeRecordHref(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+  if (!normalized) return undefined;
+  try {
+    const url = new URL(normalized);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function seedCanvas(input: CreateSessionInput): AtlasSession['canvas'] {
@@ -408,6 +458,38 @@ export async function updateNode(
     id: nodeId,
     updatedAt: now()
   };
+  return writeSession(session, cwd);
+}
+
+export async function attachGovernanceRecord(
+  sessionId: string,
+  nodeId: string,
+  input: AttachGovernanceRecordInput,
+  cwd = process.cwd()
+): Promise<AtlasSession> {
+  const session = await readSession(sessionId, cwd);
+  const index = session.canvas.nodes.findIndex((node) => node.id === nodeId);
+  if (index === -1) throw new Error(`Unknown node: ${nodeId}`);
+
+  const record = normalizeGovernanceRecordRef(input);
+  const node = session.canvas.nodes[index];
+  const existingRecords = node.governanceRecords ?? [];
+  const products = node.products ?? defaultProductsForNodeKind(node.kind, node.label);
+  const hasProduct = products.some((product) => product.productId === record.productId);
+  const nextRecords = [
+    ...existingRecords.filter(
+      (item) => !(item.productId === record.productId && item.id === record.id)
+    ),
+    record
+  ];
+
+  session.canvas.nodes[index] = {
+    ...node,
+    products: hasProduct ? products : [...products, productAttachmentForGovernanceRecord(record.productId)],
+    governanceRecords: nextRecords,
+    updatedAt: now()
+  };
+
   return writeSession(session, cwd);
 }
 
@@ -814,10 +896,19 @@ export function exportSessionMarkdown(session: AtlasSession): string {
     ...productLinks.map((link) => `- ${link.source} -> ${link.target}: ${link.label}`),
     '',
     '## Canvas Nodes',
-    ...session.canvas.nodes.map(
-      (node) =>
-        `- ${node.label} [${node.kind}, ${node.status}]${node.owner ? ` - owner: ${node.owner}` : ''}${node.notes ? ` - ${node.notes}` : ''}`
-    ),
+    ...session.canvas.nodes.flatMap((node) => {
+      const header = `- ${node.label} [${node.kind}, ${node.status}]${node.owner ? ` - owner: ${node.owner}` : ''}${node.notes ? ` - ${node.notes}` : ''}`;
+      const records = node.governanceRecords ?? [];
+      return records.length
+        ? [
+            header,
+            ...records.map(
+              (record) =>
+                `  - ${record.productId}: ${record.title} (${record.id})${record.status ? ` - ${record.status}` : ''}${record.href ? ` - ${record.href}` : ''}`
+            )
+          ]
+        : [header];
+    }),
     '',
     '## Edges',
     ...session.canvas.edges.map(

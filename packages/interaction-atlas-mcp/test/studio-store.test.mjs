@@ -15,6 +15,7 @@ import {
   addEdge,
   addNode,
   addObservation,
+  attachGovernanceRecord,
   addStoryQuestion,
   activateStoryStep,
   advanceStoryStep,
@@ -96,11 +97,32 @@ test('local Atlas Studio sessions can be mutated by agent commands', async () =>
   assert.equal(updatedEdge?.source, 'data_workflow');
   assert.equal(updatedEdge?.target, node.id);
 
+  const withGovernanceRecord = await attachGovernanceRecord(
+    session.id,
+    node.id,
+    {
+      id: 'gov_proof_123',
+      productId: 'proof',
+      title: 'Docs PR merged',
+      summary: 'Proof receipt from the governance runtime.',
+      status: 'passed',
+      href: 'https://createsomething.agency/admin/governance?atlas_node_id=linear_issue',
+      source: '/api/governance/proofs',
+      attachedBy: 'agent'
+    },
+    cwd
+  );
+  const recordNode = withGovernanceRecord.canvas.nodes.find((item) => item.id === node.id);
+  assert.equal(recordNode?.governanceRecords?.length, 1);
+  assert.equal(recordNode?.governanceRecords?.[0].productId, 'proof');
+  assert.equal(recordNode?.products?.some((product) => product.productId === 'proof'), true);
+
   const reloaded = await readSession(session.id, cwd);
   const markdown = exportSessionMarkdown(reloaded);
   assert.match(markdown, /Acme - Atlas Workflow Map/);
   assert.match(markdown, /Products: Atlas -> Signal -> Decision -> Proof/);
   assert.match(markdown, /Linear issue/);
+  assert.match(markdown, /proof: Docs PR merged \(gov_proof_123\) - passed/);
 });
 
 test('removing an Atlas Studio node also removes connected edges', async () => {

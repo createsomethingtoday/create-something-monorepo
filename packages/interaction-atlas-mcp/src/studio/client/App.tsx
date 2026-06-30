@@ -72,6 +72,7 @@ import type {
   AtlasCanvasNode,
   AtlasCanvasNodeKind,
   AtlasCanvasNodeStatus,
+  AtlasGovernanceRecordProductId,
   AtlasPaletteItem,
   AtlasSession,
   AtlasStoryStep,
@@ -163,6 +164,18 @@ function formatProductId(productId: string): string {
   return productId[0].toUpperCase() + productId.slice(1);
 }
 
+function governanceRecordCounts(
+  node: AtlasCanvasNode
+): Array<{ productId: AtlasGovernanceRecordProductId; count: number }> {
+  const counts = new Map<AtlasGovernanceRecordProductId, number>();
+  for (const record of node.governanceRecords ?? []) {
+    counts.set(record.productId, (counts.get(record.productId) ?? 0) + 1);
+  }
+  return (['signal', 'decision', 'proof'] as AtlasGovernanceRecordProductId[])
+    .map((productId) => ({ productId, count: counts.get(productId) ?? 0 }))
+    .filter((item) => item.count > 0);
+}
+
 function formatClient(client: string): string {
   const label = client.replace(/^CREATE SOMETHING\s*/i, '').trim();
   return label || client;
@@ -178,6 +191,7 @@ function nodeActivitySignature(node: AtlasCanvasNode): string {
     node.notes ?? '',
     node.evidence ?? '',
     JSON.stringify(node.products ?? []),
+    JSON.stringify(node.governanceRecords ?? []),
     node.sync?.checkedAt ?? '',
     node.sync?.status ?? '',
     node.sync?.summary ?? ''
@@ -502,6 +516,7 @@ const AtlasFlowNode = memo(function AtlasFlowNode({
   const owner = node.owner || node.createdBy || 'agent';
   const sync = node.sync;
   const products = node.products ?? [];
+  const recordCounts = governanceRecordCounts(node);
 
   return (
     <article
@@ -534,6 +549,15 @@ const AtlasFlowNode = memo(function AtlasFlowNode({
               title={`${formatProductId(product.productId)} · ${product.surface}`}
             >
               {formatProductId(product.productId)}
+            </span>
+          ))}
+          {recordCounts.map((record) => (
+            <span
+              className={`node-record product-${record.productId}`}
+              key={`${node.id}-record-${record.productId}`}
+              title={`${record.count} attached ${formatProductId(record.productId)} record${record.count === 1 ? '' : 's'}`}
+            >
+              {formatProductId(record.productId)} {record.count}
             </span>
           ))}
           <span className={`node-status ${node.status}`}>{node.status}</span>
@@ -1158,6 +1182,54 @@ function Inspector({
                 </div>
               ) : (
                 <p className="empty">No production binding has been attached to this node yet.</p>
+              )}
+            </div>
+            <div className="governance-panel">
+              <div className="section-title compact">
+                <span className="title-lockup">
+                  <span className="title-icon">
+                    <FileText aria-hidden="true" />
+                  </span>
+                  <span>
+                    <strong>Governance records</strong>
+                    <em>
+                      {selectedNode.governanceRecords?.length
+                        ? `${selectedNode.governanceRecords.length} attached record${
+                            selectedNode.governanceRecords.length === 1 ? '' : 's'
+                          }`
+                        : 'Attach Signal, Decision, or Proof refs from the ledger.'}
+                    </em>
+                  </span>
+                </span>
+              </div>
+              {selectedNode.governanceRecords?.length ? (
+                <div className="governance-record-list">
+                  {selectedNode.governanceRecords.map((record) => (
+                    <div className="governance-record-row" key={`${record.productId}-${record.id}`}>
+                      <span className={`node-record product-${record.productId}`}>
+                        {formatProductId(record.productId)}
+                      </span>
+                      <span>
+                        <strong>{record.title}</strong>
+                        <em>
+                          {record.id}
+                          {record.status ? ` · ${record.status}` : ''}
+                          {record.source ? ` · ${record.source}` : ''}
+                        </em>
+                        {record.summary ? <p>{record.summary}</p> : null}
+                        {record.href ? (
+                          <a href={record.href} rel="noreferrer" target="_blank">
+                            Open record
+                          </a>
+                        ) : null}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="empty">
+                  Use the Atlas Studio record command to connect this node to runtime evidence.
+                </p>
               )}
             </div>
           </div>
