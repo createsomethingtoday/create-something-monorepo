@@ -1090,7 +1090,8 @@ const CATO_CSS = `
   .cato-cc-mega-kicker { color: var(--cato-muted); text-transform: uppercase; margin: 0 0 1rem; font-size: .76rem; font-weight: 800; }
   .cato-cc-mega-title { max-width: 23rem; margin: 0 0 4rem; font-size: clamp(1.8rem, 2.5vw, 2.55rem); line-height: 1.06; font-weight: 800; }
   .cato-cc-mega-copy { color: var(--cato-muted); max-width: 18rem; margin: 0 0 1.6rem; font-size: .95rem; line-height: 1.5; }
-  .cato-cc-mega-home { font-weight: 800; text-decoration: none; }
+  .cato-cc-mega-home { display: block; width: fit-content; font-weight: 800; text-decoration: none; }
+  .cato-cc-mega-title + .cato-cc-mega-home { margin-top: 1.75rem; }
   .cato-cc-mega-links { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 1rem 1.5rem; }
   .cato-cc-mega-link { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; border-radius: .5rem; padding: .75rem 1rem; text-decoration: none; }
   .cato-cc-mega-link:hover { background: var(--base-color-cream--cream-200, #f2eee8); }
