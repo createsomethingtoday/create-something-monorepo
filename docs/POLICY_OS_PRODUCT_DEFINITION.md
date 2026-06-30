@@ -18,6 +18,25 @@ It combines:
 
 `MCP-only` remains the free or constrained discovery wedge. It is not the default paid package.
 
+Policy OS should be explained with the same simple operating loop used across
+CREATE SOMETHING:
+
+```text
+Signal → Decision → Proof
+```
+
+- **Signals** are the workflow events Policy OS watches: Slack updates, API
+  changes, schema diffs, PRs, tool calls, customer requests, exceptions,
+  incidents, and policy gaps.
+- **Decisions** are the routed actions Policy OS asks a human, agent, or policy
+  runtime to make: approve, deny, update docs, request changes, assign, escalate,
+  block, or run.
+- **Proof** is the durable record Policy OS leaves behind: source evidence,
+  policy applied, owner, decision, downstream action, receipt, and recovery path.
+
+This is the communication layer. The implementation still uses MCP connectivity,
+contracts, approval modes, policy artifacts, traces, and runbooks.
+
 ## Product shape
 
 Policy OS is delivered as one package with three delivery layers:
@@ -74,6 +93,11 @@ Graduation requires:
 
 - Use `Policy OS` as the canonical paid package name.
 - Keep `MCP-only` as the discovery/compliance wedge.
+- Use `Signal → Decision → Proof` as the simplest explanation of how Policy OS
+  operates.
+- Use `Inbox`, `Map`, and `Proof` for human-facing operator surfaces.
+- Use `Proof Graph` for the connected evidence/provenance layer when the
+  append-only ledger alone is too narrow.
 - Keep delivery-vector language unchanged:
   - canonical phrase: `Skills on MCP`
   - client-facing label: `Skills + MCP`

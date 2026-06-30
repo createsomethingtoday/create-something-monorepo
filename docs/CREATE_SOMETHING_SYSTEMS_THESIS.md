@@ -24,6 +24,11 @@ The 20-year category is **Delegated Work Control**:
 > agents and operators can do, what requires human authority, what must stop, and
 > what evidence proves the work.
 
+The simplest public operating loop is:
+
+> Signals come from the tools. Decisions route to the right human or agent.
+> Proof records what happened.
+
 This is the durable company boundary. The long-term product is not an AI agency,
 prompt shop, model reseller, or generic automation studio. It is the system a
 company uses before any agent, automation, contractor, or internal operator
@@ -70,6 +75,19 @@ The category hierarchy is:
 | **Policy OS** | Canonical paid package for governed execution. |
 | **MCP-only** | Constrained discovery or compliance wedge, not the default paid offer. |
 
+The operator language is:
+
+| Surface | Role |
+| --- | --- |
+| **Inbox** | Decisions waiting for action. |
+| **Map** | Workflow context, system boundaries, owners, and downstream impact. |
+| **Proof** | Evidence, policy, decision, outcome, receipt, and recovery path. |
+
+The data layer behind those surfaces is the **Proof Graph**: a connected record
+of signals, policies, agents, humans, systems, decisions, and outcomes. The
+append-only ledger is part of the Proof Graph, but the graph is the useful
+decision-provenance layer.
+
 ## Original Contribution
 
 CREATE SOMETHING contributes a practical method for governed delegated work:
@@ -80,6 +98,7 @@ CREATE SOMETHING contributes a practical method for governed delegated work:
 4. Treat runtime choice as governance, not implementation detail.
 5. Treat maps, contracts, golden tasks, runbooks, traces, and receipts as one
    operating system.
+6. Treat every governed workflow as Signal → Decision → Proof.
 
 The eventual Delegated Work Control protocol should stay portable across models,
 agent surfaces, business systems, and human operators. Its minimum shape is:
