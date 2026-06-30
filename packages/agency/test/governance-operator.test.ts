@@ -5,6 +5,7 @@ import {
 	buildGovernanceOperatorReview,
 	createGovernanceOperatorDecisionAction,
 	createGovernanceOperatorProofAction,
+	createGovernanceOperatorSignalAction,
 	emptyGovernanceOperatorReview,
 	normalizeGovernanceOperatorFilters
 } from '../src/lib/server/governance-operator.ts';
@@ -60,6 +61,35 @@ class FakeStatement {
 	}
 
 	private rowFromInsert(table: string): TableRow {
+		if (table === 'governance_signals') {
+			const [
+				id,
+				atlas_canvas_id,
+				atlas_node_id,
+				source,
+				source_url,
+				title,
+				summary,
+				status,
+				payload_json,
+				created_at,
+				updated_at
+			] = this.values;
+			return {
+				id,
+				atlas_canvas_id,
+				atlas_node_id,
+				source,
+				source_url,
+				title,
+				summary,
+				status,
+				payload_json,
+				created_at,
+				updated_at
+			};
+		}
+
 		if (table === 'governance_decisions') {
 			const [
 				id,
@@ -273,6 +303,40 @@ test('governance operator actions record decisions and proofs from source attach
 	assert.equal(proof.receipt_url, 'https://github.example/pr/789');
 	assert.equal(tables.governance_decisions.length, 1);
 	assert.equal(tables.governance_proofs.length, 1);
+});
+
+test('governance operator actions record manual Signals with Atlas attachment metadata', async () => {
+	const tables: Record<string, TableRow[]> = {
+		governance_signals: [],
+		governance_decisions: [],
+		governance_proofs: []
+	};
+	const db = new FakeD1(tables) as unknown as Parameters<typeof createGovernanceOperatorSignalAction>[0];
+
+	const signal = await createGovernanceOperatorSignalAction(db, {
+		atlasCanvasId: 'canvas_manual',
+		atlasNodeId: 'node_docs',
+		source: 'slack:#api-updates',
+		sourceUrl: 'https://slack.example/archives/C123/p456',
+		title: 'API update needs docs review',
+		summary: 'The public API response shape changed and reviewers need a docs pass.',
+		requiresDocumentationReview: true,
+		requiresReviewerProcessReview: true,
+		reasons: 'API surface changed; Reviewer workflow was mentioned'
+	});
+
+	assert.equal(signal.atlas_canvas_id, 'canvas_manual');
+	assert.equal(signal.atlas_node_id, 'node_docs');
+	assert.equal(signal.source, 'slack:#api-updates');
+	assert.equal(signal.source_url, 'https://slack.example/archives/C123/p456');
+	assert.equal(signal.payload.operator_surface, '/admin/governance');
+	assert.equal(signal.payload.manual_intake, true);
+	assert.deepEqual(signal.payload.classification, {
+		requires_documentation_review: true,
+		requires_reviewer_process_review: true,
+		reasons: ['API surface changed', 'Reviewer workflow was mentioned']
+	});
+	assert.equal(tables.governance_signals.length, 1);
 });
 
 test('governance operator helpers normalize filters and empty states', () => {

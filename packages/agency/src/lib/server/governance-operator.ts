@@ -1,6 +1,7 @@
 import {
 	createGovernanceDecision,
 	createGovernanceProof,
+	createGovernanceSignal,
 	getGovernanceDecision,
 	getGovernanceSignal,
 	listGovernanceDecisions,
@@ -11,7 +12,8 @@ import {
 	type GovernanceProof,
 	type GovernanceProofOutcome,
 	type GovernanceRecordFilters,
-	type GovernanceSignal
+	type GovernanceSignal,
+	type GovernanceSignalStatus
 } from './governance-runtime';
 
 export type GovernanceOperatorRecord = {
@@ -58,6 +60,19 @@ export type GovernanceOperatorDecisionActionInput = {
 	decisionState: GovernanceDecisionState;
 	decisionOwner: string;
 	reason: string;
+};
+
+export type GovernanceOperatorSignalActionInput = {
+	atlasCanvasId?: string | null;
+	atlasNodeId?: string | null;
+	source?: string | null;
+	sourceUrl?: string | null;
+	title: string;
+	summary: string;
+	status?: GovernanceSignalStatus;
+	requiresDocumentationReview?: boolean;
+	requiresReviewerProcessReview?: boolean;
+	reasons?: string | null;
 };
 
 export type GovernanceOperatorProofActionInput = {
@@ -231,6 +246,38 @@ function classificationFromSignal(signal: GovernanceSignal): GovernanceOperatorS
 	};
 }
 
+export async function createGovernanceOperatorSignalAction(
+	db: D1DatabaseLike,
+	input: GovernanceOperatorSignalActionInput
+): Promise<GovernanceSignal> {
+	const reasons = normalizeReasons(input.reasons);
+	const classification = {
+		requires_documentation_review: input.requiresDocumentationReview === true,
+		requires_reviewer_process_review: input.requiresReviewerProcessReview === true,
+		reasons
+	};
+
+	return createGovernanceSignal(db, {
+		atlasCanvasId: normalizeRequiredText(input.atlasCanvasId, 'atlasCanvasId', 160),
+		atlasNodeId: normalizeOptionalText(input.atlasNodeId, 160),
+		source: normalizeOptionalText(input.source, 160) ?? 'operator:manual',
+		sourceUrl: normalizeOptionalText(input.sourceUrl, 500),
+		title: normalizeRequiredText(input.title, 'title', 220),
+		summary: normalizeRequiredText(input.summary, 'summary', 2_000),
+		status: input.status ?? 'new',
+		payload: {
+			operator_surface: '/admin/governance',
+			manual_intake: true,
+			source_update: {
+				source_type: 'operator',
+				channel: null,
+				text: input.summary
+			},
+			classification
+		}
+	});
+}
+
 export async function createGovernanceOperatorDecisionAction(
 	db: D1DatabaseLike,
 	input: GovernanceOperatorDecisionActionInput
@@ -296,6 +343,27 @@ function normalizeLimit(value: string | null): number {
 	const parsed = Number.parseInt(value ?? '', 10);
 	if (!Number.isFinite(parsed) || parsed <= 0) return 100;
 	return Math.max(1, Math.min(500, parsed));
+}
+
+function normalizeRequiredText(value: string | null | undefined, field: string, maxLength: number): string {
+	const normalized = normalizeOptionalText(value, maxLength);
+	if (!normalized) {
+		throw new Error(`${field} is required`);
+	}
+	return normalized;
+}
+
+function normalizeOptionalText(value: string | null | undefined, maxLength: number): string | undefined {
+	const normalized = value?.trim().slice(0, maxLength);
+	return normalized || undefined;
+}
+
+function normalizeReasons(value: string | null | undefined): string[] {
+	return (value ?? '')
+		.split(/\r?\n|;/)
+		.map((reason) => reason.trim())
+		.filter(Boolean)
+		.slice(0, 6);
 }
 
 function groupBy<T>(items: T[], keyForItem: (item: T) => string): Map<string, T[]> {
