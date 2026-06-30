@@ -8,6 +8,9 @@ import type {
   AtlasCanvasNode,
   AtlasCanvasNodeKind,
   AtlasCanvasNodeStatus,
+  AtlasGovernanceProductAttachment,
+  AtlasGovernanceProductId,
+  AtlasGovernanceProductLink,
   AtlasObservation,
   AtlasSession,
   AtlasSessionActor,
@@ -33,6 +36,7 @@ type AddNodeInput = {
   status?: AtlasCanvasNodeStatus;
   notes?: string;
   evidence?: string;
+  products?: AtlasGovernanceProductAttachment[];
   createdBy?: AtlasSessionActor;
 };
 
@@ -68,7 +72,12 @@ type SetStoryInput = {
   focusNodeIds?: string[];
   narration?: string;
   nextAction?: string;
-  questions?: Array<Omit<AtlasStoryQuestion, 'id' | 'status'> & { id?: string; status?: AtlasStoryQuestion['status'] }>;
+  questions?: Array<
+    Omit<AtlasStoryQuestion, 'id' | 'status'> & {
+      id?: string;
+      status?: AtlasStoryQuestion['status'];
+    }
+  >;
   steps?: Array<Omit<AtlasStoryStep, 'id'> & { id?: string }>;
   title?: string;
   updatedBy?: AtlasSessionActor;
@@ -129,6 +138,7 @@ function defaultNode(input: {
   owner?: string;
   status?: AtlasCanvasNodeStatus;
   notes?: string;
+  products?: AtlasGovernanceProductAttachment[];
   createdBy?: AtlasSessionActor;
 }): AtlasCanvasNode {
   return {
@@ -142,9 +152,76 @@ function defaultNode(input: {
     owner: input.owner,
     status: input.status ?? 'unknown',
     notes: input.notes,
+    products: input.products ?? defaultProductsForNodeKind(input.kind, input.label),
     createdBy: input.createdBy ?? 'system',
     updatedAt: now()
   };
+}
+
+const SESSION_PRODUCTS: AtlasGovernanceProductId[] = ['atlas', 'signal', 'decision', 'proof'];
+
+const SESSION_PRODUCT_LINKS: AtlasGovernanceProductLink[] = [
+  {
+    source: 'atlas',
+    target: 'signal',
+    mode: 'connects',
+    label: 'Atlas maps where the signal enters.',
+    required: true
+  },
+  {
+    source: 'signal',
+    target: 'decision',
+    mode: 'produces',
+    label: 'Signal produces a decision requirement.',
+    required: true
+  },
+  {
+    source: 'decision',
+    target: 'proof',
+    mode: 'produces',
+    label: 'Decision produces proof of the action or pause.',
+    required: true
+  },
+  {
+    source: 'proof',
+    target: 'atlas',
+    mode: 'records',
+    label: 'Proof records back onto the Atlas map.',
+    required: true
+  }
+];
+
+const PRODUCT_IDS_BY_KIND: Record<AtlasCanvasNodeKind, AtlasGovernanceProductId[]> = {
+  actor: ['atlas'],
+  data: ['signal'],
+  system: ['signal'],
+  ai: ['decision'],
+  human: ['decision'],
+  constraint: ['decision'],
+  touchpoint: ['proof']
+};
+
+const PRODUCT_SURFACE_BY_ID: Record<
+  AtlasGovernanceProductId,
+  AtlasGovernanceProductAttachment['surface']
+> = {
+  atlas: 'map',
+  signal: 'inbox',
+  decision: 'queue',
+  proof: 'proof-graph'
+};
+
+function defaultProductsForNodeKind(
+  kind: AtlasCanvasNodeKind,
+  source?: string
+): AtlasGovernanceProductAttachment[] {
+  return PRODUCT_IDS_BY_KIND[kind].map((productId) => ({
+    productId,
+    mode: productId === 'proof' ? 'records' : productId === 'atlas' ? 'connects' : 'produces',
+    surface: PRODUCT_SURFACE_BY_ID[productId],
+    required: true,
+    source
+  }));
 }
 
 function seedCanvas(input: CreateSessionInput): AtlasSession['canvas'] {
@@ -233,6 +310,8 @@ export async function createSession(
     createdAt,
     updatedAt: createdAt,
     canvas: seedCanvas(input),
+    products: SESSION_PRODUCTS,
+    productLinks: SESSION_PRODUCT_LINKS,
     observations: [],
     suggestions: []
   };
@@ -344,7 +423,8 @@ export async function updateNodes(
   const missing = inputs
     .map((input) => input.id)
     .filter((id) => !session.canvas.nodes.some((node) => node.id === id));
-  if (missing.length) throw new Error(`Unknown node${missing.length === 1 ? '' : 's'}: ${missing.join(', ')}`);
+  if (missing.length)
+    throw new Error(`Unknown node${missing.length === 1 ? '' : 's'}: ${missing.join(', ')}`);
 
   const updatedAt = now();
   session.canvas.nodes = session.canvas.nodes.map((node) => {
@@ -632,9 +712,7 @@ export async function advanceStoryStep(
   if (!steps.length) throw new Error('This Atlas Studio session has no story steps.');
   const current = storyStepIndex(session);
   const next =
-    direction === 'next'
-      ? Math.min(current + 1, steps.length - 1)
-      : Math.max(current - 1, 0);
+    direction === 'next' ? Math.min(current + 1, steps.length - 1) : Math.max(current - 1, 0);
   return writeSession(applyStoryStep(session, next), cwd);
 }
 
@@ -653,7 +731,7 @@ export async function addStoryQuestion(
     focusEdgeIds: existing?.focusEdgeIds ?? [],
     focusNodeIds: input.nodeId
       ? Array.from(new Set([...(existing?.focusNodeIds ?? []), input.nodeId]))
-      : existing?.focusNodeIds ?? [],
+      : (existing?.focusNodeIds ?? []),
     narration: existing?.narration,
     questions: [
       ...(existing?.questions ?? []),
@@ -708,6 +786,9 @@ export async function acceptSuggestion(
   const node: AtlasCanvasNode = {
     ...suggestion.payload,
     id: randomId(suggestion.payload.kind),
+    products:
+      suggestion.payload.products ??
+      defaultProductsForNodeKind(suggestion.payload.kind, suggestion.payload.label),
     createdBy: 'operator',
     updatedAt: now()
   };
@@ -719,12 +800,18 @@ export async function acceptSuggestion(
 
 export function exportSessionMarkdown(session: AtlasSession): string {
   const proposals = session.proposals ?? [];
+  const products = session.products ?? SESSION_PRODUCTS;
+  const productLinks = session.productLinks ?? SESSION_PRODUCT_LINKS;
   const lines = [
     `# ${session.client} - Atlas Workflow Map`,
     '',
     `Workflow: ${session.workflow}`,
     session.owner ? `Owner: ${session.owner}` : null,
     `Updated: ${session.updatedAt}`,
+    '',
+    '## Product Composition',
+    `Products: ${products.map((product) => product[0].toUpperCase() + product.slice(1)).join(' -> ')}`,
+    ...productLinks.map((link) => `- ${link.source} -> ${link.target}: ${link.label}`),
     '',
     '## Canvas Nodes',
     ...session.canvas.nodes.map(
@@ -749,17 +836,15 @@ export function exportSessionMarkdown(session: AtlasSession): string {
       ),
     '',
     '## Write-back Proposals',
-    ...(
-      proposals.length
-        ? proposals.flatMap((proposal) => [
-            `- ${proposal.id} [${proposal.status}] - ${proposal.summary.total} actions (${proposal.summary.safe} safe, ${proposal.summary.review} review, ${proposal.summary.approval} approval, ${proposal.summary.drift} drift)`,
-            ...proposal.actions.map(
-              (action) =>
-                `  - ${action.title} [${action.risk}, ${action.status}] - ${action.summary}${action.reviewNote ? ` Note: ${action.reviewNote}` : ''}`
-            )
-          ])
-        : ['- No write-back proposals generated yet.']
-    ),
+    ...(proposals.length
+      ? proposals.flatMap((proposal) => [
+          `- ${proposal.id} [${proposal.status}] - ${proposal.summary.total} actions (${proposal.summary.safe} safe, ${proposal.summary.review} review, ${proposal.summary.approval} approval, ${proposal.summary.drift} drift)`,
+          ...proposal.actions.map(
+            (action) =>
+              `  - ${action.title} [${action.risk}, ${action.status}] - ${action.summary}${action.reviewNote ? ` Note: ${action.reviewNote}` : ''}`
+          )
+        ])
+      : ['- No write-back proposals generated yet.']),
     ''
   ].filter((line): line is string => line !== null);
 

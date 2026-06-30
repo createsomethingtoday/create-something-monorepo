@@ -37,6 +37,19 @@ test('local Atlas Studio sessions can be mutated by agent commands', async () =>
 
   assert.equal(session.client, 'Acme');
   assert.equal(session.canvas.nodes.length, 4);
+  assert.deepEqual(session.products, ['atlas', 'signal', 'decision', 'proof']);
+  assert.deepEqual(
+    session.productLinks?.map((link) => `${link.source}->${link.target}`),
+    ['atlas->signal', 'signal->decision', 'decision->proof', 'proof->atlas']
+  );
+  assert.equal(
+    session.canvas.nodes.find((node) => node.id === 'data_workflow')?.products?.[0]?.productId,
+    'signal'
+  );
+  assert.equal(
+    session.canvas.nodes.find((node) => node.id === 'human_approval')?.products?.[0]?.productId,
+    'decision'
+  );
 
   const withObservation = await addObservation(
     session.id,
@@ -86,6 +99,7 @@ test('local Atlas Studio sessions can be mutated by agent commands', async () =>
   const reloaded = await readSession(session.id, cwd);
   const markdown = exportSessionMarkdown(reloaded);
   assert.match(markdown, /Acme - Atlas Workflow Map/);
+  assert.match(markdown, /Products: Atlas -> Signal -> Decision -> Proof/);
   assert.match(markdown, /Linear issue/);
 });
 
@@ -99,10 +113,10 @@ test('removing an Atlas Studio node also removes connected edges', async () => {
   const result = await removeNode(session.id, 'data_workflow', cwd);
 
   assert.equal(result.removedNode.id, 'data_workflow');
-  assert.deepEqual(
-    result.removedEdges.map((edge) => edge.id).sort(),
-    ['edge_client_workflow', 'edge_workflow_agent']
-  );
+  assert.deepEqual(result.removedEdges.map((edge) => edge.id).sort(), [
+    'edge_client_workflow',
+    'edge_workflow_agent'
+  ]);
   assert.equal(
     result.session.canvas.nodes.some((node) => node.id === 'data_workflow'),
     false
@@ -356,7 +370,10 @@ test('Atlas Studio can generate approval-gated write-back proposals', async () =
   assert.equal(reviewed.summary.approved, 1);
   const handoff = exportWritebackProposalHandoff(reviewed.session, { proposalId: proposal.id });
   assert.match(exportSessionMarkdown(reviewed.session), /Write-back Proposals/);
-  assert.match(exportSessionMarkdown(reviewed.session), /Review Template Review Hub \[review, approved\]/);
+  assert.match(
+    exportSessionMarkdown(reviewed.session),
+    /Review Template Review Hub \[review, approved\]/
+  );
   assert.match(exportSessionMarkdown(reviewed.session), /Ready for a Dify smoke before import/);
   assert.match(handoff, /Safety Boundary/);
   assert.match(handoff, /Approved Implementation Candidates/);

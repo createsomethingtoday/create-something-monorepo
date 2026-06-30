@@ -154,6 +154,9 @@ export * from './diagrams/index.js';
 // Atlas (workflow graph and renderer primitives)
 export * from './atlas/index.js';
 
+// Governance products (Atlas, Signal, Decision, Proof)
+export * from './governance/index.js';
+
 // Insights (shareable key insight visuals)
 export * from './insights/index.js';
 

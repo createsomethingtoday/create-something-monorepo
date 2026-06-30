@@ -200,6 +200,14 @@
 			"import": "./dist/atlas/headless.js",
 			"default": "./dist/atlas/headless.js"
 		},
+		"./governance": {
+			"types": "./dist/governance/index.d.ts",
+			"default": "./dist/governance/index.js"
+		},
+		"./governance/products": {
+			"types": "./dist/governance/products.d.ts",
+			"default": "./dist/governance/products.js"
+		},
 		"./icons": {
 			"types": "./dist/icons/index.d.ts",
 			"svelte": "./dist/icons/index.js"
