@@ -30,6 +30,7 @@
 		"check": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm copy:check",
 		"seo:check": "node ./scripts/check-seo-aeo.mjs && pnpm marketing:check",
 		"governance:slack-monitor": "node ./scripts/run-governance-slack-monitor.mjs",
+		"governance:readiness": "node ./scripts/check-governance-production-readiness.mjs",
 		"check:watch": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"test:abundance": "node --import tsx --test test/abundance-*.test.ts",
 		"smoke:mobile": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm build && playwright test --config playwright.mobile-smoke.config.ts",

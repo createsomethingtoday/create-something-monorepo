@@ -168,6 +168,22 @@ Scheduler rules:
 
 ## Verification
 
+Run the production readiness audit before and after changing monitor configuration:
+
+```bash
+pnpm --filter @create-something/agency governance:readiness
+pnpm --filter @create-something/agency governance:readiness -- --json
+```
+
+The audit is read-only and secret-safe. It checks public product routes, the composition manifest, the Slack monitor auth gate, the scheduled GitHub workflow, GitHub Actions secret names, Cloudflare Pages secret names, Pages vars, remote D1 migrations, and remote D1 governance tables. It prints only whether required secrets and vars are configured, never their values.
+
+Expected production state before CRE-923 is complete:
+
+- product routes, composition manifest, auth gate, scheduled workflow, D1 migrations, and D1 tables pass
+- `Cloudflare Pages monitor secrets` fails until `SLACK_BOT_TOKEN` is set
+- `Cloudflare Pages monitor vars` fails until `GOVERNANCE_SLACK_CHANNELS` is set
+- `GitHub Actions monitor credential` fails until the repository secret `AGENCY_INTERNAL_API_KEY` is set
+
 After a production monitor run:
 
 ```bash
