@@ -37,3 +37,35 @@ Use $deep-module-design before refactoring this workflow interface.
 Use $intent-mapping before turning this ambiguous request into implementation work.
 Use $tdd-vertical-slice to add this behavior through a public interface test.
 ```
+
+## Testing
+
+Run the deterministic skill gate for every repo-owned skill change:
+
+```bash
+pnpm agent:skills:test
+```
+
+That gate verifies skill files exist in the Codex and Pi/package surfaces,
+frontmatter is valid, discovery docs mention the skills, and the Codex installer
+can link them into a temporary `CODEX_HOME`.
+
+For skills that shape important runtime behavior, add focused behavioral
+fixtures to `scripts/test/agent-skills-effectiveness.test.mjs`. Keep these
+fixtures deterministic: assert the skill encodes the required process, packet
+shape, commands, stop conditions, and evidence surfaces. Do not make this gate
+depend on a live model call. `intent-mapping` is the current example: the test
+checks its Intent Packet fields and prompt-like scenarios for ambiguous
+workflow mapping, shared implementation handoff, and solo exploratory work.
+
+Use this focused validation set before PRs:
+
+```bash
+pnpm agent:skills:test
+pnpm exec prettier --check <touched skill/docs/test files>
+git diff --check -- <touched skill/docs/test files>
+pnpm agent:solo-loop:check
+```
+
+Broaden to package, lint, or repo-wide checks when a skill change touches shared
+scripts, install behavior, package exports, or production promotion surfaces.
