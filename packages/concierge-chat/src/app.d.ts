@@ -40,6 +40,7 @@ declare global {
 		interface Platform {
 			env?: {
 				DB?: D1Database;
+				JOBS_DB?: D1Database;
 				UPLOADS?: R2Bucket;
 				AGENCY_BASE_URL?: string;
 				ENVIRONMENT?: string;
@@ -56,6 +57,7 @@ declare global {
 				AGENCY_STAFF_ONBOARDING_URL?: string;
 				AGENCY_INTERNAL_API_KEY?: string;
 				ABUNDANCE_STAFF_ONBOARDING_TOKEN?: string;
+				ABUNDANCE_JOBS_MCP_URL?: string;
 				DIFY_CREATE_SOMETHING_GUIDE_AGENT_API_KEY?: string;
 				DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT_API_KEY?: string;
 				DIFY_BLONDISH_HUB_API_KEY?: string;

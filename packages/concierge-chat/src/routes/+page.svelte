@@ -7,9 +7,36 @@
     staffingRoles,
     staffingServiceHighlights
   } from '$lib/site/abundance';
+  import {
+    absoluteUrl,
+    breadcrumbJsonLd,
+    faqJsonLd,
+    jsonLdScript,
+    organizationJsonLd,
+    serviceJsonLd,
+    websiteJsonLd
+  } from '$lib/site/seo';
   import type { PageData } from './$types';
 
   export let data: PageData;
+
+  const pageTitle = 'Abundance Staffing | Guided Nurse Applications';
+  const pageDescription =
+    'Abundance Staffing helps nurses start applications, facilities request coverage, and recruiters review staffing handoffs with public jobs and protected verification.';
+  const pagePath = '/';
+  const pageImage = absoluteUrl(heroVisual.src);
+  const structuredData = jsonLdScript([
+    organizationJsonLd(),
+    websiteJsonLd(),
+    serviceJsonLd({
+      name: 'Nurse staffing and recruiter-reviewed hiring support',
+      description: pageDescription,
+      path: pagePath,
+      audience: 'Nurses, facilities, and staffing recruiters'
+    }),
+    breadcrumbJsonLd([{ name: 'Home', path: pagePath }]),
+    faqJsonLd(staffingFaqs)
+  ]);
 
   const processOwners = ['Nurse or facility', 'Abundance agents', 'Recruiter'];
   const serviceChips = [
@@ -32,11 +59,23 @@
     rel="stylesheet"
     href="https://cdn.prod.website-files.com/6975f7e617285604fcb645f7/css/healen.webflow.shared.7df6645cf.css"
   />
-  <title>Abundance Staffing | Guided Nurse Applications</title>
+  <title>{pageTitle}</title>
   <meta
     name="description"
-    content="Abundance is a nurse staffing website with guided nurse intake, facility coverage requests, public job discovery, and recruiter-gated agent support."
+    content={pageDescription}
   />
+  <link rel="canonical" href={absoluteUrl(pagePath)} />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Abundance Staffing" />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={pageDescription} />
+  <meta property="og:url" content={absoluteUrl(pagePath)} />
+  <meta property="og:image" content={pageImage} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={pageTitle} />
+  <meta name="twitter:description" content={pageDescription} />
+  <meta name="twitter:image" content={pageImage} />
+  {@html structuredData}
 </svelte:head>
 
 <section class="hero-03 container-full abundance-hero">
@@ -147,7 +186,7 @@
         {#each staffingProcess as step, index}
           <article class="works-item abundance-work-card">
             <div class="abundance-work-top">
-              <div class="works-item-thumb-wrap abundance-step-number">
+              <div class="abundance-step-number">
                 <span>{index + 1}</span>
               </div>
               <span class="abundance-step-owner">{processOwners[index]}</span>
@@ -239,70 +278,6 @@
     loading="lazy"
   />
 </section>
-
-<footer class="footer-wrapper abundance-footer">
-  <section class="footer container-full">
-    <div class="container-fluid">
-      <div class="footer-content">
-        <div class="footer-wrap">
-          <div class="footer-left">
-            <div class="footer-left-head">
-              <div class="abundance-footer-brand">
-                <span>A</span>
-                <strong>Abundance Staffing</strong>
-              </div>
-              <h2 class="footer-left-title heading-03">Abundance Staffing</h2>
-              <p class="footer-left-text p2-regular">
-                Guided nurse applications, facility requests, public jobs, and recruiter review.
-              </p>
-              <div class="footer-left-btns">
-                <a href="/apply" class="abundance-footer-action">Start application</a>
-              </div>
-            </div>
-          </div>
-          <div class="footer-right-wrap">
-            <div class="footer-right">
-              <div class="footer-body">
-                <div class="title-small">Paths</div>
-                <div class="footer-body-links">
-                  <div class="footer-link-wrap"><a href="/nurses" class="footer-link">Nurses</a></div>
-                  <div class="footer-link-wrap"><a href="/jobs" class="footer-link">Jobs</a></div>
-                  <div class="footer-link-wrap"><a href="/facilities" class="footer-link">Facilities</a></div>
-                  <div class="footer-link-wrap"><a href="/agents" class="footer-link">Agents</a></div>
-                </div>
-              </div>
-              <div class="footer-body">
-                <div class="title-small">Start</div>
-                <div class="footer-body-links">
-                  <div class="footer-link-wrap"><a href="/apply" class="footer-link">Apply now</a></div>
-                  <div class="footer-link-wrap"><a href="/facilities" class="footer-link">Request coverage</a></div>
-                  <div class="footer-link-wrap"><a href="/agents" class="footer-link">Agent support</a></div>
-                </div>
-              </div>
-              <div class="footer-body abundance-footer-trust">
-                <div class="title-small">Trust</div>
-                <div class="footer-body-links">
-                  <span>Recruiters approve staffing moves.</span>
-                  <span>Verification gates protected steps.</span>
-                  <span>Public jobs stay read-only.</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <div class="footer-copyright-wrap">
-            <div class="footer-copyright-text">(c) 2026 Abundance Staffing.</div>
-            <div class="abundance-footer-bottom-links">
-              <a href="/agents">Agent system</a>
-              <a href="/apply">Start</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-</footer>
 
 <style>
   .abundance-hero {
@@ -855,166 +830,6 @@
     object-position: 72% 50%;
   }
 
-  .abundance-footer .footer.container-full {
-    padding-top: 46px;
-    padding-bottom: 46px;
-    background:
-      radial-gradient(circle at 18% 10%, rgba(175, 124, 84, 0.18), transparent 28%),
-      #0b0b0a;
-  }
-
-  .abundance-footer .footer-wrap {
-    display: grid;
-    grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.45fr);
-    gap: clamp(32px, 6vw, 86px);
-    align-items: stretch;
-    max-width: 1320px;
-    padding-bottom: 54px;
-  }
-
-  .abundance-footer .footer-left {
-    max-width: none;
-    min-height: 320px;
-    padding: 34px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
-      rgba(255, 255, 255, 0.04);
-  }
-
-  .abundance-footer .footer-left-head {
-    display: grid;
-    gap: 22px;
-  }
-
-  .abundance-footer-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--white);
-  }
-
-  .abundance-footer-brand span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 999px;
-    background: var(--white);
-    color: var(--black);
-    font-size: 18px;
-  }
-
-  .abundance-footer-brand strong {
-    font-size: 17px;
-    font-weight: 500;
-  }
-
-  .abundance-footer .footer-left-title {
-    max-width: 280px;
-    margin: 0;
-    color: var(--white);
-  }
-
-  .abundance-footer .footer-left-text {
-    max-width: 290px;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.62);
-  }
-
-  .abundance-footer-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 54px;
-    width: 100%;
-    max-width: 280px;
-    padding: 0 22px;
-    border-radius: 999px;
-    background: var(--secondary);
-    color: var(--white);
-    font-size: 16px;
-    line-height: 1;
-    text-decoration: none;
-  }
-
-  .abundance-footer .footer-right-wrap {
-    max-width: none;
-    justify-content: stretch;
-  }
-
-  .abundance-footer .footer-right {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
-    max-width: none;
-    height: 100%;
-  }
-
-  .abundance-footer .footer-body {
-    display: grid;
-    align-content: start;
-    gap: 22px;
-    min-height: 260px;
-    padding: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.025);
-  }
-
-  .abundance-footer .title-small {
-    color: rgba(255, 255, 255, 0.92);
-    font-size: 18px;
-  }
-
-  .abundance-footer .footer-body-links {
-    gap: 16px;
-    max-width: none;
-  }
-
-  .abundance-footer .footer-link,
-  .abundance-footer-trust span,
-  .abundance-footer-bottom-links a {
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 15px;
-    line-height: 1.35;
-    text-decoration: none;
-  }
-
-  .abundance-footer .footer-link:hover,
-  .abundance-footer-bottom-links a:hover {
-    color: var(--white);
-  }
-
-  .abundance-footer-trust span {
-    display: block;
-    padding-left: 14px;
-    border-left: 2px solid rgba(175, 124, 84, 0.55);
-  }
-
-  .abundance-footer .footer-bottom {
-    padding-top: 28px;
-    padding-bottom: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .abundance-footer .footer-copyright-wrap {
-    gap: 18px;
-  }
-
-  .abundance-footer .footer-copyright-text {
-    color: rgba(255, 255, 255, 0.58);
-    font-size: 14px;
-  }
-
-  .abundance-footer-bottom-links {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
   @media (max-width: 991px) {
     .hero-content-03,
     .support-head-02 {
@@ -1078,21 +893,6 @@
 
     .abundance-cta .cta-content {
       padding: 120px 0;
-    }
-
-    .abundance-footer .footer-wrap,
-    .abundance-footer .footer-right {
-      grid-template-columns: 1fr;
-    }
-
-    .abundance-footer .footer-left,
-    .abundance-footer .footer-body {
-      min-height: auto;
-    }
-
-    .abundance-footer .footer-copyright-wrap {
-      align-items: flex-start;
-      flex-direction: column;
     }
 
     .support-list-wrap {

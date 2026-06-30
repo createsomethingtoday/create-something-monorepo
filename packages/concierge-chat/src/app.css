@@ -328,33 +328,51 @@ input::placeholder {
 }
 
 .abundance-step-number {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  min-height: 72px;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  min-height: 64px;
   padding: 0;
   border-radius: 999px;
   background: var(--secondary, #af7c54);
   color: var(--white, #fff);
-  font-size: 28px;
+  font-size: 24px;
+  line-height: 1;
   box-shadow: 0 14px 28px rgba(175, 124, 84, 0.24);
 }
 
 .abundance-work-card .abundance-step-number.works-item-thumb-wrap {
-  flex: 0 0 72px;
-  width: 72px;
-  max-width: 72px;
-  height: 72px;
-  min-height: 72px;
-  max-height: 72px;
+  flex: 0 0 64px;
+  display: grid !important;
+  place-items: center !important;
+  position: relative;
+  width: 64px;
+  max-width: 64px;
+  height: 64px;
+  min-width: 64px;
+  min-height: 64px;
+  max-height: 64px;
   padding: 0;
   border-radius: 999px;
+  overflow: hidden;
+  text-align: center;
 }
 
 .abundance-step-number span {
-  color: inherit;
+  display: block !important;
+  position: static !important;
+  inset: auto !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: inherit !important;
+  font: inherit !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  transform: translateY(-0.02em) !important;
 }
 
 .abundance-work-rule {
@@ -497,21 +515,23 @@ input::placeholder {
   }
 
   .abundance-step-number {
-    width: 58px;
-    max-width: 58px;
-    height: 58px;
-    min-height: 58px;
-    max-height: 58px;
-    font-size: 22px;
+    width: 54px;
+    max-width: 54px;
+    height: 54px;
+    min-width: 54px;
+    min-height: 54px;
+    max-height: 54px;
+    font-size: 20px;
   }
 
   .abundance-work-card .abundance-step-number.works-item-thumb-wrap {
-    flex-basis: 58px;
-    width: 58px;
-    max-width: 58px;
-    height: 58px;
-    min-height: 58px;
-    max-height: 58px;
+    flex-basis: 54px;
+    width: 54px;
+    max-width: 54px;
+    height: 54px;
+    min-width: 54px;
+    min-height: 54px;
+    max-height: 54px;
   }
 
   .abundance-work-card,

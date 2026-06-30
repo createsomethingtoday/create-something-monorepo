@@ -119,33 +119,33 @@ export const jobHighlights = [
 export const abundanceAgents = [
   {
     name: 'Abundance Concierge',
-    lane: 'Nurse intake',
-    summary: 'Captures specialty, shift, location, timing, and profile basics.',
-    proof: 'Public application path with protected verification.'
+    lane: 'Application start',
+    summary: 'Helps nurses describe the role, shift, location, timing, and fit they actually want.',
+    proof: 'Starts simple. Verification appears only for protected steps.'
   },
   {
     name: 'Abundance Jobs',
-    lane: 'Job discovery',
-    summary: 'Surfaces public jobs and coverage without paid browser calls.',
-    proof: 'Read-only Jobs MCP and D1 serving contract.'
+    lane: 'Role discovery',
+    summary: 'Shows a fresh view of available nursing roles so nurses can see the market before applying.',
+    proof: 'Public listings stay read-only and recruiter-reviewed.'
   },
   {
     name: 'Abundance Recruiter Desk',
-    lane: 'Review prep',
-    summary: 'Highlights fit, gaps, and recruiter review context.',
-    proof: 'Recruiter approval gate before protected staffing moves.'
+    lane: 'Recruiter support',
+    summary: 'Organizes fit notes, gaps, timing, and next-step context before a recruiter reviews.',
+    proof: 'People make staffing decisions. Agents prepare the handoff.'
   },
   {
     name: 'Abundance Staffing Desk',
-    lane: 'Facility handoff',
-    summary: 'Packages needs, queue state, and candidate handoff details.',
-    proof: 'Governed staffing packet and operator action trail.'
+    lane: 'Facility coverage',
+    summary: 'Keeps facility needs, unit details, credentials, urgency, and candidate context together.',
+    proof: 'Coverage requests stay structured from first note to follow-up.'
   },
   {
     name: 'Abundance Compliance',
     lane: 'Credential readiness',
-    summary: 'Keeps document, consent, and verification status visible.',
-    proof: 'Secure verification and private upload boundary.'
+    summary: 'Supports document, consent, license, and verification readiness when placement requires it.',
+    proof: 'Private records stay private behind secure access.'
   }
 ];
 
