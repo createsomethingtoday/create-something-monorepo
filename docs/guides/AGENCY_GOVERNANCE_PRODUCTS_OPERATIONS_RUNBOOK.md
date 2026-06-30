@@ -34,10 +34,11 @@ Required secrets:
 
 - `AGENCY_INTERNAL_API_KEY`: shared internal write credential for governance write endpoints.
 - `SLACK_BOT_TOKEN`: Slack bot token used for `conversations.history`.
+- `GOVERNANCE_SLACK_CHANNELS`: watched-channel config, when channel IDs should stay out of repo-visible Pages vars.
 
 Required vars:
 
-- `GOVERNANCE_SLACK_CHANNELS`: watched-channel config.
+- `GOVERNANCE_SLACK_CHANNELS`: watched-channel config, only when the channel list is safe to expose as normal Pages configuration.
 - `GOVERNANCE_SLACK_WORKSPACE_URL`: optional Slack workspace base URL for Proof/source links.
 
 Delimited channel config:
@@ -60,7 +61,7 @@ JSON channel config:
 ]
 ```
 
-The Slack app must be installed in the watched channels and able to read channel history.
+The Slack app must be installed in the watched channels and able to read channel history. Prefer a Pages secret for `GOVERNANCE_SLACK_CHANNELS` when the config contains internal channel IDs or private workflow names; Cloudflare exposes secrets and vars to the runtime through the same `env` binding.
 
 ## Pre-Flight
 
@@ -181,7 +182,7 @@ Expected production state before CRE-923 is complete:
 
 - product routes, composition manifest, auth gate, scheduled workflow, D1 migrations, and D1 tables pass
 - `Cloudflare Pages monitor secrets` fails until `SLACK_BOT_TOKEN` is set
-- `Cloudflare Pages monitor vars` fails until `GOVERNANCE_SLACK_CHANNELS` is set
+- `Cloudflare Pages monitor source config` fails until `GOVERNANCE_SLACK_CHANNELS` is set as either a Pages secret or Pages var
 - `GitHub Actions monitor credential` fails until the repository secret `AGENCY_INTERNAL_API_KEY` is set
 
 After a production monitor run:
