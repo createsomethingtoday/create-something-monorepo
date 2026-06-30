@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, getSessionPath, listSessions, readSession } from './store.js';
+import { acceptSuggestion, addEdge, addNode, addObservation, attachGovernanceRecord, createSession, exportSessionMarkdown, getSessionPath, listSessions, readSession } from './store.js';
 import { healSessionProductionBindings } from './production-bindings.js';
 import { startStudioServer } from './server.js';
 import { createWritebackProposal, exportWritebackProposalHandoffForSession, reviewWritebackProposalAction } from './writeback-proposals.js';
@@ -43,6 +43,7 @@ Usage:
   pnpm atlas:studio observe --session SESSION_ID --suggest --text "Client says approval is needed"
   pnpm atlas:studio node --session SESSION_ID --kind ai --label "Draft response" [--status wait]
   pnpm atlas:studio edge --session SESSION_ID --source NODE_ID --target NODE_ID [--label "passes"]
+  pnpm atlas:studio record --session SESSION_ID --node NODE_ID --type signal|decision|proof --id RECORD_ID --title "Record title"
   pnpm atlas:studio accept --session SESSION_ID --suggestion SUGGESTION_ID
   pnpm atlas:studio heal --session SESSION_ID [--profile template-system]
   pnpm atlas:studio propose --session SESSION_ID [--profile template-system]
@@ -131,6 +132,26 @@ async function main() {
                 createdBy: bool(parsed.flags, 'operator') ? 'operator' : 'agent'
             });
             console.log(JSON.stringify({ session: session.id, edge: session.canvas.edges.at(-1) }, null, 2));
+            return;
+        }
+        case 'record':
+        case 'governance-record': {
+            const session = await attachGovernanceRecord(required(parsed.flags, 'session'), required(parsed.flags, 'node'), {
+                id: required(parsed.flags, 'id'),
+                productId: required(parsed.flags, 'type'),
+                title: required(parsed.flags, 'title'),
+                summary: str(parsed.flags, 'summary'),
+                status: str(parsed.flags, 'status'),
+                href: str(parsed.flags, 'href'),
+                source: str(parsed.flags, 'source'),
+                attachedBy: bool(parsed.flags, 'operator') ? 'operator' : 'agent'
+            });
+            const node = session.canvas.nodes.find((item) => item.id === required(parsed.flags, 'node'));
+            console.log(JSON.stringify({
+                session: session.id,
+                node: node?.id,
+                governanceRecords: node?.governanceRecords?.length ?? 0
+            }, null, 2));
             return;
         }
         case 'accept': {

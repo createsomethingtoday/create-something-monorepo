@@ -1,4 +1,4 @@
-import type { AtlasCanvasEdge, AtlasCanvasNode, AtlasCanvasNodeKind, AtlasCanvasNodeStatus, AtlasGovernanceProductAttachment, AtlasSession, AtlasSessionActor, AtlasStoryCallout, AtlasStoryQuestion, AtlasStoryStep } from './types.js';
+import type { AtlasCanvasEdge, AtlasCanvasNode, AtlasCanvasNodeKind, AtlasCanvasNodeStatus, AtlasGovernanceRecordRef, AtlasGovernanceProductAttachment, AtlasSession, AtlasSessionActor, AtlasStoryCallout, AtlasStoryQuestion, AtlasStoryStep } from './types.js';
 type CreateSessionInput = {
     client: string;
     workflow: string;
@@ -18,6 +18,9 @@ type AddNodeInput = {
     createdBy?: AtlasSessionActor;
 };
 type UpdateNodeInput = Partial<Omit<AtlasCanvasNode, 'id' | 'createdBy'>>;
+type AttachGovernanceRecordInput = Omit<AtlasGovernanceRecordRef, 'attachedAt' | 'attachedBy'> & {
+    attachedBy?: AtlasSessionActor;
+};
 export type RemoveNodeResult = {
     removedEdges: AtlasCanvasEdge[];
     removedNode: AtlasCanvasNode;
@@ -68,6 +71,7 @@ export declare function writeSession(session: AtlasSession, cwd?: string): Promi
 export declare function listSessions(cwd?: string): Promise<AtlasSession[]>;
 export declare function addNode(sessionId: string, input: AddNodeInput, cwd?: string): Promise<AtlasSession>;
 export declare function updateNode(sessionId: string, nodeId: string, input: UpdateNodeInput, cwd?: string): Promise<AtlasSession>;
+export declare function attachGovernanceRecord(sessionId: string, nodeId: string, input: AttachGovernanceRecordInput, cwd?: string): Promise<AtlasSession>;
 export declare function updateNodes(sessionId: string, inputs: Array<{
     id: string;
 } & UpdateNodeInput>, cwd?: string): Promise<AtlasSession>;

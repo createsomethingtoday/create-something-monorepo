@@ -235,6 +235,7 @@ input::placeholder {
 .node-status,
 .node-sync,
 .node-product,
+.node-record,
 .risk-chip,
 .review-chip {
   display: inline-flex;
@@ -358,6 +359,27 @@ input::placeholder {
 
 .node-product.product-proof {
   border-color: rgba(30, 60, 44, 0.16);
+  color: var(--green);
+}
+
+.node-record {
+  border-color: rgba(10, 14, 25, 0.1);
+  background: rgba(249, 249, 246, 0.92);
+  color: var(--muted-strong);
+}
+
+.node-record.product-signal {
+  border-color: rgba(0, 72, 255, 0.14);
+  color: var(--blue);
+}
+
+.node-record.product-decision {
+  border-color: rgba(123, 123, 117, 0.2);
+  color: var(--muted-strong);
+}
+
+.node-record.product-proof {
+  border-color: rgba(30, 60, 44, 0.18);
   color: var(--green);
 }
 
@@ -857,7 +879,8 @@ input::placeholder {
   padding-left: 0.58rem;
 }
 
-.sync-panel {
+.sync-panel,
+.governance-panel {
   display: grid;
   gap: 0.65rem;
   border-top: 1px solid var(--line);
@@ -865,12 +888,14 @@ input::placeholder {
   padding-top: 0.82rem;
 }
 
-.binding-list {
+.binding-list,
+.governance-record-list {
   display: grid;
   gap: 0.52rem;
 }
 
-.binding-row {
+.binding-row,
+.governance-record-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.52rem;
@@ -897,23 +922,42 @@ input::placeholder {
 }
 
 .binding-row strong,
-.binding-row em {
+.binding-row em,
+.governance-record-row strong,
+.governance-record-row em,
+.governance-record-row a {
   display: block;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.binding-row strong {
+.binding-row strong,
+.governance-record-row strong {
   color: var(--text);
   font-size: 0.8rem;
   line-height: 1.16;
 }
 
-.binding-row em {
+.binding-row em,
+.governance-record-row em {
   color: var(--muted);
   font-size: 0.72rem;
   font-style: normal;
   line-height: 1.25;
+}
+
+.governance-record-row p {
+  margin: 0.28rem 0 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.32;
+}
+
+.governance-record-row a {
+  color: var(--blue);
+  font-size: 0.74rem;
+  margin-top: 0.24rem;
+  text-decoration: none;
 }
 
 .palette {
