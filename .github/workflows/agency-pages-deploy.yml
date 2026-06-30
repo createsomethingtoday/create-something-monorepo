@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -67,14 +69,46 @@ jobs:
             echo "alias=${alias}" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Resolve deploy eligibility
+        id: deploy
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "eligible=true" >> "$GITHUB_OUTPUT"
+            echo "reason=manual workflow dispatch" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          base="${{ github.event.before }}"
+          head="${{ github.sha }}"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base="$(git merge-base "$head" "origin/main")"
+          fi
+
+          changed_paths="$(git diff --name-only "$base" "$head")"
+          printf '%s\n' "$changed_paths"
+
+          if printf '%s\n' "$changed_paths" | grep -E '^(packages/agency/|packages/canon/|packages/tufte/)' >/dev/null; then
+            echo "eligible=true" >> "$GITHUB_OUTPUT"
+            echo "reason=agency source changed" >> "$GITHUB_OUTPUT"
+          else
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            echo "reason=no agency source change; build-only guard" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy Agency to Cloudflare Pages
-        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        if: steps.deploy.outputs.eligible == 'true' && env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: |
           node scripts/run-wrangler.mjs --cwd packages/agency pages deploy .svelte-kit/cloudflare \
             --project-name=create-something-agency \
             --branch="${{ steps.branch.outputs.alias }}"
 
+      - name: Skip Agency deploy
+        if: steps.deploy.outputs.eligible != 'true'
+        run: |
+          echo "Skipping Agency Pages deploy: ${{ steps.deploy.outputs.reason }}"
+
       - name: Emit preview URL
-        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' && github.ref_name != 'main'
+        if: steps.deploy.outputs.eligible == 'true' && env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' && github.ref_name != 'main'
         run: |
           echo "Preview URL: https://${{ steps.branch.outputs.alias }}.create-something-agency.pages.dev"
