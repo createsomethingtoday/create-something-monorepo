@@ -22,6 +22,12 @@ test('renders the reviewed mega menu browse options', () => {
   assert.doesNotMatch(html, /Whitepapers/);
   assert.doesNotMatch(html, /Explore Our Insights/);
   assert.doesNotMatch(html, /Access Our Insights/);
+  assert.match(html, /cato-cc-mega-title \{[^}]*margin: 0 0 4rem/);
+  assert.match(
+    html,
+    /cato-cc-mega-feature-list \{[^}]*border-top: 1px solid rgba\(255,255,255,.16\)/
+  );
+  assert.doesNotMatch(html, /cato-cc-mega-feature-list \{[^}]*border-bottom/);
 });
 
 test('only renders the right-side mega menu feature CTA when explicitly enabled', () => {
@@ -57,6 +63,7 @@ test('allows editors to customize the right-side mega menu feature through navig
   assert.match(html, /Open the report/);
   assert.match(html, /href="\/resiliency-reports"/);
   assert.match(html, /Gowns and drapes alert/);
+  assert.match(html, /cato-nav__trigger \{[^}]*padding: .5rem 1rem/);
 });
 
 test('renders Cato Insights Hub with editable Webflow link overrides', () => {
