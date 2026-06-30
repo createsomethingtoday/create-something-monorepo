@@ -55,6 +55,7 @@ const cloudflareAccountId =
 	args.cloudflareAccountId ?? process.env.CLOUDFLARE_ACCOUNT_ID ?? DEFAULT_ACCOUNT_ID;
 
 const checks = [];
+let cloudflarePagesSecretNames = new Set();
 
 await checkPublicRoutes();
 await checkManifest();
@@ -345,6 +346,7 @@ async function checkCloudflarePagesSecrets() {
 	}
 
 	const names = parseCloudflareSecretNames(command.stdout);
+	cloudflarePagesSecretNames = names;
 	const requiredSecrets = ['AGENCY_INTERNAL_API_KEY', 'SLACK_BOT_TOKEN'];
 	const missing = requiredSecrets.filter((name) => !names.has(name));
 	addCheck({
@@ -378,19 +380,27 @@ async function checkCloudflarePagesVars() {
 
 		const config = await readFile(path.join(tempDir, 'wrangler.toml'), 'utf8');
 		const vars = parseTomlVarNames(config);
-		const requiredVars = ['GOVERNANCE_SLACK_CHANNELS'];
+		const requiredBindings = ['GOVERNANCE_SLACK_CHANNELS'];
 		const optionalVars = ['GOVERNANCE_SLACK_WORKSPACE_URL'];
-		const missing = requiredVars.filter((name) => !vars.has(name));
+		const missing = requiredBindings.filter(
+			(name) => !vars.has(name) && !cloudflarePagesSecretNames.has(name)
+		);
 
 		addCheck({
 			id: 'cloudflare_pages_vars',
-			label: 'Cloudflare Pages monitor vars',
+			label: 'Cloudflare Pages monitor source config',
 			status: missing.length === 0 ? 'pass' : 'fail',
 			details: {
-				required_vars: requiredVars,
+				required_bindings: requiredBindings,
 				optional_vars: optionalVars,
-				configured: Object.fromEntries(
-					[...requiredVars, ...optionalVars].map((name) => [name, vars.has(name)])
+				configured_as: Object.fromEntries(
+					[...requiredBindings, ...optionalVars].map((name) => [
+						name,
+						{
+							var: vars.has(name),
+							secret: cloudflarePagesSecretNames.has(name)
+						}
+					])
 				),
 				missing
 			}
