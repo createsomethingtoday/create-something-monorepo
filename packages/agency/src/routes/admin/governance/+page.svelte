@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
+	import { safeOperatorExternalHref } from '$lib/governance/operator-url';
 	import type { PageData } from './$types';
 
 	type GovernanceRecord = PageData['review']['records'][number];
@@ -57,6 +58,10 @@
 		if (outcome === 'passed') return 'success';
 		if (outcome === 'failed' || outcome === 'rolled_back') return 'danger';
 		return 'info';
+	}
+
+	function safeHref(value: string | null | undefined): string | null {
+		return safeOperatorExternalHref(value);
 	}
 </script>
 
@@ -163,8 +168,8 @@
 						<div>
 							<dt>Source</dt>
 							<dd>
-								{#if record.signal.source_url}
-									<a href={record.signal.source_url} target="_blank">Open</a>
+								{#if safeHref(record.signal.source_url)}
+									<a href={safeHref(record.signal.source_url) ?? ''} target="_blank" rel="noreferrer">Open</a>
 								{:else}
 									n/a
 								{/if}
@@ -198,8 +203,8 @@
 										<p>{proof.evidence}</p>
 										<small>
 											{displayDate(proof.created_at)}
-											{#if proof.receipt_url}
-												· <a href={proof.receipt_url} target="_blank">Receipt</a>
+											{#if safeHref(proof.receipt_url)}
+												· <a href={safeHref(proof.receipt_url) ?? ''} target="_blank" rel="noreferrer">Receipt</a>
 											{/if}
 										</small>
 									</div>

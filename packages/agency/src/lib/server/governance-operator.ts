@@ -83,8 +83,44 @@ export async function buildGovernanceOperatorReview(
 		atlasNodeId: filters.atlas_node_id || null,
 		limit: filters.limit
 	};
-	const [signals, decisions, proofs] = await Promise.all([
-		listGovernanceSignals(db, runtimeFilters),
+	const signals = await listGovernanceSignals(db, runtimeFilters);
+	const signalIds = new Set(signals.map((signal) => signal.id));
+	const signalChildRows = await Promise.all(
+		signals.map(async (signal) => {
+			const signalDecisions = await listGovernanceDecisions(db, {
+				signalId: signal.id,
+				limit: filters.limit
+			});
+			const signalProofs = await listGovernanceProofs(db, {
+				signalId: signal.id,
+				limit: filters.limit
+			});
+			const decisionProofs = (
+				await Promise.all(
+					signalDecisions.map((decision) =>
+						listGovernanceProofs(db, {
+							decisionId: decision.id,
+							limit: filters.limit
+						})
+					)
+				)
+			).flat();
+			return {
+				signal,
+				decisions: signalDecisions,
+				proofs: uniqueBy([...signalProofs, ...decisionProofs], (proof) => proof.id)
+			};
+		})
+	);
+	const decisions = uniqueBy(
+		signalChildRows.flatMap((record) => record.decisions),
+		(decision) => decision.id
+	);
+	const proofs = uniqueBy(
+		signalChildRows.flatMap((record) => record.proofs),
+		(proof) => proof.id
+	);
+	const [candidateUnlinkedDecisions, candidateUnlinkedProofs] = await Promise.all([
 		listGovernanceDecisions(db, runtimeFilters),
 		listGovernanceProofs(db, runtimeFilters)
 	]);
@@ -94,7 +130,6 @@ export async function buildGovernanceOperatorReview(
 		(proof) => proof.signal_id ?? ''
 	);
 	const proofsByDecision = groupBy(proofs, (proof) => proof.decision_id);
-	const signalIds = new Set(signals.map((signal) => signal.id));
 	const decisionIds = new Set(decisions.map((decision) => decision.id));
 
 	const records = signals.map((signal) => {
@@ -108,10 +143,11 @@ export async function buildGovernanceOperatorReview(
 			proofs: proofsForSignal
 		};
 	});
-	const unlinkedDecisions = decisions.filter((decision) => !signalIds.has(decision.signal_id));
-	const unlinkedProofs = proofs.filter(
+	const unlinkedDecisions = candidateUnlinkedDecisions.filter((decision) => !signalIds.has(decision.signal_id));
+	const unlinkedProofs = candidateUnlinkedProofs.filter(
 		(proof) => (proof.signal_id ? !signalIds.has(proof.signal_id) : true) && !decisionIds.has(proof.decision_id)
 	);
+	const decisionsReadyForProof = decisions.filter((decision) => (proofsByDecision.get(decision.id) ?? []).length === 0);
 
 	return {
 		generated_at: new Date().toISOString(),
@@ -124,8 +160,7 @@ export async function buildGovernanceOperatorReview(
 			signals: signals.length,
 			decisions: decisions.length,
 			proofs: proofs.length,
-			records_ready_for_proof: records.filter((record) => record.decisions.length > 0 && record.proofs.length === 0)
-				.length,
+			records_ready_for_proof: decisionsReadyForProof.length,
 			unlinked_decisions: unlinkedDecisions.length,
 			unlinked_proofs: unlinkedProofs.length
 		},
