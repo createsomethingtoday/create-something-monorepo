@@ -75,8 +75,8 @@ export default declareComponent(CatoNavigation, {
       tooltip: 'Preferred: select the Resiliency Report Alerts page used in the mega menu.'
     }),
     researchLink: props.Link({
-      name: 'Cato Research Link',
-      tooltip: 'Preferred: select the Cato Research page used in the mega menu.'
+      name: 'Industry Research Link',
+      tooltip: 'Preferred: select the Industry Research page used in the mega menu.'
     }),
     newsroomLink: props.Link({
       name: 'Newsroom Link',

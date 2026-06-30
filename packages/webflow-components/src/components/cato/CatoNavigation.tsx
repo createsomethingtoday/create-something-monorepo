@@ -266,13 +266,13 @@ const CATO_NAV_CSS = `
     min-height: 3.25rem;
     border-radius: .5rem;
     color: var(--cato-nav-white) !important;
-    background: #245a9f;
+    background: linear-gradient(135deg, #2f70b7, #245a9f 64%, #1f4e8b);
     padding: .8rem 1rem;
     font-weight: 700;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 .7rem 1.35rem rgba(31,78,139,.12);
   }
   .cato-nav__cta:hover {
-    background: #1f4e8b;
+    background: linear-gradient(135deg, #2a65a7, #214f8c 64%, #1a4276);
   }
   .cato-nav__cta svg {
     width: 1rem;
