@@ -8,6 +8,7 @@ import {
 	normalizeGovernanceOperatorFilters
 } from '$lib/server/governance-operator';
 import type { GovernanceDecisionState, GovernanceProofOutcome } from '$lib/server/governance-runtime';
+import { buildGovernanceSlackMonitorReadiness } from '$lib/server/governance-slack-monitor';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 export const load: PageServerLoad = async ({ cookies, platform, url }) => {
@@ -19,6 +20,7 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 		if (!db) {
 			return {
 				review: emptyGovernanceOperatorReview(filters, 'Database is unavailable.'),
+				monitor_readiness: null,
 				action_result: normalizeActionResult(url.searchParams.get('action_result')),
 				error: 'Database is unavailable.'
 			};
@@ -26,6 +28,11 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 
 		return {
 			review: await buildGovernanceOperatorReview(db, filters),
+			monitor_readiness: await buildGovernanceSlackMonitorReadiness(db, {
+				channelsRaw: platform.env.GOVERNANCE_SLACK_CHANNELS,
+				slackBotToken: platform.env.SLACK_BOT_TOKEN,
+				workspaceUrl: platform.env.GOVERNANCE_SLACK_WORKSPACE_URL
+			}),
 			action_result: normalizeActionResult(url.searchParams.get('action_result')),
 			error: null
 		};
@@ -33,6 +40,7 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 		const message = error instanceof Error ? error.message : 'Failed to load governance records.';
 		return {
 			review: emptyGovernanceOperatorReview(filters, message),
+			monitor_readiness: null,
 			action_result: normalizeActionResult(url.searchParams.get('action_result')),
 			error: message
 		};
