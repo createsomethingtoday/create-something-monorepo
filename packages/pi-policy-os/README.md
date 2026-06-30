@@ -22,6 +22,7 @@ A lightweight quality gate extension that:
 
 - `/skill:policy-os-starter` — What Policy OS is, how contract bundles work, the MCP-First Thesis
 - `/skill:debug-feedback-loop` — Repro-first debugging for bugs, failing checks, and performance regressions
+- `/skill:intent-mapping` — Decision, scope, validation, and handoff capture before ambiguous or long-running work
 - `/skill:tdd-vertical-slice` — Test-first vertical-slice development through public interfaces
 
 ### Prompt Templates
