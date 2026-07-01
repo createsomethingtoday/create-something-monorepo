@@ -2432,6 +2432,104 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('indexes current Airtable category records as public child category aliases', async () => {
+    const renewableAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recBrightSolar',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Bright Solar',
+        'ℹ️Description (Short)': 'Renewable energy website template',
+        'ℹ️Description (Long).html': '<p>Solar and clean energy landing pages.</p>',
+        '🪣Category Group(s) Display Name': ['Environment'],
+        '🪣Category Group(s) CMS Slug': ['environment'],
+        'ℹ️🪣Categories': ['recRenewableEnergy'],
+        'ℹ️🪣Categories (Text)': ['Renewable energy'],
+        '🥞CMS Slug (from ℹ️🪣Categories)': [],
+        '🥞CMS Slug (formula)': 'bright-solar-website-template',
+        '🔗Listing URL': 'https://webflow.com/templates/html/bright-solar-website-template',
+        '🔗Preview Site URL': 'https://bright-solar.example.com',
+        '🔗Website URL': 'https://webflow.com/templates/html/bright-solar-website-template',
+        '🚀📅Published Date': '2026-04-12',
+        '📅LMT': '2026-04-12T05:14:00.000Z',
+      },
+    };
+    const currentCategoryRecords = [
+      {
+        id: 'recRenewableEnergy',
+        fields: {
+          Name: 'Renewable energy',
+          '🥞CMS Slug': 'renewable-energy',
+          '🪣Category Group Display Names': ['Environment'],
+          '🪣Category Group CMS Slug': ['environment-websites'],
+          '🆎Asset Type': 'Template🏗️',
+        },
+      },
+    ];
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [renewableAsset],
+      styles: LOOKUPS.styles,
+      childCategories: currentCategoryRecords,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const { env, close } = createTestEnv();
+    env.AIRTABLE_CHILD_CATEGORIES_TABLE_ID = 'tblSygBX7adZ4VNjK';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const aliasRow = await env.DB.prepare(
+        'SELECT canonical_slug FROM slug_aliases WHERE slug_type = ? AND alias_slug = ?',
+      )
+        .bind('child_category', 'renewable-energy')
+        .first<{ canonical_slug: string }>();
+      expect(aliasRow).toEqual({ canonical_slug: 'renewable-energy-websites' });
+
+      const membershipRows = await env.DB
+        .prepare(
+          `SELECT category_group_slug, child_category_slug
+           FROM template_category_memberships
+           WHERE template_document_id = ?`,
+        )
+        .bind('recBrightSolar')
+        .all<{ category_group_slug: string; child_category_slug: string }>();
+      expect(membershipRows.results).toEqual([
+        { category_group_slug: 'environment-websites', child_category_slug: 'renewable-energy-websites' },
+      ]);
+
+      const publicSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?child_category_slug=renewable-energy&include=items&view=grid&page_size=10'),
+        env,
+      );
+      const publicPayload = (await publicSearch.json()) as {
+        items: Array<{ name: string; child_categories: Array<{ slug: string; url: string }> }>;
+        pagination: { total_items: number };
+        applied_filters: { child_category_slug: string | null };
+      };
+      expect(publicPayload.pagination.total_items).toBe(1);
+      expect(publicPayload.applied_filters.child_category_slug).toBe('renewable-energy');
+      expect(publicPayload.items.map((item) => item.name)).toEqual(['Bright Solar']);
+      expect(publicPayload.items[0]?.child_categories).toEqual([
+        {
+          name: 'Renewable energy',
+          slug: 'renewable-energy',
+          url: 'https://webflow.com/templates/subcategory/renewable-energy',
+        },
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('serves cacheable first-page public searches from the edge cache', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: PUBLISHED_ASSETS,

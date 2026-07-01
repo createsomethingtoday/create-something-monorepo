@@ -11,13 +11,14 @@ import type {
 import {
   canonicalizeCategoryGroupSlug,
   normalizeChildCategorySlug,
+  slugifySegment,
   normalizeStyleSlug,
   normalizeTagSlug,
 } from './slug.js';
 import { ensureStringArray, uniqueStrings } from './utils.js';
 
 const DEFAULT_ASSETS_TABLE_ID = 'tblRwzpWoLgE9MrUm';
-const DEFAULT_CHILD_CATEGORIES_TABLE_ID = 'tblWJXy3M6R8SeoFi';
+const DEFAULT_CHILD_CATEGORIES_TABLE_ID = 'tblSygBX7adZ4VNjK';
 const DEFAULT_STYLES_TABLE_ID = 'tblG7E9LbQj0sBX0o';
 const DEFAULT_TAGS_TABLE_ID = 'tblb4969G7O75gVWV';
 const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
@@ -193,11 +194,17 @@ const IMAGE_REFRESH_FIELDS = [
 ];
 
 interface AirtableCategoryFields extends Record<string, unknown> {
+  Name?: string;
+  '🥞CMS Slug'?: string;
   Category?: string;
   'Display name'?: string;
   'Parent Category'?: string[] | string;
   'Parent Category Name'?: string;
   '🪣Category Groups'?: string[] | string;
+  '🪣Category Group Display Names'?: string[] | string;
+  '🪣Category Group CMS Slug'?: string[] | string;
+  '🪣Category Group(s) Display Name'?: string[] | string;
+  '🪣Category Group(s) CMS Slug'?: string[] | string;
   Tier?: string;
   type?: string;
 }
@@ -274,7 +281,7 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
   const [childCategories, styles, tags, creators] = await Promise.all([
     fetchAirtableRecords<AirtableCategoryFields>(env, {
       tableId: env.AIRTABLE_CHILD_CATEGORIES_TABLE_ID ?? DEFAULT_CHILD_CATEGORIES_TABLE_ID,
-      fields: ['Category', 'Display name', 'Parent Category', 'Parent Category Name', '🪣Category Groups', 'Tier', 'type'],
+      fields: [],
     }),
     fetchAirtableRecords(env, {
       tableId: env.AIRTABLE_STYLES_TABLE_ID ?? DEFAULT_STYLES_TABLE_ID,
@@ -292,18 +299,20 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
 
   const childCategoryRecordsById = new Map(childCategories.map((record) => [record.id, record]));
   const childCategoryMap = new Map<string, ChildCategoryLookupValue>();
+  const childCategoryAliases: LookupMaps['childCategoryAliases'] = [];
 
   function categoryDisplayName(record: AirtableRecord<AirtableCategoryFields> | undefined): string {
     if (!record) return '';
     const displayName = typeof record.fields['Display name'] === 'string' ? record.fields['Display name'].trim() : '';
     const category = typeof record.fields.Category === 'string' ? record.fields.Category.trim() : '';
-    return displayName || category;
+    const name = typeof record.fields.Name === 'string' ? record.fields.Name.trim() : '';
+    return displayName || category || name;
   }
 
   for (const record of childCategories) {
     const tier = typeof record.fields.Tier === 'string' ? record.fields.Tier.toLowerCase() : '';
     const type = typeof record.fields.type === 'string' ? record.fields.type.toLowerCase() : '';
-    if (tier !== 'child' && type !== 'category') continue;
+    const isLegacyCategoryRecord = Boolean(tier || type);
 
     const name = categoryDisplayName(record);
     if (!name) continue;
@@ -316,15 +325,40 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
     const fallbackGroupSlugs = ensureStringArray(record.fields['🪣Category Groups']).map((entry) =>
       canonicalizeCategoryGroupSlug(entry),
     );
-    const categoryGroupSlug = parentName ? canonicalizeCategoryGroupSlug(parentName) : fallbackGroupSlugs[0] ?? null;
+    const currentGroupNames = uniqueStrings([
+      ...ensureStringArray(record.fields['🪣Category Group Display Names']),
+      ...ensureStringArray(record.fields['🪣Category Group(s) Display Name']),
+    ]);
+    const currentGroupSlugs = uniqueStrings([
+      ...ensureStringArray(record.fields['🪣Category Group CMS Slug']),
+      ...ensureStringArray(record.fields['🪣Category Group(s) CMS Slug']),
+    ]).map((entry) => canonicalizeCategoryGroupSlug(entry));
+    const categoryGroupName = parentName || currentGroupNames[0] || null;
+    const categoryGroupSlug = parentName ? canonicalizeCategoryGroupSlug(parentName) : currentGroupSlugs[0] ?? fallbackGroupSlugs[0] ?? null;
+
+    if (isLegacyCategoryRecord && tier !== 'child' && type !== 'category') continue;
+    if (!isLegacyCategoryRecord && !categoryGroupName && !categoryGroupSlug) continue;
+
+    const providedSlug = typeof record.fields['🥞CMS Slug'] === 'string' ? record.fields['🥞CMS Slug'] : null;
+    const slug = normalizeChildCategorySlug(name, providedSlug);
+    const publicSlug = providedSlug ? slugifySegment(providedSlug.replace(/-websites$/i, '')) : '';
 
     childCategoryMap.set(record.id, {
       id: record.id,
       name,
-      slug: normalizeChildCategorySlug(name),
-      categoryGroupName: parentName || null,
+      slug,
+      categoryGroupName,
       categoryGroupSlug,
     });
+
+    if (publicSlug && publicSlug !== slug) {
+      childCategoryAliases.push({
+        slugType: 'child_category',
+        aliasSlug: publicSlug,
+        canonicalSlug: slug,
+        note: 'Airtable category CMS slug',
+      });
+    }
   }
 
   const styleMap = new Map<string, LookupValue>();
@@ -370,6 +404,7 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
 
   return {
     childCategories: childCategoryMap,
+    childCategoryAliases,
     styles: styleMap,
     tags: tagMap,
     creators: creatorMap,

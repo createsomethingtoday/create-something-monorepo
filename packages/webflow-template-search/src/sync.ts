@@ -32,6 +32,7 @@ import {
   updateCreatorAvatarsFromWebflow,
   updateTemplateDocumentImages,
   updateTemplateImagesFromWebflow,
+  upsertSlugAliases,
   upsertTemplateDocuments,
 } from './db.js';
 import {
@@ -677,6 +678,8 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
     ]),
   );
   await heartbeat();
+  const aliasRecords = await withPeriodicHeartbeat(heartbeat, upsertSlugAliases(env.DB, lookups.childCategoryAliases));
+  await heartbeat();
   const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
   const documents = assets
     .map((record) => normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex))
@@ -714,7 +717,13 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
   };
 
   await setSyncCursor(env.DB, startedAt);
-  if (summary.indexed_records > 0 || summary.removed_records > 0 || summary.image_refreshed_records > 0 || summary.backfilled_records > 0) {
+  if (
+    summary.indexed_records > 0 ||
+    summary.removed_records > 0 ||
+    summary.image_refreshed_records > 0 ||
+    summary.backfilled_records > 0 ||
+    aliasRecords > 0
+  ) {
     await bumpPublicSearchCacheVersion(env.DB, summary.mode);
   }
   await recordSyncSummaryAndWarnings(env, summary, 'last_full_sync', warnings);
@@ -911,10 +920,13 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
 
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
+  let aliasRecords = 0;
   let webflowImageIndex: Awaited<ReturnType<typeof loadWebflowTemplateImageIndex>> = null;
 
   if (assets.length > 0) {
     const lookups = await loadLookupMaps(env);
+    aliasRecords = await upsertSlugAliases(env.DB, lookups.childCategoryAliases);
+    await heartbeat();
     const [loadedWebflowImageIndex, webflowDesigners] = await withPeriodicHeartbeat(
       heartbeat,
       Promise.all([
@@ -967,7 +979,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   };
 
   await setSyncCursor(env.DB, newCursor);
-  if (summary.indexed_records > 0 || summary.removed_records > 0 || summary.image_refreshed_records > 0) {
+  if (summary.indexed_records > 0 || summary.removed_records > 0 || summary.image_refreshed_records > 0 || aliasRecords > 0) {
     await bumpPublicSearchCacheVersion(env.DB, summary.mode);
   }
   await recordSyncSummaryAndWarnings(env, summary, 'last_incremental_sync', warnings);
@@ -986,6 +998,8 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
     const warnings: SyncWarning[] = [];
     const uniqueRecordIds = uniqueStrings(recordIds.map((id) => id.trim()).filter(Boolean));
     const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchAssetRecordsByIds(env, uniqueRecordIds)]);
+    await heartbeat();
+    const aliasRecords = await upsertSlugAliases(env.DB, lookups.childCategoryAliases);
     await heartbeat();
     const [webflowTemplateRecords, webflowDesigners] = await Promise.all([
       bestEffortTargetedWebflowTemplateImages(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }),
@@ -1039,7 +1053,13 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
       cursor: startedAt,
     };
 
-    if (summary.indexed_records > 0 || summary.removed_records > 0 || summary.image_refreshed_records > 0 || summary.backfilled_records > 0) {
+    if (
+      summary.indexed_records > 0 ||
+      summary.removed_records > 0 ||
+      summary.image_refreshed_records > 0 ||
+      summary.backfilled_records > 0 ||
+      aliasRecords > 0
+    ) {
       await bumpPublicSearchCacheVersion(env.DB, summary.mode);
     }
     await recordSyncSummaryAndWarnings(env, summary, 'last_record_sync', warnings);

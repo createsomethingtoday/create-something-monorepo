@@ -1,4 +1,4 @@
-import type { AliasType, CreatorLookupValue, DocumentCountRow, TemplateDocumentInput, TemplateImageSourceStats } from './types.js';
+import type { AliasType, CreatorLookupValue, DocumentCountRow, SlugAliasInput, TemplateDocumentInput, TemplateImageSourceStats } from './types.js';
 import type { WebflowDesignerAvatarRecord, WebflowTemplateImageRecord } from './webflow.js';
 import { chunk, nowIso } from './utils.js';
 
@@ -615,6 +615,37 @@ export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Pr
   for (const group of chunk(statements, 50)) {
     await db.batch(group);
   }
+}
+
+export async function upsertSlugAliases(db: D1Database, aliases: SlugAliasInput[]): Promise<number> {
+  const unique = new Map<string, SlugAliasInput>();
+  for (const alias of aliases) {
+    const aliasSlug = alias.aliasSlug.trim();
+    const canonicalSlug = alias.canonicalSlug.trim();
+    if (!aliasSlug || !canonicalSlug || aliasSlug === canonicalSlug) continue;
+    unique.set(`${alias.slugType}:${aliasSlug}`, {
+      ...alias,
+      aliasSlug,
+      canonicalSlug,
+      note: alias.note?.trim() || null,
+    });
+  }
+
+  const updatedAt = nowIso();
+  const statements = Array.from(unique.values()).map((alias) =>
+    db
+      .prepare(
+        `INSERT INTO slug_aliases (slug_type, alias_slug, canonical_slug, note, updated_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(slug_type, alias_slug) DO UPDATE SET
+           canonical_slug = excluded.canonical_slug,
+           note = excluded.note,
+           updated_at = excluded.updated_at`,
+      )
+      .bind(alias.slugType, alias.aliasSlug, alias.canonicalSlug, alias.note, updatedAt),
+  );
+
+  return runStatementBatches(db, statements);
 }
 
 // Bulk-refresh thumbnail and carousel image URLs for all published templates.
