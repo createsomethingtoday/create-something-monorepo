@@ -63,6 +63,36 @@ describe('mapAssetRecord', () => {
 		expect(asset.publishedDate).toBe('2025-06-18');
 		expect(asset.decisionDate).toBe('2025-06-18T05:52:53.967Z');
 	});
+
+	it('does not treat lifetime purchases as qualified 30-day sales', () => {
+		const asset = mapAssetRecord({
+			id: 'recTemplate',
+			fields: {
+				Name: 'GenieNova',
+				'⚙️🆎Type (Text)': 'Template🏗️',
+				'🚀Marketplace Status': '3️⃣Published🚀',
+				'📋 Cumulative Purchases': 12
+			}
+		} as unknown as Parameters<typeof mapAssetRecord>[0]);
+
+		expect(asset.cumulativePurchases).toBe(12);
+		expect(asset.qualifiedSales30d).toBeUndefined();
+	});
+
+	it('reads qualified 30-day sales from the dedicated rolling-window fields', () => {
+		const asset = mapAssetRecord({
+			id: 'recTemplate',
+			fields: {
+				Name: 'GenieNova',
+				'⚙️🆎Type (Text)': 'Template🏗️',
+				'🚀Marketplace Status': '3️⃣Published🚀',
+				'📋 Cumulative Purchases': 12,
+				'✅Qualified Sales 30d (🏗️ only)': 2
+			}
+		} as unknown as Parameters<typeof mapAssetRecord>[0]);
+
+		expect(asset.qualifiedSales30d).toBe(2);
+	});
 });
 
 describe('cleanMarketplaceStatus', () => {

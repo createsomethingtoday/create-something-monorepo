@@ -6,6 +6,7 @@ import {
 	normalizeTemplateOfferRequestBody,
 	type TemplateOfferRequestBody
 } from '$lib/server/template-offer-requests';
+import { computeTemplateHealth } from '$lib/utils/template-health';
 
 export const POST: RequestHandler = async ({ params, request, locals, platform }) => {
 	if (!locals.user?.email) {
@@ -34,6 +35,17 @@ export const POST: RequestHandler = async ({ params, request, locals, platform }
 
 	if (asset.status !== 'Published') {
 		throw error(400, 'Limited offers can only be requested for published templates');
+	}
+
+	// Mirror the dashboard surface gate: offers are for active offer management or
+	// templates the health policy has flagged for a recovery test. Direct API calls
+	// must not bypass it.
+	const health = computeTemplateHealth(asset);
+	if (!health.offer.hasOffer && health.automation.code !== 'run_recovery_offer') {
+		throw error(
+			403,
+			'Limited offers are only available for active offer management or recovery-eligible templates flagged by marketplace health policy'
+		);
 	}
 
 	const body = (await request.json()) as TemplateOfferRequestBody;
