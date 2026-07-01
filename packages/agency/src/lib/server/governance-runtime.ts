@@ -7,6 +7,9 @@ import {
 export type GovernanceSignalStatus = 'new' | 'reviewing' | 'resolved' | 'dismissed';
 export type GovernanceDecisionState = 'run' | 'wait' | 'stop';
 export type GovernanceProofOutcome = 'documented' | 'passed' | 'failed' | 'rolled_back';
+export type GovernanceConnectionKind = 'source' | 'subscription';
+export type GovernanceConnectionStatus = 'active' | 'paused' | 'error';
+export type GovernanceDeliveryReceiptStatus = 'queued' | 'delivered' | 'failed' | 'skipped';
 
 export interface GovernanceSignalRow {
 	id: string;
@@ -66,6 +69,36 @@ export interface GovernanceProductAttachmentRow {
 	updated_at: string;
 }
 
+export interface GovernanceConnectionRow {
+	id: string;
+	kind: GovernanceConnectionKind;
+	name: string;
+	status: GovernanceConnectionStatus;
+	atlas_canvas_id: string;
+	atlas_node_id: string | null;
+	endpoint_url: string | null;
+	signing_secret_name: string | null;
+	event_types_json: string;
+	owner: string | null;
+	metadata_json: string;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface GovernanceDeliveryReceiptRow {
+	id: string;
+	connection_id: string;
+	event_type: string;
+	record_product_id: GovernanceProductId;
+	record_id: string;
+	status: GovernanceDeliveryReceiptStatus;
+	status_code: number | null;
+	response_excerpt: string | null;
+	delivered_at: string | null;
+	metadata_json: string;
+	created_at: string;
+}
+
 export type GovernanceSignal = Omit<GovernanceSignalRow, 'payload_json'> & {
 	payload: Record<string, unknown>;
 };
@@ -83,6 +116,15 @@ export type GovernanceProductAttachment = Omit<
 	'metadata_json' | 'required'
 > & {
 	required: boolean;
+	metadata: Record<string, unknown>;
+};
+
+export type GovernanceConnection = Omit<GovernanceConnectionRow, 'event_types_json' | 'metadata_json'> & {
+	event_types: string[];
+	metadata: Record<string, unknown>;
+};
+
+export type GovernanceDeliveryReceipt = Omit<GovernanceDeliveryReceiptRow, 'metadata_json'> & {
 	metadata: Record<string, unknown>;
 };
 
@@ -132,6 +174,31 @@ export interface GovernanceProductAttachmentInput {
 	metadata?: Record<string, unknown>;
 }
 
+export interface GovernanceConnectionInput {
+	kind: GovernanceConnectionKind;
+	name: string;
+	status?: GovernanceConnectionStatus;
+	atlasCanvasId: string;
+	atlasNodeId?: string | null;
+	endpointUrl?: string | null;
+	signingSecretName?: string | null;
+	eventTypes?: string[];
+	owner?: string | null;
+	metadata?: Record<string, unknown>;
+}
+
+export interface GovernanceDeliveryReceiptInput {
+	connectionId: string;
+	eventType: string;
+	recordProductId: GovernanceProductId;
+	recordId: string;
+	status: GovernanceDeliveryReceiptStatus;
+	statusCode?: number | null;
+	responseExcerpt?: string | null;
+	deliveredAt?: string | null;
+	metadata?: Record<string, unknown>;
+}
+
 export interface GovernanceRecordFilters {
 	atlasCanvasId?: string | null;
 	atlasNodeId?: string | null;
@@ -139,6 +206,12 @@ export interface GovernanceRecordFilters {
 	decisionId?: string | null;
 	sourceProductId?: GovernanceProductId | null;
 	targetProductId?: GovernanceProductId | null;
+	connectionKind?: GovernanceConnectionKind | null;
+	connectionStatus?: GovernanceConnectionStatus | null;
+	connectionId?: string | null;
+	recordProductId?: GovernanceProductId | null;
+	recordId?: string | null;
+	receiptStatus?: GovernanceDeliveryReceiptStatus | null;
 	limit?: number;
 }
 
@@ -168,11 +241,21 @@ const ATTACHMENT_MODES = new Set<GovernanceProductAttachmentMode>([
 	'produces',
 	'records'
 ]);
+const CONNECTION_KINDS = new Set<GovernanceConnectionKind>(['source', 'subscription']);
+const CONNECTION_STATUSES = new Set<GovernanceConnectionStatus>(['active', 'paused', 'error']);
+const DELIVERY_RECEIPT_STATUSES = new Set<GovernanceDeliveryReceiptStatus>([
+	'queued',
+	'delivered',
+	'failed',
+	'skipped'
+]);
 const TABLE_MIGRATIONS: Record<string, string> = {
 	governance_signals: '0030',
 	governance_decisions: '0030',
 	governance_proofs: '0030',
-	governance_product_attachments: '0032'
+	governance_product_attachments: '0032',
+	governance_connections: '0033',
+	governance_delivery_receipts: '0033'
 };
 
 export async function createGovernanceSignal(
@@ -527,6 +610,153 @@ export async function listGovernanceProductAttachments(
 	return rows.map(serializeProductAttachment);
 }
 
+export async function createGovernanceConnection(
+	db: D1DatabaseLike,
+	input: GovernanceConnectionInput
+): Promise<GovernanceConnection> {
+	await assertTableAvailable(db, 'governance_connections');
+	const now = new Date().toISOString();
+	const row: GovernanceConnectionRow = {
+		id: createId(input.kind === 'source' ? 'gov_src' : 'gov_sub'),
+		kind: normalizeConnectionKind(input.kind),
+		name: requiredText(input.name, 'name', 220),
+		status: normalizeConnectionStatus(input.status),
+		atlas_canvas_id: requiredText(input.atlasCanvasId, 'atlasCanvasId', 160),
+		atlas_node_id: optionalText(input.atlasNodeId, 160),
+		endpoint_url: optionalText(input.endpointUrl, 500),
+		signing_secret_name: optionalText(input.signingSecretName, 160),
+		event_types_json: stringifyStringArray(input.eventTypes),
+		owner: optionalText(input.owner, 220),
+		metadata_json: stringifyPayload(input.metadata),
+		created_at: now,
+		updated_at: now
+	};
+
+	await db
+		.prepare(
+			`INSERT INTO governance_connections (
+				id,
+				kind,
+				name,
+				status,
+				atlas_canvas_id,
+				atlas_node_id,
+				endpoint_url,
+				signing_secret_name,
+				event_types_json,
+				owner,
+				metadata_json,
+				created_at,
+				updated_at
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		)
+		.bind(
+			row.id,
+			row.kind,
+			row.name,
+			row.status,
+			row.atlas_canvas_id,
+			row.atlas_node_id,
+			row.endpoint_url,
+			row.signing_secret_name,
+			row.event_types_json,
+			row.owner,
+			row.metadata_json,
+			row.created_at,
+			row.updated_at
+		)
+		.run();
+
+	return serializeConnection(row);
+}
+
+export async function listGovernanceConnections(
+	db: D1DatabaseLike,
+	filters: GovernanceRecordFilters = {}
+): Promise<GovernanceConnection[]> {
+	await assertTableAvailable(db, 'governance_connections');
+	const { sql, values } = buildListQuery(
+		`SELECT id, kind, name, status, atlas_canvas_id, atlas_node_id, endpoint_url,
+		        signing_secret_name, event_types_json, owner, metadata_json, created_at, updated_at
+		   FROM governance_connections`,
+		filters,
+		['atlasCanvasId', 'atlasNodeId', 'connectionKind', 'connectionStatus']
+	);
+	const rows = await queryAll<GovernanceConnectionRow>(db, sql, values);
+	return rows.map(serializeConnection);
+}
+
+export async function createGovernanceDeliveryReceipt(
+	db: D1DatabaseLike,
+	input: GovernanceDeliveryReceiptInput
+): Promise<GovernanceDeliveryReceipt> {
+	await assertTableAvailable(db, 'governance_delivery_receipts');
+	const row: GovernanceDeliveryReceiptRow = {
+		id: createId('gov_rcpt'),
+		connection_id: requiredText(input.connectionId, 'connectionId', 180),
+		event_type: requiredText(input.eventType, 'eventType', 160),
+		record_product_id: normalizeProductId(input.recordProductId, 'recordProductId'),
+		record_id: requiredText(input.recordId, 'recordId', 180),
+		status: normalizeDeliveryReceiptStatus(input.status),
+		status_code: normalizeOptionalInteger(input.statusCode),
+		response_excerpt: optionalText(input.responseExcerpt, 500),
+		delivered_at: optionalText(input.deliveredAt, 80),
+		metadata_json: stringifyPayload(input.metadata),
+		created_at: new Date().toISOString()
+	};
+
+	await db
+		.prepare(
+			`INSERT INTO governance_delivery_receipts (
+				id,
+				connection_id,
+				event_type,
+				record_product_id,
+				record_id,
+				status,
+				status_code,
+				response_excerpt,
+				delivered_at,
+				metadata_json,
+				created_at
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		)
+		.bind(
+			row.id,
+			row.connection_id,
+			row.event_type,
+			row.record_product_id,
+			row.record_id,
+			row.status,
+			row.status_code,
+			row.response_excerpt,
+			row.delivered_at,
+			row.metadata_json,
+			row.created_at
+		)
+		.run();
+
+	return serializeDeliveryReceipt(row);
+}
+
+export async function listGovernanceDeliveryReceipts(
+	db: D1DatabaseLike,
+	filters: GovernanceRecordFilters = {}
+): Promise<GovernanceDeliveryReceipt[]> {
+	await assertTableAvailable(db, 'governance_delivery_receipts');
+	const { sql, values } = buildListQuery(
+		`SELECT id, connection_id, event_type, record_product_id, record_id, status, status_code,
+		        response_excerpt, delivered_at, metadata_json, created_at
+		   FROM governance_delivery_receipts`,
+		filters,
+		['connectionId', 'recordProductId', 'recordId', 'receiptStatus']
+	);
+	const rows = await queryAll<GovernanceDeliveryReceiptRow>(db, sql, values);
+	return rows.map(serializeDeliveryReceipt);
+}
+
 export function normalizeSignalRequestBody(body: Record<string, unknown>): GovernanceSignalInput {
 	return {
 		atlasCanvasId: requiredStringFromBody(body, 'atlas_canvas_id', 'atlasCanvasId'),
@@ -591,6 +821,41 @@ export function normalizeAttachmentRequestBody(
 	};
 }
 
+export function normalizeConnectionRequestBody(body: Record<string, unknown>): GovernanceConnectionInput {
+	return {
+		kind: requiredStringFromBody(body, 'kind') as GovernanceConnectionKind,
+		name: requiredStringFromBody(body, 'name'),
+		status: stringFromBody(body, 'status') as GovernanceConnectionStatus | undefined,
+		atlasCanvasId: requiredStringFromBody(body, 'atlas_canvas_id', 'atlasCanvasId'),
+		atlasNodeId: stringFromBody(body, 'atlas_node_id', 'atlasNodeId'),
+		endpointUrl: stringFromBody(body, 'endpoint_url', 'endpointUrl'),
+		signingSecretName: stringFromBody(body, 'signing_secret_name', 'signingSecretName'),
+		eventTypes: stringArrayFromBody(body, 'event_types', 'eventTypes'),
+		owner: stringFromBody(body, 'owner'),
+		metadata: objectFromBody(body, 'metadata')
+	};
+}
+
+export function normalizeDeliveryReceiptRequestBody(
+	body: Record<string, unknown>
+): GovernanceDeliveryReceiptInput {
+	return {
+		connectionId: requiredStringFromBody(body, 'connection_id', 'connectionId'),
+		eventType: requiredStringFromBody(body, 'event_type', 'eventType'),
+		recordProductId: requiredStringFromBody(
+			body,
+			'record_product_id',
+			'recordProductId'
+		) as GovernanceProductId,
+		recordId: requiredStringFromBody(body, 'record_id', 'recordId'),
+		status: requiredStringFromBody(body, 'status') as GovernanceDeliveryReceiptStatus,
+		statusCode: integerFromBody(body, 'status_code', 'statusCode'),
+		responseExcerpt: stringFromBody(body, 'response_excerpt', 'responseExcerpt'),
+		deliveredAt: stringFromBody(body, 'delivered_at', 'deliveredAt'),
+		metadata: objectFromBody(body, 'metadata')
+	};
+}
+
 export function filtersFromSearchParams(params: URLSearchParams): GovernanceRecordFilters {
 	return {
 		atlasCanvasId: params.get('atlas_canvas_id') ?? params.get('atlasCanvasId'),
@@ -603,6 +868,20 @@ export function filtersFromSearchParams(params: URLSearchParams): GovernanceReco
 		targetProductId: (params.get('target_product_id') ?? params.get('targetProductId')) as
 			| GovernanceProductId
 			| null,
+		connectionKind: (params.get('kind') ?? params.get('connection_kind') ?? params.get('connectionKind')) as
+			| GovernanceConnectionKind
+			| null,
+		connectionStatus: (params.get('status') ??
+			params.get('connection_status') ??
+			params.get('connectionStatus')) as GovernanceConnectionStatus | null,
+		connectionId: params.get('connection_id') ?? params.get('connectionId'),
+		recordProductId: (params.get('record_product_id') ?? params.get('recordProductId')) as
+			| GovernanceProductId
+			| null,
+		recordId: params.get('record_id') ?? params.get('recordId'),
+		receiptStatus: (params.get('receipt_status') ?? params.get('receiptStatus')) as
+			| GovernanceDeliveryReceiptStatus
+			| null,
 		limit: boundedLimit(params.get('limit'))
 	};
 }
@@ -613,7 +892,9 @@ export function governanceRuntimeErrorStatus(error: unknown): number {
 	if (
 		message.includes(' is required') ||
 		message.includes('Invalid ') ||
-		message.includes('payload must be an object')
+		message.includes('payload must be an object') ||
+		message.includes('metadata must be an object') ||
+		message.includes('event_types must be an array or delimited string')
 	) {
 		return 400;
 	}
@@ -654,7 +935,13 @@ function buildListQuery(
 		signalId: 'signal_id',
 		decisionId: 'decision_id',
 		sourceProductId: 'source_product_id',
-		targetProductId: 'target_product_id'
+		targetProductId: 'target_product_id',
+		connectionKind: 'kind',
+		connectionStatus: 'status',
+		connectionId: 'connection_id',
+		recordProductId: 'record_product_id',
+		recordId: 'record_id',
+		receiptStatus: 'status'
 	};
 
 	for (const key of allowedFilters) {
@@ -699,6 +986,10 @@ function stringifyPayload(payload: Record<string, unknown> | undefined): string 
 	return JSON.stringify(payload ?? {});
 }
 
+function stringifyStringArray(values: string[] | undefined): string {
+	return JSON.stringify(normalizeStringArray(values));
+}
+
 function parsePayload(raw: string): Record<string, unknown> {
 	try {
 		const parsed = JSON.parse(raw) as unknown;
@@ -708,6 +999,24 @@ function parsePayload(raw: string): Record<string, unknown> {
 	} catch {
 		return {};
 	}
+}
+
+function parseStringArray(raw: string): string[] {
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		return normalizeStringArray(parsed);
+	} catch {
+		return [];
+	}
+}
+
+function normalizeStringArray(values: unknown): string[] {
+	if (!Array.isArray(values)) return [];
+	return values
+		.filter((value): value is string => typeof value === 'string')
+		.map((value) => value.trim().slice(0, 160))
+		.filter(Boolean)
+		.slice(0, 24);
 }
 
 function normalizeSignalStatus(status: GovernanceSignalStatus | undefined): GovernanceSignalStatus {
@@ -755,6 +1064,34 @@ function normalizeAttachmentMode(
 	return mode;
 }
 
+function normalizeConnectionKind(kind: GovernanceConnectionKind): GovernanceConnectionKind {
+	if (!CONNECTION_KINDS.has(kind)) {
+		throw new Error(`Invalid connection kind: ${kind}`);
+	}
+	return kind;
+}
+
+function normalizeConnectionStatus(status: GovernanceConnectionStatus | undefined): GovernanceConnectionStatus {
+	if (!status) return 'active';
+	if (!CONNECTION_STATUSES.has(status)) {
+		throw new Error(`Invalid connection status: ${status}`);
+	}
+	return status;
+}
+
+function normalizeDeliveryReceiptStatus(status: GovernanceDeliveryReceiptStatus): GovernanceDeliveryReceiptStatus {
+	if (!DELIVERY_RECEIPT_STATUSES.has(status)) {
+		throw new Error(`Invalid delivery receipt status: ${status}`);
+	}
+	return status;
+}
+
+function normalizeOptionalInteger(value: unknown): number | null {
+	if (value == null || value === '') return null;
+	const parsed = typeof value === 'number' ? value : Number.parseInt(String(value), 10);
+	return Number.isFinite(parsed) ? Math.floor(parsed) : null;
+}
+
 function normalizeLimit(limit: number | undefined): number {
 	if (!Number.isFinite(limit) || !limit) return 100;
 	return Math.max(1, Math.min(500, Math.floor(limit)));
@@ -788,6 +1125,33 @@ function objectFromBody(body: Record<string, unknown>, key: string): Record<stri
 	if (value == null) return undefined;
 	if (typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
 	throw new Error(`${key} must be an object`);
+}
+
+function stringArrayFromBody(
+	body: Record<string, unknown>,
+	primaryKey: string,
+	secondaryKey?: string
+): string[] | undefined {
+	const value = body[primaryKey] ?? (secondaryKey ? body[secondaryKey] : undefined);
+	if (value == null) return undefined;
+	if (Array.isArray(value)) return normalizeStringArray(value);
+	if (typeof value === 'string') {
+		return value
+			.split(/\r?\n|,/)
+			.map((item) => item.trim())
+			.filter(Boolean)
+			.slice(0, 24);
+	}
+	throw new Error(`${primaryKey} must be an array or delimited string`);
+}
+
+function integerFromBody(
+	body: Record<string, unknown>,
+	primaryKey: string,
+	secondaryKey?: string
+): number | null | undefined {
+	const value = body[primaryKey] ?? (secondaryKey ? body[secondaryKey] : undefined);
+	return value == null ? undefined : normalizeOptionalInteger(value);
 }
 
 function booleanFromBody(body: Record<string, unknown>, key: string): boolean | undefined {
@@ -827,6 +1191,23 @@ function serializeProductAttachment(row: GovernanceProductAttachmentRow): Govern
 	return {
 		...rest,
 		required: required === 1,
+		metadata: parsePayload(metadata_json)
+	};
+}
+
+function serializeConnection(row: GovernanceConnectionRow): GovernanceConnection {
+	const { event_types_json, metadata_json, ...rest } = row;
+	return {
+		...rest,
+		event_types: parseStringArray(event_types_json),
+		metadata: parsePayload(metadata_json)
+	};
+}
+
+function serializeDeliveryReceipt(row: GovernanceDeliveryReceiptRow): GovernanceDeliveryReceipt {
+	const { metadata_json, ...rest } = row;
+	return {
+		...rest,
 		metadata: parsePayload(metadata_json)
 	};
 }

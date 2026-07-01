@@ -40,6 +40,12 @@ test('governance product manifest gives Atlas and agents stable public paths', (
 	assert.equal(manifest.attachmentRecordsApi.path, '/api/governance/attachments');
 	assert.equal(manifest.attachmentRecordsApi.requiresCredential, true);
 	assert.deepEqual(manifest.attachmentRecordsApi.methods, ['GET', 'POST']);
+	assert.equal(manifest.connectionRecordsApi.path, '/api/governance/connections');
+	assert.equal(manifest.connectionRecordsApi.requiresCredential, true);
+	assert.deepEqual(manifest.connectionRecordsApi.methods, ['GET', 'POST']);
+	assert.equal(manifest.receiptRecordsApi.path, '/api/governance/receipts');
+	assert.equal(manifest.receiptRecordsApi.requiresCredential, true);
+	assert.deepEqual(manifest.receiptRecordsApi.methods, ['GET', 'POST']);
 	assert.equal(manifest.monitorReadinessApi.path, '/api/governance/monitors/slack/readiness');
 	assert.equal(manifest.monitorReadinessApi.requiresCredential, true);
 	assert.equal(manifest.monitorReadinessApi.secretSafe, true);
@@ -102,10 +108,14 @@ test('governance product manifest API returns the runtime-readable contract', as
 	assert.equal(payload.apiPath, '/api/governance/products');
 	assert.equal(payload.attachmentGraphApi.path, '/api/governance/graph');
 	assert.equal(payload.attachmentRecordsApi.path, '/api/governance/attachments');
+	assert.equal(payload.connectionRecordsApi.path, '/api/governance/connections');
+	assert.equal(payload.receiptRecordsApi.path, '/api/governance/receipts');
 	assert.equal(payload.monitorReadinessApi.path, '/api/governance/monitors/slack/readiness');
 	assert.equal(payload.agentContract.primaryConsumer, 'atlas');
 	assert.equal(payload.agentContract.attachmentGraphApiPath, '/api/governance/graph');
 	assert.equal(payload.agentContract.attachmentRecordsApiPath, '/api/governance/attachments');
+	assert.equal(payload.agentContract.connectionRecordsApiPath, '/api/governance/connections');
+	assert.equal(payload.agentContract.receiptRecordsApiPath, '/api/governance/receipts');
 	assert.equal(payload.agentContract.monitorReadinessApiPath, '/api/governance/monitors/slack/readiness');
 	assert.deepEqual(payload.agentContract.requiredLoop, ['atlas', 'signal', 'decision', 'proof']);
 	assert.equal(payload.products.length, 4);

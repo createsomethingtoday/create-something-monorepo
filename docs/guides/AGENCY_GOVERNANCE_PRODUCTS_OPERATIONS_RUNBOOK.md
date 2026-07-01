@@ -12,6 +12,11 @@ Atlas is the Map. Signal, Decision, and Proof are the products attached to it:
 - The operator Inbox is `/admin/governance`; Atlas carries the workflow context.
 
 The current watched-source monitor follows Slack channels, writes qualifying updates into Signal, and advances D1 cursors so repeated runs do not reprocess the same Slack message.
+Operators manage additional inbound and outbound integration points as:
+
+- Sources: API endpoints or monitored systems that provide Signals.
+- Subscriptions: webhooks that receive Decision and Proof notifications.
+- Receipts: delivery records showing what was sent, when, and whether it succeeded.
 
 ## Owned Surfaces
 
@@ -19,7 +24,9 @@ The current watched-source monitor follows Slack channels, writes qualifying upd
 |---------|-------|-------|
 | Signal intake | `.agency` API | `POST /api/governance/intake/source-update`, protected by `AGENCY_INTERNAL_API_KEY`. |
 | Slack monitor | `.agency` API | `POST /api/governance/monitors/slack`, protected by `AGENCY_INTERNAL_API_KEY`. |
-| Operator Inbox | `.agency` admin UI | `/admin/governance` shows Signals, Decisions, Proof, review actions, and intake classification. |
+| Connections | `.agency` API | `GET/POST /api/governance/connections`, protected by `AGENCY_INTERNAL_API_KEY`; stores Sources and Subscriptions. |
+| Receipts | `.agency` API | `GET/POST /api/governance/receipts`, protected by `AGENCY_INTERNAL_API_KEY`; stores delivery outcomes. |
+| Operator Inbox | `.agency` admin UI | `/admin/governance` shows Sources, Subscriptions, Receipts, Signals, Decisions, Proof, review actions, and intake classification. |
 | Map attachment | Atlas | Governance records can carry Atlas canvas/node references. |
 | Ledger storage | D1 | `create-something-db` stores governance records and monitor cursors. |
 
@@ -105,8 +112,10 @@ pnpm --filter @create-something/agency build
 Confirm governance migrations exist:
 
 ```bash
-ls packages/agency/migrations/0030_governance_runtime_records.sql
+ls packages/agency/migrations/0030_governance_runtime_products.sql
 ls packages/agency/migrations/0031_governance_source_cursors.sql
+ls packages/agency/migrations/0032_governance_product_attachments.sql
+ls packages/agency/migrations/0033_governance_connections.sql
 ```
 
 ## Apply D1 Migrations
@@ -126,12 +135,15 @@ pnpm --filter @create-something/agency db:migrate
 Verify remote tables:
 
 ```bash
-pnpm exec wrangler d1 execute create-something-db --remote --command "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('governance_signals', 'governance_decisions', 'governance_proofs', 'governance_source_cursors') ORDER BY name;"
+pnpm exec wrangler d1 execute create-something-db --remote --command "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('governance_connections', 'governance_decisions', 'governance_delivery_receipts', 'governance_product_attachments', 'governance_proofs', 'governance_signals', 'governance_source_cursors') ORDER BY name;"
 ```
 
 Expected tables:
 
 - `governance_decisions`
+- `governance_connections`
+- `governance_delivery_receipts`
+- `governance_product_attachments`
 - `governance_proofs`
 - `governance_signals`
 - `governance_source_cursors`
@@ -194,8 +206,10 @@ Scheduler rules:
 1. Scheduler or operator invokes the Slack monitor.
 2. Slack messages are classified through Signal intake.
 3. Updates requiring documentation or process review appear in `/admin/governance`.
-4. Human reviewers complete Inbox actions.
-5. Decisions and Proof attach back to the Signal and, where configured, Atlas map context.
+4. Operators add Sources when external systems should provide Signals.
+5. Operators add Subscriptions when systems should receive Decision or Proof notifications.
+6. Human reviewers complete Inbox actions.
+7. Decisions, Proof, and delivery Receipts attach back to the Signal and, where configured, Atlas map context.
 
 ## Verification
 

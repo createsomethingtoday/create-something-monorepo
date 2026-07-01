@@ -1,18 +1,27 @@
 import type { GovernanceProductAttachmentMode, GovernanceProductId } from '@create-something/canon/governance';
 import {
 	createGovernanceDecision,
+	createGovernanceConnection,
 	createGovernanceProductAttachment,
+	createGovernanceDeliveryReceipt,
 	createGovernanceProof,
 	createGovernanceSignal,
 	getGovernanceDecision,
 	getGovernanceSignal,
+	listGovernanceConnections,
 	listGovernanceDecisions,
+	listGovernanceDeliveryReceipts,
 	listGovernanceProductAttachments,
 	listGovernanceProofs,
 	listGovernanceSignals,
 	updateGovernanceSignalStatus,
+	type GovernanceConnection,
+	type GovernanceConnectionKind,
+	type GovernanceConnectionStatus,
 	type GovernanceDecision,
 	type GovernanceDecisionState,
+	type GovernanceDeliveryReceipt,
+	type GovernanceDeliveryReceiptStatus,
 	type GovernanceProductAttachment,
 	type GovernanceProof,
 	type GovernanceProofOutcome,
@@ -62,9 +71,15 @@ export type GovernanceOperatorReview = {
 		unlinked_decisions: number;
 		unlinked_proofs: number;
 		explicit_attachments: number;
+		sources: number;
+		subscriptions: number;
+		receipts: number;
+		failed_receipts: number;
 	};
 	graph: GovernanceAttachmentGraph;
 	explicit_attachments: GovernanceProductAttachment[];
+	connections: GovernanceConnection[];
+	receipts: GovernanceDeliveryReceipt[];
 	records: GovernanceOperatorRecord[];
 	unlinked_decisions: GovernanceDecision[];
 	unlinked_proofs: GovernanceProof[];
@@ -110,6 +125,28 @@ export type GovernanceOperatorAttachmentActionInput = {
 	required?: boolean;
 };
 
+export type GovernanceOperatorConnectionActionInput = {
+	kind: GovernanceConnectionKind;
+	name: string;
+	atlasCanvasId: string;
+	atlasNodeId?: string | null;
+	endpointUrl?: string | null;
+	signingSecretName?: string | null;
+	eventTypes?: string | null;
+	owner?: string | null;
+	status?: GovernanceConnectionStatus;
+};
+
+export type GovernanceOperatorReceiptActionInput = {
+	connectionId: string;
+	eventType: string;
+	recordProductId: GovernanceProductId;
+	recordId: string;
+	status: GovernanceDeliveryReceiptStatus;
+	statusCode?: string | null;
+	responseExcerpt?: string | null;
+};
+
 interface D1PreparedStatementLike {
 	bind(...values: unknown[]): D1PreparedStatementLike;
 	all<T = unknown>(): Promise<{ results?: T[] }>;
@@ -143,10 +180,16 @@ export function emptyGovernanceOperatorReview(
 			records_requiring_reviewer_process_review: 0,
 			unlinked_decisions: 0,
 			unlinked_proofs: 0,
-			explicit_attachments: 0
+			explicit_attachments: 0,
+			sources: 0,
+			subscriptions: 0,
+			receipts: 0,
+			failed_receipts: 0
 		},
 		graph: emptyGovernanceAttachmentGraph(filters),
 		explicit_attachments: [],
+		connections: [],
+		receipts: [],
 		records: [],
 		unlinked_decisions: [],
 		unlinked_proofs: []
@@ -165,6 +208,10 @@ export async function buildGovernanceOperatorReview(
 	const [graph, explicitAttachments] = await Promise.all([
 		buildGovernanceAttachmentGraph(db, runtimeFilters),
 		listAvailableGovernanceProductAttachments(db, runtimeFilters)
+	]);
+	const [connections, receipts] = await Promise.all([
+		listAvailableGovernanceConnections(db, runtimeFilters),
+		listAvailableGovernanceDeliveryReceipts(db, runtimeFilters)
 	]);
 	const signals = await listGovernanceSignals(db, runtimeFilters);
 	const signalIds = new Set(signals.map((signal) => signal.id));
@@ -257,10 +304,16 @@ export async function buildGovernanceOperatorReview(
 			).length,
 			unlinked_decisions: unlinkedDecisions.length,
 			unlinked_proofs: unlinkedProofs.length,
-			explicit_attachments: explicitAttachments.length
+			explicit_attachments: explicitAttachments.length,
+			sources: connections.filter((connection) => connection.kind === 'source').length,
+			subscriptions: connections.filter((connection) => connection.kind === 'subscription').length,
+			receipts: receipts.length,
+			failed_receipts: receipts.filter((receipt) => receipt.status === 'failed').length
 		},
 		graph,
 		explicit_attachments: explicitAttachments,
+		connections,
+		receipts,
 		records,
 		unlinked_decisions: unlinkedDecisions,
 		unlinked_proofs: unlinkedProofs
@@ -276,6 +329,36 @@ async function listAvailableGovernanceProductAttachments(
 	} catch (error) {
 		const message = error instanceof Error ? error.message : '';
 		if (message.includes('governance_product_attachments table is not available')) {
+			return [];
+		}
+		throw error;
+	}
+}
+
+async function listAvailableGovernanceConnections(
+	db: D1DatabaseLike,
+	filters: GovernanceRecordFilters
+): Promise<GovernanceConnection[]> {
+	try {
+		return await listGovernanceConnections(db, filters);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : '';
+		if (message.includes('governance_connections table is not available')) {
+			return [];
+		}
+		throw error;
+	}
+}
+
+async function listAvailableGovernanceDeliveryReceipts(
+	db: D1DatabaseLike,
+	filters: GovernanceRecordFilters
+): Promise<GovernanceDeliveryReceipt[]> {
+	try {
+		return await listGovernanceDeliveryReceipts(db, filters);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : '';
+		if (message.includes('governance_delivery_receipts table is not available')) {
 			return [];
 		}
 		throw error;
@@ -442,6 +525,46 @@ export async function createGovernanceOperatorAttachmentAction(
 	});
 }
 
+export async function createGovernanceOperatorConnectionAction(
+	db: D1DatabaseLike,
+	input: GovernanceOperatorConnectionActionInput
+): Promise<GovernanceConnection> {
+	return createGovernanceConnection(db, {
+		kind: input.kind,
+		name: normalizeRequiredText(input.name, 'name', 220),
+		status: input.status ?? 'active',
+		atlasCanvasId: normalizeRequiredText(input.atlasCanvasId, 'atlasCanvasId', 160),
+		atlasNodeId: normalizeOptionalText(input.atlasNodeId, 160),
+		endpointUrl: normalizeOptionalText(input.endpointUrl, 500),
+		signingSecretName: normalizeOptionalText(input.signingSecretName, 160),
+		eventTypes: normalizeEventTypes(input.eventTypes),
+		owner: normalizeOptionalText(input.owner, 220),
+		metadata: {
+			operator_surface: '/admin/governance',
+			operator_language: input.kind === 'source' ? 'source' : 'subscription'
+		}
+	});
+}
+
+export async function createGovernanceOperatorReceiptAction(
+	db: D1DatabaseLike,
+	input: GovernanceOperatorReceiptActionInput
+): Promise<GovernanceDeliveryReceipt> {
+	return createGovernanceDeliveryReceipt(db, {
+		connectionId: normalizeRequiredText(input.connectionId, 'connectionId', 180),
+		eventType: normalizeRequiredText(input.eventType, 'eventType', 160),
+		recordProductId: input.recordProductId,
+		recordId: normalizeRequiredText(input.recordId, 'recordId', 180),
+		status: input.status,
+		statusCode: input.statusCode ? Number.parseInt(input.statusCode, 10) : null,
+		responseExcerpt: normalizeOptionalText(input.responseExcerpt, 500),
+		metadata: {
+			operator_surface: '/admin/governance',
+			manual_receipt: true
+		}
+	});
+}
+
 export function normalizeGovernanceOperatorFilters(params: URLSearchParams): GovernanceOperatorReview['filters'] {
 	return {
 		atlas_canvas_id: normalizeSearchParam(params.get('atlas_canvas_id') ?? params.get('canvas')),
@@ -479,6 +602,14 @@ function normalizeReasons(value: string | null | undefined): string[] {
 		.map((reason) => reason.trim())
 		.filter(Boolean)
 		.slice(0, 6);
+}
+
+function normalizeEventTypes(value: string | null | undefined): string[] {
+	return (value ?? '')
+		.split(/\r?\n|,/)
+		.map((eventType) => eventType.trim())
+		.filter(Boolean)
+		.slice(0, 24);
 }
 
 function groupBy<T>(items: T[], keyForItem: (item: T) => string): Map<string, T[]> {

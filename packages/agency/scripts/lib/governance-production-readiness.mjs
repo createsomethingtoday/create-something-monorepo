@@ -46,6 +46,22 @@ export function validateGovernanceProductManifest(body) {
 			body.attachmentRecordsApi?.attaches?.includes(productId)
 		) &&
 		body?.agentContract?.attachmentRecordsApiPath === '/api/governance/attachments';
+	const connectionRecordsReady =
+		body?.connectionRecordsApi?.path === '/api/governance/connections' &&
+		body?.connectionRecordsApi?.requiresCredential === true &&
+		Array.isArray(body?.connectionRecordsApi?.methods) &&
+		body.connectionRecordsApi.methods.includes('GET') &&
+		body.connectionRecordsApi.methods.includes('POST') &&
+		body?.connectionRecordsApi?.records === 'sources_and_subscriptions' &&
+		body?.agentContract?.connectionRecordsApiPath === '/api/governance/connections';
+	const receiptRecordsReady =
+		body?.receiptRecordsApi?.path === '/api/governance/receipts' &&
+		body?.receiptRecordsApi?.requiresCredential === true &&
+		Array.isArray(body?.receiptRecordsApi?.methods) &&
+		body.receiptRecordsApi.methods.includes('GET') &&
+		body.receiptRecordsApi.methods.includes('POST') &&
+		body?.receiptRecordsApi?.records === 'delivery_receipts' &&
+		body?.agentContract?.receiptRecordsApiPath === '/api/governance/receipts';
 	const monitorReadinessReady =
 		body?.monitorReadinessApi?.path === '/api/governance/monitors/slack/readiness' &&
 		body?.monitorReadinessApi?.requiresCredential === true &&
@@ -60,6 +76,8 @@ export function validateGovernanceProductManifest(body) {
 		missingDeclaredAttachments.length === 0 &&
 		attachmentGraphReady &&
 		attachmentRecordsReady &&
+		connectionRecordsReady &&
+		receiptRecordsReady &&
 		monitorReadinessReady;
 
 	return {
@@ -76,6 +94,10 @@ export function validateGovernanceProductManifest(body) {
 			attachment_graph_ready: attachmentGraphReady,
 			attachment_records_api_path: body?.attachmentRecordsApi?.path ?? null,
 			attachment_records_ready: attachmentRecordsReady,
+			connection_records_api_path: body?.connectionRecordsApi?.path ?? null,
+			connection_records_ready: connectionRecordsReady,
+			receipt_records_api_path: body?.receiptRecordsApi?.path ?? null,
+			receipt_records_ready: receiptRecordsReady,
 			monitor_readiness_api_path: body?.monitorReadinessApi?.path ?? null,
 			monitor_readiness_secret_safe: body?.monitorReadinessApi?.secretSafe === true,
 			monitor_readiness_ready: monitorReadinessReady
