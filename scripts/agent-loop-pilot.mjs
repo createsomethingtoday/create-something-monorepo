@@ -1,16 +1,58 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
+
+import {
+  resolve_service_config,
+  validate_dispatch_config
+} from '../packages/symphony/src/config.js';
+import { MemoryLogger } from '../packages/symphony/src/logger.js';
+import { LinearTrackerClient } from '../packages/symphony/src/tracker/linear.js';
+import { load_workflow_definition } from '../packages/symphony/src/workflow.js';
 
 const args = new Set(process.argv.slice(2));
 const dispatch = args.has('--dispatch');
 const json = args.has('--json');
+const CODE_QUALITY_WORKFLOW = 'automation/symphony/code-quality/WORKFLOW.md';
+const MODEL_API_KEY_ENV_NAMES = new Set([
+  'AI_GATEWAY_API_KEY',
+  'ANTHROPIC_API_KEY',
+  'AZURE_OPENAI_API_KEY',
+  'COHERE_API_KEY',
+  'DEEPSEEK_API_KEY',
+  'GEMINI_API_KEY',
+  'GOOGLE_API_KEY',
+  'GROQ_API_KEY',
+  'MISTRAL_API_KEY',
+  'MOONSHOT_API_KEY',
+  'OPENAI_API_KEY',
+  'PERPLEXITY_API_KEY',
+  'TOGETHER_API_KEY',
+  'XAI_API_KEY'
+]);
+
+export function isModelApiKeyEnvName(name) {
+  return MODEL_API_KEY_ENV_NAMES.has(name) || name.endsWith('_OPENAI_API_KEY');
+}
+
+export function buildAccountBasedLoopEnv(env = process.env) {
+  const next = { ...env };
+  const removedKeys = [];
+  for (const key of Object.keys(next)) {
+    if (isModelApiKeyEnvName(key)) {
+      delete next[key];
+      removedKeys.push(key);
+    }
+  }
+  return { env: next, removedKeys: removedKeys.sort() };
+}
 
 function runStep(id, label, command, commandArgs, options = {}) {
   const startedAt = new Date().toISOString();
   const result = spawnSync(command, commandArgs, {
     cwd: process.cwd(),
-    env: process.env,
+    env: options.env ?? process.env,
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 20
   });
@@ -33,6 +75,23 @@ function runStep(id, label, command, commandArgs, options = {}) {
   };
 }
 
+function accountAuthGuardStep(removedKeys) {
+  return {
+    id: 'account-auth-guard',
+    label: 'Prepare account-based model auth environment',
+    command: null,
+    ok: true,
+    skipped: false,
+    started_at: new Date().toISOString(),
+    completed_at: new Date().toISOString(),
+    exit_code: 0,
+    summary: removedKeys.length
+      ? `Removed model API-key env var(s) from worker dispatch: ${removedKeys.join(', ')}.`
+      : 'No model API-key env vars were present in the worker dispatch environment.',
+    removed_model_api_key_env_vars: removedKeys
+  };
+}
+
 function skippedStep(id, label, reason) {
   return {
     id,
@@ -45,6 +104,37 @@ function skippedStep(id, label, reason) {
     exit_code: null,
     summary: reason
   };
+}
+
+async function runAsyncStep(id, label, callback) {
+  const startedAt = new Date().toISOString();
+  try {
+    const result = await callback();
+    return {
+      id,
+      label,
+      command: result.command ?? null,
+      ok: true,
+      skipped: false,
+      started_at: startedAt,
+      completed_at: new Date().toISOString(),
+      exit_code: 0,
+      summary: result.summary,
+      ...result.extra
+    };
+  } catch (error) {
+    return {
+      id,
+      label,
+      command: null,
+      ok: false,
+      skipped: false,
+      started_at: startedAt,
+      completed_at: new Date().toISOString(),
+      exit_code: 1,
+      summary: error instanceof Error ? error.message : String(error)
+    };
+  }
 }
 
 function summarizeOutput(output) {
@@ -82,7 +172,33 @@ function summarizeLegibility(stdout, stderr, ok) {
   }
 }
 
-function main() {
+async function inspectSymphonyCandidates() {
+  const definition = await load_workflow_definition(CODE_QUALITY_WORKFLOW, process.cwd());
+  const config = resolve_service_config(definition, process.cwd(), process.env);
+  validate_dispatch_config(config);
+  const tracker = new LinearTrackerClient(config, new MemoryLogger());
+  const candidates = await tracker.fetch_candidate_issues();
+  const identifiers = candidates
+    .slice(0, 8)
+    .map((issue) => issue.identifier)
+    .filter(Boolean);
+  const labels =
+    [config.tracker.label, ...config.tracker.labels].filter(Boolean).join(', ') || 'none';
+  const summary = [
+    `Symphony returned ${candidates.length} dispatchable candidate issue(s): ${identifiers.join(', ') || 'none'}.`,
+    `Filter: project_slug=${config.tracker.project_slug}; active_states=${config.tracker.active_states.join(', ')}; labels=${labels}.`
+  ].join('\n');
+  return {
+    command: `fetch Symphony candidates from ${CODE_QUALITY_WORKFLOW}`,
+    summary,
+    extra: {
+      candidate_count: candidates.length,
+      candidate_identifiers: identifiers
+    }
+  };
+}
+
+async function main() {
   const steps = [];
 
   steps.push(
@@ -120,6 +236,14 @@ function main() {
 
   if (process.env.LINEAR_API_KEY) {
     steps.push(
+      await runAsyncStep(
+        'symphony-candidates',
+        'Inspect Symphony dispatchable code-quality queue',
+        inspectSymphonyCandidates
+      )
+    );
+
+    steps.push(
       runStep(
         'linear-ready',
         'Inspect Linear ready queue',
@@ -133,6 +257,14 @@ function main() {
   } else {
     steps.push(
       skippedStep(
+        'symphony-candidates',
+        'Inspect Symphony dispatchable code-quality queue',
+        'Skipped because LINEAR_API_KEY is not set.'
+      )
+    );
+
+    steps.push(
+      skippedStep(
         'linear-ready',
         'Inspect Linear ready queue',
         'Skipped because LINEAR_API_KEY is not set.'
@@ -141,15 +273,28 @@ function main() {
   }
 
   if (dispatch) {
-    steps.push(
-      runStep(
-        'symphony-dispatch',
-        'Dispatch one bounded Symphony code-quality pass',
-        'pnpm',
-        ['symphony:code-quality:once'],
-        { includeOutput: true }
-      )
-    );
+    const candidateStep = steps.find((step) => step.id === 'symphony-candidates');
+    if (candidateStep && candidateStep.ok && candidateStep.candidate_count === 0) {
+      steps.push(
+        skippedStep(
+          'symphony-dispatch',
+          'Dispatch one bounded Symphony code-quality pass',
+          'Skipped because Symphony returned 0 dispatchable candidate issue(s).'
+        )
+      );
+    } else {
+      const accountEnv = buildAccountBasedLoopEnv(process.env);
+      steps.push(accountAuthGuardStep(accountEnv.removedKeys));
+      steps.push(
+        runStep(
+          'symphony-dispatch',
+          'Dispatch one bounded Symphony code-quality pass',
+          'pnpm',
+          ['symphony:code-quality:once'],
+          { env: accountEnv.env, includeOutput: true }
+        )
+      );
+    }
   } else {
     steps.push(
       skippedStep(
@@ -187,4 +332,6 @@ function main() {
   process.exit(passed ? 0 : 1);
 }
 
-main();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}
