@@ -560,7 +560,7 @@ function normalizeAssetChildCategories(record: AirtableRecord<AirtableAssetField
     const displayName = (lookup?.name ?? names[index] ?? '').trim();
     if (!displayName) continue;
 
-    const slug = normalizeChildCategorySlug(displayName, slugs[index] ?? lookup?.slug);
+    const slug = normalizeChildCategorySlug(displayName, lookup?.slug ?? slugs[index]);
     if (!slug || categories.has(slug)) continue;
 
     categories.set(slug, {

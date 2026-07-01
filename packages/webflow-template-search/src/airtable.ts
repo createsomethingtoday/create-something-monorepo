@@ -341,7 +341,8 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
 
     const providedSlug = typeof record.fields['🥞CMS Slug'] === 'string' ? record.fields['🥞CMS Slug'] : null;
     const slug = normalizeChildCategorySlug(name, providedSlug);
-    const publicSlug = providedSlug ? slugifySegment(providedSlug.replace(/-websites$/i, '')) : '';
+    const publicSlugSource = providedSlug || (!isLegacyCategoryRecord ? name : '');
+    const publicSlug = publicSlugSource ? slugifySegment(publicSlugSource.replace(/-websites$/i, '')) : '';
 
     childCategoryMap.set(record.id, {
       id: record.id,
