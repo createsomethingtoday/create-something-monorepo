@@ -211,8 +211,9 @@ gh workflow run cloudflare-bot-access-hardening.yml \
   -f zone=all
 ```
 
-The workflow runs `scripts/cloudflare-bot-access-hardening.mjs` with either
-`CLOUDFLARE_WAF_API_TOKEN` or `CLOUDFLARE_API_TOKEN` from GitHub Secrets. The
-script is idempotent: it creates the `http_request_firewall_custom` entry-point
-ruleset if missing, adds the `CRE-946 Phase 1 block scanner probes on non-MCP
-hosts` rule if missing, and updates that rule if the expression changes.
+The workflow runs `scripts/cloudflare-bot-access-hardening.mjs` with
+`CLOUDFLARE_WAF_API_TOKEN`, `CLOUDFLARE_API_TOKEN`, or
+`CLOUDFLARE_WORKERS_API_TOKEN` from GitHub Secrets, in that order. The script is
+idempotent: it creates the `http_request_firewall_custom` entry-point ruleset if
+missing, adds the `CRE-946 Phase 1 block scanner probes on non-MCP hosts` rule
+if missing, and updates that rule if the expression changes.
