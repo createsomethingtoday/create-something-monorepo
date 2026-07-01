@@ -2443,9 +2443,9 @@ describe('webflow-template-search worker', () => {
         'ℹ️Description (Long).html': '<p>Solar and clean energy landing pages.</p>',
         '🪣Category Group(s) Display Name': ['Environment'],
         '🪣Category Group(s) CMS Slug': ['environment'],
-        'ℹ️🪣Categories': ['recRenewableEnergy'],
-        'ℹ️🪣Categories (Text)': ['Renewable energy'],
-        '🥞CMS Slug (from ℹ️🪣Categories)': [],
+        'ℹ️🪣Categories': ['recRenewableEnergy', 'recNatureConservation'],
+        'ℹ️🪣Categories (Text)': ['Renewable energy', 'Nature & Conservation'],
+        '🥞CMS Slug (from ℹ️🪣Categories)': ['nature-and-conservation-websites'],
         '🥞CMS Slug (formula)': 'bright-solar-website-template',
         '🔗Listing URL': 'https://webflow.com/templates/html/bright-solar-website-template',
         '🔗Preview Site URL': 'https://bright-solar.example.com',
@@ -2459,7 +2459,15 @@ describe('webflow-template-search worker', () => {
         id: 'recRenewableEnergy',
         fields: {
           Name: 'Renewable energy',
-          '🥞CMS Slug': 'renewable-energy',
+          '🪣Category Group Display Names': ['Environment'],
+          '🪣Category Group CMS Slug': ['environment-websites'],
+          '🆎Asset Type': 'Template🏗️',
+        },
+      },
+      {
+        id: 'recNatureConservation',
+        fields: {
+          Name: 'Nature & Conservation',
           '🪣Category Group Display Names': ['Environment'],
           '🪣Category Group CMS Slug': ['environment-websites'],
           '🆎Asset Type': 'Template🏗️',
@@ -2497,11 +2505,13 @@ describe('webflow-template-search worker', () => {
         .prepare(
           `SELECT category_group_slug, child_category_slug
            FROM template_category_memberships
-           WHERE template_document_id = ?`,
+           WHERE template_document_id = ?
+           ORDER BY child_category_slug`,
         )
         .bind('recBrightSolar')
         .all<{ category_group_slug: string; child_category_slug: string }>();
       expect(membershipRows.results).toEqual([
+        { category_group_slug: 'environment-websites', child_category_slug: 'nature-and-conservation-websites' },
         { category_group_slug: 'environment-websites', child_category_slug: 'renewable-energy-websites' },
       ]);
 
@@ -2522,6 +2532,11 @@ describe('webflow-template-search worker', () => {
           name: 'Renewable energy',
           slug: 'renewable-energy',
           url: 'https://webflow.com/templates/subcategory/renewable-energy',
+        },
+        {
+          name: 'Nature & Conservation',
+          slug: 'nature-and-conservation',
+          url: 'https://webflow.com/templates/subcategory/nature-and-conservation',
         },
       ]);
     } finally {
