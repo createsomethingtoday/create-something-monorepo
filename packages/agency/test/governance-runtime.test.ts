@@ -428,6 +428,42 @@ test('governance graph composes Atlas Signal Decision Proof attachments by canva
 			[`proof:${proof.id}`, `atlas:canvas_graph`, 'records', 'Proof records back onto the Atlas map.']
 		]
 	);
+	assert.equal(graph.attachment_capabilities.length, 12);
+	assert.deepEqual(
+		graph.attachment_capabilities
+			.filter((capability) => capability.required)
+			.map((capability) => [
+				`${capability.source_product_id}->${capability.target_product_id}`,
+				capability.attached,
+				capability.current_attachment_count
+			]),
+		[
+			['atlas->signal', true, 1],
+			['signal->decision', true, 1],
+			['decision->proof', true, 1],
+			['proof->atlas', true, 1]
+		]
+	);
+	assert.deepEqual(
+		graph.attachment_capabilities
+			.filter(
+				(capability) =>
+					!capability.required &&
+					['atlas->decision', 'atlas->proof', 'signal->proof'].includes(
+						`${capability.source_product_id}->${capability.target_product_id}`
+					)
+			)
+			.map((capability) => [
+				`${capability.source_product_id}->${capability.target_product_id}`,
+				capability.can_attach,
+				capability.attached
+			]),
+		[
+			['atlas->decision', true, false],
+			['atlas->proof', true, false],
+			['signal->proof', true, false]
+		]
+	);
 
 	const response = await getGraph(
 		credentialedGetEvent(
@@ -441,6 +477,7 @@ test('governance graph composes Atlas Signal Decision Proof attachments by canva
 	assert.equal(payload.graph.atlas.canvas_id, 'canvas_graph');
 	assert.equal(payload.graph.nodes.length, 4);
 	assert.equal(payload.graph.attachments.length, 4);
+	assert.equal(payload.graph.attachment_capabilities.length, 12);
 
 	const unauthorized = await getGraph(
 		credentialedGetEvent(
