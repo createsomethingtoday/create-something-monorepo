@@ -131,7 +131,7 @@ export function installAirtableFetchMock(dataset: MockDataset) {
       return Response.json({ records: dataset.styles ?? [] });
     }
 
-    if (tableId === 'tblWJXy3M6R8SeoFi') {
+    if (tableId === 'tblWJXy3M6R8SeoFi' || tableId === 'tblSygBX7adZ4VNjK') {
       return Response.json({ records: dataset.childCategories ?? [] });
     }
 

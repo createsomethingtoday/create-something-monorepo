@@ -93,6 +93,13 @@ export interface ChildCategoryLookupValue extends LookupValue {
   categoryGroupSlug: string | null;
 }
 
+export interface SlugAliasInput {
+  slugType: AliasType;
+  aliasSlug: string;
+  canonicalSlug: string;
+  note: string | null;
+}
+
 export interface CreatorLookupValue {
   id: string;
   name: string;
@@ -104,6 +111,7 @@ export interface CreatorLookupValue {
 
 export interface LookupMaps {
   childCategories: Map<string, ChildCategoryLookupValue>;
+  childCategoryAliases: SlugAliasInput[];
   styles: Map<string, LookupValue>;
   tags: Map<string, LookupValue>;
   creators: Map<string, CreatorLookupValue>;
