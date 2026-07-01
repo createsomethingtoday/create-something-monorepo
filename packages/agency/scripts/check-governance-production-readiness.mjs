@@ -7,6 +7,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
+import { validateGovernanceProductManifest } from './lib/governance-production-readiness.mjs';
+
 const execFileAsync = promisify(execFile);
 
 const DEFAULT_BASE_URL = 'https://createsomething.agency';
@@ -27,8 +29,6 @@ const REQUIRED_ROUTES = [
 	['/admin/governance', 302]
 ];
 
-const REQUIRED_PRODUCTS = ['atlas', 'signal', 'decision', 'proof'];
-const REQUIRED_LINKS = ['atlas->signal', 'signal->decision', 'decision->proof', 'proof->atlas'];
 const REQUIRED_TABLES = [
 	'governance_decisions',
 	'governance_proofs',
@@ -161,31 +161,15 @@ async function checkManifest() {
 	try {
 		const response = await fetch(`${baseUrl}/api/governance/products`);
 		const body = await response.json();
-		const productIds = new Set((body.products ?? []).map((product) => product.id));
-		const requiredLinks = new Set(
-			(body.requiredLinks ?? []).map((link) => `${link.source}->${link.target}`)
-		);
-		const missingProducts = REQUIRED_PRODUCTS.filter((productId) => !productIds.has(productId));
-		const missingLinks = REQUIRED_LINKS.filter((link) => !requiredLinks.has(link));
-		const ready =
-			response.ok &&
-			body.productionReadiness?.ready === true &&
-			body.attachmentGraphApi?.path === '/api/governance/graph' &&
-			missingProducts.length === 0 &&
-			missingLinks.length === 0;
+		const validation = validateGovernanceProductManifest(body);
 
 		addCheck({
 			id: 'composition_manifest',
 			label: 'Governance composition manifest',
-			status: ready ? 'pass' : 'fail',
+			status: response.ok && validation.ready ? 'pass' : 'fail',
 			details: {
 				http_status: response.status,
-				manifest_ready: body.productionReadiness?.ready === true,
-				required_products: REQUIRED_PRODUCTS,
-				missing_products: missingProducts,
-				required_links: REQUIRED_LINKS,
-				missing_links: missingLinks,
-				attachment_graph_api_path: body.attachmentGraphApi?.path ?? null
+				...validation.details
 			}
 		});
 	} catch (error) {
