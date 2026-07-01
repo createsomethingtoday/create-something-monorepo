@@ -1,0 +1,50 @@
+name: Cloudflare Bot Access Hardening
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run mode'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+      zone:
+        description: 'Zone name or all'
+        required: true
+        default: 'all'
+
+permissions:
+  contents: read
+
+jobs:
+  harden:
+    name: ${{ inputs.mode }} scanner hardening
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WAF_API_TOKEN != '' && secrets.CLOUDFLARE_WAF_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Require Cloudflare token
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "CLOUDFLARE_WAF_API_TOKEN or CLOUDFLARE_API_TOKEN is required" >&2
+            exit 1
+          fi
+
+      - name: Run hardening plan/apply
+        run: |
+          args=(--zone "${{ inputs.zone }}")
+          if [ "${{ inputs.mode }}" = "apply" ]; then
+            args+=(--apply)
+          fi
+          node scripts/cloudflare-bot-access-hardening.mjs "${args[@]}"
