@@ -9,6 +9,8 @@
 
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
+import { createPublicHtmlCacheHandle } from '@create-something/canon/server/public-html-cache';
 
 const IDENTITY_WORKER = 'https://id.createsomething.space';
 const ISSUER = 'https://id.createsomething.space';
@@ -45,7 +47,7 @@ interface JWTPayload {
 	exp: number;
 }
 
-export const handle: Handle = async ({ event, resolve }) => {
+const authHandle: Handle = async ({ event, resolve }) => {
 	const pathname = event.url.pathname;
 
 	// Hard-retired surfaces: return 410 Gone with replacement guidance.
@@ -156,6 +158,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	return resolve(event);
 };
+
+const publicHtmlCacheHandle = createPublicHtmlCacheHandle({
+	statusHeader: 'X-LMS-Edge-Cache',
+	uncachedPathPrefixes: ['/account', '/api', '/auth', '/learn', '/login', '/modules', '/praxis', '/progress']
+});
+
+export const handle = sequence(authHandle, publicHtmlCacheHandle);
 
 /**
  * Fetch JWKS from Identity Worker (with caching)

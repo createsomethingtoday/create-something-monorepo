@@ -1,13 +1,8 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { createAuthHooks } from '@create-something/canon/auth';
+import { createPublicHtmlCacheHandle } from '@create-something/canon/server/public-html-cache';
 import { abundanceApiAuthHandle } from './lib/server/abundance-api-auth';
-import {
-	createPublicHtmlCacheKey,
-	isCacheablePublicHtmlResponse,
-	shouldAttemptPublicHtmlCache,
-	withPublicHtmlCacheHeaders
-} from './lib/server/public-html-cache';
 
 /**
  * Redirects for deprecated routes (post-MCP pivot)
@@ -43,38 +38,18 @@ const authHandle = createAuthHooks({
 	includeRedirect: true,
 }) as Handle;
 
-const publicHtmlCacheHandle: Handle = async ({ event, resolve }) => {
-	const shouldAttemptCache = shouldAttemptPublicHtmlCache({
-		method: event.request.method,
-		pathname: event.url.pathname,
-		search: event.url.search,
-		headers: event.request.headers
-	});
-
-	const edgeCache = event.platform?.caches?.default;
-	if (!shouldAttemptCache || !edgeCache) {
-		return resolve(event);
-	}
-
-	const cacheKey = createPublicHtmlCacheKey(event.request);
-	const cached = await edgeCache.match(cacheKey);
-	if (cached) {
-		return withPublicHtmlCacheHeaders(cached, 'HIT');
-	}
-
-	const response = await resolve(event);
-	if (!isCacheablePublicHtmlResponse(response)) {
-		return response;
-	}
-
-	const cacheableResponse = withPublicHtmlCacheHeaders(response, 'MISS');
-	event.platform?.context?.waitUntil(
-		edgeCache.put(cacheKey, cacheableResponse.clone()).catch((error: unknown) => {
-			console.error('Failed to write public HTML response to edge cache:', error);
-		})
-	);
-
-	return cacheableResponse;
-};
+const publicHtmlCacheHandle = createPublicHtmlCacheHandle({
+	statusHeader: 'X-Agency-Edge-Cache',
+	uncachedPathPrefixes: [
+		'/account',
+		'/admin',
+		'/api',
+		'/auth',
+		'/dashboard',
+		'/login',
+		'/mcp-access',
+		'/prospects'
+	]
+});
 
 export const handle = sequence(redirectHandle, authHandle, abundanceApiAuthHandle, publicHtmlCacheHandle);
