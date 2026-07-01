@@ -291,7 +291,9 @@
 							<option value="Exit sale before delist" disabled={asset.recoveryOfferUsed}
 								>Exit sale before archive</option
 							>
-							<option value="Retention save">Retention save</option>
+							<option value="Retention save" disabled={asset.recoveryOfferUsed}
+								>Retention save</option
+							>
 						</select>
 					</div>
 

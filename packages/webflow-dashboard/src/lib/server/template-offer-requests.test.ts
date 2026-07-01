@@ -205,4 +205,42 @@ describe('normalizeTemplateOfferRequestBody', () => {
 			'Recovery offers are one-time. This template must meet the marketplace re-entry threshold before another recovery path is available.'
 		);
 	});
+
+	it('treats a retention save as the one-time recovery path', () => {
+		const err = captureError(() =>
+			normalizeTemplateOfferRequestBody(
+				{
+					offerPrice: '60',
+					fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
+					endsAt: '2026-06-20',
+					offerStrategy: 'Retention save',
+					termsAccepted: true
+				},
+				'creator@example.com',
+				NOW,
+				{ marketplacePrice: 169, recoveryOfferUsed: true }
+			)
+		);
+
+		expect(err.body?.message ?? err.message).toBe(
+			'Recovery offers are one-time. This template must meet the marketplace re-entry threshold before another recovery path is available.'
+		);
+	});
+
+	it('allows a retention save when the recovery path is still available', () => {
+		const input = normalizeTemplateOfferRequestBody(
+			{
+				offerPrice: '60',
+				fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
+				endsAt: '2026-06-20',
+				offerStrategy: 'Retention save',
+				termsAccepted: true
+			},
+			'creator@example.com',
+			NOW,
+			{ marketplacePrice: 169, recoveryOfferUsed: false }
+		);
+
+		expect(input.offerStrategy).toBe('Retention save');
+	});
 });

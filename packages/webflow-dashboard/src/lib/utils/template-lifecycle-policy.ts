@@ -1,6 +1,11 @@
 export const RECOVERY_REENTRY_QUALIFIED_SALES_30D = 4;
 
-const RECOVERY_STRATEGY_TOKENS = ['prune recovery', 'exit sale', 'before delist'] as const;
+const RECOVERY_STRATEGY_TOKENS = [
+	'prune recovery',
+	'exit sale',
+	'before delist',
+	'retention save'
+] as const;
 
 function normalizePolicyText(value?: string | null): string {
 	return String(value ?? '').trim().toLowerCase();

@@ -1165,11 +1165,13 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 	const priceAmountRaw = record.fields['🥞💲Template Price Filter (🏗️ only)'];
 	const priceAmount = typeof priceAmountRaw === 'number' ? priceAmountRaw : Number(priceAmountRaw);
 	const activeOfferStrategy = firstString(record.fields['⚙️Active Offer Strategy (🏗️ only)']);
+	// No lifetime-purchase fallback: the re-entry threshold is a rolling 30-day
+	// gate, and treating cumulative sales as recent sales would let stale
+	// templates satisfy it. Unknown stays unknown.
 	const qualifiedSales30d = firstNumber(
 		record.fields['✅Qualified Sales 30d (🏗️ only)'],
 		record.fields['✅Qualified Sales (30d) (🏗️ only)'],
 		record.fields['Qualified Sales 30d'],
-		record.fields['📋 Cumulative Purchases'],
 		record.fields['TOTAL_SALES_30D']
 	);
 	const recoveryOfferUsed =
@@ -1180,8 +1182,8 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 		) ??
 		Boolean(
 			activeOfferStrategy &&
-				(activeOfferStrategy.toLowerCase().includes('recovery') ||
-					activeOfferStrategy.toLowerCase().includes('exit sale'))
+				(isRecoveryOfferStrategy(activeOfferStrategy) ||
+					activeOfferStrategy.toLowerCase().includes('recovery'))
 		);
 
 	return {
