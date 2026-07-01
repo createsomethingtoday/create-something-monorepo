@@ -1,53 +1,20 @@
 <script lang="ts">
+	import AtlasFlow from './AtlasFlow.svelte';
 	import {
 		createPublicAtlasCanvas,
 		createPublicAtlasGraphArtifact,
 		createPublicAtlasStoryArtifact,
-		publicAtlasNodeWidth,
 		type PublicAtlasCanvas,
 		type PublicAtlasGraphArtifact,
-		type PublicAtlasNodeKind,
-		type PublicAtlasNode,
 		type PublicAtlasStoryArtifact
 	} from './headless.js';
+	import type { Viewport } from '@xyflow/svelte';
 
-	type PositionedNode = PublicAtlasNode & { x: number; y: number; width: number };
-	type StoryEdgeLine = {
-		id: string;
-		path: string;
-	};
 	type LedgerCopy = {
 		label: string;
 		outcome: string;
 		evidence: string;
 	};
-
-	const STORY_FLOW_SIZE = {
-		width: 1320,
-		height: 560
-	} as const;
-
-	const STORY_NODE_HEIGHT = 132;
-
-	const STORY_NODE_LANES: Record<PublicAtlasNodeKind, { x: number; y: number }> = {
-		actor: { x: 48, y: 214 },
-		data: { x: 330, y: 214 },
-		system: { x: 612, y: 84 },
-		ai: { x: 612, y: 344 },
-		human: { x: 930, y: 70 },
-		touchpoint: { x: 930, y: 224 },
-		constraint: { x: 930, y: 378 }
-	};
-
-	const STORY_NODE_ORDER: PublicAtlasNodeKind[] = [
-		'actor',
-		'data',
-		'system',
-		'ai',
-		'human',
-		'touchpoint',
-		'constraint'
-	];
 
 	function toDomIdToken(value: string): string {
 		return value
@@ -55,53 +22,6 @@
 			.replace(/[^a-z0-9_-]+/g, '-')
 			.replace(/^-+|-+$/g, '')
 			.slice(0, 80) || 'workflow';
-	}
-
-	function layoutStoryNodes(sourceNodes: PublicAtlasNode[]): PositionedNode[] {
-		const offsets = new Map<PublicAtlasNodeKind, number>();
-		const positioned = [...sourceNodes]
-			.sort((a, b) => STORY_NODE_ORDER.indexOf(a.kind) - STORY_NODE_ORDER.indexOf(b.kind))
-			.map((node) => {
-				const lane = STORY_NODE_LANES[node.kind];
-				const offset = offsets.get(node.kind) ?? 0;
-				offsets.set(node.kind, offset + 1);
-				return {
-					...node,
-					x: node.x ?? lane.x,
-					y: node.y ?? lane.y + offset * 148,
-					width: Math.min(300, publicAtlasNodeWidth(node))
-				};
-			});
-
-		return sourceNodes.map((node) => positioned.find((item) => item.id === node.id) ?? node) as PositionedNode[];
-	}
-
-	function createStoryEdgePath(source: PositionedNode, target: PositionedNode): string {
-		const sourceCenterX = source.x + source.width / 2;
-		const targetCenterX = target.x + target.width / 2;
-		const sourceCenterY = source.y + STORY_NODE_HEIGHT / 2;
-		const targetCenterY = target.y + STORY_NODE_HEIGHT / 2;
-		const targetIsRight = target.x > source.x + source.width - 24;
-		const targetIsLeft = target.x + target.width < source.x + 24;
-		const targetIsBelow = target.y > source.y;
-
-		if (targetIsRight || targetIsLeft) {
-			const direction = targetIsRight ? 1 : -1;
-			const x1 = targetIsRight ? source.x + source.width : source.x;
-			const x2 = targetIsRight ? target.x : target.x + target.width;
-			const y1 = sourceCenterY;
-			const y2 = targetCenterY;
-			const control = Math.max(52, Math.min(96, Math.abs(x2 - x1) * 0.34));
-			return `M ${x1} ${y1} C ${x1 + direction * control} ${y1}, ${x2 - direction * control} ${y2}, ${x2} ${y2}`;
-		}
-
-		const x1 = sourceCenterX;
-		const x2 = targetCenterX;
-		const y1 = targetIsBelow ? source.y + STORY_NODE_HEIGHT : source.y;
-		const y2 = targetIsBelow ? target.y : target.y + STORY_NODE_HEIGHT;
-		const direction = targetIsBelow ? 1 : -1;
-		const control = Math.max(54, Math.min(118, Math.abs(y2 - y1) * 0.44));
-		return `M ${x1} ${y1} C ${x1} ${y1 + direction * control}, ${x2} ${y2 - direction * control}, ${x2} ${y2}`;
 	}
 
 	function sentenceCase(value: string): string {
@@ -167,24 +87,23 @@
 	let sourceCanvas: PublicAtlasCanvas;
 	let graph: PublicAtlasGraphArtifact;
 	let story: PublicAtlasStoryArtifact;
-	let nodes: PositionedNode[];
-	let edgeLines: StoryEdgeLine[];
+	let storyViewport: Viewport;
 
 	$: sourceCanvas = canvas ?? createPublicAtlasCanvas();
 	$: graph = createPublicAtlasGraphArtifact(sourceCanvas);
 	$: story = createPublicAtlasStoryArtifact(sourceCanvas, graph.readiness);
-	$: nodes = layoutStoryNodes(sourceCanvas.nodes);
 	$: storyDomId = storyId ?? `atlas-story-${toDomIdToken(starterId)}`;
 	$: titleId = `${storyDomId}-title`;
-	$: arrowId = `${storyDomId}-arrow`;
 	$: rendererLabel = graph.renderer.primary === 'atlas' ? 'Atlas' : graph.renderer.primary;
-	$: nodeById = new Map(nodes.map((node) => [node.id, node]));
-	$: edgeLines = sourceCanvas.edges.flatMap((edge) => {
-		const source = nodeById.get(edge.source);
-		const target = nodeById.get(edge.target);
-		if (!source || !target) return [];
-		return [{ id: edge.id, path: createStoryEdgePath(source, target) }];
-	});
+	$: selectedStoryNodeId =
+		story.chapters.find((chapter) => chapter.focusNodeIds[0])?.focusNodeIds[0] ??
+		sourceCanvas.nodes[0]?.id ??
+		'';
+	$: storyViewport = {
+		x: compact ? -16 : 0,
+		y: compact ? -18 : -8,
+		zoom: compact ? 0.82 : 0.9
+	};
 </script>
 
 <section class="atlas-story" class:compact aria-labelledby={titleId}>
@@ -198,52 +117,16 @@
 
 	<div class="atlas-story__layout">
 		<div class="atlas-story__map" aria-label={story.summary}>
-			<div
-				class="atlas-story__map-inner"
-				style={`--atlas-story-width: ${STORY_FLOW_SIZE.width}px; --atlas-story-height: ${STORY_FLOW_SIZE.height}px;`}
-			>
-				<div class="atlas-story__stage atlas-story__stage--source">Source</div>
-				<div class="atlas-story__stage atlas-story__stage--automation">Automation</div>
-				<div class="atlas-story__stage atlas-story__stage--decision">Decision / Proof</div>
-				<svg
-					class="atlas-story__edges"
-					viewBox={`0 0 ${STORY_FLOW_SIZE.width} ${STORY_FLOW_SIZE.height}`}
-					aria-hidden="true"
-				>
-					<defs>
-						<marker
-							id={arrowId}
-							markerHeight="9"
-							markerWidth="9"
-							orient="auto"
-							refX="8"
-							refY="4.5"
-						>
-							<path d="M0,0 L9,4.5 L0,9 Z" />
-						</marker>
-					</defs>
-					{#each edgeLines as edge}
-						<path d={edge.path} marker-end={`url(#${arrowId})`} />
-					{/each}
-				</svg>
-
-				{#each nodes as node}
-					<article
-						class={`atlas-story__node status-${node.status}`}
-						style={`left: ${node.x}px; top: ${node.y}px; width: ${node.width}px;`}
-					>
-						<header>
-							<span>{node.kind}</span>
-							<strong>{node.status}</strong>
-						</header>
-						<h4>{node.label}</h4>
-						{#if node.owner}
-							<p class="owner">{node.owner}</p>
-						{/if}
-						<p>{node.notes}</p>
-					</article>
-				{/each}
-			</div>
+			<AtlasFlow
+				canvas={sourceCanvas}
+				flowId={`${storyDomId}-flow`}
+				selectedNodeId={selectedStoryNodeId}
+				readOnly
+				showControls={false}
+				initialViewport={storyViewport}
+				minZoom={0.7}
+				maxZoom={1.2}
+			/>
 		</div>
 
 		{#if compact}
@@ -308,7 +191,6 @@
 	}
 
 	.atlas-story__copy > span,
-	.atlas-story__node header span,
 	.atlas-story__chapter > span,
 	.atlas-story__ledger-copy span,
 	.atlas-story__ledger-summary span,
@@ -329,8 +211,7 @@
 	}
 
 	.atlas-story__copy p,
-	.atlas-story__chapter p,
-	.atlas-story__node p {
+	.atlas-story__chapter p {
 		margin: 0;
 		color: var(--color-clear-grey, #636363);
 		line-height: 1.45;
@@ -344,6 +225,8 @@
 	}
 
 	.atlas-story__map {
+		height: clamp(31rem, 46vh, 38rem);
+		min-height: 31rem;
 		overflow: auto;
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 8px;
@@ -373,87 +256,6 @@
 		background-clip: padding-box;
 	}
 
-	.atlas-story__map-inner {
-		position: relative;
-		width: var(--atlas-story-width);
-		height: var(--atlas-story-height);
-	}
-
-	.atlas-story__edges {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-	}
-
-	.atlas-story__edges path {
-		fill: none;
-		stroke: #a7a7a0;
-		stroke-width: 1.2;
-	}
-
-	.atlas-story__edges marker path {
-		fill: #a7a7a0;
-	}
-
-	.atlas-story__stage {
-		position: absolute;
-		top: 1rem;
-		z-index: 1;
-		border: 1px solid rgba(10, 14, 25, 0.08);
-		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.82);
-		color: var(--color-clear-grey, #636363);
-		font-size: 0.66rem;
-		font-weight: 800;
-		letter-spacing: 0.08em;
-		padding: 0.26rem 0.55rem;
-		text-transform: uppercase;
-	}
-
-	.atlas-story__stage--source {
-		left: 3rem;
-	}
-
-	.atlas-story__stage--automation {
-		left: 38rem;
-	}
-
-	.atlas-story__stage--decision {
-		left: 58rem;
-	}
-
-	.atlas-story__node {
-		position: absolute;
-		z-index: 2;
-		display: grid;
-		gap: 0.35rem;
-		min-height: 7.2rem;
-		border: 1px solid rgba(10, 14, 25, 0.1);
-		border-radius: 7px;
-		background: #ffffff;
-		box-shadow: 0 14px 28px rgba(10, 14, 25, 0.055);
-		padding: 0.72rem;
-	}
-
-	.atlas-story__node header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem;
-	}
-
-	.atlas-story__node header strong {
-		border-radius: 999px;
-		background: rgba(10, 14, 25, 0.05);
-		color: #6d6d66;
-		font-size: 0.66rem;
-		padding: 0.22rem 0.45rem;
-		text-transform: uppercase;
-	}
-
-	.atlas-story__node h4,
 	.atlas-story__chapter h4 {
 		margin: 0;
 		color: var(--color-clear-onyx, #0a0e19);
@@ -462,25 +264,16 @@
 		line-height: 1.16;
 	}
 
-	.atlas-story__node .owner {
-		color: var(--color-clear-onyx, #0a0e19);
-		font-size: 0.76rem;
-		font-weight: 700;
-	}
-
-	.atlas-story__node.status-run,
 	.atlas-story__chapter.state-run {
 		border-color: #cfe3d6;
 		background: #f8fcf9;
 	}
 
-	.atlas-story__node.status-wait,
 	.atlas-story__chapter.state-wait {
 		border-color: #d9ddf5;
 		background: #f8f7ff;
 	}
 
-	.atlas-story__node.status-stop,
 	.atlas-story__chapter.state-stop {
 		border-color: #f4cdd3;
 		background: #fff7f8;
@@ -691,12 +484,8 @@
 	}
 
 	@media (max-width: 640px) {
-		.atlas-story__map-inner {
-			transform: scale(0.72);
-			transform-origin: top left;
-		}
-
 		.atlas-story__map {
+			height: 28rem;
 			max-height: 28rem;
 		}
 

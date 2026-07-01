@@ -1,6 +1,6 @@
 <script lang="ts">
-	import './AtlasFlow.css';
 	import '@xyflow/svelte/dist/style.css';
+	import './AtlasFlow.css';
 	import {
 		Background,
 		Controls,
@@ -9,7 +9,8 @@
 		type Edge,
 		type Node,
 		type OnSelectionChange,
-		type ProOptions
+		type ProOptions,
+		type Viewport
 	} from '@xyflow/svelte';
 	import AtlasFlowNode from './AtlasFlowNode.svelte';
 	import {
@@ -56,11 +57,29 @@
 		hideAttribution: true
 	};
 
+	const controlsFitViewOptions = {
+		padding: 0.12,
+		minZoom: 0.7,
+		maxZoom: 1
+	};
+
+	const noopMoveNode = () => {};
+	const noopSelectNode = () => {};
+
 	export let canvas: PublicAtlasCanvas;
 	export let selectedNodeId: string;
 	export let flowId = 'public-atlas-flow';
-	export let onMoveNode: (nodeId: string, position: { x: number; y: number }) => void;
-	export let onSelectNode: (nodeId: string) => void;
+	export let onMoveNode: (nodeId: string, position: { x: number; y: number }) => void = noopMoveNode;
+	export let onSelectNode: (nodeId: string) => void = noopSelectNode;
+	export let readOnly = false;
+	export let showControls = true;
+	export let initialViewport: Viewport = {
+		x: 0,
+		y: 0,
+		zoom: 1
+	};
+	export let minZoom = 0.7;
+	export let maxZoom = 1.45;
 
 	$: counts = `${canvas.nodes.length} nodes / ${canvas.edges.length} edges`;
 	$: flowNodes = layoutPublicAtlasNodes(canvas.nodes).map((node) => {
@@ -142,13 +161,14 @@
 		bind:nodes={flowNodes}
 		bind:edges={flowEdges}
 		{nodeTypes}
-		fitView
-		fitViewOptions={{ padding: 0.18, minZoom: 0.2, maxZoom: 1 }}
-		minZoom={0.2}
-		maxZoom={1.45}
+		{initialViewport}
+		{minZoom}
+		{maxZoom}
 		snapGrid={[8, 8]}
 		nodesConnectable={false}
-		elementsSelectable
+		nodesDraggable={!readOnly}
+		panOnDrag
+		elementsSelectable={!readOnly}
 		nodesFocusable
 		edgesFocusable
 		nodeExtent={[
@@ -165,7 +185,9 @@
 		onnodedragstop={handleNodeDragStop}
 		onselectionchange={handleSelectionChange}
 	>
-		<Controls showLock={false} />
+		{#if showControls}
+			<Controls showLock={false} fitViewOptions={controlsFitViewOptions} />
+		{/if}
 		<Background gap={32} patternColor="#eeeee8" />
 	</SvelteFlow>
 </div>

@@ -104,16 +104,13 @@ test('atlas route labels the story and mapping surfaces distinctly', () => {
 	assert.ok(atlasRoute.includes('The canvas turns curiosity into booking context.'));
 });
 
-test('services route introduces the public Atlas canvas with the story artifact', () => {
-	const storyCanvasIndex = servicesRoute.indexOf('<PublicAtlasStoryCanvas');
-	const editableCanvasIndex = servicesRoute.indexOf('<PublicAtlasCanvas');
-
-	assert.notEqual(storyCanvasIndex, -1);
-	assert.notEqual(editableCanvasIndex, -1);
-	assert.ok(storyCanvasIndex < editableCanvasIndex);
-	assert.ok(servicesRoute.includes('starterId="marketplace-review-queue"'));
-	assert.ok(servicesRoute.includes('storyId="services-marketplace-review-story"'));
-	assert.ok(servicesRoute.includes('compact'));
+test('services route keeps one public Atlas map and removes the example canvas', () => {
+	assert.ok(servicesRoute.includes('<PublicAtlasCanvas'));
+	assert.equal(servicesRoute.includes('<PublicAtlasStoryCanvas'), false);
+	assert.equal(servicesRoute.includes('storyId="services-marketplace-review-story"'), false);
+	assert.equal(servicesRoute.includes('<ClearDecisionPanel'), false);
+	assert.equal(servicesRoute.includes('<ClearCtaBand'), false);
+	assert.equal(servicesRoute.includes('<ClearCardGrid'), false);
 });
 
 test('home route uses the read-only story canvas as a proof object', () => {
@@ -171,9 +168,14 @@ test('story canvas uses stable overridable ids instead of fixed DOM ids', () => 
 	assert.ok(canonStoryCanvasComponent.includes('export let storyId'));
 	assert.ok(canonStoryCanvasComponent.includes('aria-labelledby={titleId}'));
 	assert.ok(canonStoryCanvasComponent.includes('id={titleId}'));
-	assert.ok(canonStoryCanvasComponent.includes('id={arrowId}'));
-	assert.ok(canonStoryCanvasComponent.includes('marker-end={`url(#${arrowId})`}'));
+	assert.ok(canonStoryCanvasComponent.includes('<AtlasFlow'));
+	assert.ok(canonStoryCanvasComponent.includes('flowId={`${storyDomId}-flow`}'));
+	assert.ok(canonStoryCanvasComponent.includes('readOnly'));
+	assert.ok(canonStoryCanvasComponent.includes('showControls={false}'));
 	assert.ok(canonStoryCanvasComponent.includes('data-motion-cue={chapter.motionCue}'));
+	assert.equal(canonStoryCanvasComponent.includes('<svg'), false);
+	assert.equal(canonStoryCanvasComponent.includes('marker-end'), false);
+	assert.equal(canonStoryCanvasComponent.includes('atlas-story__node'), false);
 	assert.equal(canonStoryCanvasComponent.includes('aria-labelledby="atlas-story-title"'), false);
 	assert.equal(canonStoryCanvasComponent.includes('id="atlas-story-title"'), false);
 	assert.equal(canonStoryCanvasComponent.includes('id="atlas-story-arrow"'), false);
@@ -188,9 +190,14 @@ test('editable Atlas flow uses stable overridable ids instead of fixed DOM ids',
 	assert.ok(canonFlowComponent.includes("from '@xyflow/svelte'"));
 	assert.ok(canonFlowComponent.includes('<SvelteFlow'));
 	assert.ok(canonFlowComponent.includes('id={flowId}'));
+	assert.ok(canonFlowComponent.includes('{initialViewport}'));
 	assert.ok(canonFlowComponent.includes('proOptions'));
 	assert.ok(canonFlowComponent.includes('hideAttribution: true'));
 	assert.ok(canonFlowComponent.includes('aria-label="Atlas workflow map"'));
+	assert.equal(canonFlowComponent.includes('public-atlas-flow__surface'), false);
+	assert.equal(canonFlowComponent.includes('<svg'), false);
+	assert.equal(canonFlowComponent.includes('\n\t\t\tfitView\n'), false);
+	assert.equal(canonFlowComponent.includes('fitViewOptions={{ padding: 0.18, minZoom: 0.2'), false);
 	assert.equal(canonFlowComponent.includes('aria-label="Svelte Atlas workflow map"'), false);
 	assert.equal(canonFlowComponent.includes('id="public-atlas-flow-arrow"'), false);
 	assert.equal(canonFlowComponent.includes('marker-end="url(#public-atlas-flow-arrow)"'), false);

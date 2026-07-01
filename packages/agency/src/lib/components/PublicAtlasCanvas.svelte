@@ -61,6 +61,7 @@
 	let starterState = '';
 	let hydrated = false;
 	let addMenuOpen = false;
+	let agentSuggestions = ['Name the owner', 'Find the approval point', 'Mark the riskiest handoff'];
 	let usage: AgentResponse['usage'] = {
 		tier: 'anonymous',
 		messagesUsed: 0,
@@ -74,7 +75,7 @@
 		{
 			role: 'assistant',
 			text:
-				'Name the workflow, the owner, and the first decision. I will help turn that into a map with human tasks, AI tasks, systems, data, constraints, and touchpoints.'
+				'Name the workflow, owner, and first decision. I will turn it into a bounded map with run, wait, stop, and proof points.'
 		}
 	];
 	const agentPrompts = [
@@ -177,6 +178,11 @@
 			}
 		];
 		usage = initialUsage(visitorEmail.trim() ? 'warmLead' : 'anonymous');
+		agentSuggestions = [
+			'Name the decision owner',
+			'Add the stop condition',
+			'Show where proof should land'
+		];
 		copyState = '';
 		starterState = starter ? `${starter.name} loaded` : 'Starter loaded';
 		saveState = 'Starter loaded';
@@ -287,6 +293,9 @@
 			}
 			usage = result.usage;
 			updateCanvas(result.canvas);
+			agentSuggestions = result.suggestions?.length
+				? result.suggestions.slice(0, 3)
+				: agentPrompts.map((prompt) => prompt.text);
 			messages = [...messages, { role: 'assistant', text: result.reply }];
 		} catch (error) {
 			agentError = error instanceof Error ? error.message : 'The mapping agent is unavailable.';
@@ -325,6 +334,7 @@
 		saveState = 'Draft cleared';
 		starterState = '';
 		addMenuOpen = false;
+		agentSuggestions = ['Name the owner', 'Find the approval point', 'Mark the riskiest handoff'];
 	}
 
 	onMount(() => {
@@ -445,22 +455,6 @@
 		</div>
 
 		<aside class="atlas-side">
-			<section class="starter-panel">
-				<div class="panel-title">
-					<span>Starter maps</span>
-					<strong>{starterState || 'Choose an industry'}</strong>
-				</div>
-				<div class="starter-grid">
-					{#each PUBLIC_ATLAS_INDUSTRY_STARTERS as starter}
-						<button type="button" onclick={() => loadStarterMap(starter.id)}>
-							<span>{starter.industry}</span>
-							<strong>{starter.name}</strong>
-							<small>{starter.description}</small>
-						</button>
-					{/each}
-				</div>
-			</section>
-
 			<section class="agent-panel">
 				<div class="agent-hero">
 					<div>
@@ -472,6 +466,20 @@
 						<small>messages</small>
 					</div>
 				</div>
+				<div class="agent-state-grid" aria-label="Agent mapping state">
+					<span>
+						<strong>{readiness.score}/100</strong>
+						<small>{readiness.level}</small>
+					</span>
+					<span>
+						<strong>{usage.mutationsUsed}/{usage.mutationsLimit}</strong>
+						<small>mutations</small>
+					</span>
+					<span>
+						<strong>{leadTierLabel}</strong>
+						<small>public map only</small>
+					</span>
+				</div>
 				<label class="email-field">
 					<span>{leadTierLabel}</span>
 					<input bind:value={visitorEmail} type="email" placeholder="you@example.com" />
@@ -482,6 +490,11 @@
 							<strong>{message.role === 'assistant' ? 'Agent' : 'You'}</strong>
 							<p>{message.text}</p>
 						</article>
+					{/each}
+				</div>
+				<div class="agent-suggestions" aria-label="Agent follow-up suggestions">
+					{#each agentSuggestions as suggestion}
+						<button type="button" onclick={() => (agentInput = suggestion)}>{suggestion}</button>
 					{/each}
 				</div>
 				<form
@@ -510,9 +523,21 @@
 				{#if agentError}
 					<p class="error">{agentError}</p>
 				{/if}
-				<div class="limit-copy">
-					<span>{usage.mutationsUsed}/{usage.mutationsLimit} mutations</span>
-					<span>Public map only</span>
+			</section>
+
+			<section class="starter-panel">
+				<div class="panel-title">
+					<span>Starter maps</span>
+					<strong>{starterState || 'Choose an industry'}</strong>
+				</div>
+				<div class="starter-grid">
+					{#each PUBLIC_ATLAS_INDUSTRY_STARTERS as starter}
+						<button type="button" onclick={() => loadStarterMap(starter.id)}>
+							<span>{starter.industry}</span>
+							<strong>{starter.name}</strong>
+							<small>{starter.description}</small>
+						</button>
+					{/each}
 				</div>
 			</section>
 
@@ -661,6 +686,7 @@
 	.add-node-trigger,
 	.add-node-options button,
 	.agent-form button,
+	.agent-suggestions button,
 	.prompt-row button,
 	.starter-grid button,
 	.summary-actions button,
@@ -962,6 +988,37 @@
 		font-weight: 700;
 	}
 
+	.agent-state-grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.45rem;
+		padding: 0 0.85rem;
+	}
+
+	.agent-state-grid span {
+		display: grid;
+		gap: 0.16rem;
+		min-width: 0;
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: 7px;
+		background: var(--color-clear-porcelain, #f9f9f9);
+		padding: 0.58rem;
+	}
+
+	.agent-state-grid strong {
+		overflow-wrap: anywhere;
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 0.86rem;
+		line-height: 1.1;
+	}
+
+	.agent-state-grid small {
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.68rem;
+		font-weight: 700;
+		line-height: 1.15;
+	}
+
 	.email-field,
 	.inspector-panel label {
 		display: grid;
@@ -1032,6 +1089,27 @@
 		line-height: 1.45;
 	}
 
+	.agent-suggestions {
+		display: grid;
+		gap: 0.38rem;
+		padding: 0 0.85rem;
+	}
+
+	.agent-suggestions button {
+		min-height: 2.25rem;
+		padding: 0.52rem 0.62rem;
+		text-align: left;
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 0.82rem;
+		font-weight: 700;
+	}
+
+	.agent-suggestions button:hover,
+	.agent-suggestions button:focus-visible {
+		border-color: rgba(10, 14, 25, 0.24);
+		background: var(--color-clear-porcelain-soft, #f2f2f2);
+	}
+
 	.agent-form {
 		display: grid;
 		gap: 0.5rem;
@@ -1096,25 +1174,9 @@
 		opacity: 0.45;
 	}
 
-	.limit-copy,
 	.error {
 		padding: 0 0.85rem;
 		font-size: 0.82rem;
-	}
-
-	.limit-copy {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.35rem;
-		margin: 0;
-		color: var(--color-clear-grey, #636363);
-	}
-
-	.limit-copy span {
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: 999px;
-		background: var(--color-clear-porcelain, #f9f9f9);
-		padding: 0.3rem 0.5rem;
 	}
 
 	.error {
