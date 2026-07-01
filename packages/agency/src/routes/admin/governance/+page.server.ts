@@ -1,7 +1,9 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
+import type { GovernanceProductAttachmentMode, GovernanceProductId } from '@create-something/canon/governance';
 import {
 	buildGovernanceOperatorReview,
+	createGovernanceOperatorAttachmentAction,
 	createGovernanceOperatorDecisionAction,
 	createGovernanceOperatorProofAction,
 	createGovernanceOperatorSignalAction,
@@ -125,6 +127,35 @@ export const actions: Actions = {
 		}
 
 		throw redirect(303, governanceRedirectUrl(data, 'proof_created'));
+	},
+
+	recordAttachment: async ({ cookies, platform, request }) => {
+		await requireAgencyOperator({ cookies, platform });
+		const db = platform?.env?.DB;
+		if (!db) {
+			return fail(503, { error: 'Database is unavailable.' });
+		}
+
+		const data = await request.formData();
+		try {
+			await createGovernanceOperatorAttachmentAction(db, {
+				sourceProductId: requiredFormText(data, 'source_product_id') as GovernanceProductId,
+				sourceRecordId: requiredFormText(data, 'source_record_id'),
+				targetProductId: requiredFormText(data, 'target_product_id') as GovernanceProductId,
+				targetRecordId: requiredFormText(data, 'target_record_id'),
+				atlasCanvasId: requiredFormText(data, 'atlas_canvas_id'),
+				atlasNodeId: optionalFormText(data, 'atlas_node_id'),
+				mode: optionalFormText(data, 'mode') as GovernanceProductAttachmentMode | undefined,
+				label: optionalFormText(data, 'label'),
+				required: checkboxValue(data, 'required')
+			});
+		} catch (error) {
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Failed to record attachment.'
+			});
+		}
+
+		throw redirect(303, governanceRedirectUrl(data, 'attachment_created'));
 	}
 };
 
@@ -162,5 +193,6 @@ function normalizeActionResult(value: string | null): string {
 	if (value === 'signal_created') return 'Signal recorded.';
 	if (value === 'decision_created') return 'Decision recorded.';
 	if (value === 'proof_created') return 'Proof recorded.';
+	if (value === 'attachment_created') return 'Attachment recorded.';
 	return '';
 }

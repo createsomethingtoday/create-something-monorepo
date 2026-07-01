@@ -1,15 +1,19 @@
+import type { GovernanceProductAttachmentMode, GovernanceProductId } from '@create-something/canon/governance';
 import {
 	createGovernanceDecision,
+	createGovernanceProductAttachment,
 	createGovernanceProof,
 	createGovernanceSignal,
 	getGovernanceDecision,
 	getGovernanceSignal,
 	listGovernanceDecisions,
+	listGovernanceProductAttachments,
 	listGovernanceProofs,
 	listGovernanceSignals,
 	updateGovernanceSignalStatus,
 	type GovernanceDecision,
 	type GovernanceDecisionState,
+	type GovernanceProductAttachment,
 	type GovernanceProof,
 	type GovernanceProofOutcome,
 	type GovernanceRecordFilters,
@@ -57,8 +61,10 @@ export type GovernanceOperatorReview = {
 		records_requiring_reviewer_process_review: number;
 		unlinked_decisions: number;
 		unlinked_proofs: number;
+		explicit_attachments: number;
 	};
 	graph: GovernanceAttachmentGraph;
+	explicit_attachments: GovernanceProductAttachment[];
 	records: GovernanceOperatorRecord[];
 	unlinked_decisions: GovernanceDecision[];
 	unlinked_proofs: GovernanceProof[];
@@ -90,6 +96,18 @@ export type GovernanceOperatorProofActionInput = {
 	outcome?: GovernanceProofOutcome;
 	receiptUrl?: string | null;
 	rollbackNote?: string | null;
+};
+
+export type GovernanceOperatorAttachmentActionInput = {
+	sourceProductId: GovernanceProductId;
+	sourceRecordId: string;
+	targetProductId: GovernanceProductId;
+	targetRecordId: string;
+	atlasCanvasId: string;
+	atlasNodeId?: string | null;
+	mode?: GovernanceProductAttachmentMode;
+	label?: string | null;
+	required?: boolean;
 };
 
 interface D1PreparedStatementLike {
@@ -124,9 +142,11 @@ export function emptyGovernanceOperatorReview(
 			records_requiring_docs_review: 0,
 			records_requiring_reviewer_process_review: 0,
 			unlinked_decisions: 0,
-			unlinked_proofs: 0
+			unlinked_proofs: 0,
+			explicit_attachments: 0
 		},
 		graph: emptyGovernanceAttachmentGraph(filters),
+		explicit_attachments: [],
 		records: [],
 		unlinked_decisions: [],
 		unlinked_proofs: []
@@ -142,7 +162,10 @@ export async function buildGovernanceOperatorReview(
 		atlasNodeId: filters.atlas_node_id || null,
 		limit: filters.limit
 	};
-	const graph = await buildGovernanceAttachmentGraph(db, runtimeFilters);
+	const [graph, explicitAttachments] = await Promise.all([
+		buildGovernanceAttachmentGraph(db, runtimeFilters),
+		listAvailableGovernanceProductAttachments(db, runtimeFilters)
+	]);
 	const signals = await listGovernanceSignals(db, runtimeFilters);
 	const signalIds = new Set(signals.map((signal) => signal.id));
 	const signalChildRows = await Promise.all(
@@ -233,13 +256,30 @@ export async function buildGovernanceOperatorReview(
 				(record) => record.classification?.requires_reviewer_process_review
 			).length,
 			unlinked_decisions: unlinkedDecisions.length,
-			unlinked_proofs: unlinkedProofs.length
+			unlinked_proofs: unlinkedProofs.length,
+			explicit_attachments: explicitAttachments.length
 		},
 		graph,
+		explicit_attachments: explicitAttachments,
 		records,
 		unlinked_decisions: unlinkedDecisions,
 		unlinked_proofs: unlinkedProofs
 	};
+}
+
+async function listAvailableGovernanceProductAttachments(
+	db: D1DatabaseLike,
+	filters: GovernanceRecordFilters
+): Promise<GovernanceProductAttachment[]> {
+	try {
+		return await listGovernanceProductAttachments(db, filters);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : '';
+		if (message.includes('governance_product_attachments table is not available')) {
+			return [];
+		}
+		throw error;
+	}
 }
 
 function emptyGovernanceAttachmentGraph(filters: GovernanceOperatorReview['filters']): GovernanceAttachmentGraph {
@@ -379,6 +419,27 @@ export async function createGovernanceOperatorProofAction(
 	}
 
 	return proof;
+}
+
+export async function createGovernanceOperatorAttachmentAction(
+	db: D1DatabaseLike,
+	input: GovernanceOperatorAttachmentActionInput
+): Promise<GovernanceProductAttachment> {
+	return createGovernanceProductAttachment(db, {
+		sourceProductId: input.sourceProductId,
+		sourceRecordId: normalizeRequiredText(input.sourceRecordId, 'sourceRecordId', 180),
+		targetProductId: input.targetProductId,
+		targetRecordId: normalizeRequiredText(input.targetRecordId, 'targetRecordId', 180),
+		atlasCanvasId: normalizeRequiredText(input.atlasCanvasId, 'atlasCanvasId', 160),
+		atlasNodeId: normalizeOptionalText(input.atlasNodeId, 160),
+		mode: input.mode,
+		label: normalizeOptionalText(input.label, 280),
+		required: input.required === true,
+		metadata: {
+			operator_surface: '/admin/governance',
+			manual_attachment: true
+		}
+	});
 }
 
 export function normalizeGovernanceOperatorFilters(params: URLSearchParams): GovernanceOperatorReview['filters'] {
