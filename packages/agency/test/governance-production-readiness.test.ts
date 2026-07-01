@@ -15,6 +15,8 @@ test('validateGovernanceProductManifest accepts the full product attachment cont
 	assert.deepEqual(validation.details.missing_declared_attachments, []);
 	assert.equal(validation.details.attachment_graph_ready, true);
 	assert.equal(validation.details.attachment_records_ready, true);
+	assert.equal(validation.details.connection_records_ready, true);
+	assert.equal(validation.details.receipt_records_ready, true);
 	assert.equal(validation.details.monitor_readiness_ready, true);
 });
 
@@ -27,6 +29,14 @@ test('validateGovernanceProductManifest rejects missing runtime and attachment A
 			...manifest.attachmentRecordsApi,
 			path: '/api/governance/old-attachments'
 		},
+		connectionRecordsApi: {
+			...manifest.connectionRecordsApi,
+			path: '/api/governance/old-connections'
+		},
+		receiptRecordsApi: {
+			...manifest.receiptRecordsApi,
+			requiresCredential: false
+		},
 		monitorReadinessApi: {
 			...manifest.monitorReadinessApi,
 			secretSafe: false
@@ -36,6 +46,8 @@ test('validateGovernanceProductManifest rejects missing runtime and attachment A
 	assert.equal(validation.ready, false);
 	assert.deepEqual(validation.details.missing_runtime_apis, ['proof']);
 	assert.equal(validation.details.attachment_records_ready, false);
+	assert.equal(validation.details.connection_records_ready, false);
+	assert.equal(validation.details.receipt_records_ready, false);
 	assert.equal(validation.details.monitor_readiness_secret_safe, false);
 	assert.equal(validation.details.monitor_readiness_ready, false);
 });

@@ -3,10 +3,14 @@ import test from 'node:test';
 
 import {
 	createGovernanceDecision,
+	createGovernanceConnection,
+	createGovernanceDeliveryReceipt,
 	createGovernanceProductAttachment,
 	createGovernanceProof,
 	createGovernanceSignal,
+	listGovernanceConnections,
 	listGovernanceDecisions,
+	listGovernanceDeliveryReceipts,
 	listGovernanceProductAttachments,
 	listGovernanceProofs,
 	listGovernanceSignals
@@ -15,11 +19,16 @@ import {
 	GET as getAttachments,
 	POST as postAttachment
 } from '../src/routes/api/governance/attachments/+server.ts';
+import {
+	GET as getConnections,
+	POST as postConnection
+} from '../src/routes/api/governance/connections/+server.ts';
 import { buildGovernanceAttachmentGraph } from '../src/lib/server/governance-graph.ts';
 import { GET as getDecisions, POST as postDecision } from '../src/routes/api/governance/decisions/+server.ts';
 import { GET as getGraph } from '../src/routes/api/governance/graph/+server.ts';
 import { POST as postSourceUpdate } from '../src/routes/api/governance/intake/source-update/+server.ts';
 import { GET as getProofs, POST as postProof } from '../src/routes/api/governance/proofs/+server.ts';
+import { GET as getReceipts, POST as postReceipt } from '../src/routes/api/governance/receipts/+server.ts';
 import { GET as getSignals, POST as postSignal } from '../src/routes/api/governance/signals/+server.ts';
 
 type TableRow = Record<string, unknown>;
@@ -54,14 +63,7 @@ class FakeStatement {
 		const limit = Number(this.values.at(-1) ?? 100);
 		let filterIndex = 0;
 
-		for (const column of [
-			'atlas_canvas_id',
-			'atlas_node_id',
-			'signal_id',
-			'decision_id',
-			'source_product_id',
-			'target_product_id'
-		]) {
+		for (const column of this.filterColumnsForTable(tableName)) {
 			if (!this.sql.includes(`${column} = ?`)) continue;
 			const expected = this.values[filterIndex++];
 			rows = rows.filter((row) => row[column] === expected);
@@ -90,8 +92,27 @@ class FakeStatement {
 			'governance_signals',
 			'governance_decisions',
 			'governance_proofs',
-			'governance_product_attachments'
-		].find((table) => this.sql.includes(`INSERT INTO ${table}`));
+			'governance_product_attachments',
+			'governance_connections',
+			'governance_delivery_receipts'
+			].find((table) => this.sql.includes(`INSERT INTO ${table}`));
+	}
+
+	private filterColumnsForTable(tableName: string): string[] {
+		if (tableName === 'governance_connections') {
+			return ['atlas_canvas_id', 'atlas_node_id', 'kind', 'status'];
+		}
+		if (tableName === 'governance_delivery_receipts') {
+			return ['connection_id', 'record_product_id', 'record_id', 'status'];
+		}
+		return [
+			'atlas_canvas_id',
+			'atlas_node_id',
+			'signal_id',
+			'decision_id',
+			'source_product_id',
+			'target_product_id'
+		];
 	}
 
 	private rowFromInsert(table: string): TableRow {
@@ -184,6 +205,68 @@ class FakeStatement {
 			};
 		}
 
+		if (table === 'governance_connections') {
+			const [
+				id,
+				kind,
+				name,
+				status,
+				atlas_canvas_id,
+				atlas_node_id,
+				endpoint_url,
+				signing_secret_name,
+				event_types_json,
+				owner,
+				metadata_json,
+				created_at,
+				updated_at
+			] = this.values;
+			return {
+				id,
+				kind,
+				name,
+				status,
+				atlas_canvas_id,
+				atlas_node_id,
+				endpoint_url,
+				signing_secret_name,
+				event_types_json,
+				owner,
+				metadata_json,
+				created_at,
+				updated_at
+			};
+		}
+
+		if (table === 'governance_delivery_receipts') {
+			const [
+				id,
+				connection_id,
+				event_type,
+				record_product_id,
+				record_id,
+				status,
+				status_code,
+				response_excerpt,
+				delivered_at,
+				metadata_json,
+				created_at
+			] = this.values;
+			return {
+				id,
+				connection_id,
+				event_type,
+				record_product_id,
+				record_id,
+				status,
+				status_code,
+				response_excerpt,
+				delivered_at,
+				metadata_json,
+				created_at
+			};
+		}
+
 		const [
 			id,
 			signal_id,
@@ -228,7 +311,9 @@ function defaultTables(): Record<string, TableRow[]> {
 		governance_signals: [],
 		governance_decisions: [],
 		governance_proofs: [],
-		governance_product_attachments: []
+		governance_product_attachments: [],
+		governance_connections: [],
+		governance_delivery_receipts: []
 	};
 }
 
@@ -422,6 +507,62 @@ test('governance runtime records durable product attachments beyond inferred loo
 	);
 });
 
+test('governance runtime records Sources Subscriptions and Receipts', async () => {
+	const db = new FakeD1() as unknown as Parameters<typeof createGovernanceConnection>[0];
+
+	const source = await createGovernanceConnection(db, {
+		kind: 'source',
+		name: 'API update intake',
+		atlasCanvasId: 'canvas_connections',
+		atlasNodeId: 'node_api',
+		endpointUrl: 'https://example.com/governance/signals',
+		signingSecretName: 'GOVERNANCE_SOURCE_SECRET',
+		eventTypes: ['signal.received', 'api.updated'],
+		owner: 'platform'
+	});
+	const subscription = await createGovernanceConnection(db, {
+		kind: 'subscription',
+		name: 'Docs review webhook',
+		atlasCanvasId: 'canvas_connections',
+		atlasNodeId: 'node_docs',
+		endpointUrl: 'https://example.com/webhooks/governance',
+		signingSecretName: 'GOVERNANCE_WEBHOOK_SECRET',
+		eventTypes: ['decision.approved', 'proof.attached'],
+		owner: 'docs'
+	});
+	const receipt = await createGovernanceDeliveryReceipt(db, {
+		connectionId: subscription.id,
+		eventType: 'proof.attached',
+		recordProductId: 'proof',
+		recordId: 'proof_docs',
+		status: 'delivered',
+		statusCode: 200,
+		responseExcerpt: 'ok'
+	});
+
+	assert.equal(source.kind, 'source');
+	assert.deepEqual(source.event_types, ['signal.received', 'api.updated']);
+	assert.equal(subscription.kind, 'subscription');
+	assert.deepEqual(subscription.event_types, ['decision.approved', 'proof.attached']);
+	assert.equal(receipt.connection_id, subscription.id);
+	assert.equal(receipt.status, 'delivered');
+	assert.equal(receipt.status_code, 200);
+
+	const sources = await listGovernanceConnections(db, {
+		atlasCanvasId: 'canvas_connections',
+		connectionKind: 'source'
+	});
+	const receipts = await listGovernanceDeliveryReceipts(db, {
+		connectionId: subscription.id,
+		receiptStatus: 'delivered'
+	});
+
+	assert.equal(sources.length, 1);
+	assert.equal(sources[0]?.id, source.id);
+	assert.equal(receipts.length, 1);
+	assert.equal(receipts[0]?.id, receipt.id);
+});
+
 test('governance runtime validates required fields and migration availability', async () => {
 	const db = new FakeD1({ governance_signals: [] }) as unknown as Parameters<
 		typeof createGovernanceDecision
@@ -447,6 +588,66 @@ test('governance runtime validates required fields and migration availability', 
 		}),
 		/governance_decisions table is not available/
 	);
+});
+
+test('governance connection and receipt APIs create and filter protected records', async () => {
+	const db = new FakeD1();
+
+	const connectionResponse = await postConnection(
+		postEvent(db, {
+			kind: 'subscription',
+			name: 'Decision webhook',
+			atlas_canvas_id: 'canvas_api_connections',
+			atlas_node_id: 'node_decision',
+			endpoint_url: 'https://example.com/webhooks/decision',
+			event_types: ['decision.approved', 'proof.attached'],
+			signing_secret_name: 'GOVERNANCE_WEBHOOK_SECRET'
+		})
+	);
+	const connectionPayload = await connectionResponse.json();
+
+	assert.equal(connectionResponse.status, 201);
+	assert.equal(connectionPayload.connection.kind, 'subscription');
+	assert.deepEqual(connectionPayload.connection.event_types, ['decision.approved', 'proof.attached']);
+
+	const receiptResponse = await postReceipt(
+		postEvent(db, {
+			connection_id: connectionPayload.connection.id,
+			event_type: 'decision.approved',
+			record_product_id: 'decision',
+			record_id: 'dec_api',
+			status: 'delivered',
+			status_code: 202
+		})
+	);
+	const receiptPayload = await receiptResponse.json();
+
+	assert.equal(receiptResponse.status, 201);
+	assert.equal(receiptPayload.receipt.connection_id, connectionPayload.connection.id);
+
+	const listConnections = await getConnections(
+		credentialedGetEvent(
+			db,
+			'https://createsomething.agency/api/governance/connections?kind=subscription&atlas_canvas_id=canvas_api_connections'
+		)
+	);
+	const listReceipts = await getReceipts(
+		credentialedGetEvent(
+			db,
+			`https://createsomething.agency/api/governance/receipts?connection_id=${connectionPayload.connection.id}&receipt_status=delivered`
+		)
+	);
+	const unauthorized = await getConnections(
+		credentialedGetEvent(db, 'https://createsomething.agency/api/governance/connections', {
+			providedKey: null
+		})
+	);
+
+	assert.equal(listConnections.status, 200);
+	assert.equal((await listConnections.json()).count, 1);
+	assert.equal(listReceipts.status, 200);
+	assert.equal((await listReceipts.json()).receipts[0].id, receiptPayload.receipt.id);
+	assert.equal(unauthorized.status, 401);
 });
 
 test('governance APIs create and filter runtime records', async () => {

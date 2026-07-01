@@ -69,6 +69,22 @@ export type GovernanceProductAttachmentRecordsApi = {
 	attaches: GovernanceProductId[];
 };
 
+export type GovernanceProductConnectionRecordsApi = {
+	product: 'signal';
+	path: '/api/governance/connections';
+	methods: ['GET', 'POST'];
+	requiresCredential: true;
+	records: 'sources_and_subscriptions';
+};
+
+export type GovernanceProductReceiptRecordsApi = {
+	product: 'proof';
+	path: '/api/governance/receipts';
+	methods: ['GET', 'POST'];
+	requiresCredential: true;
+	records: 'delivery_receipts';
+};
+
 export type GovernanceProductMonitorReadinessApi = {
 	product: 'signal';
 	path: '/api/governance/monitors/slack/readiness';
@@ -86,6 +102,8 @@ export type GovernanceProductCompositionManifest = {
 	apiPath: '/api/governance/products';
 	attachmentGraphApi: GovernanceProductAttachmentGraphApi;
 	attachmentRecordsApi: GovernanceProductAttachmentRecordsApi;
+	connectionRecordsApi: GovernanceProductConnectionRecordsApi;
+	receiptRecordsApi: GovernanceProductReceiptRecordsApi;
 	monitorReadinessApi: GovernanceProductMonitorReadinessApi;
 	products: GovernanceProductManifestProduct[];
 	runtimeApis: GovernanceProductRuntimeApi[];
@@ -106,6 +124,8 @@ export type GovernanceProductCompositionManifest = {
 		requiredLoop: GovernanceProductId[];
 		attachmentGraphApiPath: '/api/governance/graph';
 		attachmentRecordsApiPath: '/api/governance/attachments';
+		connectionRecordsApiPath: '/api/governance/connections';
+		receiptRecordsApiPath: '/api/governance/receipts';
 		monitorReadinessApiPath: '/api/governance/monitors/slack/readiness';
 	};
 };
@@ -223,6 +243,26 @@ function buildAttachmentRecordsApi(): GovernanceProductAttachmentRecordsApi {
 	};
 }
 
+function buildConnectionRecordsApi(): GovernanceProductConnectionRecordsApi {
+	return {
+		product: 'signal',
+		path: '/api/governance/connections',
+		methods: ['GET', 'POST'],
+		requiresCredential: true,
+		records: 'sources_and_subscriptions'
+	};
+}
+
+function buildReceiptRecordsApi(): GovernanceProductReceiptRecordsApi {
+	return {
+		product: 'proof',
+		path: '/api/governance/receipts',
+		methods: ['GET', 'POST'],
+		requiresCredential: true,
+		records: 'delivery_receipts'
+	};
+}
+
 function buildMonitorReadinessApi(): GovernanceProductMonitorReadinessApi {
 	return {
 		product: 'signal',
@@ -253,6 +293,8 @@ export function buildGovernanceProductCompositionManifest(): GovernanceProductCo
 		apiPath: '/api/governance/products',
 		attachmentGraphApi: buildAttachmentGraphApi(),
 		attachmentRecordsApi: buildAttachmentRecordsApi(),
+		connectionRecordsApi: buildConnectionRecordsApi(),
+		receiptRecordsApi: buildReceiptRecordsApi(),
 		monitorReadinessApi: buildMonitorReadinessApi(),
 		products,
 		runtimeApis: buildRuntimeApis(products),
@@ -273,6 +315,8 @@ export function buildGovernanceProductCompositionManifest(): GovernanceProductCo
 			requiredLoop: [...SIGNAL_DECISION_PROOF_COMPOSITION.products],
 			attachmentGraphApiPath: '/api/governance/graph',
 			attachmentRecordsApiPath: '/api/governance/attachments',
+			connectionRecordsApiPath: '/api/governance/connections',
+			receiptRecordsApiPath: '/api/governance/receipts',
 			monitorReadinessApiPath: '/api/governance/monitors/slack/readiness'
 		}
 	};

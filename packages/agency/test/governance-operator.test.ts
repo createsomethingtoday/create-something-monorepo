@@ -4,8 +4,10 @@ import test from 'node:test';
 import {
 	buildGovernanceOperatorReview,
 	createGovernanceOperatorAttachmentAction,
+	createGovernanceOperatorConnectionAction,
 	createGovernanceOperatorDecisionAction,
 	createGovernanceOperatorProofAction,
+	createGovernanceOperatorReceiptAction,
 	createGovernanceOperatorSignalAction,
 	emptyGovernanceOperatorReview,
 	normalizeGovernanceOperatorFilters
@@ -48,7 +50,12 @@ class FakeStatement {
 			'signal_id',
 			'decision_id',
 			'source_product_id',
-			'target_product_id'
+			'target_product_id',
+			'kind',
+			'status',
+			'connection_id',
+			'record_product_id',
+			'record_id'
 		]) {
 			if (!new RegExp(`\\b${column}\\s*=\\s*\\?`).test(this.sql)) continue;
 			const expected = this.values[filterIndex++];
@@ -63,7 +70,9 @@ class FakeStatement {
 			'governance_signals',
 			'governance_decisions',
 			'governance_proofs',
-			'governance_product_attachments'
+			'governance_product_attachments',
+			'governance_connections',
+			'governance_delivery_receipts'
 		].find((name) => this.sql.includes(`INSERT INTO ${name}`));
 		if (table) {
 			this.tables[table] ??= [];
@@ -167,6 +176,68 @@ class FakeStatement {
 				metadata_json,
 				created_at,
 				updated_at
+			};
+		}
+
+		if (table === 'governance_connections') {
+			const [
+				id,
+				kind,
+				name,
+				status,
+				atlas_canvas_id,
+				atlas_node_id,
+				endpoint_url,
+				signing_secret_name,
+				event_types_json,
+				owner,
+				metadata_json,
+				created_at,
+				updated_at
+			] = this.values;
+			return {
+				id,
+				kind,
+				name,
+				status,
+				atlas_canvas_id,
+				atlas_node_id,
+				endpoint_url,
+				signing_secret_name,
+				event_types_json,
+				owner,
+				metadata_json,
+				created_at,
+				updated_at
+			};
+		}
+
+		if (table === 'governance_delivery_receipts') {
+			const [
+				id,
+				connection_id,
+				event_type,
+				record_product_id,
+				record_id,
+				status,
+				status_code,
+				response_excerpt,
+				delivered_at,
+				metadata_json,
+				created_at
+			] = this.values;
+			return {
+				id,
+				connection_id,
+				event_type,
+				record_product_id,
+				record_id,
+				status,
+				status_code,
+				response_excerpt,
+				delivered_at,
+				metadata_json,
+				created_at
 			};
 		}
 
@@ -550,6 +621,73 @@ test('governance operator action records durable product attachments for review'
 			}),
 		/sourceProductId and targetProductId must be different/
 	);
+});
+
+test('governance operator records Sources Subscriptions and Receipts for operators', async () => {
+	const tables: Record<string, TableRow[]> = {
+		governance_signals: [],
+		governance_decisions: [],
+		governance_proofs: [],
+		governance_product_attachments: [],
+		governance_connections: [],
+		governance_delivery_receipts: []
+	};
+	const db = new FakeD1(tables) as unknown as Parameters<typeof createGovernanceOperatorConnectionAction>[0];
+
+	const source = await createGovernanceOperatorConnectionAction(db, {
+		kind: 'source',
+		name: 'API update intake',
+		atlasCanvasId: 'canvas_connections',
+		atlasNodeId: 'node_api',
+		endpointUrl: 'https://example.com/governance/signals',
+		signingSecretName: 'GOVERNANCE_SOURCE_SECRET',
+		eventTypes: 'signal.received, api.updated',
+		owner: 'platform'
+	});
+	const subscription = await createGovernanceOperatorConnectionAction(db, {
+		kind: 'subscription',
+		name: 'Docs review webhook',
+		atlasCanvasId: 'canvas_connections',
+		atlasNodeId: 'node_docs',
+		endpointUrl: 'https://example.com/webhooks/governance',
+		signingSecretName: 'GOVERNANCE_WEBHOOK_SECRET',
+		eventTypes: 'decision.approved, proof.attached',
+		owner: 'docs'
+	});
+	const receipt = await createGovernanceOperatorReceiptAction(db, {
+		connectionId: subscription.id,
+		eventType: 'proof.attached',
+		recordProductId: 'proof',
+		recordId: 'proof_docs',
+		status: 'failed',
+		statusCode: '500',
+		responseExcerpt: 'timeout'
+	});
+	const review = await buildGovernanceOperatorReview(
+		db as unknown as Parameters<typeof buildGovernanceOperatorReview>[0],
+		{
+			atlas_canvas_id: 'canvas_connections',
+			atlas_node_id: '',
+			limit: 100
+		}
+	);
+
+	assert.equal(source.kind, 'source');
+	assert.deepEqual(source.event_types, ['signal.received', 'api.updated']);
+	assert.equal(source.metadata.operator_language, 'source');
+	assert.equal(subscription.kind, 'subscription');
+	assert.deepEqual(subscription.event_types, ['decision.approved', 'proof.attached']);
+	assert.equal(receipt.connection_id, subscription.id);
+	assert.equal(receipt.status, 'failed');
+	assert.equal(receipt.status_code, 500);
+	assert.equal(tables.governance_connections.length, 2);
+	assert.equal(tables.governance_delivery_receipts.length, 1);
+	assert.equal(review.summary.sources, 1);
+	assert.equal(review.summary.subscriptions, 1);
+	assert.equal(review.summary.receipts, 1);
+	assert.equal(review.summary.failed_receipts, 1);
+	assert.equal(review.connections[0]?.name, 'API update intake');
+	assert.equal(review.receipts[0]?.event_type, 'proof.attached');
 });
 
 test('governance operator actions record manual Signals with Atlas attachment metadata', async () => {

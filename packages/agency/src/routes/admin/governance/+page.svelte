@@ -7,6 +7,8 @@
 	type Decision = PageData['review']['unlinked_decisions'][number];
 	type Proof = PageData['review']['unlinked_proofs'][number];
 	type ProductAttachment = PageData['review']['explicit_attachments'][number];
+	type Connection = PageData['review']['connections'][number];
+	type Receipt = PageData['review']['receipts'][number];
 	type GraphNode = PageData['review']['graph']['nodes'][number];
 	type GraphAttachment = PageData['review']['graph']['attachments'][number];
 
@@ -16,10 +18,18 @@
 	const unlinkedDecisions = $derived(data.review.unlinked_decisions as Decision[]);
 	const unlinkedProofs = $derived(data.review.unlinked_proofs as Proof[]);
 	const explicitAttachments = $derived(data.review.explicit_attachments as ProductAttachment[]);
+	const sources = $derived(
+		(data.review.connections as Connection[]).filter((connection) => connection.kind === 'source')
+	);
+	const subscriptions = $derived(
+		(data.review.connections as Connection[]).filter((connection) => connection.kind === 'subscription')
+	);
+	const receipts = $derived(data.review.receipts as Receipt[]);
 	const graphNodes = $derived(data.review.graph.nodes as GraphNode[]);
 	const graphAttachments = $derived(data.review.graph.attachments as GraphAttachment[]);
 	const productOptions = ['atlas', 'signal', 'decision', 'proof'];
 	const attachmentModes = ['connects', 'consumes', 'produces', 'records'];
+	const receiptStatuses = ['queued', 'delivered', 'failed', 'skipped'];
 	const graphProductCounts = $derived(
 		data.review.graph.product_loop.map((productId) => ({
 			productId,
@@ -85,6 +95,19 @@
 		return 'warning';
 	}
 
+	function connectionTone(status: string): string {
+		if (status === 'active') return 'success';
+		if (status === 'error') return 'danger';
+		return 'warning';
+	}
+
+	function receiptTone(status: string): string {
+		if (status === 'delivered') return 'success';
+		if (status === 'failed') return 'danger';
+		if (status === 'skipped') return 'warning';
+		return 'info';
+	}
+
 	function safeHref(value: string | null | undefined): string | null {
 		return safeOperatorExternalHref(value);
 	}
@@ -105,6 +128,8 @@
 			<a href={apiHref('/api/governance/decisions')} target="_blank">Decisions</a>
 			<a href={apiHref('/api/governance/proofs')} target="_blank">Proofs</a>
 			<a href={apiHref('/api/governance/attachments')} target="_blank">Attachments</a>
+			<a href={apiHref('/api/governance/connections')} target="_blank">Connections</a>
+			<a href={apiHref('/api/governance/receipts')} target="_blank">Receipts</a>
 		</nav>
 	</header>
 
@@ -156,6 +181,232 @@
 			<span class="metric-value">{data.review.summary.explicit_attachments}</span>
 			<span class="metric-label">Manual links</span>
 		</div>
+		<div class="metric">
+			<span class="metric-value">{data.review.summary.sources}</span>
+			<span class="metric-label">Sources</span>
+		</div>
+		<div class="metric">
+			<span class="metric-value">{data.review.summary.subscriptions}</span>
+			<span class="metric-label">Subscriptions</span>
+		</div>
+		<div class="metric">
+			<span class="metric-value">{data.review.summary.receipts}</span>
+			<span class="metric-label">Receipts</span>
+		</div>
+		<div class="metric">
+			<span class="metric-value">{data.review.summary.failed_receipts}</span>
+			<span class="metric-label">Failed delivery</span>
+		</div>
+	</section>
+
+	<section class="connections-panel" aria-label="Governance Sources Subscriptions and Receipts">
+		<div class="section-heading">
+			<div>
+				<p class="eyebrow">Connections</p>
+				<h2>Sources, Subscriptions, Receipts</h2>
+			</div>
+			<span>{sources.length + subscriptions.length} connections</span>
+		</div>
+		<div class="connections-grid">
+			<section>
+				<header class="panel-subheading">
+					<h3>Sources</h3>
+					<span>Signals in</span>
+				</header>
+				{#if sources.length === 0}
+					<div class="empty compact">No Signal sources match this view.</div>
+				{:else}
+					<div class="connection-list">
+						{#each sources as connection}
+							<div class="connection-row">
+								<span class={`pill ${connectionTone(connection.status)}`}>{connection.status}</span>
+								<div>
+									<strong>{connection.name}</strong>
+									<small>{connection.id}</small>
+									<small>{connection.event_types.join(', ') || 'signal.received'}</small>
+									{#if safeHref(connection.endpoint_url)}
+										<a href={safeHref(connection.endpoint_url) ?? ''} target="_blank" rel="noreferrer">Endpoint</a>
+									{/if}
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
+				<form method="POST" action="?/recordConnection" class="connection-form">
+					<input type="hidden" name="kind" value="source" />
+					<input type="hidden" name="return_atlas_canvas_id" value={data.review.filters.atlas_canvas_id} />
+					<input type="hidden" name="return_atlas_node_id" value={data.review.filters.atlas_node_id} />
+					<input type="hidden" name="return_limit" value={data.review.filters.limit} />
+					<label>
+						<span>Name</span>
+						<input name="name" maxlength="220" placeholder="API update intake" required />
+					</label>
+					<div class="form-row compact">
+						<label>
+							<span>Atlas canvas</span>
+							<input name="atlas_canvas_id" maxlength="160" value={data.review.filters.atlas_canvas_id} required />
+						</label>
+						<label>
+							<span>Atlas node</span>
+							<input name="atlas_node_id" maxlength="160" value={data.review.filters.atlas_node_id} />
+						</label>
+					</div>
+					<label>
+						<span>API endpoint</span>
+						<input name="endpoint_url" type="url" maxlength="500" placeholder="https://..." />
+					</label>
+					<div class="form-row compact">
+						<label>
+							<span>Events</span>
+							<input name="event_types" maxlength="1000" placeholder="signal.received, api.updated" />
+						</label>
+						<label>
+							<span>Owner</span>
+							<input name="owner" maxlength="220" placeholder="team or operator" />
+						</label>
+					</div>
+					<label>
+						<span>Signing secret</span>
+						<input name="signing_secret_name" maxlength="160" placeholder="GOVERNANCE_SOURCE_SECRET" />
+					</label>
+					<button type="submit">Add Source</button>
+				</form>
+			</section>
+			<section>
+				<header class="panel-subheading">
+					<h3>Subscriptions</h3>
+					<span>Decisions and Proofs out</span>
+				</header>
+				{#if subscriptions.length === 0}
+					<div class="empty compact">No Decision or Proof subscriptions match this view.</div>
+				{:else}
+					<div class="connection-list">
+						{#each subscriptions as connection}
+							<div class="connection-row">
+								<span class={`pill ${connectionTone(connection.status)}`}>{connection.status}</span>
+								<div>
+									<strong>{connection.name}</strong>
+									<small>{connection.id}</small>
+									<small>{connection.event_types.join(', ') || 'decision.updated, proof.attached'}</small>
+									{#if safeHref(connection.endpoint_url)}
+										<a href={safeHref(connection.endpoint_url) ?? ''} target="_blank" rel="noreferrer">Webhook</a>
+									{/if}
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
+				<form method="POST" action="?/recordConnection" class="connection-form">
+					<input type="hidden" name="kind" value="subscription" />
+					<input type="hidden" name="return_atlas_canvas_id" value={data.review.filters.atlas_canvas_id} />
+					<input type="hidden" name="return_atlas_node_id" value={data.review.filters.atlas_node_id} />
+					<input type="hidden" name="return_limit" value={data.review.filters.limit} />
+					<label>
+						<span>Name</span>
+						<input name="name" maxlength="220" placeholder="Docs review webhook" required />
+					</label>
+					<div class="form-row compact">
+						<label>
+							<span>Atlas canvas</span>
+							<input name="atlas_canvas_id" maxlength="160" value={data.review.filters.atlas_canvas_id} required />
+						</label>
+						<label>
+							<span>Atlas node</span>
+							<input name="atlas_node_id" maxlength="160" value={data.review.filters.atlas_node_id} />
+						</label>
+					</div>
+					<label>
+						<span>Webhook URL</span>
+						<input name="endpoint_url" type="url" maxlength="500" placeholder="https://..." />
+					</label>
+					<div class="form-row compact">
+						<label>
+							<span>Events</span>
+							<input name="event_types" maxlength="1000" placeholder="decision.approved, proof.attached" />
+						</label>
+						<label>
+							<span>Owner</span>
+							<input name="owner" maxlength="220" placeholder="team or operator" />
+						</label>
+					</div>
+					<label>
+						<span>Signing secret</span>
+						<input name="signing_secret_name" maxlength="160" placeholder="GOVERNANCE_WEBHOOK_SECRET" />
+					</label>
+					<button type="submit">Add Subscription</button>
+				</form>
+			</section>
+		</div>
+		<section class="receipts-panel" aria-label="Delivery receipts">
+			<header class="panel-subheading">
+				<h3>Receipts</h3>
+				<span>{receipts.length} delivery records</span>
+			</header>
+			{#if receipts.length === 0}
+				<div class="empty compact">No delivery receipts recorded yet.</div>
+			{:else}
+				<div class="receipt-list">
+					{#each receipts as receipt}
+						<div class="receipt-row">
+							<span class={`pill ${receiptTone(receipt.status)}`}>{receipt.status}</span>
+							<div>
+								<strong>{receipt.event_type}</strong>
+								<small>{receipt.record_product_id}:{receipt.record_id} · {displayDate(receipt.created_at)}</small>
+							</div>
+							<small>{displayValue(receipt.status_code ? String(receipt.status_code) : null)}</small>
+						</div>
+					{/each}
+				</div>
+			{/if}
+			<form method="POST" action="?/recordReceipt" class="receipt-form">
+				<input type="hidden" name="return_atlas_canvas_id" value={data.review.filters.atlas_canvas_id} />
+				<input type="hidden" name="return_atlas_node_id" value={data.review.filters.atlas_node_id} />
+				<input type="hidden" name="return_limit" value={data.review.filters.limit} />
+				<div class="form-row compact">
+					<label>
+						<span>Connection</span>
+						<input name="connection_id" maxlength="180" placeholder="source or subscription id" required />
+					</label>
+					<label>
+						<span>Event</span>
+						<input name="event_type" maxlength="160" placeholder="proof.attached" required />
+					</label>
+				</div>
+				<div class="form-row compact">
+					<label>
+						<span>Record product</span>
+						<select name="record_product_id" required>
+							{#each productOptions as product}
+								<option value={product}>{product}</option>
+							{/each}
+						</select>
+					</label>
+					<label>
+						<span>Record id</span>
+						<input name="record_id" maxlength="180" placeholder="record id" required />
+					</label>
+				</div>
+				<div class="form-row compact">
+					<label>
+						<span>Status</span>
+						<select name="status" required>
+							{#each receiptStatuses as status}
+								<option value={status}>{status}</option>
+							{/each}
+						</select>
+					</label>
+					<label>
+						<span>Status code</span>
+						<input name="status_code" type="number" min="100" max="599" placeholder="200" />
+					</label>
+				</div>
+				<label>
+					<span>Response</span>
+					<input name="response_excerpt" maxlength="500" placeholder="Optional delivery detail" />
+				</label>
+				<button type="submit">Record Receipt</button>
+			</form>
+		</section>
 	</section>
 
 	<section class="map-panel" aria-label="Atlas attachment map">
@@ -754,6 +1005,7 @@
 	.metric,
 	.record,
 	.filters,
+	.connections-panel,
 	.monitor-panel,
 	.map-panel,
 	.attachment-panel,
@@ -767,6 +1019,72 @@
 
 	.metric {
 		padding: 18px;
+	}
+
+	.connections-panel {
+		display: grid;
+		gap: 16px;
+		margin: 24px 0;
+		padding: 18px;
+	}
+
+	.connections-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16px;
+	}
+
+	.connections-grid > section,
+	.receipts-panel {
+		display: grid;
+		gap: 12px;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		background: #f8fafc;
+		padding: 14px;
+	}
+
+	.panel-subheading {
+		display: flex;
+		align-items: start;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.connection-list,
+	.receipt-list,
+	.connection-form,
+	.receipt-form {
+		display: grid;
+		gap: 10px;
+	}
+
+	.connection-row,
+	.receipt-row {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: start;
+		gap: 10px;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		background: #fff;
+		padding: 10px;
+	}
+
+	.connection-row div,
+	.receipt-row div {
+		display: grid;
+		gap: 4px;
+		min-width: 0;
+	}
+
+	.connection-row strong,
+	.connection-row small,
+	.receipt-row strong,
+	.receipt-row small {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.monitor-panel {
@@ -1090,6 +1408,10 @@
 		padding: 24px;
 	}
 
+	.empty.compact {
+		padding: 14px;
+	}
+
 	a {
 		color: #0f766e;
 	}
@@ -1101,6 +1423,9 @@
 
 		.hero,
 		.summary-grid,
+		.connections-grid,
+		.connection-row,
+		.receipt-row,
 		.monitor-grid,
 		.map-summary,
 		.attachment-edge,

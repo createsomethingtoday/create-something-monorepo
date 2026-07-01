@@ -4,13 +4,21 @@ import type { GovernanceProductAttachmentMode, GovernanceProductId } from '@crea
 import {
 	buildGovernanceOperatorReview,
 	createGovernanceOperatorAttachmentAction,
+	createGovernanceOperatorConnectionAction,
 	createGovernanceOperatorDecisionAction,
 	createGovernanceOperatorProofAction,
+	createGovernanceOperatorReceiptAction,
 	createGovernanceOperatorSignalAction,
 	emptyGovernanceOperatorReview,
 	normalizeGovernanceOperatorFilters
 } from '$lib/server/governance-operator';
-import type { GovernanceDecisionState, GovernanceProofOutcome } from '$lib/server/governance-runtime';
+import type {
+	GovernanceConnectionKind,
+	GovernanceConnectionStatus,
+	GovernanceDecisionState,
+	GovernanceDeliveryReceiptStatus,
+	GovernanceProofOutcome
+} from '$lib/server/governance-runtime';
 import { buildGovernanceSlackMonitorReadiness } from '$lib/server/governance-slack-monitor';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 
@@ -156,6 +164,62 @@ export const actions: Actions = {
 		}
 
 		throw redirect(303, governanceRedirectUrl(data, 'attachment_created'));
+	},
+
+	recordConnection: async ({ cookies, platform, request }) => {
+		await requireAgencyOperator({ cookies, platform });
+		const db = platform?.env?.DB;
+		if (!db) {
+			return fail(503, { error: 'Database is unavailable.' });
+		}
+
+		const data = await request.formData();
+		try {
+			await createGovernanceOperatorConnectionAction(db, {
+				kind: requiredFormText(data, 'kind') as GovernanceConnectionKind,
+				name: requiredFormText(data, 'name'),
+				status: optionalFormText(data, 'status') as GovernanceConnectionStatus | undefined,
+				atlasCanvasId: requiredFormText(data, 'atlas_canvas_id'),
+				atlasNodeId: optionalFormText(data, 'atlas_node_id'),
+				endpointUrl: optionalFormText(data, 'endpoint_url'),
+				signingSecretName: optionalFormText(data, 'signing_secret_name'),
+				eventTypes: optionalFormText(data, 'event_types'),
+				owner: optionalFormText(data, 'owner')
+			});
+		} catch (error) {
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Failed to record connection.'
+			});
+		}
+
+		throw redirect(303, governanceRedirectUrl(data, `${requiredFormText(data, 'kind')}_created`));
+	},
+
+	recordReceipt: async ({ cookies, platform, request }) => {
+		await requireAgencyOperator({ cookies, platform });
+		const db = platform?.env?.DB;
+		if (!db) {
+			return fail(503, { error: 'Database is unavailable.' });
+		}
+
+		const data = await request.formData();
+		try {
+			await createGovernanceOperatorReceiptAction(db, {
+				connectionId: requiredFormText(data, 'connection_id'),
+				eventType: requiredFormText(data, 'event_type'),
+				recordProductId: requiredFormText(data, 'record_product_id') as GovernanceProductId,
+				recordId: requiredFormText(data, 'record_id'),
+				status: requiredFormText(data, 'status') as GovernanceDeliveryReceiptStatus,
+				statusCode: optionalFormText(data, 'status_code'),
+				responseExcerpt: optionalFormText(data, 'response_excerpt')
+			});
+		} catch (error) {
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Failed to record receipt.'
+			});
+		}
+
+		throw redirect(303, governanceRedirectUrl(data, 'receipt_created'));
 	}
 };
 
@@ -194,5 +258,8 @@ function normalizeActionResult(value: string | null): string {
 	if (value === 'decision_created') return 'Decision recorded.';
 	if (value === 'proof_created') return 'Proof recorded.';
 	if (value === 'attachment_created') return 'Attachment recorded.';
+	if (value === 'source_created') return 'Source recorded.';
+	if (value === 'subscription_created') return 'Subscription recorded.';
+	if (value === 'receipt_created') return 'Receipt recorded.';
 	return '';
 }

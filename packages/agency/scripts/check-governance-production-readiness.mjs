@@ -30,7 +30,9 @@ const REQUIRED_ROUTES = [
 ];
 
 const REQUIRED_TABLES = [
+	'governance_connections',
 	'governance_decisions',
+	'governance_delivery_receipts',
 	'governance_product_attachments',
 	'governance_proofs',
 	'governance_signals',
@@ -61,6 +63,8 @@ let cloudflarePagesSecretNames = new Set();
 await checkPublicRoutes();
 await checkManifest();
 await checkGraphApiAuthGate();
+await checkConnectionApiAuthGate();
+await checkReceiptApiAuthGate();
 await checkMonitorAuthGate();
 await checkMonitorReadinessAuthGate();
 await checkGithubWorkflow();
@@ -201,6 +205,46 @@ async function checkGraphApiAuthGate() {
 		addCheck({
 			id: 'graph_api_auth_gate',
 			label: 'Governance graph API auth gate',
+			status: 'fail',
+			details: { error: errorMessage(error) }
+		});
+	}
+}
+
+async function checkConnectionApiAuthGate() {
+	await checkCredentialedGetAuthGate({
+		id: 'connections_api_auth_gate',
+		label: 'Governance connections API auth gate',
+		path: '/api/governance/connections'
+	});
+}
+
+async function checkReceiptApiAuthGate() {
+	await checkCredentialedGetAuthGate({
+		id: 'receipts_api_auth_gate',
+		label: 'Governance receipts API auth gate',
+		path: '/api/governance/receipts'
+	});
+}
+
+async function checkCredentialedGetAuthGate({ id, label, path: routePath }) {
+	try {
+		const response = await fetch(`${baseUrl}${routePath}`, { redirect: 'manual' });
+		const body = await safeText(response);
+		addCheck({
+			id,
+			label,
+			status: response.status === 401 ? 'pass' : 'fail',
+			details: {
+				expected_status: 401,
+				observed_status: response.status,
+				response_excerpt: body.slice(0, 160)
+			}
+		});
+	} catch (error) {
+		addCheck({
+			id,
+			label,
 			status: 'fail',
 			details: { error: errorMessage(error) }
 		});
