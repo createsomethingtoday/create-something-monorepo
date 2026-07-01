@@ -179,6 +179,12 @@ const PUBLIC_ATLAS_FLOW_ORDER: PublicAtlasNodeKind[] = [
 	'touchpoint'
 ];
 
+const PUBLIC_ATLAS_COMPACT_FLOW_LANES: Partial<Record<PublicAtlasNodeKind, { x: number; y: number }>> = {
+	actor: { x: 72, y: 190 },
+	data: { x: 398, y: 190 },
+	human: { x: 728, y: 190 }
+};
+
 const KIND_DEFAULTS: Record<PublicAtlasNodeKind, string> = {
 	actor: 'Workflow owner',
 	human: 'Human decision',
@@ -618,6 +624,8 @@ export function publicAtlasNodeWidth(node: PublicAtlasNode): number {
 
 export function layoutPublicAtlasNodes(nodes: PublicAtlasNode[]): PublicAtlasNode[] {
 	const offsets = new Map<PublicAtlasNodeKind, number>();
+	const shouldUseCompactLayout =
+		nodes.length <= 3 && nodes.every((node) => !Number.isFinite(node.x) && !Number.isFinite(node.y));
 	const ordered = [...nodes].sort((a, b) => {
 		const laneDelta = PUBLIC_ATLAS_FLOW_ORDER.indexOf(a.kind) - PUBLIC_ATLAS_FLOW_ORDER.indexOf(b.kind);
 		if (laneDelta !== 0) return laneDelta;
@@ -627,7 +635,9 @@ export function layoutPublicAtlasNodes(nodes: PublicAtlasNode[]): PublicAtlasNod
 	const positioned = new Map<string, PublicAtlasNode>();
 
 	for (const node of ordered) {
-		const lane = PUBLIC_ATLAS_FLOW_LANES[node.kind];
+		const lane =
+			(shouldUseCompactLayout ? PUBLIC_ATLAS_COMPACT_FLOW_LANES[node.kind] : undefined) ??
+			PUBLIC_ATLAS_FLOW_LANES[node.kind];
 		const offset = offsets.get(node.kind) ?? 0;
 		offsets.set(node.kind, offset + 1);
 		positioned.set(node.id, {

@@ -185,9 +185,13 @@ test('editable Atlas flow uses stable overridable ids instead of fixed DOM ids',
 	assert.ok(agencyEditableCanvas.includes("export let flowId = 'public-atlas-flow'"));
 	assert.ok(agencyEditableCanvas.includes('{flowId}'));
 	assert.ok(canonFlowComponent.includes("export let flowId = 'public-atlas-flow'"));
-	assert.ok(canonFlowComponent.includes('arrowId = `${flowId}-arrow`'));
-	assert.ok(canonFlowComponent.includes('id={arrowId}'));
-	assert.ok(canonFlowComponent.includes('marker-end={`url(#${arrowId})`}'));
+	assert.ok(canonFlowComponent.includes("from '@xyflow/svelte'"));
+	assert.ok(canonFlowComponent.includes('<SvelteFlow'));
+	assert.ok(canonFlowComponent.includes('id={flowId}'));
+	assert.ok(canonFlowComponent.includes('proOptions'));
+	assert.ok(canonFlowComponent.includes('hideAttribution: true'));
+	assert.ok(canonFlowComponent.includes('aria-label="Atlas workflow map"'));
+	assert.equal(canonFlowComponent.includes('aria-label="Svelte Atlas workflow map"'), false);
 	assert.equal(canonFlowComponent.includes('id="public-atlas-flow-arrow"'), false);
 	assert.equal(canonFlowComponent.includes('marker-end="url(#public-atlas-flow-arrow)"'), false);
 });

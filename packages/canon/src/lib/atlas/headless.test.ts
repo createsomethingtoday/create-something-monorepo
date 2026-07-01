@@ -4,6 +4,7 @@ import {
   createPublicAtlasCanvas,
   createPublicAtlasGraphArtifact,
   createPublicAtlasNode,
+  layoutPublicAtlasNodes,
   normalizePublicAtlasCanvas
 } from './headless.js';
 
@@ -66,6 +67,20 @@ describe('public Atlas governance product attachments', () => {
         required: true,
         source: 'Reviewer inbox'
       }
+    ]);
+  });
+});
+
+describe('public Atlas editable layout', () => {
+  it('keeps the blank intake map compact enough for a readable first viewport', () => {
+    const positioned = layoutPublicAtlasNodes(createPublicAtlasCanvas().nodes);
+    const rightEdge = Math.max(...positioned.map((node) => (node.x ?? 0) + (node.width ?? 0)));
+
+    expect(rightEdge).toBeLessThanOrEqual(1040);
+    expect(positioned.map((node) => node.id)).toEqual([
+      'actor_client',
+      'data_workflow',
+      'human_approval'
     ]);
   });
 });
