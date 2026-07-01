@@ -458,6 +458,22 @@ test('governance operator helpers normalize filters and empty states', () => {
 	assert.equal(empty.storage.available, false);
 	assert.equal(empty.storage.error, 'Database is unavailable.');
 	assert.equal(empty.summary.signals, 0);
+	assert.equal(empty.graph.attachment_capabilities.length, 12);
+	assert.deepEqual(
+		empty.graph.attachment_capabilities
+			.filter((capability) => capability.required)
+			.map((capability) => [
+				`${capability.source_product_id}->${capability.target_product_id}`,
+				capability.can_attach,
+				capability.attached
+			]),
+		[
+			['atlas->signal', true, false],
+			['signal->decision', true, false],
+			['decision->proof', true, false],
+			['proof->atlas', true, false]
+		]
+	);
 });
 
 test('safeOperatorExternalHref only allows http and https links', () => {

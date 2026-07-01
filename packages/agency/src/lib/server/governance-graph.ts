@@ -1,5 +1,7 @@
 import {
 	SIGNAL_DECISION_PROOF_COMPOSITION,
+	canAttachGovernanceProducts,
+	listGovernanceProducts,
 	type GovernanceProductAttachmentMode,
 	type GovernanceProductId
 } from '@create-something/canon/governance';
@@ -36,6 +38,17 @@ export type GovernanceAttachmentGraphEdge = {
 	required: boolean;
 };
 
+export type GovernanceAttachmentCapability = {
+	source_product_id: GovernanceProductId;
+	target_product_id: GovernanceProductId;
+	can_attach: boolean;
+	mode: GovernanceProductAttachmentMode;
+	label: string;
+	required: boolean;
+	current_attachment_count: number;
+	attached: boolean;
+};
+
 export type GovernanceAttachmentGraph = {
 	schemaVersion: 1;
 	generated_at: string;
@@ -49,6 +62,7 @@ export type GovernanceAttachmentGraph = {
 	filters: GovernanceRecordFilters;
 	nodes: GovernanceAttachmentGraphNode[];
 	attachments: GovernanceAttachmentGraphEdge[];
+	attachment_capabilities: GovernanceAttachmentCapability[];
 	summary: {
 		atlas_canvases: number;
 		signals: number;
@@ -137,6 +151,7 @@ export async function buildGovernanceAttachmentGraph(
 
 	const nodeList = [...nodes.values()];
 	const attachmentList = [...attachments.values()];
+	const attachmentCapabilities = buildGovernanceAttachmentCapabilities(attachmentList);
 
 	return {
 		schemaVersion: 1,
@@ -151,6 +166,7 @@ export async function buildGovernanceAttachmentGraph(
 		filters: runtimeFilters,
 		nodes: nodeList,
 		attachments: attachmentList,
+		attachment_capabilities: attachmentCapabilities,
 		summary: {
 			atlas_canvases: nodeList.filter((node) => node.product_id === 'atlas').length,
 			signals: signals.length,
@@ -159,6 +175,38 @@ export async function buildGovernanceAttachmentGraph(
 			attachments: attachmentList.length
 		}
 	};
+}
+
+export function buildGovernanceAttachmentCapabilities(
+	attachments: GovernanceAttachmentGraphEdge[]
+): GovernanceAttachmentCapability[] {
+	return listGovernanceProducts().flatMap((source) =>
+		listGovernanceProducts()
+			.filter((target) => target.id !== source.id)
+			.map((target) => {
+				const link = REQUIRED_LINKS.get(`${source.id}->${target.id}`);
+				const currentAttachmentCount = attachments.filter(
+					(attachment) =>
+						attachment.source_product_id === source.id && attachment.target_product_id === target.id
+				).length;
+				return {
+					source_product_id: source.id,
+					target_product_id: target.id,
+					can_attach: canAttachGovernanceProducts(source.id, target.id),
+					mode: link?.mode ?? fallbackAttachmentMode(source.id),
+					label: link?.label ?? `${source.name} can attach to ${target.name}.`,
+					required: link?.required ?? false,
+					current_attachment_count: currentAttachmentCount,
+					attached: currentAttachmentCount > 0
+				};
+			})
+	);
+}
+
+function fallbackAttachmentMode(sourceProductId: GovernanceProductId): GovernanceProductAttachmentMode {
+	if (sourceProductId === 'proof') return 'records';
+	if (sourceProductId === 'atlas') return 'connects';
+	return 'produces';
 }
 
 function addAtlasNode(

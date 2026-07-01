@@ -18,6 +18,7 @@ import {
 } from './governance-runtime';
 import {
 	buildGovernanceAttachmentGraph,
+	buildGovernanceAttachmentCapabilities,
 	type GovernanceAttachmentGraph
 } from './governance-graph';
 
@@ -259,6 +260,7 @@ function emptyGovernanceAttachmentGraph(filters: GovernanceOperatorReview['filte
 		},
 		nodes: [],
 		attachments: [],
+		attachment_capabilities: buildGovernanceAttachmentCapabilities([]),
 		summary: {
 			atlas_canvases: 0,
 			signals: 0,
