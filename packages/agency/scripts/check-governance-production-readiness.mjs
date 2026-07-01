@@ -31,6 +31,7 @@ const REQUIRED_ROUTES = [
 
 const REQUIRED_TABLES = [
 	'governance_decisions',
+	'governance_product_attachments',
 	'governance_proofs',
 	'governance_signals',
 	'governance_source_cursors'

@@ -1,3 +1,9 @@
+import {
+	canAttachGovernanceProducts,
+	type GovernanceProductAttachmentMode,
+	type GovernanceProductId
+} from '@create-something/canon/governance';
+
 export type GovernanceSignalStatus = 'new' | 'reviewing' | 'resolved' | 'dismissed';
 export type GovernanceDecisionState = 'run' | 'wait' | 'stop';
 export type GovernanceProofOutcome = 'documented' | 'passed' | 'failed' | 'rolled_back';
@@ -44,6 +50,22 @@ export interface GovernanceProofRow {
 	updated_at: string;
 }
 
+export interface GovernanceProductAttachmentRow {
+	id: string;
+	source_product_id: GovernanceProductId;
+	source_record_id: string;
+	target_product_id: GovernanceProductId;
+	target_record_id: string;
+	atlas_canvas_id: string;
+	atlas_node_id: string | null;
+	mode: GovernanceProductAttachmentMode;
+	label: string;
+	required: 0 | 1;
+	metadata_json: string;
+	created_at: string;
+	updated_at: string;
+}
+
 export type GovernanceSignal = Omit<GovernanceSignalRow, 'payload_json'> & {
 	payload: Record<string, unknown>;
 };
@@ -54,6 +76,14 @@ export type GovernanceDecision = Omit<GovernanceDecisionRow, 'payload_json'> & {
 
 export type GovernanceProof = Omit<GovernanceProofRow, 'payload_json'> & {
 	payload: Record<string, unknown>;
+};
+
+export type GovernanceProductAttachment = Omit<
+	GovernanceProductAttachmentRow,
+	'metadata_json' | 'required'
+> & {
+	required: boolean;
+	metadata: Record<string, unknown>;
 };
 
 export interface GovernanceSignalInput {
@@ -89,11 +119,26 @@ export interface GovernanceProofInput {
 	payload?: Record<string, unknown>;
 }
 
+export interface GovernanceProductAttachmentInput {
+	sourceProductId: GovernanceProductId;
+	sourceRecordId: string;
+	targetProductId: GovernanceProductId;
+	targetRecordId: string;
+	atlasCanvasId: string;
+	atlasNodeId?: string | null;
+	mode?: GovernanceProductAttachmentMode;
+	label?: string | null;
+	required?: boolean;
+	metadata?: Record<string, unknown>;
+}
+
 export interface GovernanceRecordFilters {
 	atlasCanvasId?: string | null;
 	atlasNodeId?: string | null;
 	signalId?: string | null;
 	decisionId?: string | null;
+	sourceProductId?: GovernanceProductId | null;
+	targetProductId?: GovernanceProductId | null;
 	limit?: number;
 }
 
@@ -116,6 +161,19 @@ const PROOF_OUTCOMES = new Set<GovernanceProofOutcome>([
 	'failed',
 	'rolled_back'
 ]);
+const PRODUCT_IDS = new Set<GovernanceProductId>(['atlas', 'signal', 'decision', 'proof']);
+const ATTACHMENT_MODES = new Set<GovernanceProductAttachmentMode>([
+	'connects',
+	'consumes',
+	'produces',
+	'records'
+]);
+const TABLE_MIGRATIONS: Record<string, string> = {
+	governance_signals: '0030',
+	governance_decisions: '0030',
+	governance_proofs: '0030',
+	governance_product_attachments: '0032'
+};
 
 export async function createGovernanceSignal(
 	db: D1DatabaseLike,
@@ -381,6 +439,94 @@ export async function listGovernanceProofs(
 	return rows.map(serializeProof);
 }
 
+export async function createGovernanceProductAttachment(
+	db: D1DatabaseLike,
+	input: GovernanceProductAttachmentInput
+): Promise<GovernanceProductAttachment> {
+	await assertTableAvailable(db, 'governance_product_attachments');
+	const sourceProductId = normalizeProductId(input.sourceProductId, 'sourceProductId');
+	const targetProductId = normalizeProductId(input.targetProductId, 'targetProductId');
+	if (sourceProductId === targetProductId) {
+		throw new Error('sourceProductId and targetProductId must be different');
+	}
+	if (!canAttachGovernanceProducts(sourceProductId, targetProductId)) {
+		throw new Error(`${sourceProductId} cannot attach to ${targetProductId}`);
+	}
+
+	const now = new Date().toISOString();
+	const row: GovernanceProductAttachmentRow = {
+		id: createId('gov_att'),
+		source_product_id: sourceProductId,
+		source_record_id: requiredText(input.sourceRecordId, 'sourceRecordId', 180),
+		target_product_id: targetProductId,
+		target_record_id: requiredText(input.targetRecordId, 'targetRecordId', 180),
+		atlas_canvas_id: requiredText(input.atlasCanvasId, 'atlasCanvasId', 160),
+		atlas_node_id: optionalText(input.atlasNodeId, 160),
+		mode: normalizeAttachmentMode(input.mode, sourceProductId),
+		label:
+			optionalText(input.label, 280) ??
+			`${sourceProductId} attaches to ${targetProductId}`,
+		required: input.required ? 1 : 0,
+		metadata_json: stringifyPayload(input.metadata),
+		created_at: now,
+		updated_at: now
+	};
+
+	await db
+		.prepare(
+			`INSERT INTO governance_product_attachments (
+				id,
+				source_product_id,
+				source_record_id,
+				target_product_id,
+				target_record_id,
+				atlas_canvas_id,
+				atlas_node_id,
+				mode,
+				label,
+				required,
+				metadata_json,
+				created_at,
+				updated_at
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		)
+		.bind(
+			row.id,
+			row.source_product_id,
+			row.source_record_id,
+			row.target_product_id,
+			row.target_record_id,
+			row.atlas_canvas_id,
+			row.atlas_node_id,
+			row.mode,
+			row.label,
+			row.required,
+			row.metadata_json,
+			row.created_at,
+			row.updated_at
+		)
+		.run();
+
+	return serializeProductAttachment(row);
+}
+
+export async function listGovernanceProductAttachments(
+	db: D1DatabaseLike,
+	filters: GovernanceRecordFilters = {}
+): Promise<GovernanceProductAttachment[]> {
+	await assertTableAvailable(db, 'governance_product_attachments');
+	const { sql, values } = buildListQuery(
+		`SELECT id, source_product_id, source_record_id, target_product_id, target_record_id,
+		        atlas_canvas_id, atlas_node_id, mode, label, required, metadata_json, created_at, updated_at
+		   FROM governance_product_attachments`,
+		filters,
+		['atlasCanvasId', 'atlasNodeId', 'sourceProductId', 'targetProductId']
+	);
+	const rows = await queryAll<GovernanceProductAttachmentRow>(db, sql, values);
+	return rows.map(serializeProductAttachment);
+}
+
 export function normalizeSignalRequestBody(body: Record<string, unknown>): GovernanceSignalInput {
 	return {
 		atlasCanvasId: requiredStringFromBody(body, 'atlas_canvas_id', 'atlasCanvasId'),
@@ -420,12 +566,43 @@ export function normalizeProofRequestBody(body: Record<string, unknown>): Govern
 	};
 }
 
+export function normalizeAttachmentRequestBody(
+	body: Record<string, unknown>
+): GovernanceProductAttachmentInput {
+	return {
+		sourceProductId: requiredStringFromBody(
+			body,
+			'source_product_id',
+			'sourceProductId'
+		) as GovernanceProductId,
+		sourceRecordId: requiredStringFromBody(body, 'source_record_id', 'sourceRecordId'),
+		targetProductId: requiredStringFromBody(
+			body,
+			'target_product_id',
+			'targetProductId'
+		) as GovernanceProductId,
+		targetRecordId: requiredStringFromBody(body, 'target_record_id', 'targetRecordId'),
+		atlasCanvasId: requiredStringFromBody(body, 'atlas_canvas_id', 'atlasCanvasId'),
+		atlasNodeId: stringFromBody(body, 'atlas_node_id', 'atlasNodeId'),
+		mode: stringFromBody(body, 'mode') as GovernanceProductAttachmentMode | undefined,
+		label: stringFromBody(body, 'label'),
+		required: booleanFromBody(body, 'required'),
+		metadata: objectFromBody(body, 'metadata')
+	};
+}
+
 export function filtersFromSearchParams(params: URLSearchParams): GovernanceRecordFilters {
 	return {
 		atlasCanvasId: params.get('atlas_canvas_id') ?? params.get('atlasCanvasId'),
 		atlasNodeId: params.get('atlas_node_id') ?? params.get('atlasNodeId'),
 		signalId: params.get('signal_id') ?? params.get('signalId'),
 		decisionId: params.get('decision_id') ?? params.get('decisionId'),
+		sourceProductId: (params.get('source_product_id') ?? params.get('sourceProductId')) as
+			| GovernanceProductId
+			| null,
+		targetProductId: (params.get('target_product_id') ?? params.get('targetProductId')) as
+			| GovernanceProductId
+			| null,
 		limit: boundedLimit(params.get('limit'))
 	};
 }
@@ -449,7 +626,8 @@ async function assertTableAvailable(db: D1DatabaseLike, tableName: string): Prom
 		.bind(tableName)
 		.first<{ name: string }>();
 	if (!row?.name) {
-		throw new Error(`${tableName} table is not available; apply migration 0030 first`);
+		const migration = TABLE_MIGRATIONS[tableName] ?? 'required';
+		throw new Error(`${tableName} table is not available; apply migration ${migration} first`);
 	}
 }
 
@@ -474,7 +652,9 @@ function buildListQuery(
 		atlasCanvasId: 'atlas_canvas_id',
 		atlasNodeId: 'atlas_node_id',
 		signalId: 'signal_id',
-		decisionId: 'decision_id'
+		decisionId: 'decision_id',
+		sourceProductId: 'source_product_id',
+		targetProductId: 'target_product_id'
 	};
 
 	for (const key of allowedFilters) {
@@ -553,6 +733,28 @@ function normalizeProofOutcome(outcome: GovernanceProofOutcome | undefined): Gov
 	return outcome;
 }
 
+function normalizeProductId(value: GovernanceProductId, field: string): GovernanceProductId {
+	if (!PRODUCT_IDS.has(value)) {
+		throw new Error(`Invalid ${field}: ${value}`);
+	}
+	return value;
+}
+
+function normalizeAttachmentMode(
+	mode: GovernanceProductAttachmentMode | undefined,
+	sourceProductId: GovernanceProductId
+): GovernanceProductAttachmentMode {
+	if (!mode) {
+		if (sourceProductId === 'proof') return 'records';
+		if (sourceProductId === 'atlas') return 'connects';
+		return 'produces';
+	}
+	if (!ATTACHMENT_MODES.has(mode)) {
+		throw new Error(`Invalid attachment mode: ${mode}`);
+	}
+	return mode;
+}
+
 function normalizeLimit(limit: number | undefined): number {
 	if (!Number.isFinite(limit) || !limit) return 100;
 	return Math.max(1, Math.min(500, Math.floor(limit)));
@@ -588,6 +790,14 @@ function objectFromBody(body: Record<string, unknown>, key: string): Record<stri
 	throw new Error(`${key} must be an object`);
 }
 
+function booleanFromBody(body: Record<string, unknown>, key: string): boolean | undefined {
+	const value = body[key];
+	if (value == null) return undefined;
+	if (typeof value === 'boolean') return value;
+	if (typeof value === 'string') return value === 'true' || value === '1' || value === 'on';
+	return undefined;
+}
+
 function serializeSignal(row: GovernanceSignalRow): GovernanceSignal {
 	const { payload_json, ...rest } = row;
 	return {
@@ -609,5 +819,14 @@ function serializeProof(row: GovernanceProofRow): GovernanceProof {
 	return {
 		...rest,
 		payload: parsePayload(payload_json)
+	};
+}
+
+function serializeProductAttachment(row: GovernanceProductAttachmentRow): GovernanceProductAttachment {
+	const { metadata_json, required, ...rest } = row;
+	return {
+		...rest,
+		required: required === 1,
+		metadata: parsePayload(metadata_json)
 	};
 }
