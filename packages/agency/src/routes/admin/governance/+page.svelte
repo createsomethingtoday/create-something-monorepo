@@ -6,6 +6,7 @@
 	type GovernanceRecord = PageData['review']['records'][number];
 	type Decision = PageData['review']['unlinked_decisions'][number];
 	type Proof = PageData['review']['unlinked_proofs'][number];
+	type ProductAttachment = PageData['review']['explicit_attachments'][number];
 	type GraphNode = PageData['review']['graph']['nodes'][number];
 	type GraphAttachment = PageData['review']['graph']['attachments'][number];
 
@@ -14,8 +15,11 @@
 	const records = $derived(data.review.records as GovernanceRecord[]);
 	const unlinkedDecisions = $derived(data.review.unlinked_decisions as Decision[]);
 	const unlinkedProofs = $derived(data.review.unlinked_proofs as Proof[]);
+	const explicitAttachments = $derived(data.review.explicit_attachments as ProductAttachment[]);
 	const graphNodes = $derived(data.review.graph.nodes as GraphNode[]);
 	const graphAttachments = $derived(data.review.graph.attachments as GraphAttachment[]);
+	const productOptions = ['atlas', 'signal', 'decision', 'proof'];
+	const attachmentModes = ['connects', 'consumes', 'produces', 'records'];
 	const graphProductCounts = $derived(
 		data.review.graph.product_loop.map((productId) => ({
 			productId,
@@ -100,6 +104,7 @@
 			<a href={apiHref('/api/governance/signals')} target="_blank">Signals</a>
 			<a href={apiHref('/api/governance/decisions')} target="_blank">Decisions</a>
 			<a href={apiHref('/api/governance/proofs')} target="_blank">Proofs</a>
+			<a href={apiHref('/api/governance/attachments')} target="_blank">Attachments</a>
 		</nav>
 	</header>
 
@@ -147,6 +152,10 @@
 			<span class="metric-value">{data.review.summary.records_requiring_reviewer_process_review}</span>
 			<span class="metric-label">Process review</span>
 		</div>
+		<div class="metric">
+			<span class="metric-value">{data.review.summary.explicit_attachments}</span>
+			<span class="metric-label">Manual links</span>
+		</div>
 	</section>
 
 	<section class="map-panel" aria-label="Atlas attachment map">
@@ -185,6 +194,118 @@
 				{/each}
 			</div>
 		{/if}
+	</section>
+
+	<section class="attachment-panel" aria-label="Durable product attachments">
+		<div class="section-heading">
+			<div>
+				<p class="eyebrow">Attach</p>
+				<h2>Product attachments</h2>
+			</div>
+			<span>{explicitAttachments.length} durable links</span>
+		</div>
+		{#if explicitAttachments.length === 0}
+			<div class="empty">No manual product attachments match this view.</div>
+		{:else}
+			<div class="attachment-list" aria-label="Explicit product attachments">
+				{#each explicitAttachments as attachment}
+					<div class="attachment-edge">
+						<span class="pill info">{attachment.source_product_id}</span>
+						<div>
+							<strong>{attachment.source_record_id}</strong>
+							<small>{attachment.mode} · {attachment.label}</small>
+						</div>
+						<span class="edge-arrow">-&gt;</span>
+						<div>
+							<strong>{attachment.target_record_id}</strong>
+							<small>
+								{attachment.target_product_id}
+								{#if attachment.required}
+									· required
+								{/if}
+							</small>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
+
+		<form method="POST" action="?/recordAttachment" class="attachment-form">
+			<input type="hidden" name="return_atlas_canvas_id" value={data.review.filters.atlas_canvas_id} />
+			<input type="hidden" name="return_atlas_node_id" value={data.review.filters.atlas_node_id} />
+			<input type="hidden" name="return_limit" value={data.review.filters.limit} />
+			<div class="form-row compact">
+				<label>
+					<span>Source product</span>
+					<select name="source_product_id" required>
+						{#each productOptions as product}
+							<option value={product}>{product}</option>
+						{/each}
+					</select>
+				</label>
+				<label>
+					<span>Source record</span>
+					<input name="source_record_id" maxlength="180" placeholder="canvas or record id" required />
+				</label>
+			</div>
+			<div class="form-row compact">
+				<label>
+					<span>Target product</span>
+					<select name="target_product_id" required>
+						<option value="signal">signal</option>
+						<option value="decision">decision</option>
+						<option value="proof">proof</option>
+						<option value="atlas">atlas</option>
+					</select>
+				</label>
+				<label>
+					<span>Target record</span>
+					<input name="target_record_id" maxlength="180" placeholder="record id" required />
+				</label>
+			</div>
+			<div class="form-row compact">
+				<label>
+					<span>Atlas canvas</span>
+					<input
+						name="atlas_canvas_id"
+						maxlength="160"
+						value={data.review.filters.atlas_canvas_id}
+						placeholder="governance_source_updates"
+						required
+					/>
+				</label>
+				<label>
+					<span>Atlas node</span>
+					<input
+						name="atlas_node_id"
+						maxlength="160"
+						value={data.review.filters.atlas_node_id}
+						placeholder="optional node id"
+					/>
+				</label>
+			</div>
+			<div class="form-row compact">
+				<label>
+					<span>Mode</span>
+					<select name="mode">
+						{#each attachmentModes as mode}
+							<option value={mode}>{mode}</option>
+						{/each}
+					</select>
+				</label>
+				<label>
+					<span>Label</span>
+					<input name="label" maxlength="280" placeholder="Why these records belong together" />
+				</label>
+			</div>
+			<div class="checkbox-row" aria-label="Attachment requirements">
+				<label>
+					<input type="checkbox" name="required" />
+					<span>Required link</span>
+				</label>
+			</div>
+			<button type="submit">Record attachment</button>
+		</form>
 	</section>
 
 	{#if data.monitor_readiness}
@@ -625,7 +746,7 @@
 
 	.summary-grid {
 		display: grid;
-		grid-template-columns: repeat(6, minmax(0, 1fr));
+		grid-template-columns: repeat(4, minmax(0, 1fr));
 		gap: 12px;
 		margin: 24px 0;
 	}
@@ -635,6 +756,7 @@
 	.filters,
 	.monitor-panel,
 	.map-panel,
+	.attachment-panel,
 	.manual-signal-panel,
 	.notice,
 	.empty {
@@ -655,6 +777,13 @@
 	}
 
 	.map-panel {
+		display: grid;
+		gap: 14px;
+		margin: 24px 0;
+		padding: 18px;
+	}
+
+	.attachment-panel {
 		display: grid;
 		gap: 14px;
 		margin: 24px 0;
@@ -716,6 +845,13 @@
 		display: grid;
 		gap: 12px;
 		margin-top: 14px;
+	}
+
+	.attachment-form {
+		display: grid;
+		gap: 12px;
+		border-top: 1px solid #e2e8f0;
+		padding-top: 14px;
 	}
 
 	.monitor-heading {
@@ -828,6 +964,10 @@
 		display: grid;
 		grid-template-columns: minmax(0, 160px) minmax(0, 1fr);
 		gap: 10px;
+	}
+
+	.form-row.compact {
+		grid-template-columns: minmax(0, 180px) minmax(0, 1fr);
 	}
 
 	.checkbox-row {

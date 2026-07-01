@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
 	buildGovernanceOperatorReview,
+	createGovernanceOperatorAttachmentAction,
 	createGovernanceOperatorDecisionAction,
 	createGovernanceOperatorProofAction,
 	createGovernanceOperatorSignalAction,
@@ -40,7 +41,15 @@ class FakeStatement {
 
 		let rows = [...(this.tables[table] ?? [])];
 		let filterIndex = 0;
-		for (const column of ['id', 'atlas_canvas_id', 'atlas_node_id', 'signal_id', 'decision_id']) {
+		for (const column of [
+			'id',
+			'atlas_canvas_id',
+			'atlas_node_id',
+			'signal_id',
+			'decision_id',
+			'source_product_id',
+			'target_product_id'
+		]) {
 			if (!new RegExp(`\\b${column}\\s*=\\s*\\?`).test(this.sql)) continue;
 			const expected = this.values[filterIndex++];
 			rows = rows.filter((row) => row[column] === expected);
@@ -50,9 +59,12 @@ class FakeStatement {
 	}
 
 	async run(): Promise<{ success: true }> {
-		const table = ['governance_signals', 'governance_decisions', 'governance_proofs'].find((name) =>
-			this.sql.includes(`INSERT INTO ${name}`)
-		);
+		const table = [
+			'governance_signals',
+			'governance_decisions',
+			'governance_proofs',
+			'governance_product_attachments'
+		].find((name) => this.sql.includes(`INSERT INTO ${name}`));
 		if (table) {
 			this.tables[table] ??= [];
 			this.tables[table].push(this.rowFromInsert(table));
@@ -120,6 +132,39 @@ class FakeStatement {
 				decision_owner,
 				reason,
 				payload_json,
+				created_at,
+				updated_at
+			};
+		}
+
+		if (table === 'governance_product_attachments') {
+			const [
+				id,
+				source_product_id,
+				source_record_id,
+				target_product_id,
+				target_record_id,
+				atlas_canvas_id,
+				atlas_node_id,
+				mode,
+				label,
+				required,
+				metadata_json,
+				created_at,
+				updated_at
+			] = this.values;
+			return {
+				id,
+				source_product_id,
+				source_record_id,
+				target_product_id,
+				target_record_id,
+				atlas_canvas_id,
+				atlas_node_id,
+				mode,
+				label,
+				required,
+				metadata_json,
 				created_at,
 				updated_at
 			};
@@ -253,6 +298,7 @@ test('buildGovernanceOperatorReview groups decisions and proofs under their Atla
 	assert.equal(review.summary.records_ready_for_proof, 1);
 	assert.equal(review.summary.records_requiring_docs_review, 1);
 	assert.equal(review.summary.records_requiring_reviewer_process_review, 1);
+	assert.equal(review.summary.explicit_attachments, 0);
 	assert.equal(review.records[0]?.signal.id, 'sig_docs');
 	assert.equal(review.records[0]?.classification?.requires_documentation_review, true);
 	assert.equal(review.records[0]?.classification?.requires_reviewer_process_review, true);
@@ -404,6 +450,106 @@ test('governance operator proof action preserves dismissed Signal inbox state', 
 
 	assert.equal(tables.governance_signals[0]?.status, 'dismissed');
 	assert.equal(tables.governance_proofs.length, 1);
+});
+
+test('governance operator action records durable product attachments for review', async () => {
+	const tables: Record<string, TableRow[]> = {
+		governance_signals: [
+			{
+				id: 'sig_docs',
+				atlas_canvas_id: 'canvas_docs',
+				atlas_node_id: 'node_api',
+				source: 'slack:#api-updates',
+				source_url: 'https://slack.example/archives/C123/p456',
+				title: 'API update',
+				summary: 'Docs need review.',
+				status: 'new',
+				payload_json: '{}',
+				created_at: now,
+				updated_at: now
+			}
+		],
+		governance_decisions: [
+			{
+				id: 'dec_docs',
+				signal_id: 'sig_docs',
+				atlas_canvas_id: 'canvas_docs',
+				atlas_node_id: 'node_api',
+				decision_state: 'run',
+				decision_owner: 'docs-reviewer@example.com',
+				reason: 'Update docs.',
+				payload_json: '{}',
+				created_at: now,
+				updated_at: now
+			}
+		],
+		governance_proofs: [
+			{
+				id: 'proof_docs',
+				signal_id: 'sig_docs',
+				decision_id: 'dec_docs',
+				atlas_canvas_id: 'canvas_docs',
+				atlas_node_id: 'node_api',
+				evidence: 'Docs PR merged.',
+				outcome: 'passed',
+				receipt_url: 'https://github.example/pr/456',
+				rollback_note: null,
+				payload_json: '{}',
+				created_at: now,
+				updated_at: now
+			}
+		],
+		governance_product_attachments: []
+	};
+	const db = new FakeD1(tables) as unknown as Parameters<typeof createGovernanceOperatorAttachmentAction>[0];
+
+	const attachment = await createGovernanceOperatorAttachmentAction(db, {
+		sourceProductId: 'signal',
+		sourceRecordId: 'sig_docs',
+		targetProductId: 'proof',
+		targetRecordId: 'proof_docs',
+		atlasCanvasId: 'canvas_docs',
+		atlasNodeId: 'node_api',
+		mode: 'records',
+		label: 'Signal source requires this proof receipt.',
+		required: true
+	});
+	const review = await buildGovernanceOperatorReview(
+		db as unknown as Parameters<typeof buildGovernanceOperatorReview>[0],
+		{
+			atlas_canvas_id: 'canvas_docs',
+			atlas_node_id: 'node_api',
+			limit: 100
+		}
+	);
+
+	assert.equal(attachment.source_product_id, 'signal');
+	assert.equal(attachment.target_product_id, 'proof');
+	assert.equal(attachment.required, true);
+	assert.equal(attachment.metadata.operator_surface, '/admin/governance');
+	assert.equal(tables.governance_product_attachments.length, 1);
+	assert.equal(review.summary.explicit_attachments, 1);
+	assert.equal(review.explicit_attachments[0]?.id, attachment.id);
+	assert.ok(
+		review.graph.attachments.some(
+			(edge) =>
+				edge.id === `attachment:${attachment.id}` &&
+				edge.source === 'signal:sig_docs' &&
+				edge.target === 'proof:proof_docs'
+		)
+	);
+
+	await assert.rejects(
+		() =>
+			createGovernanceOperatorAttachmentAction(db, {
+				sourceProductId: 'signal',
+				sourceRecordId: 'sig_docs',
+				targetProductId: 'signal',
+				targetRecordId: 'sig_docs',
+				atlasCanvasId: 'canvas_docs'
+			}),
+		/sourceProductId and targetProductId must be different/
+	);
 });
 
 test('governance operator actions record manual Signals with Atlas attachment metadata', async () => {
