@@ -418,11 +418,12 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     cluster: 'products',
     role: 'pillar',
     decision: 'index',
-    audience: 'Teams looking for proof before trusting the workflow method.',
+    audience: 'Teams evaluating the product surfaces behind controlled AI workflow work.',
     funnelStage: 'evaluate',
-    intent: 'Show proof objects that make the CREATE SOMETHING method inspectable.',
-    primaryAction: 'Apply the proof',
-    requiredTerms: ['proof', 'workflow', 'Signal', 'Decision', 'Proof'],
+    intent:
+      'Explain Atlas, Signal, Decision, and Proof as one product system for inspectable workflows.',
+    primaryAction: 'Start Workflow Map',
+    requiredTerms: ['workflow', 'Atlas', 'Signal', 'Decision', 'Proof'],
     requiredLinks: [],
     schema: 'faq',
     search: {

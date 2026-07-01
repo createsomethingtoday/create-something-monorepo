@@ -48,7 +48,7 @@
   const navLinks = [
     { label: 'How I Work', href: '/services' },
     { label: 'Stack Boundary', href: '/stack' },
-    { label: 'Proof', href: '/products' }
+    { label: 'Products', href: '/products' }
   ];
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
@@ -61,7 +61,7 @@
       links: [
         { label: 'How I Work', href: '/services' },
         { label: 'Stack Boundary', href: '/stack' },
-        { label: 'Proof', href: '/products' },
+        { label: 'Products', href: '/products' },
         { label: 'About', href: '/about' }
       ]
     },
@@ -264,11 +264,11 @@
     },
     {
       id: 'nav-products',
-      label: 'Proof',
-      description: 'Delivery records, tools, and examples that show how the service works',
+      label: 'Products',
+      description: 'Atlas, Signal, Decision, and Proof surfaces for controlled AI workflows',
       href: '/products',
       icon: '📦',
-      keywords: ['portfolio', 'tools', 'integrations', 'proof surfaces']
+      keywords: ['portfolio', 'tools', 'integrations', 'product surfaces', 'proof surfaces']
     },
     {
       id: 'nav-self-map',
