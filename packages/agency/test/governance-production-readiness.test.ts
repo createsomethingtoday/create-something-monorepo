@@ -14,14 +14,19 @@ test('validateGovernanceProductManifest accepts the full product attachment cont
 	assert.deepEqual(validation.details.missing_runtime_apis, []);
 	assert.deepEqual(validation.details.missing_declared_attachments, []);
 	assert.equal(validation.details.attachment_graph_ready, true);
+	assert.equal(validation.details.attachment_records_ready, true);
 	assert.equal(validation.details.monitor_readiness_ready, true);
 });
 
-test('validateGovernanceProductManifest rejects missing runtime and monitor readiness APIs', () => {
+test('validateGovernanceProductManifest rejects missing runtime and attachment APIs', () => {
 	const manifest = buildGovernanceProductCompositionManifest();
 	const validation = validateGovernanceProductManifest({
 		...manifest,
 		runtimeApis: manifest.runtimeApis.filter((api) => api.product !== 'proof'),
+		attachmentRecordsApi: {
+			...manifest.attachmentRecordsApi,
+			path: '/api/governance/old-attachments'
+		},
 		monitorReadinessApi: {
 			...manifest.monitorReadinessApi,
 			secretSafe: false
@@ -30,6 +35,7 @@ test('validateGovernanceProductManifest rejects missing runtime and monitor read
 
 	assert.equal(validation.ready, false);
 	assert.deepEqual(validation.details.missing_runtime_apis, ['proof']);
+	assert.equal(validation.details.attachment_records_ready, false);
 	assert.equal(validation.details.monitor_readiness_secret_safe, false);
 	assert.equal(validation.details.monitor_readiness_ready, false);
 });

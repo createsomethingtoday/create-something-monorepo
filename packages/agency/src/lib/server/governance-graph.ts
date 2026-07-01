@@ -7,9 +7,11 @@ import {
 } from '@create-something/canon/governance';
 import {
 	listGovernanceDecisions,
+	listGovernanceProductAttachments,
 	listGovernanceProofs,
 	listGovernanceSignals,
 	type GovernanceDecision,
+	type GovernanceProductAttachment,
 	type GovernanceProof,
 	type GovernanceRecordFilters,
 	type GovernanceSignal
@@ -149,6 +151,12 @@ export async function buildGovernanceAttachmentGraph(
 		addAttachment(attachments, proofNodeId, atlasGraphNodeId(proof.atlas_canvas_id), 'proof', 'atlas');
 	}
 
+	const explicitAttachments = await listAvailableGovernanceProductAttachments(db, runtimeFilters);
+	for (const attachment of explicitAttachments) {
+		addExplicitAttachmentNodes(nodes, attachment);
+		addExplicitAttachment(attachments, attachment);
+	}
+
 	const nodeList = [...nodes.values()];
 	const attachmentList = [...attachments.values()];
 	const attachmentCapabilities = buildGovernanceAttachmentCapabilities(attachmentList);
@@ -175,6 +183,78 @@ export async function buildGovernanceAttachmentGraph(
 			attachments: attachmentList.length
 		}
 	};
+}
+
+async function listAvailableGovernanceProductAttachments(
+	db: Parameters<typeof listGovernanceProductAttachments>[0],
+	filters: GovernanceRecordFilters
+): Promise<GovernanceProductAttachment[]> {
+	try {
+		return await listGovernanceProductAttachments(db, filters);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : '';
+		if (message.includes('governance_product_attachments table is not available')) {
+			return [];
+		}
+		throw error;
+	}
+}
+
+function addExplicitAttachmentNodes(
+	nodes: Map<string, GovernanceAttachmentGraphNode>,
+	attachment: GovernanceProductAttachment
+): void {
+	const sourceNodeId = productGraphNodeId(
+		attachment.source_product_id,
+		attachment.source_record_id
+	);
+	const targetNodeId = productGraphNodeId(
+		attachment.target_product_id,
+		attachment.target_record_id
+	);
+	if (!nodes.has(sourceNodeId)) {
+		nodes.set(sourceNodeId, attachmentRecordNode(attachment, 'source'));
+	}
+	if (!nodes.has(targetNodeId)) {
+		nodes.set(targetNodeId, attachmentRecordNode(attachment, 'target'));
+	}
+}
+
+function attachmentRecordNode(
+	attachment: GovernanceProductAttachment,
+	side: 'source' | 'target'
+): GovernanceAttachmentGraphNode {
+	const productId = side === 'source' ? attachment.source_product_id : attachment.target_product_id;
+	const recordId = side === 'source' ? attachment.source_record_id : attachment.target_record_id;
+	return {
+		id: productGraphNodeId(productId, recordId),
+		product_id: productId,
+		record_id: productId === 'atlas' ? null : recordId,
+		atlas_canvas_id: attachment.atlas_canvas_id,
+		atlas_node_id: attachment.atlas_node_id,
+		label: recordId,
+		status: null,
+		created_at: attachment.created_at,
+		record: null
+	};
+}
+
+function addExplicitAttachment(
+	attachments: Map<string, GovernanceAttachmentGraphEdge>,
+	attachment: GovernanceProductAttachment
+): void {
+	const id = `attachment:${attachment.id}`;
+	if (attachments.has(id)) return;
+	attachments.set(id, {
+		id,
+		source: productGraphNodeId(attachment.source_product_id, attachment.source_record_id),
+		target: productGraphNodeId(attachment.target_product_id, attachment.target_record_id),
+		source_product_id: attachment.source_product_id,
+		target_product_id: attachment.target_product_id,
+		mode: attachment.mode,
+		label: attachment.label,
+		required: attachment.required
+	});
 }
 
 export function buildGovernanceAttachmentCapabilities(
@@ -307,4 +387,11 @@ function decisionGraphNodeId(decisionId: string): string {
 
 function proofGraphNodeId(proofId: string): string {
 	return `proof:${proofId}`;
+}
+
+function productGraphNodeId(productId: GovernanceProductId, recordId: string): string {
+	if (productId === 'atlas') return atlasGraphNodeId(recordId);
+	if (productId === 'signal') return signalGraphNodeId(recordId);
+	if (productId === 'decision') return decisionGraphNodeId(recordId);
+	return proofGraphNodeId(recordId);
 }

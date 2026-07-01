@@ -60,6 +60,15 @@ export type GovernanceProductAttachmentGraphApi = {
 	attaches: GovernanceProductId[];
 };
 
+export type GovernanceProductAttachmentRecordsApi = {
+	product: 'atlas';
+	path: '/api/governance/attachments';
+	methods: ['GET', 'POST'];
+	requiresCredential: true;
+	records: 'product_attachments';
+	attaches: GovernanceProductId[];
+};
+
 export type GovernanceProductMonitorReadinessApi = {
 	product: 'signal';
 	path: '/api/governance/monitors/slack/readiness';
@@ -76,6 +85,7 @@ export type GovernanceProductCompositionManifest = {
 	atlasHub: GovernanceProductId;
 	apiPath: '/api/governance/products';
 	attachmentGraphApi: GovernanceProductAttachmentGraphApi;
+	attachmentRecordsApi: GovernanceProductAttachmentRecordsApi;
 	monitorReadinessApi: GovernanceProductMonitorReadinessApi;
 	products: GovernanceProductManifestProduct[];
 	runtimeApis: GovernanceProductRuntimeApi[];
@@ -95,6 +105,7 @@ export type GovernanceProductCompositionManifest = {
 		attachmentModes: GovernanceProductAttachmentMode[];
 		requiredLoop: GovernanceProductId[];
 		attachmentGraphApiPath: '/api/governance/graph';
+		attachmentRecordsApiPath: '/api/governance/attachments';
 		monitorReadinessApiPath: '/api/governance/monitors/slack/readiness';
 	};
 };
@@ -201,6 +212,17 @@ function buildAttachmentGraphApi(): GovernanceProductAttachmentGraphApi {
 	};
 }
 
+function buildAttachmentRecordsApi(): GovernanceProductAttachmentRecordsApi {
+	return {
+		product: 'atlas',
+		path: '/api/governance/attachments',
+		methods: ['GET', 'POST'],
+		requiresCredential: true,
+		records: 'product_attachments',
+		attaches: [...SIGNAL_DECISION_PROOF_COMPOSITION.products]
+	};
+}
+
 function buildMonitorReadinessApi(): GovernanceProductMonitorReadinessApi {
 	return {
 		product: 'signal',
@@ -230,6 +252,7 @@ export function buildGovernanceProductCompositionManifest(): GovernanceProductCo
 		atlasHub: SIGNAL_DECISION_PROOF_COMPOSITION.atlasHub,
 		apiPath: '/api/governance/products',
 		attachmentGraphApi: buildAttachmentGraphApi(),
+		attachmentRecordsApi: buildAttachmentRecordsApi(),
 		monitorReadinessApi: buildMonitorReadinessApi(),
 		products,
 		runtimeApis: buildRuntimeApis(products),
@@ -249,6 +272,7 @@ export function buildGovernanceProductCompositionManifest(): GovernanceProductCo
 			attachmentModes: ['connects', 'consumes', 'produces', 'records'],
 			requiredLoop: [...SIGNAL_DECISION_PROOF_COMPOSITION.products],
 			attachmentGraphApiPath: '/api/governance/graph',
+			attachmentRecordsApiPath: '/api/governance/attachments',
 			monitorReadinessApiPath: '/api/governance/monitors/slack/readiness'
 		}
 	};

@@ -36,6 +36,16 @@ export function validateGovernanceProductManifest(body) {
 		body?.attachmentGraphApi?.path === '/api/governance/graph' &&
 		body?.attachmentGraphApi?.requiresCredential === true &&
 		REQUIRED_GOVERNANCE_PRODUCTS.every((productId) => body.attachmentGraphApi?.attaches?.includes(productId));
+	const attachmentRecordsReady =
+		body?.attachmentRecordsApi?.path === '/api/governance/attachments' &&
+		body?.attachmentRecordsApi?.requiresCredential === true &&
+		Array.isArray(body?.attachmentRecordsApi?.methods) &&
+		body.attachmentRecordsApi.methods.includes('GET') &&
+		body.attachmentRecordsApi.methods.includes('POST') &&
+		REQUIRED_GOVERNANCE_PRODUCTS.every((productId) =>
+			body.attachmentRecordsApi?.attaches?.includes(productId)
+		) &&
+		body?.agentContract?.attachmentRecordsApiPath === '/api/governance/attachments';
 	const monitorReadinessReady =
 		body?.monitorReadinessApi?.path === '/api/governance/monitors/slack/readiness' &&
 		body?.monitorReadinessApi?.requiresCredential === true &&
@@ -49,6 +59,7 @@ export function validateGovernanceProductManifest(body) {
 		missingRuntimeApis.length === 0 &&
 		missingDeclaredAttachments.length === 0 &&
 		attachmentGraphReady &&
+		attachmentRecordsReady &&
 		monitorReadinessReady;
 
 	return {
@@ -63,6 +74,8 @@ export function validateGovernanceProductManifest(body) {
 			missing_declared_attachments: missingDeclaredAttachments,
 			attachment_graph_api_path: body?.attachmentGraphApi?.path ?? null,
 			attachment_graph_ready: attachmentGraphReady,
+			attachment_records_api_path: body?.attachmentRecordsApi?.path ?? null,
+			attachment_records_ready: attachmentRecordsReady,
 			monitor_readiness_api_path: body?.monitorReadinessApi?.path ?? null,
 			monitor_readiness_secret_safe: body?.monitorReadinessApi?.secretSafe === true,
 			monitor_readiness_ready: monitorReadinessReady

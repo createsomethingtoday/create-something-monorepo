@@ -3,12 +3,18 @@ import test from 'node:test';
 
 import {
 	createGovernanceDecision,
+	createGovernanceProductAttachment,
 	createGovernanceProof,
 	createGovernanceSignal,
 	listGovernanceDecisions,
+	listGovernanceProductAttachments,
 	listGovernanceProofs,
 	listGovernanceSignals
 } from '../src/lib/server/governance-runtime.ts';
+import {
+	GET as getAttachments,
+	POST as postAttachment
+} from '../src/routes/api/governance/attachments/+server.ts';
 import { buildGovernanceAttachmentGraph } from '../src/lib/server/governance-graph.ts';
 import { GET as getDecisions, POST as postDecision } from '../src/routes/api/governance/decisions/+server.ts';
 import { GET as getGraph } from '../src/routes/api/governance/graph/+server.ts';
@@ -48,7 +54,14 @@ class FakeStatement {
 		const limit = Number(this.values.at(-1) ?? 100);
 		let filterIndex = 0;
 
-		for (const column of ['atlas_canvas_id', 'atlas_node_id', 'signal_id', 'decision_id']) {
+		for (const column of [
+			'atlas_canvas_id',
+			'atlas_node_id',
+			'signal_id',
+			'decision_id',
+			'source_product_id',
+			'target_product_id'
+		]) {
 			if (!this.sql.includes(`${column} = ?`)) continue;
 			const expected = this.values[filterIndex++];
 			rows = rows.filter((row) => row[column] === expected);
@@ -73,9 +86,12 @@ class FakeStatement {
 	}
 
 	private tableFromInsert(): string | undefined {
-		return ['governance_signals', 'governance_decisions', 'governance_proofs'].find((table) =>
-			this.sql.includes(`INSERT INTO ${table}`)
-		);
+		return [
+			'governance_signals',
+			'governance_decisions',
+			'governance_proofs',
+			'governance_product_attachments'
+		].find((table) => this.sql.includes(`INSERT INTO ${table}`));
 	}
 
 	private rowFromInsert(table: string): TableRow {
@@ -135,6 +151,39 @@ class FakeStatement {
 			};
 		}
 
+		if (table === 'governance_product_attachments') {
+			const [
+				id,
+				source_product_id,
+				source_record_id,
+				target_product_id,
+				target_record_id,
+				atlas_canvas_id,
+				atlas_node_id,
+				mode,
+				label,
+				required,
+				metadata_json,
+				created_at,
+				updated_at
+			] = this.values;
+			return {
+				id,
+				source_product_id,
+				source_record_id,
+				target_product_id,
+				target_record_id,
+				atlas_canvas_id,
+				atlas_node_id,
+				mode,
+				label,
+				required,
+				metadata_json,
+				created_at,
+				updated_at
+			};
+		}
+
 		const [
 			id,
 			signal_id,
@@ -178,7 +227,8 @@ function defaultTables(): Record<string, TableRow[]> {
 	return {
 		governance_signals: [],
 		governance_decisions: [],
-		governance_proofs: []
+		governance_proofs: [],
+		governance_product_attachments: []
 	};
 }
 
@@ -283,6 +333,95 @@ test('governance runtime records the Signal Decision Proof loop with Atlas attac
 	assert.equal(decisionProofs[0]?.id, proof.id);
 });
 
+test('governance runtime records durable product attachments beyond inferred loop edges', async () => {
+	const db = new FakeD1() as unknown as Parameters<typeof createGovernanceSignal>[0];
+
+	const signal = await createGovernanceSignal(db, {
+		atlasCanvasId: 'canvas_explicit',
+		atlasNodeId: 'node_api_updates',
+		source: 'slack:#api-updates',
+		title: 'API field changed',
+		summary: 'The update needs docs review.'
+	});
+	const decision = await createGovernanceDecision(db, {
+		signalId: signal.id,
+		atlasCanvasId: signal.atlas_canvas_id,
+		atlasNodeId: signal.atlas_node_id,
+		decisionState: 'run',
+		decisionOwner: 'docs-reviewer@example.com',
+		reason: 'Docs update can proceed.'
+	});
+	const proof = await createGovernanceProof(db, {
+		signalId: signal.id,
+		decisionId: decision.id,
+		atlasCanvasId: signal.atlas_canvas_id,
+		atlasNodeId: signal.atlas_node_id,
+		evidence: 'Docs PR opened.',
+		outcome: 'documented'
+	});
+	const attachment = await createGovernanceProductAttachment(db, {
+		sourceProductId: 'signal',
+		sourceRecordId: signal.id,
+		targetProductId: 'proof',
+		targetRecordId: proof.id,
+		atlasCanvasId: signal.atlas_canvas_id,
+		atlasNodeId: signal.atlas_node_id,
+		mode: 'records',
+		label: 'Signal keeps a direct proof receipt.',
+		metadata: { reason: 'direct_receipt' }
+	});
+
+	assert.equal(attachment.source_product_id, 'signal');
+	assert.equal(attachment.target_product_id, 'proof');
+	assert.equal(attachment.metadata.reason, 'direct_receipt');
+
+	const attachments = await listGovernanceProductAttachments(db, {
+		atlasCanvasId: 'canvas_explicit',
+		sourceProductId: 'signal'
+	});
+	assert.equal(attachments.length, 1);
+	assert.equal(attachments[0]?.id, attachment.id);
+
+	const graph = await buildGovernanceAttachmentGraph(db, { atlasCanvasId: 'canvas_explicit' });
+	const explicitEdge = graph.attachments.find((edge) => edge.id === `attachment:${attachment.id}`);
+	assert.deepEqual(
+		explicitEdge && [
+			explicitEdge.source,
+			explicitEdge.target,
+			explicitEdge.source_product_id,
+			explicitEdge.target_product_id,
+			explicitEdge.mode,
+			explicitEdge.label
+		],
+		[
+			`signal:${signal.id}`,
+			`proof:${proof.id}`,
+			'signal',
+			'proof',
+			'records',
+			'Signal keeps a direct proof receipt.'
+		]
+	);
+	assert.equal(
+		graph.attachment_capabilities.find(
+			(capability) =>
+				capability.source_product_id === 'signal' && capability.target_product_id === 'proof'
+		)?.current_attachment_count,
+		1
+	);
+
+	await assert.rejects(
+		createGovernanceProductAttachment(db, {
+			sourceProductId: 'signal',
+			sourceRecordId: signal.id,
+			targetProductId: 'signal',
+			targetRecordId: signal.id,
+			atlasCanvasId: signal.atlas_canvas_id
+		}),
+		/sourceProductId and targetProductId must be different/
+	);
+});
+
 test('governance runtime validates required fields and migration availability', async () => {
 	const db = new FakeD1({ governance_signals: [] }) as unknown as Parameters<
 		typeof createGovernanceDecision
@@ -368,6 +507,57 @@ test('governance APIs create and filter runtime records', async () => {
 	assert.equal((await filteredSignals.json()).count, 1);
 	assert.equal((await filteredDecisions.json()).decisions[0].id, decisionPayload.decision.id);
 	assert.equal((await filteredProofs.json()).proofs[0].outcome, 'passed');
+});
+
+test('governance attachment API creates and filters explicit product attachments', async () => {
+	const db = new FakeD1();
+
+	const createResponse = await postAttachment(
+		postEvent(db, {
+			source_product_id: 'atlas',
+			source_record_id: 'canvas_runtime',
+			target_product_id: 'decision',
+			target_record_id: 'dec_runtime',
+			atlas_canvas_id: 'canvas_runtime',
+			atlas_node_id: 'node_policy',
+			mode: 'connects',
+			label: 'Atlas links directly to an owner decision.',
+			metadata: { source: 'operator' }
+		})
+	);
+	const createPayload = await createResponse.json();
+
+	assert.equal(createResponse.status, 201);
+	assert.equal(createPayload.attachment.source_product_id, 'atlas');
+	assert.equal(createPayload.attachment.target_product_id, 'decision');
+	assert.equal(createPayload.attachment.metadata.source, 'operator');
+
+	const listResponse = await getAttachments(
+		credentialedGetEvent(
+			db,
+			'https://createsomething.agency/api/governance/attachments?atlas_canvas_id=canvas_runtime&target_product_id=decision'
+		)
+	);
+	const listPayload = await listResponse.json();
+
+	assert.equal(listResponse.status, 200);
+	assert.equal(listPayload.count, 1);
+	assert.equal(listPayload.attachments[0].label, 'Atlas links directly to an owner decision.');
+
+	const unauthorized = await postAttachment(
+		postEvent(
+			db,
+			{
+				source_product_id: 'atlas',
+				source_record_id: 'canvas_runtime',
+				target_product_id: 'proof',
+				target_record_id: 'proof_runtime',
+				atlas_canvas_id: 'canvas_runtime'
+			},
+			{ providedKey: null }
+		)
+	);
+	assert.equal(unauthorized.status, 401);
 });
 
 test('governance graph composes Atlas Signal Decision Proof attachments by canvas', async () => {
@@ -490,6 +680,69 @@ test('governance graph composes Atlas Signal Decision Proof attachments by canva
 
 	assert.equal(unauthorized.status, 401);
 	assert.match(unauthorizedPayload.error, /governance write credential/i);
+});
+
+test('governance graph remains available before explicit attachment migration is applied', async () => {
+	const db = new FakeD1({
+		governance_signals: [],
+		governance_decisions: [],
+		governance_proofs: []
+	});
+	const signal = await createGovernanceSignal(db as unknown as Parameters<typeof createGovernanceSignal>[0], {
+		atlasCanvasId: 'canvas_rollout',
+		source: 'slack:#api-updates',
+		title: 'API update needs review',
+		summary: 'Docs and reviewer process need a coordinated review.'
+	});
+	const decision = await createGovernanceDecision(
+		db as unknown as Parameters<typeof createGovernanceDecision>[0],
+		{
+			signalId: signal.id,
+			atlasCanvasId: signal.atlas_canvas_id,
+			decisionState: 'run',
+			decisionOwner: 'docs-reviewer@example.com',
+			reason: 'Update docs now.'
+		}
+	);
+	await createGovernanceProof(db as unknown as Parameters<typeof createGovernanceProof>[0], {
+		signalId: signal.id,
+		decisionId: decision.id,
+		atlasCanvasId: signal.atlas_canvas_id,
+		evidence: 'Docs were updated.',
+		outcome: 'documented'
+	});
+
+	const graph = await buildGovernanceAttachmentGraph(
+		db as unknown as Parameters<typeof buildGovernanceAttachmentGraph>[0],
+		{
+			atlasCanvasId: 'canvas_rollout'
+		}
+	);
+
+	assert.equal(graph.nodes.length, 4);
+	assert.equal(graph.attachments.length, 4);
+	assert.deepEqual(
+		graph.attachment_capabilities
+			.filter((capability) => capability.required)
+			.map((capability) => [
+				`${capability.source_product_id}->${capability.target_product_id}`,
+				capability.attached
+			]),
+		[
+			['atlas->signal', true],
+			['signal->decision', true],
+			['decision->proof', true],
+			['proof->atlas', true]
+		]
+	);
+
+	await assert.rejects(
+		() =>
+			listGovernanceProductAttachments(
+				db as unknown as Parameters<typeof listGovernanceProductAttachments>[0]
+			),
+		/migration 0032/
+	);
 });
 
 test('governance write APIs require the internal credential', async () => {
