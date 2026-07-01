@@ -17,6 +17,10 @@ marketing visuals: `packages/ltd/src/lib/content/canon/guidelines/images.md`.
 Ona.com is the design and communication foundation, but CREATE SOMETHING owns the
 system-map, policy, receipt, validation, and handoff language.
 
+Use `docs/IMAGE_LANGUAGE_FOUNDATION.md` as the foundation for TASTE-backed image
+generation. TASTE supplies judgment context; generated images still need a named
+image family, proof requirement, source prompt, metadata, and review gate.
+
 ## Canvas-First Visual Language
 
 When a visual needs to explain a workflow, service, offer, case study, tool
@@ -93,6 +97,8 @@ redrawing the workflow by hand.
 For generated images, use `gpt-image-2` when access is available and keep the
 source prompt beside the export. The prompt must state the image family, proof
 requirement, target surface, and constraints before style direction.
+Use the Image API for one completed prompt or direct edits. Use the Responses API
+image generation tool when the work needs conversational, multi-turn refinement.
 
 ## Collect
 

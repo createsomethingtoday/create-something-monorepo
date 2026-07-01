@@ -24,6 +24,7 @@ should answer at least one operational question.
 | `ClearPageSection` | A page band needs a plain claim, short explanation, proof, action, or aside. |
 | `ClearPlatformHero` | The first viewport needs to anchor a product, system, or platform with proof. |
 | `ClearProofStrip` | Several compact proof objects need to be scanned together. |
+| `ClearWorkflowMiniArtifact` | Signal, Decision, or Proof needs a deterministic mini artifact that reads as interface evidence, not illustration. |
 | `ClearDecisionPanel` | A workflow has allow, review, block, or neutral decision states. |
 | `ClearStateRows` | The page needs explicit run, wait, stop, or handoff rows. |
 | `ClearReceiptGrid` | Delivery evidence, artifacts, or validation receipts need to be shown. |

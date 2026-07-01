@@ -3,11 +3,10 @@
     Button,
     ClearActionFooter,
     ClearPageSection,
-    ClearPillarGrid,
     ClearPlatformHero,
+    ClearWorkflowMiniArtifact,
     SEO,
     type ClearActionFooterItem,
-    type ClearPillarItem,
     type ClearPlatformHeroProof
   } from '@create-something/canon';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
@@ -53,7 +52,7 @@
     {
       question: 'What does CREATE SOMETHING build?',
       answer:
-        'CREATE SOMETHING builds AI workflow systems for business operations: Signals from your tools, Decisions routed to the right human or agent, and Proof that records what happened.'
+        'CREATE SOMETHING builds AI workflow systems that make one business workflow safe to delegate: Signals from your tools, Decisions routed to the right human or agent, and Proof that records what happened.'
     },
     {
       question: 'What makes a workflow reliable?',
@@ -63,7 +62,7 @@
     {
       question: 'Where does CREATE SOMETHING start?',
       answer:
-        'The work starts with one messy handoff your team still protects by hand, then maps the first controlled pilot before expanding automation.'
+        'The work starts with one messy handoff your team wants to delegate, then maps the first controlled pilot before expanding automation.'
     },
     {
       question: 'What do clients leave with?',
@@ -91,35 +90,35 @@
     }
   ];
 
-  const serviceFlowPillars: ClearPillarItem[] = [
+  const serviceFlowSteps = [
     {
+      id: 'signal',
       eyebrow: '01 Signal',
       title: 'Watch the signals',
       detail:
         'Pick the support, revenue, production, API, or credential-touching changes the team still has to notice by hand.',
-      proof: 'Output: signal sources, workflow map, owner, systems, and risk.',
-      links: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
+      proof: 'signal sources · workflow map · owner · systems · risk'
     },
     {
+      id: 'decision',
       eyebrow: '02 Decision',
       title: 'Route the decision',
       detail:
         'Turn that map into an operator inbox with scoped actions, approval pauses, blocked states, and clear owners.',
-      proof: 'Output: decision queue, working path, runbook, and release evidence.',
-      links: [{ label: 'See service path', href: '/services#service-path' }]
+      proof: 'decision queue · working path · runbook · release evidence'
     },
     {
+      id: 'proof',
       eyebrow: '03 Proof',
       title: 'Leave proof behind',
       detail:
         'Record source evidence, policy, decision, downstream action, receipt, and recovery path when the lane goes live.',
-      proof: 'Output: Proof Graph for revenue, customer, or production risk.',
-      links: [{ label: 'See stack boundary', href: '/stack' }]
+      proof: 'Proof Graph · receipt trail · recovery path'
     }
-  ];
+  ] as const;
 
   const actionFooterItems: ClearActionFooterItem[] = [
-    { label: 'Signal', value: 'One workflow your team still has to watch' },
+    { label: 'Signal', value: 'One workflow your team wants to delegate' },
     { label: 'Decision', value: 'Owner, allowed actions, approval pauses, and stops' },
     { label: 'Proof', value: 'A fixed-scope map and proof plan before any build commitment' }
   ];
@@ -127,7 +126,7 @@
 
 <SEO
   title="AI Workflow Systems | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING turns one messy business handoff into Signals, Decisions, and Proof: connected tools, approvals, stop conditions, and an audit trail."
+  description="CREATE SOMETHING builds AI workflow systems for business operations: one messy handoff becomes Signals, Decisions, Proof, connected tools, approvals, stop conditions, and an audit trail."
   keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -138,8 +137,8 @@
 <div class="home-pilot">
   <ClearPlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="AI workflow systems for business operations."
-    description="Turn one messy handoff into Signals, Decisions, and Proof. CREATE SOMETHING maps the process, connects the tools, defines what AI can do, and gives your team approvals, stop conditions, and an audit trail."
+    title="Make one workflow safe to delegate."
+    description="CREATE SOMETHING turns one messy handoff into Signals, Decisions, and Proof: the process is mapped, the tools are connected, AI gets a clear lane, and your team keeps approvals, stop conditions, and an audit trail."
     proofItems={heroProofItems}
     hideAsideOnMobile={true}
   >
@@ -156,7 +155,7 @@
   <ClearPageSection
     variant="white"
     eyebrow="Workflow plan"
-    title="See the workflow before we build it."
+    title="Map the work before AI runs it."
     description="Atlas turns the current process into a clear map: which signals matter, where work moves, what AI can handle, where people approve, and what proof records the outcome."
   >
     {#snippet after()}
@@ -176,22 +175,39 @@
     variant="white"
     class="home-process-section"
     eyebrow="Service path"
-    title="Watch signals. Route decisions. Leave proof."
+    title="Map signals. Route decisions. Leave proof."
     description="The work stays narrow: first understand the handoff, then build one controlled pilot, then add operating rules only when live work needs them."
   >
     {#snippet after()}
-      <ClearPillarGrid
-        items={serviceFlowPillars}
-        columns={3}
-        ariaLabel="CREATE SOMETHING service flow"
-      />
+      <div class="service-flow-artifacts" aria-label="CREATE SOMETHING service flow">
+        {#each serviceFlowSteps as step}
+          <article class="service-flow-artifact service-flow-artifact--{step.id}">
+            <div class="service-flow-artifact__visual">
+              <ClearWorkflowMiniArtifact kind={step.id} />
+            </div>
+            <div class="service-flow-artifact__copy">
+              <span>{step.eyebrow}</span>
+              <h3>{step.title}</h3>
+              <p>{step.detail}</p>
+              <small>{step.proof}</small>
+            </div>
+          </article>
+        {/each}
+      </div>
+      <div class="service-flow-action">
+        <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
+        <p>
+          See the <a href="/services">service path</a>, the <a href="/partners">tool stack</a>, or
+          the <a href="/products">proof surfaces</a>.
+        </p>
+      </div>
     {/snippet}
   </ClearPageSection>
 
   <ClearActionFooter
     eyebrow="Fixed-scope first step"
     title={agencyCoreMessaging.workflowCtaHeading}
-    description="Start with a workflow map and proof plan. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear boundary."
+    description="Start with a workflow map and proof plan. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear delegation boundary."
     items={actionFooterItems}
   >
     {#snippet actions()}
@@ -246,26 +262,97 @@
   }
 
   .home-pilot :global(.home-process-section .clear-page-section__after) {
-    margin-top: 2rem;
+    margin-top: 2.4rem;
   }
 
-  .home-pilot :global(.home-process-section .clear-pillar) {
-    min-height: 12.6rem;
-    padding: 0.9rem;
+  .service-flow-artifacts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--color-clear-border, #e1e1e1);
+    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
   }
 
-  .home-pilot :global(.home-process-section .clear-pillar strong),
-  .home-pilot :global(.home-process-section .clear-pillar__title-link) {
-    font-size: 1.04rem;
+  .service-flow-artifact {
+    display: grid;
+    grid-template-rows: 7.25rem minmax(0, 1fr);
+    gap: 1.18rem;
+    min-height: 22rem;
+    padding: 1.18rem 1.22rem 1.28rem;
   }
 
-  .home-pilot :global(.home-process-section .clear-pillar p) {
-    font-size: 0.9rem;
-    line-height: 1.42;
+  .service-flow-artifact + .service-flow-artifact {
+    border-left: 1px solid var(--color-clear-border, #e1e1e1);
   }
 
-  .home-pilot :global(.home-process-section .clear-pillar small) {
+  .service-flow-artifact__visual {
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    min-width: 0;
+    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+  }
+
+  .service-flow-artifact__copy {
+    display: grid;
+    align-content: start;
+    gap: 0.58rem;
+    max-width: 31rem;
+  }
+
+  .service-flow-artifact__copy span,
+  .service-flow-artifact__copy small {
+    color: var(--color-clear-grey, #636363);
+    font-family: var(--font-mono);
     font-size: 0.72rem;
+    font-weight: var(--font-semibold);
+    line-height: 1.32;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .service-flow-artifact__copy h3 {
+    margin: 0;
+    color: var(--color-clear-onyx, #0a0e19);
+    font-size: 1.12rem;
+    font-weight: var(--font-medium);
+    line-height: 1.18;
+  }
+
+  .service-flow-artifact__copy p {
+    margin: 0;
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .service-flow-artifact__copy small {
+    display: block;
+    margin-top: 0.32rem;
+    color: var(--color-clear-onyx, #0a0e19);
+    text-transform: none;
+  }
+
+  .service-flow-action {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem 1.1rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.4rem;
+    padding-top: 1.2rem;
+  }
+
+  .service-flow-action p {
+    margin: 0;
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .service-flow-action a {
+    color: var(--color-clear-onyx, #0a0e19);
+    text-underline-offset: 0.18em;
   }
 
   @media (max-width: 640px) {
@@ -278,6 +365,31 @@
     .home-pilot :global(.clear-platform-hero__proof article) {
       min-height: 5.45rem;
       padding: 0.72rem;
+    }
+
+    .service-flow-artifacts {
+      grid-template-columns: 1fr;
+      border-bottom: 0;
+    }
+
+    .service-flow-artifact {
+      grid-template-rows: 5.9rem minmax(0, 1fr);
+      min-height: 0;
+      padding: 1rem 0;
+    }
+
+    .service-flow-artifact + .service-flow-artifact {
+      border-top: 1px solid var(--color-clear-border, #e1e1e1);
+      border-left: 0;
+    }
+
+    .service-flow-action {
+      align-items: stretch;
+    }
+
+    .service-flow-action :global(.btn) {
+      width: 100%;
+      justify-content: center;
     }
   }
 </style>

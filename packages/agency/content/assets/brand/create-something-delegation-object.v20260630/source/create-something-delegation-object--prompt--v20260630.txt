@@ -1,0 +1,52 @@
+Model: gpt-image-2
+Quality: high
+Size: 1536x1024
+Surface: agency homepage hero, social crops, sales deck opener
+Image family: system-map-hero
+Owner: CREATE SOMETHING
+Review status: draft
+Source manifest: docs/IMAGE_LANGUAGE_FOUNDATION.md, packages/agency/README.md, packages/agency/src/lib/components/HeroTrustArtifact.svelte
+
+Purpose:
+Create a reusable CREATE SOMETHING hero visual that makes one delegated business workflow feel safe, mapped, and inspectable before AI runs it.
+
+Audience:
+Business operators, technical operators, founders, and workflow owners evaluating whether an AI-assisted workflow can touch customers, revenue, production, credentials, or regulated decisions.
+
+Primary claim:
+Make one workflow safe to delegate.
+
+Proof requirement:
+The image must visibly show Signal, Decision, Proof, plus run, wait, stop, owner, and receipt surfaces. It is an explanatory generated artifact, not screenshot evidence.
+
+TASTE packet:
+1. Together.ai homepage screenshot, June 30 2026. Borrow the confident first-viewport scale, quiet pale field, one memorable system object, thin annotation lines, and small proof labels. Do not copy the Together.ai logo, exact layout, AI Native Cloud language, customer-logo strip, or colored platform sculpture.
+2. Modal homepage. Borrow direct technical confidence and category clarity. Do not copy infrastructure positioning or developer-only framing.
+3. LangChain homepage. Borrow lifecycle confidence around reliable agent systems. Do not copy agent-platform framing or product taxonomy.
+
+Prompt:
+Create a CREATE SOMETHING system-map hero visual for the agency homepage.
+
+The visual should show a single 2.5D operational object, like a clear Atlas delegation artifact floating on a pale porcelain workspace. It should not look like a generic AI cloud sculpture. It should look like a mapped workflow object an operator can inspect.
+
+Show three connected planes or layers labeled Signal, Decision, and Proof. Signal should show incoming records or requests. Decision should show an owner gate with run, wait, and stop states. Proof should show receipt cards or files that record the outcome. Add restrained annotation lines with small labels: RUN, WAIT, STOP, OWNER, RECEIPT.
+
+Composition:
+- Large quiet hero field with generous empty space.
+- The 2.5D delegation object sits on the right side and occupies the main visual attention.
+- Left-side space should remain clean enough for a homepage headline.
+- Thin rules and compact labels should make the object feel precise.
+- Include a tiny isometric cube signature only if it supports the system identity.
+
+Style:
+Readable Control for CREATE SOMETHING. Calm proof surface, porcelain or white background, near-black labels, crisp typography, restrained cobalt, moss, and stop-red accents. The visual should feel operational, governed, and inspectable. Use clean geometry, translucent planes, small file cards, policy gates, and receipt markers. The image should show mapped, governed, validated, handed-off work.
+
+Avoid:
+Glowing robots, circuit faces, generic brains, blue AI gradients, magical automation atmosphere, fake screenshot evidence, unreadable labels, customer logos, vendor endorsement, private data, PHI, secrets, watermarks, abstract cloud-platform sculpture, and any copied source assets.
+
+Review gate:
+- Text remains legible at 50% size.
+- Signal, Decision, Proof are visible.
+- Run, wait, stop, owner, and receipt are visible.
+- The generated visual is not presented as a real screenshot.
+- The result feels like CREATE SOMETHING: mapped, governed, validated, and handed off.

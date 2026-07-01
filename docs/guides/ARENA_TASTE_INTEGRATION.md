@@ -49,8 +49,29 @@ Use the corpus to produce sellable artifacts:
 - Client design-context packets.
 - Taste pattern audits.
 - Agent-readable brand/design standards.
+- Image-language foundation packets for generated, designed, and rendered assets.
 - Before/after reference boards for `.agency` sales.
 - Project-specific `llm.txt` or MCP resources for client agents.
+
+## Image Language Foundation Loop
+
+Use TASTE as the judgment layer for CREATE SOMETHING image generation. The
+canonical image-language foundation lives in
+`docs/IMAGE_LANGUAGE_FOUNDATION.md`.
+
+For production image work:
+
+1. Pull a small TASTE packet from approved references.
+2. State what each reference contributes and what must not be copied.
+3. Attach the TASTE packet to the image prompt or asset metadata.
+4. Generate or edit only after the proof requirement is clear.
+5. Review the result against the TASTE packet, Canon image guideline, and
+   operational proof requirement.
+6. Feed approved patterns back into `/llm.txt`, `/api/taste/context`, and the
+   relevant asset template or guide.
+
+TASTE references are judgment inputs, not source assets. Do not copy third-party
+images, fonts, brand marks, page layouts, campaign language, or generated CSS.
 
 ## Ona Clarity Loop
 

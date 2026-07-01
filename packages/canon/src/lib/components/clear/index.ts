@@ -7,6 +7,10 @@ export {
 } from './ClearPlatformHero.svelte';
 export { default as ClearLogoStrip, type ClearLogoStripItem } from './ClearLogoStrip.svelte';
 export { default as ClearProofStrip, type ClearProofItem } from './ClearProofStrip.svelte';
+export {
+	default as ClearWorkflowMiniArtifact,
+	type ClearWorkflowMiniArtifactProps
+} from './ClearWorkflowMiniArtifact.svelte';
 export { default as ClearStateRows, type ClearWorkflowState } from './ClearStateRows.svelte';
 export { default as ClearArtifactCard } from './ClearArtifactCard.svelte';
 export { default as ClearCardGrid, type ClearCardItem } from './ClearCardGrid.svelte';

@@ -6,6 +6,12 @@
 > Updated:
 > Refresh owner:
 
+## TASTE Packet
+
+| Reference | Source | Why it belongs | What must not be copied | Notes |
+| --------- | ------ | -------------- | ----------------------- | ----- |
+|           |        |                |                         |       |
+
 ## Original Visuals
 
 | File | Source prompt | Source file | Model | Owner | Review status | Refresh due | Notes |
@@ -42,6 +48,8 @@ a case study, a tool comparison, or agent behavior.
 ## Review Gate
 
 - [ ] Original visuals use the Canon Images guideline.
+- [ ] TASTE packet is attached or explicitly marked not applicable.
+- [ ] TASTE references were used as judgment inputs and were not copied.
 - [ ] Workflow, governance, and agent-behavior visuals were attempted as Atlas canvas artifacts before one-off graphics.
 - [ ] Canvas artifacts preserve a graph source and do not move the source of truth into the renderer.
 - [ ] Canvas artifacts show owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
