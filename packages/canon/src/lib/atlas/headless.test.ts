@@ -72,15 +72,16 @@ describe('public Atlas governance product attachments', () => {
 });
 
 describe('public Atlas editable layout', () => {
-  it('keeps the blank intake map compact enough for a readable first viewport', () => {
+  it('preserves full workflow lanes for the blank intake map', () => {
     const positioned = layoutPublicAtlasNodes(createPublicAtlasCanvas().nodes);
-    const rightEdge = Math.max(...positioned.map((node) => (node.x ?? 0) + (node.width ?? 0)));
 
-    expect(rightEdge).toBeLessThanOrEqual(1040);
     expect(positioned.map((node) => node.id)).toEqual([
       'actor_client',
       'data_workflow',
       'human_approval'
     ]);
+    expect(positioned.map((node) => node.x)).toEqual([72, 398, 1060]);
+    expect(positioned.map((node) => node.y)).toEqual([190, 132, 132]);
+    expect(positioned.map((node) => node.width)).toEqual([274, 274, 274]);
   });
 });
