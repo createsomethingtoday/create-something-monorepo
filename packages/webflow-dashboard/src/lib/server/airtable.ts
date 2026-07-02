@@ -1083,6 +1083,14 @@ function buildTemplateOfferMirrorFields(
 	return {
 		'✅Active Offer Enabled (🏗️ only)': Boolean(activeOffer),
 		'⚙️Active Offer Mode (🏗️ only)': activeOffer ? activeOfferModeKey(activeOffer) : null,
+		// Whalesync maps the CMS "Offer Mode" Option field to the legacy select, whose
+		// option names are fixed in Webflow. Keep it stamped until that CMS field is
+		// converted to plain text and remapped to the field above.
+		'❌LEGACY ⚙️Active Offer Mode (🏗️ only)': activeOffer
+			? activeOfferModeKey(activeOffer) === 'fulfillment_link'
+				? 'Fulfillment Link'
+				: 'Marketplace'
+			: null,
 		'🎟️Active Offer Label (🏗️ only)': activeOffer
 			? firstString(activeOffer.fields['🏷️Offer Label']) || 'Limited offer'
 			: null,
