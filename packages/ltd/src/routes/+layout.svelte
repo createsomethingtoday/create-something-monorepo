@@ -62,7 +62,7 @@
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-canon', label: 'Canon', description: 'The philosophical foundation', href: '/canon', icon: '📜', keywords: ['philosophy', 'foundation', 'truth'] },
+		{ id: 'nav-canon', label: 'Canon', description: 'Automation infrastructure philosophy', href: '/canon', icon: '📜', keywords: ['philosophy', 'foundation', 'truth'] },
 		{ id: 'nav-masters', label: 'Masters', description: 'Learn from the masters', href: '/masters', icon: '🎓', keywords: ['teachers', 'wisdom', 'dieter'] },
 		{ id: 'nav-principles', label: 'Principles', description: 'Core design principles', href: '/principles', icon: '⚖️', keywords: ['rules', 'guidelines', 'values'] },
 		{ id: 'nav-patterns', label: 'Patterns', description: 'Reusable patterns', href: '/patterns', icon: '🔷', keywords: ['components', 'templates', 'recipes'] },
@@ -110,7 +110,7 @@
 		<Footer
 			mode="ltd"
 			showNewsletter={false}
-			aboutText="The philosophical foundation for the Create Something ecosystem. Curated wisdom from masters who embody 'less, but better.'"
+			aboutText="The philosophy layer for CREATE SOMETHING: automation infrastructure, controlled delegation, standards, and proof for work that has to hold up."
 			quickLinks={quickLinks}
 			showSocial={true}
 			isAuthenticated={!!data.user}

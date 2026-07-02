@@ -4,77 +4,99 @@
     ClearCardGrid,
     ClearDecisionPanel,
     ClearPageSection,
-    ClearProofStrip,
+    ClearPlatformHero,
+    ClearStateRows,
     SEO,
     NewsletterSignup,
     PropertyFunnel,
     type ClearCardItem,
-    type ClearDecisionItem
+    type ClearDecisionItem,
+    type ClearPlatformHeroMeta,
+    type ClearPlatformHeroProof,
+    type ClearWorkflowState
   } from '@create-something/canon';
 
-  const proofMetrics = [
-    { value: 'Canon', label: 'principles that guide judgment' },
-    { value: 'Masters', label: 'reference points for quality' },
-    { value: 'Standards', label: 'operating rules for the work' },
-    { value: 'Voice', label: 'language that keeps decisions clear' }
+  const heroProofItems: ClearPlatformHeroProof[] = [
+    {
+      value: 'Creation',
+      label: 'The moat is building governed connectivity, not consuming AI tools.'
+    },
+    {
+      value: 'Control',
+      label: 'Delegated work needs owners, approvals, stop points, and policy.'
+    },
+    {
+      value: 'Chassis',
+      label: 'MCP gives agents a controlled frame for touching real systems.'
+    },
+    {
+      value: 'Proof',
+      label: 'Every useful action leaves evidence another operator can inspect.'
+    }
   ];
 
-  const heroSignals: ClearCardItem[] = [
+  const heroMetaItems: ClearPlatformHeroMeta[] = [
+    { label: 'Property role', value: 'Philosophy layer' },
+    { label: 'Category', value: 'Delegated Work Control' },
+    { label: 'Method', value: 'Less, but better' }
+  ];
+
+  const creationStates: ClearWorkflowState[] = [
     {
-      eyebrow: 'Principle',
-      icon: 'check',
-      title: 'Less, but better',
-      detail: 'The canon turns taste into constraints a team can reuse.'
+      tone: 'run',
+      state: 'Build',
+      label: 'Create the connection',
+      detail: 'Name the tool boundary, system owner, data shape, and action that should exist.'
     },
     {
-      eyebrow: 'Standard',
-      icon: 'document',
-      title: 'Rules before ornament',
-      detail: 'Decisions should leave behind language, standards, and examples.'
+      tone: 'wait',
+      state: 'Govern',
+      label: 'Encode the judgment',
+      detail: 'Turn taste, risk, and approval rules into policy artifacts an agent can follow.'
     },
     {
-      eyebrow: 'Handoff',
-      icon: 'arrow-right',
-      title: 'Philosophy into work',
-      detail: 'Principles connect back into research, runtime practice, and delivery.'
+      tone: 'stop',
+      state: 'Prove',
+      label: 'Leave the receipt',
+      detail: 'Keep the evidence, owner, outcome, and recovery path visible after the work runs.'
     }
   ];
 
   const canonCards: ClearCardItem[] = [
     {
-      eyebrow: 'Principle',
+      eyebrow: 'Creation moat',
       icon: 'check',
-      title: 'Less, but better.',
+      title: 'Consumption is not the work.',
       detail:
-        'Not minimalism for its own sake. When you remove the unnecessary, what remains gets stronger.',
+        'Installing and using AI tools keeps getting easier. The scarce work is deciding what should connect, what should run, and what must stay governed.',
       points: [
-        'Every feature, word, and decision has to earn its place',
-        'Simple takes more effort than leaving the work complicated',
-        'The canon makes that effort repeatable'
+        'MCP consumption is commoditized',
+        'MCP creation still requires domain and protocol judgment',
+        'The canon keeps that judgment reusable'
       ]
     },
     {
-      eyebrow: 'Question',
+      eyebrow: 'Controlled delegation',
       icon: 'search',
-      title: 'Does this belong?',
+      title: 'Connectivity comes before intelligence.',
       detail:
-        'Before adding another surface, pattern, or claim, the property asks whether it helps the next decision.',
+        'A useful agent needs a chassis: data access, authority boundaries, approvals, blocked states, and proof that the work stayed inside its lane.',
       points: [
-        'Reduce until the operating intent is legible',
-        'Keep the useful constraint and remove the ornamental one',
-        'Make judgment visible enough for another team to reuse'
+        'Signal names what changed',
+        'Decision routes what can happen next',
+        'Proof records what actually happened'
       ]
     },
     {
-      eyebrow: 'Application',
+      eyebrow: 'Canon',
       icon: 'arrow-right',
-      title: 'Philosophy into work',
+      title: 'Less, but better is an operating rule.',
       detail:
-        'The standard only matters if it moves into research, runtime practice, and scoped delivery.',
+        'The design lineage matters because automation gets dangerous when every feature, prompt, and permission is allowed to sprawl.',
       points: [
-        'Research uses the canon to decide what evidence matters',
-        'The workbench tests whether the principle survives runtime',
-        'Delivery turns the decision into a controlled workflow'
+        'Remove the ornamental claim',
+        'Keep the useful constraint',
+        'Reconnect every artifact to the system'
       ]
     }
   ];
@@ -152,116 +174,112 @@
 
   const decisionStates: ClearDecisionItem[] = [
     {
-      label: 'Keep',
-      summary: 'Earned place',
-      title: 'Name what belongs.',
+      label: 'Connect',
+      summary: 'Chassis needed',
+      title: 'Name the missing connection.',
       detail:
-        'The canon should help a visitor see which principle, reference, or standard is relevant before adding another surface or claim.',
+        'Start where a tool, record, tenant, workflow, or owner is still unreachable from the agent lane.',
       tone: 'allow',
       evidence: [
-        'The principle clarifies a real decision',
-        'The example raises the quality bar',
-        'The wording can travel into the work'
+        'The system of record is clear',
+        'The action boundary is specific',
+        'The connection changes a real workflow'
       ],
-      receipts: ['canon note', 'master reference', 'voice cue'],
+      receipts: ['MCP contract', 'data shape', 'owner'],
       actions: [
-        { label: 'Read Canon', href: '/canon' },
-        { label: 'Meet Masters', href: '/masters' }
+        { label: 'Read Research', href: 'https://createsomething.io' },
+        { label: 'Open Workbench', href: 'https://createsomething.space' }
       ]
     },
     {
-      label: 'Constrain',
-      summary: 'Standard needed',
-      title: 'Turn taste into a usable rule.',
+      label: 'Govern',
+      summary: 'Policy needed',
+      title: 'Turn judgment into policy.',
       detail:
-        'If a choice is still subjective, the next move is not more language. It is a standard, pattern, or example that makes judgment reviewable.',
+        'If a decision still depends on tacit taste, preference, or risk tolerance, it is not ready to be delegated.',
       tone: 'review',
       evidence: [
-        'The decision repeats across surfaces',
-        'The team needs a reusable constraint',
-        'The rule can be checked after implementation'
+        'The allowed action is explicit',
+        'The approval pause is named',
+        'The stop condition is reviewable'
       ],
-      receipts: ['standard', 'pattern', 'review question'],
+      receipts: ['policy artifact', 'standard', 'review gate'],
       actions: [
         { label: 'Open Standards', href: '/standards' },
         { label: 'Browse Patterns', href: '/patterns' }
       ]
     },
     {
-      label: 'Apply',
-      summary: 'Operating decision',
-      title: 'Move the judgment into work.',
+      label: 'Prove',
+      summary: 'Evidence needed',
+      title: 'Leave proof another operator can trust.',
       detail:
-        'A good canon interaction should not end in philosophy. It should point to research, runtime practice, or governed delivery when the decision is ready.',
+        'The work is not finished when an agent acts. It is finished when the evidence, owner, outcome, and recovery path are inspectable.',
       tone: 'neutral',
       evidence: [
-        'The principle has a concrete receiving surface',
-        'The next property matches the decision type',
-        'The handoff keeps the original judgment visible'
+        'The receipt identifies source evidence',
+        'The outcome maps back to policy',
+        'The rollback or follow-up path is visible'
       ],
-      receipts: ['research path', 'runtime test', 'delivery lane'],
+      receipts: ['proof record', 'handoff note', 'recovery path'],
       actions: [
-        { label: 'Read Research', href: 'https://createsomething.io' },
-        { label: 'Open Workbench', href: 'https://createsomething.space' }
+        { label: 'Read Canon', href: '/canon' },
+        { label: 'Map Workflow', href: 'https://createsomething.agency/book?source=ltd&intent=policy-to-workflow&lane=policy_os' }
       ]
     }
   ];
 </script>
 
 <SEO
-  title="The Canon for Less, But Better"
-  description="The philosophical foundation for Create Something. Curated wisdom from masters who embody 'less, but better.' Dieter Rams, Mies van der Rohe, and more."
-  keywords="design principles, less but better, Dieter Rams, minimalism, good design, design philosophy, systems thinking"
+  title="The Philosophy of Automation Infrastructure"
+  description="CREATE SOMETHING .ltd explains the creation moat: why governed connectivity, policy, trust boundaries, and proof matter more than simply consuming AI tools."
+  keywords="automation infrastructure, delegated work control, MCP creation, policy artifacts, proof, AI governance, design canon"
   ogImage="/og-image.svg"
   propertyName="ltd"
 />
 
-<ClearPageSection
-  variant="hero"
-  layout="split"
-  titleLevel="h1"
+<ClearPlatformHero
   eyebrow="CREATE SOMETHING .ltd"
-  title="A canon for decisions that earn their place."
-  description="CREATE SOMETHING .ltd turns philosophy, standards, voice, and patterns into practical judgment for building less, but better."
+  title="The philosophy of automation infrastructure."
+  description="CREATE SOMETHING .ltd explains the creation moat: consuming AI tools is easy; building governed connectivity, policy, trust boundaries, and proof is the work."
+  proofItems={heroProofItems}
+  metaItems={heroMetaItems}
+  ariaLabel="CREATE SOMETHING .ltd philosophy overview"
 >
   {#snippet actions()}
-    <Button href="/masters">Meet The Masters</Button>
-    <Button href="/ethos" variant="secondary">Read The Ethos</Button>
+    <Button href="/canon">Read The Canon</Button>
+    <Button href="/standards" variant="secondary">Open Standards</Button>
   {/snippet}
-
-  <p class="clear-note">Principles, standards, and language for work that has to hold up.</p>
 
   {#snippet aside()}
-    <ClearCardGrid
-      items={heroSignals}
-      columns={1}
-      density="compact"
-      ariaLabel="Canon operating signals"
+    <ClearStateRows
+      eyebrow="Creation loop"
+      title="Build, govern, prove"
+      states={creationStates}
+      receiptLabel="Operating receipts"
+      receipts={['MCP boundary', 'policy artifact', 'proof trail']}
+      ariaLabel="Automation infrastructure creation loop"
     />
   {/snippet}
-
-  {#snippet after()}
-    <ClearProofStrip items={proofMetrics} ariaLabel="Canon proof artifacts" />
-  {/snippet}
-</ClearPageSection>
+</ClearPlatformHero>
 
 <ClearDecisionPanel
   id="canon-decision"
-  eyebrow="Canon decision path"
-  title="Make judgment visible before it becomes work."
-  description="The Ona-inspired interaction pattern fits the canon when it shows whether to keep a principle, turn it into a standard, or apply it elsewhere."
+  eyebrow="Delegation canon"
+  title="Creation starts where consumption stops."
+  description="The canon helps decide whether the next useful move is a connection, a policy, or proof that the delegated work stayed inside its lane."
   items={decisionStates}
-  ariaLabel="Canon decision path"
+  ariaLabel="Delegated work control decision path"
 />
 
 <ClearPageSection
   variant="white"
-  eyebrow="Operating canon"
-  title="Weniger, aber besser."
-  description="Less, but better is the rule for how CREATE SOMETHING evaluates research, design experiments, and delivery work. The canon exists so that judgment can travel."
+  eyebrow="Operating thesis"
+  title="MCP consumption is commoditized. MCP creation is not."
+  description="The entry point to automation is connectivity, not intelligence. The canon names the discipline required to build that connectivity without losing control."
 >
   {#snippet after()}
-    <ClearCardGrid items={canonCards} columns={3} ariaLabel="Canon operating principles" />
+    <ClearCardGrid items={canonCards} columns={3} ariaLabel="Automation infrastructure principles" />
   {/snippet}
 </ClearPageSection>
 
@@ -279,8 +297,8 @@
 <ClearPageSection
   variant="white"
   eyebrow="Featured masters"
-  title="Reference points for quality."
-  description="The masters are not there for nostalgia. They give the work a higher bar for restraint, legibility, and usefulness."
+  title="Reference points for restraint."
+  description="Rams, Mies, and the canon matter because governed automation needs fewer vague affordances and more decisions that earn their place."
 >
   {#snippet actions()}
     <Button href="/masters" variant="secondary">View All Masters</Button>
@@ -293,9 +311,9 @@
 
 <ClearPageSection
   variant="soft"
-  eyebrow="Creation moat"
-  title="MCP consumption is commoditized. MCP creation is not."
-  description="The canon names the standard, the research documents the evidence, the workbench tests the runtime, and the agency turns the fit into governed workflow delivery."
+  eyebrow="Property loop"
+  title="The philosophy has to return to the work."
+  description=".ltd names the standard, .io documents the evidence, .space tests the runtime, and .agency turns the fit into governed workflow delivery."
 >
   {#snippet after()}
     <ClearCardGrid
@@ -309,7 +327,7 @@
 <PropertyFunnel
   current="ltd"
   heading="Turn the canon into the next operating decision."
-  description="Start with the principles, read the research when the claim needs evidence, use the workbench when it needs runtime proof, and book a mapping session when it belongs in the business."
+  description="Start with the philosophy, read the research when the claim needs evidence, use the workbench when it needs runtime proof, and book a mapping session when it belongs in the business."
 />
 
 <!-- Newsletter CTA -->
@@ -322,13 +340,3 @@
   note="No noise. Just the principles, language, and artifacts that make the work easier to defend."
   source="ltd-homepage"
 />
-
-<style>
-  .clear-note {
-    margin: 0;
-    max-width: 36rem;
-    color: var(--color-clear-grey, #636363);
-    font-size: 0.94rem;
-    line-height: 1.55;
-  }
-</style>
