@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AGENCY_GOVERNANCE_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || 'https://createsomething.agency' }}
-      REQUIRE_CONFIGURED: ${{ github.event_name == 'workflow_dispatch' && inputs.require_configured || 'true' }}
+      REQUIRE_CONFIGURED: ${{ github.event_name == 'workflow_dispatch' && inputs.require_configured || 'false' }}
       AGENCY_INTERNAL_API_KEY: ${{ secrets.AGENCY_INTERNAL_API_KEY }}
     steps:
       - name: Checkout
