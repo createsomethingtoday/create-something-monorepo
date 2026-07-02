@@ -1,7 +1,7 @@
 import { McpAgent } from 'agents/mcp';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { braintrustHealth } from './braintrust.js';
 import { resolveRuntimeConfig } from './config.js';
+import { langfuseHealth } from './langfuse.js';
 import { createBlondishSyncMcpServer } from './mcp.js';
 import type { Env } from './types.js';
 
@@ -45,7 +45,7 @@ export default {
           client_source_data_source_configured: Boolean(runtime.sourceDataSourceId || runtime.sourceDataSourceTitle),
           halfdozen_target_data_source_configured: Boolean(env.HALFDOZEN_TICKETS_DATA_SOURCE_ID?.trim() || env.HALFDOZEN_TICKETS_DATABASE_ID?.trim() || env.HALFDOZEN_TICKETS_DATA_SOURCE_TITLE?.trim()),
           client_status_property: runtime.sourceStatusProperty || 'Status',
-          braintrust: braintrustHealth(env),
+          langfuse: langfuseHealth(env),
         },
         secrets: {
           mcp_api_key_configured: Boolean(env.MCP_API_KEY?.trim()),

@@ -58,6 +58,7 @@ interface Env {
   INK_BRIDGE_TOKEN?: string;
   HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED?: string;
   HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS?: string;
+  HALFDOZEN_FLEET_WATCHDOG_TIMEOUT_MS?: string;
   RESEND_API_KEY?: string;
   HALFDOZEN_AGENT_NOTIFY_EMAIL_FROM?: string;
   HALFDOZEN_AGENT_NOTIFY_EMAIL_TO?: string;
@@ -102,6 +103,7 @@ const HALFDOZEN_TOKEN_PROTECTED_ROUTES = [
 ] as const;
 const DEFAULT_INK_BRIDGE_ORIGIN = 'https://ink.createsomething.agency';
 const DEFAULT_FLEET_WATCHDOG_CRON_UTC_HOURS = '4,13,18,23';
+const DEFAULT_FLEET_WATCHDOG_TIMEOUT_MS = 60_000;
 const DEFAULT_MCP_REGISTRY_SWEEP_CRON_UTC_HOURS = '4,13,18,23';
 const MCP_HUB_REGISTRY = registryJson as McpHubRegistry;
 const MCP_FLEET_REGISTRY = fleetJson as McpFleetRegistry;
@@ -466,6 +468,14 @@ function shouldRunFleetWatchdogCron(env: Env, scheduledTimeMs: number): boolean 
   return hours.has(new Date(scheduledTimeMs).getUTCHours());
 }
 
+function fleetWatchdogTimeoutMs(env: Env): number {
+  const parsed = Number(env.HALFDOZEN_FLEET_WATCHDOG_TIMEOUT_MS);
+  if (Number.isFinite(parsed) && parsed >= 10_000 && parsed <= 120_000) {
+    return Math.round(parsed);
+  }
+  return DEFAULT_FLEET_WATCHDOG_TIMEOUT_MS;
+}
+
 function shouldRunMcpRegistrySweepCron(env: Env, scheduledTimeMs: number): boolean {
   if (!isFlagEnabled(env.MCP_REGISTRY_SWEEP_CRON_ENABLED, true)) return false;
   const hours = parseCsvHourSet(
@@ -787,6 +797,7 @@ function buildNotificationEmail(event: NotificationEvent): {
   const scenario = isError ? event.scenario : event.result.scenario;
   const status = isError || shouldEscalate(event.result) ? 'ALERT' : 'OK';
   const title = `${status}: ${scenarioLabel(scenario)} ${event.runId}`;
+  const degradedReason = isError ? undefined : event.result.degraded_reason?.trim();
   const fields = isError
     ? [
         ['Status', status],
@@ -806,12 +817,15 @@ function buildNotificationEmail(event: NotificationEvent): {
           'Failed Servers',
           event.result.failed_servers.map((item) => item.server).join(', ') || 'none'
         ],
+        ...(degradedReason ? [['Degraded Reason', degradedReason]] : []),
         ['Duration', event.durationMs === undefined ? 'unknown' : `${event.durationMs}ms`]
       ];
 
   const summary = isError
     ? event.errorMessage
-    : String(event.result.final_output ?? 'No final output.');
+    : [degradedReason, String(event.result.final_output ?? 'No final output.')]
+        .filter((item): item is string => Boolean(item && item.trim()))
+        .join('\n\n');
   const text = `${title}\n\n${fields.map(([key, value]) => `${key}: ${value}`).join('\n')}\n\n${summary}`;
   const fieldRows = fields
     .map(([key, value]) => {
@@ -1565,7 +1579,7 @@ async function runScenarioByKey(
 
 function buildHalfDozenRunInput(
   env: Env,
-  body: AgentRouteBody | { query?: string }
+  body: AgentRouteBody | { query?: string; timeout_ms?: number }
 ): HalfDozenRouteRunInput {
   return {
     openaiApiKey: env.OPENAI_API_KEY as string,
@@ -1836,7 +1850,8 @@ async function runScheduledFleetWatchdog(
 
   const runInput = buildHalfDozenRunInput(env, {
     query:
-      'Scheduled fleet watchdog review. Use the standard 24-hour fleet watchdog contract and escalate degraded services or required-tool coverage failures.'
+      'Scheduled fleet watchdog review. Use the standard 24-hour fleet watchdog contract and escalate degraded services or required-tool coverage failures.',
+    timeout_ms: fleetWatchdogTimeoutMs(env)
   });
   const braintrustTracingEnabled = isBraintrustRouteTracingEnabled(env);
 

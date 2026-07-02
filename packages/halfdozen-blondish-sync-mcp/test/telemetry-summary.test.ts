@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { braintrustHealth, summarizeBraintrustPayload } from '../src/braintrust.js';
+import { langfuseHealth } from '../src/langfuse.js';
+import { summarizeTelemetryPayload } from '../src/telemetry-summary.js';
 import type { Env, SyncResult } from '../src/types.js';
 
-test('summarizeBraintrustPayload emits counts and drift categories without row payloads', () => {
+test('summarizeTelemetryPayload emits counts and drift categories without row payloads', () => {
   const result: SyncResult = {
     ok: true,
     action: 'audit',
@@ -28,7 +29,7 @@ test('summarizeBraintrustPayload emits counts and drift categories without row p
     },
   };
 
-  const summary = summarizeBraintrustPayload(result);
+  const summary = summarizeTelemetryPayload(result);
   const serialized = JSON.stringify(summary);
 
   assert.equal(summary.action, 'audit');
@@ -44,7 +45,7 @@ test('summarizeBraintrustPayload emits counts and drift categories without row p
   assert.doesNotMatch(serialized, /source-page-a|target-page-a|ST-ISH-24|Merchandise Funnel/);
 });
 
-test('summarizeBraintrustPayload keeps scoped repair plans compact', () => {
+test('summarizeTelemetryPayload keeps scoped repair plans compact', () => {
   const result: SyncResult = {
     ok: true,
     action: 'source_to_hd_repair_plan',
@@ -67,7 +68,7 @@ test('summarizeBraintrustPayload keeps scoped repair plans compact', () => {
     },
   };
 
-  const summary = summarizeBraintrustPayload(result);
+  const summary = summarizeTelemetryPayload(result);
 
   assert.equal(summary.repairable_missing_hd_rows, 1);
   assert.equal(summary.repairable_external_url_drifts, 15);
@@ -79,16 +80,18 @@ test('summarizeBraintrustPayload keeps scoped repair plans compact', () => {
   ]);
 });
 
-test('braintrustHealth reports configured state without exposing secret values', () => {
-  const health = braintrustHealth({
-    BRAINTRUST_API_KEY: 'secret_token_should_not_render',
-    BRAINTRUST_PROJECT_ID: 'project-id',
-    BRAINTRUST_PROJECT_NAME: 'Custom Project',
+test('langfuseHealth reports configured state without exposing secret values', () => {
+  const health = langfuseHealth({
+    LANGFUSE_PUBLIC_KEY: 'pk-lf-secret-token-should-not-render',
+    LANGFUSE_SECRET_KEY: 'sk-lf-secret-token-should-not-render',
+    LANGFUSE_BASE_URL: 'https://cloud.langfuse.example',
+    LANGFUSE_PROJECT_NAME: 'Custom Langfuse Project',
   } as Env);
 
   assert.equal(health.enabled, true);
-  assert.equal(health.api_key_configured, true);
-  assert.equal(health.project_id_configured, true);
-  assert.equal(health.project_name, 'Custom Project');
-  assert.doesNotMatch(JSON.stringify(health), /secret_token_should_not_render/);
+  assert.equal(health.public_key_configured, true);
+  assert.equal(health.secret_key_configured, true);
+  assert.equal(health.host, 'https://cloud.langfuse.example');
+  assert.equal(health.project_name, 'Custom Langfuse Project');
+  assert.doesNotMatch(JSON.stringify(health), /secret-token-should-not-render/);
 });

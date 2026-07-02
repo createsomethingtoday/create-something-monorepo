@@ -40,6 +40,18 @@
   --color-path-advanced: #ef4444;
 }
 
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  z-index: var(--z-tooltip);
+  transform: translateX(-50%);
+}
+
+.skip-to-content:focus {
+  top: var(--space-sm);
+}
+
 /* ==========================================================================
    Learning Path Indicators
    ========================================================================== */
