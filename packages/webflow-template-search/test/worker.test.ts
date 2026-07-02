@@ -2053,6 +2053,13 @@ describe('webflow-template-search worker', () => {
     const { env, close } = createTestEnv();
 
     try {
+      // A row absent from the fresh Airtable snapshot must be swept by the rebuild.
+      await env.DB.prepare(
+        'INSERT INTO template_documents (id, template_slug, name, synced_at) VALUES (?, ?, ?, ?)',
+      )
+        .bind('recStaleSweep', 'stale-sweep-template', 'Stale Sweep', '2026-01-01T00:00:00.000Z')
+        .run();
+
       const rebuild = await callWorker(
         new Request('https://templates.test/api/templates/admin/rebuild', {
           method: 'POST',
@@ -2061,6 +2068,13 @@ describe('webflow-template-search worker', () => {
         env,
       );
       expect(rebuild.status).toBe(200);
+
+      const staleRow = await env.DB.prepare('SELECT id FROM template_documents WHERE id = ?').bind('recStaleSweep').first();
+      expect(staleRow).toBeNull();
+      const fullSummary = await env.DB.prepare('SELECT value_json FROM sync_state WHERE key = ?')
+        .bind('last_full_sync')
+        .first<{ value_json: string }>();
+      expect(JSON.parse(fullSummary?.value_json ?? '{}')).toMatchObject({ mode: 'full', removed_records: 1 });
 
       const categorySearch = await callWorker(
         new Request('https://templates.test/api/templates/search?category_group_slug=technology-websites&child_category_slug=ai-websites'),
@@ -2307,6 +2321,58 @@ describe('webflow-template-search worker', () => {
         creator_slug: 'brix-templates',
         creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
       });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('refuses to sweep the live index when the rebuild snapshot is implausibly small', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      // Live index has 10 rows; the snapshot returns only 1 (below the 80% guard).
+      // A partial or failed Airtable fetch must not mass-delete the marketplace.
+      for (let index = 0; index < 10; index += 1) {
+        await env.DB.prepare(
+          'INSERT INTO template_documents (id, template_slug, name, synced_at) VALUES (?, ?, ?, ?)',
+        )
+          .bind(`recGuard${index}`, `guard-template-${index}`, `Guard Template ${index}`, '2026-01-01T00:00:00.000Z')
+          .run();
+      }
+
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const survivors = await env.DB.prepare("SELECT COUNT(*) AS count FROM template_documents WHERE id LIKE 'recGuard%'").first<{
+        count: number;
+      }>();
+      expect(survivors?.count).toBe(10);
+
+      const fullSummary = await env.DB.prepare('SELECT value_json FROM sync_state WHERE key = ?')
+        .bind('last_full_sync')
+        .first<{ value_json: string }>();
+      const parsedSummary = JSON.parse(fullSummary?.value_json ?? '{}') as {
+        removed_records: number;
+        indexed_records: number;
+        warnings?: Array<{ source: string }>;
+      };
+      expect(parsedSummary.removed_records).toBe(0);
+      expect(parsedSummary.indexed_records).toBe(1);
+      expect(parsedSummary.warnings?.some((warning) => warning.source === 'full_sync_sweep')).toBe(true);
     } finally {
       fetchMock.mockRestore();
       close();
