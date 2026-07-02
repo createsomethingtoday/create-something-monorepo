@@ -483,6 +483,7 @@
 			<Button href={agencyCoreMessaging.selfMapHref} variant="secondary">
 				{agencyCoreMessaging.selfMapLabel}
 			</Button>
+			<Button href="/services" variant="secondary">Review the service path</Button>
 		{/snippet}
 
 		{#snippet aside()}
