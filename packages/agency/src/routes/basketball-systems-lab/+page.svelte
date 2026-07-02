@@ -10,6 +10,6 @@
 	propertyName="agency"
 />
 
-<main>
+<main aria-label="Run Basketball Systems Lab">
 	<BasketballSystemsLab />
 </main>
