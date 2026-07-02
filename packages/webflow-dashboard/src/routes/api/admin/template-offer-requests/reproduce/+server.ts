@@ -86,8 +86,6 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		marketplacePrice: asset.priceAmount,
 		recoveryOfferUsed: asset.recoveryOfferUsed
 	});
-	const approvalStatus =
-		input.postOfferAction === 'Delist / archive after expiry' ? 'Pending' : 'Approved';
 
 	if (dryRun) {
 		return json({
@@ -103,11 +101,10 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 				recoveryOfferUsed: asset.recoveryOfferUsed
 			},
 			wouldCreate: {
-				templateFulfillmentLink: true,
 				templateOffer: true,
-				approvalStatus,
-				offerMode: 'Fulfillment link',
-				visibility: 'Detail only',
+				approvalStatus: 'Pending',
+				offerMode: 'Marketplace checkout',
+				visibility: 'Internal only',
 				offerLabel: input.offerLabel,
 				offerPrice: input.offerPrice,
 				offerStrategy: input.offerStrategy,
