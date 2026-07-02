@@ -622,6 +622,20 @@ function summarizeRequiredToolCoverageLegacy(requiredToolNames: string[], toolCa
   };
 }
 
+async function registerOptionalBraintrustTracing(): Promise<boolean> {
+  const enabled = process.env.BRAINTRUST_ENABLED?.trim().toLowerCase();
+  if (enabled === 'false' || enabled === '0' || enabled === 'off') return false;
+  if (!process.env.BRAINTRUST_API_KEY) return false;
+
+  const { registerOpenAIAgentsBraintrustTracing } = await import(
+    '@create-something/observability/openai-agents'
+  );
+  return registerOpenAIAgentsBraintrustTracing({
+    projectName: process.env.BRAINTRUST_PROJECT_NAME ?? 'Create Something',
+    tags: ['halfdozen', 'smoke'],
+  });
+}
+
 async function main(): Promise<void> {
   const parsedArgs = parseArgs(process.argv.slice(2));
 
@@ -705,13 +719,7 @@ async function main(): Promise<void> {
       mcpServers: mcpServers.active,
     });
 
-    const { registerOpenAIAgentsBraintrustTracing } = await import(
-      '@create-something/observability/openai-agents'
-    );
-    const braintrustTracingEnabled = registerOpenAIAgentsBraintrustTracing({
-      projectName: process.env.BRAINTRUST_PROJECT_NAME ?? 'Create Something',
-      tags: ['halfdozen', 'smoke']
-    });
+    const braintrustTracingEnabled = await registerOptionalBraintrustTracing();
 
     const runner = new Runner({ tracingDisabled: !braintrustTracingEnabled });
     const result = await runner.run(agent, options.query, {

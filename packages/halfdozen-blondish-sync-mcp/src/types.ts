@@ -22,10 +22,12 @@ export interface Env {
   SYNC_OWNER_LABEL?: string;
   SYNC_CLIENT_LABEL?: string;
   SYNC_SOURCE_LABEL?: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_ID?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
-  BRAINTRUST_ENABLED?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_BASE_URL?: string;
+  LANGFUSE_HOST?: string;
+  LANGFUSE_PROJECT_NAME?: string;
+  LANGFUSE_ENABLED?: string;
 }
 
 export type Workspace = 'client' | 'blondish' | 'halfdozen';

@@ -148,6 +148,7 @@
     showLogin={true}
     loginHref="/login"
     accountHref="/account"
+    visualStyle="clear"
   />
 
   <main id="main-content" class="content">
@@ -166,6 +167,7 @@
     ]}
     showSocial={true}
     isAuthenticated={!!data.user}
+    visualStyle="clear"
   />
 
   <ModeIndicator current="learn" />
@@ -174,10 +176,59 @@
 <style>
   .layout {
     min-height: 100vh;
-    background: var(--color-bg-pure);
+    background: var(--color-clear-porcelain, #f7f7f7);
   }
 
   .content {
     padding-top: 72px;
+  }
+
+  :global(.nav-clear .nav-logo) {
+    gap: 0.18rem;
+  }
+
+  :global(.nav-clear .nav-logo-mark) {
+    width: 1.6rem;
+    height: 1.6rem;
+    margin-right: 0.45rem;
+  }
+
+  :global(.nav-clear .nav-logo-text),
+  :global(.nav-clear .nav-logo-suffix) {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: nowrap !important;
+  }
+
+  :global(.nav-clear .nav-logo .nav-logo-text) {
+    color: var(--color-clear-onyx, #0a0e19) !important;
+    font-size: 1rem !important;
+    font-weight: var(--font-bold) !important;
+    line-height: 1 !important;
+  }
+
+  :global(.nav-clear .nav-logo .nav-logo-suffix) {
+    color: var(--color-clear-grey, #636363) !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.72rem !important;
+    font-weight: var(--font-semibold) !important;
+    letter-spacing: 0 !important;
+    line-height: 1 !important;
+    text-transform: uppercase !important;
+  }
+
+  @media (max-width: 480px) {
+    :global(.nav-clear .nav-logo-mark) {
+      display: none;
+    }
+
+    :global(.nav-clear .nav-logo-text) {
+      font-size: 0.95rem;
+    }
   }
 </style>

@@ -65,29 +65,24 @@ database polling or multi-client rollout, add an event-driven layer:
 In that future shape, webhooks do the normal incremental sync work and this MCP
 remains the agent/operator surface for audit, repair, backfill, and exceptions.
 
-## Braintrust
+## Observability
 
-Braintrust is included for runtime observability and MCP contract evaluation.
-When `BRAINTRUST_API_KEY` is configured, each tool call emits a sanitized trace
-with tool name, action, duration, success state, write counts, error scopes, row
-counts, drift counts, field drift categories, and repair scope.
+Langfuse is included for runtime observability and MCP contract receipts. When
+`LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are configured, each tool call
+emits a sanitized Langfuse trace with tool name, action, duration, success state,
+write counts, error scopes, row counts, drift counts, field drift categories, and
+repair scope.
 
 Traces intentionally do not include raw Notion page payloads, page body text,
 attachment URLs, bearer tokens, or full row lists. The MCP response remains the
-source of row-level operator evidence.
-
-Run the local no-log contract eval with:
-
-```bash
-pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local
-```
+source of row-level operator evidence, while Langfuse is the durable receipt
+surface for autonomous repair/audit runs.
 
 ## Deploy
 
 ```bash
 pnpm --filter @create-something/halfdozen-blondish-sync-mcp typecheck
 pnpm --filter @create-something/halfdozen-blondish-sync-mcp test
-pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local
 pnpm deploy:halfdozen-blondish-sync-mcp
 pnpm deploy:halfdozen-c3-management-sync-mcp
 pnpm deploy:halfdozen-cracked-sync-mcp
@@ -102,6 +97,7 @@ pnpm exec wrangler secret put MCP_API_KEY
 pnpm exec wrangler secret put CLIENT_NOTION_API_KEY
 pnpm exec wrangler secret put HALFDOZEN_NOTION_API_KEY
 pnpm exec wrangler secret put HALFDOZEN_TICKETS_DATA_SOURCE_ID
-pnpm exec wrangler secret put BRAINTRUST_API_KEY
-pnpm exec wrangler secret put BRAINTRUST_PROJECT_ID # optional
+pnpm exec wrangler secret put LANGFUSE_PUBLIC_KEY
+pnpm exec wrangler secret put LANGFUSE_SECRET_KEY
+pnpm exec wrangler secret put LANGFUSE_BASE_URL # optional
 ```

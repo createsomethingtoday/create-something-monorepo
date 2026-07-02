@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { trackMarketplaceEvent } from './analytics';
+import type { MarketplaceAnalyticsData } from './analytics';
+import { trackMarketplaceEvent, trackMarketplaceEventExact } from './analytics';
 import {
   attributionAnalytics,
   getSafeAnalyticsOverrides,
@@ -36,6 +37,9 @@ const PREVIEW_SELECTOR = [
   '#footer-browser-preview',
   '#footer-designer-preview',
 ].join(',');
+const CODE_COMPONENT_EVENT_NAME = 'Code Component Event';
+
+export const LEGACY_TEMPLATE_DETAIL_PURCHASE_CTA_EVENT = 'Template Detail Page - Purchase CTA Clicked';
 
 function inferTemplateSlug(explicitSlug?: string): string | null {
   const propSlug = explicitSlug?.trim();
@@ -85,6 +89,14 @@ function purchaseType(element: Element, price?: string): string {
   return priceBucket(price) === 'free' ? 'use_free_template' : 'checkout';
 }
 
+export function trackTemplateDetailPurchaseCtaClick(
+  data: MarketplaceAnalyticsData,
+  enabled = true,
+): void {
+  trackMarketplaceEvent(CODE_COMPONENT_EVENT_NAME, data, enabled);
+  trackMarketplaceEventExact(LEGACY_TEMPLATE_DETAIL_PURCHASE_CTA_EVENT, data, enabled);
+}
+
 export const TemplateDetailConversionTracker: React.FC<TemplateDetailConversionTrackerProps> = ({
   templateSlug = '',
   price = '',
@@ -118,7 +130,7 @@ export const TemplateDetailConversionTracker: React.FC<TemplateDetailConversionT
     if (trackView && !viewTrackedRef.current) {
       viewTrackedRef.current = true;
       trackMarketplaceEvent(
-        'Code Component Event',
+        CODE_COMPONENT_EVENT_NAME,
         {
           ...baseData(),
           scope: 'detail_viewed',
@@ -134,7 +146,7 @@ export const TemplateDetailConversionTracker: React.FC<TemplateDetailConversionT
       const previewEl = trackPreviewClicks ? target.closest(PREVIEW_SELECTOR) : null;
       if (previewEl) {
         trackMarketplaceEvent(
-          'Code Component Event',
+          CODE_COMPONENT_EVENT_NAME,
           {
             ...baseData(),
             scope: 'detail_preview_cta_clicked',
@@ -148,8 +160,7 @@ export const TemplateDetailConversionTracker: React.FC<TemplateDetailConversionT
 
       const purchaseEl = trackPurchaseClicks ? target.closest(PURCHASE_SELECTOR) : null;
       if (purchaseEl) {
-        trackMarketplaceEvent(
-          'Code Component Event',
+        trackTemplateDetailPurchaseCtaClick(
           {
             ...baseData(),
             scope: 'detail_purchase_cta_clicked',

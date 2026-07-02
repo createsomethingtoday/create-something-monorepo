@@ -436,6 +436,8 @@ export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Pr
     strict: false,
     dropFailed: true,
     connectInParallel: true,
+    connectTimeoutMs: timeoutMs,
+    closeTimeoutMs: timeoutMs,
   });
 
   try {

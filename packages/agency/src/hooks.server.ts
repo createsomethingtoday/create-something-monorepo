@@ -2,6 +2,7 @@ import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { createAuthHooks } from '@create-something/canon/auth';
 import { abundanceApiAuthHandle } from './lib/server/abundance-api-auth';
+import { AGENCY_PROTECTED_PATHS } from './lib/server/protected-routes';
 import {
 	createPublicHtmlCacheKey,
 	isCacheablePublicHtmlResponse,
@@ -38,7 +39,7 @@ const redirectHandle: Handle = async ({ event, resolve }) => {
 };
 
 const authHandle = createAuthHooks({
-	protectedPaths: ['/account', '/dashboard', '/admin', '/mcp-access'],
+	protectedPaths: [...AGENCY_PROTECTED_PATHS],
 	loginPath: '/login',
 	includeRedirect: true,
 }) as Handle;

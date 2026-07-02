@@ -67,8 +67,6 @@
     "braintrust:eval:mcp:intent-routing": "pnpm exec braintrust eval ./evals/braintrust/mcp/hub-intent-routing-quality.eval.ts",
     "braintrust:eval:mcp:webflow-template-hubs": "pnpm exec braintrust eval ./evals/braintrust/mcp/webflow-template-review-hubs-airtable.eval.ts",
     "braintrust:eval:mcp:webflow-template-hubs:local": "pnpm exec braintrust eval ./evals/braintrust/mcp/webflow-template-review-hubs-airtable.eval.ts --no-send-logs --no-progress-bars",
-    "braintrust:eval:mcp:halfdozen-blondish-sync": "pnpm exec braintrust eval ./evals/braintrust/mcp/halfdozen-blondish-sync-mcp.eval.ts",
-    "braintrust:eval:mcp:halfdozen-blondish-sync:local": "pnpm exec braintrust eval ./evals/braintrust/mcp/halfdozen-blondish-sync-mcp.eval.ts --no-send-logs --no-progress-bars",
     "braintrust:eval:dify": "pnpm exec braintrust eval ./evals/braintrust/dify",
     "braintrust:eval:dify:local": "pnpm exec braintrust eval ./evals/braintrust/dify --no-send-logs",
     "braintrust:eval:dify:create-something-guide-agent": "pnpm exec braintrust eval ./evals/braintrust/dify/create-something-guide-agent.eval.ts",
