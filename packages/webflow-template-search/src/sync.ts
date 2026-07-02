@@ -13,12 +13,12 @@ import {
   backfillCreatorFieldsFromLookup,
   acquireSyncJobLock,
   bumpPublicSearchCacheVersion,
-  clearIndex,
   deleteTemplateDocuments,
   filterMissingOrStaleTemplateLookupTargets,
   finishSyncJobLock,
   getSyncCursor,
   heartbeatSyncJobLock,
+  listTemplateDocumentIds,
   listTemplateImageBackfillRows,
   listTemplateImageRefreshRows,
   markTemplateImageBackfillAttempts,
@@ -665,6 +665,15 @@ function normalizeTemplateRecord(
   };
 }
 
+// A full rebuild must never leave the live index empty: search serves the
+// marketplace, so the old clear-then-reinsert flow meant a mid-flight death (or
+// just the minutes the reinsert takes) served an empty catalog. Instead the
+// rebuild upserts the fresh snapshot over the live rows and then sweeps only
+// the rows absent from it. The sweep is refused when the snapshot is
+// implausibly small relative to the live index — a partial or failed Airtable
+// fetch must not mass-delete the marketplace.
+const FULL_SYNC_SWEEP_GUARD_RATIO = 0.8;
+
 async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSummary> {
   const startedAt = nowIso();
   const warnings: SyncWarning[] = [];
@@ -685,9 +694,23 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
     .map((record) => normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex))
     .filter((value): value is NonNullable<typeof value> => Boolean(value));
 
-  await withPeriodicHeartbeat(heartbeat, clearIndex(env.DB));
-  await heartbeat();
+  const existingIds = await listTemplateDocumentIds(env.DB);
   await withPeriodicHeartbeat(heartbeat, upsertTemplateDocuments(env.DB, documents));
+  await heartbeat();
+
+  const freshIds = new Set(documents.map((document) => document.id));
+  const staleIds = existingIds.filter((id) => !freshIds.has(id));
+  const sweepGuardThreshold = Math.floor(existingIds.length * FULL_SYNC_SWEEP_GUARD_RATIO);
+  let removedRecords = 0;
+  if (documents.length >= sweepGuardThreshold) {
+    await withPeriodicHeartbeat(heartbeat, deleteTemplateDocuments(env.DB, staleIds));
+    removedRecords = staleIds.length;
+  } else if (staleIds.length > 0) {
+    warnings.push({
+      source: 'full_sync_sweep',
+      message: `Kept ${staleIds.length} rows missing from the snapshot: ${documents.length} fetched is below the guard threshold of ${sweepGuardThreshold} (live index has ${existingIds.length}).`,
+    });
+  }
   await heartbeat();
   const webflowCreatorRecords = await withPeriodicHeartbeat(
     heartbeat,
@@ -710,7 +733,7 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
     finished_at: nowIso(),
     fetched_records: assets.length,
     indexed_records: documents.length,
-    removed_records: 0,
+    removed_records: removedRecords,
     backfilled_records: nameBackfilledRecords + lookupBackfilledRecords + webflowCreatorRecords,
     image_refreshed_records: imageRefreshedRecords,
     cursor: startedAt,

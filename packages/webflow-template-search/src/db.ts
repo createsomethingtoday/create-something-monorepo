@@ -470,15 +470,9 @@ export async function heartbeatSyncJobLock(db: D1Database, lock: SyncJobLock, he
     .run();
 }
 
-export async function clearIndex(db: D1Database): Promise<void> {
-  // Delete in chunks to avoid D1's per-statement CPU time limit on large tables.
-  for (const table of ['template_styles', 'template_child_categories', 'template_category_memberships', 'template_documents'] as const) {
-    let hasMore = true;
-    while (hasMore) {
-      const result = await db.prepare(`DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table} LIMIT 1000)`).run();
-      hasMore = (result.meta?.changes ?? 0) > 0;
-    }
-  }
+export async function listTemplateDocumentIds(db: D1Database): Promise<string[]> {
+  const { results } = await db.prepare('SELECT id FROM template_documents').all<{ id: string }>();
+  return (results ?? []).map((row) => row.id);
 }
 
 export async function upsertTemplateDocuments(db: D1Database, documents: TemplateDocumentInput[]): Promise<void> {
