@@ -2,6 +2,10 @@ export type MarketplaceAnalyticsData = Record<string, string | number | boolean 
 export type MarketplaceExperimentVariant = 'control' | 'treatment';
 export type MarketplaceExperimentRole = 'none' | MarketplaceExperimentVariant;
 
+export interface TrackMarketplaceEventOptions {
+  prefixTemplateMarketplaceEvent?: boolean;
+}
+
 export interface MarketplaceExperimentState {
   key: string;
   variant: MarketplaceExperimentVariant;
@@ -129,6 +133,7 @@ export function trackMarketplaceEvent(
   eventName: string,
   eventData: MarketplaceAnalyticsData = {},
   enabled = true,
+  options: TrackMarketplaceEventOptions = {},
 ): void {
   if (!enabled || typeof window === 'undefined') return;
 
@@ -149,27 +154,37 @@ export function trackMarketplaceEvent(
     // Analytics must not block navigation or component interaction.
   }
 
-  const amplitudeEventName = eventName.startsWith('[Template Marketplace]')
-    ? eventName
-    : `[Template Marketplace] ${eventName}`;
+  const shouldPrefixTemplateMarketplaceEvent = options.prefixTemplateMarketplaceEvent ?? true;
+  const analyticsEventName =
+    shouldPrefixTemplateMarketplaceEvent && !eventName.startsWith('[Template Marketplace]')
+      ? `[Template Marketplace] ${eventName}`
+      : eventName;
 
   try {
-    window.analytics?.track?.(amplitudeEventName, data);
+    window.analytics?.track?.(analyticsEventName, data);
   } catch {
     // Analytics must not block navigation or component interaction.
   }
 
   try {
     if (typeof window.amplitude?.track === 'function') {
-      window.amplitude.track(amplitudeEventName, data);
+      window.amplitude.track(analyticsEventName, data);
     } else if (typeof window.amplitude?.logEvent === 'function') {
-      window.amplitude.logEvent(amplitudeEventName, data);
+      window.amplitude.logEvent(analyticsEventName, data);
     } else {
-      window.amplitude?.getInstance?.()?.logEvent?.(amplitudeEventName, data);
+      window.amplitude?.getInstance?.()?.logEvent?.(analyticsEventName, data);
     }
   } catch {
     // Analytics must not block navigation or component interaction.
   }
+}
+
+export function trackMarketplaceEventExact(
+  eventName: string,
+  eventData: MarketplaceAnalyticsData = {},
+  enabled = true,
+): void {
+  trackMarketplaceEvent(eventName, eventData, enabled, { prefixTemplateMarketplaceEvent: false });
 }
 
 function normalizeErrorMessage(error: unknown): string {

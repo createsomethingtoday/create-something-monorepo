@@ -190,6 +190,7 @@ Ink notifications (optional):
 - Set `INK_SOURCE_TOKEN` or `INK_BRIDGE_TOKEN` so completed runs can post a health snapshot to Calm Operator Ink.
 - Set `INK_BRIDGE_ORIGIN` when the Ink bridge is not `https://ink.createsomething.agency`.
 - The fleet watchdog is scheduled by Cloudflare Cron at `04:00`, `13:00`, `18:00`, and `23:00` UTC by default. Override with `HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS` or disable with `HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED=false`.
+- Scheduled fleet-watchdog runs use `HALFDOZEN_FLEET_WATCHDOG_TIMEOUT_MS` for MCP connection and request timeouts. The default is `60000`; accepted values are `10000` through `120000`.
 - The MCP registry sweep runs on the same default schedule. Override with `MCP_REGISTRY_SWEEP_CRON_UTC_HOURS` or disable with `MCP_REGISTRY_SWEEP_CRON_ENABLED=false`.
 - Healthy runs clear the agent health state; degraded runs surface as Ink health attention.
 

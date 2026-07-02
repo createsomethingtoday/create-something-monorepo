@@ -10,8 +10,8 @@ import {
   syncHalfDozenStatusToSource,
   syncSourceTicketsToHalfDozen,
 } from './sync.js';
-import { emitBraintrustToolInvocation } from './braintrust.js';
 import { resolveRuntimeConfig } from './config.js';
+import { emitLangfuseToolInvocation } from './langfuse.js';
 import type { Env, ToolResponse } from './types.js';
 
 const optionalPageIdsSchema = z.object({
@@ -201,18 +201,27 @@ async function tracedJsonToolResponse(env: Env, toolName: string, operation: () 
 
   try {
     const payload = await operation();
-    await emitBraintrustToolInvocation(env, {
+    await emitToolInvocationTelemetry(env, {
       toolName,
       result: payload,
       durationMs: Date.now() - startedAt,
     });
     return jsonToolResponse(payload);
   } catch (error) {
-    await emitBraintrustToolInvocation(env, {
+    await emitToolInvocationTelemetry(env, {
       toolName,
       durationMs: Date.now() - startedAt,
       error,
     });
     throw error;
   }
+}
+
+async function emitToolInvocationTelemetry(
+  env: Env,
+  invocation: { toolName: string; result?: unknown; durationMs: number; error?: unknown },
+): Promise<void> {
+  await Promise.all([
+    emitLangfuseToolInvocation(env, invocation),
+  ]);
 }
