@@ -635,7 +635,6 @@ export interface TemplateOfferRequestInput {
 	creatorEmail: string;
 	offerLabel: string;
 	offerPrice: number;
-	fulfillmentUrl: string;
 	startsAt?: string;
 	endsAt: string;
 	offerStrategy: TemplateOfferStrategy;
@@ -647,8 +646,7 @@ export interface TemplateOfferRequestInput {
 
 export interface TemplateOfferRequestResult {
 	offerId: string;
-	fulfillmentLinkId: string;
-	approvalStatus: 'Approved' | 'Pending';
+	approvalStatus: 'Pending';
 }
 
 export interface Creator {
@@ -977,12 +975,6 @@ function addDaysIso(dateValue: string, days: number): string {
 	}
 	date.setUTCDate(date.getUTCDate() + days);
 	return date.toISOString();
-}
-
-function approvalStatusForPostOfferAction(
-	action: TemplateOfferPostOfferAction
-): TemplateOfferRequestResult['approvalStatus'] {
-	return action === 'Delist / archive after expiry' ? 'Pending' : 'Approved';
 }
 
 function linkedRecordIds(value: unknown): string[] {
@@ -1639,10 +1631,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
-		 * Create a creator-submitted limited-offer request for a template.
+		 * Create a creator-submitted price change request for a template.
 		 *
-		 * Guardrail-approved offers immediately sync Asset-level mirror fields. Archive/delist
-		 * outcomes stay pending until marketplace review approves them.
+		 * Fulfillment links only deliver a template after an external purchase — they carry
+		 * no pricing. The real template price lives in the Admin MRP record, so every request
+		 * stays Pending until marketplace review applies the price there. Nothing here writes
+		 * public CTA or mirror fields.
 		 */
 		async createTemplateOfferRequest(
 			assetId: string,
@@ -1662,7 +1656,6 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			const startsAt = input.startsAt || submittedAt;
 			const pruneReviewAt = addDaysIso(input.endsAt, 7);
 			const marketplacePrice = asset.priceAmount ?? parseCurrencyAmount(asset.priceString);
-			const approvalStatus = approvalStatusForPostOfferAction(input.postOfferAction);
 			const notes = [
 				`Creator email: ${input.creatorEmail}`,
 				`Submitted from Asset Dashboard: ${submittedAt}`,
@@ -1671,42 +1664,22 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					? `Visibility terms accepted: ${input.visibilityTermsAcceptedAt}`
 					: '',
 				input.notes?.trim() ? `Creator notes: ${input.notes.trim()}` : '',
-				approvalStatus === 'Approved'
-					? 'Offer passed creator self-service guardrails. Public active-offer mirror fields still update through the offer lifecycle sync.'
-					: 'Archive or delist outcomes require marketplace review before public active-offer mirror fields change.'
+				'Price change requests are applied to the template price in Admin by marketplace review before any public change.'
 			]
 				.filter(Boolean)
 				.join('\n');
 
 			try {
-				const fulfillmentRecords = (await base(TABLES.TEMPLATE_FULFILLMENT_LINKS).create([
-					{
-						fields: {
-							Name: offerName,
-							'👛Asset': [assetId],
-							'🔗Fulfillment URL': input.fulfillmentUrl,
-							'⚙️Status': 'Active',
-							'⚙️Source': 'Creator submitted',
-							'📅Last Checked At': submittedAt,
-							'📝Notes': notes
-						} as Airtable.FieldSet
-					}
-				])) as Airtable.Record<Airtable.FieldSet>[];
-
-				const fulfillmentLinkId = fulfillmentRecords[0].id;
-
 				const offerFields: Record<string, AirtableWritableValue | string[]> = {
 					Name: offerName,
 					'👛Asset': [assetId],
-					'🔗Fulfillment Link': [fulfillmentLinkId],
-					'⚙️Approval Status': approvalStatus,
-					'⚙️Offer Mode': 'Fulfillment link',
+					'⚙️Approval Status': 'Pending',
+					'⚙️Offer Mode': 'Marketplace checkout',
 					'⚙️Offer Strategy': input.offerStrategy,
 					'⚙️Post-Offer Action': input.postOfferAction,
-					'👁️Visibility': 'Detail only',
+					'👁️Visibility': 'Internal only',
 					'🏷️Offer Label': normalizedLabel,
 					'💲Offer Price': input.offerPrice,
-					'🔗Public CTA URL': input.fulfillmentUrl,
 					'📅Starts At': startsAt,
 					'📅Ends At': input.endsAt,
 					'📅Prune Review At': pruneReviewAt,
@@ -1724,17 +1697,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					}
 				])) as Airtable.Record<Airtable.FieldSet>[];
 
-				if (approvalStatus === 'Approved') {
-					await this.syncTemplateOfferMirrors(assetId, [offerRecords[0].id]);
-				}
-
 				return {
-					fulfillmentLinkId,
 					offerId: offerRecords[0].id,
-					approvalStatus
+					approvalStatus: 'Pending'
 				};
 			} catch (err) {
-				console.error('[Airtable] Error creating template offer request:', err);
+				console.error('[Airtable] Error creating template price change request:', err);
 				return null;
 			}
 		},

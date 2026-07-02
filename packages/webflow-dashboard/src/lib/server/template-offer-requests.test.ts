@@ -19,7 +19,6 @@ describe('normalizeTemplateOfferRequestBody', () => {
 			{
 				offerLabel: '',
 				offerPrice: '49',
-				fulfillmentUrl: 'https://webflow.com/dashboard/sites/new?unauthSignup=true',
 				startsAt: '2026-06-10',
 				endsAt: '2026-07-02',
 				offerStrategy: 'Creator-managed price test',
@@ -35,7 +34,6 @@ describe('normalizeTemplateOfferRequestBody', () => {
 			creatorEmail: 'creator@example.com',
 			offerLabel: 'Limited offer',
 			offerPrice: 49,
-			fulfillmentUrl: 'https://webflow.com/dashboard/sites/new?unauthSignup=true',
 			startsAt: '2026-06-10T00:00:00.000Z',
 			endsAt: '2026-07-02T00:00:00.000Z',
 			offerStrategy: 'Creator-managed price test',
@@ -50,7 +48,6 @@ describe('normalizeTemplateOfferRequestBody', () => {
 			normalizeTemplateOfferRequestBody(
 				{
 					offerPrice: '49',
-					fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
 					endsAt: '2026-07-02',
 					offerStrategy: 'Creator-managed price test',
 					termsAccepted: false
@@ -65,30 +62,11 @@ describe('normalizeTemplateOfferRequestBody', () => {
 		);
 	});
 
-	it('rejects non-HTTPS fulfillment URLs', () => {
-		const err = captureError(() =>
-			normalizeTemplateOfferRequestBody(
-				{
-					offerPrice: '49',
-					fulfillmentUrl: 'http://example.com',
-					endsAt: '2026-07-02',
-					offerStrategy: 'Creator-managed price test',
-					termsAccepted: true
-				},
-				'creator@example.com',
-				NOW
-			)
-		);
-
-		expect(err.body?.message ?? err.message).toBe('Fulfillment URL must use HTTPS');
-	});
-
 	it('rejects discounts that are too deep for the marketplace price', () => {
 		const err = captureError(() =>
 			normalizeTemplateOfferRequestBody(
 				{
 					offerPrice: '49',
-					fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
 					endsAt: '2026-06-20',
 					offerStrategy: 'Creator-managed price test',
 					termsAccepted: true
@@ -107,7 +85,6 @@ describe('normalizeTemplateOfferRequestBody', () => {
 			normalizeTemplateOfferRequestBody(
 				{
 					offerPrice: '49',
-					fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
 					endsAt: '2026-06-09T11:59:59.000Z',
 					offerStrategy: 'Creator-managed price test',
 					termsAccepted: true
@@ -125,7 +102,6 @@ describe('normalizeTemplateOfferRequestBody', () => {
 			normalizeTemplateOfferRequestBody(
 				{
 					offerPrice: '59',
-					fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
 					endsAt: '2026-07-20',
 					offerStrategy: 'Creator-managed price test',
 					termsAccepted: true
@@ -144,7 +120,6 @@ describe('normalizeTemplateOfferRequestBody', () => {
 			normalizeTemplateOfferRequestBody(
 				{
 					offerPrice: '59',
-					fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
 					endsAt: '2026-06-20',
 					offerStrategy: 'Prune recovery test',
 					postOfferAction: 'Move to detail-only after expiry',
@@ -165,7 +140,6 @@ describe('normalizeTemplateOfferRequestBody', () => {
 		const input = normalizeTemplateOfferRequestBody(
 			{
 				offerPrice: '60',
-				fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
 				endsAt: '2026-06-20',
 				offerStrategy: 'Prune recovery test',
 				postOfferAction: 'Move to detail-only after expiry',
@@ -188,7 +162,6 @@ describe('normalizeTemplateOfferRequestBody', () => {
 			normalizeTemplateOfferRequestBody(
 				{
 					offerPrice: '60',
-					fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
 					endsAt: '2026-06-20',
 					offerStrategy: 'Prune recovery test',
 					postOfferAction: 'Move to detail-only after expiry',
@@ -211,7 +184,6 @@ describe('normalizeTemplateOfferRequestBody', () => {
 			normalizeTemplateOfferRequestBody(
 				{
 					offerPrice: '60',
-					fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
 					endsAt: '2026-06-20',
 					offerStrategy: 'Retention save',
 					termsAccepted: true
@@ -231,7 +203,6 @@ describe('normalizeTemplateOfferRequestBody', () => {
 		const input = normalizeTemplateOfferRequestBody(
 			{
 				offerPrice: '60',
-				fulfillmentUrl: 'https://webflow.com/dashboard/sites/new',
 				endsAt: '2026-06-20',
 				offerStrategy: 'Retention save',
 				termsAccepted: true
