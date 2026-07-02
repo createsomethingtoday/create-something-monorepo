@@ -37,6 +37,7 @@
 			Current CREATE SOMETHING repo work now uses <strong>Linear as the source of truth</strong>
 			for tracked ownership, status, and evidence.
 		</p>
+		<a href="/products" class="hero-action">Proof and Receipts</a>
 	</section>
 
 	<!-- Install Section -->
@@ -453,6 +454,26 @@
 
 	.hero-description strong {
 		color: var(--color-fg-secondary);
+	}
+
+	.hero-action {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		margin-top: var(--space-md);
+		padding: var(--space-xs) var(--space-md);
+		border: 1px solid var(--color-fg-primary);
+		border-radius: var(--radius-sm);
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		text-decoration: none;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.hero-action:hover {
+		opacity: 0.9;
 	}
 
 	/* Section Styles */
