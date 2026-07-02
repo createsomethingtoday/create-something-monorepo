@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 export type CatoCompanyLinkMode = 'webflow' | 'export';
 
@@ -25,6 +25,8 @@ export interface CatoTeamMember {
   bio?: string;
   imageUrl?: string;
   linkedinUrl?: string;
+  group?: 'leadership' | 'board' | string;
+  order?: number;
 }
 
 export interface CatoCaseStudyResult {
@@ -59,6 +61,8 @@ export interface CatoAboutPageProps {
   valuesJson?: string;
   leadershipJson?: string;
   boardJson?: string;
+  peopleEndpointUrl?: string;
+  fetchPeople?: boolean;
   assetBasePath?: string;
   showMission?: boolean;
   showTeam?: boolean;
@@ -68,6 +72,8 @@ export interface CatoLeadershipPageProps {
   title?: string;
   summary?: string;
   leadershipJson?: string;
+  peopleEndpointUrl?: string;
+  fetchPeople?: boolean;
   assetBasePath?: string;
   ctaLabel?: string;
   ctaHref?: string;
@@ -77,6 +83,8 @@ export interface CatoBoardOfDirectorsPageProps {
   title?: string;
   summary?: string;
   boardJson?: string;
+  peopleEndpointUrl?: string;
+  fetchPeople?: boolean;
   assetBasePath?: string;
   ctaLabel?: string;
   ctaHref?: string;
@@ -123,77 +131,80 @@ const DEFAULT_METRICS: CatoImpactMetric[] = [
   { value: '40', label: 'States and growing' },
   { value: '650+', label: 'Brands supported' },
   { value: '113,000+', label: 'SKUs available' },
-  { value: '110+', label: 'Domestic suppliers' },
+  { value: '110+', label: 'Domestic suppliers' }
 ];
 
 const DEFAULT_VALUES: CatoValueItem[] = [
   {
     title: 'Resilience Defines Us',
-    description: 'We build for the moments when supply disruption threatens care continuity and teams need dependable options fast.',
+    description:
+      'We build for the moments when supply disruption threatens care continuity and teams need dependable options fast.'
   },
   {
     title: 'Our Tech Serves People',
-    description: 'Cato uses intelligence, automation, and supplier visibility to help operators make better healthcare procurement decisions.',
+    description:
+      'Cato uses intelligence, automation, and supplier visibility to help operators make better healthcare procurement decisions.'
   },
   {
     title: 'Transparency Drives Us',
-    description: 'We keep sourcing paths, constraints, and response options visible so stakeholders can act with confidence.',
+    description:
+      'We keep sourcing paths, constraints, and response options visible so stakeholders can act with confidence.'
   },
   {
     title: 'Reliability Is Our Commitment',
-    description: 'Hospitals need trusted execution. Our work centers on consistent follow-through when supply chains are under pressure.',
+    description:
+      'Hospitals need trusted execution. Our work centers on consistent follow-through when supply chains are under pressure.'
   },
   {
     title: 'Allies When Needed Most',
-    description: 'We operate as a partner for procurement, supply chain, and clinical teams protecting patient care.',
-  },
+    description:
+      'We operate as a partner for procurement, supply chain, and clinical teams protecting patient care.'
+  }
 ];
 
 const DEFAULT_LEADERSHIP: CatoTeamMember[] = [
   {
     name: 'Ryan Zackon',
     role: 'President & Chief Executive Officer',
-    bio: 'Ryan leads Cato as it helps healthcare teams strengthen supply continuity across volatile sourcing conditions. Photo and full approved bio forthcoming from Cato.',
+    bio: 'Ryan leads Cato as it helps healthcare teams strengthen supply continuity across volatile sourcing conditions. Photo and full approved bio forthcoming from Cato.'
   },
   {
     name: 'Lainy Jahnke',
-    role: 'Chief Operating Officer, Co-Founder & Board Member',
-    bio: 'Operations leader with experience scaling organizations and guiding Cato customer delivery, management discipline, and supply continuity programs.',
+    role: 'Chief Operating Officer, Co-Founder',
+    bio: 'Operations leader with experience scaling organizations and guiding Cato customer delivery, management discipline, and supply continuity programs.'
   },
   {
     name: 'Ethan Weinberg',
     role: 'VP, Supply Chain, Co-Founder',
-    bio: 'Supply chain executive who has sourced and delivered medical supplies across broad SKU sets and supplier pathways.',
-  },
+    bio: 'Supply chain executive who has sourced and delivered medical supplies across broad SKU sets and supplier pathways.'
+  }
 ];
 
 const DEFAULT_BOARD: CatoTeamMember[] = [
   {
     name: 'Bala Iyer',
     role: 'Board Chair',
-    bio: 'Veteran technology operator with experience overseeing acquisitions, divestitures, and growth-stage company strategy.',
-  },
-  {
-    name: 'Andy James',
-    role: 'Board Member',
-    bio: 'Technology-forward leader with decades of experience guiding healthcare, impact, and growth initiatives.',
+    bio: 'Veteran technology operator with experience overseeing acquisitions, divestitures, and growth-stage company strategy.'
   },
   {
     name: 'Heather Matzke-Hamlin',
     role: 'Board Member',
-    bio: 'Finance and transformation leader with experience guiding accounting, auditing, and acquisition integration teams.',
+    bio: 'Finance and transformation leader with experience guiding accounting, auditing, and acquisition integration teams.'
   },
   {
     name: 'John Courtney',
     role: 'Board Member',
-    bio: 'Operating partner and growth executive with experience scaling teams, operations, and technology-led businesses.',
+    bio: 'Operating partner and growth executive with experience scaling teams, operations, and technology-led businesses.'
   },
   {
     name: 'Tiffani Shaw',
     role: 'Board Member',
-    bio: 'Impact investing and operating leader focused on improving health, well-being, and institutional growth.',
-  },
+    bio: 'Impact investing and operating leader focused on improving health, well-being, and institutional growth.'
+  }
 ];
+
+const DEFAULT_PEOPLE_ENDPOINT_URL =
+  'https://cato-supply-insights-cms.createsomething.workers.dev/api/cato/team';
 
 const DEFAULT_CASE_STUDIES: CatoCaseStudyItem[] = [
   {
@@ -202,7 +213,8 @@ const DEFAULT_CASE_STUDIES: CatoCaseStudyItem[] = [
     clientName: 'Tennessee Health System',
     summary:
       'Urgently needed supplies including needles, syringes, irrigation supplies, and blood collection media were unavailable through primary vendors due to ongoing disruptions.',
-    customerProfile: 'Regional health system coordinating supply continuity across clinical teams and purchasing stakeholders.',
+    customerProfile:
+      'Regional health system coordinating supply continuity across clinical teams and purchasing stakeholders.',
     featured: true,
     challengeHtml:
       '<p>A Tennessee health system needed a fast, reliable path for critical items that could not be sourced through primary channels. The team needed to protect patient care while avoiding a rushed, opaque buying process.</p>',
@@ -211,15 +223,17 @@ const DEFAULT_CASE_STUDIES: CatoCaseStudyItem[] = [
     results: [
       { text: 'Patient care was maintained without interruption.' },
       { text: 'Upon PO receipt, shipments were dispatched the same or next day.' },
-      { text: '13 critical SKUs were shipped within 5 hours of request.' },
-    ],
+      { text: '13 critical SKUs were shipped within 5 hours of request.' }
+    ]
   },
   {
     title: 'Complexity Solved at Scale',
     slug: 'complexity-solved-at-scale',
     clientName: 'Nationwide Health System',
-    summary: 'A large healthcare organization needed a coordinated sourcing workflow for complex supply needs across multiple facilities.',
-    customerProfile: 'Nationwide health system managing product complexity, sourcing variance, and urgent operational requirements.',
+    summary:
+      'A large healthcare organization needed a coordinated sourcing workflow for complex supply needs across multiple facilities.',
+    customerProfile:
+      'Nationwide health system managing product complexity, sourcing variance, and urgent operational requirements.',
     challengeHtml:
       '<p>Scale made sourcing decisions harder to coordinate. The customer needed cleaner visibility into available supply paths and practical alternatives.</p>',
     solutionHtml:
@@ -227,14 +241,15 @@ const DEFAULT_CASE_STUDIES: CatoCaseStudyItem[] = [
     results: [
       { text: 'Reduced coordination friction across sourcing stakeholders.' },
       { text: 'Expanded visibility into practical supply options.' },
-      { text: 'Improved response confidence for complex requests.' },
-    ],
+      { text: 'Improved response confidence for complex requests.' }
+    ]
   },
   {
     title: 'Vendor Vulnerability Neutralized',
     slug: 'vendor-vulnerability-neutralized',
     clientName: 'Missouri Health System',
-    summary: 'A health system used Cato to reduce single-vendor vulnerability and evaluate practical alternatives during disruption.',
+    summary:
+      'A health system used Cato to reduce single-vendor vulnerability and evaluate practical alternatives during disruption.',
     customerProfile: 'Health system working to reduce exposure to constrained supplier channels.',
     challengeHtml:
       '<p>Supplier concentration created continuity risk. The team needed alternatives that could satisfy clinical and operational constraints.</p>',
@@ -243,15 +258,17 @@ const DEFAULT_CASE_STUDIES: CatoCaseStudyItem[] = [
     results: [
       { text: 'Reduced dependence on a constrained supply path.' },
       { text: 'Gave procurement leaders clearer alternate options.' },
-      { text: 'Supported continuity planning before escalation.' },
-    ],
+      { text: 'Supported continuity planning before escalation.' }
+    ]
   },
   {
     title: 'Hurricane Hits, Network Responds',
     slug: 'hurricane-hits-network-responds',
     clientName: 'South Carolina Health System',
-    summary: 'When nature strikes, supply continuity depends on quick supplier visibility, alternate routing, and response discipline.',
-    customerProfile: 'Regional health system responding to storm-related supply and logistics pressure.',
+    summary:
+      'When nature strikes, supply continuity depends on quick supplier visibility, alternate routing, and response discipline.',
+    customerProfile:
+      'Regional health system responding to storm-related supply and logistics pressure.',
     challengeHtml:
       '<p>Storm disruption put pressure on standard channels and required fast review of available sourcing paths.</p>',
     solutionHtml:
@@ -259,9 +276,9 @@ const DEFAULT_CASE_STUDIES: CatoCaseStudyItem[] = [
     results: [
       { text: 'Improved visibility during a regional disruption.' },
       { text: 'Supported faster review of alternative sourcing paths.' },
-      { text: 'Helped preserve focus on care continuity.' },
-    ],
-  },
+      { text: 'Helped preserve focus on care continuity.' }
+    ]
+  }
 ];
 
 const CATO_COMPANY_CSS = `
@@ -1000,6 +1017,193 @@ function parseJsonArray<T>(json: string | undefined, fallback: T[]): T[] {
   }
 }
 
+function textFromRecord(record: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (typeof value === 'number') return String(value);
+  }
+  return '';
+}
+
+function numberFromRecord(record: Record<string, unknown>, keys: string[]): number | undefined {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) {
+      return Number(value);
+    }
+  }
+  return undefined;
+}
+
+function firstRecordObject(value: unknown): Record<string, unknown> | null {
+  if (!value) return null;
+  if (Array.isArray(value)) {
+    return firstRecordObject(value[0]);
+  }
+  if (typeof value === 'object') return value as Record<string, unknown>;
+  return null;
+}
+
+function imageFromRecord(record: Record<string, unknown>): string {
+  const direct = textFromRecord(record, [
+    'imageUrl',
+    'image',
+    'photoUrl',
+    'photo',
+    'headshotUrl',
+    'headshot',
+    'avatarUrl',
+    'avatar'
+  ]);
+  if (direct) return direct;
+
+  const imageObject = firstRecordObject(
+    record.image || record.photo || record.headshot || record.avatar || record['profile-image']
+  );
+  if (!imageObject) return '';
+
+  return textFromRecord(imageObject, ['url', 'src', 'href', 'fileUrl']);
+}
+
+function normalizePeopleGroup(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return '';
+  if (
+    ['board', 'board-of-directors', 'board of directors', 'bod', 'director'].includes(normalized)
+  ) {
+    return 'board';
+  }
+  if (['leadership', 'leader', 'executive', 'team'].includes(normalized)) {
+    return 'leadership';
+  }
+  return normalized;
+}
+
+function normalizeEndpointPerson(raw: unknown): CatoTeamMember | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const source = raw as Record<string, unknown>;
+  const fieldData =
+    source.fieldData && typeof source.fieldData === 'object'
+      ? (source.fieldData as Record<string, unknown>)
+      : {};
+  const record = { ...source, ...fieldData };
+  const name = textFromRecord(record, ['name', 'title', 'fullName', 'full-name']);
+  if (!name) return null;
+
+  const rawGroup = textFromRecord(record, [
+    'group',
+    'category',
+    'type',
+    'team',
+    'profileGroup',
+    'profile-group',
+    'collection'
+  ]);
+
+  return {
+    name,
+    role:
+      textFromRecord(record, ['role', 'jobTitle', 'job-title', 'position', 'titleOverride']) ||
+      'Cato Supply',
+    bio: textFromRecord(record, ['bio', 'biography', 'summary', 'description']),
+    imageUrl: imageFromRecord(record),
+    linkedinUrl: textFromRecord(record, ['linkedinUrl', 'linkedin-url', 'linkedin', 'linkedIn']),
+    group: normalizePeopleGroup(rawGroup),
+    order: numberFromRecord(record, ['order', 'sortOrder', 'sort-order', 'positionNumber'])
+  };
+}
+
+export function normalizeEndpointPeople(payload: unknown): CatoTeamMember[] {
+  const source =
+    payload && typeof payload === 'object'
+      ? (payload as Record<string, unknown>).people ||
+        (payload as Record<string, unknown>).items ||
+        (payload as Record<string, unknown>).members ||
+        (payload as Record<string, unknown>).records ||
+        payload
+      : payload;
+  const records = Array.isArray(source) ? source : [];
+  return records
+    .map(normalizeEndpointPerson)
+    .filter((person): person is CatoTeamMember => Boolean(person))
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+}
+
+function splitPeopleByGroup(people: CatoTeamMember[]) {
+  return {
+    leadership: people.filter(
+      (person) => normalizePeopleGroup(person.group || '') === 'leadership'
+    ),
+    board: people.filter((person) => normalizePeopleGroup(person.group || '') === 'board')
+  };
+}
+
+function useCompanyPeopleData({
+  leadershipJson,
+  boardJson,
+  peopleEndpointUrl,
+  fetchPeople = true
+}: {
+  leadershipJson?: string;
+  boardJson?: string;
+  peopleEndpointUrl?: string;
+  fetchPeople?: boolean;
+}) {
+  const configuredLeadership = parseJsonArray<CatoTeamMember>(leadershipJson, []);
+  const configuredBoard = parseJsonArray<CatoTeamMember>(boardJson, []);
+  const hasConfiguredLeadership = Boolean(leadershipJson?.trim());
+  const hasConfiguredBoard = Boolean(boardJson?.trim());
+  const endpointUrl =
+    peopleEndpointUrl?.trim() ||
+    (hasConfiguredLeadership && hasConfiguredBoard ? '' : DEFAULT_PEOPLE_ENDPOINT_URL);
+  const [remotePeople, setRemotePeople] = useState<CatoTeamMember[] | null>(null);
+
+  useEffect(() => {
+    if (!fetchPeople || !endpointUrl || typeof window === 'undefined') {
+      setRemotePeople(null);
+      return;
+    }
+
+    let cancelled = false;
+    fetch(endpointUrl, { headers: { Accept: 'application/json' } })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Cato people endpoint returned ${response.status}`);
+        return response.json();
+      })
+      .then((payload) => {
+        if (cancelled) return;
+        const normalized = normalizeEndpointPeople(payload);
+        setRemotePeople(normalized.length ? normalized : null);
+      })
+      .catch(() => {
+        if (!cancelled) setRemotePeople(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [endpointUrl, fetchPeople]);
+
+  const groupedRemotePeople = splitPeopleByGroup(remotePeople || []);
+
+  return {
+    leadership:
+      configuredLeadership.length || hasConfiguredLeadership
+        ? configuredLeadership
+        : groupedRemotePeople.leadership.length
+          ? groupedRemotePeople.leadership
+          : DEFAULT_LEADERSHIP,
+    board:
+      configuredBoard.length || hasConfiguredBoard
+        ? configuredBoard
+        : groupedRemotePeople.board.length
+          ? groupedRemotePeople.board
+          : DEFAULT_BOARD
+  };
+}
+
 function cleanHtml(html: string | undefined): string {
   if (!html?.trim()) return '<p>No content has been added yet.</p>';
   return html
@@ -1027,7 +1231,11 @@ function initials(name: string): string {
     .join('');
 }
 
-function caseHref(slug: string, linkMode: CatoCompanyLinkMode = 'webflow', pathPrefix = ''): string {
+function caseHref(
+  slug: string,
+  linkMode: CatoCompanyLinkMode = 'webflow',
+  pathPrefix = ''
+): string {
   const cleanSlug = slug.replace(/^\/+/, '');
   const cleanPrefix = pathPrefix.replace(/\/+$/, '');
   const suffix = linkMode === 'export' ? '.html' : '';
@@ -1041,7 +1249,10 @@ function inferCaseSlugFromLocation(): string {
   return parts[parts.length - 1]?.replace(/\.html$/, '') || '';
 }
 
-function selectCaseStudy(props: CatoCaseStudyDetailProps, cases: CatoCaseStudyItem[]): CatoCaseStudyItem {
+function selectCaseStudy(
+  props: CatoCaseStudyDetailProps,
+  cases: CatoCaseStudyItem[]
+): CatoCaseStudyItem {
   const inferredSlug = inferCaseSlugFromLocation();
   const selectedSlug = inferredSlug || props.slug;
   const selected =
@@ -1061,25 +1272,45 @@ function selectCaseStudy(props: CatoCaseStudyDetailProps, cases: CatoCaseStudyIt
     solutionHtml: props.solutionHtml || selected.solutionHtml,
     challengeImageUrl: props.challengeImageUrl || selected.challengeImageUrl,
     solutionImageUrl: props.solutionImageUrl || selected.solutionImageUrl,
-    results: parseJsonArray<CatoCaseStudyResult>(props.resultsJson, selected.results || []),
+    results: parseJsonArray<CatoCaseStudyResult>(props.resultsJson, selected.results || [])
   };
 }
 
 function RichText({ html }: { html?: string }) {
-  return <div className="cato-company-richtext" dangerouslySetInnerHTML={{ __html: cleanHtml(html) }} />;
+  return (
+    <div className="cato-company-richtext" dangerouslySetInnerHTML={{ __html: cleanHtml(html) }} />
+  );
 }
 
 function ArrowIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 20 20" fill="none" className={className}>
-      <path d="M7.5 15L12.5 10L7.5 5" stroke="currentcolor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="100%"
+      viewBox="0 0 20 20"
+      fill="none"
+      className={className}
+    >
+      <path
+        d="M7.5 15L12.5 10L7.5 5"
+        stroke="currentcolor"
+        strokeWidth="1.66667"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
 function CloseIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 24 24" fill="none" className="team_modal-close-svg">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="100%"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="team_modal-close-svg"
+    >
       <path
         d="M17.5996 5.925C17.7639 5.925 17.8659 5.97351 17.9463 6.05391C18.0265 6.13422 18.0751 6.2357 18.0752 6.39961C18.0752 6.56382 18.0266 6.6659 17.9463 6.74629L12.6924 12.0002L13.0459 12.3537L17.9463 17.2531C18.0267 17.3335 18.0752 17.4357 18.0752 17.5998C18.0752 17.7641 18.0267 17.8661 17.9463 17.9465C17.8659 18.0269 17.7639 18.0754 17.5996 18.0754C17.4355 18.0754 17.3333 18.0269 17.2529 17.9465L12.3535 13.0461L12 12.6926L6.74609 17.9465C6.66571 18.0268 6.56362 18.0754 6.39941 18.0754C6.23551 18.0753 6.13402 18.0267 6.05371 17.9465C5.97331 17.8661 5.9248 17.7641 5.9248 17.5998C5.92484 17.4357 5.97334 17.3335 6.05371 17.2531L11.3066 12.0002L10.9531 11.6467L6.05371 6.74629C5.97331 6.66589 5.9248 6.56388 5.9248 6.39961C5.92488 6.23557 5.97337 6.13425 6.05371 6.05391C6.13405 5.97357 6.23537 5.92508 6.39941 5.925C6.56368 5.925 6.66569 5.97351 6.74609 6.05391L11.6465 10.9533L12 11.3068L17.2529 6.05391C17.3333 5.97354 17.4355 5.92504 17.5996 5.925Z"
         fill="currentColor"
@@ -1091,7 +1322,14 @@ function CloseIcon() {
 
 function ExportButton({ href, label }: { href: string; label: string }) {
   return (
-    <a data-modal-target="" data-anim-load="fade" data-anim-scroll="" data-wf--button--variant="base" href={href} className="button is-parent w-inline-block">
+    <a
+      data-modal-target=""
+      data-anim-load="fade"
+      data-anim-scroll=""
+      data-wf--button--variant="base"
+      href={href}
+      className="button is-parent w-inline-block"
+    >
       <div className="button">
         <div className="button_text">{label}</div>
         <div className="button_spacer" />
@@ -1106,7 +1344,7 @@ function TeamPageHero({
   summary,
   ctaLabel,
   ctaHref,
-  assetBasePath,
+  assetBasePath
 }: {
   title: string;
   summary: string;
@@ -1139,8 +1377,18 @@ function TeamPageHero({
         </div>
       </div>
       <div className="u-bg-slot">
-        {bg ? <img className="hero-v2_bg-element" src={bg} width={938} alt="" loading="eager" /> : null}
-        {bg ? <img className="hero-v2_bg-element is-right" src={bg} width={938} alt="" loading="eager" /> : null}
+        {bg ? (
+          <img className="hero-v2_bg-element" src={bg} width={938} alt="" loading="eager" />
+        ) : null}
+        {bg ? (
+          <img
+            className="hero-v2_bg-element is-right"
+            src={bg}
+            width={938}
+            alt=""
+            loading="eager"
+          />
+        ) : null}
         <div className="hero-v2_gradient is-about" />
       </div>
     </section>
@@ -1153,14 +1401,24 @@ function PersonCard({ person, assetBasePath }: { person: CatoTeamMember; assetBa
   return (
     <article className="cato-company-card cato-company-person">
       <div className="cato-company-person-image" aria-hidden={!image}>
-        {image ? <img src={image} alt={person.name} loading="lazy" /> : <span>{initials(person.name)}</span>}
+        {image ? (
+          <img src={image} alt={person.name} loading="lazy" />
+        ) : (
+          <span>{initials(person.name)}</span>
+        )}
       </div>
       <div className="cato-company-person-body">
         <h3>{person.name}</h3>
         <p>{person.role}</p>
         {person.bio ? <p>{person.bio}</p> : null}
         {person.linkedinUrl ? (
-          <a className="cato-company-button" data-variant="text" href={person.linkedinUrl} target="_blank" rel="noreferrer">
+          <a
+            className="cato-company-button"
+            data-variant="text"
+            href={person.linkedinUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
             LinkedIn
           </a>
         ) : null}
@@ -1169,7 +1427,13 @@ function PersonCard({ person, assetBasePath }: { person: CatoTeamMember; assetBa
   );
 }
 
-function TeamProfileCard({ person, assetBasePath }: { person: CatoTeamMember; assetBasePath?: string }) {
+function TeamProfileCard({
+  person,
+  assetBasePath
+}: {
+  person: CatoTeamMember;
+  assetBasePath?: string;
+}) {
   const [isOpen, setIsOpen] = React.useState(false);
   const image = assetUrl(person.imageUrl, assetBasePath);
 
@@ -1195,12 +1459,20 @@ function TeamProfileCard({ person, assetBasePath }: { person: CatoTeamMember; as
             aria-expanded={isOpen}
             onClick={() => setIsOpen(true)}
           >
-            <span className="button_text w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd">Read bio</span>
+            <span className="button_text w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd">
+              Read bio
+            </span>
             <span className="button_spacer w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd" />
             <ArrowIcon className="button_icon w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd" />
           </button>
         </div>
-        <div data-team="modal" className={`team_modal${isOpen ? ' is-open' : ''}`} role="dialog" aria-modal="true" aria-label={`${person.name} bio`}>
+        <div
+          data-team="modal"
+          className={`team_modal${isOpen ? ' is-open' : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${person.name} bio`}
+        >
           <div className="padding-global padding-section-large">
             <div className="container-small">
               <div className="team_modal-content">
@@ -1229,13 +1501,25 @@ function TeamProfileCard({ person, assetBasePath }: { person: CatoTeamMember; as
                     </p>
                   ) : null}
                 </div>
-                <button type="button" data-team="modal-close" className="team_modal-close-button" aria-label="Close bio" onClick={() => setIsOpen(false)}>
+                <button
+                  type="button"
+                  data-team="modal-close"
+                  className="team_modal-close-button"
+                  aria-label="Close bio"
+                  onClick={() => setIsOpen(false)}
+                >
                   <CloseIcon />
                 </button>
               </div>
             </div>
           </div>
-          <button type="button" data-team="modal-close" className="team_modal-bg" aria-label="Close bio" onClick={() => setIsOpen(false)} />
+          <button
+            type="button"
+            data-team="modal-close"
+            className="team_modal-bg"
+            aria-label="Close bio"
+            onClick={() => setIsOpen(false)}
+          />
         </div>
       </article>
     </div>
@@ -1245,7 +1529,7 @@ function TeamProfileCard({ person, assetBasePath }: { person: CatoTeamMember; as
 function TeamSection({
   title,
   people,
-  assetBasePath,
+  assetBasePath
 }: {
   title: string;
   people: CatoTeamMember[];
@@ -1264,7 +1548,11 @@ function TeamSection({
               <div className="team_cms-list-wrapper w-dyn-list">
                 <div role="list" className="team_cms-list w-dyn-items">
                   {people.map((person) => (
-                    <TeamProfileCard key={`${person.name}-${person.role}`} person={person} assetBasePath={assetBasePath} />
+                    <TeamProfileCard
+                      key={`${person.name}-${person.role}`}
+                      person={person}
+                      assetBasePath={assetBasePath}
+                    />
                   ))}
                 </div>
               </div>
@@ -1279,7 +1567,7 @@ function TeamSection({
 function CaseCard({
   item,
   linkMode,
-  pathPrefix,
+  pathPrefix
 }: {
   item: CatoCaseStudyItem;
   linkMode?: CatoCompanyLinkMode;
@@ -1292,7 +1580,11 @@ function CaseCard({
         <h3>{item.title}</h3>
         <p>{item.summary}</p>
       </div>
-      <a className="cato-company-button" data-variant="text" href={caseHref(item.slug, linkMode, pathPrefix)}>
+      <a
+        className="cato-company-button"
+        data-variant="text"
+        href={caseHref(item.slug, linkMode, pathPrefix)}
+      >
         Read case study
         <span aria-hidden="true">-&gt;</span>
       </a>
@@ -1313,14 +1605,20 @@ export function CatoAboutPage({
   valuesJson,
   leadershipJson,
   boardJson,
+  peopleEndpointUrl,
+  fetchPeople = true,
   assetBasePath,
   showMission = true,
-  showTeam = false,
+  showTeam = false
 }: CatoAboutPageProps) {
   const metrics = parseJsonArray<CatoImpactMetric>(metricsJson, DEFAULT_METRICS);
   const values = parseJsonArray<CatoValueItem>(valuesJson, DEFAULT_VALUES);
-  const leadership = parseJsonArray<CatoTeamMember>(leadershipJson, DEFAULT_LEADERSHIP);
-  const board = parseJsonArray<CatoTeamMember>(boardJson, DEFAULT_BOARD);
+  const { leadership, board } = useCompanyPeopleData({
+    leadershipJson,
+    boardJson,
+    peopleEndpointUrl,
+    fetchPeople
+  });
   const missionImage = assetUrl('images/mission-bg-img.webp', assetBasePath);
 
   return (
@@ -1342,7 +1640,10 @@ export function CatoAboutPage({
               <div className="cato-company-pill">Purpose built</div>
               <h2>Off-contract supply intelligence for care continuity.</h2>
             </div>
-            <p>Search, risk visibility, and sourcing support in one operating layer for healthcare procurement teams.</p>
+            <p>
+              Search, risk visibility, and sourcing support in one operating layer for healthcare
+              procurement teams.
+            </p>
           </aside>
         </div>
       </section>
@@ -1362,11 +1663,17 @@ export function CatoAboutPage({
         <div className="cato-company-container">
           <div className="cato-company-section-head">
             <h2 id="cato-impact-title">Our Impact</h2>
-            <p>Operational reach designed for health systems that need resilient sourcing options before disruption affects patient care.</p>
+            <p>
+              Operational reach designed for health systems that need resilient sourcing options
+              before disruption affects patient care.
+            </p>
           </div>
           <div className="cato-company-metrics-grid">
             {metrics.map((metric) => (
-              <article className="cato-company-card cato-company-metric" key={`${metric.value}-${metric.label}`}>
+              <article
+                className="cato-company-card cato-company-metric"
+                key={`${metric.value}-${metric.label}`}
+              >
                 <strong>{metric.value}</strong>
                 <p>{metric.label}</p>
                 {metric.note ? <p>{metric.note}</p> : null}
@@ -1398,7 +1705,9 @@ export function CatoAboutPage({
       {showMission ? (
         <section className="cato-company-band" aria-labelledby="cato-mission-title">
           <div className="cato-company-container cato-company-mission-grid">
-            <div className="cato-company-mission-visual">{missionImage ? <img src={missionImage} alt="" loading="lazy" /> : null}</div>
+            <div className="cato-company-mission-visual">
+              {missionImage ? <img src={missionImage} alt="" loading="lazy" /> : null}
+            </div>
             <div className="cato-company-hero-copy cato-company-mission">
               <p className="cato-company-eyebrow">Mission</p>
               <h2 id="cato-mission-title">{missionTitle}</h2>
@@ -1416,7 +1725,11 @@ export function CatoAboutPage({
             </div>
             <div className="cato-company-team-grid">
               {leadership.map((person) => (
-                <PersonCard key={`${person.name}-${person.role}`} person={person} assetBasePath={assetBasePath} />
+                <PersonCard
+                  key={`${person.name}-${person.role}`}
+                  person={person}
+                  assetBasePath={assetBasePath}
+                />
               ))}
             </div>
             <div className="cato-company-section-head" style={{ marginTop: '4rem' }}>
@@ -1424,7 +1737,10 @@ export function CatoAboutPage({
             </div>
             <div className="cato-company-board-grid">
               {board.map((person) => (
-                <article className="cato-company-card cato-company-board-card" key={`${person.name}-${person.role}`}>
+                <article
+                  className="cato-company-card cato-company-board-card"
+                  key={`${person.name}-${person.role}`}
+                >
                   <h3>{person.name}</h3>
                   <p>{person.role}</p>
                 </article>
@@ -1441,16 +1757,24 @@ export function CatoLeadershipPage({
   title = 'Meet the team helping hospitals protect supply continuity',
   summary = 'Cato combines healthcare procurement experience, supplier network discipline, and operator-led execution to help supply chain teams respond when standard channels cannot keep pace.',
   leadershipJson,
+  peopleEndpointUrl,
+  fetchPeople = true,
   assetBasePath,
   ctaLabel = 'Contact Us',
-  ctaHref = '/contact-us',
+  ctaHref = '/contact-us'
 }: CatoLeadershipPageProps) {
-  const leadership = parseJsonArray<CatoTeamMember>(leadershipJson, DEFAULT_LEADERSHIP);
+  const { leadership } = useCompanyPeopleData({ leadershipJson, peopleEndpointUrl, fetchPeople });
 
   return (
     <div className="cato-company cato-company-shell">
       <style>{CATO_COMPANY_CSS}</style>
-      <TeamPageHero title={title} summary={summary} ctaLabel={ctaLabel} ctaHref={ctaHref} assetBasePath={assetBasePath} />
+      <TeamPageHero
+        title={title}
+        summary={summary}
+        ctaLabel={ctaLabel}
+        ctaHref={ctaHref}
+        assetBasePath={assetBasePath}
+      />
       <TeamSection title="Leadership Team" people={leadership} assetBasePath={assetBasePath} />
     </div>
   );
@@ -1460,16 +1784,24 @@ export function CatoBoardOfDirectorsPage({
   title = 'Governance built for resilient healthcare supply',
   summary = 'Cato is guided by leaders with healthcare, technology, impact investing, operating, and growth experience so hospitals can rely on stronger supply pathways when disruption hits.',
   boardJson,
+  peopleEndpointUrl,
+  fetchPeople = true,
   assetBasePath,
   ctaLabel = 'Contact Us',
-  ctaHref = '/contact-us',
+  ctaHref = '/contact-us'
 }: CatoBoardOfDirectorsPageProps) {
-  const board = parseJsonArray<CatoTeamMember>(boardJson, DEFAULT_BOARD);
+  const { board } = useCompanyPeopleData({ boardJson, peopleEndpointUrl, fetchPeople });
 
   return (
     <div className="cato-company cato-company-shell">
       <style>{CATO_COMPANY_CSS}</style>
-      <TeamPageHero title={title} summary={summary} ctaLabel={ctaLabel} ctaHref={ctaHref} assetBasePath={assetBasePath} />
+      <TeamPageHero
+        title={title}
+        summary={summary}
+        ctaLabel={ctaLabel}
+        ctaHref={ctaHref}
+        assetBasePath={assetBasePath}
+      />
       <TeamSection title="Board of Directors" people={board} assetBasePath={assetBasePath} />
     </div>
   );
@@ -1486,7 +1818,7 @@ export function CatoCaseStudiesLanding({
   pathPrefix = '',
   contactLabel = 'Get in Touch',
   contactHref = '/contact-us',
-  showFeatured = true,
+  showFeatured = true
 }: CatoCaseStudiesLandingProps) {
   const cases = parseJsonArray<CatoCaseStudyItem>(caseStudiesJson, DEFAULT_CASE_STUDIES);
   const featured = cases.find((item) => item.featured) || cases[0];
@@ -1495,7 +1827,11 @@ export function CatoCaseStudiesLanding({
   return (
     <div className="cato-company cato-company-shell">
       <style>{CATO_COMPANY_CSS}</style>
-      <section className="cato-company-band" data-tone="soft" aria-labelledby="cato-case-studies-title">
+      <section
+        className="cato-company-band"
+        data-tone="soft"
+        aria-labelledby="cato-case-studies-title"
+      >
         <div className="cato-company-container cato-company-hero-grid">
           <div className="cato-company-hero-copy">
             <p className="cato-company-eyebrow">Case Studies</p>
@@ -1533,7 +1869,10 @@ export function CatoCaseStudiesLanding({
                   <h3>{featured.title}</h3>
                   <p>{featured.summary}</p>
                 </div>
-                <a className="cato-company-button" href={caseHref(featured.slug, linkMode, pathPrefix)}>
+                <a
+                  className="cato-company-button"
+                  href={caseHref(featured.slug, linkMode, pathPrefix)}
+                >
                   Read featured case
                   <span aria-hidden="true">-&gt;</span>
                 </a>
@@ -1570,9 +1909,16 @@ export function CatoCaseStudyDetail(props: CatoCaseStudyDetailProps) {
   const selected = selectCaseStudy(props, cases);
   const related = cases.filter((item) => item.slug !== selected.slug).slice(0, 3);
   const backLabel = props.backLabel || 'See all case studies';
-  const backHref = props.backHref || (props.linkMode === 'export' ? 'case-studies.html' : '/case-studies');
-  const challengeImage = assetUrl(props.challengeImage || selected.challengeImageUrl, props.assetBasePath);
-  const solutionImage = assetUrl(props.solutionImage || selected.solutionImageUrl, props.assetBasePath);
+  const backHref =
+    props.backHref || (props.linkMode === 'export' ? 'case-studies.html' : '/case-studies');
+  const challengeImage = assetUrl(
+    props.challengeImage || selected.challengeImageUrl,
+    props.assetBasePath
+  );
+  const solutionImage = assetUrl(
+    props.solutionImage || selected.solutionImageUrl,
+    props.assetBasePath
+  );
 
   return (
     <div className="cato-company cato-company-shell">
@@ -1597,17 +1943,28 @@ export function CatoCaseStudyDetail(props: CatoCaseStudyDetailProps) {
 
       <main className="cato-company-band" aria-label="Case study content">
         <div className="cato-company-container cato-company-detail-content">
-          <section className="cato-company-card cato-company-story-section" aria-labelledby="cato-challenge-title">
+          <section
+            className="cato-company-card cato-company-story-section"
+            aria-labelledby="cato-challenge-title"
+          >
             <div>
               <p className="cato-company-eyebrow">The Challenge</p>
               <h2 id="cato-challenge-title">The Challenge</h2>
               <RichText html={selected.challengeHtml} />
             </div>
-            <div className="cato-company-image-panel">{challengeImage ? <img src={challengeImage} alt="" loading="lazy" /> : null}</div>
+            <div className="cato-company-image-panel">
+              {challengeImage ? <img src={challengeImage} alt="" loading="lazy" /> : null}
+            </div>
           </section>
 
-          <section className="cato-company-card cato-company-story-section" data-flip="true" aria-labelledby="cato-solution-title">
-            <div className="cato-company-image-panel">{solutionImage ? <img src={solutionImage} alt="" loading="lazy" /> : null}</div>
+          <section
+            className="cato-company-card cato-company-story-section"
+            data-flip="true"
+            aria-labelledby="cato-solution-title"
+          >
+            <div className="cato-company-image-panel">
+              {solutionImage ? <img src={solutionImage} alt="" loading="lazy" /> : null}
+            </div>
             <div>
               <p className="cato-company-eyebrow">Solution</p>
               <h2 id="cato-solution-title">Solutions</h2>
@@ -1636,7 +1993,12 @@ export function CatoCaseStudyDetail(props: CatoCaseStudyDetailProps) {
               </div>
               <div className="cato-company-case-list">
                 {related.map((item) => (
-                  <CaseCard key={item.slug} item={item} linkMode={props.linkMode} pathPrefix={props.pathPrefix} />
+                  <CaseCard
+                    key={item.slug}
+                    item={item}
+                    linkMode={props.linkMode}
+                    pathPrefix={props.pathPrefix}
+                  />
                 ))}
               </div>
             </section>
