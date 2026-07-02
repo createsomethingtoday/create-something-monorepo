@@ -1022,7 +1022,6 @@ function isPublicActiveTemplateOffer(
 	now = new Date()
 ): boolean {
 	if (!isApprovedLikeTemplateOffer(record)) return false;
-	if (!firstString(record.fields['🔗Public CTA URL'])) return false;
 
 	const nowTime = now.getTime();
 	const startsAt = dateTimestamp(record.fields['📅Starts At']);
