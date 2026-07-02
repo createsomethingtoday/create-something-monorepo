@@ -6,8 +6,10 @@
  */
 
 import type { Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
+import { createPublicHtmlCacheHandle } from '@create-something/canon/server/public-html-cache';
 
-export const handle: Handle = async ({ event, resolve }) => {
+const frameAncestorsHandle: Handle = async ({ event, resolve }) => {
 	const response = await resolve(event);
 
 	// Clone response to modify headers
@@ -29,3 +31,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		headers: newHeaders
 	});
 };
+
+const publicHtmlCacheHandle = createPublicHtmlCacheHandle({
+	statusHeader: 'X-Maverick-Edge-Cache'
+});
+
+export const handle = sequence(frameAncestorsHandle, publicHtmlCacheHandle);

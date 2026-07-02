@@ -1,7 +1,9 @@
 import { redirect, type Handle } from '@sveltejs/kit';
-import { createSessionManager, type User } from '@create-something/canon/auth';
+import { sequence } from '@sveltejs/kit/hooks';
+import { createSessionManager } from '@create-something/canon/auth';
+import { createPublicHtmlCacheHandle } from '@create-something/canon/server/public-html-cache';
 
-export const handle: Handle = async ({ event, resolve }) => {
+const authAndAdminHandle: Handle = async ({ event, resolve }) => {
 	const isProduction = event.platform?.env?.ENVIRONMENT === 'production';
 	const domain = isProduction ? '.createsomething.io' : undefined;
 
@@ -115,3 +117,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	return resolve(event);
 };
+
+const publicHtmlCacheHandle = createPublicHtmlCacheHandle({
+	statusHeader: 'X-IO-Edge-Cache',
+	uncachedPathPrefixes: ['/account', '/admin', '/api', '/auth', '/confirm', '/dashboard', '/login', '/unsubscribe']
+});
+
+export const handle = sequence(authAndAdminHandle, publicHtmlCacheHandle);
