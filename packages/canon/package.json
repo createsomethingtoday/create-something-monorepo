@@ -3,6 +3,19 @@
 	"version": "0.1.0",
 	"description": "Canon Design System - Single source of truth for CREATE SOMETHING properties",
 	"type": "module",
+	"createSomething": {
+		"agentLegibilityContract": true,
+		"tier": "database",
+		"surface": "library",
+		"entrypoints": [
+			"README.md",
+			"src/lib/index.ts",
+			"src/lib/registry/index.ts",
+			"src/lib/styles/tokens.css"
+		],
+		"boot": "pnpm dev",
+		"smoke": "pnpm check && pnpm test"
+	},
 	"license": "MIT",
 	"scripts": {
 		"clean:package-tmp": "node -e \"const fs=require('fs'); fs.rmSync('.svelte-kit/__package__',{recursive:true,force:true}); fs.rmSync('.svelte-kit/__package_types_tmp__',{recursive:true,force:true});\"",
@@ -207,6 +220,10 @@
 		"./governance/products": {
 			"types": "./dist/governance/products.d.ts",
 			"default": "./dist/governance/products.js"
+		},
+		"./registry": {
+			"types": "./dist/registry/index.d.ts",
+			"default": "./dist/registry/index.js"
 		},
 		"./icons": {
 			"types": "./dist/icons/index.d.ts",

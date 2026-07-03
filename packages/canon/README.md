@@ -190,6 +190,45 @@ repeatable image-generation contract, see the public Canon Images guideline in
 For component-level usage rules, see
 [`src/lib/components/clear/README.md`](./src/lib/components/clear/README.md).
 
+## Canon Registry
+
+Canon exposes a machine-readable registry at `@create-something/canon/registry`.
+This is the foundation for agent discovery, content MCP resources, templates,
+project overlays, and modality-specific UI guidance.
+
+The registry classifies Canon artifacts as:
+
+- `component`: Svelte primitives such as `Button`, `Navigation`, and `ClearDecisionPanel`
+- `token`: CSS and design-token sources
+- `template`: reusable compositions for governed workflows
+- `adapter`: renderer-independent contracts such as Atlas graph artifacts
+- `policy`: rules and product loops such as Signal -> Decision -> Proof
+
+Each registry item carries source path, import path, docs path, maturity,
+supported modalities (`web`, `chat`, `app`, `voice`, `glasses`), dependencies,
+and contract notes for accessibility, evidence, motion, and extension.
+
+Project and client surfaces should extend Canon through this lifecycle:
+
+1. `project-local`: local overlay owns the need and evidence.
+2. `candidate`: repeated across at least two surfaces or clients.
+3. `canon-stable`: Canon owns export, docs, tests, and compatibility.
+4. `deprecated`: Canon preserves migration guidance and replacement routing.
+
+```typescript
+import {
+  searchCanonRegistry,
+  getCanonRegistryItem
+} from '@create-something/canon/registry';
+
+const glassesTemplates = searchCanonRegistry('routing evidence', {
+  kind: 'template',
+  modality: 'glasses'
+});
+
+const decisionPanel = getCanonRegistryItem('component.clear-decision-panel');
+```
+
 ## Atlas Graph And Story Primitives
 
 Canon owns the reusable Atlas graph/story contract at
@@ -239,6 +278,17 @@ copying third-party identity.
 ```css
 @import '@create-something/canon/styles/performance.css';
 ```
+
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `src/lib/index.ts`, `src/lib/registry/index.ts`, `src/lib/styles/tokens.css` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm check && pnpm test` |
+| Validation surfaces | `svelte-check`, `vitest`, `svelte-package`, `publint`, registry generated content in `@create-something/mcp` |
+| UI validation path | Downstream .ltd Canon docs and Canon-consuming property routes |
+| Escalation rule | Stop before changing Canon semantics, Clear/Atlas/governance contracts, or registry lifecycle without source-adjacent tests and public docs alignment. |
 
 Use the performance layer for labs, systems maps, operational dashboards, simulation surfaces, and
 high-stakes decision rooms where clarity needs more physical energy than a standard SaaS panel.

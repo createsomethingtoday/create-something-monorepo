@@ -6,6 +6,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
+import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -97,6 +98,54 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'text/markdown',
           text: `# ${page.title}\n\n**Section:** ${page.section}\n\n${page.content}`
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-registry',
+    'canon://registry',
+    { description: `Canon registry: ${CANON_REGISTRY_MANIFEST.items.length} machine-readable components, tokens, templates, adapters, and policies`, mimeType: 'application/json' },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_REGISTRY_MANIFEST, null, 2)
+      }]
+    })
+  );
+
+  server.resource(
+    'canon-registry-list',
+    'canon://registry/list',
+    { description: 'Index of Canon registry items for agent and template discovery', mimeType: 'application/json' },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_REGISTRY_MANIFEST.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          kind: item.kind,
+          maturity: item.maturity,
+          modalities: item.modalities,
+          uri: `canon://registry/${item.id}`
+        })), null, 2)
+      }]
+    })
+  );
+
+  for (const item of CANON_REGISTRY_MANIFEST.items) {
+    server.resource(
+      `canon-registry-${item.id.replace(/[^a-z0-9-]/gi, '-')}`,
+      `canon://registry/${item.id}`,
+      { description: `Canon registry ${item.kind}: ${item.name}`, mimeType: 'application/json' },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(item, null, 2)
         }]
       })
     );

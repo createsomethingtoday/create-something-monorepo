@@ -6,6 +6,13 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { search, findRelated } from './search.js';
+import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
+import type {
+  CanonRegistryItem,
+  CanonRegistryKind,
+  CanonRegistryMaturity,
+  CanonRegistryModality
+} from './content/types.js';
 import {
   classifyComponent,
   debugSystem,
@@ -28,6 +35,92 @@ const USER_VISIBLE = {
   }
 };
 
+const CANON_REGISTRY_KIND_VALUES = ['component', 'token', 'template', 'adapter', 'policy'] as const;
+const CANON_REGISTRY_MODALITY_VALUES = ['web', 'chat', 'app', 'voice', 'glasses'] as const;
+const CANON_REGISTRY_MATURITY_VALUES = ['stable', 'candidate', 'experimental'] as const;
+
+function getCanonRegistryItem(id: string): CanonRegistryItem | undefined {
+  return CANON_REGISTRY_MANIFEST.items.find((item) => item.id === id);
+}
+
+function scoreCanonRegistryItem(item: CanonRegistryItem, query: string): number {
+  if (!query) return 1;
+
+  const haystacks = [
+    item.id,
+    item.name,
+    item.kind,
+    item.maturity,
+    item.description,
+    item.sourcePath,
+    item.importPath ?? '',
+    item.docsPath ?? '',
+    ...item.tags,
+    ...item.modalities,
+    ...(item.dependencies ?? []),
+    item.contract.accessibility ?? '',
+    item.contract.evidence ?? '',
+    item.contract.motion ?? '',
+    item.contract.extension ?? ''
+  ].map((value) => value.toLowerCase());
+
+  return query
+    .split(/\s+/)
+    .filter(Boolean)
+    .reduce((score, token) => {
+      if (item.id.toLowerCase() === token || item.name.toLowerCase() === token) return score + 8;
+      if (haystacks.some((value) => value.includes(token))) return score + 1;
+      return score;
+    }, 0);
+}
+
+function searchCanonRegistryItems(input: {
+  query?: string;
+  kind?: CanonRegistryKind;
+  modality?: CanonRegistryModality;
+  maturity?: CanonRegistryMaturity;
+  limit?: number;
+}): CanonRegistryItem[] {
+  const query = input.query?.trim().toLowerCase() ?? '';
+  const limit = input.limit ?? 10;
+
+  return CANON_REGISTRY_MANIFEST.items
+    .filter((item) => !input.kind || item.kind === input.kind)
+    .filter((item) => !input.modality || item.modalities.includes(input.modality))
+    .filter((item) => !input.maturity || item.maturity === input.maturity)
+    .map((item) => ({ item, score: scoreCanonRegistryItem(item, query) }))
+    .filter((result) => !query || result.score > 0)
+    .sort((a, b) => b.score - a.score || a.item.id.localeCompare(b.item.id))
+    .slice(0, limit)
+    .map((result) => result.item);
+}
+
+function renderCanonRegistryItem(item: CanonRegistryItem): string {
+  const lines = [
+    `## ${item.name}`,
+    '',
+    `- ID: \`${item.id}\``,
+    `- Kind: \`${item.kind}\``,
+    `- Maturity: \`${item.maturity}\``,
+    `- Modalities: ${item.modalities.map((m) => `\`${m}\``).join(', ')}`,
+    `- Source: \`${item.sourcePath}\``,
+  ];
+
+  if (item.importPath) lines.push(`- Import: \`${item.importPath}\``);
+  if (item.docsPath) lines.push(`- Docs: \`${item.docsPath}\``);
+  if (item.dependencies?.length) {
+    lines.push(`- Dependencies: ${item.dependencies.map((id) => `\`${id}\``).join(', ')}`);
+  }
+
+  lines.push('', item.description, '', '### Contract');
+
+  for (const [key, value] of Object.entries(item.contract)) {
+    if (value) lines.push(`- **${key}**: ${value}`);
+  }
+
+  return lines.join('\n');
+}
+
 export function registerTools(server: McpServer) {
   // ==========================================================================
   // search — Cross-property full-text search
@@ -38,7 +131,7 @@ export function registerTools(server: McpServer) {
     'Search across all CREATE SOMETHING content: papers, Canon design system, patterns, masters, praxis exercises, products, full property markdown documents, and framework definitions. Returns ranked results with matched terms.',
     {
       query: z.string().describe('Search query — can be a concept, term, or phrase'),
-      type: z.enum(['paper', 'canon', 'pattern', 'master', 'praxis', 'product', 'framework', 'playbook', 'document']).optional()
+      type: z.enum(['paper', 'canon', 'canon-registry', 'pattern', 'master', 'praxis', 'product', 'framework', 'playbook', 'document']).optional()
         .describe('Filter results to a specific content type'),
       property: z.enum(['io', 'ltd', 'space', 'agency', 'framework']).optional()
         .describe('Filter results to a specific property'),
@@ -59,7 +152,7 @@ export function registerTools(server: McpServer) {
       }
 
       const PROPERTY_LABELS: Record<string, string> = { io: '.io', ltd: '.ltd', space: '.space', agency: '.agency', framework: 'Framework' };
-      const TYPE_ICONS: Record<string, string> = { paper: 'Paper', canon: 'Canon', pattern: 'Pattern', master: 'Master', praxis: 'Praxis', product: 'Product', framework: 'Framework', playbook: 'Playbook', document: 'Document' };
+      const TYPE_ICONS: Record<string, string> = { paper: 'Paper', canon: 'Canon', 'canon-registry': 'Canon Registry', pattern: 'Pattern', master: 'Master', praxis: 'Praxis', product: 'Product', framework: 'Framework', playbook: 'Playbook', document: 'Document' };
 
       const lines = [`## Search: "${query}"\n`, `**${results.length} results found**\n`];
 
@@ -294,6 +387,120 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: lines.join('\n'),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  // ==========================================================================
+  // Canon registry — machine-readable design system lookup
+  // ==========================================================================
+
+  server.tool(
+    'canon_registry_search',
+    'Search the machine-readable Canon registry for components, tokens, templates, adapters, and policies. Use this before inventing local UI or choosing a modality pattern.',
+    {
+      query: z.string().optional().describe('Optional search query such as "decision evidence", "glasses routing", or "tokens"'),
+      kind: z.enum(CANON_REGISTRY_KIND_VALUES).optional().describe('Filter by Canon artifact kind'),
+      modality: z.enum(CANON_REGISTRY_MODALITY_VALUES).optional().describe('Filter by target surface: web, chat, app, voice, or glasses'),
+      maturity: z.enum(CANON_REGISTRY_MATURITY_VALUES).optional().describe('Filter by maturity stage'),
+      limit: z.number().min(1).max(25).optional().describe('Maximum number of results (default: 10)')
+    },
+    async ({ query, kind, modality, maturity, limit }) => {
+      const results = searchCanonRegistryItems({ query, kind, modality, maturity, limit });
+
+      if (results.length === 0) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: 'No Canon registry items matched. Try a broader query or remove filters.',
+            ...USER_VISIBLE,
+          }]
+        };
+      }
+
+      const lines = [
+        '## Canon Registry Search',
+        '',
+        `Results: ${results.length}`,
+        '',
+        '| ID | Kind | Maturity | Modalities | Description |',
+        '|----|------|----------|------------|-------------|',
+      ];
+
+      for (const item of results) {
+        lines.push(`| \`${item.id}\` | ${item.kind} | ${item.maturity} | ${item.modalities.join(', ')} | ${item.description.replace(/\|/g, '\\|')} |`);
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: lines.join('\n'),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_registry_get',
+    'Get one Canon registry item by id, including source path, import path, docs path, modalities, dependencies, and contract notes.',
+    {
+      id: z.string().describe('Canon registry item id, for example component.clear-decision-panel or template.glasses-routing-hud')
+    },
+    async ({ id }) => {
+      const item = getCanonRegistryItem(id);
+
+      if (!item) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Canon registry item not found: ${id}`,
+            ...USER_VISIBLE,
+          }],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonRegistryItem(item),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_template_get',
+    'Get a Canon template by id or by modality. Use this to start web/chat/app/voice/glasses surfaces from Canon instead of ad hoc UI.',
+    {
+      id: z.string().optional().describe('Template id, for example template.web-governed-workflow'),
+      modality: z.enum(CANON_REGISTRY_MODALITY_VALUES).optional().describe('Find the strongest template for a target modality'),
+      query: z.string().optional().describe('Optional template search query')
+    },
+    async ({ id, modality, query }) => {
+      const item = id
+        ? getCanonRegistryItem(id)
+        : searchCanonRegistryItems({ query, modality, kind: 'template', limit: 1 })[0];
+
+      if (!item || item.kind !== 'template') {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: id ? `Canon template not found: ${id}` : 'No Canon template matched the requested modality/query.',
+            ...USER_VISIBLE,
+          }],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonRegistryItem(item),
           ...USER_VISIBLE,
         }]
       };

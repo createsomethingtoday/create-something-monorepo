@@ -2,6 +2,22 @@
   "name": "@createsomething/canon-tokens",
   "version": "0.1.0",
   "description": "Canon Design Tokens - Framework-agnostic CSS custom properties for dark-mode interfaces. Golden ratio spacing, WCAG-compliant colors, glass effects.",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "database",
+    "surface": "library",
+    "entrypoints": [
+      "README.md",
+      "tokens.css",
+      "tokens.json"
+    ],
+    "boot": "pnpm check",
+    "smoke": "pnpm check"
+  },
+  "scripts": {
+    "check": "node -e \"const fs=require('node:fs'); for (const file of ['tokens.css','tokens.scss','tokens.json']) fs.accessSync(file); JSON.parse(fs.readFileSync('tokens.json','utf8'));\""
+  },
   "author": "CREATE SOMETHING <hello@createsomething.io>",
   "license": "MIT",
   "repository": {

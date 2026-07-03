@@ -6,6 +6,7 @@
 import type { ContentItem } from './content/types.js';
 import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
+import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -53,6 +54,31 @@ function buildContentIndex(): ContentItem[] {
       content: c.content,
       property: 'ltd',
       uri: `canon://${c.slug}`
+    });
+  }
+
+  for (const item of CANON_REGISTRY_MANIFEST.items) {
+    items.push({
+      id: `canon-registry:${item.id}`,
+      type: 'canon-registry',
+      title: item.name,
+      description: item.description,
+      content: [
+        item.kind,
+        item.maturity,
+        item.sourcePath,
+        item.importPath ?? '',
+        item.docsPath ?? '',
+        item.tags.join(' '),
+        item.modalities.join(' '),
+        item.dependencies?.join(' ') ?? '',
+        item.contract.accessibility ?? '',
+        item.contract.evidence ?? '',
+        item.contract.motion ?? '',
+        item.contract.extension ?? ''
+      ].join('\n'),
+      property: 'ltd',
+      uri: `canon://registry/${item.id}`
     });
   }
 
