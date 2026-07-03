@@ -4,6 +4,12 @@ export type CanonRegistryMaturity = 'stable' | 'candidate' | 'experimental';
 
 export type CanonRegistryModality = 'web' | 'chat' | 'app' | 'voice' | 'glasses';
 
+export type CanonExtensionLifecycleStage =
+	| 'project-local'
+	| 'candidate'
+	| 'canon-stable'
+	| 'deprecated';
+
 export type CanonRegistryContract = {
 	accessibility?: string;
 	evidence?: string;
@@ -35,7 +41,7 @@ export type CanonRegistryManifest = {
 	requiredModalities: CanonRegistryModality[];
 	items: CanonRegistryItem[];
 	extensionLifecycle: Array<{
-		stage: 'project-local' | 'candidate' | 'canon-stable' | 'deprecated';
+		stage: CanonExtensionLifecycleStage;
 		description: string;
 	}>;
 	agentContract: {
@@ -51,4 +57,41 @@ export type CanonRegistrySearchOptions = {
 	modality?: CanonRegistryModality;
 	maturity?: CanonRegistryMaturity;
 	limit?: number;
+};
+
+export type CanonExtensionSurfaceEvidence = {
+	surfaceId: string;
+	name: string;
+	modality: CanonRegistryModality;
+	sourcePath?: string;
+	proof?: string;
+};
+
+export type CanonExtensionIntakePacket = {
+	id: string;
+	title: string;
+	summary: string;
+	requestedKind: CanonRegistryKind;
+	requestedModalities: CanonRegistryModality[];
+	owner: string;
+	sourcePackage: string;
+	sourcePath?: string;
+	tags: string[];
+	surfaces: CanonExtensionSurfaceEvidence[];
+	dependencies?: string[];
+	matchesRegistryItemId?: string;
+	deprecatesRegistryItemId?: string;
+};
+
+export type CanonExtensionRoutingDecision = {
+	stage: CanonExtensionLifecycleStage;
+	action:
+		| 'use-existing'
+		| 'keep-local'
+		| 'promote-candidate'
+		| 'mark-deprecated'
+		| 'needs-review';
+	rationale: string;
+	requiredEvidence: string[];
+	stopBeforeStable: string[];
 };

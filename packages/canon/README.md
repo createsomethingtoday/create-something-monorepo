@@ -217,6 +217,7 @@ Project and client surfaces should extend Canon through this lifecycle:
 
 ```typescript
 import {
+  routeCanonExtensionIntake,
   searchCanonRegistry,
   getCanonRegistryItem
 } from '@create-something/canon/registry';
@@ -227,7 +228,44 @@ const glassesTemplates = searchCanonRegistry('routing evidence', {
 });
 
 const decisionPanel = getCanonRegistryItem('component.clear-decision-panel');
+
+const routing = routeCanonExtensionIntake({
+  id: 'overlay.client-proof-panel',
+  title: 'Client Proof Panel',
+  summary: 'A client-local proof panel that may become a shared primitive.',
+  requestedKind: 'component',
+  requestedModalities: ['web'],
+  owner: 'client-team',
+  sourcePackage: '@create-something/agency',
+  sourcePath: 'packages/agency/src/lib/ClientProofPanel.svelte',
+  tags: ['proof', 'client'],
+  surfaces: [
+    {
+      surfaceId: 'agency-client-launch',
+      name: 'Agency client launch',
+      modality: 'web',
+      proof: 'Live launch receipt or review evidence'
+    }
+  ]
+});
 ```
+
+Use `template.canon-extension-intake` when a project or client surface wants to feed a
+pattern back into Canon. The packet must name the owner, source package, requested kind,
+modalities, tags, evidence surfaces, dependencies, and any existing Canon item it matches or
+deprecates.
+
+`routeCanonExtensionIntake(...)` applies the shared promotion rule:
+
+| Evidence | Routing |
+|----------|---------|
+| Matches a stable registry item | use the existing Canon item instead of forking |
+| One distinct surface | keep project-local and collect proof |
+| Two or more distinct surfaces | promote to `candidate` for Canon review |
+| Deprecates an existing item | keep migration guidance and replacement routing discoverable |
+
+Do not mark an overlay `canon-stable` until Canon owns the export path, docs, tests, and
+compatibility notes.
 
 ## Atlas Graph And Story Primitives
 

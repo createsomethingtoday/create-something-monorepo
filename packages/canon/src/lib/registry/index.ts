@@ -1,5 +1,7 @@
 import { CANON_REGISTRY_MANIFEST } from './data.js';
 import type {
+	CanonExtensionIntakePacket,
+	CanonExtensionRoutingDecision,
 	CanonRegistryItem,
 	CanonRegistryKind,
 	CanonRegistryManifest,
@@ -10,6 +12,10 @@ import type {
 
 export { CANON_REGISTRY_MANIFEST };
 export type {
+	CanonExtensionIntakePacket,
+	CanonExtensionLifecycleStage,
+	CanonExtensionRoutingDecision,
+	CanonExtensionSurfaceEvidence,
 	CanonRegistryContract,
 	CanonRegistryItem,
 	CanonRegistryKind,
@@ -62,6 +68,80 @@ export function searchCanonRegistry(
 		.map((result) => result.item);
 
 	return matches;
+}
+
+export function routeCanonExtensionIntake(
+	packet: CanonExtensionIntakePacket
+): CanonExtensionRoutingDecision {
+	if (packet.matchesRegistryItemId) {
+		const existing = getCanonRegistryItem(packet.matchesRegistryItemId);
+		if (existing?.maturity === 'stable') {
+			return {
+				stage: 'canon-stable',
+				action: 'use-existing',
+				rationale: `${existing.id} is already stable in Canon; extend through configuration or overlay copy instead of forking the primitive.`,
+				requiredEvidence: [
+					'Name the consuming surface and import path.',
+					'Document any local copy, integration, or content differences outside Canon.'
+				],
+				stopBeforeStable: []
+			};
+		}
+	}
+
+	if (packet.deprecatesRegistryItemId) {
+		const existing = getCanonRegistryItem(packet.deprecatesRegistryItemId);
+		return {
+			stage: existing ? 'deprecated' : 'project-local',
+			action: existing ? 'mark-deprecated' : 'needs-review',
+			rationale: existing
+				? `${existing.id} exists in Canon; replacement proposals must keep migration guidance and replacement routing discoverable.`
+				: `${packet.deprecatesRegistryItemId} is not a Canon registry item; confirm the source of truth before deprecation work.`,
+			requiredEvidence: [
+				'Replacement registry item or overlay path.',
+				'Migration guidance for existing consumers.',
+				'Compatibility or rollback note.'
+			],
+			stopBeforeStable: [
+				'Do not remove the old item until consumers and replacement routing are documented.'
+			]
+		};
+	}
+
+	const uniqueSurfaceIds = new Set(packet.surfaces.map((surface) => surface.surfaceId));
+	if (uniqueSurfaceIds.size >= 2) {
+		return {
+			stage: 'candidate',
+			action: 'promote-candidate',
+			rationale:
+				'The proposal has evidence from at least two surfaces, so Canon should evaluate it as a shared candidate instead of leaving it project-local.',
+			requiredEvidence: [
+				'Source-adjacent implementation path.',
+				'At least two surface proofs or client receipts.',
+				'Accessibility, evidence, motion, and extension contract notes.',
+				'Registry dependencies and modality list.'
+			],
+			stopBeforeStable: [
+				'Do not mark stable until Canon owns export path, docs, tests, and compatibility notes.'
+			]
+		};
+	}
+
+	return {
+		stage: 'project-local',
+		action: 'keep-local',
+		rationale:
+			'The proposal has fewer than two distinct surfaces, so the project overlay should keep ownership while collecting evidence.',
+		requiredEvidence: [
+			'Local owner and source path.',
+			'Problem statement tied to a real workflow.',
+			'Proof from a second surface or client before candidate promotion.'
+		],
+		stopBeforeStable: [
+			'Do not add a stable Canon export from a one-off overlay.',
+			'Do not create a parallel primitive when a stable registry item already matches the need.'
+		]
+	};
 }
 
 function scoreCanonRegistryItem(item: CanonRegistryItem, query: string): number {

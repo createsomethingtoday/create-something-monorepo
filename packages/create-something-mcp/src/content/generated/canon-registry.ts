@@ -293,6 +293,40 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "template.canon-extension-intake",
+      "name": "Canon Extension Intake Template",
+      "kind": "template",
+      "maturity": "candidate",
+      "description": "Machine-readable packet for project and client overlays to propose Canon extensions, candidate promotion, or deprecated replacement routing.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/registry/schema.ts",
+      "importPath": "@create-something/canon/registry",
+      "docsPath": "/canon/resources/registry",
+      "tags": [
+        "template",
+        "extension",
+        "intake",
+        "overlay",
+        "promotion",
+        "governance"
+      ],
+      "modalities": [
+        "web",
+        "chat",
+        "app",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Extension packets must name modality constraints before a display primitive is promoted.",
+        "evidence": "Candidate promotion requires evidence from at least two distinct surfaces or clients.",
+        "extension": "Project overlays own project-local evidence; Canon owns stable exports, docs, tests, and compatibility."
+      }
+    },
+    {
       "id": "template.web-governed-workflow",
       "name": "Web Governed Workflow Template",
       "kind": "template",
