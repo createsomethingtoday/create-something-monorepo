@@ -38,6 +38,12 @@ export type CanonRegistryMaturity = 'stable' | 'candidate' | 'experimental';
 
 export type CanonRegistryModality = 'web' | 'chat' | 'app' | 'voice' | 'glasses';
 
+export type CanonExtensionLifecycleStage =
+  | 'project-local'
+  | 'candidate'
+  | 'canon-stable'
+  | 'deprecated';
+
 export interface CanonRegistryItem {
   id: string;
   name: string;
@@ -67,7 +73,7 @@ export interface CanonRegistryManifest {
   requiredModalities: CanonRegistryModality[];
   items: CanonRegistryItem[];
   extensionLifecycle: Array<{
-    stage: 'project-local' | 'candidate' | 'canon-stable' | 'deprecated';
+    stage: CanonExtensionLifecycleStage;
     description: string;
   }>;
   agentContract: {
@@ -76,6 +82,38 @@ export interface CanonRegistryManifest {
     useFor: string[];
     stopBefore: string[];
   };
+}
+
+export interface CanonExtensionSurfaceEvidence {
+  surfaceId: string;
+  name: string;
+  modality: CanonRegistryModality;
+  sourcePath?: string;
+  proof?: string;
+}
+
+export interface CanonExtensionIntakePacket {
+  id: string;
+  title: string;
+  summary: string;
+  requestedKind: CanonRegistryKind;
+  requestedModalities: CanonRegistryModality[];
+  owner: string;
+  sourcePackage: string;
+  sourcePath?: string;
+  tags: string[];
+  surfaces: CanonExtensionSurfaceEvidence[];
+  dependencies?: string[];
+  matchesRegistryItemId?: string;
+  deprecatesRegistryItemId?: string;
+}
+
+export interface CanonExtensionRoutingDecision {
+  stage: CanonExtensionLifecycleStage;
+  action: 'use-existing' | 'keep-local' | 'promote-candidate' | 'mark-deprecated' | 'needs-review';
+  rationale: string;
+  requiredEvidence: string[];
+  stopBeforeStable: string[];
 }
 
 // ============================================================================

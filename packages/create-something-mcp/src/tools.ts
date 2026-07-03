@@ -8,6 +8,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { search, findRelated } from './search.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import type {
+  CanonExtensionIntakePacket,
+  CanonExtensionRoutingDecision,
   CanonRegistryItem,
   CanonRegistryKind,
   CanonRegistryMaturity,
@@ -116,6 +118,137 @@ function renderCanonRegistryItem(item: CanonRegistryItem): string {
 
   for (const [key, value] of Object.entries(item.contract)) {
     if (value) lines.push(`- **${key}**: ${value}`);
+  }
+
+  return lines.join('\n');
+}
+
+function routeCanonExtensionIntake(
+  packet: CanonExtensionIntakePacket
+): CanonExtensionRoutingDecision {
+  if (packet.matchesRegistryItemId) {
+    const existing = getCanonRegistryItem(packet.matchesRegistryItemId);
+    if (existing?.maturity === 'stable') {
+      return {
+        stage: 'canon-stable',
+        action: 'use-existing',
+        rationale: `${existing.id} is already stable in Canon; extend through configuration or overlay copy instead of forking the primitive.`,
+        requiredEvidence: [
+          'Name the consuming surface and import path.',
+          'Document any local copy, integration, or content differences outside Canon.'
+        ],
+        stopBeforeStable: []
+      };
+    }
+  }
+
+  if (packet.deprecatesRegistryItemId) {
+    const existing = getCanonRegistryItem(packet.deprecatesRegistryItemId);
+    return {
+      stage: existing ? 'deprecated' : 'project-local',
+      action: existing ? 'mark-deprecated' : 'needs-review',
+      rationale: existing
+        ? `${existing.id} exists in Canon; replacement proposals must keep migration guidance and replacement routing discoverable.`
+        : `${packet.deprecatesRegistryItemId} is not a Canon registry item; confirm the source of truth before deprecation work.`,
+      requiredEvidence: [
+        'Replacement registry item or overlay path.',
+        'Migration guidance for existing consumers.',
+        'Compatibility or rollback note.'
+      ],
+      stopBeforeStable: [
+        'Do not remove the old item until consumers and replacement routing are documented.'
+      ]
+    };
+  }
+
+  const uniqueSurfaceIds = new Set(packet.surfaces.map((surface) => surface.surfaceId));
+  if (uniqueSurfaceIds.size >= 2) {
+    return {
+      stage: 'candidate',
+      action: 'promote-candidate',
+      rationale:
+        'The proposal has evidence from at least two surfaces, so Canon should evaluate it as a shared candidate instead of leaving it project-local.',
+      requiredEvidence: [
+        'Source-adjacent implementation path.',
+        'At least two surface proofs or client receipts.',
+        'Accessibility, evidence, motion, and extension contract notes.',
+        'Registry dependencies and modality list.'
+      ],
+      stopBeforeStable: [
+        'Do not mark stable until Canon owns export path, docs, tests, and compatibility notes.'
+      ]
+    };
+  }
+
+  return {
+    stage: 'project-local',
+    action: 'keep-local',
+    rationale:
+      'The proposal has fewer than two distinct surfaces, so the project overlay should keep ownership while collecting evidence.',
+    requiredEvidence: [
+      'Local owner and source path.',
+      'Problem statement tied to a real workflow.',
+      'Proof from a second surface or client before candidate promotion.'
+    ],
+    stopBeforeStable: [
+      'Do not add a stable Canon export from a one-off overlay.',
+      'Do not create a parallel primitive when a stable registry item already matches the need.'
+    ]
+  };
+}
+
+function renderCanonExtensionRoutingDecision(
+  packet: CanonExtensionIntakePacket,
+  decision: CanonExtensionRoutingDecision
+): string {
+  const lines = [
+    '## Canon Extension Routing',
+    '',
+    `- Intake: \`${packet.id}\``,
+    `- Title: ${packet.title}`,
+    `- Requested kind: \`${packet.requestedKind}\``,
+    `- Requested modalities: ${packet.requestedModalities.map((m) => `\`${m}\``).join(', ')}`,
+    `- Owner: ${packet.owner}`,
+    `- Source package: \`${packet.sourcePackage}\``,
+  ];
+
+  if (packet.sourcePath) lines.push(`- Source path: \`${packet.sourcePath}\``);
+  if (packet.tags.length) lines.push(`- Tags: ${packet.tags.map((tag) => `\`${tag}\``).join(', ')}`);
+  if (packet.dependencies?.length) {
+    lines.push(`- Dependencies: ${packet.dependencies.map((id) => `\`${id}\``).join(', ')}`);
+  }
+  if (packet.matchesRegistryItemId) {
+    lines.push(`- Matches registry item: \`${packet.matchesRegistryItemId}\``);
+  }
+  if (packet.deprecatesRegistryItemId) {
+    lines.push(`- Deprecates registry item: \`${packet.deprecatesRegistryItemId}\``);
+  }
+
+  lines.push('', packet.summary, '', '### Decision');
+  lines.push(`- Stage: \`${decision.stage}\``);
+  lines.push(`- Action: \`${decision.action}\``);
+  lines.push(`- Rationale: ${decision.rationale}`);
+
+  if (packet.surfaces.length) {
+    lines.push('', '### Surface Evidence');
+    for (const surface of packet.surfaces) {
+      const details = [
+        `\`${surface.surfaceId}\``,
+        surface.name,
+        `modality: \`${surface.modality}\``
+      ];
+      if (surface.sourcePath) details.push(`source: \`${surface.sourcePath}\``);
+      if (surface.proof) details.push(`proof: ${surface.proof}`);
+      lines.push(`- ${details.join(' | ')}`);
+    }
+  }
+
+  lines.push('', '### Required Evidence');
+  for (const evidence of decision.requiredEvidence) lines.push(`- ${evidence}`);
+
+  if (decision.stopBeforeStable.length) {
+    lines.push('', '### Stop Before Stable');
+    for (const stop of decision.stopBeforeStable) lines.push(`- ${stop}`);
   }
 
   return lines.join('\n');
@@ -501,6 +634,73 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonRegistryItem(item),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_extension_route',
+    'Route a Canon extension intake packet. Use this when a project or client overlay proposes a new component, template, adapter, token, or policy and needs project-local, candidate, stable-reuse, or deprecation guidance.',
+    {
+      id: z.string().describe('Stable intake id, for example overlay.client-proof-panel'),
+      title: z.string().describe('Human-readable extension proposal title'),
+      summary: z.string().describe('What the overlay proposes and why it exists'),
+      requestedKind: z.enum(CANON_REGISTRY_KIND_VALUES).describe('Requested Canon artifact kind'),
+      requestedModalities: z.array(z.enum(CANON_REGISTRY_MODALITY_VALUES)).min(1)
+        .describe('Target modalities such as web, chat, app, voice, or glasses'),
+      owner: z.string().describe('Owner responsible for the overlay evidence'),
+      sourcePackage: z.string().describe('Source package or project proposing the extension'),
+      sourcePath: z.string().optional().describe('Optional source path for the overlay implementation'),
+      tags: z.array(z.string()).optional().describe('Optional tags that describe the proposal'),
+      surfaces: z.array(z.object({
+        surfaceId: z.string().describe('Distinct surface or client id'),
+        name: z.string().describe('Human-readable surface name'),
+        modality: z.enum(CANON_REGISTRY_MODALITY_VALUES).describe('Surface modality'),
+        sourcePath: z.string().optional().describe('Optional source path for this surface evidence'),
+        proof: z.string().optional().describe('Optional receipt, launch evidence, or review proof')
+      })).optional().describe('Surface evidence. Two distinct surface ids route the proposal to candidate promotion.'),
+      dependencies: z.array(z.string()).optional().describe('Optional Canon registry dependency ids'),
+      matchesRegistryItemId: z.string().optional().describe('Existing Canon registry item this proposal may duplicate'),
+      deprecatesRegistryItemId: z.string().optional().describe('Existing Canon registry item this proposal would replace')
+    },
+    async ({
+      id,
+      title,
+      summary,
+      requestedKind,
+      requestedModalities,
+      owner,
+      sourcePackage,
+      sourcePath,
+      tags,
+      surfaces,
+      dependencies,
+      matchesRegistryItemId,
+      deprecatesRegistryItemId
+    }) => {
+      const packet: CanonExtensionIntakePacket = {
+        id,
+        title,
+        summary,
+        requestedKind,
+        requestedModalities,
+        owner,
+        sourcePackage,
+        sourcePath,
+        tags: tags ?? [],
+        surfaces: surfaces ?? [],
+        dependencies,
+        matchesRegistryItemId,
+        deprecatesRegistryItemId
+      };
+      const decision = routeCanonExtensionIntake(packet);
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonExtensionRoutingDecision(packet, decision),
           ...USER_VISIBLE,
         }]
       };
