@@ -47,6 +47,7 @@ Content from all CREATE SOMETHING properties.
 | `canon_registry_search` | Search Canon components, tokens, templates, adapters, and policies by query, modality, kind, and maturity. |
 | `canon_registry_get` | Get one Canon registry item with source path, import path, docs path, dependencies, modalities, and contract notes. |
 | `canon_template_get` | Get a Canon template by id or modality for web/chat/app/voice/glasses surfaces. |
+| `canon_extension_route` | Route a project/client Canon extension intake packet to project-local, candidate, stable-reuse, or deprecation guidance. |
 
 ## Prompts (Judgment Tier)
 
