@@ -114,6 +114,7 @@ export { FEEDBACK_TOOL_SCHEMA, createFeedbackToolHandler, registerFeedbackTool }
 
 export {
   enableTelemetry,
+  recordMcpToolInvocation,
   recordInvocation,
   getUsage,
   getHealth,
@@ -129,6 +130,9 @@ export type {
   RunCountRow,
   ToolInvocationRow,
   BraintrustTelemetryOptions,
+  LangfuseTelemetryOptions,
+  TelemetryBackendOptions,
+  LangfuseTelemetryInvocation,
 } from './telemetry.js';
 
 // =============================================================================

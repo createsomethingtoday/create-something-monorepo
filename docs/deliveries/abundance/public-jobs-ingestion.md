@@ -140,21 +140,46 @@ The source-controlled Jobs MCP Worker exposes the stable Dify tool surface at:
 https://abundance-jobs-mcp.createsomething.workers.dev/mcp
 ```
 
-It also exposes an authenticated operator endpoint:
+For ChatGPT custom app onboarding, use the read-only no-auth surface:
+
+```text
+https://abundance-jobs-mcp.createsomething.workers.dev/chatgpt/mcp
+```
+
+This route is for white-glove onboarding and workflow learning, not broad unauthenticated marketplace distribution. It exposes only `list_public_jobs`, `search_public_jobs`, and `get_job`; write-capable funnel actions and all RapidAPI refresh/admin endpoints remain on the bearer-protected operator surface. The public ChatGPT route still records D1 telemetry and Braintrust events under the ChatGPT-public account label when those bindings are configured, so onboarding sessions can feed evals and future MCP packaging decisions.
+
+It also exposes an authenticated nursing-specific operator endpoint:
 
 ```bash
-curl "$ABUNDANCE_JOBS_MCP_URL/admin/ingest/rapidapi" \
+curl "$ABUNDANCE_JOBS_MCP_URL/admin/ingest/rapidapi/nursing-jobs" \
   -H "Authorization: Bearer $ABUNDANCE_MCP_BEARER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "title_filter": "nurse",
     "location_filter": "United States",
-    "limit": 100,
-    "endpoints": ["/active-ats-7d", "/modified-ats-24h"]
+    "limit": 100
   }'
 ```
 
-The endpoint writes normalized `provider=rapidapi` rows into `abundance_public_jobs` and records a row in `abundance_public_job_ingestion_runs`.
+The nursing endpoint pins `title_filter` to `nurse`, calls only `/modified-ats-24h` by default, and writes normalized `provider=rapidapi` rows into `abundance_public_jobs`. It records each attempt in `abundance_public_job_ingestion_runs` and skips a paid RapidAPI request when the Cloudflare D1 ledger already has a successful non-dry-run matching run inside the freshness window.
+
+Keep `title_filter=nurse` as the RapidAPI cost-control boundary. Live D1 samples showed it captures RN, LPN/LVN, CNA, NP, and adjacent nurse roles in one paid provider call; narrower paid filters such as `registered nurse`, `rn`, `lpn`, or `cna` reduce recall or require multiple paid calls. The Worker ranks core nursing titles first when serving from D1. If the table grows beyond the current Abundance-scale shortlist, move that rank into a stored/indexed ingestion column instead of adding more provider calls.
+
+Use an explicit backfill only when the operator needs the seven-day active set:
+
+```bash
+curl "$ABUNDANCE_JOBS_MCP_URL/admin/ingest/rapidapi/nursing-jobs" \
+  -H "Authorization: Bearer $ABUNDANCE_MCP_BEARER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "location_filter": "United States",
+    "limit": 100,
+    "include_backfill": true
+  }'
+```
+
+Set `"force_refresh": true` only when a paid provider pull is intentional despite a fresh matching D1 run. Set `"freshness_window_minutes": 0` to disable the freshness guard for a single call. Treat `"dry_run": true` as a paid provider request; it skips job upserts but still records an ingestion run for cost auditing and does not refresh the reusable D1 freshness window.
+
+The generic `/admin/ingest/rapidapi` endpoint remains available for manual provider diagnostics and non-nursing experiments, but it should not be used for normal Abundance delivery refreshes.
 
 Do not schedule `/active-ats-expired` until the provider returns bounded responses for filtered requests. The Worker exposes `/admin/probe/rapidapi-expired` for capped operator checks, but expired job ingestion should stay disabled unless the response shape is proven safe.
 
