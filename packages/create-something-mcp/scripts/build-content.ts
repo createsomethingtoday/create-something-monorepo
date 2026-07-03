@@ -15,6 +15,7 @@
 
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { basename, join, relative } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const OUT_DIR = join(import.meta.dirname, '..', 'src', 'content', 'generated');
@@ -299,6 +300,31 @@ ${entries.join(',\n')}
 }
 
 // ============================================================================
+// Build Canon registry snapshot
+// ============================================================================
+
+async function buildCanonRegistry(): Promise<string> {
+  const registryModuleUrl = pathToFileURL(
+    join(ROOT, 'packages', 'canon', 'src', 'lib', 'registry', 'index.ts')
+  ).href;
+  const registry = await import(registryModuleUrl) as {
+    getCanonRegistryManifest: () => unknown;
+  };
+  const manifest = registry.getCanonRegistryManifest();
+
+  return `/**
+ * Generated Canon registry content — DO NOT EDIT MANUALLY.
+ * Run: npm run build:content
+ * Source: packages/canon/src/lib/registry/
+ */
+
+import type { CanonRegistryManifest } from '../types.js';
+
+export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = ${JSON.stringify(manifest, null, 2)};
+`;
+}
+
+// ============================================================================
 // Build patterns
 // ============================================================================
 
@@ -534,9 +560,10 @@ async function main() {
   await mkdir(OUT_DIR, { recursive: true });
 
   // Build all content in parallel
-  const [papers, canon, patterns, graph, propertyDocs] = await Promise.all([
+  const [papers, canon, canonRegistry, patterns, graph, propertyDocs] = await Promise.all([
     buildPapers(),
     buildCanon(),
+    buildCanonRegistry(),
     buildPatterns(),
     buildGraph(),
     buildPropertyDocuments(),
@@ -546,6 +573,7 @@ async function main() {
   await Promise.all([
     writeFile(join(OUT_DIR, 'papers.ts'), papers, 'utf-8'),
     writeFile(join(OUT_DIR, 'canon.ts'), canon, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-registry.ts'), canonRegistry, 'utf-8'),
     writeFile(join(OUT_DIR, 'patterns.ts'), patterns, 'utf-8'),
     writeFile(join(OUT_DIR, 'graph.ts'), graph, 'utf-8'),
     writeFile(join(OUT_DIR, 'property-docs.ts'), propertyDocs.source, 'utf-8'),
@@ -554,12 +582,14 @@ async function main() {
   // Count content
   const paperCount = (papers.match(/slug:/g) || []).length;
   const canonCount = (canon.match(/slug:/g) || []).length;
+  const canonRegistryCount = (canonRegistry.match(/"id":/g) || []).length - 1;
   const patternCount = (patterns.match(/slug:/g) || []).length;
   const nodeCount = (graph.match(/"id":/g) || []).length;
 
   console.log('Content built successfully:');
   console.log(`  Papers:         ${paperCount}`);
   console.log(`  Canon:          ${canonCount}`);
+  console.log(`  Canon registry: ${canonRegistryCount} items`);
   console.log(`  Patterns:       ${patternCount}`);
   console.log(`  Graph:          ${nodeCount} nodes`);
   console.log(`  Property docs:  ${propertyDocs.totalCount}`);

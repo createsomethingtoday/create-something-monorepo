@@ -18,6 +18,7 @@ Content from all CREATE SOMETHING properties.
 |-------------|----------|-------------|
 | `papers://list`, `papers://{slug}` | .io | Research papers on methodology, architecture, philosophy |
 | `canon://list`, `canon://{slug}` | .ltd | Canon Design System pages (foundations, concepts, guidelines) |
+| `canon://registry`, `canon://registry/list`, `canon://registry/{id}` | .ltd | Machine-readable Canon registry for components, tokens, templates, adapters, policies, and modalities |
 | `patterns://list`, `patterns://{slug}` | .ltd | Design patterns from the CREATE SOMETHING philosophy |
 | `masters://list`, `masters://{slug}` | .ltd | Philosophical and design masters (Rams, Heidegger, etc.) |
 | `framework://definitions`, `framework://definitions/{tier}` | framework | Three-Tier Framework definitions |
@@ -43,6 +44,9 @@ Content from all CREATE SOMETHING properties.
 | `classify_component` | Classify a component into Three-Tier Framework tier(s) with confidence and rationale. |
 | `apply_triad` | Apply the Subtractive Triad (DRY, Rams, Heidegger) to an artifact. |
 | `audit_design` | Audit a design against the Canon Design System. |
+| `canon_registry_search` | Search Canon components, tokens, templates, adapters, and policies by query, modality, kind, and maturity. |
+| `canon_registry_get` | Get one Canon registry item with source path, import path, docs path, dependencies, modalities, and contract notes. |
+| `canon_template_get` | Get a Canon template by id or modality for web/chat/app/voice/glasses surfaces. |
 
 ## Prompts (Judgment Tier)
 
@@ -136,13 +140,13 @@ Worker deploys include telemetry via `@create-something/mcp-core` and the `TELEM
 
 ## Content Pipeline
 
-Content is extracted from the monorepo's source files and compiled into JSON:
+Content and the Canon registry are extracted from the monorepo's source files and compiled into JSON:
 
 ```bash
 pnpm --filter=@create-something/mcp build:content
 ```
 
-This generates files in `src/content/generated/` (papers, canon, patterns, graph, property-docs). Other content (masters, praxis, products, framework) is hand-authored in `src/content/`.
+This generates files in `src/content/generated/` (papers, canon, canon-registry, patterns, graph, property-docs). Other content (masters, praxis, products, framework) is hand-authored in `src/content/`.
 
 Playbook data is imported from `@create-something/playbook-mcp` (canonical source) — not duplicated.
 
