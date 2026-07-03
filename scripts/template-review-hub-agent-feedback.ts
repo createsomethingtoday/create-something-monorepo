@@ -49,6 +49,7 @@ type CandidateResult = {
   durationMs?: number;
   feedbackLength?: number;
   tools?: string[];
+  feedbackDiagnostics?: FeedbackPersistenceDiagnostics;
 };
 
 type ReturnedSaveAgentFeedbackRequest = {
@@ -57,6 +58,23 @@ type ReturnedSaveAgentFeedbackRequest = {
     version_id?: unknown;
     agent_review_feedback?: unknown;
   };
+};
+
+type FeedbackFallbackSource = 'returned_save_payload' | 'save_tool_input' | 'formatter_observation';
+
+type FeedbackFallbackCandidate = {
+  source: FeedbackFallbackSource;
+  feedback: string;
+};
+
+type FeedbackPersistenceDiagnostics = {
+  initialReadbackFound: boolean;
+  returnedSavePayloadFound: boolean;
+  saveToolInputFound: boolean;
+  formatterObservationFound: boolean;
+  runnerFallbackAttempted: boolean;
+  runnerFallbackSource?: FeedbackFallbackSource;
+  runnerFallbackReadbackFound?: boolean;
 };
 
 const READY_FOR_REVIEW_VIEW_ID = 'viwlVxrTFxnP0O9xp';
@@ -520,6 +538,14 @@ function parseHubExecuteObservation(observation: string): Record<string, unknown
     : null;
 }
 
+function parseHubExecuteToolInput(toolInput: string): Record<string, unknown> | null {
+  const wrapped = parseHubExecuteObservation(toolInput);
+  if (wrapped) return wrapped;
+
+  const raw = parseJsonRecord(toolInput);
+  return typeof raw?.proxyToolName === 'string' ? raw : null;
+}
+
 export function extractFormattedAgentFeedbackFromToolCalls(
   toolCalls: DifyChatOutput['toolCalls'],
   expectedVersionId: string
@@ -546,6 +572,81 @@ export function extractFormattedAgentFeedbackFromToolCalls(
   }
 
   return null;
+}
+
+export function extractSaveAgentFeedbackFromToolCalls(
+  toolCalls: DifyChatOutput['toolCalls'],
+  expectedVersionId: string
+): string | null {
+  for (const call of [...toolCalls].reverse()) {
+    if (!call.tool.includes('hub_execute_proxy_tool')) continue;
+    if (!call.toolInput.includes('template_review_save_agent_feedback')) continue;
+
+    const payload = parseHubExecuteToolInput(call.toolInput);
+    if (
+      payload?.proxyToolName !== 'webflow-template-review-mcp__template_review_save_agent_feedback'
+    ) {
+      continue;
+    }
+    const args = payload.args;
+    if (!args || typeof args !== 'object' || Array.isArray(args)) continue;
+
+    const versionId = (args as Record<string, unknown>).version_id;
+    const feedback = (args as Record<string, unknown>).agent_review_feedback;
+    if (versionId !== expectedVersionId || typeof feedback !== 'string') continue;
+
+    const trimmed = feedback.trim();
+    if (
+      trimmed &&
+      looksLikeFormattedAgentReviewFeedback(trimmed) &&
+      feedbackMentionsVersion(trimmed, expectedVersionId)
+    ) {
+      return trimmed;
+    }
+  }
+
+  return null;
+}
+
+function chooseFeedbackFallback(
+  output: DifyChatOutput,
+  expectedVersionId: string
+): {
+  fallback: FeedbackFallbackCandidate | null;
+  diagnostics: Omit<
+    FeedbackPersistenceDiagnostics,
+    | 'initialReadbackFound'
+    | 'runnerFallbackAttempted'
+    | 'runnerFallbackSource'
+    | 'runnerFallbackReadbackFound'
+  >;
+} {
+  const returnedSavePayload = extractReturnedSaveAgentFeedback(output.answer, expectedVersionId);
+  const saveToolInput = extractSaveAgentFeedbackFromToolCalls(output.toolCalls, expectedVersionId);
+  const formatterObservation = extractFormattedAgentFeedbackFromToolCalls(
+    output.toolCalls,
+    expectedVersionId
+  );
+  const fallback =
+    (returnedSavePayload && {
+      source: 'returned_save_payload' as const,
+      feedback: returnedSavePayload
+    }) ||
+    (saveToolInput && { source: 'save_tool_input' as const, feedback: saveToolInput }) ||
+    (formatterObservation && {
+      source: 'formatter_observation' as const,
+      feedback: formatterObservation
+    }) ||
+    null;
+
+  return {
+    fallback,
+    diagnostics: {
+      returnedSavePayloadFound: Boolean(returnedSavePayload),
+      saveToolInputFound: Boolean(saveToolInput),
+      formatterObservationFound: Boolean(formatterObservation)
+    }
+  };
 }
 
 function buildDifyConfig(args: Args) {
@@ -684,20 +785,34 @@ async function processCandidate(
   let feedback = await waitForAgentReviewFeedback(() =>
     airtableClient.getVersionById(candidate.version.versionId)
   );
-  let savedFromReturnedPayload = false;
+  const feedbackDiagnostics: FeedbackPersistenceDiagnostics = {
+    initialReadbackFound: Boolean(feedback),
+    returnedSavePayloadFound: false,
+    saveToolInputFound: false,
+    formatterObservationFound: false,
+    runnerFallbackAttempted: false
+  };
+  let savedFromRunnerFallback = false;
+  let runnerFallbackSource: FeedbackFallbackSource | undefined;
 
   if (!feedback) {
-    const returnedFeedback =
-      extractReturnedSaveAgentFeedback(output.answer, candidate.version.versionId) ??
-      extractFormattedAgentFeedbackFromToolCalls(output.toolCalls, candidate.version.versionId);
-    if (returnedFeedback) {
+    const { fallback, diagnostics } = chooseFeedbackFallback(output, candidate.version.versionId);
+    feedbackDiagnostics.returnedSavePayloadFound = diagnostics.returnedSavePayloadFound;
+    feedbackDiagnostics.saveToolInputFound = diagnostics.saveToolInputFound;
+    feedbackDiagnostics.formatterObservationFound = diagnostics.formatterObservationFound;
+
+    if (fallback) {
+      feedbackDiagnostics.runnerFallbackAttempted = true;
+      feedbackDiagnostics.runnerFallbackSource = fallback.source;
+      runnerFallbackSource = fallback.source;
       await airtableClient.updateVersionReview(candidate.version.versionId, {
-        agent_review_feedback: returnedFeedback
+        agent_review_feedback: fallback.feedback
       });
       feedback = await waitForAgentReviewFeedback(() =>
         airtableClient.getVersionById(candidate.version.versionId)
       );
-      savedFromReturnedPayload = true;
+      feedbackDiagnostics.runnerFallbackReadbackFound = Boolean(feedback);
+      savedFromRunnerFallback = true;
     }
   }
 
@@ -711,7 +826,8 @@ async function processCandidate(
       messageId: output.messageId,
       conversationId: output.conversationId,
       durationMs: output.durationMs,
-      tools
+      tools,
+      feedbackDiagnostics
     };
   }
 
@@ -720,14 +836,15 @@ async function processCandidate(
     assetId: candidate.asset.assetId,
     templateName: candidate.asset.templateName,
     status: 'saved',
-    reason: savedFromReturnedPayload
-      ? 'Agent Review Feedback saved by runner from validated Dify feedback payload.'
+    reason: savedFromRunnerFallback
+      ? `Agent Review Feedback saved by runner from validated ${runnerFallbackSource} fallback.`
       : 'Agent Review Feedback saved.',
     messageId: output.messageId,
     conversationId: output.conversationId,
     durationMs: output.durationMs,
     feedbackLength: feedback.length,
-    tools
+    tools,
+    feedbackDiagnostics
   };
 }
 
