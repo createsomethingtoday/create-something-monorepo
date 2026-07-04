@@ -630,6 +630,111 @@ describe('Canon registry manifest', () => {
 		);
 	});
 
+	it('adds advanced navigation surfaces as candidates while keeping Tabs stable', () => {
+		const navigationCandidates = [
+			{
+				id: 'component.navigation-sticky-header',
+				exportName: 'StickyHeader',
+				tag: 'sticky',
+				dependencies: ['component.navigation']
+			},
+			{
+				id: 'component.navigation-mobile-drawer',
+				exportName: 'MobileDrawer',
+				tag: 'drawer',
+				dependencies: ['component.navigation', 'component.navigation-drawer']
+			},
+			{
+				id: 'component.navigation-command-palette',
+				exportName: 'CommandPalette',
+				tag: 'command-palette',
+				dependencies: [
+					'component.navigation-dropdown-menu',
+					'component.form-text-field',
+					'component.button'
+				]
+			},
+			{
+				id: 'component.navigation-unified-search',
+				exportName: 'UnifiedSearch',
+				tag: 'search',
+				dependencies: [
+					'component.navigation-dropdown-menu',
+					'component.form-text-field',
+					'component.feedback-alert'
+				]
+			},
+			{
+				id: 'component.navigation-related-content',
+				exportName: 'RelatedContent',
+				tag: 'related-content',
+				dependencies: ['component.navigation', 'component.card', 'component.feedback-alert']
+			},
+			{
+				id: 'component.navigation-concept-journey',
+				exportName: 'ConceptJourney',
+				tag: 'journey',
+				dependencies: ['component.navigation', 'component.card', 'component.feedback-alert']
+			},
+			{
+				id: 'component.navigation-menu-button',
+				exportName: 'MenuButton',
+				tag: 'menu-button',
+				dependencies: ['component.button', 'component.navigation']
+			},
+			{
+				id: 'component.navigation-mega-menu',
+				exportName: 'MegaMenu',
+				tag: 'mega-menu',
+				dependencies: [
+					'component.navigation',
+					'component.navigation-dropdown-menu',
+					'component.navigation-drawer'
+				]
+			}
+		] as const;
+
+		for (const candidate of navigationCandidates) {
+			const item = getCanonRegistryItem(candidate.id);
+			const classification = getCanonPublicExportClassification(
+				'./navigation',
+				candidate.exportName
+			);
+
+			expect(
+				candidateRegistryItemIdsForPublicExport('./navigation', candidate.exportName),
+				candidate.exportName
+			).toContain(candidate.id);
+			expect(item?.kind, candidate.id).toBe('component');
+			expect(item?.maturity, candidate.id).toBe('candidate');
+			expect(item?.sourcePath, candidate.id).toBe(
+				`packages/canon/src/lib/navigation/${candidate.exportName}.svelte`
+			);
+			expect(item?.importPath, candidate.id).toBe('@create-something/canon/navigation');
+			expect(item?.docsPath, candidate.id).toBe('/canon/components/navigation');
+			expect(item?.tags, candidate.id).toContain('navigation');
+			expect(item?.tags, candidate.id).toContain(candidate.tag);
+			expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+			for (const dependency of candidate.dependencies) {
+				expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
+			}
+			expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, candidate.id).toBeTruthy();
+			expect(item?.contract.evidence, candidate.id).toBeTruthy();
+			expect(item?.contract.motion, candidate.id).toBeTruthy();
+			expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+			expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
+		}
+
+		expect(getCanonRegistryItem('component.navigation-tabs')?.maturity).toBe('stable');
+		expect(getCanonPublicExportClassification('./navigation', 'Tabs')?.registryPolicy).toBe(
+			'registry-covered'
+		);
+		expect(searchCanonRegistry('navigation candidate', { maturity: 'candidate' }).map((item) => item.id)).toEqual(
+			expect.arrayContaining(navigationCandidates.map(({ id }) => id))
+		);
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();
