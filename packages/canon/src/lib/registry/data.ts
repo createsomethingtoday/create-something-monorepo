@@ -1862,6 +1862,88 @@ const INSIGHT_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
 	}
 ];
 
+const CONTENT_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
+	{
+		id: 'component.content-video-lightbox',
+		name: 'VideoLightbox',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Video lightbox candidate for thumbnail-triggered YouTube, Vimeo, or direct-video playback.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/content/VideoLightbox.svelte',
+		importPath: '@create-something/canon/content',
+		docsPath: '/canon/components/content',
+		tags: ['content', 'video', 'lightbox', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.button'],
+		contract: {
+			accessibility:
+				'Video triggers must expose title, play action, close action, modal state, captions path, and provider fallback.',
+			evidence:
+				'Video data must preserve provider URL, embed URL, thumbnail URL, title, aspect ratio, and playback state.',
+			motion:
+				'Lightbox fade, scale, and play-button hover treatment must be optional and cannot block Escape or close controls.',
+			extension:
+				'Promote to stable only after provider parsing, captions, focus management, thumbnail fallback, and close behavior contracts are documented.'
+		}
+	},
+	{
+		id: 'component.content-carousel',
+		name: 'Carousel',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Generic content carousel candidate for indexed slide collections with arrows, dots, looping, and autoplay.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/content/Carousel.svelte',
+		importPath: '@create-something/canon/content',
+		docsPath: '/canon/components/content',
+		tags: ['content', 'carousel', 'slides', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.button'],
+		contract: {
+			accessibility:
+				'Carousel slides must expose region label, current index, slide count, previous/next actions, dot labels, and hidden state.',
+			evidence:
+				'Carousel state must preserve slide order, current index, loop setting, autoplay interval, pause state, and rendering slot semantics.',
+			motion:
+				'Slide translation and autoplay must be pausable, reduced-motion safe, and never the only way to discover slide content.',
+			extension:
+				'Promote to stable only after keyboard behavior, autoplay policy, slide schema, and nonvisual summary contracts are documented.'
+		}
+	},
+	{
+		id: 'component.content-testimonial-carousel',
+		name: 'TestimonialCarousel',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Social proof carousel candidate for testimonials with quote, author, role, avatar, rating, and navigation state.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/content/TestimonialCarousel.svelte',
+		importPath: '@create-something/canon/content',
+		docsPath: '/canon/components/content',
+		tags: ['content', 'testimonial', 'social-proof', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: [
+			'token.canon-core',
+			'component.content-carousel',
+			'component.clear-proof-strip'
+		],
+		contract: {
+			accessibility:
+				'Testimonials must expose quote text, author, role, avatar alt text, rating text, current index, and navigation actions.',
+			evidence:
+				'Testimonial data must preserve quote, author, role, avatar URL, rating, headline, subheadline, and proof ordering.',
+			motion:
+				'Auto-rotation, card fade, and horizontal movement must pause on interaction and remain reduced-motion safe.',
+			extension:
+				'Promote to stable only after quote provenance, rating semantics, autoplay policy, and proof/source attribution contracts are documented.'
+		}
+	}
+];
+
 export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 	schemaVersion: 1,
 	id: 'canon-registry',
@@ -1990,6 +2072,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 		...NAVIGATION_CANDIDATE_ITEMS,
 		...FILTERING_CANDIDATE_ITEMS,
 		...INSIGHT_CANDIDATE_ITEMS,
+		...CONTENT_CANDIDATE_ITEMS,
 		...CLEAR_PRIMITIVE_ITEMS,
 		...FOUNDATION_CONTROL_ITEMS,
 		{
