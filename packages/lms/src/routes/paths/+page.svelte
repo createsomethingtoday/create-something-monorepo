@@ -3,15 +3,18 @@
 </script>
 
 <svelte:head>
-  <title>Codex MCP Course | CREATE SOMETHING Learn</title>
-  <meta name="description" content="A single practical course for learning Codex by building an MCP." />
+  <title>Operator Workflow Paths | CREATE SOMETHING Learn</title>
+  <meta
+    name="description"
+    content="Operator learning paths for creating MCP workflows in the Codex app and making those workflows visible with Canon images."
+  />
 </svelte:head>
 
 <div class="max-w-4xl mx-auto px-6 py-12">
-  <h1 class="page-title">Codex MCP Course</h1>
+  <h1 class="page-title">Operator Workflow Paths</h1>
   <p class="page-subtitle">
-    This learn site is now one focused curriculum: build, connect, test, and ship an MCP server with
-    Codex.
+    Use the Codex app to create your first MCP-backed workflow, then use Canon to make the workflow
+    visible through maps, boundaries, gates, receipts, and handoff artifacts.
   </p>
 
   <div class="paths-list">
@@ -27,7 +30,8 @@
 
         <div class="path-meta">
           <span>{path.lessons.length} lessons</span>
-          <span>Practical, code-first walkthrough</span>
+          <span>{path.id === 'codex-mcp' ? 'Codex MCP-building skill' : 'Canon learning images'}</span>
+          <span>Practical operator workflow</span>
         </div>
       </a>
     {/each}

@@ -8,76 +8,79 @@
     ClearStateRows
   } from '$canon/components/clear';
 
-  const course = PATHS[0] ?? null;
-  const lessons = course?.lessons ?? [];
-  const firstLessonHref = lessons[0] ? `/paths/${course?.id}/${lessons[0].id}` : '/paths';
-  const courseHref = course ? `/paths/${course.id}` : '/paths';
+  const featuredCourse = PATHS[0] ?? null;
+  const featuredLessons = featuredCourse?.lessons ?? [];
+  const firstLessonHref = featuredLessons[0]
+    ? `/paths/${featuredCourse?.id}/${featuredLessons[0].id}`
+    : '/paths';
+  const totalLessons = PATHS.reduce((count, path) => count + path.lessons.length, 0);
 
   const proofItems = [
-    { value: '6 lessons', label: 'One path from MCP concept to shipped server' },
-    { value: 'Codex-ready', label: 'Every lesson ends in a usable local artifact' },
-    { value: 'TypeScript', label: 'Build with the stack used in production MCP work' },
-    { value: 'Evidence loop', label: 'Test, debug, and document before extending' }
+    { value: `${PATHS.length} paths`, label: `${totalLessons} lessons from workflow creation to visible proof` },
+    { value: 'RapidAPI', label: 'Use live business data without building a data source first' },
+    { value: 'Canon images', label: 'Turn workflow boundaries, gates, and receipts into learning artifacts' },
+    { value: 'MCP skill', label: 'Use Codex MCP-building guidance as the planning and review loop' },
+    { value: 'Operator loop', label: 'Search, normalize, inspect, prove, decide, then hand off' }
   ];
 
   const workflowStates = [
     {
       tone: 'run' as const,
-      state: 'Build',
-      label: 'Create the server',
-      detail: 'Scaffold one TypeScript MCP server with a clean entry point and tool contract.'
+      state: 'Prompt',
+      label: 'Start in the Codex app',
+      detail: 'Use the Codex app and its MCP-building skill to turn a concrete operator question into a narrow tool contract.'
     },
     {
       tone: 'wait' as const,
-      state: 'Attach',
-      label: 'Connect it to Codex',
-      detail: 'Register the server, invoke it from chat, and inspect what Codex can actually use.'
+      state: 'Create',
+      label: 'Wrap the data source',
+      detail: 'Create the MCP server, connect one RapidAPI endpoint, and keep the schema inspectable.'
     },
     {
       tone: 'stop' as const,
       state: 'Prove',
-      label: 'Debug before shipping',
-      detail: 'Add validation, run the tool under real prompts, and leave a reusable handoff.'
+      label: 'Make the work visible',
+      detail: 'Use Canon image rules to show the object, boundary, policy gate, receipt, owner, and next action.'
     }
   ];
 
   const outcomes = [
     {
-      label: 'Lesson 01',
-      title: 'Understand the boundary',
-      detail: 'Codex drives work. MCP exposes the tools and context it can safely call.'
+      label: 'Path 01',
+      title: 'Learn Codex through MCP creation',
+      detail: 'Codex is the working environment, and the MCP-building skill is the guide for creating a capability Codex can call.'
     },
     {
-      label: 'Lessons 02-04',
-      title: 'Build and connect',
-      detail: 'Create the server, add one useful tool, then wire it into your Codex setup.'
+      label: 'Path 02',
+      title: 'Learn Canon through workflow images',
+      detail: 'Turn the workflow into maps, MCP boundaries, policy gates, receipts, and handoff images that operators can inspect.'
     },
     {
-      label: 'Lessons 05-06',
-      title: 'Stabilize and ship',
-      detail: 'Test failure cases, document usage, and choose the next tool deliberately.'
+      label: 'Outcome',
+      title: 'Ship with proof',
+      detail: 'Leave with a working capability and the visual evidence needed to explain, govern, and extend it.'
     }
   ];
 </script>
 
 <svelte:head>
-  <title>Learn Codex with MCP | CREATE SOMETHING Learn</title>
+  <title>Operator Workflow Learning Paths | CREATE SOMETHING Learn</title>
   <meta
     name="description"
-    content="A practical course for learning Codex by building and shipping a real MCP server."
+    content="Practical learning paths for business owners using the Codex app, MCP creation, RapidAPI, and Canon workflow images."
   />
 </svelte:head>
 
 <div class="learn-home">
   <ClearPlatformHero
     eyebrow="CREATE SOMETHING Learn"
-    title="Learn Codex by building one MCP server"
-    description="A focused course for operators who want working context, tools, validation, and handoff. No theory detour. You finish with a local MCP server Codex can call."
+    title="Build workflows operators can run and explain"
+    description="Practical paths for business owners becoming operators. Start in the OpenAI ecosystem with the Codex app, create a RapidAPI-backed MCP, then use Canon image rules to make boundaries, policy, proof, and handoff visible."
     proofItems={proofItems}
     metaItems={[
-      { label: 'Course', value: course?.title ?? 'Codex MCP Course' },
-      { label: 'Pace', value: 'About 105 minutes' },
-      { label: 'Surface', value: 'Terminal + Codex' }
+      { label: 'Paths', value: `${PATHS.length} operator tracks` },
+      { label: 'Pace', value: 'About 175 minutes' },
+      { label: 'Surface', value: 'Codex app + Canon' }
     ]}
     ariaLabel="CREATE SOMETHING Learn course overview"
   >
@@ -86,16 +89,16 @@
         Start lesson 1
         <ArrowRight size={17} strokeWidth={1.8} />
       </a>
-      <a class="btn btn-secondary" href={courseHref}>Review course</a>
+      <a class="btn btn-secondary" href="/paths">Review paths</a>
     {/snippet}
 
     {#snippet aside()}
       <ClearStateRows
         eyebrow="Learning loop"
-        title="Build, attach, prove"
+        title="Prompt, create, prove"
         states={workflowStates}
         receiptLabel="Final receipt"
-        receipts={['server scaffold', 'tool schema', 'Codex config', 'debug log']}
+        receipts={['MCP-building skill prompt', 'server scaffold', 'RapidAPI tool schema', 'Canon workflow image']}
         ariaLabel="Course workflow states"
       />
     {/snippet}
@@ -104,30 +107,34 @@
   <section class="learn-section" aria-labelledby="course-outline-title">
     <div class="learn-section__header">
       <span>Course outline</span>
-      <h2 id="course-outline-title">One path, six concrete checkpoints.</h2>
+      <h2 id="course-outline-title">Two operator paths: create the workflow, then make it visible.</h2>
     </div>
 
-    {#if course}
-      <a class="course-panel" href={courseHref}>
-        <div class="course-panel__summary">
-          <span>{course.subtitle}</span>
-          <h3>{course.title}</h3>
-          <p>{course.description}</p>
-        </div>
+    {#if PATHS.length}
+      <div class="course-grid">
+        {#each PATHS as path}
+          <a class="course-panel" href={`/paths/${path.id}`}>
+            <div class="course-panel__summary">
+              <span>{path.subtitle}</span>
+              <h3>{path.title}</h3>
+              <p>{path.description}</p>
+            </div>
 
-        <ol class="lesson-list">
-          {#each lessons as lesson, index}
-            <li>
-              <span class="lesson-list__index">{String(index + 1).padStart(2, '0')}</span>
-              <div>
-                <strong>{lesson.title}</strong>
-                <p>{lesson.description}</p>
-              </div>
-              <span class="lesson-list__duration">{lesson.duration}</span>
-            </li>
-          {/each}
-        </ol>
-      </a>
+            <ol class="lesson-list">
+              {#each path.lessons as lesson, index}
+                <li>
+                  <span class="lesson-list__index">{String(index + 1).padStart(2, '0')}</span>
+                  <div>
+                    <strong>{lesson.title}</strong>
+                    <p>{lesson.description}</p>
+                  </div>
+                  <span class="lesson-list__duration">{lesson.duration}</span>
+                </li>
+              {/each}
+            </ol>
+          </a>
+        {/each}
+      </div>
     {:else}
       <div class="course-panel">
         <div class="course-panel__summary">
@@ -146,10 +153,10 @@
     </div>
     <ClearProofStrip
       items={[
-        { value: 'Tool contract', label: 'Input schema, output shape, and failure behavior are explicit.' },
+        { value: 'Tool contract', label: 'Input schema, output shape, API limits, and failure behavior are explicit.' },
         { value: 'Local config', label: 'Codex can find and run the server from your environment.' },
-        { value: 'Debug evidence', label: 'You keep a short record of what failed and what changed.' },
-        { value: 'Next tool', label: 'You leave with a scoped extension instead of a vague roadmap.' }
+        { value: 'Workflow image', label: 'The object, MCP boundary, policy gate, owner, and receipt are visible.' },
+        { value: 'Next workflow', label: 'You leave with a scoped extension instead of a vague automation roadmap.' }
       ]}
       ariaLabel="Course proof artifacts"
     />
@@ -157,13 +164,13 @@
 
   <ClearCtaBand
     eyebrow="Get started"
-    title="Build the smallest useful MCP first."
-    description="Start with one tool, one schema, and one Codex call. The rest of the course is there to make that loop durable."
+    title="Build the smallest useful workflow first."
+    description="Start with one Codex prompt, one endpoint, one schema, and one MCP call. Then use Canon to make the operating boundary visible enough to govern."
     items={outcomes}
   >
     {#snippet actions()}
       <a class="btn btn-primary" href={firstLessonHref}>Start lesson 1</a>
-      <a class="btn btn-secondary" href="/progress">View progress</a>
+      <a class="btn btn-secondary" href="/paths">View paths</a>
     {/snippet}
   </ClearCtaBand>
 </div>
@@ -210,6 +217,11 @@
     letter-spacing: 0;
     line-height: 1.04;
     text-wrap: balance;
+  }
+
+  .course-grid {
+    display: grid;
+    gap: 1rem;
   }
 
   .course-panel {

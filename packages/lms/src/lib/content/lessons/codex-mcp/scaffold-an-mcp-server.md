@@ -2,11 +2,25 @@
 
 ## Outcome
 
-Create a minimal TypeScript MCP server using the stable SDK and stdio transport.
+Use the Codex app's MCP-building skill to plan a minimal TypeScript MCP server, then create the local package with the stable SDK and stdio transport.
 
-This course uses a local stdio server because that is the fastest way to create a Codex capability while you are engineering in a repo. Remote MCP servers are useful later, but they add auth, deployment, and network concerns before the core tool contract is clear.
+This course uses the Codex app plus a local stdio server because that is the fastest way for business operators to learn Codex by creating a capability for it. Remote MCP servers are useful later, but they add auth, deployment, and network concerns before the core tool contract is clear.
 
-## 1) Create the Package
+## 1) Start With the Codex MCP-Building Skill
+
+In the Codex app, start the build with a prompt like this:
+
+```text
+Use the MCP-building skill to help me create a local TypeScript stdio MCP server named codex-demo-mcp.
+
+The first workflow is read-only: search RapidAPI Local Business Data for businesses and return structured records for operator review.
+
+Keep the server narrow, use the TypeScript MCP SDK, use Zod schemas, return structuredContent, include read-only annotations, and give actionable error messages.
+```
+
+Use the skill output as a build plan and review checklist. The learner should still create the files below and understand the tool contract.
+
+## 2) Create the Package
 
 ```bash
 mkdir -p packages/codex-demo-mcp/src
@@ -60,7 +74,7 @@ Create `tsconfig.json`:
 }
 ```
 
-## 2) Add the Server Entry Point
+## 3) Add the Server Entry Point
 
 Create `src/index.ts`:
 
@@ -71,9 +85,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 const server = new McpServer({
   name: 'codex-demo-mcp',
-  version: '0.1.0',
-  instructions:
-    'Use these tools for the Codex MCP course demo. Keep calls narrow and report errors clearly.'
+  version: '0.1.0'
 });
 
 const transport = new StdioServerTransport();
@@ -82,7 +94,9 @@ await server.connect(transport);
 
 Stdio MCP servers reserve stdout for protocol messages. Send diagnostics to stderr with `console.error`, or Codex may see corrupted protocol output.
 
-## 3) Install and Build
+Keep operating guidance in tool names, descriptions, schemas, and error messages. Those are the surfaces Codex will inspect when deciding how to use the server.
+
+## 4) Install and Build
 
 From repo root:
 
