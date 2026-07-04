@@ -254,6 +254,59 @@ describe('Canon registry manifest', () => {
 		});
 	});
 
+	it('promotes first accessibility and layout foundation exports into stable registry items', () => {
+		const promotedItems = [
+			{
+				id: 'component.heading',
+				exportPath: './components',
+				exportName: 'Heading',
+				sourcePath: 'packages/canon/src/lib/components/Heading.svelte',
+				importPath: '@create-something/canon',
+				tag: 'typography'
+			},
+			{
+				id: 'component.skip-to-content',
+				exportPath: './components',
+				exportName: 'SkipToContent',
+				sourcePath: 'packages/canon/src/lib/components/SkipToContent.svelte',
+				importPath: '@create-something/canon',
+				tag: 'accessibility'
+			},
+			{
+				id: 'component.layout-section',
+				exportPath: './layout',
+				exportName: 'Section',
+				sourcePath: 'packages/canon/src/lib/layout/Section.svelte',
+				importPath: '@create-something/canon/layout',
+				tag: 'layout'
+			},
+			{
+				id: 'component.layout-section-header',
+				exportPath: './layout',
+				exportName: 'SectionHeader',
+				sourcePath: 'packages/canon/src/lib/layout/SectionHeader.svelte',
+				importPath: '@create-something/canon/layout',
+				tag: 'layout'
+			}
+		];
+
+		for (const promoted of promotedItems) {
+			const item = getCanonRegistryItem(promoted.id);
+			const classification = getCanonPublicExportClassification(
+				promoted.exportPath,
+				promoted.exportName
+			);
+
+			expect(item?.kind, promoted.id).toBe('component');
+			expect(item?.maturity, promoted.id).toBe('stable');
+			expect(item?.sourcePath, promoted.id).toBe(promoted.sourcePath);
+			expect(item?.importPath, promoted.id).toBe(promoted.importPath);
+			expect(item?.tags, promoted.id).toContain(promoted.tag);
+			expect(item?.dependencies, promoted.id).toContain('token.canon-core');
+			expect(classification?.registryPolicy, promoted.exportName).toBe('registry-covered');
+		}
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();

@@ -50,8 +50,8 @@ const ROOT_COMPONENT_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportPath: './components',
 		exportName: 'Heading',
 		classification: 'stable-foundation-candidate',
-		registryPolicy: 'candidate-review',
-		rationale: 'Typography primitive candidate; should align with token and accessibility contracts first.'
+		registryPolicy: 'registry-covered',
+		rationale: 'Promoted to component.heading as the stable semantic typography primitive.'
 	},
 	{
 		exportPath: './components',
@@ -155,8 +155,8 @@ const ROOT_COMPONENT_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportPath: './components',
 		exportName: 'SkipToContent',
 		classification: 'stable-foundation-candidate',
-		registryPolicy: 'candidate-review',
-		rationale: 'Accessibility primitive candidate; should become stable once docs and coverage exist.'
+		registryPolicy: 'registry-covered',
+		rationale: 'Promoted to component.skip-to-content as the stable keyboard bypass primitive.'
 	},
 	{
 		exportPath: './components',
@@ -297,6 +297,20 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		classification: 'decorative-effect',
 		registryPolicy: 'classified-out',
 		rationale: 'Motion utilities need sparing use and should not be agent-default primitives.'
+	},
+	{
+		exportPath: './layout',
+		exportName: 'Section',
+		classification: 'stable-foundation-candidate',
+		registryPolicy: 'registry-covered',
+		rationale: 'Promoted to component.layout-section as the stable page section primitive.'
+	},
+	{
+		exportPath: './layout',
+		exportName: 'SectionHeader',
+		classification: 'stable-foundation-candidate',
+		registryPolicy: 'registry-covered',
+		rationale: 'Promoted to component.layout-section-header as the stable section heading pattern.'
 	},
 	{
 		exportPath: './layout',
