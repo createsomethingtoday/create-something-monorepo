@@ -288,6 +288,92 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.layout-bento-grid",
+      "name": "BentoGrid",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Responsive asymmetric grid wrapper for repeated feature, proof, or workflow-summary items.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/layout/BentoGrid.svelte",
+      "importPath": "@create-something/canon/layout",
+      "docsPath": "/canon/components/layout",
+      "tags": [
+        "layout",
+        "grid",
+        "bento",
+        "foundation"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.layout-bento-item"
+      ],
+      "contract": {
+        "accessibility": "Grid order must remain logical when the responsive layout stacks or spans change.",
+        "extension": "Use BentoGrid for asymmetric repeated layouts before creating local feature grids."
+      }
+    },
+    {
+      "id": "component.layout-bento-item",
+      "name": "BentoItem",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Child layout container for BentoGrid with controlled span and surface variants.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/layout/BentoItem.svelte",
+      "importPath": "@create-something/canon/layout",
+      "docsPath": "/canon/components/layout",
+      "tags": [
+        "layout",
+        "grid-item",
+        "bento",
+        "foundation"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Spans and variants must not replace semantic headings, labels, or reading order.",
+        "extension": "Use BentoItem inside BentoGrid before adding local card-grid span utilities."
+      }
+    },
+    {
+      "id": "component.layout-split-section",
+      "name": "SplitSection",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Two-column responsive layout primitive with explicit ratios, gaps, alignment, and stacking.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/layout/SplitSection.svelte",
+      "importPath": "@create-something/canon/layout",
+      "docsPath": "/canon/components/layout",
+      "tags": [
+        "layout",
+        "split",
+        "responsive",
+        "foundation"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.layout-section"
+      ],
+      "contract": {
+        "accessibility": "Column order must stay understandable when reversed or stacked at responsive breakpoints.",
+        "extension": "Use SplitSection for two-column content/media layouts before creating local split wrappers."
+      }
+    },
+    {
       "id": "component.clear-page-section",
       "name": "ClearPageSection",
       "kind": "component",
