@@ -116,6 +116,46 @@ export interface CanonExtensionRoutingDecision {
   stopBeforeStable: string[];
 }
 
+export type CanonProjectOverlayArtifactKind =
+  | 'theme'
+  | 'tokens'
+  | 'templates'
+  | 'copy-rules'
+  | 'surface-policy'
+  | 'registry';
+
+export interface CanonProjectOverlayArtifact {
+  kind: CanonProjectOverlayArtifactKind;
+  path: string;
+  description?: string;
+  registryItemIds?: string[];
+}
+
+export interface CanonProjectOverlayManifest {
+  id: string;
+  name: string;
+  owner: string;
+  sourcePackage: string;
+  sourcePath?: string;
+  targetModalities: CanonRegistryModality[];
+  tags?: string[];
+  artifacts: CanonProjectOverlayArtifact[];
+  extensionIntakes?: CanonExtensionIntakePacket[];
+}
+
+export interface CanonProjectOverlayReview {
+  status: 'ready' | 'needs-artifacts' | 'needs-evidence' | 'needs-review';
+  requiredArtifacts: CanonProjectOverlayArtifactKind[];
+  presentArtifacts: CanonProjectOverlayArtifactKind[];
+  missingArtifacts: CanonProjectOverlayArtifactKind[];
+  extensionDecisions: Array<{
+    packet: CanonExtensionIntakePacket;
+    decision: CanonExtensionRoutingDecision;
+  }>;
+  stopConditions: string[];
+  summary: string;
+}
+
 // ============================================================================
 // Design Patterns (.ltd)
 // ============================================================================

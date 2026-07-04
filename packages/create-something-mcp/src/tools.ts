@@ -10,6 +10,9 @@ import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import type {
   CanonExtensionIntakePacket,
   CanonExtensionRoutingDecision,
+  CanonProjectOverlayArtifactKind,
+  CanonProjectOverlayManifest,
+  CanonProjectOverlayReview,
   CanonRegistryItem,
   CanonRegistryKind,
   CanonRegistryMaturity,
@@ -40,6 +43,22 @@ const USER_VISIBLE = {
 const CANON_REGISTRY_KIND_VALUES = ['component', 'token', 'template', 'adapter', 'policy'] as const;
 const CANON_REGISTRY_MODALITY_VALUES = ['web', 'chat', 'app', 'voice', 'glasses'] as const;
 const CANON_REGISTRY_MATURITY_VALUES = ['stable', 'candidate', 'experimental'] as const;
+const CANON_OVERLAY_ARTIFACT_KIND_VALUES = [
+  'theme',
+  'tokens',
+  'templates',
+  'copy-rules',
+  'surface-policy',
+  'registry'
+] as const;
+const CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS: CanonProjectOverlayArtifactKind[] = [
+  'theme',
+  'tokens',
+  'templates',
+  'copy-rules',
+  'surface-policy',
+  'registry'
+];
 
 function getCanonRegistryItem(id: string): CanonRegistryItem | undefined {
   return CANON_REGISTRY_MANIFEST.items.find((item) => item.id === id);
@@ -250,6 +269,100 @@ function renderCanonExtensionRoutingDecision(
     lines.push('', '### Stop Before Stable');
     for (const stop of decision.stopBeforeStable) lines.push(`- ${stop}`);
   }
+
+  return lines.join('\n');
+}
+
+function reviewCanonProjectOverlay(
+  manifest: CanonProjectOverlayManifest
+): CanonProjectOverlayReview {
+  const presentArtifacts = CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS.filter((kind) =>
+    manifest.artifacts.some((artifact) => artifact.kind === kind)
+  );
+  const missingArtifacts = CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS.filter(
+    (kind) => !presentArtifacts.includes(kind)
+  );
+  const extensionDecisions = (manifest.extensionIntakes ?? []).map((packet) => ({
+    packet,
+    decision: routeCanonExtensionIntake(packet)
+  }));
+  const needsReview = extensionDecisions.some(({ decision }) => decision.action === 'needs-review');
+  const needsEvidence = extensionDecisions.some(({ decision }) => decision.stage === 'project-local');
+  const status = needsReview
+    ? 'needs-review'
+    : missingArtifacts.length
+      ? 'needs-artifacts'
+      : needsEvidence
+        ? 'needs-evidence'
+        : 'ready';
+  const stopConditions = [
+    ...(missingArtifacts.length
+      ? [
+          `Add missing overlay artifacts before treating ${manifest.id} as a complete Canon overlay: ${missingArtifacts.join(', ')}.`
+        ]
+      : []),
+    ...extensionDecisions.flatMap(({ decision }) => decision.stopBeforeStable),
+    'Do not promote project-local overlay primitives into Canon stable without repeated-surface evidence.',
+    'Do not fork Canon primitives; keep local copy, policy, tokens, and templates in named overlay artifacts.'
+  ];
+
+  return {
+    status,
+    requiredArtifacts: CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS,
+    presentArtifacts,
+    missingArtifacts,
+    extensionDecisions,
+    stopConditions: [...new Set(stopConditions)],
+    summary:
+      status === 'ready'
+        ? `${manifest.name} declares the complete Canon overlay artifact set and has no project-local evidence gaps.`
+        : `${manifest.name} is ${status}; keep it project-owned until missing artifacts and evidence gaps are resolved.`
+  };
+}
+
+function renderCanonProjectOverlayReview(
+  manifest: CanonProjectOverlayManifest,
+  review: CanonProjectOverlayReview
+): string {
+  const lines = [
+    '## Canon Project Overlay Review',
+    '',
+    `- Overlay: \`${manifest.id}\``,
+    `- Name: ${manifest.name}`,
+    `- Status: \`${review.status}\``,
+    `- Owner: ${manifest.owner}`,
+    `- Source package: \`${manifest.sourcePackage}\``,
+    `- Target modalities: ${manifest.targetModalities.map((m) => `\`${m}\``).join(', ')}`,
+  ];
+
+  if (manifest.sourcePath) lines.push(`- Source path: \`${manifest.sourcePath}\``);
+  if (manifest.tags?.length) lines.push(`- Tags: ${manifest.tags.map((tag) => `\`${tag}\``).join(', ')}`);
+
+  lines.push('', review.summary, '', '### Overlay Artifacts');
+  lines.push(`- Required: ${review.requiredArtifacts.map((kind) => `\`${kind}\``).join(', ')}`);
+  lines.push(`- Present: ${review.presentArtifacts.map((kind) => `\`${kind}\``).join(', ') || 'none'}`);
+  lines.push(`- Missing: ${review.missingArtifacts.map((kind) => `\`${kind}\``).join(', ') || 'none'}`);
+
+  for (const artifact of manifest.artifacts) {
+    const details = [`\`${artifact.kind}\``, `path: \`${artifact.path}\``];
+    if (artifact.description) details.push(artifact.description);
+    if (artifact.registryItemIds?.length) {
+      details.push(`registry: ${artifact.registryItemIds.map((id) => `\`${id}\``).join(', ')}`);
+    }
+    lines.push(`- ${details.join(' | ')}`);
+  }
+
+  if (review.extensionDecisions.length) {
+    lines.push('', '### Extension Intake Decisions');
+    for (const { packet, decision } of review.extensionDecisions) {
+      lines.push(
+        `- \`${packet.id}\`: \`${decision.stage}\` / \`${decision.action}\` — ${decision.rationale}`
+      );
+    }
+  }
+
+  lines.push('', '### Stop Conditions');
+  for (const stop of review.stopConditions) lines.push(`- ${stop}`);
 
   return lines.join('\n');
 }
@@ -701,6 +814,85 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonExtensionRoutingDecision(packet, decision),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_overlay_review',
+    'Review a project/client Canon overlay manifest. Use this to keep theme, tokens, templates, copy rules, surface policy, registry metadata, and extension intakes as overlays instead of forks.',
+    {
+      id: z.string().describe('Stable overlay id, for example overlay.client-workflow-system'),
+      name: z.string().describe('Human-readable overlay name'),
+      owner: z.string().describe('Owner responsible for overlay evidence and local policy'),
+      sourcePackage: z.string().describe('Source package or project that owns this overlay'),
+      sourcePath: z.string().optional().describe('Optional path to the overlay manifest or package root'),
+      targetModalities: z.array(z.enum(CANON_REGISTRY_MODALITY_VALUES)).min(1)
+        .describe('Modalities this overlay targets, such as web, chat, app, voice, or glasses'),
+      tags: z.array(z.string()).optional().describe('Optional overlay tags'),
+      artifacts: z.array(z.object({
+        kind: z.enum(CANON_OVERLAY_ARTIFACT_KIND_VALUES).describe('Overlay artifact kind'),
+        path: z.string().describe('Path to the overlay artifact, such as theme.css or registry.json'),
+        description: z.string().optional().describe('Short artifact purpose'),
+        registryItemIds: z.array(z.string()).optional().describe('Canon registry items this artifact configures or depends on')
+      })).optional().describe('Declared overlay artifacts. Complete overlays include theme, tokens, templates, copy-rules, surface-policy, and registry.'),
+      extensionIntakes: z.array(z.object({
+        id: z.string().describe('Stable intake id, for example overlay.client-proof-panel'),
+        title: z.string().describe('Human-readable extension proposal title'),
+        summary: z.string().describe('What the overlay proposes and why it exists'),
+        requestedKind: z.enum(CANON_REGISTRY_KIND_VALUES).describe('Requested Canon artifact kind'),
+        requestedModalities: z.array(z.enum(CANON_REGISTRY_MODALITY_VALUES)).min(1)
+          .describe('Target modalities such as web, chat, app, voice, or glasses'),
+        owner: z.string().describe('Owner responsible for the overlay evidence'),
+        sourcePackage: z.string().describe('Source package or project proposing the extension'),
+        sourcePath: z.string().optional().describe('Optional source path for the overlay implementation'),
+        tags: z.array(z.string()).optional().describe('Optional tags that describe the proposal'),
+        surfaces: z.array(z.object({
+          surfaceId: z.string().describe('Distinct surface or client id'),
+          name: z.string().describe('Human-readable surface name'),
+          modality: z.enum(CANON_REGISTRY_MODALITY_VALUES).describe('Surface modality'),
+          sourcePath: z.string().optional().describe('Optional source path for this surface evidence'),
+          proof: z.string().optional().describe('Optional receipt, launch evidence, or review proof')
+        })).optional().describe('Surface evidence. Two distinct surface ids route the proposal to candidate promotion.'),
+        dependencies: z.array(z.string()).optional().describe('Optional Canon registry dependency ids'),
+        matchesRegistryItemId: z.string().optional().describe('Existing Canon registry item this proposal may duplicate'),
+        deprecatesRegistryItemId: z.string().optional().describe('Existing Canon registry item this proposal would replace')
+      })).optional().describe('Optional Canon extension intake packets attached to this overlay')
+    },
+    async ({
+      id,
+      name,
+      owner,
+      sourcePackage,
+      sourcePath,
+      targetModalities,
+      tags,
+      artifacts,
+      extensionIntakes
+    }) => {
+      const manifest: CanonProjectOverlayManifest = {
+        id,
+        name,
+        owner,
+        sourcePackage,
+        sourcePath,
+        targetModalities,
+        tags,
+        artifacts: artifacts ?? [],
+        extensionIntakes: extensionIntakes?.map((packet) => ({
+          ...packet,
+          tags: packet.tags ?? [],
+          surfaces: packet.surfaces ?? []
+        }))
+      };
+      const review = reviewCanonProjectOverlay(manifest);
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonProjectOverlayReview(manifest, review),
           ...USER_VISIBLE,
         }]
       };

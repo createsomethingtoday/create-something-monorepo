@@ -362,6 +362,41 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "template.canon-project-overlay-manifest",
+      "name": "Canon Project Overlay Manifest",
+      "kind": "template",
+      "maturity": "candidate",
+      "description": "Machine-readable manifest for project and client overlays to declare theme, token, template, copy, policy, and registry artifacts without forking Canon primitives.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/registry/schema.ts",
+      "importPath": "@create-something/canon/registry",
+      "docsPath": "/canon/resources/registry",
+      "tags": [
+        "template",
+        "overlay",
+        "manifest",
+        "project",
+        "client",
+        "governance"
+      ],
+      "modalities": [
+        "web",
+        "chat",
+        "app",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "template.canon-extension-intake",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Overlay manifests must name target modalities before local copy, visual, or interaction policy is applied.",
+        "evidence": "Complete overlays declare theme, tokens, templates, copy rules, surface policy, registry metadata, and any extension-intake evidence.",
+        "extension": "Projects extend Canon through named overlay artifacts; primitive changes still route through Canon extension intake and review."
+      }
+    },
+    {
       "id": "template.web-governed-workflow",
       "name": "Web Governed Workflow Template",
       "kind": "template",
