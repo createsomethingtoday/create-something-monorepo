@@ -351,6 +351,23 @@ describe('Canon registry manifest', () => {
 		});
 	});
 
+	it('promotes the accessible icon primitive while keeping icon helpers reviewable', () => {
+		const item = getCanonRegistryItem('component.icon');
+		const classification = getCanonPublicExportClassification('./icons', 'Icon');
+		const helperClassification = getCanonPublicExportClassification('./icons', 'ICON_PATHS');
+
+		expect(item?.kind).toBe('component');
+		expect(item?.maturity).toBe('stable');
+		expect(item?.sourcePath).toBe('packages/canon/src/lib/icons/Icon.svelte');
+		expect(item?.importPath).toBe('@create-something/canon/icons');
+		expect(item?.tags).toContain('icon');
+		expect(item?.tags).toContain('accessibility');
+		expect(item?.dependencies).toContain('token.canon-core');
+		expect(item?.modalities).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+		expect(classification?.registryPolicy).toBe('registry-covered');
+		expect(helperClassification?.registryPolicy).toBe('candidate-review');
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();

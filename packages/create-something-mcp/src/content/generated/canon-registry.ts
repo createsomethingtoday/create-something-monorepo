@@ -374,6 +374,37 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.icon",
+      "name": "Icon",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Stroke-based Canon icon primitive with typed names, size tokens, and accessible labeling.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/icons/Icon.svelte",
+      "importPath": "@create-something/canon/icons",
+      "docsPath": "/canon/components/icons",
+      "tags": [
+        "icon",
+        "visual-language",
+        "accessibility",
+        "foundation"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Provide a label for standalone meaningful icons and omit it only for decorative icons.",
+        "extension": "Use the Canon typed icon set before adding local SVG paths or decorative icon variants."
+      }
+    },
+    {
       "id": "component.clear-page-section",
       "name": "ClearPageSection",
       "kind": "component",

@@ -267,9 +267,16 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
   },
   {
     "exportPath": "./icons",
+    "exportName": "Icon",
+    "classification": "stable-foundation-candidate",
+    "registryPolicy": "registry-covered",
+    "rationale": "Promoted to component.icon as the stable accessible icon primitive."
+  },
+  {
+    "exportPath": "./icons",
     "classification": "stable-foundation-candidate",
     "registryPolicy": "candidate-review",
-    "rationale": "Icon primitive should become registry-covered with naming and accessibility contract."
+    "rationale": "Icon support exports remain under review while naming and advanced accessibility contracts settle."
   },
   {
     "exportPath": "./motion",
