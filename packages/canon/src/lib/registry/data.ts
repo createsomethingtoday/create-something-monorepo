@@ -17,6 +17,16 @@ type FoundationControlDefinition = {
 	contract: CanonRegistryItem['contract'];
 };
 
+type RootComponentCandidateDefinition = {
+	id: string;
+	name: string;
+	description: string;
+	tags: string[];
+	modalities: CanonRegistryModality[];
+	dependencies?: string[];
+	contract: CanonRegistryItem['contract'];
+};
+
 function createFoundationControlItem(definition: FoundationControlDefinition): CanonRegistryItem {
 	return {
 		id: definition.id,
@@ -29,6 +39,26 @@ function createFoundationControlItem(definition: FoundationControlDefinition): C
 		importPath: '@create-something/canon',
 		docsPath: `/canon/components/${definition.group}`,
 		tags: [definition.group, ...definition.tags],
+		modalities: definition.modalities,
+		dependencies: definition.dependencies ?? ['token.canon-core'],
+		contract: definition.contract
+	};
+}
+
+function createRootComponentCandidateItem(
+	definition: RootComponentCandidateDefinition
+): CanonRegistryItem {
+	return {
+		id: definition.id,
+		name: definition.name,
+		kind: 'component',
+		maturity: 'candidate',
+		description: definition.description,
+		ownerPackage: '@create-something/canon',
+		sourcePath: `packages/canon/src/lib/components/${definition.name}.svelte`,
+		importPath: '@create-something/canon/components',
+		docsPath: '/canon/components',
+		tags: ['components', ...definition.tags, 'candidate'],
 		modalities: definition.modalities,
 		dependencies: definition.dependencies ?? ['token.canon-core'],
 		contract: definition.contract
@@ -836,6 +866,281 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 				'Use the Canon typed icon set before adding local SVG paths or decorative icon variants.'
 		}
 	}
+];
+
+const ROOT_COMPONENT_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
+	createRootComponentCandidateItem({
+		id: 'component.footer',
+		name: 'Footer',
+		description:
+			'Shared site footer candidate for property navigation, legal routes, contact links, and cross-property identity.',
+		tags: ['footer', 'navigation', 'site-chrome'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.navigation'],
+		contract: {
+			accessibility:
+				'Footer content must preserve landmark semantics, link labels, property identity, and legal route names.',
+			evidence:
+				'Footer data must preserve property links, legal links, contact routes, copyright text, and source property.',
+			extension:
+				'Promote to stable only after property topology, legal-route policy, compact summaries, and cross-property behavior are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.catalog-card',
+		name: 'CatalogCard',
+		description:
+			'Catalog listing card candidate for reusable offers, templates, papers, packages, or property entries.',
+		tags: ['catalog', 'card', 'listing'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.card', 'component.clear-artifact-card'],
+		contract: {
+			accessibility:
+				'Catalog cards must expose title, description, category, link/action label, and any status text without relying on hover.',
+			evidence:
+				'Catalog item data must preserve slug or href, taxonomy, summary, image or icon fallback, and source collection.',
+			extension:
+				'Promote to stable only after catalog item schema, media fallback, taxonomy, and repeated-list behavior are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.paper-card',
+		name: 'PaperCard',
+		description:
+			'Research paper card candidate for title, summary, category, publication metadata, and reading route.',
+		tags: ['paper', 'research', 'card'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.card', 'component.content-testimonial-carousel'],
+		contract: {
+			accessibility:
+				'Paper cards must expose title, summary, category, date or status, and read action as text.',
+			evidence:
+				'Paper card data must preserve slug, title, excerpt, category, date, author/source, and relationship to the source paper.',
+			extension:
+				'Promote to stable only after research metadata, excerpt policy, related-content behavior, and nonvisual summaries are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.papers-grid',
+		name: 'PapersGrid',
+		description:
+			'Research paper collection grid candidate for filtered or grouped paper lists with empty and loading states.',
+		tags: ['papers', 'grid', 'collection'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.paper-card', 'component.clear-card-grid'],
+		contract: {
+			accessibility:
+				'Paper grids must preserve collection heading, item count, filter context, empty state, and card order.',
+			evidence:
+				'Grid state must preserve paper ids, order, active category or query, loading state, and empty-state reason.',
+			extension:
+				'Promote to stable only after collection schema, filtering policy, empty-state copy, and pagination behavior are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.category-section',
+		name: 'CategorySection',
+		description:
+			'Content taxonomy section candidate for grouping entries under a category heading with summary and calls to action.',
+		tags: ['category', 'taxonomy', 'section'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.layout-section', 'component.heading'],
+		contract: {
+			accessibility:
+				'Category sections must expose category name, summary, item list, and route labels in a logical heading hierarchy.',
+			evidence:
+				'Category state must preserve taxonomy key, display label, description, item count, and route or source collection.',
+			extension:
+				'Promote to stable only after taxonomy schema, item relationship policy, empty behavior, and cross-surface summary rules are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.share-buttons',
+		name: 'ShareButtons',
+		description:
+			'Share control candidate for platform-specific sharing routes with explicit channel policy and copy fallback.',
+		tags: ['share', 'platform', 'actions'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.button'],
+		contract: {
+			accessibility:
+				'Share controls must expose destination platform, target URL, copy action, success or failure state, and focusable labels.',
+			evidence:
+				'Share data must preserve canonical URL, title, platform list, generated share URL, and copy-to-clipboard outcome.',
+			extension:
+				'Promote to stable only after channel allowlist, tracking policy, clipboard fallback, and privacy behavior are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.quote-block',
+		name: 'QuoteBlock',
+		description:
+			'Editorial quote block candidate for quoted text, attribution, source context, and optional proof relationship.',
+		tags: ['quote', 'editorial', 'proof'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.clear-quote-metric-panel'],
+		contract: {
+			accessibility:
+				'Quotes must expose quote text, attribution, source label, and context without decorative punctuation as the only cue.',
+			evidence:
+				'Quote data must preserve exact quote, attribution, source URL or artifact, relationship to nearby proof, and editing status.',
+			extension:
+				'Promote to stable only after quote provenance, truncation policy, citation behavior, and thin-display summaries are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.related-articles',
+		name: 'RelatedArticles',
+		description:
+			'Related content section candidate for recommendation lists tied to taxonomy, topic, or authored relationship.',
+		tags: ['related-content', 'recommendation', 'section'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.navigation-related-content', 'component.card'],
+		contract: {
+			accessibility:
+				'Related content must expose section heading, article titles, relationship reason when available, and route labels.',
+			evidence:
+				'Recommendation data must preserve related item ids, titles, hrefs, relationship source, order, and exclusion rules.',
+			extension:
+				'Promote to stable only after recommendation provenance, ordering policy, fallback state, and cross-property routing are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.triad-health',
+		name: 'TriadHealth',
+		description:
+			'Three-Tier Framework health display candidate for Database, Automation, and Judgment readiness.',
+		tags: ['three-tier', 'health', 'governance'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'policy.signal-decision-proof', 'component.clear-state-rows'],
+		contract: {
+			accessibility:
+				'Triad health must expose each tier label, state, blocker, evidence, owner, and next action in text.',
+			evidence:
+				'Health data must preserve tier states, checks, receipts, owners, timestamps, and escalation route.',
+			extension:
+				'Promote to stable only after tier schema, status semantics, evidence requirements, and client overlay policy are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.hermeneutic-circle',
+		name: 'HermeneuticCircle',
+		description:
+			'Conceptual framework display candidate for showing iterative interpretation loops and their current state.',
+		tags: ['framework', 'loop', 'governance'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.clear-state-rows'],
+		contract: {
+			accessibility:
+				'Loop displays must expose cycle labels, current phase, interpretation state, and route to detail without relying on circular layout.',
+			evidence:
+				'Loop state must preserve phase order, active phase, interpretation notes, owner, and source artifact.',
+			extension:
+				'Promote to stable only after framework schema, phase semantics, nonvisual sequence summary, and motion policy are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.mode-indicator',
+		name: 'ModeIndicator',
+		description:
+			'Mode and state indicator candidate for showing current operating mode, environment, or workflow posture.',
+		tags: ['mode', 'status', 'indicator'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.clear-state-rows'],
+		contract: {
+			accessibility:
+				'Mode indicators must expose label, current mode, state meaning, and change context without color-only encoding.',
+			evidence:
+				'Mode data must preserve mode id, label, severity or tone, source of truth, timestamp, and optional owner.',
+			extension:
+				'Promote to stable only after mode taxonomy, tone semantics, compact rendering, and source-of-truth policy are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.cross-property-link',
+		name: 'CrossPropertyLink',
+		description:
+			'Cross-property routing candidate for linking between CREATE SOMETHING properties with clear destination context.',
+		tags: ['property', 'routing', 'link'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.button', 'component.navigation'],
+		contract: {
+			accessibility:
+				'Cross-property links must name the destination property, action, external context, and current-route relationship.',
+			evidence:
+				'Route data must preserve source property, destination property, href, reason, tracking label, and fallback text.',
+			extension:
+				'Promote to stable only after property topology, route ownership, tracking policy, and external-link behavior are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.property-funnel',
+		name: 'PropertyFunnel',
+		description:
+			'Property conversion funnel candidate for routing visitors from property context to the next owned action.',
+		tags: ['property', 'funnel', 'conversion'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.clear-cta-band', 'component.conversion-sticky-cta'],
+		contract: {
+			accessibility:
+				'Funnels must expose current property, offer, qualifying context, primary action, secondary action, and dismissal state.',
+			evidence:
+				'Funnel data must preserve property, audience segment, offer, destination, stage, proof reference, and conversion event.',
+			extension:
+				'Promote to stable only after funnel stage policy, offer schema, analytics boundaries, and cross-property handoff are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.cookie-consent',
+		name: 'CookieConsent',
+		description:
+			'Consent surface candidate for privacy notice, preference state, regional behavior, and analytics gating.',
+		tags: ['consent', 'privacy', 'policy'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'policy.signal-decision-proof', 'component.button'],
+		contract: {
+			accessibility:
+				'Consent prompts must expose notice text, accept action, reject or manage action, preference state, and policy link.',
+			evidence:
+				'Consent state must preserve region, categories, selected preferences, storage key, timestamp, and analytics gating status.',
+			extension:
+				'Promote to stable only after privacy policy mapping, regional defaults, storage behavior, and revocation flow are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.page-actions',
+		name: 'PageActions',
+		description:
+			'Page-level action group candidate for edit, preview, share, copy, publish, or workflow commands.',
+		tags: ['page-actions', 'commands', 'authoring'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.button', 'component.clear-action-footer'],
+		contract: {
+			accessibility:
+				'Page actions must expose command labels, disabled state, destructive state, shortcut or status text, and result feedback.',
+			evidence:
+				'Action data must preserve command id, label, permission, target artifact, pending state, and last result.',
+			extension:
+				'Promote to stable only after command schema, permission policy, destructive-action behavior, and result feedback are documented.'
+		}
+	}),
+	createRootComponentCandidateItem({
+		id: 'component.markdown-preview-modal',
+		name: 'MarkdownPreviewModal',
+		description:
+			'Markdown preview modal candidate for authoring workflows that need rendered preview, source context, and close controls.',
+		tags: ['markdown', 'preview', 'authoring', 'modal'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.feedback-dialog', 'component.page-actions'],
+		contract: {
+			accessibility:
+				'Preview modals must expose title, close action, rendered heading structure, source state, and focus management.',
+			evidence:
+				'Preview data must preserve source markdown, rendered output status, target artifact, validation errors, and last update.',
+			extension:
+				'Promote to stable only after rendering policy, sanitization, focus behavior, and authoring workflow ownership are documented.'
+		}
+	})
 ];
 
 const LAYOUT_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
@@ -2195,6 +2500,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 			}
 		},
 		...FOUNDATION_PRIMITIVE_ITEMS,
+		...ROOT_COMPONENT_CANDIDATE_ITEMS,
 		...LAYOUT_CANDIDATE_ITEMS,
 		...DIAGRAM_CANDIDATE_ITEMS,
 		...TYPOGRAPHY_CANDIDATE_ITEMS,

@@ -405,6 +405,562 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.footer",
+      "name": "Footer",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Shared site footer candidate for property navigation, legal routes, contact links, and cross-property identity.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/Footer.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "footer",
+        "navigation",
+        "site-chrome",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.navigation"
+      ],
+      "contract": {
+        "accessibility": "Footer content must preserve landmark semantics, link labels, property identity, and legal route names.",
+        "evidence": "Footer data must preserve property links, legal links, contact routes, copyright text, and source property.",
+        "extension": "Promote to stable only after property topology, legal-route policy, compact summaries, and cross-property behavior are documented."
+      }
+    },
+    {
+      "id": "component.catalog-card",
+      "name": "CatalogCard",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Catalog listing card candidate for reusable offers, templates, papers, packages, or property entries.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/CatalogCard.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "catalog",
+        "card",
+        "listing",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.card",
+        "component.clear-artifact-card"
+      ],
+      "contract": {
+        "accessibility": "Catalog cards must expose title, description, category, link/action label, and any status text without relying on hover.",
+        "evidence": "Catalog item data must preserve slug or href, taxonomy, summary, image or icon fallback, and source collection.",
+        "extension": "Promote to stable only after catalog item schema, media fallback, taxonomy, and repeated-list behavior are documented."
+      }
+    },
+    {
+      "id": "component.paper-card",
+      "name": "PaperCard",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Research paper card candidate for title, summary, category, publication metadata, and reading route.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/PaperCard.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "paper",
+        "research",
+        "card",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.card",
+        "component.content-testimonial-carousel"
+      ],
+      "contract": {
+        "accessibility": "Paper cards must expose title, summary, category, date or status, and read action as text.",
+        "evidence": "Paper card data must preserve slug, title, excerpt, category, date, author/source, and relationship to the source paper.",
+        "extension": "Promote to stable only after research metadata, excerpt policy, related-content behavior, and nonvisual summaries are documented."
+      }
+    },
+    {
+      "id": "component.papers-grid",
+      "name": "PapersGrid",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Research paper collection grid candidate for filtered or grouped paper lists with empty and loading states.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/PapersGrid.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "papers",
+        "grid",
+        "collection",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.paper-card",
+        "component.clear-card-grid"
+      ],
+      "contract": {
+        "accessibility": "Paper grids must preserve collection heading, item count, filter context, empty state, and card order.",
+        "evidence": "Grid state must preserve paper ids, order, active category or query, loading state, and empty-state reason.",
+        "extension": "Promote to stable only after collection schema, filtering policy, empty-state copy, and pagination behavior are documented."
+      }
+    },
+    {
+      "id": "component.category-section",
+      "name": "CategorySection",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Content taxonomy section candidate for grouping entries under a category heading with summary and calls to action.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/CategorySection.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "category",
+        "taxonomy",
+        "section",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.layout-section",
+        "component.heading"
+      ],
+      "contract": {
+        "accessibility": "Category sections must expose category name, summary, item list, and route labels in a logical heading hierarchy.",
+        "evidence": "Category state must preserve taxonomy key, display label, description, item count, and route or source collection.",
+        "extension": "Promote to stable only after taxonomy schema, item relationship policy, empty behavior, and cross-surface summary rules are documented."
+      }
+    },
+    {
+      "id": "component.share-buttons",
+      "name": "ShareButtons",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Share control candidate for platform-specific sharing routes with explicit channel policy and copy fallback.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/ShareButtons.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "share",
+        "platform",
+        "actions",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.button"
+      ],
+      "contract": {
+        "accessibility": "Share controls must expose destination platform, target URL, copy action, success or failure state, and focusable labels.",
+        "evidence": "Share data must preserve canonical URL, title, platform list, generated share URL, and copy-to-clipboard outcome.",
+        "extension": "Promote to stable only after channel allowlist, tracking policy, clipboard fallback, and privacy behavior are documented."
+      }
+    },
+    {
+      "id": "component.quote-block",
+      "name": "QuoteBlock",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Editorial quote block candidate for quoted text, attribution, source context, and optional proof relationship.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/QuoteBlock.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "quote",
+        "editorial",
+        "proof",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.clear-quote-metric-panel"
+      ],
+      "contract": {
+        "accessibility": "Quotes must expose quote text, attribution, source label, and context without decorative punctuation as the only cue.",
+        "evidence": "Quote data must preserve exact quote, attribution, source URL or artifact, relationship to nearby proof, and editing status.",
+        "extension": "Promote to stable only after quote provenance, truncation policy, citation behavior, and thin-display summaries are documented."
+      }
+    },
+    {
+      "id": "component.related-articles",
+      "name": "RelatedArticles",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Related content section candidate for recommendation lists tied to taxonomy, topic, or authored relationship.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/RelatedArticles.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "related-content",
+        "recommendation",
+        "section",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.navigation-related-content",
+        "component.card"
+      ],
+      "contract": {
+        "accessibility": "Related content must expose section heading, article titles, relationship reason when available, and route labels.",
+        "evidence": "Recommendation data must preserve related item ids, titles, hrefs, relationship source, order, and exclusion rules.",
+        "extension": "Promote to stable only after recommendation provenance, ordering policy, fallback state, and cross-property routing are documented."
+      }
+    },
+    {
+      "id": "component.triad-health",
+      "name": "TriadHealth",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Three-Tier Framework health display candidate for Database, Automation, and Judgment readiness.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/TriadHealth.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "three-tier",
+        "health",
+        "governance",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof",
+        "component.clear-state-rows"
+      ],
+      "contract": {
+        "accessibility": "Triad health must expose each tier label, state, blocker, evidence, owner, and next action in text.",
+        "evidence": "Health data must preserve tier states, checks, receipts, owners, timestamps, and escalation route.",
+        "extension": "Promote to stable only after tier schema, status semantics, evidence requirements, and client overlay policy are documented."
+      }
+    },
+    {
+      "id": "component.hermeneutic-circle",
+      "name": "HermeneuticCircle",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Conceptual framework display candidate for showing iterative interpretation loops and their current state.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/HermeneuticCircle.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "framework",
+        "loop",
+        "governance",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.clear-state-rows"
+      ],
+      "contract": {
+        "accessibility": "Loop displays must expose cycle labels, current phase, interpretation state, and route to detail without relying on circular layout.",
+        "evidence": "Loop state must preserve phase order, active phase, interpretation notes, owner, and source artifact.",
+        "extension": "Promote to stable only after framework schema, phase semantics, nonvisual sequence summary, and motion policy are documented."
+      }
+    },
+    {
+      "id": "component.mode-indicator",
+      "name": "ModeIndicator",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Mode and state indicator candidate for showing current operating mode, environment, or workflow posture.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/ModeIndicator.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "mode",
+        "status",
+        "indicator",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.clear-state-rows"
+      ],
+      "contract": {
+        "accessibility": "Mode indicators must expose label, current mode, state meaning, and change context without color-only encoding.",
+        "evidence": "Mode data must preserve mode id, label, severity or tone, source of truth, timestamp, and optional owner.",
+        "extension": "Promote to stable only after mode taxonomy, tone semantics, compact rendering, and source-of-truth policy are documented."
+      }
+    },
+    {
+      "id": "component.cross-property-link",
+      "name": "CrossPropertyLink",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Cross-property routing candidate for linking between CREATE SOMETHING properties with clear destination context.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/CrossPropertyLink.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "property",
+        "routing",
+        "link",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.button",
+        "component.navigation"
+      ],
+      "contract": {
+        "accessibility": "Cross-property links must name the destination property, action, external context, and current-route relationship.",
+        "evidence": "Route data must preserve source property, destination property, href, reason, tracking label, and fallback text.",
+        "extension": "Promote to stable only after property topology, route ownership, tracking policy, and external-link behavior are documented."
+      }
+    },
+    {
+      "id": "component.property-funnel",
+      "name": "PropertyFunnel",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Property conversion funnel candidate for routing visitors from property context to the next owned action.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/PropertyFunnel.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "property",
+        "funnel",
+        "conversion",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.clear-cta-band",
+        "component.conversion-sticky-cta"
+      ],
+      "contract": {
+        "accessibility": "Funnels must expose current property, offer, qualifying context, primary action, secondary action, and dismissal state.",
+        "evidence": "Funnel data must preserve property, audience segment, offer, destination, stage, proof reference, and conversion event.",
+        "extension": "Promote to stable only after funnel stage policy, offer schema, analytics boundaries, and cross-property handoff are documented."
+      }
+    },
+    {
+      "id": "component.cookie-consent",
+      "name": "CookieConsent",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Consent surface candidate for privacy notice, preference state, regional behavior, and analytics gating.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/CookieConsent.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "consent",
+        "privacy",
+        "policy",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof",
+        "component.button"
+      ],
+      "contract": {
+        "accessibility": "Consent prompts must expose notice text, accept action, reject or manage action, preference state, and policy link.",
+        "evidence": "Consent state must preserve region, categories, selected preferences, storage key, timestamp, and analytics gating status.",
+        "extension": "Promote to stable only after privacy policy mapping, regional defaults, storage behavior, and revocation flow are documented."
+      }
+    },
+    {
+      "id": "component.page-actions",
+      "name": "PageActions",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Page-level action group candidate for edit, preview, share, copy, publish, or workflow commands.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/PageActions.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "page-actions",
+        "commands",
+        "authoring",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.button",
+        "component.clear-action-footer"
+      ],
+      "contract": {
+        "accessibility": "Page actions must expose command labels, disabled state, destructive state, shortcut or status text, and result feedback.",
+        "evidence": "Action data must preserve command id, label, permission, target artifact, pending state, and last result.",
+        "extension": "Promote to stable only after command schema, permission policy, destructive-action behavior, and result feedback are documented."
+      }
+    },
+    {
+      "id": "component.markdown-preview-modal",
+      "name": "MarkdownPreviewModal",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Markdown preview modal candidate for authoring workflows that need rendered preview, source context, and close controls.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/MarkdownPreviewModal.svelte",
+      "importPath": "@create-something/canon/components",
+      "docsPath": "/canon/components",
+      "tags": [
+        "components",
+        "markdown",
+        "preview",
+        "authoring",
+        "modal",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.feedback-dialog",
+        "component.page-actions"
+      ],
+      "contract": {
+        "accessibility": "Preview modals must expose title, close action, rendered heading structure, source state, and focus management.",
+        "evidence": "Preview data must preserve source markdown, rendered output status, target artifact, validation errors, and last update.",
+        "extension": "Promote to stable only after rendering policy, sanitization, focus behavior, and authoring workflow ownership are documented."
+      }
+    },
+    {
       "id": "component.layout-project-grid-interactive",
       "name": "ProjectGridInteractive",
       "kind": "component",
