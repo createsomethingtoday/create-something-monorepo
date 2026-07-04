@@ -828,6 +828,65 @@ describe('Canon registry manifest', () => {
 		);
 	});
 
+	it('adds insight visuals as candidates for proof and statement export surfaces', () => {
+		const insightCandidates = [
+			{
+				id: 'component.insights-key-insight',
+				exportName: 'KeyInsight',
+				tag: 'shareable',
+				dependencies: ['component.insights-statement-text', 'component.clear-proof-strip']
+			},
+			{
+				id: 'component.insights-key-insight-card',
+				exportName: 'KeyInsightCard',
+				tag: 'card',
+				dependencies: ['component.card', 'component.insights-key-insight']
+			},
+			{
+				id: 'component.insights-statement-text',
+				exportName: 'StatementText',
+				tag: 'statement',
+				dependencies: ['component.heading', 'component.typography-typography-hero']
+			}
+		] as const;
+
+		for (const candidate of insightCandidates) {
+			const item = getCanonRegistryItem(candidate.id);
+			const classification = getCanonPublicExportClassification(
+				'./insights',
+				candidate.exportName
+			);
+
+			expect(
+				candidateRegistryItemIdsForPublicExport('./insights', candidate.exportName),
+				candidate.exportName
+			).toContain(candidate.id);
+			expect(item?.kind, candidate.id).toBe('component');
+			expect(item?.maturity, candidate.id).toBe('candidate');
+			expect(item?.sourcePath, candidate.id).toBe(
+				`packages/canon/src/lib/insights/${candidate.exportName}.svelte`
+			);
+			expect(item?.importPath, candidate.id).toBe('@create-something/canon/insights');
+			expect(item?.docsPath, candidate.id).toBe('/canon/components/insights');
+			expect(item?.tags, candidate.id).toContain('insights');
+			expect(item?.tags, candidate.id).toContain(candidate.tag);
+			expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+			for (const dependency of candidate.dependencies) {
+				expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
+			}
+			expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, candidate.id).toBeTruthy();
+			expect(item?.contract.evidence, candidate.id).toBeTruthy();
+			expect(item?.contract.motion, candidate.id).toBeTruthy();
+			expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+			expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
+		}
+
+		expect(searchCanonRegistry('insight proof candidate', { maturity: 'candidate' }).map((item) => item.id)).toEqual(
+			expect.arrayContaining(insightCandidates.map(({ id }) => id))
+		);
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();
