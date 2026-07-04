@@ -327,9 +327,65 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
   },
   {
     "exportPath": "./interactive",
+    "exportName": "GlassCard",
+    "classification": "decorative-effect",
+    "registryPolicy": "classified-out",
+    "rationale": "GlassCard is a glass visual treatment over the stable Card primitive, not a new foundation contract."
+  },
+  {
+    "exportPath": "./interactive",
+    "exportName": "HoverCard",
+    "classification": "composition-pattern",
+    "registryPolicy": "candidate-review",
+    "rationale": "HoverCard is a contextual disclosure pattern that needs focus, positioning, and fallback contracts before promotion."
+  },
+  {
+    "exportPath": "./interactive",
+    "exportName": "LiquidGlass",
+    "classification": "decorative-effect",
+    "registryPolicy": "classified-out",
+    "rationale": "LiquidGlass is a refraction/backdrop visual effect and should not become an agent-default UI primitive."
+  },
+  {
+    "exportPath": "./interactive",
+    "exportName": "LiquidGlassIcon",
+    "classification": "decorative-effect",
+    "registryPolicy": "classified-out",
+    "rationale": "LiquidGlassIcon is a nested-glass icon treatment; Canon should route icon contracts through component.icon."
+  },
+  {
+    "exportPath": "./interactive",
+    "exportName": "IntegrationFlow",
+    "classification": "composition-pattern",
+    "registryPolicy": "candidate-review",
+    "rationale": "IntegrationFlow can become a shared workflow/integration disclosure pattern after data and nonvisual contracts settle."
+  },
+  {
+    "exportPath": "./interactive",
+    "exportName": "TimelineEditor",
+    "classification": "platform-surface",
+    "registryPolicy": "candidate-review",
+    "rationale": "TimelineEditor is an authoring surface candidate that needs keyboard, canvas, and data-model contracts before promotion."
+  },
+  {
+    "exportPath": "./interactive",
+    "exportName": "InteractiveExperimentCTA",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "InteractiveExperimentCTA is tied to paper experiment launch state, not a general Canon action primitive."
+  },
+  {
+    "exportPath": "./interactive",
+    "exportName": "TrackedExperimentBadge",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "TrackedExperimentBadge renders experiment-specific paper metrics and should stay outside foundation UI discovery."
+  },
+  {
+    "exportPath": "./interactive",
     "classification": "decorative-effect",
     "registryPolicy": "candidate-review",
-    "rationale": "Interactive effects need evidence and modality constraints before registry promotion."
+    "rationale": "Any new interactive export needs explicit review before it can become registry-covered or classified out."
   },
   {
     "exportPath": "./conversion",

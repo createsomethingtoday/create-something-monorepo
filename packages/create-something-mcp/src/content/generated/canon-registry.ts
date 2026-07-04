@@ -961,6 +961,111 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.interactive-hover-card",
+      "name": "HoverCard",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Contextual disclosure candidate for previewing links, profiles, or supporting context on hover and focus.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/interactive/HoverCard.svelte",
+      "importPath": "@create-something/canon/interactive",
+      "docsPath": "/canon/components/interactive",
+      "tags": [
+        "interactive",
+        "hover-card",
+        "disclosure",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.card",
+        "component.navigation-tooltip"
+      ],
+      "contract": {
+        "accessibility": "Hover disclosures must expose trigger label, preview content, focus behavior, Escape close, and non-hover fallback.",
+        "evidence": "Disclosure state must preserve trigger relationship, side, alignment, open/close delays, disabled state, and viewport collision behavior.",
+        "motion": "Scale, opacity, delay, and directional transitions must collapse for reduced-motion users and cannot hide required context.",
+        "extension": "Promote to stable only after keyboard semantics, touch fallback, collision policy, and aria relationship contracts are documented."
+      }
+    },
+    {
+      "id": "component.interactive-integration-flow",
+      "name": "IntegrationFlow",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Integration flow candidate for showing connected services, connector order, and workflow description.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/interactive/IntegrationFlow.svelte",
+      "importPath": "@create-something/canon/interactive",
+      "docsPath": "/canon/components/interactive",
+      "tags": [
+        "interactive",
+        "integration-flow",
+        "workflow",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "adapter.atlas-graph-artifact",
+        "component.clear-workflow-mini-artifact"
+      ],
+      "contract": {
+        "accessibility": "Integration flows must expose service names, connector order, description, and a text summary that does not depend on arrows or animated particles.",
+        "evidence": "Flow data must preserve integration labels, service names, ordering, connector visibility, description, and source workflow.",
+        "motion": "Connector particles, grid animation, and glass treatments must be optional and reduced-motion safe.",
+        "extension": "Promote to stable only after integration schema, connector semantics, service icon fallback, and nonvisual workflow summaries are documented."
+      }
+    },
+    {
+      "id": "component.interactive-timeline-editor",
+      "name": "TimelineEditor",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Canvas timeline editor candidate for keyframe tracks, scrubber state, zoom, and motion-authoring callbacks.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/interactive/TimelineEditor.svelte",
+      "importPath": "@create-something/canon/interactive",
+      "docsPath": "/canon/components/interactive",
+      "tags": [
+        "interactive",
+        "timeline",
+        "editor",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.page-actions",
+        "component.diagrams-timeline"
+      ],
+      "contract": {
+        "accessibility": "Timeline editors must expose current frame, total frames, track names, selected keyframe, keyboard navigation, and canvas fallback state.",
+        "evidence": "Editor data must preserve tracks, keyframes, easing, current frame, fps, zoom, scroll offset, and callback semantics.",
+        "motion": "Motion previews, scrubber movement, and keyframe curves must not be the only representation of the timeline data.",
+        "extension": "Promote to stable only after canvas accessibility, keyboard editing, data-model versioning, and motion-studio ownership are documented."
+      }
+    },
+    {
       "id": "component.layout-project-grid-interactive",
       "name": "ProjectGridInteractive",
       "kind": "component",
