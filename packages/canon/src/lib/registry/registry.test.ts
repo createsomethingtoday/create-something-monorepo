@@ -1105,6 +1105,124 @@ describe('Canon registry manifest', () => {
 		}
 	});
 
+	it('splits interactive exports between candidates and classified-out effects', () => {
+		const interactiveCandidates = [
+			{
+				id: 'component.interactive-hover-card',
+				exportName: 'HoverCard',
+				tag: 'hover-card',
+				classification: 'composition-pattern',
+				dependencies: ['component.card', 'component.navigation-tooltip']
+			},
+			{
+				id: 'component.interactive-integration-flow',
+				exportName: 'IntegrationFlow',
+				tag: 'integration-flow',
+				classification: 'composition-pattern',
+				dependencies: ['adapter.atlas-graph-artifact', 'component.clear-workflow-mini-artifact']
+			},
+			{
+				id: 'component.interactive-timeline-editor',
+				exportName: 'TimelineEditor',
+				tag: 'timeline',
+				classification: 'platform-surface',
+				dependencies: ['component.page-actions', 'component.diagrams-timeline']
+			}
+		] as const;
+		const classifiedOut = [
+			{
+				exportName: 'GlassCard',
+				classification: 'decorative-effect'
+			},
+			{
+				exportName: 'LiquidGlass',
+				classification: 'decorative-effect'
+			},
+			{
+				exportName: 'LiquidGlassIcon',
+				classification: 'decorative-effect'
+			},
+			{
+				exportName: 'InteractiveExperimentCTA',
+				classification: 'experiment'
+			},
+			{
+				exportName: 'TrackedExperimentBadge',
+				classification: 'experiment'
+			}
+		] as const;
+		const interactiveExports = publicDefaultExports('packages/canon/src/lib/interactive/index.ts');
+
+		expect(new Set(interactiveExports)).toEqual(
+			new Set([
+				...interactiveCandidates.map(({ exportName }) => exportName),
+				...classifiedOut.map(({ exportName }) => exportName)
+			])
+		);
+
+		for (const exportName of interactiveExports) {
+			expect(getCanonPublicExportClassification('./interactive', exportName)?.exportName).toBe(
+				exportName
+			);
+		}
+
+		for (const candidate of interactiveCandidates) {
+			const item = getCanonRegistryItem(candidate.id);
+			const classification = getCanonPublicExportClassification(
+				'./interactive',
+				candidate.exportName
+			);
+
+			expect(
+				candidateRegistryItemIdsForPublicExport('./interactive', candidate.exportName),
+				candidate.exportName
+			).toContain(candidate.id);
+			expect(item?.kind, candidate.id).toBe('component');
+			expect(item?.maturity, candidate.id).toBe('candidate');
+			expect(item?.sourcePath, candidate.id).toBe(
+				`packages/canon/src/lib/interactive/${candidate.exportName}.svelte`
+			);
+			expect(item?.importPath, candidate.id).toBe('@create-something/canon/interactive');
+			expect(item?.docsPath, candidate.id).toBe('/canon/components/interactive');
+			expect(item?.tags, candidate.id).toContain('interactive');
+			expect(item?.tags, candidate.id).toContain(candidate.tag);
+			expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+			for (const dependency of candidate.dependencies) {
+				expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
+			}
+			expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, candidate.id).toBeTruthy();
+			expect(item?.contract.evidence, candidate.id).toBeTruthy();
+			expect(item?.contract.motion, candidate.id).toBeTruthy();
+			expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+			expect(classification?.classification, candidate.exportName).toBe(candidate.classification);
+			expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
+			expect(
+				searchCanonRegistry(candidate.id, { maturity: 'candidate', limit: 1 }).map(
+					(result) => result.id
+				),
+				candidate.id
+			).toEqual([candidate.id]);
+		}
+
+		for (const excluded of classifiedOut) {
+			const classification = getCanonPublicExportClassification(
+				'./interactive',
+				excluded.exportName
+			);
+
+			expect(classification?.classification, excluded.exportName).toBe(
+				excluded.classification
+			);
+			expect(classification?.registryPolicy, excluded.exportName).toBe('classified-out');
+			expect(
+				candidateRegistryItemIdsForPublicExport('./interactive', excluded.exportName).some((id) =>
+					Boolean(getCanonRegistryItem(id))
+				)
+			).toBe(false);
+		}
+	});
+
 	it('adds conversion proof and action surfaces as candidates', () => {
 		const conversionCandidates = [
 			{
