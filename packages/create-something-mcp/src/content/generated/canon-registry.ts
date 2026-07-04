@@ -168,6 +168,126 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.heading",
+      "name": "Heading",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Semantic heading primitive with Canon fluid typography scales and explicit heading levels.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/Heading.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/heading",
+      "tags": [
+        "typography",
+        "heading",
+        "semantic",
+        "foundation"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Consumers must choose the heading level for document structure, not visual size alone.",
+        "extension": "Use the canonical scale before adding local heading styles or viewport-specific typography."
+      }
+    },
+    {
+      "id": "component.skip-to-content",
+      "name": "SkipToContent",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "WCAG skip link primitive that lets keyboard users bypass repeated navigation.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/SkipToContent.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/skip-to-content",
+      "tags": [
+        "accessibility",
+        "keyboard",
+        "navigation",
+        "foundation"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Place before navigation and ensure the configured target id exists on the main content.",
+        "extension": "Use this primitive for route shells before creating local skip-link implementations."
+      }
+    },
+    {
+      "id": "component.layout-section",
+      "name": "Section",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Canonical page section wrapper for vertical rhythm, background variants, and content width.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/layout/Section.svelte",
+      "importPath": "@create-something/canon/layout",
+      "docsPath": "/canon/components/layout",
+      "tags": [
+        "layout",
+        "section",
+        "spacing",
+        "foundation"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Sections must preserve semantic section structure and readable spacing.",
+        "extension": "Use Section for page bands before inventing local wrappers or nested card shells."
+      }
+    },
+    {
+      "id": "component.layout-section-header",
+      "name": "SectionHeader",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Section title, eyebrow, and subtitle pattern with explicit semantic heading-level control.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/layout/SectionHeader.svelte",
+      "importPath": "@create-something/canon/layout",
+      "docsPath": "/canon/components/layout",
+      "tags": [
+        "layout",
+        "heading",
+        "section-header",
+        "foundation"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.layout-section",
+        "component.heading"
+      ],
+      "contract": {
+        "accessibility": "Choose the heading level for document structure and keep title/subtitle readable as text.",
+        "extension": "Use SectionHeader for repeated section introductions before adding local header patterns."
+      }
+    },
+    {
       "id": "component.clear-page-section",
       "name": "ClearPageSection",
       "kind": "component",
