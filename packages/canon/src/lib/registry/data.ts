@@ -1780,6 +1780,88 @@ const FILTERING_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
 	}
 ];
 
+const INSIGHT_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
+	{
+		id: 'component.insights-key-insight',
+		name: 'KeyInsight',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Shareable key insight visual candidate for full-screen, inline, card, and exportable proof statements.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/insights/KeyInsight.svelte',
+		importPath: '@create-something/canon/insights',
+		docsPath: '/canon/components/insights',
+		tags: ['insights', 'proof', 'shareable', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: [
+			'token.canon-core',
+			'component.insights-statement-text',
+			'component.clear-proof-strip'
+		],
+		contract: {
+			accessibility:
+				'Insight visuals must expose the principle, source, comparison rows, interaction trigger, and final revealed text outside animation.',
+			evidence:
+				'Insight data must preserve id, principle, optional statement words, comparison rows, source URL, property, paper id, and category.',
+			motion:
+				'Click, scroll, and auto revelation must be optional and must respect reduced-motion and static export contexts.',
+			extension:
+				'Promote to stable only after export formats, source attribution, statement fallback, and interaction-trigger contracts are documented.'
+		}
+	},
+	{
+		id: 'component.insights-key-insight-card',
+		name: 'KeyInsightCard',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Compact insight card candidate for embedding proof statements and before/after comparisons in papers and articles.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/insights/KeyInsightCard.svelte',
+		importPath: '@create-something/canon/insights',
+		docsPath: '/canon/components/insights',
+		tags: ['insights', 'card', 'comparison', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.card', 'component.insights-key-insight'],
+		contract: {
+			accessibility:
+				'Insight cards must keep the key insight label, category, principle, comparison rows, link target, and source readable.',
+			evidence:
+				'Card data must preserve the same insight config as the full view plus optional href for full-screen inspection.',
+			motion:
+				'Card hover lift and focus treatment must be optional and cannot replace the link or source text.',
+			extension:
+				'Promote to stable only after inline density, comparison wrapping, source behavior, and full-view linking contracts are documented.'
+		}
+	},
+	{
+		id: 'component.insights-statement-text',
+		name: 'StatementText',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Word-level statement revelation candidate for subtractive typography, essence extraction, and reverse reading.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/insights/StatementText.svelte',
+		importPath: '@create-something/canon/insights',
+		docsPath: '/canon/components/insights',
+		tags: ['insights', 'statement', 'typography', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.heading', 'component.typography-typography-hero'],
+		contract: {
+			accessibility:
+				'Statement text must preserve full words, kept words, emphasis, phase, direction, and readable essence without animation.',
+			evidence:
+				'Statement data must preserve ordered words, keep/remove metadata, optional emphasis, and derived essence text.',
+			motion:
+				'Striking, fading, coalescing, and reverse expansion must be reduced-motion safe and must not be the only path to the insight.',
+			extension:
+				'Promote to stable only after word schema, phase semantics, essence fallback, and export-safe typography contracts are documented.'
+		}
+	}
+];
+
 export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 	schemaVersion: 1,
 	id: 'canon-registry',
@@ -1907,6 +1989,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 		...PATTERN_CANDIDATE_ITEMS,
 		...NAVIGATION_CANDIDATE_ITEMS,
 		...FILTERING_CANDIDATE_ITEMS,
+		...INSIGHT_CANDIDATE_ITEMS,
 		...CLEAR_PRIMITIVE_ITEMS,
 		...FOUNDATION_CONTROL_ITEMS,
 		{
