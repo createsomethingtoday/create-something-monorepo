@@ -425,6 +425,51 @@ describe('Canon registry manifest', () => {
 		expect(classification?.registryPolicy).toBe('candidate-review');
 	});
 
+	it('adds Atlas renderers as candidates aligned to the headless graph artifact', () => {
+		const atlasCandidates = [
+			{
+				id: 'component.atlas-atlas-flow',
+				exportName: 'AtlasFlow',
+				tag: 'workflow-map',
+				dependency: 'token.canon-core'
+			},
+			{
+				id: 'component.atlas-atlas-story-canvas',
+				exportName: 'AtlasStoryCanvas',
+				tag: 'story',
+				dependency: 'component.atlas-atlas-flow'
+			}
+		] as const;
+
+		for (const candidate of atlasCandidates) {
+			const item = getCanonRegistryItem(candidate.id);
+			const classification = getCanonPublicExportClassification('./atlas', candidate.exportName);
+
+			expect(item?.kind, candidate.id).toBe('component');
+			expect(item?.maturity, candidate.id).toBe('candidate');
+			expect(item?.sourcePath, candidate.id).toBe(
+				`packages/canon/src/lib/atlas/${candidate.exportName}.svelte`
+			);
+			expect(item?.importPath, candidate.id).toBe('@create-something/canon/atlas');
+			expect(item?.docsPath, candidate.id).toBe('/canon/components/atlas');
+			expect(item?.tags, candidate.id).toContain('atlas');
+			expect(item?.tags, candidate.id).toContain('renderer');
+			expect(item?.tags, candidate.id).toContain(candidate.tag);
+			expect(item?.dependencies, candidate.id).toContain('adapter.atlas-graph-artifact');
+			expect(item?.dependencies, candidate.id).toContain(candidate.dependency);
+			expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, candidate.id).toBeTruthy();
+			expect(item?.contract.evidence, candidate.id).toContain('artifact');
+			expect(item?.contract.motion, candidate.id).toBeTruthy();
+			expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+			expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
+		}
+
+		expect(searchCanonRegistry('atlas renderer', { maturity: 'candidate' }).map((item) => item.id)).toEqual(
+			expect.arrayContaining(atlasCandidates.map(({ id }) => id))
+		);
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();
