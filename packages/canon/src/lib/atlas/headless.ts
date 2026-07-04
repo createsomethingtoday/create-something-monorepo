@@ -133,6 +133,16 @@ export type PublicAtlasStoryArtifact = {
 	chapters: PublicAtlasStoryChapter[];
 };
 
+export type PublicAtlasFocusGroupId = 'owner' | 'run' | 'wait' | 'stop' | 'proof';
+
+export type PublicAtlasFocusGroup = {
+	id: PublicAtlasFocusGroupId;
+	label: string;
+	description: string;
+	nodeIds: string[];
+	edgeIds: string[];
+};
+
 export type PublicAtlasStarterMap = {
 	id: string;
 	name: string;
@@ -384,6 +394,18 @@ function storyChapter(
 		...input,
 		relationshipIds: relationshipIdsForNodes(artifact, input.focusNodeIds)
 	};
+}
+
+function edgeIdsForFocusedNodes(canvas: PublicAtlasCanvas, nodeIds: string[]): string[] {
+	const nodeIdSet = new Set(nodeIds);
+	return canvas.edges
+		.filter((edge) => nodeIdSet.has(edge.source) || nodeIdSet.has(edge.target))
+		.map((edge) => edge.id);
+}
+
+function uniqueNodeIds(canvas: PublicAtlasCanvas, ids: Array<string | undefined>): string[] {
+	const available = new Set(canvas.nodes.map((node) => node.id));
+	return [...new Set(ids.filter((id): id is string => Boolean(id) && available.has(id)))];
 }
 
 export function createPublicAtlasNode(
@@ -639,6 +661,68 @@ export function layoutPublicAtlasNodes(nodes: PublicAtlasNode[]): PublicAtlasNod
 	}
 
 	return nodes.map((node) => positioned.get(node.id) ?? node);
+}
+
+export function createPublicAtlasFocusGroups(inputCanvas: PublicAtlasCanvas): PublicAtlasFocusGroup[] {
+	const canvas = normalizePublicAtlasCanvas(inputCanvas);
+	const owner = canvas.nodes.find((node) => node.kind === 'actor');
+	const workflow = canvas.nodes.find((node) => node.kind === 'data');
+	const runNodes = canvas.nodes.filter(
+		(node) => node.status === 'run' && (node.kind === 'system' || node.kind === 'ai')
+	);
+	const waitNodes = canvas.nodes.filter(
+		(node) => node.kind !== 'actor' && (node.status === 'wait' || node.kind === 'human')
+	);
+	const stopNodes = canvas.nodes.filter((node) => node.status === 'stop' || node.kind === 'constraint');
+	const proofNodes = canvas.nodes.filter((node) => node.kind === 'touchpoint');
+	const buildGroup = (
+		id: PublicAtlasFocusGroupId,
+		label: string,
+		description: string,
+		nodeIds: string[]
+	): PublicAtlasFocusGroup => {
+		const uniqueIds = uniqueNodeIds(canvas, nodeIds);
+		return {
+			id,
+			label,
+			description,
+			nodeIds: uniqueIds,
+			edgeIds: edgeIdsForFocusedNodes(canvas, uniqueIds)
+		};
+	};
+
+	return [
+		buildGroup(
+			'owner',
+			'Owner',
+			'Who owns the workflow and the durable record that should be mapped first.',
+			[owner?.id, workflow?.id].filter((id): id is string => Boolean(id))
+		),
+		buildGroup(
+			'run',
+			'Run',
+			'System or AI work that can proceed when the rule and evidence are clear.',
+			runNodes.map((node) => node.id)
+		),
+		buildGroup(
+			'wait',
+			'Wait',
+			'Human review, approval, or handoff state that should remain explicit.',
+			waitNodes.map((node) => node.id)
+		),
+		buildGroup(
+			'stop',
+			'Stop',
+			'Policy, privacy, access, accuracy, or authority boundaries that pause execution.',
+			stopNodes.map((node) => node.id)
+		),
+		buildGroup(
+			'proof',
+			'Proof',
+			'The inspection surface where state, evidence, owner, and outcome become visible.',
+			proofNodes.map((node) => node.id)
+		)
+	];
 }
 
 export function summarizePublicAtlasCanvas(

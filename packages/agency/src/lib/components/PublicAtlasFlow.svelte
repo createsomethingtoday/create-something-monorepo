@@ -7,6 +7,18 @@
 	export let flowId = 'public-atlas-flow';
 	export let onMoveNode: (nodeId: string, position: { x: number; y: number }) => void;
 	export let onSelectNode: (nodeId: string) => void;
+	export let focusedNodeIds: string[] = [];
+	export let focusedEdgeIds: string[] = [];
+	export let dimUnfocused = false;
 </script>
 
-<AtlasFlow {canvas} {selectedNodeId} {flowId} {onMoveNode} {onSelectNode} />
+<AtlasFlow
+	{canvas}
+	{selectedNodeId}
+	{flowId}
+	{onMoveNode}
+	{onSelectNode}
+	{focusedNodeIds}
+	{focusedEdgeIds}
+	{dimUnfocused}
+/>
