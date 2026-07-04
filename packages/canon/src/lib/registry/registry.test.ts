@@ -48,6 +48,13 @@ function readMcpCanonRegistrySnapshot() {
 	return JSON.parse(source.slice(start + assignment.length, end + 2));
 }
 
+function clearComponentIdForExport(exportName: string) {
+	return `component.${exportName
+		.replace(/^Clear/, 'clear')
+		.replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+		.toLowerCase()}`;
+}
+
 describe('Canon registry manifest', () => {
 	it('covers every required product modality', () => {
 		expect(listCanonRegistryModalities()).toEqual(['web', 'chat', 'app', 'voice', 'glasses']);
@@ -95,6 +102,36 @@ describe('Canon registry manifest', () => {
 
 	it('keeps the MCP Canon registry snapshot synchronized', () => {
 		expect(readMcpCanonRegistrySnapshot()).toEqual(CANON_REGISTRY_MANIFEST);
+	});
+
+	it('covers every public Clear primitive in the registry', () => {
+		const clearIndexSource = readFileSync(
+			join(repoRoot, 'packages/canon/src/lib/components/clear/index.ts'),
+			'utf-8'
+		);
+		const clearExportNames = [...clearIndexSource.matchAll(/default as (Clear[A-Za-z0-9]+)/g)].map(
+			(match) => match[1]
+		);
+		const expectedIds = clearExportNames.map(clearComponentIdForExport);
+		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
+
+		expect(clearExportNames.length).toBeGreaterThan(0);
+		expect(new Set(clearExportNames).size).toBe(clearExportNames.length);
+
+		for (const id of expectedIds) {
+			expect(registryIds.has(id), id).toBe(true);
+			const item = getCanonRegistryItem(id);
+			const exportName = clearExportNames[expectedIds.indexOf(id)];
+
+			expect(item?.kind, id).toBe('component');
+			expect(item?.maturity, id).toBe('stable');
+			expect(item?.sourcePath, id).toBe(
+				`packages/canon/src/lib/components/clear/${exportName}.svelte`
+			);
+			expect(item?.importPath, id).toBe('@create-something/canon');
+			expect(item?.docsPath, id).toBe('/canon/components/clear');
+			expect(item?.tags, id).toContain('clear');
+		}
 	});
 
 	it('exposes ClearDecisionPanel as the shared decision surface', () => {

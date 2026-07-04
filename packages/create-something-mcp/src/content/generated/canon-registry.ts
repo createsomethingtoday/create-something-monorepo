@@ -168,6 +168,548 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.clear-page-section",
+      "name": "ClearPageSection",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Open page section primitive for clear communication layouts with restrained spacing and readable hierarchy.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearPageSection.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "layout",
+        "section",
+        "surface"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Sections must preserve heading order, landmarks, and readable spacing.",
+        "extension": "Use page sections for full-width layout bands instead of nested card shells."
+      }
+    },
+    {
+      "id": "component.clear-error-page",
+      "name": "ClearErrorPage",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Plain-language error state surface that names what happened and the next recovery action.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearErrorPage.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "error",
+        "recovery",
+        "state"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Error surfaces must state the problem and recovery path in text.",
+        "evidence": "When possible, include receipt, owner, or support route for the failure.",
+        "extension": "Project overlays may provide local support copy without replacing the primitive."
+      }
+    },
+    {
+      "id": "component.clear-platform-hero",
+      "name": "ClearPlatformHero",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "First-screen platform hero that pairs a plain operational claim with proof metadata.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearPlatformHero.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "hero",
+        "claim",
+        "proof"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.clear-proof-strip"
+      ],
+      "contract": {
+        "accessibility": "Hero claims must remain readable as text and not depend on decorative media.",
+        "evidence": "Claims need adjacent proof metadata or a route to receipts.",
+        "extension": "Project overlays own local offer copy while Canon owns the claim/proof structure."
+      }
+    },
+    {
+      "id": "component.clear-logo-strip",
+      "name": "ClearLogoStrip",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Compact trust or partner strip for recognizable proof without crowding the page.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearLogoStrip.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "proof",
+        "logos",
+        "trust"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Logo rows need text alternatives and must not be the only proof claim.",
+        "evidence": "Use only when the relationship or receipt behind the mark is true.",
+        "extension": "Local overlays provide logo assets and labels; Canon owns strip structure."
+      }
+    },
+    {
+      "id": "component.clear-proof-strip",
+      "name": "ClearProofStrip",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Compact proof objects for claims, validation gates, receipts, and trust evidence.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearProofStrip.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "proof",
+        "evidence",
+        "receipt"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "evidence": "Proof items must connect claims to concrete artifacts, checks, or receipts.",
+        "extension": "Prefer this when multiple proof objects need to be scanned together."
+      }
+    },
+    {
+      "id": "component.clear-workflow-mini-artifact",
+      "name": "ClearWorkflowMiniArtifact",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Small workflow artifact card for showing object, state, owner, and receipt in compact surfaces.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearWorkflowMiniArtifact.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "workflow",
+        "artifact",
+        "receipt"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Mini artifacts must keep object, state, and owner readable without hover.",
+        "evidence": "Receipt or source metadata should sit near the workflow state.",
+        "extension": "Use for compact workflow previews before inventing local status cards."
+      }
+    },
+    {
+      "id": "component.clear-state-rows",
+      "name": "ClearStateRows",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Scannable rows for workflow state, owner, evidence, and next action.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearStateRows.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "state",
+        "workflow",
+        "owner"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "State must be encoded in text and structure, not color alone.",
+        "evidence": "Rows should name owner, evidence, receipt, or next action.",
+        "extension": "Use for operational state lists across web, chat summaries, and thin displays."
+      }
+    },
+    {
+      "id": "component.clear-artifact-card",
+      "name": "ClearArtifactCard",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Card for a single proof artifact, policy object, receipt, or source-of-truth item.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearArtifactCard.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "artifact",
+        "proof",
+        "card"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Artifact cards need explicit titles and link/action labels.",
+        "evidence": "Artifact metadata should identify what is proved and where the source lives.",
+        "extension": "Use before creating local proof cards for individual artifacts."
+      }
+    },
+    {
+      "id": "component.clear-card-grid",
+      "name": "ClearCardGrid",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Repeated clear cards for comparable work objects, offers, artifacts, or services.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearCardGrid.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "grid",
+        "cards",
+        "comparison"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Card grids must preserve readable headings and stable focus order.",
+        "extension": "Use for repeated items; avoid nested card-in-card page composition."
+      }
+    },
+    {
+      "id": "component.clear-use-case-band",
+      "name": "ClearUseCaseBand",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Use-case band for mapping audience needs to outcomes, proof, and actions.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearUseCaseBand.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "use-case",
+        "outcome",
+        "workflow"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Use cases must be stated as workflow needs and outcomes.",
+        "evidence": "Each use case should connect to proof, receipt, or a next action.",
+        "extension": "Project overlays provide domain-specific use cases without changing the band."
+      }
+    },
+    {
+      "id": "component.clear-quote-metric-panel",
+      "name": "ClearQuoteMetricPanel",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Panel pairing a human quote with metric proof or operational evidence.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearQuoteMetricPanel.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "quote",
+        "metric",
+        "proof"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Quotes and metrics must remain readable as text.",
+        "evidence": "Metrics need labels and should not imply precision without source proof.",
+        "extension": "Local overlays provide quote and metric content; Canon owns the proof layout."
+      }
+    },
+    {
+      "id": "component.clear-pillar-grid",
+      "name": "ClearPillarGrid",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Pillar grid for principle, capability, or workflow structure summaries.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearPillarGrid.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "pillars",
+        "principles",
+        "structure"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Pillars need descriptive headings and optional links with clear labels.",
+        "extension": "Use for structured explanation before creating local principle grids."
+      }
+    },
+    {
+      "id": "component.clear-metadata-rail",
+      "name": "ClearMetadataRail",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Metadata rail for owner, source, receipt, status, and related workflow facts.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearMetadataRail.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "metadata",
+        "owner",
+        "receipt"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Metadata labels and values must remain paired in text.",
+        "evidence": "Rails should expose owner, source, receipt, or status metadata near decisions.",
+        "extension": "Use for supporting facts instead of hiding trust details in prose."
+      }
+    },
+    {
+      "id": "component.clear-security-panel",
+      "name": "ClearSecurityPanel",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Security and governance panel for controls, logs, owners, and review state.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearSecurityPanel.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "security",
+        "governance",
+        "controls"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Security state must be visible in text and grouped by control or log.",
+        "evidence": "Controls and logs should identify owner, state, and proof.",
+        "extension": "Project policy details stay local while Canon owns the security display pattern."
+      }
+    },
+    {
+      "id": "component.clear-content-highlights",
+      "name": "ClearContentHighlights",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Highlight list for key claims, lessons, capabilities, or evidence points.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearContentHighlights.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "content",
+        "highlights",
+        "claims"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Highlights must use readable text labels and not only visual emphasis.",
+        "extension": "Use for compact content summaries before creating local feature lists."
+      }
+    },
+    {
+      "id": "component.clear-receipt-grid",
+      "name": "ClearReceiptGrid",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Grid for receipts, validation proof, artifacts, and completion evidence.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearReceiptGrid.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "receipt",
+        "proof",
+        "validation"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Receipts need labels, status text, and navigable links when interactive.",
+        "evidence": "Every receipt should identify what was validated and where proof lives.",
+        "extension": "Use before inventing local proof grids or launch evidence panels."
+      }
+    },
+    {
+      "id": "component.clear-cta-band",
+      "name": "ClearCtaBand",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Call-to-action band that names the next action and supporting proof.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearCtaBand.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "cta",
+        "action",
+        "handoff"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Action labels must describe the outcome and remain keyboard reachable.",
+        "evidence": "When trust matters, pair the action with a proof or receipt cue.",
+        "extension": "Local overlays provide action copy and destinations; Canon owns band structure."
+      }
+    },
+    {
+      "id": "component.clear-action-footer",
+      "name": "ClearActionFooter",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Footer action group for final commands, secondary routes, and handoff state.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/clear/ClearActionFooter.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/clear",
+      "tags": [
+        "clear",
+        "action",
+        "footer",
+        "handoff"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Footer actions must be clearly labeled and ordered by expected workflow.",
+        "extension": "Use for terminal action groups before creating local footer button clusters."
+      }
+    },
+    {
       "id": "component.clear-decision-panel",
       "name": "ClearDecisionPanel",
       "kind": "component",
@@ -200,36 +742,6 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "evidence": "Every decision item should name evidence, receipt, owner, or next action.",
         "motion": "Motion is limited to state, selection, progression, or handoff.",
         "extension": "Use this before inventing local decision cards, approval panels, or status shells."
-      }
-    },
-    {
-      "id": "component.clear-proof-strip",
-      "name": "ClearProofStrip",
-      "kind": "component",
-      "maturity": "stable",
-      "description": "Compact proof objects for claims, validation gates, receipts, and trust evidence.",
-      "ownerPackage": "@create-something/canon",
-      "sourcePath": "packages/canon/src/lib/components/clear/ClearProofStrip.svelte",
-      "importPath": "@create-something/canon",
-      "docsPath": "/canon/components/clear",
-      "tags": [
-        "clear",
-        "proof",
-        "evidence",
-        "receipt"
-      ],
-      "modalities": [
-        "web",
-        "app",
-        "chat"
-      ],
-      "dependencies": [
-        "token.canon-core",
-        "policy.signal-decision-proof"
-      ],
-      "contract": {
-        "evidence": "Proof items must connect claims to concrete artifacts, checks, or receipts.",
-        "extension": "Prefer this when multiple proof objects need to be scanned together."
       }
     },
     {
