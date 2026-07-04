@@ -470,6 +470,70 @@ describe('Canon registry manifest', () => {
 		);
 	});
 
+	it('adds advanced form controls as candidates aligned to foundation form primitives', () => {
+		const formCandidates = [
+			{
+				id: 'component.forms-form-field',
+				exportName: 'FormField',
+				tag: 'field',
+				dependencies: ['component.form-text-field']
+			},
+			{
+				id: 'component.forms-combobox',
+				exportName: 'Combobox',
+				tag: 'combobox',
+				dependencies: ['component.form-text-field', 'component.form-select']
+			},
+			{
+				id: 'component.forms-date-picker',
+				exportName: 'DatePicker',
+				tag: 'date-picker',
+				dependencies: ['component.form-text-field']
+			},
+			{
+				id: 'component.forms-file-upload',
+				exportName: 'FileUpload',
+				tag: 'file-upload',
+				dependencies: ['component.form-text-field']
+			},
+			{
+				id: 'component.forms-otp-input',
+				exportName: 'OTPInput',
+				tag: 'otp',
+				dependencies: ['component.form-text-field']
+			}
+		] as const;
+
+		for (const candidate of formCandidates) {
+			const item = getCanonRegistryItem(candidate.id);
+			const classification = getCanonPublicExportClassification('./forms', candidate.exportName);
+
+			expect(item?.kind, candidate.id).toBe('component');
+			expect(item?.maturity, candidate.id).toBe('candidate');
+			expect(item?.sourcePath, candidate.id).toBe(
+				`packages/canon/src/lib/forms/${candidate.exportName}.svelte`
+			);
+			expect(item?.importPath, candidate.id).toBe('@create-something/canon/forms');
+			expect(item?.docsPath, candidate.id).toBe('/canon/components/forms');
+			expect(item?.tags, candidate.id).toContain('forms');
+			expect(item?.tags, candidate.id).toContain(candidate.tag);
+			expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+			for (const dependency of candidate.dependencies) {
+				expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
+			}
+			expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, candidate.id).toBeTruthy();
+			expect(item?.contract.evidence, candidate.id).toBeTruthy();
+			expect(item?.contract.motion, candidate.id).toBeTruthy();
+			expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+			expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
+		}
+
+		expect(searchCanonRegistry('form candidate', { maturity: 'candidate' }).map((item) => item.id)).toEqual(
+			expect.arrayContaining(formCandidates.map(({ id }) => id))
+		);
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();
