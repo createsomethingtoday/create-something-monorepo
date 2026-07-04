@@ -1573,6 +1573,112 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.filtering-filter-toggle-panel",
+      "name": "FilterTogglePanel",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Filter control panel candidate for material, category, status, and price-range facets.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/filtering/FilterTogglePanel.svelte",
+      "importPath": "@create-something/canon/filtering",
+      "docsPath": "/canon/components/filtering",
+      "tags": [
+        "filtering",
+        "facets",
+        "toggle-panel",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.form-checkbox",
+        "component.form-switch"
+      ],
+      "contract": {
+        "accessibility": "Facet groups must expose labels, selected state, range values, clear action, and expanded state without visual-only toggles.",
+        "evidence": "Filter state must preserve materials, categories, statuses, price min/max, and the configuration that produced each option.",
+        "motion": "Panel collapse, toggle feedback, and range updates must remain usable without animation.",
+        "extension": "Promote to stable only after facet schema, grouped option labels, range behavior, and clear/reset contracts are documented."
+      }
+    },
+    {
+      "id": "component.filtering-product-grid",
+      "name": "ProductGrid",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Filtered product grid candidate for responsive catalog cards, empty state, and product metadata.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/filtering/ProductGrid.svelte",
+      "importPath": "@create-something/canon/filtering",
+      "docsPath": "/canon/components/filtering",
+      "tags": [
+        "filtering",
+        "product-grid",
+        "catalog",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.card",
+        "component.patterns-empty-state"
+      ],
+      "contract": {
+        "accessibility": "Product cards must preserve product name, image alt text, status, material, dimensions, price, and empty state text.",
+        "evidence": "Product data must preserve stable ids, category, materials, dimensions, price in cents, status, and image source.",
+        "motion": "Card hover elevation and grid transitions must be optional and reduced-motion safe.",
+        "extension": "Promote to stable only after product schema, empty-action slot, image fallback, and formatting contracts are documented."
+      }
+    },
+    {
+      "id": "component.filtering-agent-panel",
+      "name": "AgentPanel",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Agent-assisted filtering panel candidate for natural-language queries, reasoning trace, and applied filter summary.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/filtering/AgentPanel.svelte",
+      "importPath": "@create-something/canon/filtering",
+      "docsPath": "/canon/components/filtering",
+      "tags": [
+        "filtering",
+        "agent-panel",
+        "reasoning",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.form-text-field",
+        "component.button",
+        "component.filtering-filter-toggle-panel"
+      ],
+      "contract": {
+        "accessibility": "Agent panels must expose query input, loading state, example queries, reasoning visibility, and applied filters as readable text.",
+        "evidence": "Agent steps must preserve type, content, optional tool metadata, timestamp, explanation, and resulting filter state.",
+        "motion": "Reasoning reveal, example-chip feedback, and loading treatment must not delay query submission or applied-filter summary.",
+        "extension": "Promote to stable only after query schema, tool-trace disclosure, loading behavior, and filter summary contracts are documented."
+      }
+    },
+    {
       "id": "component.clear-page-section",
       "name": "ClearPageSection",
       "kind": "component",
