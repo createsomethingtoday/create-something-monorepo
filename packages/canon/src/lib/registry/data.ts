@@ -1098,6 +1098,134 @@ const ATLAS_RENDERER_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
 	}
 ];
 
+const FORM_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
+	{
+		id: 'component.forms-form-field',
+		name: 'FormField',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Advanced form field wrapper candidate for labels, help text, validation, and control composition.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/forms/FormField.svelte',
+		importPath: '@create-something/canon/forms',
+		docsPath: '/canon/components/forms',
+		tags: ['forms', 'field', 'validation', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.form-text-field'],
+		contract: {
+			accessibility:
+				'Labels, descriptions, errors, and required state must stay programmatically tied to the composed control.',
+			evidence:
+				'Field state should preserve value, validation message, required status, and owner-provided help copy.',
+			motion:
+				'Error and focus transitions must be optional and must not delay validation feedback.',
+			extension:
+				'Promote to stable only after composition, described-by, and validation contracts are documented.'
+		}
+	},
+	{
+		id: 'component.forms-combobox',
+		name: 'Combobox',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Advanced searchable option control candidate for mixed text entry and bounded selection workflows.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/forms/Combobox.svelte',
+		importPath: '@create-something/canon/forms',
+		docsPath: '/canon/components/forms',
+		tags: ['forms', 'combobox', 'selection', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.form-text-field', 'component.form-select'],
+		contract: {
+			accessibility:
+				'Input, popup, active option, selected value, and empty state must be exposed for keyboard and screen-reader users.',
+			evidence:
+				'Options must preserve stable ids, labels, disabled state, search query, and selected value for adapters.',
+			motion:
+				'Popup, filtering, and active-option movement must remain usable without animation.',
+			extension:
+				'Promote to stable only after keyboard navigation, option schema, and nonvisual fallback contracts are documented.'
+		}
+	},
+	{
+		id: 'component.forms-date-picker',
+		name: 'DatePicker',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Advanced date selection candidate for calendar input with typed fallback and validation state.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/forms/DatePicker.svelte',
+		importPath: '@create-something/canon/forms',
+		docsPath: '/canon/components/forms',
+		tags: ['forms', 'date-picker', 'calendar', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.form-text-field'],
+		contract: {
+			accessibility:
+				'Dates must be reachable through typed input, keyboard calendar navigation, and readable selected-state text.',
+			evidence:
+				'Date values must preserve locale display, canonical value, min/max constraints, and validation copy.',
+			motion:
+				'Calendar opening, month changes, and selection feedback must respect reduced-motion preferences.',
+			extension:
+				'Promote to stable only after date value, locale, keyboard, and typed-input fallback contracts are documented.'
+		}
+	},
+	{
+		id: 'component.forms-file-upload',
+		name: 'FileUpload',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Advanced file upload candidate for selected-file state, acceptance constraints, progress, and errors.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/forms/FileUpload.svelte',
+		importPath: '@create-something/canon/forms',
+		docsPath: '/canon/components/forms',
+		tags: ['forms', 'file-upload', 'attachment', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.form-text-field'],
+		contract: {
+			accessibility:
+				'Upload control, accepted types, selected files, progress, and errors must be available as text and status.',
+			evidence:
+				'File state must preserve name, size, type, acceptance result, progress, and retry or removal action.',
+			motion:
+				'Progress and dropzone feedback must not rely on motion or color alone.',
+			extension:
+				'Promote to stable only after file-state, progress, acceptance, and retry contracts are documented.'
+		}
+	},
+	{
+		id: 'component.forms-otp-input',
+		name: 'OTPInput',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Advanced one-time-code input candidate for segmented verification flows with pasted-code handling.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/forms/OTPInput.svelte',
+		importPath: '@create-something/canon/forms',
+		docsPath: '/canon/components/forms',
+		tags: ['forms', 'otp', 'verification', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.form-text-field'],
+		contract: {
+			accessibility:
+				'Segmented inputs must expose one clear verification-code field purpose, order, errors, and completion state.',
+			evidence:
+				'Code state must preserve length, filled count, validation result, paste handling, and resend or recovery route.',
+			motion:
+				'Focus movement, invalid-state cues, and completion feedback must remain understandable without animation.',
+			extension:
+				'Promote to stable only after segmented-input, paste, autofill, and recovery contracts are documented.'
+		}
+	}
+];
+
 export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 	schemaVersion: 1,
 	id: 'canon-registry',
@@ -1220,6 +1348,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 		...DIAGRAM_CANDIDATE_ITEMS,
 		...TYPOGRAPHY_CANDIDATE_ITEMS,
 		...ATLAS_RENDERER_CANDIDATE_ITEMS,
+		...FORM_CANDIDATE_ITEMS,
 		...CLEAR_PRIMITIVE_ITEMS,
 		...FOUNDATION_CONTROL_ITEMS,
 		{
