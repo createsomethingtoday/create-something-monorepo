@@ -194,6 +194,7 @@
   }
 
   :global(.nav-clear .nav-logo) {
+    max-width: calc(100% - 3.5rem);
     gap: 0.18rem;
   }
 
@@ -233,12 +234,22 @@
   }
 
   @media (max-width: 480px) {
-    :global(.nav-clear .nav-logo-mark) {
-      display: none;
+    :global(.nav-clear .nav-logo) {
+      gap: 0.14rem;
     }
 
-    :global(.nav-clear .nav-logo-text) {
-      font-size: 0.95rem;
+    :global(.nav-clear .nav-logo-mark) {
+      width: 1.35rem;
+      height: 1.35rem;
+      margin-right: 0.32rem;
+    }
+
+    :global(.nav-clear .nav-logo .nav-logo-text) {
+      font-size: 0.9rem !important;
+    }
+
+    :global(.nav-clear .nav-logo .nav-logo-suffix) {
+      font-size: 0.68rem !important;
     }
   }
 </style>
