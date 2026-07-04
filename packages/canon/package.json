@@ -213,6 +213,11 @@
 			"import": "./dist/atlas/headless.js",
 			"default": "./dist/atlas/headless.js"
 		},
+		"./atlas/handoff": {
+			"types": "./dist/atlas/handoff.d.ts",
+			"import": "./dist/atlas/handoff.js",
+			"default": "./dist/atlas/handoff.js"
+		},
 		"./governance": {
 			"types": "./dist/governance/index.d.ts",
 			"default": "./dist/governance/index.js"
