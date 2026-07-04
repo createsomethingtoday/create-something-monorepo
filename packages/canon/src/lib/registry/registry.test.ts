@@ -10,8 +10,10 @@ import {
 	CANON_PROJECT_OVERLAY_TEMPLATE_ROOT
 } from '../overlays/project-template/index.js';
 import {
+	CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES,
 	CANON_REGISTRY_MANIFEST,
 	getCanonRegistryItem,
+	getCanonPublicExportClassification,
 	listCanonRegistryModalities,
 	reviewCanonProjectOverlay,
 	routeCanonExtensionIntake,
@@ -22,7 +24,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../.
 const canonPackageJson = JSON.parse(
 	readFileSync(join(repoRoot, 'packages/canon/package.json'), 'utf-8')
 ) as {
-	exports: Record<string, unknown>;
+	exports: Record<string, string | { svelte?: string; default?: string; import?: string }>;
 };
 const mcpCanonRegistrySnapshotPath = join(
 	repoRoot,
@@ -61,9 +63,63 @@ function prefixedComponentIdForExport(idPrefix: string, exportName: string) {
 		.toLowerCase()}`;
 }
 
+function componentIdForExport(exportName: string) {
+	return `component.${exportName
+		.replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+		.toLowerCase()}`;
+}
+
 function publicDefaultExports(relativeIndexPath: string) {
 	const source = readFileSync(join(repoRoot, relativeIndexPath), 'utf-8');
 	return [...source.matchAll(/default as ([A-Za-z0-9]+)/g)].map((match) => match[1]);
+}
+
+function sourceIndexPathForSvelteExport(exportValue: {
+	svelte?: string;
+	default?: string;
+	import?: string;
+}) {
+	const exportTarget = exportValue.svelte;
+	if (!exportTarget?.startsWith('./dist/') || !exportTarget.endsWith('.js')) return null;
+
+	return exportTarget.replace('./dist/', 'packages/canon/src/lib/').replace(/\.js$/, '.ts');
+}
+
+function publicSvelteComponentExports() {
+	return Object.entries(canonPackageJson.exports).flatMap(([exportPath, exportValue]) => {
+		if (typeof exportValue === 'string') return [];
+
+		const sourcePath = sourceIndexPathForSvelteExport(exportValue);
+		if (!sourcePath) return [];
+
+		const absoluteSourcePath = join(repoRoot, sourcePath);
+		if (!existsSync(absoluteSourcePath)) return [];
+
+		const source = readFileSync(absoluteSourcePath, 'utf-8');
+		const exportNames = [
+			...source.matchAll(/export \{ default as ([A-Za-z0-9]+) \} from ['"][^'"]+\.svelte['"]/g),
+			...source.matchAll(/default as ([A-Za-z0-9]+)/g)
+		].map((match) => match[1]);
+
+		return [...new Set(exportNames)].map((exportName) => ({
+			exportPath,
+			exportName,
+			sourcePath
+		}));
+	});
+}
+
+function candidateRegistryItemIdsForPublicExport(exportPath: string, exportName: string) {
+	const ids = [componentIdForExport(exportName)];
+	const exportPathParts = exportPath.replace(/^\.\//, '').split('/');
+
+	if (exportPathParts[0] === 'components' && exportPathParts[1]) {
+		ids.push(prefixedComponentIdForExport(exportPathParts[1], exportName));
+	} else if (exportPathParts[0] && exportPathParts[0] !== '.') {
+		ids.push(prefixedComponentIdForExport(exportPathParts[0], exportName));
+	}
+
+	return [...new Set(ids)];
 }
 
 function expectPublicComponentBarrelCovered(options: {
@@ -196,6 +252,48 @@ describe('Canon registry manifest', () => {
 			docsPath: '/canon/components/navigation',
 			tag: 'navigation'
 		});
+	});
+
+	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
+		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
+		const publicExports = publicSvelteComponentExports();
+		const missingPolicy = publicExports.filter(({ exportPath, exportName }) => {
+			const hasRegistryItem = candidateRegistryItemIdsForPublicExport(exportPath, exportName).some(
+				(id) => registryIds.has(id)
+			);
+
+			return !hasRegistryItem && !getCanonPublicExportClassification(exportPath, exportName);
+		});
+
+		expect(publicExports.length).toBeGreaterThan(0);
+		expect(missingPolicy).toEqual([]);
+	});
+
+	it('keeps public export classification rules non-stale and reviewable', () => {
+		const publicExports = publicSvelteComponentExports();
+		const publicExportPaths = new Set(publicExports.map(({ exportPath }) => exportPath));
+		const publicExportKeys = new Set(
+			publicExports.map(({ exportPath, exportName }) => `${exportPath}:${exportName}`)
+		);
+		const exactRuleKeys = CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.filter(
+			(rule) => rule.exportName
+		).map((rule) => `${rule.exportPath}:${rule.exportName}`);
+
+		expect(new Set(exactRuleKeys).size).toBe(exactRuleKeys.length);
+
+		for (const rule of CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES) {
+			expect(rule.rationale.trim().length, `${rule.exportPath}:${rule.exportName ?? '*'}`).toBeGreaterThan(
+				10
+			);
+
+			if (rule.exportName) {
+				expect(publicExportKeys.has(`${rule.exportPath}:${rule.exportName}`), rule.exportName).toBe(
+					true
+				);
+			} else {
+				expect(publicExportPaths.has(rule.exportPath), rule.exportPath).toBe(true);
+			}
+		}
 	});
 
 	it('exposes ClearDecisionPanel as the shared decision surface', () => {
