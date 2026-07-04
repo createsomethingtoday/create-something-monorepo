@@ -1,5 +1,10 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
+import { CANON_REGISTRY_MANIFEST as MCP_CANON_REGISTRY_MANIFEST } from '../../../../create-something-mcp/src/content/generated/canon-registry.js';
 import {
 	CANON_REGISTRY_MANIFEST,
 	getCanonRegistryItem,
@@ -7,6 +12,20 @@ import {
 	routeCanonExtensionIntake,
 	searchCanonRegistry
 } from './index.js';
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
+const canonPackageJson = JSON.parse(
+	readFileSync(join(repoRoot, 'packages/canon/package.json'), 'utf-8')
+) as {
+	exports: Record<string, unknown>;
+};
+
+function exportKeyForCanonImportPath(importPath: string): string | null {
+	if (importPath === '@create-something/canon') return '.';
+	const prefix = '@create-something/canon/';
+	if (!importPath.startsWith(prefix)) return null;
+	return `./${importPath.slice(prefix.length)}`;
+}
 
 describe('Canon registry manifest', () => {
 	it('covers every required product modality', () => {
@@ -22,6 +41,39 @@ describe('Canon registry manifest', () => {
 				expect(getCanonRegistryItem(dependencyId), `${item.id} -> ${dependencyId}`).toBeDefined();
 			}
 		}
+	});
+
+	it('keeps registry source paths backed by repo files', () => {
+		for (const item of CANON_REGISTRY_MANIFEST.items) {
+			expect(existsSync(join(repoRoot, item.sourcePath)), item.id).toBe(true);
+		}
+	});
+
+	it('keeps Canon import paths aligned with package exports', () => {
+		for (const item of CANON_REGISTRY_MANIFEST.items) {
+			if (!item.importPath) continue;
+			const exportKey = exportKeyForCanonImportPath(item.importPath);
+
+			expect(exportKey, item.id).not.toBeNull();
+			expect(canonPackageJson.exports, `${item.id} -> ${item.importPath}`).toHaveProperty(
+				exportKey as string
+			);
+		}
+	});
+
+	it('keeps item modalities inside the required modality set', () => {
+		const requiredModalities = new Set(CANON_REGISTRY_MANIFEST.requiredModalities);
+
+		for (const item of CANON_REGISTRY_MANIFEST.items) {
+			expect(item.modalities.length, item.id).toBeGreaterThan(0);
+			for (const modality of item.modalities) {
+				expect(requiredModalities.has(modality), `${item.id} -> ${modality}`).toBe(true);
+			}
+		}
+	});
+
+	it('keeps the MCP Canon registry snapshot synchronized', () => {
+		expect(MCP_CANON_REGISTRY_MANIFEST).toEqual(CANON_REGISTRY_MANIFEST);
 	});
 
 	it('exposes ClearDecisionPanel as the shared decision surface', () => {
