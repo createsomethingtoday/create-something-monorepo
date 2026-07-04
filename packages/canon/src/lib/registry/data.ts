@@ -838,6 +838,186 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 	}
 ];
 
+const DIAGRAM_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
+	{
+		id: 'component.diagrams-flow-diagram',
+		name: 'FlowDiagram',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Node-and-edge process diagram candidate for workflows, systems, and decision paths.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/diagrams/FlowDiagram.svelte',
+		importPath: '@create-something/canon/diagrams',
+		docsPath: '/canon/components/diagrams',
+		tags: ['diagrams', 'flow', 'graph', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core'],
+		contract: {
+			accessibility:
+				'Every node and edge must be recoverable as ordered text for screen readers and nonvisual modalities.',
+			evidence: 'Data must preserve stable node ids, labels, edge direction, and optional edge labels.',
+			motion: 'Flow motion must be optional and disabled for reduced-motion contexts.',
+			extension:
+				'Promote to stable only after layout rules, overflow behavior, and text summary format are documented.'
+		}
+	},
+	{
+		id: 'component.diagrams-bar-chart',
+		name: 'BarChart',
+		kind: 'component',
+		maturity: 'candidate',
+		description: 'Categorical comparison chart candidate for compact quantitative evidence.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/diagrams/BarChart.svelte',
+		importPath: '@create-something/canon/diagrams',
+		docsPath: '/canon/components/diagrams',
+		tags: ['diagrams', 'chart', 'bar', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core'],
+		contract: {
+			accessibility:
+				'Bars must have text labels and values that do not depend on color or visual height alone.',
+			evidence: 'Data must include labeled numeric values and the source or owner of the measurement.',
+			motion: 'Animated bar transitions must not hide final values or block reduced-motion users.',
+			extension:
+				'Promote to stable only after scale, empty-state, and long-label behavior are documented.'
+		}
+	},
+	{
+		id: 'component.diagrams-line-chart',
+		name: 'LineChart',
+		kind: 'component',
+		maturity: 'candidate',
+		description: 'Time-series or ordered-series chart candidate for trends and deltas.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/diagrams/LineChart.svelte',
+		importPath: '@create-something/canon/diagrams',
+		docsPath: '/canon/components/diagrams',
+		tags: ['diagrams', 'chart', 'line', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core'],
+		contract: {
+			accessibility:
+				'Series names, axis labels, and point values must be available as structured text.',
+			evidence: 'Data must name each series and preserve x/y values without relying on sampled pixels.',
+			motion: 'Line drawing and point reveal effects must respect reduced-motion preferences.',
+			extension:
+				'Promote to stable only after multi-series labeling, axis scaling, and summary rules are documented.'
+		}
+	},
+	{
+		id: 'component.diagrams-pie-chart',
+		name: 'PieChart',
+		kind: 'component',
+		maturity: 'candidate',
+		description: 'Part-to-whole chart candidate for small proportional datasets.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/diagrams/PieChart.svelte',
+		importPath: '@create-something/canon/diagrams',
+		docsPath: '/canon/components/diagrams',
+		tags: ['diagrams', 'chart', 'pie', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core'],
+		contract: {
+			accessibility:
+				'Slices must expose labels, values, and percentages in text; color must not be the only differentiator.',
+			evidence: 'Data must include labeled numeric values and clarify whether totals are complete or sampled.',
+			motion: 'Slice reveal motion must be optional and never delay text value availability.',
+			extension:
+				'Promote to stable only after limits for slice count, legends, and donut variants are documented.'
+		}
+	},
+	{
+		id: 'component.diagrams-timeline',
+		name: 'Timeline',
+		kind: 'component',
+		maturity: 'candidate',
+		description: 'Chronological event diagram candidate for process, history, and roadmap surfaces.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/diagrams/Timeline.svelte',
+		importPath: '@create-something/canon/diagrams',
+		docsPath: '/canon/components/diagrams',
+		tags: ['diagrams', 'timeline', 'events', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core'],
+		contract: {
+			accessibility:
+				'Events must retain readable date, label, description, and highlight state in source order.',
+			evidence: 'Data must preserve dates as text and identify which events are emphasized.',
+			motion: 'Scroll or reveal effects must not be required to understand event order.',
+			extension:
+				'Promote to stable only after date parsing, wrapping, and horizontal/vertical behavior are documented.'
+		}
+	},
+	{
+		id: 'component.diagrams-matrix',
+		name: 'Matrix',
+		kind: 'component',
+		maturity: 'candidate',
+		description: 'Row-and-column comparison matrix candidate for decisions and capability maps.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/diagrams/Matrix.svelte',
+		importPath: '@create-something/canon/diagrams',
+		docsPath: '/canon/components/diagrams',
+		tags: ['diagrams', 'matrix', 'comparison', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core'],
+		contract: {
+			accessibility:
+				'Cells must preserve row and column headers so values remain understandable outside the visual table.',
+			evidence: 'Data must include row headers, column headers, cell values, and any highlight semantics.',
+			motion: 'Highlight transitions must not be required to identify selected or emphasized cells.',
+			extension:
+				'Promote to stable only after responsive overflow, caption, and boolean/value formatting are documented.'
+		}
+	},
+	{
+		id: 'component.diagrams-knowledge-graph-canvas',
+		name: 'KnowledgeGraphCanvas',
+		kind: 'component',
+		maturity: 'candidate',
+		description: 'Canvas graph candidate for concept, entity, relation, and document networks.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/diagrams/KnowledgeGraphCanvas.svelte',
+		importPath: '@create-something/canon/diagrams',
+		docsPath: '/canon/components/diagrams',
+		tags: ['diagrams', 'knowledge-graph', 'canvas', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core'],
+		contract: {
+			accessibility:
+				'Canvas graph nodes and edges must have an equivalent textual graph summary and keyboard-safe inspection route.',
+			evidence: 'Data must preserve node ids, labels, types, edge endpoints, weights, and relation types.',
+			motion: 'Force or pan animations must be optional and disabled for reduced-motion contexts.',
+			extension:
+				'Promote to stable only after canvas fallback, graph summary, and interaction contracts are documented.'
+		}
+	},
+	{
+		id: 'component.diagrams-canvas-diagram',
+		name: 'CanvasDiagram',
+		kind: 'component',
+		maturity: 'candidate',
+		description: 'General canvas drawing candidate for exportable annotated diagram shapes.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/diagrams/CanvasDiagram.svelte',
+		importPath: '@create-something/canon/diagrams',
+		docsPath: '/canon/components/diagrams',
+		tags: ['diagrams', 'canvas', 'export', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core'],
+		contract: {
+			accessibility:
+				'Canvas shapes must have a durable text alternative or serialized shape list for nonvisual modalities.',
+			evidence: 'Data must preserve shape ids, geometry, labels, image sources, and export intent.',
+			motion: 'Drag, selection, and animation behavior must be optional and keyboard-safe before stable use.',
+			extension:
+				'Promote to stable only after export, selection, keyboard, and text-fallback contracts are documented.'
+		}
+	}
+];
+
 export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 	schemaVersion: 1,
 	id: 'canon-registry',
@@ -957,6 +1137,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 			}
 		},
 		...FOUNDATION_PRIMITIVE_ITEMS,
+		...DIAGRAM_CANDIDATE_ITEMS,
 		...CLEAR_PRIMITIVE_ITEMS,
 		...FOUNDATION_CONTROL_ITEMS,
 		{
