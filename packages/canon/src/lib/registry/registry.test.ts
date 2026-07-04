@@ -946,6 +946,165 @@ describe('Canon registry manifest', () => {
 		);
 	});
 
+	it('adds root component barrel candidate-review exports as candidates', () => {
+		const rootComponentCandidates = [
+			{
+				id: 'component.footer',
+				exportName: 'Footer',
+				tag: 'footer',
+				dependencies: ['component.navigation']
+			},
+			{
+				id: 'component.catalog-card',
+				exportName: 'CatalogCard',
+				tag: 'catalog',
+				dependencies: ['component.card', 'component.clear-artifact-card']
+			},
+			{
+				id: 'component.paper-card',
+				exportName: 'PaperCard',
+				tag: 'paper',
+				dependencies: ['component.card']
+			},
+			{
+				id: 'component.papers-grid',
+				exportName: 'PapersGrid',
+				tag: 'papers',
+				dependencies: ['component.paper-card', 'component.clear-card-grid']
+			},
+			{
+				id: 'component.category-section',
+				exportName: 'CategorySection',
+				tag: 'category',
+				dependencies: ['component.layout-section', 'component.heading']
+			},
+			{
+				id: 'component.share-buttons',
+				exportName: 'ShareButtons',
+				tag: 'share',
+				dependencies: ['component.button']
+			},
+			{
+				id: 'component.quote-block',
+				exportName: 'QuoteBlock',
+				tag: 'quote',
+				dependencies: ['component.clear-quote-metric-panel']
+			},
+			{
+				id: 'component.related-articles',
+				exportName: 'RelatedArticles',
+				tag: 'related-content',
+				dependencies: ['component.navigation-related-content', 'component.card']
+			},
+			{
+				id: 'component.triad-health',
+				exportName: 'TriadHealth',
+				tag: 'three-tier',
+				dependencies: ['policy.signal-decision-proof', 'component.clear-state-rows']
+			},
+			{
+				id: 'component.hermeneutic-circle',
+				exportName: 'HermeneuticCircle',
+				tag: 'framework',
+				dependencies: ['component.clear-state-rows']
+			},
+			{
+				id: 'component.mode-indicator',
+				exportName: 'ModeIndicator',
+				tag: 'mode',
+				dependencies: ['component.clear-state-rows']
+			},
+			{
+				id: 'component.cross-property-link',
+				exportName: 'CrossPropertyLink',
+				tag: 'property',
+				dependencies: ['component.button', 'component.navigation']
+			},
+			{
+				id: 'component.property-funnel',
+				exportName: 'PropertyFunnel',
+				tag: 'funnel',
+				dependencies: ['component.clear-cta-band', 'component.conversion-sticky-cta']
+			},
+			{
+				id: 'component.cookie-consent',
+				exportName: 'CookieConsent',
+				tag: 'consent',
+				dependencies: ['policy.signal-decision-proof', 'component.button']
+			},
+			{
+				id: 'component.page-actions',
+				exportName: 'PageActions',
+				tag: 'page-actions',
+				dependencies: ['component.button', 'component.clear-action-footer']
+			},
+			{
+				id: 'component.markdown-preview-modal',
+				exportName: 'MarkdownPreviewModal',
+				tag: 'markdown',
+				dependencies: ['component.feedback-dialog', 'component.page-actions']
+			}
+		] as const;
+
+		for (const candidate of rootComponentCandidates) {
+			const item = getCanonRegistryItem(candidate.id);
+			const classification = getCanonPublicExportClassification(
+				'./components',
+				candidate.exportName
+			);
+
+			expect(
+				candidateRegistryItemIdsForPublicExport('./components', candidate.exportName),
+				candidate.exportName
+			).toContain(candidate.id);
+			expect(item?.kind, candidate.id).toBe('component');
+			expect(item?.maturity, candidate.id).toBe('candidate');
+			expect(item?.sourcePath, candidate.id).toBe(
+				`packages/canon/src/lib/components/${candidate.exportName}.svelte`
+			);
+			expect(item?.importPath, candidate.id).toBe('@create-something/canon/components');
+			expect(item?.docsPath, candidate.id).toBe('/canon/components');
+			expect(item?.tags, candidate.id).toContain('components');
+			expect(item?.tags, candidate.id).toContain(candidate.tag);
+			expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+			for (const dependency of candidate.dependencies) {
+				expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
+			}
+			expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, candidate.id).toBeTruthy();
+			expect(item?.contract.evidence, candidate.id).toBeTruthy();
+			expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+			expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
+		}
+
+		for (const exportName of [
+			'SEO',
+			'LayoutSEO',
+			'AnimatedAsciiThumbnail',
+			'Analytics',
+			'PrivacyPolicyContent',
+			'TermsOfServiceContent'
+		]) {
+			const classification = getCanonPublicExportClassification('./components', exportName);
+
+			expect(classification?.registryPolicy, exportName).toBe('classified-out');
+			expect(
+				candidateRegistryItemIdsForPublicExport('./components', exportName).some((id) =>
+					Boolean(getCanonRegistryItem(id))
+				)
+			).toBe(false);
+		}
+
+		for (const candidate of rootComponentCandidates) {
+			expect(
+				searchCanonRegistry(candidate.id, { maturity: 'candidate', limit: 1 }).map(
+					(item) => item.id
+				),
+				candidate.id
+			).toEqual([candidate.id]);
+		}
+	});
+
 	it('adds conversion proof and action surfaces as candidates', () => {
 		const conversionCandidates = [
 			{
