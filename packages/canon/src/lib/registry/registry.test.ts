@@ -1223,6 +1223,68 @@ describe('Canon registry manifest', () => {
 		}
 	});
 
+	it('adds 3D brand marks as brand-surface candidates', () => {
+		const brand3dCandidates = [
+			{
+				id: 'component.brand-cube-mark3-d',
+				exportName: 'CubeMark3D',
+				tag: 'cube-mark',
+				dependencies: ['component.icon']
+			},
+			{
+				id: 'component.brand-glass-cube-scene',
+				exportName: 'GlassCubeScene',
+				tag: 'glass-scene',
+				dependencies: ['component.brand-cube-mark3-d']
+			}
+		] as const;
+
+		expect(publicDefaultExports('packages/canon/src/lib/brand/3d/index.ts')).toEqual([
+			'CubeMark3D',
+			'GlassCubeScene'
+		]);
+
+		for (const candidate of brand3dCandidates) {
+			const item = getCanonRegistryItem(candidate.id);
+			const classification = getCanonPublicExportClassification(
+				'./brand/3d',
+				candidate.exportName
+			);
+
+			expect(
+				candidateRegistryItemIdsForPublicExport('./brand/3d', candidate.exportName),
+				candidate.exportName
+			).toContain(candidate.id);
+			expect(item?.kind, candidate.id).toBe('component');
+			expect(item?.maturity, candidate.id).toBe('candidate');
+			expect(item?.sourcePath, candidate.id).toBe(
+				`packages/canon/src/lib/brand/3d/${candidate.exportName}.svelte`
+			);
+			expect(item?.importPath, candidate.id).toBe('@create-something/canon/brand/3d');
+			expect(item?.docsPath, candidate.id).toBe('/canon/components/brand');
+			expect(item?.tags, candidate.id).toContain('brand');
+			expect(item?.tags, candidate.id).toContain('3d');
+			expect(item?.tags, candidate.id).toContain(candidate.tag);
+			expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+			for (const dependency of candidate.dependencies) {
+				expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
+			}
+			expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, candidate.id).toBeTruthy();
+			expect(item?.contract.evidence, candidate.id).toBeTruthy();
+			expect(item?.contract.motion, candidate.id).toBeTruthy();
+			expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+			expect(classification?.classification, candidate.exportName).toBe('brand-surface');
+			expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
+			expect(
+				searchCanonRegistry(candidate.id, { maturity: 'candidate', limit: 1 }).map(
+					(result) => result.id
+				),
+				candidate.id
+			).toEqual([candidate.id]);
+		}
+	});
+
 	it('adds conversion proof and action surfaces as candidates', () => {
 		const conversionCandidates = [
 			{

@@ -1066,6 +1066,74 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.brand-cube-mark3-d",
+      "name": "CubeMark3D",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "3D CREATE SOMETHING cube mark candidate with Threlte canvas rendering, glass materials, and reduced-motion rotation handling.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/brand/3d/CubeMark3D.svelte",
+      "importPath": "@create-something/canon/brand/3d",
+      "docsPath": "/canon/components/brand",
+      "tags": [
+        "brand",
+        "3d",
+        "cube-mark",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.icon"
+      ],
+      "contract": {
+        "accessibility": "3D brand marks must expose a text label, stable dimensions, reduced-motion rotation behavior, and a non-canvas fallback path.",
+        "evidence": "Brand mark data must preserve size, material variant, interaction flag, shadow setting, rotation speed, and environment intent.",
+        "motion": "Auto-rotation and orbit controls must disable or simplify for reduced-motion and thin-display contexts.",
+        "extension": "Promote to stable only after brand usage rules, canvas fallback, material tokens, and cross-property placement contracts are documented."
+      }
+    },
+    {
+      "id": "component.brand-glass-cube-scene",
+      "name": "GlassCubeScene",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Lower-level Threlte glass cube scene candidate for physically based materials, lighting, and cube-face semantics.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/brand/3d/GlassCubeScene.svelte",
+      "importPath": "@create-something/canon/brand/3d",
+      "docsPath": "/canon/components/brand",
+      "tags": [
+        "brand",
+        "3d",
+        "glass-scene",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.brand-cube-mark3-d"
+      ],
+      "contract": {
+        "accessibility": "Scene consumers must provide the accessible brand label and nonvisual description outside the canvas wrapper.",
+        "evidence": "Scene data must preserve cube face material semantics, material preset, overrides, rotation state, and lighting assumptions.",
+        "motion": "Scene rotation must be externally controllable and safe to stop for reduced-motion contexts.",
+        "extension": "Promote to stable only after material presets, cube-face semantics, lighting defaults, and Canvas ownership boundaries are documented."
+      }
+    },
+    {
       "id": "component.layout-project-grid-interactive",
       "name": "ProjectGridInteractive",
       "kind": "component",
