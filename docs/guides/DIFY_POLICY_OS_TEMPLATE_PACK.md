@@ -172,6 +172,53 @@ Dify Cloud or current Community Edition. Marketplace submissions should have:
 - No hardcoded credentials.
 - Clear explanation of required MCP server cards and knowledge bases.
 
+### First Marketplace Submission Packet
+
+The first CREATE SOMETHING marketplace candidate is
+`Policy OS Client Intake And MCP Audit`.
+
+Use this template first because it is read-only, uses public CREATE SOMETHING
+MCP cards, and shows the differentiated operating boundary: Dify as the visible
+app surface, MCP as the tool boundary, and Policy OS as the approval, runbook,
+and evidence layer.
+
+Recommended listing metadata:
+
+| Field | Value |
+| --- | --- |
+| Template name | `Policy OS MCP Audit Assistant` |
+| Categories | `Operations`, `IT`, `Knowledge` |
+| Language | `English` |
+| Tags | `MCP`, `workflow audit`, `operations`, `runbook`, `governance` |
+| Overview | `This template helps teams map a workflow before connecting AI to real tools. It collects business context, classifies the workflow across Database, Automation, and Judgment, and produces a scoped MCP audit brief with approval boundaries and next steps. It is best for operators, agencies, and technical teams preparing a governed Dify app.` |
+
+Recommended setup steps:
+
+1. Click Use template to copy `Policy OS MCP Audit Assistant` into your Dify workspace.
+2. Go to Integrations > Model Provider and add the LLM provider you want to use.
+3. Open the app's Orchestrate page and confirm the CREATE SOMETHING, Three-Tier Framework, and Playbook MCP tools are enabled.
+4. Review the instructions and replace any organization-specific wording with your team's workflow language.
+5. Click Publish, then test with: `We use Gmail, Notion, and QuickBooks. We want an agent to triage billing requests.`
+6. Confirm the answer names Database, Automation, Judgment, approval boundaries, and avoids asking for secrets.
+
+Creator Center submission checklist:
+
+1. Import `config/dify-templates/policy-os-client-intake-audit.chatflow.dify.yml`
+   into Dify Studio.
+2. Run the app once in Dify Studio before submission.
+3. Export the final DSL after any Dify Studio edits.
+4. Import the final DSL back into the repo-side control plane with
+   `pnpm dify:agent:import-dsl`.
+5. Add the live clone to `config/dify/inventory.json` with at least one
+   `smoke_cases` entry.
+6. Run the validation commands below plus the clone-specific smoke and
+   Braintrust eval.
+7. Submit through Creator Center under the CREATE SOMETHING organization.
+
+Do not submit the starter DSL directly if it has not run in Dify Studio. Do not
+include private client examples, raw traces, private Hub URLs, credentials,
+affiliate claims, or official partner language in the listing.
+
 ## Validation
 
 Run these before promoting a cloned template:

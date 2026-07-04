@@ -328,12 +328,17 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent: 'Explain the Dify workflow path and route readers into the cluster.',
     primaryAction: 'Map one workflow',
     requiredTerms: ['Dify', 'MCP', 'Policy OS', 'approval', 'evidence'],
-    requiredLinks: ['/dify/mcp-control-plane', '/dify/agent-eval-gates', '/stack'],
+    requiredLinks: [
+      '/dify/mcp-control-plane',
+      '/dify/agent-eval-gates',
+      '/dify/template-marketplace-proof',
+      '/stack'
+    ],
     schema: 'faq',
     search: {
       changefreq: 'weekly',
       priority: '0.9',
-      lastmod: '2026-06-19'
+      lastmod: '2026-07-04'
     },
     selfHealing: ['copy:heal', 'search-route:sync']
   },
@@ -390,7 +395,27 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     search: {
       changefreq: 'weekly',
       priority: '0.85',
-      lastmod: '2026-06-28'
+      lastmod: '2026-07-04'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
+    path: '/dify/template-marketplace-proof',
+    cluster: 'dify',
+    role: 'implementation',
+    decision: 'index',
+    audience: 'Teams turning a governed Dify workflow into a reusable template.',
+    funnelStage: 'implement',
+    intent:
+      'Show how the first Dify marketplace submission should package Policy OS, MCP boundaries, setup steps, and proof.',
+    primaryAction: 'Book workflow mapping',
+    requiredTerms: ['Dify', 'Template Marketplace', 'Creator Center', 'Policy OS', 'MCP'],
+    requiredLinks: ['/dify', '/dify/ship-dify-app-with-mcp-tools', '/dify/agent-eval-gates'],
+    schema: 'article',
+    search: {
+      changefreq: 'weekly',
+      priority: '0.82',
+      lastmod: '2026-07-04'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },

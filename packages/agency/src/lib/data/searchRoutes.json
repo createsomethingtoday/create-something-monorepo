@@ -69,7 +69,7 @@
     "path": "/dify",
     "changefreq": "weekly",
     "priority": "0.9",
-    "lastmod": "2026-06-19"
+    "lastmod": "2026-07-04"
   },
   {
     "path": "/dify/mcp-control-plane",
@@ -87,7 +87,13 @@
     "path": "/dify/ship-dify-app-with-mcp-tools",
     "changefreq": "weekly",
     "priority": "0.85",
-    "lastmod": "2026-06-28"
+    "lastmod": "2026-07-04"
+  },
+  {
+    "path": "/dify/template-marketplace-proof",
+    "changefreq": "weekly",
+    "priority": "0.82",
+    "lastmod": "2026-07-04"
   },
   {
     "path": "/dify/n8n-vs-dify",
