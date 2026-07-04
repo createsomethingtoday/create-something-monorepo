@@ -11,9 +11,15 @@ import {
   renderCanonOverlayInstantiatePreview
 } from './canon-overlay-preview.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
+import {
+  CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
+} from './content/generated/canon-public-export-classification.js';
 import type {
   CanonExtensionIntakePacket,
   CanonExtensionRoutingDecision,
+  CanonPublicExportClassification,
+  CanonPublicExportClassificationRule,
+  CanonPublicExportRegistryPolicy,
   CanonProjectOverlayArtifactKind,
   CanonProjectOverlayManifest,
   CanonProjectOverlayReview,
@@ -47,6 +53,24 @@ const USER_VISIBLE = {
 const CANON_REGISTRY_KIND_VALUES = ['component', 'token', 'template', 'adapter', 'policy'] as const;
 const CANON_REGISTRY_MODALITY_VALUES = ['web', 'chat', 'app', 'voice', 'glasses'] as const;
 const CANON_REGISTRY_MATURITY_VALUES = ['stable', 'candidate', 'experimental'] as const;
+const CANON_PUBLIC_EXPORT_CLASSIFICATION_VALUES = [
+  'analytics-surface',
+  'auth-surface',
+  'brand-surface',
+  'composition-pattern',
+  'content-utility',
+  'decorative-effect',
+  'docs-only',
+  'domain-specific',
+  'experiment',
+  'platform-surface',
+  'stable-foundation-candidate'
+] as const;
+const CANON_PUBLIC_EXPORT_REGISTRY_POLICY_VALUES = [
+  'candidate-review',
+  'classified-out',
+  'registry-covered'
+] as const;
 const CANON_OVERLAY_ARTIFACT_KIND_VALUES = [
   'theme',
   'tokens',
@@ -120,6 +144,69 @@ function searchCanonRegistryItems(input: {
     .map((result) => result.item);
 }
 
+function getCanonPublicExportClassificationRule(
+  exportPath: string,
+  exportName?: string
+): CanonPublicExportClassificationRule | undefined {
+  if (exportName) {
+    const exact = CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.find(
+      (rule) => rule.exportPath === exportPath && rule.exportName === exportName
+    );
+    if (exact) return exact;
+  }
+
+  return CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.find(
+    (rule) => rule.exportPath === exportPath && !rule.exportName
+  );
+}
+
+function scoreCanonPublicExportClassificationRule(
+  rule: CanonPublicExportClassificationRule,
+  query: string
+): number {
+  if (!query) return 1;
+
+  const haystacks = [
+    rule.exportPath,
+    rule.exportName ?? '',
+    rule.classification,
+    rule.registryPolicy,
+    rule.rationale
+  ].map((value) => value.toLowerCase());
+
+  return query
+    .split(/\s+/)
+    .filter(Boolean)
+    .reduce((score, token) => {
+      if (rule.exportName?.toLowerCase() === token || rule.exportPath.toLowerCase() === token) {
+        return score + 8;
+      }
+      if (haystacks.some((value) => value.includes(token))) return score + 1;
+      return score;
+    }, 0);
+}
+
+function searchCanonPublicExportClassificationRules(input: {
+  query?: string;
+  classification?: CanonPublicExportClassification;
+  registryPolicy?: CanonPublicExportRegistryPolicy;
+  exportPath?: string;
+  limit?: number;
+}): CanonPublicExportClassificationRule[] {
+  const query = input.query?.trim().toLowerCase() ?? '';
+  const limit = input.limit ?? 10;
+
+  return CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
+    .filter((rule) => !input.classification || rule.classification === input.classification)
+    .filter((rule) => !input.registryPolicy || rule.registryPolicy === input.registryPolicy)
+    .filter((rule) => !input.exportPath || rule.exportPath === input.exportPath)
+    .map((rule) => ({ rule, score: scoreCanonPublicExportClassificationRule(rule, query) }))
+    .filter((result) => !query || result.score > 0)
+    .sort((a, b) => b.score - a.score || a.rule.exportPath.localeCompare(b.rule.exportPath))
+    .slice(0, limit)
+    .map((result) => result.rule);
+}
+
 function renderCanonRegistryItem(item: CanonRegistryItem): string {
   const lines = [
     `## ${item.name}`,
@@ -142,6 +229,27 @@ function renderCanonRegistryItem(item: CanonRegistryItem): string {
   for (const [key, value] of Object.entries(item.contract)) {
     if (value) lines.push(`- **${key}**: ${value}`);
   }
+
+  return lines.join('\n');
+}
+
+function renderCanonPublicExportClassificationRule(
+  rule: CanonPublicExportClassificationRule
+): string {
+  const exportLabel = rule.exportName
+    ? `${rule.exportPath}#${rule.exportName}`
+    : `${rule.exportPath}#*`;
+  const lines = [
+    `## ${exportLabel}`,
+    '',
+    `- Export path: \`${rule.exportPath}\``,
+    `- Classification: \`${rule.classification}\``,
+    `- Registry policy: \`${rule.registryPolicy}\``
+  ];
+
+  if (rule.exportName) lines.push(`- Export name: \`${rule.exportName}\``);
+
+  lines.push('', rule.rationale);
 
   return lines.join('\n');
 }
@@ -751,6 +859,94 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonRegistryItem(item),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_public_export_policy_search',
+    'Search Canon public export registry-policy classifications. Use this when a public Canon export is not in the registry and you need to know whether it is candidate-review, classified-out, or already registry-covered by another item.',
+    {
+      query: z.string().optional().describe('Optional search query such as "layout", "docs-only", or "candidate"'),
+      classification: z.enum(CANON_PUBLIC_EXPORT_CLASSIFICATION_VALUES).optional()
+        .describe('Filter by export classification, such as stable-foundation-candidate or domain-specific'),
+      registryPolicy: z.enum(CANON_PUBLIC_EXPORT_REGISTRY_POLICY_VALUES).optional()
+        .describe('Filter by registry policy: candidate-review, classified-out, or registry-covered'),
+      exportPath: z.string().optional().describe('Optional package export path, for example ./components or ./motion'),
+      limit: z.number().min(1).max(25).optional().describe('Maximum number of results (default: 10)')
+    },
+    async ({ query, classification, registryPolicy, exportPath, limit }) => {
+      const results = searchCanonPublicExportClassificationRules({
+        query,
+        classification,
+        registryPolicy,
+        exportPath,
+        limit
+      });
+
+      if (results.length === 0) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: 'No Canon public export policy rules matched. Try a broader query or remove filters.',
+            ...USER_VISIBLE,
+          }]
+        };
+      }
+
+      const lines = [
+        '## Canon Public Export Policy Search',
+        '',
+        `Results: ${results.length}`,
+        '',
+        '| Export | Classification | Registry Policy | Rationale |',
+        '|--------|----------------|-----------------|-----------|',
+      ];
+
+      for (const rule of results) {
+        const exportLabel = rule.exportName ? `${rule.exportPath}#${rule.exportName}` : `${rule.exportPath}#*`;
+        lines.push(`| \`${exportLabel}\` | ${rule.classification} | ${rule.registryPolicy} | ${rule.rationale.replace(/\|/g, '\\|')} |`);
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: lines.join('\n'),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_public_export_policy_get',
+    'Get Canon public export registry-policy classification by package export path and optional export name.',
+    {
+      exportPath: z.string().describe('Package export path, for example ./components, ./motion, or ./domains/agency'),
+      exportName: z.string().optional().describe('Optional exported component name, for example Footer or ScrollReveal')
+    },
+    async ({ exportPath, exportName }) => {
+      const rule = getCanonPublicExportClassificationRule(exportPath, exportName);
+
+      if (!rule) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: exportName
+              ? `Canon public export policy not found: ${exportPath}#${exportName}`
+              : `Canon public export policy not found: ${exportPath}`,
+            ...USER_VISIBLE,
+          }],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonPublicExportClassificationRule(rule),
           ...USER_VISIBLE,
         }]
       };

@@ -7,6 +7,9 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
+import {
+  CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
+} from './content/generated/canon-public-export-classification.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -146,6 +149,70 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'application/json',
           text: JSON.stringify(item, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-public-export-policy',
+    'canon://public-export-policy',
+    {
+      description: `Canon public export policy: ${CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.length} registry classification rules`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES, null, 2)
+      }]
+    })
+  );
+
+  server.resource(
+    'canon-public-export-policy-list',
+    'canon://public-export-policy/list',
+    {
+      description: 'Index of Canon public exports that are classified for registry promotion policy',
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.map(rule => ({
+          exportPath: rule.exportPath,
+          exportName: rule.exportName,
+          classification: rule.classification,
+          registryPolicy: rule.registryPolicy,
+          uri: rule.exportName
+            ? `canon://public-export-policy/${encodeURIComponent(rule.exportPath)}/${rule.exportName}`
+            : `canon://public-export-policy/${encodeURIComponent(rule.exportPath)}`
+        })), null, 2)
+      }]
+    })
+  );
+
+  for (const rule of CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES) {
+    const exportLabel = rule.exportName ? `${rule.exportPath}#${rule.exportName}` : `${rule.exportPath}#*`;
+    const resourceName = `canon-public-export-policy-${exportLabel.replace(/[^a-z0-9-]/gi, '-')}`;
+    const resourceUri = rule.exportName
+      ? `canon://public-export-policy/${encodeURIComponent(rule.exportPath)}/${rule.exportName}`
+      : `canon://public-export-policy/${encodeURIComponent(rule.exportPath)}`;
+
+    server.resource(
+      resourceName,
+      resourceUri,
+      {
+        description: `Canon public export policy: ${exportLabel}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(rule, null, 2)
         }]
       })
     );

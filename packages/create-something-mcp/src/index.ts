@@ -27,6 +27,9 @@ import { registerPrompts } from './prompts.js';
 import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
+import {
+  CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
+} from './content/generated/canon-public-export-classification.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -61,5 +64,5 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 
 console.error('CREATE SOMETHING Content MCP running on stdio');
-console.error(`Content: ${PAPERS.length} papers, ${CANON_PAGES.length} canon pages, ${CANON_REGISTRY_MANIFEST.items.length} canon registry items, ${PATTERNS.length} patterns, ${MASTERS.length} masters, ${GRAPH_NODES.length} graph nodes, ${PRAXIS_EXERCISES.length} exercises, ${PRODUCTS.length} products, ${HOST_PLAYBOOKS.length} host playbooks, ${PROPERTY_DOCUMENTS.length} property docs`);
+console.error(`Content: ${PAPERS.length} papers, ${CANON_PAGES.length} canon pages, ${CANON_REGISTRY_MANIFEST.items.length} canon registry items, ${CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.length} canon export policy rules, ${PATTERNS.length} patterns, ${MASTERS.length} masters, ${GRAPH_NODES.length} graph nodes, ${PRAXIS_EXERCISES.length} exercises, ${PRODUCTS.length} products, ${HOST_PLAYBOOKS.length} host playbooks, ${PROPERTY_DOCUMENTS.length} property docs`);
 console.error('Capabilities: Resources (Database) + Tools (Automation) + Prompts (Judgment)');

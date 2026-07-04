@@ -156,6 +156,32 @@ export interface CanonProjectOverlayReview {
   summary: string;
 }
 
+export type CanonPublicExportClassification =
+  | 'analytics-surface'
+  | 'auth-surface'
+  | 'brand-surface'
+  | 'composition-pattern'
+  | 'content-utility'
+  | 'decorative-effect'
+  | 'docs-only'
+  | 'domain-specific'
+  | 'experiment'
+  | 'platform-surface'
+  | 'stable-foundation-candidate';
+
+export type CanonPublicExportRegistryPolicy =
+  | 'candidate-review'
+  | 'classified-out'
+  | 'registry-covered';
+
+export interface CanonPublicExportClassificationRule {
+  exportPath: string;
+  exportName?: string;
+  classification: CanonPublicExportClassification;
+  registryPolicy: CanonPublicExportRegistryPolicy;
+  rationale: string;
+}
+
 // ============================================================================
 // Design Patterns (.ltd)
 // ============================================================================

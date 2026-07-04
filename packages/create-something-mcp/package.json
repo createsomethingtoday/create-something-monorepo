@@ -24,8 +24,9 @@
     "dev": "tsc --watch",
     "lint": "pnpm run typecheck",
     "start": "node dist/index.js",
-    "test": "pnpm run test:overlay-preview",
+    "test": "pnpm run test:overlay-preview && pnpm run test:canon-export-policy",
     "test:overlay-preview": "tsx scripts/check-canon-overlay-preview-parity.ts",
+    "test:canon-export-policy": "tsx scripts/check-canon-public-export-classification-parity.ts",
     "test:smoke": "pnpm run test:overlay-preview",
     "typecheck": "tsc --noEmit"
   },
