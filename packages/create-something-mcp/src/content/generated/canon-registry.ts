@@ -1253,6 +1253,290 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.navigation-sticky-header",
+      "name": "StickyHeader",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Sticky header candidate for persistent site wayfinding with scroll-aware treatment and slots.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/navigation/StickyHeader.svelte",
+      "importPath": "@create-something/canon/navigation",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "header",
+        "sticky",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.navigation"
+      ],
+      "contract": {
+        "accessibility": "Persistent headers must expose primary wayfinding, current context, and skip/focus behavior without relying on scroll position.",
+        "evidence": "Header state should preserve logo route, primary links, scroll state, active location, and mobile fallback.",
+        "motion": "Scroll treatment and sticky transitions must be optional and reduced-motion safe.",
+        "extension": "Promote to stable only after sticky behavior, active-route, slot, and mobile fallback contracts are documented."
+      }
+    },
+    {
+      "id": "component.navigation-mobile-drawer",
+      "name": "MobileDrawer",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Mobile drawer candidate for responsive navigation panels, sheets, and secondary route groups.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/navigation/MobileDrawer.svelte",
+      "importPath": "@create-something/canon/navigation",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "drawer",
+        "mobile",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.navigation",
+        "component.navigation-drawer"
+      ],
+      "contract": {
+        "accessibility": "Drawers must preserve close controls, modal context, focus management, and menu labels for nonvisual paths.",
+        "evidence": "Drawer state should preserve open state, position, trigger label, contained links, and close reason.",
+        "motion": "Slide and overlay transitions must respect reduced-motion preferences and never block the close route.",
+        "extension": "Promote to stable only after focus trap, close behavior, position, and responsive fallback contracts are documented."
+      }
+    },
+    {
+      "id": "component.navigation-command-palette",
+      "name": "CommandPalette",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Command palette candidate for keyboard-first command and route search over provided items.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/navigation/CommandPalette.svelte",
+      "importPath": "@create-something/canon/navigation",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "command-palette",
+        "keyboard",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.navigation-dropdown-menu",
+        "component.form-text-field",
+        "component.button"
+      ],
+      "contract": {
+        "accessibility": "Command palettes must expose dialog state, search label, selected result, keyboard navigation, and close behavior.",
+        "evidence": "Command data must preserve item ids, labels, descriptions, shortcuts, hrefs, selection index, and query.",
+        "motion": "Palette entry, result highlighting, and close transitions must be optional and reduced-motion safe.",
+        "extension": "Promote to stable only after command schema, keyboard model, shortcut, and nonvisual fallback contracts are documented."
+      }
+    },
+    {
+      "id": "component.navigation-unified-search",
+      "name": "UnifiedSearch",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Unified search candidate for cross-property query, grouped results, local fallback, and analytics events.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/navigation/UnifiedSearch.svelte",
+      "importPath": "@create-something/canon/navigation",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "search",
+        "cross-property",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.navigation-dropdown-menu",
+        "component.form-text-field",
+        "component.feedback-alert"
+      ],
+      "contract": {
+        "accessibility": "Search must expose query, grouped results, empty/loading/error states, selected result, and close behavior.",
+        "evidence": "Search state must preserve query, source API, result ids, property groups, selected result, and emitted event names.",
+        "motion": "Palette, mobile button, result focus, and loading treatment must respect reduced-motion preferences.",
+        "extension": "Promote to stable only after result schema, API boundaries, analytics, grouping, and fallback contracts are documented."
+      }
+    },
+    {
+      "id": "component.navigation-related-content",
+      "name": "RelatedContent",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Related content candidate for cross-property recommendations grouped by source and relationship.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/navigation/RelatedContent.svelte",
+      "importPath": "@create-something/canon/navigation",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "related-content",
+        "recommendation",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.navigation",
+        "component.card",
+        "component.feedback-alert"
+      ],
+      "contract": {
+        "accessibility": "Related content must expose section title, grouped links, relationship labels, and loading/error states as text.",
+        "evidence": "Related state must preserve content id, property, relationship, item ids, URLs, grouping, and fetch status.",
+        "motion": "Loading and grouping transitions must be optional and cannot hide link text or relationship labels.",
+        "extension": "Promote to stable only after related-item schema, grouping, fetch status, and source boundary contracts are documented."
+      }
+    },
+    {
+      "id": "component.navigation-concept-journey",
+      "name": "ConceptJourney",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Concept journey candidate for tracing a topic across property stages, related artifacts, and source links.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/navigation/ConceptJourney.svelte",
+      "importPath": "@create-something/canon/navigation",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "journey",
+        "cross-property",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.navigation",
+        "component.card",
+        "component.feedback-alert"
+      ],
+      "contract": {
+        "accessibility": "Journey stages must expose concept, stage order, item links, empty stages, loading, and error states structurally.",
+        "evidence": "Journey data must preserve concept, stage keys, item ids, titles, URLs, property source, and active stage count.",
+        "motion": "Timeline and stage transitions must be optional and cannot replace the ordered text path.",
+        "extension": "Promote to stable only after journey schema, stage ordering, empty-state, and API boundary contracts are documented."
+      }
+    },
+    {
+      "id": "component.navigation-menu-button",
+      "name": "MenuButton",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Menu button candidate for accessible responsive navigation toggles with open and close state.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/navigation/MenuButton.svelte",
+      "importPath": "@create-something/canon/navigation",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "menu-button",
+        "toggle",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.button",
+        "component.navigation"
+      ],
+      "contract": {
+        "accessibility": "Menu toggles must expose open/closed state, target label, focus treatment, and an equivalent text command.",
+        "evidence": "Toggle state must preserve label, expanded state, target drawer/menu id, and activation source.",
+        "motion": "Hamburger-to-close animation must be optional and must not be the only state indicator.",
+        "extension": "Promote to stable only after target relationship, expanded-state, and reduced-motion contracts are documented."
+      }
+    },
+    {
+      "id": "component.navigation-mega-menu",
+      "name": "MegaMenu",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Mega menu candidate for grouped route panels, featured links, and keyboard navigable menu structures.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/navigation/MegaMenu.svelte",
+      "importPath": "@create-something/canon/navigation",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "mega-menu",
+        "menu",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.navigation",
+        "component.navigation-dropdown-menu",
+        "component.navigation-drawer"
+      ],
+      "contract": {
+        "accessibility": "Mega menus must preserve trigger labels, expanded state, menu roles, link groups, and keyboard navigation.",
+        "evidence": "Menu data must preserve item ids, labels, hrefs, sections, featured links, active panel, and close reason.",
+        "motion": "Panel reveal, hover delay, and chevron motion must be optional and reduced-motion safe.",
+        "extension": "Promote to stable only after menu schema, keyboard model, responsive drawer, and active-panel contracts are documented."
+      }
+    },
+    {
       "id": "component.clear-page-section",
       "name": "ClearPageSection",
       "kind": "component",

@@ -397,6 +397,13 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 	},
 	{
 		exportPath: './navigation',
+		exportName: 'Tabs',
+		classification: 'stable-foundation-candidate',
+		registryPolicy: 'registry-covered',
+		rationale: 'Covered by component.navigation-tabs as the stable tabbed view switcher primitive.'
+	},
+	{
+		exportPath: './navigation',
 		classification: 'composition-pattern',
 		registryPolicy: 'candidate-review',
 		rationale: 'Advanced navigation components need wayfinding and command-policy contracts first.'
