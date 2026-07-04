@@ -497,7 +497,7 @@ describe('Canon registry manifest', () => {
 				dependencies: ['component.form-text-field']
 			},
 			{
-				id: 'component.forms-otp-input',
+				id: 'component.forms-otpinput',
 				exportName: 'OTPInput',
 				tag: 'otp',
 				dependencies: ['component.form-text-field']
@@ -508,6 +508,10 @@ describe('Canon registry manifest', () => {
 			const item = getCanonRegistryItem(candidate.id);
 			const classification = getCanonPublicExportClassification('./forms', candidate.exportName);
 
+			expect(
+				candidateRegistryItemIdsForPublicExport('./forms', candidate.exportName),
+				candidate.exportName
+			).toContain(candidate.id);
 			expect(item?.kind, candidate.id).toBe('component');
 			expect(item?.maturity, candidate.id).toBe('candidate');
 			expect(item?.sourcePath, candidate.id).toBe(

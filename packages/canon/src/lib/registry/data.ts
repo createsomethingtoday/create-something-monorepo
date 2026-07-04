@@ -1200,7 +1200,7 @@ const FORM_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
 		}
 	},
 	{
-		id: 'component.forms-otp-input',
+		id: 'component.forms-otpinput',
 		name: 'OTPInput',
 		kind: 'component',
 		maturity: 'candidate',
