@@ -351,6 +351,36 @@ describe('Canon registry manifest', () => {
 		});
 	});
 
+	it('adds ProjectGridInteractive as a layout candidate tied to stable grid primitives', () => {
+		const item = getCanonRegistryItem('component.layout-project-grid-interactive');
+		const classification = getCanonPublicExportClassification('./layout', 'ProjectGridInteractive');
+
+		expect(
+			candidateRegistryItemIdsForPublicExport('./layout', 'ProjectGridInteractive')
+		).toContain('component.layout-project-grid-interactive');
+		expect(item?.kind).toBe('component');
+		expect(item?.maturity).toBe('candidate');
+		expect(item?.sourcePath).toBe(
+			'packages/canon/src/lib/layout/ProjectGridInteractive.svelte'
+		);
+		expect(item?.importPath).toBe('@create-something/canon/layout');
+		expect(item?.docsPath).toBe('/canon/components/layout');
+		expect(item?.tags).toContain('layout');
+		expect(item?.tags).toContain('project-grid');
+		expect(item?.dependencies).toEqual([
+			'token.canon-core',
+			'component.layout-section',
+			'component.layout-bento-grid',
+			'component.layout-bento-item'
+		]);
+		expect(item?.modalities).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+		expect(item?.contract.accessibility).toContain('without depending on hover');
+		expect(item?.contract.evidence).toContain('Project data');
+		expect(item?.contract.motion).toContain('reduced-motion');
+		expect(item?.contract.extension).toContain('Promote to stable only after');
+		expect(classification?.registryPolicy).toBe('candidate-review');
+	});
+
 	it('promotes the accessible icon primitive while keeping icon helpers reviewable', () => {
 		const item = getCanonRegistryItem('component.icon');
 		const classification = getCanonPublicExportClassification('./icons', 'Icon');
