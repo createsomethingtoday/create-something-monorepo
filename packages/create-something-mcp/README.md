@@ -46,7 +46,7 @@ Content from all CREATE SOMETHING properties.
 | `audit_design` | Audit a design against the Canon Design System. |
 | `canon_registry_search` | Search Canon components, tokens, templates, adapters, and policies by query, modality, kind, and maturity. |
 | `canon_registry_get` | Get one Canon registry item with source path, import path, docs path, dependencies, modalities, and contract notes. |
-| `canon_template_get` | Get a Canon template by id or modality for web/chat/app/voice/glasses surfaces. |
+| `canon_template_get` | Get a Canon template by id or modality for web/chat/app/voice/glasses surfaces, including overlay template packs. |
 | `canon_extension_route` | Route a project/client Canon extension intake packet to project-local, candidate, stable-reuse, or deprecation guidance. |
 | `canon_overlay_review` | Review a project/client Canon overlay manifest for theme, tokens, templates, copy rules, surface policy, registry metadata, and extension-intake gaps. |
 
