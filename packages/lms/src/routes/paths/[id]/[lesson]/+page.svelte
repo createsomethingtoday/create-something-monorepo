@@ -67,7 +67,7 @@
   <title>{lesson.title} — {path.title} — CREATE SOMETHING LMS</title>
 </svelte:head>
 
-<div class="max-w-4xl mx-auto px-6 py-16">
+<div class="lesson-shell">
   <!-- Breadcrumb -->
   <div class="breadcrumb">
     <a href="/paths" class="breadcrumb-link">Paths</a>
@@ -183,6 +183,7 @@
 <style>
   .breadcrumb {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
     margin-bottom: var(--space-md);
@@ -242,9 +243,17 @@
   }
 
   .lesson-description {
+    max-width: 48rem;
     font-size: var(--text-body-lg);
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-clear-grey, #636363);
     line-height: var(--leading-relaxed);
+  }
+
+  .lesson-shell {
+    width: min(56rem, calc(100% - 2.5rem));
+    margin-inline: auto;
+    padding: clamp(3rem, 8vw, 5rem) 0 clamp(4rem, 8vw, 6rem);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .lesson-content {
@@ -253,9 +262,9 @@
 
   .placeholder-content {
     padding: var(--space-xl);
-    border-radius: var(--radius-lg);
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-clear-md, 8px);
+    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-clear-border, #e1e1e1);
   }
 
   .placeholder-content h2 {
@@ -271,7 +280,7 @@
 
   .placeholder-content p {
     font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    color: var(--color-clear-grey, #636363);
     line-height: var(--leading-relaxed);
     margin-bottom: var(--space-md);
   }
@@ -280,23 +289,27 @@
   .prose {
     font-size: var(--text-body);
     line-height: var(--leading-relaxed);
-    color: var(--color-fg-secondary);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .prose :global(h1) {
     font-size: var(--text-h1);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    font-weight: var(--font-medium);
+    color: var(--color-clear-onyx, #0a0e19);
     margin: var(--space-xl) 0 var(--space-md);
+  }
+
+  .prose :global(h1:first-child) {
+    display: none;
   }
 
   .prose :global(h2) {
     font-size: var(--text-h2);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    font-weight: var(--font-medium);
+    color: var(--color-clear-onyx, #0a0e19);
     margin: var(--space-lg) 0 var(--space-sm);
     padding-top: var(--space-md);
-    border-top: 1px solid var(--color-border-default);
+    border-top: 1px solid var(--color-clear-border, #e1e1e1);
   }
 
   .prose :global(h2:first-child) {
@@ -308,7 +321,7 @@
   .prose :global(h3) {
     font-size: var(--text-h3);
     font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    color: var(--color-clear-onyx, #0a0e19);
     margin: var(--space-md) 0 var(--space-sm);
   }
 
@@ -317,7 +330,7 @@
   }
 
   .prose :global(strong) {
-    color: var(--color-fg-primary);
+    color: var(--color-clear-onyx, #0a0e19);
     font-weight: var(--font-semibold);
   }
 
@@ -334,10 +347,9 @@
   .prose :global(blockquote) {
     margin: var(--space-md) 0;
     padding: var(--space-md);
-    border-left: 3px solid var(--color-border-emphasis);
-    background: var(--color-bg-elevated);
-    font-style: italic;
-    color: var(--color-fg-tertiary);
+    border-left: 3px solid var(--color-clear-onyx, #0a0e19);
+    background: var(--color-clear-panel, #ffffff);
+    color: var(--color-clear-grey, #636363);
   }
 
   .prose :global(.learning-figure) {
@@ -369,56 +381,59 @@
     font-family: var(--font-mono);
     font-size: 0.9em;
     padding: 0.2em 0.4em;
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-sm);
+    background: var(--color-clear-porcelain-soft, #f2f2f2);
+    border-radius: var(--radius-clear-sm, 4px);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .prose :global(pre) {
     margin: var(--space-md) 0;
     padding: var(--space-md);
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-md);
+    background: var(--color-clear-onyx, #0a0e19);
+    border-radius: var(--radius-clear-md, 8px);
     overflow-x: auto;
   }
 
   .prose :global(pre code) {
     padding: 0;
     background: none;
+    color: #ffffff;
   }
 
   .prose :global(table) {
     width: 100%;
     margin: var(--space-md) 0;
     border-collapse: collapse;
+    background: var(--color-clear-panel, #ffffff);
   }
 
   .prose :global(th),
   .prose :global(td) {
     padding: var(--space-sm);
-    border: 1px solid var(--color-border-default);
+    border: 1px solid var(--color-clear-border, #e1e1e1);
     text-align: left;
   }
 
   .prose :global(th) {
-    background: var(--color-bg-elevated);
+    background: var(--color-clear-porcelain-soft, #f2f2f2);
     font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .prose :global(hr) {
     margin: var(--space-lg) 0;
     border: none;
-    border-top: 1px solid var(--color-border-default);
+    border-top: 1px solid var(--color-clear-border, #e1e1e1);
   }
 
   .prose :global(a) {
-    color: var(--color-data-1);
+    color: var(--color-clear-ocean, #0048ff);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 
   .prose :global(a:hover) {
-    color: var(--color-fg-primary);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .lesson-nav {
@@ -427,7 +442,7 @@
     gap: var(--space-md);
     margin-bottom: var(--space-xl);
     padding-top: var(--space-xl);
-    border-top: 1px solid var(--color-border-default);
+    border-top: 1px solid var(--color-clear-border, #e1e1e1);
   }
 
   .nav-button {
@@ -435,14 +450,17 @@
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-md);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border-default);
-    background: var(--color-bg-elevated);
-    transition: border-color var(--duration-micro) var(--ease-standard);
+    border-radius: var(--radius-clear-md, 8px);
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    background: var(--color-clear-panel, #ffffff);
+    transition:
+      background var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard);
   }
 
   .nav-button:hover {
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-clear-border-strong, #cecece);
+    background: var(--color-clear-porcelain-soft, #f2f2f2);
   }
 
   .nav-button.center {
@@ -452,20 +470,20 @@
   .nav-arrow {
     display: flex;
     align-items: center;
-    color: var(--color-fg-muted);
+    color: var(--color-clear-grey, #636363);
   }
 
   .nav-label {
     font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    color: var(--color-clear-grey-quiet, #818181);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0;
     margin-bottom: 0.25rem;
   }
 
   .nav-title {
     font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .completion-section {
@@ -476,16 +494,20 @@
 
   .btn-primary {
     padding: var(--space-md) var(--space-lg);
-    border-radius: var(--radius-md);
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
+    border-radius: var(--radius-clear-sm, 4px);
+    border: 1px solid var(--color-clear-onyx, #0a0e19);
+    background: var(--color-clear-onyx, #0a0e19);
+    color: #ffffff;
     font-size: var(--text-body);
     font-weight: var(--font-medium);
-    transition: background var(--duration-micro) var(--ease-standard);
+    transition:
+      background var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard);
   }
 
   .btn-primary:hover:not(:disabled) {
-    background: var(--color-fg-secondary);
+    background: #1a2030;
+    border-color: #1a2030;
   }
 
   .btn-primary:disabled {
@@ -495,18 +517,21 @@
 
   .btn-secondary {
     padding: var(--space-md) var(--space-lg);
-    border-radius: var(--radius-md);
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-default);
-    color: var(--color-fg-primary);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    color: var(--color-clear-onyx, #0a0e19);
     font-size: var(--text-body);
     font-weight: var(--font-medium);
-    transition: border-color var(--duration-micro) var(--ease-standard);
+    transition:
+      background var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard);
     margin-left: var(--space-md);
   }
 
   .btn-secondary:hover {
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-clear-border-strong, #cecece);
+    background: var(--color-clear-porcelain-soft, #f2f2f2);
   }
 
   .completed-indicator {
