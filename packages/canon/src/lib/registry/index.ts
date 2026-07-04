@@ -14,6 +14,10 @@ import type {
 } from './schema.js';
 
 export { CANON_REGISTRY_MANIFEST };
+export {
+	CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES,
+	getCanonPublicExportClassification
+} from './public-export-classification.js';
 export type {
 	CanonExtensionIntakePacket,
 	CanonExtensionLifecycleStage,
@@ -31,6 +35,11 @@ export type {
 	CanonRegistryModality,
 	CanonRegistrySearchOptions
 } from './schema.js';
+export type {
+	CanonPublicExportClassification,
+	CanonPublicExportClassificationRule,
+	CanonPublicExportRegistryPolicy
+} from './public-export-classification.js';
 
 export const CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS: CanonProjectOverlayArtifactKind[] = [
 	'theme',
