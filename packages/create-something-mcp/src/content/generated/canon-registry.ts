@@ -703,6 +703,74 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.atlas-atlas-flow",
+      "name": "AtlasFlow",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Interactive Atlas workflow-map renderer candidate for node and edge inspection against the Canon graph artifact.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/atlas/AtlasFlow.svelte",
+      "importPath": "@create-something/canon/atlas",
+      "docsPath": "/canon/components/atlas",
+      "tags": [
+        "atlas",
+        "renderer",
+        "workflow-map",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "adapter.atlas-graph-artifact",
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Rendered nodes and edges must retain aria labels plus a text summary path for chat, voice, and glasses surfaces.",
+        "evidence": "Canvas data must preserve node ids, edge ids, owner, status, products, and graph source-of-truth fields from the headless artifact.",
+        "motion": "Panning, dragging, focus dimming, and animated viewport changes must stay optional and reduced-motion safe.",
+        "extension": "Promote to stable only after keyboard inspection, nonvisual fallback, and renderer compatibility rules are documented."
+      }
+    },
+    {
+      "id": "component.atlas-atlas-story-canvas",
+      "name": "AtlasStoryCanvas",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Story-led Atlas renderer candidate that pairs workflow graph focus with chapters, readiness, and receipt copy.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/atlas/AtlasStoryCanvas.svelte",
+      "importPath": "@create-something/canon/atlas",
+      "docsPath": "/canon/components/atlas",
+      "tags": [
+        "atlas",
+        "renderer",
+        "story",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "adapter.atlas-graph-artifact",
+        "component.atlas-atlas-flow"
+      ],
+      "contract": {
+        "accessibility": "Story chapters must preserve the generated accessibility summary and readable chapter text outside the visual map.",
+        "evidence": "Chapter focus, readiness score, proof labels, and receipt ledger copy must derive from the graph/story artifacts.",
+        "motion": "Chapter focus and trace-handoff cues must be optional and must not hide map state or proof text.",
+        "extension": "Promote to stable only after chapter schema, compact layout, and fallback story contracts are documented."
+      }
+    },
+    {
       "id": "component.clear-page-section",
       "name": "ClearPageSection",
       "kind": "component",
