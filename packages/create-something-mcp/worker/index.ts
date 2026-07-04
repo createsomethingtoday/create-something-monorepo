@@ -116,7 +116,7 @@ export default {
         },
         capabilities: {
           resources: `${PAPERS.length + CANON_PAGES.length + CANON_REGISTRY_MANIFEST.items.length + PATTERNS.length + MASTERS.length + 13 + 2 + 1 + 1} URIs (Database tier)`,
-          tools: '10 tools (Automation tier — search, relate, classify, apply_triad, audit_design, canon_registry_search, canon_registry_get, canon_template_get, canon_extension_route, canon_overlay_review)',
+          tools: '11 tools (Automation tier — search, relate, classify, apply_triad, audit_design, canon_registry_search, canon_registry_get, canon_template_get, canon_extension_route, canon_overlay_review, canon_overlay_instantiate_preview)',
           prompts: '5 prompts (Judgment tier — architecture_review, design_review, triad_analysis, mcp_design, research_dive)',
         },
         properties: {
