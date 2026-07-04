@@ -10,57 +10,69 @@ Set up a fast debugging loop so MCP failures are easy to reproduce, isolate, and
 2. Wrong command/path in Codex MCP config.
 3. Server writes logs to stdout and corrupts the stdio protocol.
 4. Tool listed but argument shape mismatches schema.
-5. Tool hangs because a promise never resolves.
-6. Runtime error message does not tell Codex what to try next.
+5. `RAPIDAPI_KEY` is missing from the server environment.
+6. RapidAPI subscription, rate limit, or query returns an API error.
+7. Tool hangs because a promise never resolves.
+8. Runtime error message does not tell Codex what to try next.
 
 ## Quick Debug Checklist
 
-1. Rebuild:
+1. Ask Codex to use the MCP-building skill as a review checklist:
+
+```text
+Use the MCP-building skill to review this local stdio MCP server.
+
+Check the TypeScript build, tool registration, Zod input schema, outputSchema, structuredContent, annotations, stderr-only logging, Codex config, and actionable RapidAPI errors.
+```
+
+2. Rebuild:
 ```bash
 pnpm --filter @create-something/codex-demo-mcp build
 ```
 
-2. Confirm output file exists:
+3. Confirm output file exists:
 ```bash
 ls packages/codex-demo-mcp/dist
 ```
 
-3. Confirm Codex points to the right server command:
-```bash
-codex mcp get codex-demo
-```
+4. Confirm the Codex app points to the right server command:
 
-4. Run the server through MCP Inspector:
+Open **Settings -> Integrations & MCP**, select `codex-demo`, and confirm the command, args, environment, and enabled state.
+
+5. Run the server through MCP Inspector:
 
 ```bash
 npx @modelcontextprotocol/inspector node packages/codex-demo-mcp/dist/index.js
 ```
 
-5. Add temporary logs in `src/index.ts`. Use stderr, not stdout:
+6. Add temporary logs in `src/index.ts`. Use stderr, not stdout:
 
 ```ts
-console.error('[codex-demo-mcp] echo_text called', { length: text.length });
+console.error('[codex-demo-mcp] find_local_businesses called', { query, limit, region });
 ```
 
-6. Restart Codex session and run the same prompt again.
+7. Restart Codex session and run the same prompt again.
 
 ## Failure Table
 
 | Symptom | Likely Cause | First Check |
 | --- | --- | --- |
-| Server is not listed | Config not loaded | `codex mcp list`, then restart the session |
-| Server listed but unavailable | Bad command, path, permissions, or env | `codex mcp get codex-demo` |
+| Server is not listed | Config not loaded | Codex app MCP settings, then restart the session |
+| Server listed but unavailable | Bad command, path, permissions, or env | Codex app MCP settings for `codex-demo` |
 | Tool is missing | Registration code did not run | Inspector tool list |
 | Arguments rejected | Schema and prompt do not match | Zod schema descriptions |
+| `RAPIDAPI_KEY is missing` | Key not passed into the MCP server environment | Codex MCP config env block |
+| RapidAPI returns 401 or 403 | Bad key or missing API subscription | RapidAPI dashboard |
+| RapidAPI returns 429 | Rate limit or quota hit | Reduce `limit`, wait, or check plan |
 | Call hangs | Handler never returns or awaits forever | Add stderr logs around each await |
 | Protocol errors | Logs written to stdout | Replace `console.log` with `console.error` |
 
-## Add One Real Tool
+## Keep the Operator Boundary
 
-After `echo_text`, add a tool tied to your daily work. Example:
-- `list_workspace_packages`
-- `find_todos`
-- `summarize_changed_files`
+After `find_local_businesses`, do not jump straight to automated outreach. Add the next tool only when the workflow boundary is clear. Useful read-only extensions:
+- `get_business_details`
+- `compare_business_results`
+- `summarize_market_snapshot`
 
 Keep each tool focused and deterministic.
 

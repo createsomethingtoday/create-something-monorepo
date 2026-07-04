@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * CREATE SOMETHING Learn CLI
+ * CREATE SOMETHING Learn setup helper
  *
- * Setup and configuration for Codex MCP learning integration.
+ * Setup and configuration for the Codex app MCP learning integration.
  *
  * @example
  * npx @createsomething/learn init
@@ -17,7 +17,7 @@ import { homedir } from 'os';
 import { isAuthenticated, clearAuth, getCurrentUser } from './auth/storage.js';
 
 const COMMANDS = {
-	init: 'Set up CREATE SOMETHING Learn in Codex',
+	init: 'Show Codex app MCP setup instructions',
 	status: 'Show authentication and learning status',
 	clear: 'Clear authentication and cached data',
 	help: 'Show this help message'
@@ -38,13 +38,21 @@ ${Object.entries(COMMANDS)
 	.join('\n')}
 
 MCP Server:
-  Add with Codex CLI:
-  ${CODEX_MCP_ADD_COMMAND}
+  Recommended operator setup:
+  Open the Codex app -> Settings -> Integrations & MCP -> Add server
 
-  Or manually in ~/.codex/config.toml:
+  Server fields:
+  Name: learn
+  Command: npx
+  Args: -y @createsomething/learn
+
+  Manual config fallback:
   [mcp_servers.learn]
   command = "npx"
   args = ["-y", "@createsomething/learn"]
+
+  Technical CLI shortcut:
+  ${CODEX_MCP_ADD_COMMAND}
 
 Learn more: https://learn.createsomething.space/paths/codex-mcp
 `);
@@ -61,7 +69,7 @@ function isLearnServerConfigured(): boolean {
 }
 
 function printManualConfigFallback() {
-	console.log('Manual fallback (~/.codex/config.toml):');
+	console.log('Manual fallback through Codex app config (~/.codex/config.toml):');
 	console.log('');
 	console.log('[mcp_servers.learn]');
 	console.log('command = "npx"');
@@ -89,7 +97,7 @@ function printStatus() {
 	}
 
 	console.log('\nStart here in Codex:');
-	console.log('  "Help me learn Codex by building an MCP"');
+	console.log('  "Help me learn Codex by creating my first business MCP"');
 	console.log('');
 }
 
@@ -110,18 +118,21 @@ function initSetup() {
 	console.log('\nCREATE SOMETHING Learn Setup\n');
 
 	if (!hasCodexMcpCli()) {
-		console.log('○ Codex CLI not found or MCP commands unavailable');
-		console.log('  Install or update Codex CLI, then run:');
-		console.log(`  ${CODEX_MCP_ADD_COMMAND}`);
-		console.log('');
+		console.log('○ Technical CLI shortcut unavailable');
+		console.log('  Use the Codex app instead: Settings -> Integrations & MCP -> Add server');
 		printManualConfigFallback();
 	} else if (isLearnServerConfigured()) {
 		console.log('✓ MCP server already configured in Codex');
 	} else {
-		console.log('Run this command to enable learning tools in Codex:\n');
-		console.log(`  ${CODEX_MCP_ADD_COMMAND}`);
+		console.log('Recommended: add this server in the Codex app:\n');
+		console.log('  Settings -> Integrations & MCP -> Add server');
+		console.log('  Name: learn');
+		console.log('  Command: npx');
+		console.log('  Args: -y @createsomething/learn');
 		console.log('');
-		console.log('Or run: npx @createsomething/learn init --auto');
+		console.log('Technical shortcut, if you choose to use it:');
+		console.log(`  ${CODEX_MCP_ADD_COMMAND}`);
+		console.log('  or: npx @createsomething/learn init --auto');
 		console.log('');
 	}
 
@@ -134,16 +145,16 @@ function initSetup() {
 	}
 
 	console.log('\n--- Next Steps ---\n');
-	console.log('1. Add the MCP server using the command above');
-	console.log('2. Restart Codex');
-	console.log('3. Ask for: "Learn Codex by building an MCP"');
+	console.log('1. Add the MCP server in the Codex app settings');
+	console.log('2. Restart the Codex app session');
+	console.log('3. Ask in the Codex app: "Help me learn Codex by creating my first business MCP"');
 	console.log('4. Complete lessons in the codex-mcp path');
 }
 
 function initAuto() {
 	if (!hasCodexMcpCli()) {
-		console.error('Error: Codex CLI with MCP support was not found.');
-		console.error(`Run manually once available: ${CODEX_MCP_ADD_COMMAND}`);
+		console.error('Error: the technical CLI shortcut is unavailable.');
+		console.error('Use the Codex app instead: Settings -> Integrations & MCP -> Add server');
 		console.error('');
 		printManualConfigFallback();
 		process.exit(1);
@@ -151,8 +162,8 @@ function initAuto() {
 
 	if (isLearnServerConfigured()) {
 		console.log('✓ MCP server already configured in Codex');
-		console.log('\nRestart Codex, then ask:');
-		console.log('  "Help me learn Codex by building an MCP"');
+		console.log('\nRestart the Codex app session, then ask:');
+		console.log('  "Help me learn Codex by creating my first business MCP"');
 		return;
 	}
 
@@ -171,8 +182,8 @@ function initAuto() {
 	}
 
 	console.log('✓ MCP server configured in Codex');
-	console.log('\nRestart Codex, then ask:');
-	console.log('  "Help me learn Codex by building an MCP"');
+	console.log('\nRestart the Codex app session, then ask:');
+	console.log('  "Help me learn Codex by creating my first business MCP"');
 }
 
 function main() {
