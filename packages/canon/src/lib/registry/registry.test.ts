@@ -765,6 +765,69 @@ describe('Canon registry manifest', () => {
 		);
 	});
 
+	it('adds filtering surfaces as candidates for product and agent-assisted filtering', () => {
+		const filteringCandidates = [
+			{
+				id: 'component.filtering-filter-toggle-panel',
+				exportName: 'FilterTogglePanel',
+				tag: 'toggle-panel',
+				dependencies: ['component.form-checkbox', 'component.form-switch']
+			},
+			{
+				id: 'component.filtering-product-grid',
+				exportName: 'ProductGrid',
+				tag: 'product-grid',
+				dependencies: ['component.card', 'component.patterns-empty-state']
+			},
+			{
+				id: 'component.filtering-agent-panel',
+				exportName: 'AgentPanel',
+				tag: 'agent-panel',
+				dependencies: [
+					'component.form-text-field',
+					'component.button',
+					'component.filtering-filter-toggle-panel'
+				]
+			}
+		] as const;
+
+		for (const candidate of filteringCandidates) {
+			const item = getCanonRegistryItem(candidate.id);
+			const classification = getCanonPublicExportClassification(
+				'./filtering',
+				candidate.exportName
+			);
+
+			expect(
+				candidateRegistryItemIdsForPublicExport('./filtering', candidate.exportName),
+				candidate.exportName
+			).toContain(candidate.id);
+			expect(item?.kind, candidate.id).toBe('component');
+			expect(item?.maturity, candidate.id).toBe('candidate');
+			expect(item?.sourcePath, candidate.id).toBe(
+				`packages/canon/src/lib/filtering/${candidate.exportName}.svelte`
+			);
+			expect(item?.importPath, candidate.id).toBe('@create-something/canon/filtering');
+			expect(item?.docsPath, candidate.id).toBe('/canon/components/filtering');
+			expect(item?.tags, candidate.id).toContain('filtering');
+			expect(item?.tags, candidate.id).toContain(candidate.tag);
+			expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+			for (const dependency of candidate.dependencies) {
+				expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
+			}
+			expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, candidate.id).toBeTruthy();
+			expect(item?.contract.evidence, candidate.id).toBeTruthy();
+			expect(item?.contract.motion, candidate.id).toBeTruthy();
+			expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+			expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
+		}
+
+		expect(searchCanonRegistry('filtering candidate', { maturity: 'candidate' }).map((item) => item.id)).toEqual(
+			expect.arrayContaining(filteringCandidates.map(({ id }) => id))
+		);
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();
