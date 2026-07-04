@@ -64,7 +64,8 @@ test('Dify marketing cluster has one pillar and indexable support routes', () =>
     '/dify/agent-eval-gates',
     '/dify/mcp-control-plane',
     '/dify/n8n-vs-dify',
-    '/dify/ship-dify-app-with-mcp-tools'
+    '/dify/ship-dify-app-with-mcp-tools',
+    '/dify/template-marketplace-proof'
   ]);
   assert.ok(difyPages.every((entry) => entry.decision === 'index'));
 });
