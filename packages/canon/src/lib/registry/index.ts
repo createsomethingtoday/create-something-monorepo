@@ -2,6 +2,9 @@ import { CANON_REGISTRY_MANIFEST } from './data.js';
 import type {
 	CanonExtensionIntakePacket,
 	CanonExtensionRoutingDecision,
+	CanonProjectOverlayArtifactKind,
+	CanonProjectOverlayManifest,
+	CanonProjectOverlayReview,
 	CanonRegistryItem,
 	CanonRegistryKind,
 	CanonRegistryManifest,
@@ -16,6 +19,10 @@ export type {
 	CanonExtensionLifecycleStage,
 	CanonExtensionRoutingDecision,
 	CanonExtensionSurfaceEvidence,
+	CanonProjectOverlayArtifact,
+	CanonProjectOverlayArtifactKind,
+	CanonProjectOverlayManifest,
+	CanonProjectOverlayReview,
 	CanonRegistryContract,
 	CanonRegistryItem,
 	CanonRegistryKind,
@@ -24,6 +31,15 @@ export type {
 	CanonRegistryModality,
 	CanonRegistrySearchOptions
 } from './schema.js';
+
+export const CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS: CanonProjectOverlayArtifactKind[] = [
+	'theme',
+	'tokens',
+	'templates',
+	'copy-rules',
+	'surface-policy',
+	'registry'
+];
 
 export function getCanonRegistryManifest(): CanonRegistryManifest {
 	return CANON_REGISTRY_MANIFEST;
@@ -141,6 +157,53 @@ export function routeCanonExtensionIntake(
 			'Do not add a stable Canon export from a one-off overlay.',
 			'Do not create a parallel primitive when a stable registry item already matches the need.'
 		]
+	};
+}
+
+export function reviewCanonProjectOverlay(
+	manifest: CanonProjectOverlayManifest
+): CanonProjectOverlayReview {
+	const presentArtifacts = CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS.filter((kind) =>
+		manifest.artifacts.some((artifact) => artifact.kind === kind)
+	);
+	const missingArtifacts = CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS.filter(
+		(kind) => !presentArtifacts.includes(kind)
+	);
+	const extensionDecisions = (manifest.extensionIntakes ?? []).map((packet) => ({
+		packet,
+		decision: routeCanonExtensionIntake(packet)
+	}));
+	const needsReview = extensionDecisions.some(({ decision }) => decision.action === 'needs-review');
+	const needsEvidence = extensionDecisions.some(({ decision }) => decision.stage === 'project-local');
+	const status = needsReview
+		? 'needs-review'
+		: missingArtifacts.length
+			? 'needs-artifacts'
+			: needsEvidence
+				? 'needs-evidence'
+				: 'ready';
+	const stopConditions = [
+		...(missingArtifacts.length
+			? [
+					`Add missing overlay artifacts before treating ${manifest.id} as a complete Canon overlay: ${missingArtifacts.join(', ')}.`
+				]
+			: []),
+		...extensionDecisions.flatMap(({ decision }) => decision.stopBeforeStable),
+		'Do not promote project-local overlay primitives into Canon stable without repeated-surface evidence.',
+		'Do not fork Canon primitives; keep local copy, policy, tokens, and templates in named overlay artifacts.'
+	];
+
+	return {
+		status,
+		requiredArtifacts: CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS,
+		presentArtifacts,
+		missingArtifacts,
+		extensionDecisions,
+		stopConditions: [...new Set(stopConditions)],
+		summary:
+			status === 'ready'
+				? `${manifest.name} declares the complete Canon overlay artifact set and has no project-local evidence gaps.`
+				: `${manifest.name} is ${status}; keep it project-owned until missing artifacts and evidence gaps are resolved.`
 	};
 }
 

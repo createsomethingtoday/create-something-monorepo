@@ -9,6 +9,7 @@ import {
 	CANON_REGISTRY_MANIFEST,
 	getCanonRegistryItem,
 	listCanonRegistryModalities,
+	reviewCanonProjectOverlay,
 	routeCanonExtensionIntake,
 	searchCanonRegistry
 } from './index.js';
@@ -99,6 +100,15 @@ describe('Canon registry manifest', () => {
 		expect(item?.kind).toBe('template');
 		expect(item?.modalities).toEqual(['web', 'chat', 'app', 'voice', 'glasses']);
 		expect(item?.contract.evidence).toContain('two distinct surfaces');
+	});
+
+	it('exposes the Canon project overlay manifest across modalities', () => {
+		const item = getCanonRegistryItem('template.canon-project-overlay-manifest');
+
+		expect(item?.kind).toBe('template');
+		expect(item?.modalities).toEqual(['web', 'chat', 'app', 'voice', 'glasses']);
+		expect(item?.dependencies).toContain('template.canon-extension-intake');
+		expect(item?.contract.extension).toContain('named overlay artifacts');
 	});
 
 	it('exposes the Atlas development handoff template for every modality', () => {
@@ -205,5 +215,101 @@ describe('Canon registry manifest', () => {
 		expect(decision.stage).toBe('deprecated');
 		expect(decision.action).toBe('mark-deprecated');
 		expect(decision.requiredEvidence.join(' ')).toContain('Migration guidance');
+	});
+
+	it('marks a complete overlay manifest ready when shared extension evidence exists', () => {
+		const review = reviewCanonProjectOverlay({
+			id: 'overlay.agency-client',
+			name: 'Agency Client Overlay',
+			owner: 'agency',
+			sourcePackage: '@create-something/agency',
+			targetModalities: ['web', 'chat'],
+			artifacts: [
+				{ kind: 'theme', path: 'theme.css' },
+				{ kind: 'tokens', path: 'tokens.json' },
+				{ kind: 'templates', path: 'templates/' },
+				{ kind: 'copy-rules', path: 'copy-rules.md' },
+				{ kind: 'surface-policy', path: 'surface-policy.md' },
+				{ kind: 'registry', path: 'registry.json' }
+			],
+			extensionIntakes: [
+				{
+					id: 'overlay.operator-handoff-brief',
+					title: 'Operator Handoff Brief',
+					summary: 'A compact state, owner, receipt, and next-action brief.',
+					requestedKind: 'template',
+					requestedModalities: ['chat', 'voice'],
+					owner: 'agency',
+					sourcePackage: '@create-something/agency',
+					tags: ['handoff', 'brief'],
+					surfaces: [
+						{ surfaceId: 'chat-reviewer-handoff', name: 'Chat reviewer handoff', modality: 'chat' },
+						{ surfaceId: 'voice-standup-brief', name: 'Voice standup brief', modality: 'voice' }
+					]
+				}
+			]
+		});
+
+		expect(review.status).toBe('ready');
+		expect(review.missingArtifacts).toEqual([]);
+		expect(review.extensionDecisions[0]?.decision.action).toBe('promote-candidate');
+	});
+
+	it('reports missing overlay artifacts before treating a manifest as complete', () => {
+		const review = reviewCanonProjectOverlay({
+			id: 'overlay.partial-client',
+			name: 'Partial Client Overlay',
+			owner: 'client-team',
+			sourcePackage: '@create-something/agency',
+			targetModalities: ['web'],
+			artifacts: [
+				{ kind: 'tokens', path: 'tokens.json' },
+				{ kind: 'registry', path: 'registry.json' }
+			]
+		});
+
+		expect(review.status).toBe('needs-artifacts');
+		expect(review.missingArtifacts).toEqual([
+			'theme',
+			'templates',
+			'copy-rules',
+			'surface-policy'
+		]);
+		expect(review.stopConditions.join(' ')).toContain('missing overlay artifacts');
+	});
+
+	it('keeps one-surface overlay intakes in evidence collection', () => {
+		const review = reviewCanonProjectOverlay({
+			id: 'overlay.local-client',
+			name: 'Local Client Overlay',
+			owner: 'client-team',
+			sourcePackage: '@create-something/agency',
+			targetModalities: ['web'],
+			artifacts: [
+				{ kind: 'theme', path: 'theme.css' },
+				{ kind: 'tokens', path: 'tokens.json' },
+				{ kind: 'templates', path: 'templates/' },
+				{ kind: 'copy-rules', path: 'copy-rules.md' },
+				{ kind: 'surface-policy', path: 'surface-policy.md' },
+				{ kind: 'registry', path: 'registry.json' }
+			],
+			extensionIntakes: [
+				{
+					id: 'overlay.local-proof-card',
+					title: 'Local Proof Card',
+					summary: 'A local proof card for one launch.',
+					requestedKind: 'component',
+					requestedModalities: ['web'],
+					owner: 'client-team',
+					sourcePackage: '@create-something/agency',
+					tags: ['proof'],
+					surfaces: [{ surfaceId: 'client-launch', name: 'Client launch', modality: 'web' }]
+				}
+			]
+		});
+
+		expect(review.status).toBe('needs-evidence');
+		expect(review.extensionDecisions[0]?.decision.stage).toBe('project-local');
+		expect(review.stopConditions.join(' ')).toContain('repeated-surface evidence');
 	});
 });
