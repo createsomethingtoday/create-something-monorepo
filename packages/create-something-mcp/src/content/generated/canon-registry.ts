@@ -1887,6 +1887,179 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.conversion-trust-signals",
+      "name": "TrustSignals",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Trust signal strip candidate for client, certification, association, or press credibility marks.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/conversion/TrustSignals.svelte",
+      "importPath": "@create-something/canon/conversion",
+      "docsPath": "/canon/components/conversion",
+      "tags": [
+        "conversion",
+        "trust",
+        "proof",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.clear-proof-strip"
+      ],
+      "contract": {
+        "accessibility": "Trust marks must expose headline, item names, logo alt text, fallback logo text, variant, and compact state.",
+        "evidence": "Trust data must preserve item name, logo URL or logo text, trust category, and ordering source.",
+        "motion": "Logo hover opacity and filter changes must be optional and cannot be the only credibility cue.",
+        "extension": "Promote to stable only after logo fallback, source attribution, variant naming, and proof-ordering contracts are documented."
+      }
+    },
+    {
+      "id": "component.conversion-sticky-cta",
+      "name": "StickyCTA",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Journey-aware sticky call-to-action candidate that changes message by scroll depth.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/conversion/StickyCTA.svelte",
+      "importPath": "@create-something/canon/conversion",
+      "docsPath": "/canon/components/conversion",
+      "tags": [
+        "conversion",
+        "cta",
+        "journey-depth",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.button",
+        "component.clear-cta-band"
+      ],
+      "contract": {
+        "accessibility": "Sticky actions must expose href, current message, journey depth, visible state, and text alternative to the arrow.",
+        "evidence": "CTA state must preserve scroll threshold, early/mid/late messages, selected journey depth, and destination.",
+        "motion": "Slide-up, hover lift, arrow movement, and late-state emphasis must be optional and reduced-motion safe.",
+        "extension": "Promote to stable only after scroll-depth policy, message schema, mobile placement, and dismissal/overlap contracts are documented."
+      }
+    },
+    {
+      "id": "component.conversion-process-steps",
+      "name": "ProcessSteps",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Process disclosure candidate for numbered engagement steps with optional connectors and section copy.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/conversion/ProcessSteps.svelte",
+      "importPath": "@create-something/canon/conversion",
+      "docsPath": "/canon/components/conversion",
+      "tags": [
+        "conversion",
+        "process",
+        "steps",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.patterns-multi-step-form",
+        "component.clear-state-rows"
+      ],
+      "contract": {
+        "accessibility": "Process steps must preserve headline, subheadline, ordered number, title, description, and connector semantics as readable text.",
+        "evidence": "Process data must preserve step number, title, description, order, and whether connectors are presentation-only.",
+        "motion": "Connector and layout treatments must not be required to understand step order or completion state.",
+        "extension": "Promote to stable only after step schema, connector policy, responsive order, and nonvisual summary contracts are documented."
+      }
+    },
+    {
+      "id": "component.conversion-metric-counters",
+      "name": "MetricCounters",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Metric counter candidate for proof statistics with prefix, suffix, label, and scroll-triggered count-up.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/conversion/MetricCounters.svelte",
+      "importPath": "@create-something/canon/conversion",
+      "docsPath": "/canon/components/conversion",
+      "tags": [
+        "conversion",
+        "metrics",
+        "proof",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.clear-proof-strip"
+      ],
+      "contract": {
+        "accessibility": "Metric counters must expose final numeric value, prefix, suffix, label, and source context without relying on count-up animation.",
+        "evidence": "Metric data must preserve value, label, prefix, suffix, display order, and measurement source when available.",
+        "motion": "Count-up and entrance staggering must resolve immediately for reduced-motion users and never hide final values.",
+        "extension": "Promote to stable only after metric provenance, formatting, reduced-motion final-state, and responsive divider contracts are documented."
+      }
+    },
+    {
+      "id": "component.conversion-exit-intent",
+      "name": "ExitIntent",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Exit-intent modal candidate for value-preserving retention prompts with storage, delay, and conversion callbacks.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/conversion/ExitIntent.svelte",
+      "importPath": "@create-something/canon/conversion",
+      "docsPath": "/canon/components/conversion",
+      "tags": [
+        "conversion",
+        "modal",
+        "retention",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.feedback-dialog",
+        "component.button"
+      ],
+      "contract": {
+        "accessibility": "Exit intent prompts must expose dialog title, description, close action, CTA, dismissal, storage policy, and Escape behavior.",
+        "evidence": "Prompt state must preserve activation delay, scroll depth threshold, storage key, session policy, sensitivity, disabled state, and callback events.",
+        "motion": "Backdrop fade and dialog slide-up must be optional and must not trap users or delay close behavior.",
+        "extension": "Promote to stable only after storage consent, trigger policy, focus management, callback semantics, and value-offer contracts are documented."
+      }
+    },
+    {
       "id": "component.clear-page-section",
       "name": "ClearPageSection",
       "kind": "component",

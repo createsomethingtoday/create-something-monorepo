@@ -946,6 +946,77 @@ describe('Canon registry manifest', () => {
 		);
 	});
 
+	it('adds conversion proof and action surfaces as candidates', () => {
+		const conversionCandidates = [
+			{
+				id: 'component.conversion-trust-signals',
+				exportName: 'TrustSignals',
+				tag: 'trust',
+				dependencies: ['component.clear-proof-strip']
+			},
+			{
+				id: 'component.conversion-sticky-cta',
+				exportName: 'StickyCTA',
+				tag: 'cta',
+				dependencies: ['component.button', 'component.clear-cta-band']
+			},
+			{
+				id: 'component.conversion-process-steps',
+				exportName: 'ProcessSteps',
+				tag: 'process',
+				dependencies: ['component.patterns-multi-step-form', 'component.clear-state-rows']
+			},
+			{
+				id: 'component.conversion-metric-counters',
+				exportName: 'MetricCounters',
+				tag: 'metrics',
+				dependencies: ['component.clear-proof-strip']
+			},
+			{
+				id: 'component.conversion-exit-intent',
+				exportName: 'ExitIntent',
+				tag: 'modal',
+				dependencies: ['component.feedback-dialog', 'component.button']
+			}
+		] as const;
+
+		for (const candidate of conversionCandidates) {
+			const item = getCanonRegistryItem(candidate.id);
+			const classification = getCanonPublicExportClassification(
+				'./conversion',
+				candidate.exportName
+			);
+
+			expect(
+				candidateRegistryItemIdsForPublicExport('./conversion', candidate.exportName),
+				candidate.exportName
+			).toContain(candidate.id);
+			expect(item?.kind, candidate.id).toBe('component');
+			expect(item?.maturity, candidate.id).toBe('candidate');
+			expect(item?.sourcePath, candidate.id).toBe(
+				`packages/canon/src/lib/conversion/${candidate.exportName}.svelte`
+			);
+			expect(item?.importPath, candidate.id).toBe('@create-something/canon/conversion');
+			expect(item?.docsPath, candidate.id).toBe('/canon/components/conversion');
+			expect(item?.tags, candidate.id).toContain('conversion');
+			expect(item?.tags, candidate.id).toContain(candidate.tag);
+			expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+			for (const dependency of candidate.dependencies) {
+				expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
+			}
+			expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, candidate.id).toBeTruthy();
+			expect(item?.contract.evidence, candidate.id).toBeTruthy();
+			expect(item?.contract.motion, candidate.id).toBeTruthy();
+			expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+			expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
+		}
+
+		expect(searchCanonRegistry('conversion proof candidate', { maturity: 'candidate' }).map((item) => item.id)).toEqual(
+			expect.arrayContaining(conversionCandidates.map(({ id }) => id))
+		);
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();
