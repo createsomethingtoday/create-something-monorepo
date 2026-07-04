@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Codex app MCP settings registration</title>
+  <desc id="desc">The Codex app settings register a local stdio server with command, args, environment, enabled state, and a fresh session.</desc>
+  <rect width="960" height="540" fill="#f6f4ee"/>
+  <rect x="66" y="50" width="828" height="440" rx="16" fill="#ffffff" stroke="#1f2933" stroke-width="2"/>
+  <text x="104" y="96" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Register the server in the Codex app</text>
+  <text x="104" y="126" font-family="Arial, sans-serif" font-size="16" fill="#4b5563">The app owns discovery and auth flows. The terminal only supplies the built server.</text>
+
+  <g font-family="Arial, sans-serif">
+    <rect x="106" y="170" width="310" height="250" rx="12" fill="#111827"/>
+    <text x="132" y="206" font-size="17" font-weight="700" fill="#ffffff">Settings</text>
+    <rect x="132" y="232" width="242" height="34" rx="6" fill="#374151"/>
+    <text x="152" y="255" font-size="14" fill="#ffffff">Integrations &amp; MCP</text>
+    <rect x="132" y="286" width="242" height="88" rx="8" fill="#f9fafb"/>
+    <text x="152" y="316" font-size="15" font-weight="700" fill="#111827">codex-demo</text>
+    <text x="152" y="342" font-size="13" fill="#374151">Command: node</text>
+    <text x="152" y="364" font-size="13" fill="#374151">Args: dist/index.js</text>
+    <circle cx="352" cy="312" r="8" fill="#22c55e"/>
+
+    <rect x="498" y="184" width="306" height="74" rx="10" fill="#eef2ff" stroke="#3730a3" stroke-width="2"/>
+    <text x="651" y="216" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">1. Build server</text>
+    <text x="651" y="241" text-anchor="middle" font-size="14" fill="#374151">dist/index.js exists</text>
+
+    <rect x="498" y="288" width="306" height="74" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+    <text x="651" y="320" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">2. Add env locally</text>
+    <text x="651" y="345" text-anchor="middle" font-size="14" fill="#374151">RAPIDAPI_KEY stays out of source</text>
+
+    <rect x="498" y="392" width="306" height="52" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+    <text x="651" y="425" text-anchor="middle" font-size="16" font-weight="700" fill="#111827">3. Start a fresh Codex session</text>
+
+    <path d="M420 294 C468 264 466 226 490 222" fill="none" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M650 262 V280" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M650 366 V384" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+  </g>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#111827"/>
+    </marker>
+  </defs>
+</svg>

@@ -4,6 +4,11 @@
 
 Set up a fast debugging loop so MCP failures are easy to reproduce, isolate, and fix.
 
+<figure class="learning-figure">
+  <img src="/learning/codex-mcp/mcp-debug-loop.svg" alt="MCP debugging loop checking build output, Codex app config, MCP Inspector, stderr logs, and RapidAPI responses." />
+  <figcaption>Debug the boundary first: build, app config, Inspector, logs, then the external API.</figcaption>
+</figure>
+
 ## Common Failure Modes
 
 1. Build output missing (`dist/index.js` does not exist).

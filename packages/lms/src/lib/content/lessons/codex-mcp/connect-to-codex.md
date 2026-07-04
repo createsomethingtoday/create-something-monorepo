@@ -4,6 +4,11 @@
 
 Register your local MCP server so Codex can discover and call it.
 
+<figure class="learning-figure">
+  <img src="/learning/codex-mcp/codex-mcp-settings.svg" alt="Codex app settings panel showing an enabled codex-demo MCP server with command, args, local environment, and fresh session step." />
+  <figcaption>Registration happens in the Codex app. The local build and secret only support that operator-facing setup.</figcaption>
+</figure>
+
 ## 1) Build First
 
 Use the terminal for the build step only:

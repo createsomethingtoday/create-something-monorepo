@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">RapidAPI MCP tool contract</title>
+  <desc id="desc">The find local businesses tool validates input, calls RapidAPI Local Business Data, normalizes output, and stops at operator review.</desc>
+  <rect width="960" height="540" fill="#f8fafc"/>
+  <rect x="54" y="46" width="852" height="448" rx="14" fill="#ffffff" stroke="#1f2933" stroke-width="2"/>
+  <text x="94" y="94" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Tool contract before automation</text>
+  <text x="94" y="124" font-family="Arial, sans-serif" font-size="16" fill="#4b5563">One read-only tool gives Codex structured market evidence without taking business action.</text>
+
+  <g font-family="Arial, sans-serif">
+    <rect x="92" y="188" width="164" height="128" rx="10" fill="#eef2ff" stroke="#3730a3" stroke-width="2"/>
+    <text x="174" y="224" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">Input schema</text>
+    <text x="174" y="252" text-anchor="middle" font-size="14" fill="#374151">query</text>
+    <text x="174" y="275" text-anchor="middle" font-size="14" fill="#374151">limit 1-10</text>
+    <text x="174" y="298" text-anchor="middle" font-size="14" fill="#374151">region</text>
+
+    <rect x="312" y="170" width="170" height="164" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+    <text x="397" y="207" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">MCP tool</text>
+    <text x="397" y="235" text-anchor="middle" font-size="14" fill="#374151">find_local_businesses</text>
+    <text x="397" y="262" text-anchor="middle" font-size="14" fill="#374151">read-only hint</text>
+    <text x="397" y="289" text-anchor="middle" font-size="14" fill="#374151">actionable errors</text>
+
+    <rect x="538" y="188" width="164" height="128" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+    <text x="620" y="224" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">RapidAPI</text>
+    <text x="620" y="252" text-anchor="middle" font-size="14" fill="#374151">Local Business</text>
+    <text x="620" y="275" text-anchor="middle" font-size="14" fill="#374151">Data search</text>
+
+    <rect x="758" y="170" width="108" height="164" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+    <text x="812" y="207" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">Output</text>
+    <text x="812" y="235" text-anchor="middle" font-size="14" fill="#374151">count</text>
+    <text x="812" y="258" text-anchor="middle" font-size="14" fill="#374151">records</text>
+    <text x="812" y="281" text-anchor="middle" font-size="14" fill="#374151">links</text>
+    <text x="812" y="304" text-anchor="middle" font-size="14" fill="#374151">ratings</text>
+
+    <path d="M260 252 H304" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M486 252 H530" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M706 252 H750" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+  </g>
+
+  <rect x="152" y="390" width="656" height="42" rx="8" fill="#111827"/>
+  <text x="480" y="417" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#ffffff">Boundary: search and normalize only. No outreach, CRM write, or enrichment.</text>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#111827"/>
+    </marker>
+  </defs>
+</svg>
