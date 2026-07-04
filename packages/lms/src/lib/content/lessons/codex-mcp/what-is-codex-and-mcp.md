@@ -14,6 +14,11 @@ By the end of this lesson, you should be able to explain this in one sentence:
 4. The MCP server exposes a tool, resource, or prompt through a strict contract.
 5. Codex calls the MCP, reads the response as evidence, and helps you decide the next operator action.
 
+<figure class="learning-figure">
+  <img src="/learning/codex-mcp/codex-mcp-loop.svg" alt="Codex app MCP learning loop showing operator question, Codex app skill, local MCP package, and evidence returned to Codex." />
+  <figcaption>The first lesson is the loop: use Codex to create one inspectable capability, then let Codex call it as evidence.</figcaption>
+</figure>
+
 ## Codex Skill Loop
 
 This path should use the MCP-building skill that is available inside the Codex app. Treat the skill as the teaching assistant for the build:

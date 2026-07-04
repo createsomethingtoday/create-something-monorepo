@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">MCP shipping receipt</title>
+  <desc id="desc">A first MCP is shippable when README, build, Codex settings, Inspector, Codex call, security posture, and changelog are documented.</desc>
+  <rect width="960" height="540" fill="#f7f5ef"/>
+  <rect x="60" y="48" width="840" height="444" rx="14" fill="#ffffff" stroke="#1f2933" stroke-width="2"/>
+  <text x="100" y="96" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Ship the receipt, not just the code</text>
+  <text x="100" y="126" font-family="Arial, sans-serif" font-size="16" fill="#4b5563">A reusable MCP has evidence another operator can inspect before trusting it.</text>
+
+  <g font-family="Arial, sans-serif">
+    <rect x="110" y="170" width="300" height="250" rx="12" fill="#f9fafb" stroke="#6b7280" stroke-width="2"/>
+    <text x="142" y="210" font-size="19" font-weight="700" fill="#111827">Shippable evidence</text>
+    <text x="142" y="246" font-size="15" fill="#374151">[x] README and examples</text>
+    <text x="142" y="276" font-size="15" fill="#374151">[x] clean build</text>
+    <text x="142" y="306" font-size="15" fill="#374151">[x] Codex app settings proof</text>
+    <text x="142" y="336" font-size="15" fill="#374151">[x] Inspector call</text>
+    <text x="142" y="366" font-size="15" fill="#374151">[x] Codex chat call</text>
+    <text x="142" y="396" font-size="15" fill="#374151">[x] changelog</text>
+
+    <rect x="500" y="172" width="286" height="86" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+    <text x="643" y="207" text-anchor="middle" font-size="18" font-weight="700" fill="#111827">Read tools</text>
+    <text x="643" y="233" text-anchor="middle" font-size="14" fill="#374151">small limits + structured output</text>
+
+    <rect x="500" y="286" width="286" height="86" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+    <text x="643" y="321" text-anchor="middle" font-size="18" font-weight="700" fill="#111827">Write tools later</text>
+    <text x="643" y="347" text-anchor="middle" font-size="14" fill="#374151">dry-run + confirmation + rollback</text>
+
+    <path d="M414 296 H492" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+  </g>
+
+  <rect x="500" y="404" width="286" height="42" rx="8" fill="#111827"/>
+  <text x="643" y="431" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#ffffff">Next tool only after the boundary is clear.</text>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#111827"/>
+    </marker>
+  </defs>
+</svg>
