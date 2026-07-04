@@ -368,6 +368,43 @@ describe('Canon registry manifest', () => {
 		expect(helperClassification?.registryPolicy).toBe('candidate-review');
 	});
 
+	it('adds diagram candidates with explicit contracts without stable promotion', () => {
+		const diagramCandidates = [
+			['component.diagrams-flow-diagram', 'FlowDiagram', 'flow'],
+			['component.diagrams-bar-chart', 'BarChart', 'bar'],
+			['component.diagrams-line-chart', 'LineChart', 'line'],
+			['component.diagrams-pie-chart', 'PieChart', 'pie'],
+			['component.diagrams-timeline', 'Timeline', 'timeline'],
+			['component.diagrams-matrix', 'Matrix', 'matrix'],
+			['component.diagrams-knowledge-graph-canvas', 'KnowledgeGraphCanvas', 'knowledge-graph'],
+			['component.diagrams-canvas-diagram', 'CanvasDiagram', 'canvas']
+		] as const;
+
+		for (const [id, exportName, tag] of diagramCandidates) {
+			const item = getCanonRegistryItem(id);
+			const classification = getCanonPublicExportClassification('./diagrams', exportName);
+
+			expect(item?.kind, id).toBe('component');
+			expect(item?.maturity, id).toBe('candidate');
+			expect(item?.sourcePath, id).toBe(`packages/canon/src/lib/diagrams/${exportName}.svelte`);
+			expect(item?.importPath, id).toBe('@create-something/canon/diagrams');
+			expect(item?.docsPath, id).toBe('/canon/components/diagrams');
+			expect(item?.tags, id).toContain('diagrams');
+			expect(item?.tags, id).toContain(tag);
+			expect(item?.dependencies, id).toContain('token.canon-core');
+			expect(item?.modalities, id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, id).toBeTruthy();
+			expect(item?.contract.evidence, id).toBeTruthy();
+			expect(item?.contract.motion, id).toBeTruthy();
+			expect(item?.contract.extension, id).toContain('Promote to stable only after');
+			expect(classification?.registryPolicy, exportName).toBe('candidate-review');
+		}
+
+		expect(searchCanonRegistry('diagram', { maturity: 'candidate' }).map((item) => item.id)).toEqual(
+			expect.arrayContaining(diagramCandidates.map(([id]) => id))
+		);
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();
