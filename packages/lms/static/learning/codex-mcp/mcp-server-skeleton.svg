@@ -21,7 +21,7 @@
     <text x="542" y="238" text-anchor="middle" font-size="14" fill="#374151">name + version</text>
 
     <rect x="452" y="314" width="180" height="96" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
-    <text x="542" y="351" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">Stdio transport</text>
+    <text x="542" y="351" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">stdio transport</text>
     <text x="542" y="378" text-anchor="middle" font-size="14" fill="#374151">protocol on stdout</text>
 
     <rect x="710" y="214" width="118" height="156" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
