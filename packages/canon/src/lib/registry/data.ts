@@ -1018,6 +1018,33 @@ const DIAGRAM_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
 	}
 ];
 
+const TYPOGRAPHY_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
+	{
+		id: 'component.typography-typography-hero',
+		name: 'TypographyHero',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Typography-led hero candidate for monochrome pages where hierarchy comes from type scale and weight.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/typography/TypographyHero.svelte',
+		importPath: '@create-something/canon/typography',
+		docsPath: '/canon/components/typography',
+		tags: ['typography', 'hero', 'weight-contrast', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'component.heading'],
+		contract: {
+			accessibility:
+				'Hero hierarchy must preserve semantic heading structure and readable copy in every modality.',
+			evidence:
+				'Headline, eyebrow, subhead, and CTA text must remain inspectable as text and tied to the page claim.',
+			motion: 'Fade-up entrance motion must respect reduced-motion preferences and never hide core copy.',
+			extension:
+				'Promote to stable only after heading-level control, CTA composition, and responsive type rules are documented.'
+		}
+	}
+];
+
 export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 	schemaVersion: 1,
 	id: 'canon-registry',
@@ -1138,6 +1165,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 		},
 		...FOUNDATION_PRIMITIVE_ITEMS,
 		...DIAGRAM_CANDIDATE_ITEMS,
+		...TYPOGRAPHY_CANDIDATE_ITEMS,
 		...CLEAR_PRIMITIVE_ITEMS,
 		...FOUNDATION_CONTROL_ITEMS,
 		{
