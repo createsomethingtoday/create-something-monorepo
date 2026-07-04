@@ -26,6 +26,7 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
+		"overlay:instantiate": "tsx scripts/instantiate-project-overlay.ts",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},

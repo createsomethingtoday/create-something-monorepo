@@ -13,3 +13,14 @@ export const CANON_PROJECT_OVERLAY_TEMPLATE_FILES = [
 	'registry.json',
 	'manifest.ts'
 ] as const;
+
+export {
+	createCanonProjectOverlayManifest,
+	instantiateCanonProjectOverlayTemplate,
+	renderCanonProjectOverlayTemplateFiles
+} from './instantiate.js';
+export type {
+	CanonProjectOverlayInstantiateFile,
+	CanonProjectOverlayInstantiateOptions,
+	CanonProjectOverlayInstantiateResult
+} from './instantiate.js';

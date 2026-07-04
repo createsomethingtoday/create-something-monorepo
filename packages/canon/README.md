@@ -267,6 +267,25 @@ deprecates.
 Do not mark an overlay `canon-stable` until Canon owns the export path, docs, tests, and
 compatibility notes.
 
+### Project Overlay Instantiation
+
+Use the Canon overlay template pack when a project or client needs local theme, token, template,
+copy, surface-policy, and registry artifacts without forking Canon primitives.
+
+```bash
+pnpm --filter @create-something/canon overlay:instantiate -- \
+  --id overlay.client-workflow \
+  --name "Client Workflow Overlay" \
+  --owner client-team \
+  --source-package @create-something/client \
+  --out ./packages/client/canon-overlay \
+  --modalities web,chat \
+  --dry-run
+```
+
+Remove `--dry-run` to write the files. The command skips existing files unless `--force` is
+provided. The generated `manifest.ts` can be passed to `reviewCanonProjectOverlay(...)`.
+
 ## Atlas Graph And Story Primitives
 
 Canon owns the reusable Atlas graph/story contract at
