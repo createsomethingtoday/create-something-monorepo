@@ -4,6 +4,11 @@
 
 Package your MCP so it is easy to reuse, inspect, and improve without changing the tool contract accidentally.
 
+<figure class="learning-figure">
+  <img src="/learning/codex-mcp/mcp-ship-receipt.svg" alt="MCP shipping receipt showing README, clean build, Codex app settings proof, Inspector call, Codex chat call, changelog, and future write-tool gates." />
+  <figcaption>A first MCP ships when another operator can inspect the receipt, rerun the checks, and understand the next safe extension.</figcaption>
+</figure>
+
 ## Ship Checklist
 
 - `README.md` explains purpose, install, config, tools, security posture, and examples.

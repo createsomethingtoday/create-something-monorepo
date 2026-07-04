@@ -6,6 +6,11 @@ Use the Codex app's MCP-building skill to plan a minimal TypeScript MCP server, 
 
 This course uses the Codex app plus a local stdio server because that is the fastest way for business operators to learn Codex by creating a capability for it. Remote MCP servers are useful later, but they add auth, deployment, and network concerns before the core tool contract is clear.
 
+<figure class="learning-figure">
+  <img src="/learning/codex-mcp/mcp-server-skeleton.svg" alt="Minimal local MCP server skeleton showing package files, McpServer, stdio transport, and Codex discovery." />
+  <figcaption>The scaffold proves the server can start cleanly before any business workflow is added.</figcaption>
+</figure>
+
 ## 1) Start With the Codex MCP-Building Skill
 
 In the Codex app, start the build with a prompt like this:
