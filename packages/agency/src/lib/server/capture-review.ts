@@ -1,3 +1,13 @@
+import {
+	computePublicAtlasReadiness,
+	createPublicAtlasGraphArtifact,
+	normalizePublicAtlasCanvas,
+	summarizePublicAtlasCanvas,
+	type PublicAtlasCanvas,
+	type PublicAtlasGraphArtifact,
+	type PublicAtlasNodeKind,
+} from '@create-something/canon/atlas/headless';
+
 export type CaptureSurface =
 	| 'newsletter'
 	| 'contact'
@@ -42,8 +52,18 @@ export interface CaptureReviewRecord {
 	updated_at?: string | null;
 	excerpt?: string | null;
 	metadata?: Record<string, unknown>;
+	atlas_handoff?: AtlasDevelopmentHandoff | null;
 	review?: CaptureReviewDecisionSummary;
 	classification: CaptureClassification;
+}
+
+export interface AtlasDevelopmentHandoff {
+	title: string;
+	tier: 'mixed';
+	lane: 'claim-worktree' | 'research/no-edit';
+	goal: string;
+	packet: string;
+	linear_create_command: string;
 }
 
 export interface CaptureReviewOptions {
@@ -186,6 +206,8 @@ interface AtlasSessionRow {
 	email_hash: string | null;
 	readiness_slug: string | null;
 	readiness_score: number | null;
+	canvas_json: string | null;
+	summary: string | null;
 	source: string | null;
 	created_at: string | null;
 	updated_at: string | null;
@@ -274,6 +296,15 @@ const VALID_RECOMMENDED_ACTIONS = new Set<CaptureRecommendedAction>([
 	'suppress',
 ]);
 const VALID_CONFIDENCE = new Set<CaptureClassification['confidence']>(['high', 'medium', 'low']);
+const ATLAS_KIND_LABELS: Record<PublicAtlasNodeKind, string> = {
+	actor: 'Actor',
+	human: 'Human task',
+	ai: 'AI task',
+	system: 'System operation',
+	data: 'Data artifact',
+	constraint: 'Constraint',
+	touchpoint: 'Touchpoint',
+};
 
 function normalizeEmail(value: string | null | undefined): string | null {
 	const normalized = value?.trim().toLowerCase();
@@ -288,6 +319,133 @@ function emailDomain(email: string | null): string | null {
 function localPart(email: string | null): string {
 	const at = email?.lastIndexOf('@') ?? -1;
 	return at >= 0 ? email?.slice(0, at) ?? '' : '';
+}
+
+function shellQuote(value: string): string {
+	return `'${value.replaceAll("'", "'\"'\"'")}'`;
+}
+
+function parseAtlasCanvas(value: string | null): PublicAtlasCanvas | null {
+	if (!value) return null;
+
+	try {
+		return normalizePublicAtlasCanvas(JSON.parse(value));
+	} catch {
+		return null;
+	}
+}
+
+function labelsByKind(
+	artifact: PublicAtlasGraphArtifact,
+	kinds: PublicAtlasNodeKind[],
+	fallback: string
+): string {
+	const labels = artifact.nodes
+		.filter((node) => kinds.includes(node.kind))
+		.map((node) => {
+			const status = node.status === 'unknown' ? '' : ` (${node.status})`;
+			return `${ATLAS_KIND_LABELS[node.kind]}: ${node.label}${status}`;
+		});
+	return labels.length ? labels.join('; ') : fallback;
+}
+
+function firstAtlasWorkflowLabel(artifact: PublicAtlasGraphArtifact): string {
+	return (
+		artifact.nodes.find((node) => node.kind === 'data')?.label ??
+		artifact.nodes.find((node) => node.kind === 'actor')?.label ??
+		'Captured Atlas workflow'
+	);
+}
+
+function titleizeAtlasStarterId(canvasId: string): string | null {
+	const match = canvasId.match(/^public_atlas_([a-z0-9-]+)_/);
+	if (!match?.[1]) return null;
+	const words = match[1].split('-');
+	return words
+		.map((word, index) => (index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+		.join(' ');
+}
+
+function buildAtlasDevelopmentHandoff(row: AtlasSessionRow): AtlasDevelopmentHandoff | null {
+	const canvas = parseAtlasCanvas(row.canvas_json);
+	if (!canvas) return null;
+
+	const readiness = computePublicAtlasReadiness(canvas);
+	const artifact = createPublicAtlasGraphArtifact(canvas, readiness);
+	const workflowLabel = firstAtlasWorkflowLabel(artifact);
+	const mapLabel = titleizeAtlasStarterId(canvas.id) ?? workflowLabel;
+	const lane: AtlasDevelopmentHandoff['lane'] =
+		readiness.slug === 'needs-shape' ? 'research/no-edit' : 'claim-worktree';
+	const title = `Implement Atlas handoff: ${mapLabel}`;
+	const goal =
+		readiness.slug === 'needs-shape'
+			? `Clarify ${mapLabel} until the owner, durable record, approval boundary, and first stop condition are explicit.`
+			: `Turn ${mapLabel} into the next reviewed development slice with explicit state, execution, and judgment boundaries.`;
+	const database = labelsByKind(
+		artifact,
+		['data', 'touchpoint'],
+		'No durable data artifact or inspection touchpoint mapped yet.'
+	);
+	const automation = labelsByKind(
+		artifact,
+		['system', 'ai'],
+		'No run path or bounded AI task mapped yet.'
+	);
+	const judgment = labelsByKind(
+		artifact,
+		['actor', 'human', 'constraint'],
+		'No owner, approval, or stop condition mapped yet.'
+	);
+	const handoffs = artifact.edges.length
+		? artifact.edges.map((edge) => `${edge.source} -> ${edge.target} (${edge.relationship})`).join('; ')
+		: 'No handoffs mapped yet.';
+	const summary = row.summary ?? summarizePublicAtlasCanvas(canvas, readiness);
+	const packet = [
+		`Atlas session: ${row.id}`,
+		`Atlas map: ${mapLabel}`,
+		`Source: ${row.source ?? 'agency-public-atlas'}`,
+		`Readiness: ${readiness.level} (${readiness.score}/100)`,
+		`Lane: ${lane}`,
+		`Tier: mixed`,
+		`Goal: ${goal}`,
+		'',
+		'Database:',
+		`- ${database}`,
+		'',
+		'Automation:',
+		`- ${automation}`,
+		'',
+		'Judgment:',
+		`- ${judgment}`,
+		'',
+		'Acceptance criteria:',
+		'- Development scope names the durable record, run path, approval point, stop condition, and proof surface.',
+		'- Implementation preserves the public Atlas boundary: no production writes, credential capture, or third-party mutation without an owning promotion workflow.',
+		'- Operator evidence can be recorded in Linear or a PR body before promotion.',
+		'',
+		'Verification:',
+		'- Add or update the nearest route/unit test for the selected slice.',
+		'- Run the package-local test/check command that covers the touched surface.',
+		'- Smoke the public or admin route if the change is promoted.',
+		'',
+		'Stop conditions:',
+		'- Pause if the map requires credentials, PHI/PII export, production writes, or unclear approval authority.',
+		'- Pause if the owning data source or runtime binding is unavailable.',
+		'',
+		`Handoffs: ${handoffs}`,
+		'',
+		'Canvas summary:',
+		summary,
+	].join('\n');
+
+	return {
+		title,
+		tier: 'mixed',
+		lane,
+		goal,
+		packet,
+		linear_create_command: `pnpm linear:create -- --title ${shellQuote(title)} --description '<paste handoff packet>' --label code-quality`,
+	};
 }
 
 function isGeneratedLookingEmail(email: string | null): boolean {
@@ -883,7 +1041,7 @@ export async function buildCaptureReview(
 		const rows = await queryAll<AtlasSessionRow>(
 			db,
 			`SELECT id, email_hash, readiness_slug, readiness_score, source, created_at, updated_at,
-			        substr(summary, 1, 220) AS summary_excerpt
+			        canvas_json, summary, substr(summary, 1, 220) AS summary_excerpt
 			   FROM public_atlas_sessions
 			  WHERE email_hash IS NOT NULL
 			  ORDER BY datetime(COALESCE(updated_at, created_at)) DESC
@@ -893,6 +1051,7 @@ export async function buildCaptureReview(
 
 		for (const row of rows) {
 			const matchedEmail = await matchAtlasEmailHash(row.email_hash, knownEmails);
+			const atlasHandoff = buildAtlasDevelopmentHandoff(row);
 			addRecord(records, {
 				id: row.id,
 				surface: 'public_atlas',
@@ -907,7 +1066,10 @@ export async function buildCaptureReview(
 				metadata: {
 					readiness_score: row.readiness_score,
 					hash_matched_from_known_email: Boolean(matchedEmail),
+					atlas_handoff_title: atlasHandoff?.title,
+					atlas_handoff_lane: atlasHandoff?.lane,
 				},
+				atlas_handoff: atlasHandoff,
 			});
 		}
 	}

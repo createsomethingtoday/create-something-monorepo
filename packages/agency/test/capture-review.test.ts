@@ -9,6 +9,7 @@ import {
 	upsertCaptureReviewDecision,
 	type CaptureReviewRecord,
 } from '../src/lib/server/capture-review.ts';
+import { createPublicAtlasCanvasFromStarter } from '../src/lib/atlas/public.ts';
 
 class FakeStatement {
 	constructor(
@@ -150,6 +151,7 @@ test('classifies explicit tests, fixtures, generated addresses, and spam', () =>
 });
 
 test('buildCaptureReview matches Atlas warm lead hashes against captured emails', async () => {
+	const canvas = createPublicAtlasCanvasFromStarter('marketplace-review-queue');
 	const db = new FakeD1({
 		newsletter_subscribers: [
 			{
@@ -172,6 +174,8 @@ test('buildCaptureReview matches Atlas warm lead hashes against captured emails'
 				email_hash: atlasHash('micah@createsomething.io'),
 				readiness_slug: 'ready-to-map',
 				readiness_score: 84,
+				canvas_json: JSON.stringify(canvas),
+				summary: 'Atlas public canvas summary',
 				source: 'agency-public-atlas',
 				created_at: '2026-06-18 15:38:29',
 				updated_at: '2026-06-18 17:36:13',
@@ -185,6 +189,14 @@ test('buildCaptureReview matches Atlas warm lead hashes against captured emails'
 
 	assert.equal(atlas?.matched_email, 'micah@createsomething.io');
 	assert.equal(atlas?.classification.label, 'internal_test');
+	assert.equal(atlas?.atlas_handoff?.tier, 'mixed');
+	assert.equal(atlas?.atlas_handoff?.lane, 'claim-worktree');
+	assert.match(atlas?.atlas_handoff?.packet ?? '', /Database:/);
+	assert.match(atlas?.atlas_handoff?.packet ?? '', /Automation:/);
+	assert.match(atlas?.atlas_handoff?.packet ?? '', /Judgment:/);
+	assert.match(atlas?.atlas_handoff?.packet ?? '', /Marketplace review queue/);
+	assert.match(atlas?.atlas_handoff?.linear_create_command ?? '', /pnpm linear:create/);
+	assert.match(atlas?.atlas_handoff?.linear_create_command ?? '', /code-quality/);
 	assert.equal(review.summary.by_surface.newsletter, 1);
 	assert.equal(review.summary.by_surface.public_atlas, 1);
 	assert.equal(review.decision_storage.available, false);

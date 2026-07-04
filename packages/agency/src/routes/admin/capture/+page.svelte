@@ -89,6 +89,7 @@
 	let busyKey = $state<string | null>(null);
 	let message = $state('');
 	let errorMessage = $state('');
+	let copiedKey = $state<string | null>(null);
 
 	const records = $derived(data.review.records as CaptureReviewRecord[]);
 	const visibleRecords = $derived(
@@ -121,6 +122,16 @@
 
 	function clearKey(record: CaptureReviewRecord): string {
 		return `${record.surface}:${record.id}:clear`;
+	}
+
+	async function copyText(key: string, value: string) {
+		try {
+			await navigator.clipboard.writeText(value);
+			copiedKey = key;
+			message = 'Copied.';
+		} catch {
+			errorMessage = 'Clipboard is unavailable. Select and copy the text manually.';
+		}
 	}
 
 	function buildQuery(overrides: Record<string, string | number | null | undefined> = {}): string {
@@ -394,6 +405,35 @@
 											<li>{reason}</li>
 										{/each}
 									</ul>
+									{#if record.atlas_handoff}
+										<details class="atlas-handoff">
+											<summary>
+												<span>{record.atlas_handoff.title}</span>
+												<strong>{record.atlas_handoff.lane}</strong>
+											</summary>
+											<div class="handoff-actions">
+												<button
+													type="button"
+													onclick={() =>
+														copyText(`${record.id}:packet`, record.atlas_handoff?.packet ?? '')}
+												>
+													{copiedKey === `${record.id}:packet` ? 'Copied packet' : 'Copy packet'}
+												</button>
+												<button
+													type="button"
+													onclick={() =>
+														copyText(
+															`${record.id}:linear`,
+															record.atlas_handoff?.linear_create_command ?? ''
+														)}
+												>
+													{copiedKey === `${record.id}:linear` ? 'Copied command' : 'Copy Linear command'}
+												</button>
+											</div>
+											<pre>{record.atlas_handoff.packet}</pre>
+											<code>{record.atlas_handoff.linear_create_command}</code>
+										</details>
+									{/if}
 								</td>
 								<td>
 									<div class="decision-grid">
@@ -707,6 +747,58 @@
 		margin: 0.45rem 0 0;
 		padding-left: 1rem;
 		color: var(--color-fg-muted, #9ca3af);
+	}
+
+	.atlas-handoff {
+		margin-top: 0.75rem;
+		border: 1px solid rgba(147, 197, 253, 0.22);
+		border-radius: 8px;
+		background: rgba(147, 197, 253, 0.06);
+	}
+
+	.atlas-handoff summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding: 0.65rem 0.75rem;
+		cursor: pointer;
+	}
+
+	.atlas-handoff summary span {
+		font-weight: 700;
+	}
+
+	.atlas-handoff summary strong {
+		color: #93c5fd;
+		font-size: 0.78rem;
+		font-weight: 600;
+	}
+
+	.handoff-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		padding: 0 0.75rem 0.65rem;
+	}
+
+	.handoff-actions button {
+		padding: 0.4rem 0.55rem;
+		font-size: 0.78rem;
+	}
+
+	.atlas-handoff pre,
+	.atlas-handoff code {
+		display: block;
+		max-width: 36rem;
+		margin: 0;
+		overflow-x: auto;
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		padding: 0.75rem;
+		color: rgba(255, 255, 255, 0.82);
+		font-size: 0.78rem;
+		line-height: 1.45;
+		white-space: pre-wrap;
 	}
 
 	.decision-grid {
