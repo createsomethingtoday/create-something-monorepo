@@ -942,6 +942,317 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.patterns-form-layout",
+      "name": "FormLayout",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Form composition pattern candidate for grouped fields, headings, descriptions, and action placement.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/patterns/FormLayout.svelte",
+      "importPath": "@create-something/canon/patterns",
+      "docsPath": "/canon/components/patterns",
+      "tags": [
+        "patterns",
+        "form",
+        "layout",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.form-text-field",
+        "component.clear-action-footer"
+      ],
+      "contract": {
+        "accessibility": "Form sections must preserve heading order, labels, descriptions, and final action order across modalities.",
+        "evidence": "Pattern state should name section titles, required fields, validation scope, and submission action.",
+        "motion": "Section transitions and action feedback must be optional and cannot hide form state.",
+        "extension": "Promote to stable only after section schema, action placement, and nonvisual form summary contracts are documented."
+      }
+    },
+    {
+      "id": "component.patterns-form-validation",
+      "name": "FormValidation",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Validation pattern candidate for error summaries, field-level messages, and validation timing.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/patterns/FormValidation.svelte",
+      "importPath": "@create-something/canon/patterns",
+      "docsPath": "/canon/components/patterns",
+      "tags": [
+        "patterns",
+        "form",
+        "validation",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.form-text-field",
+        "component.feedback-alert"
+      ],
+      "contract": {
+        "accessibility": "Validation summaries and field messages must be announced, linked to fields, and readable without color.",
+        "evidence": "Validation data must preserve field ids, messages, timing, severity, and recovery action.",
+        "motion": "Validation reveal motion must be optional and must not delay error availability.",
+        "extension": "Promote to stable only after validation timing, summary linking, and field-error contracts are documented."
+      }
+    },
+    {
+      "id": "component.patterns-multi-step-form",
+      "name": "MultiStepForm",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Multi-step form pattern candidate for progress, step navigation, persisted data, and completion actions.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/patterns/MultiStepForm.svelte",
+      "importPath": "@create-something/canon/patterns",
+      "docsPath": "/canon/components/patterns",
+      "tags": [
+        "patterns",
+        "form",
+        "multi-step",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.form-text-field",
+        "component.clear-action-footer"
+      ],
+      "contract": {
+        "accessibility": "Step order, current step, completed steps, and progress must be available as structured text.",
+        "evidence": "Step state must preserve ids, titles, descriptions, completion state, current index, and submit action.",
+        "motion": "Step changes and progress animation must be optional and must not mask data persistence or validation.",
+        "extension": "Promote to stable only after step schema, persistence, navigation, and completion contracts are documented."
+      }
+    },
+    {
+      "id": "component.patterns-empty-state",
+      "name": "EmptyState",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Empty state pattern candidate for no-data surfaces with plain-language explanation and next action.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/patterns/EmptyState.svelte",
+      "importPath": "@create-something/canon/patterns",
+      "docsPath": "/canon/components/patterns",
+      "tags": [
+        "patterns",
+        "empty-state",
+        "recovery",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.button"
+      ],
+      "contract": {
+        "accessibility": "Empty states must expose the title, explanation, and available next action as text.",
+        "evidence": "State copy should distinguish no data, filtered data, unavailable data, and first-use context.",
+        "motion": "Illustration or entrance motion must be optional and cannot replace the state message.",
+        "extension": "Promote to stable only after empty reason, action, and modality fallback contracts are documented."
+      }
+    },
+    {
+      "id": "component.patterns-first-time-user",
+      "name": "FirstTimeUser",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Onboarding pattern candidate for first-use progress, steps, completion, and dismiss behavior.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/patterns/FirstTimeUser.svelte",
+      "importPath": "@create-something/canon/patterns",
+      "docsPath": "/canon/components/patterns",
+      "tags": [
+        "patterns",
+        "onboarding",
+        "progress",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.button",
+        "component.feedback-alert"
+      ],
+      "contract": {
+        "accessibility": "Onboarding progress, step titles, descriptions, action labels, and dismiss controls must be readable and keyboard reachable.",
+        "evidence": "Onboarding state must preserve step ids, completed ids, progress percentage, action labels, and dismiss status.",
+        "motion": "Progress and completion motion must be optional and cannot hide skipped or incomplete steps.",
+        "extension": "Promote to stable only after onboarding step schema, progress, dismiss, and recovery contracts are documented."
+      }
+    },
+    {
+      "id": "component.patterns-loading-skeleton",
+      "name": "LoadingSkeleton",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Loading skeleton pattern candidate for placeholder content that communicates pending state without fake data.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/patterns/LoadingSkeleton.svelte",
+      "importPath": "@create-something/canon/patterns",
+      "docsPath": "/canon/components/patterns",
+      "tags": [
+        "patterns",
+        "loading",
+        "skeleton",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Loading placeholders must expose busy state and a readable loading label without pretending content exists.",
+        "evidence": "Loading state should preserve expected content type, count, label, and timeout or fallback route when available.",
+        "motion": "Shimmer or pulse treatment must respect reduced-motion preferences.",
+        "extension": "Promote to stable only after placeholder semantics, reduced-motion, and timeout fallback contracts are documented."
+      }
+    },
+    {
+      "id": "component.patterns-loading-overlay",
+      "name": "LoadingOverlay",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Loading overlay pattern candidate for scoped blocking progress with message and busy state.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/patterns/LoadingOverlay.svelte",
+      "importPath": "@create-something/canon/patterns",
+      "docsPath": "/canon/components/patterns",
+      "tags": [
+        "patterns",
+        "loading",
+        "overlay",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.feedback-alert"
+      ],
+      "contract": {
+        "accessibility": "Blocking loading state must expose scope, message, and busy state without trapping users unexpectedly.",
+        "evidence": "Loading state should preserve operation label, scope, blocking reason, and recovery or timeout route.",
+        "motion": "Spinner and blur treatment must be optional and reduced-motion safe.",
+        "extension": "Promote to stable only after blocking scope, busy-state, timeout, and fallback contracts are documented."
+      }
+    },
+    {
+      "id": "component.patterns-inline-error",
+      "name": "InlineError",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Inline error pattern candidate for contextual error, warning, or info messages near affected content.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/patterns/InlineError.svelte",
+      "importPath": "@create-something/canon/patterns",
+      "docsPath": "/canon/components/patterns",
+      "tags": [
+        "patterns",
+        "error",
+        "inline",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.feedback-alert",
+        "component.form-text-field"
+      ],
+      "contract": {
+        "accessibility": "Inline messages must expose severity, message, related field or object, and dismiss action when present.",
+        "evidence": "Error state must preserve message, code, severity, affected id, recovery action, and dismissal status.",
+        "motion": "Error reveal and dismiss motion must be optional and must not remove critical recovery copy.",
+        "extension": "Promote to stable only after severity, field-linking, dismissal, and recovery contracts are documented."
+      }
+    },
+    {
+      "id": "component.patterns-error-boundary",
+      "name": "ErrorBoundary",
+      "kind": "component",
+      "maturity": "candidate",
+      "description": "Error boundary pattern candidate for contained failure state, reset action, and diagnostic disclosure.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/patterns/ErrorBoundary.svelte",
+      "importPath": "@create-something/canon/patterns",
+      "docsPath": "/canon/components/patterns",
+      "tags": [
+        "patterns",
+        "error",
+        "boundary",
+        "candidate"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.clear-error-page",
+        "component.button"
+      ],
+      "contract": {
+        "accessibility": "Boundary fallback must announce failure, preserve the reset route, and keep diagnostic details optional.",
+        "evidence": "Failure state must preserve title, message, error code or stack policy, reset action, and report route.",
+        "motion": "Fallback entry and reset feedback must be optional and must not obscure the failure message.",
+        "extension": "Promote to stable only after failure disclosure, reset, reporting, and diagnostic redaction contracts are documented."
+      }
+    },
+    {
       "id": "component.clear-page-section",
       "name": "ClearPageSection",
       "kind": "component",
