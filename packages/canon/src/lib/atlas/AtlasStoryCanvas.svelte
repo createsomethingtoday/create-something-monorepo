@@ -88,6 +88,7 @@
 	let graph: PublicAtlasGraphArtifact;
 	let story: PublicAtlasStoryArtifact;
 	let storyViewport: Viewport;
+	let selectedChapterId = 'claim';
 
 	$: sourceCanvas = canvas ?? createPublicAtlasCanvas();
 	$: graph = createPublicAtlasGraphArtifact(sourceCanvas);
@@ -95,10 +96,11 @@
 	$: storyDomId = storyId ?? `atlas-story-${toDomIdToken(starterId)}`;
 	$: titleId = `${storyDomId}-title`;
 	$: rendererLabel = graph.renderer.primary === 'atlas' ? 'Atlas' : graph.renderer.primary;
-	$: selectedStoryNodeId =
-		story.chapters.find((chapter) => chapter.focusNodeIds[0])?.focusNodeIds[0] ??
-		sourceCanvas.nodes[0]?.id ??
-		'';
+	$: selectedStoryChapter =
+		story.chapters.find((chapter) => chapter.id === selectedChapterId) ??
+		story.chapters.find((chapter) => chapter.focusNodeIds[0]) ??
+		story.chapters[0];
+	$: selectedStoryNodeId = selectedStoryChapter?.focusNodeIds[0] ?? sourceCanvas.nodes[0]?.id ?? '';
 	$: storyViewport = {
 		x: compact ? -16 : 0,
 		y: compact ? -18 : -8,
@@ -123,6 +125,9 @@
 				selectedNodeId={selectedStoryNodeId}
 				readOnly
 				showControls={false}
+				focusedNodeIds={selectedStoryChapter.focusNodeIds}
+				focusedEdgeIds={selectedStoryChapter.relationshipIds}
+				dimUnfocused
 				initialViewport={storyViewport}
 				minZoom={0.7}
 				maxZoom={1.2}
@@ -141,15 +146,18 @@
 						{@const ledger = ledgerCopyFor(chapter)}
 						<li
 							class={`atlas-story__ledger-row state-${chapter.state}`}
+							class:selected={chapter.id === selectedStoryChapter.id}
 							data-motion-cue={chapter.motionCue}
 							data-state={chapter.state}
 						>
-							<span class="atlas-story__ledger-index">{chapter.sequence}</span>
-							<div class="atlas-story__ledger-copy">
-								<span>{ledger.label}</span>
-								<strong>{ledger.outcome}</strong>
-							</div>
-							<small>{ledger.evidence}</small>
+							<button type="button" onclick={() => (selectedChapterId = chapter.id)}>
+								<span class="atlas-story__ledger-index">{chapter.sequence}</span>
+								<div class="atlas-story__ledger-copy">
+									<span>{ledger.label}</span>
+									<strong>{ledger.outcome}</strong>
+								</div>
+								<small>{ledger.evidence}</small>
+							</button>
 						</li>
 					{/each}
 				</ol>
@@ -164,15 +172,18 @@
 				{#each story.chapters as chapter}
 					<article
 						class={`atlas-story__chapter state-${chapter.state}`}
+						class:selected={chapter.id === selectedStoryChapter.id}
 						data-motion-cue={chapter.motionCue}
 						data-state={chapter.state}
 					>
-						<span>{chapter.sequence}. {chapter.eyebrow}</span>
-						<h4>{chapter.title}</h4>
-						<p>{chapter.body}</p>
-						<footer>
-							<small>{chapter.proofLabel}</small>
-						</footer>
+						<button type="button" onclick={() => (selectedChapterId = chapter.id)}>
+							<span>{chapter.sequence}. {chapter.eyebrow}</span>
+							<h4>{chapter.title}</h4>
+							<p>{chapter.body}</p>
+							<footer>
+								<small>{chapter.proofLabel}</small>
+							</footer>
+						</button>
 					</article>
 				{/each}
 			</aside>
@@ -191,7 +202,7 @@
 	}
 
 	.atlas-story__copy > span,
-	.atlas-story__chapter > span,
+	.atlas-story__chapter button > span,
 	.atlas-story__ledger-copy span,
 	.atlas-story__ledger-summary span,
 	.atlas-story__score span {
@@ -312,6 +323,35 @@
 	.atlas-story__chapter {
 		display: grid;
 		gap: 0.4rem;
+		padding: 0;
+	}
+
+	.atlas-story__chapter button,
+	.atlas-story__ledger-row button {
+		display: grid;
+		width: 100%;
+		border: 0;
+		background: transparent;
+		color: inherit;
+		font: inherit;
+		text-align: left;
+	}
+
+	.atlas-story__chapter button {
+		gap: 0.4rem;
+		padding: 0.8rem;
+	}
+
+	.atlas-story__chapter.selected,
+	.atlas-story__ledger-row.selected {
+		border-color: rgba(10, 14, 25, 0.34);
+		box-shadow: inset 0 0 0 1px rgba(10, 14, 25, 0.08);
+	}
+
+	.atlas-story__chapter button:focus-visible,
+	.atlas-story__ledger-row button:focus-visible {
+		outline: 2px solid rgba(10, 14, 25, 0.62);
+		outline-offset: 2px;
 	}
 
 	.atlas-story__chapter footer {
@@ -384,13 +424,16 @@
 	.atlas-story__ledger-row {
 		position: relative;
 		display: grid;
-		grid-template-columns: auto minmax(0, 1fr);
-		align-items: start;
-		gap: 0.42rem 0.68rem;
 		min-height: 5.15rem;
 		border-left: 1px solid var(--color-clear-border, #e1e1e1);
 		border-top: 1px solid var(--color-clear-border, #e1e1e1);
 		background: #ffffff;
+	}
+
+	.atlas-story__ledger-row button {
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: start;
+		gap: 0.42rem 0.68rem;
 		padding: 0.7rem 0.86rem 0.74rem;
 	}
 

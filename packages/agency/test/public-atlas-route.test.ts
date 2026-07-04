@@ -140,7 +140,7 @@ test('stack route uses a read-only story canvas to explain the boundary', () => 
 test('products route exposes the governance product contract surfaces', () => {
 	assert.ok(productsRoute.includes("from '@create-something/canon/governance'"));
 	assert.ok(productsRoute.includes('listGovernanceProducts'));
-	assert.ok(productsRoute.includes('Atlas connects Signal, Decision, and Proof.'));
+	assert.ok(productsRoute.includes('Atlas maps the workflow.'));
 	assert.ok(productsRoute.includes("href: product.id === 'atlas' ? '/atlas' : `/products/${product.id}`"));
 	assert.equal(productsRoute.includes('<PublicAtlasCanvas'), false);
 });
@@ -169,6 +169,9 @@ test('story canvas uses stable overridable ids instead of fixed DOM ids', () => 
 	assert.ok(canonStoryCanvasComponent.includes('aria-labelledby={titleId}'));
 	assert.ok(canonStoryCanvasComponent.includes('id={titleId}'));
 	assert.ok(canonStoryCanvasComponent.includes('<AtlasFlow'));
+	assert.ok(canonStoryCanvasComponent.includes('focusedNodeIds={selectedStoryChapter.focusNodeIds}'));
+	assert.ok(canonStoryCanvasComponent.includes('focusedEdgeIds={selectedStoryChapter.relationshipIds}'));
+	assert.ok(canonStoryCanvasComponent.includes('dimUnfocused'));
 	assert.ok(canonStoryCanvasComponent.includes('flowId={`${storyDomId}-flow`}'));
 	assert.ok(canonStoryCanvasComponent.includes('readOnly'));
 	assert.ok(canonStoryCanvasComponent.includes('showControls={false}'));
@@ -186,7 +189,17 @@ test('story canvas uses stable overridable ids instead of fixed DOM ids', () => 
 test('editable Atlas flow uses stable overridable ids instead of fixed DOM ids', () => {
 	assert.ok(agencyEditableCanvas.includes("export let flowId = 'public-atlas-flow'"));
 	assert.ok(agencyEditableCanvas.includes('{flowId}'));
+	assert.ok(agencyEditableCanvas.includes('createPublicAtlasFocusGroups'));
+	assert.ok(agencyEditableCanvas.includes('activeFocusId'));
+	assert.ok(agencyEditableCanvas.includes('Focus owner'));
+	assert.ok(agencyEditableCanvas.includes('Focus run'));
+	assert.ok(agencyEditableCanvas.includes('Focus wait'));
+	assert.ok(agencyEditableCanvas.includes('Focus stop'));
+	assert.ok(agencyEditableCanvas.includes('Focus proof'));
 	assert.ok(canonFlowComponent.includes("export let flowId = 'public-atlas-flow'"));
+	assert.ok(canonFlowComponent.includes('export let focusedNodeIds'));
+	assert.ok(canonFlowComponent.includes('export let focusedEdgeIds'));
+	assert.ok(canonFlowComponent.includes('export let dimUnfocused'));
 	assert.ok(canonFlowComponent.includes("from '@xyflow/svelte'"));
 	assert.ok(canonFlowComponent.includes('<SvelteFlow'));
 	assert.ok(canonFlowComponent.includes('id={flowId}'));

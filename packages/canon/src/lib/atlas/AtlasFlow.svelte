@@ -30,6 +30,7 @@
 		notes: string;
 		status: PublicAtlasNodeStatus;
 		statusLabel: string;
+		focusState: 'focused' | 'dimmed' | 'neutral';
 	};
 
 	const KIND_LABELS: Record<PublicAtlasNodeKind, string> = {
@@ -73,6 +74,9 @@
 	export let onSelectNode: (nodeId: string) => void = noopSelectNode;
 	export let readOnly = false;
 	export let showControls = true;
+	export let focusedNodeIds: string[] = [];
+	export let focusedEdgeIds: string[] = [];
+	export let dimUnfocused = false;
 	export let initialViewport: Viewport = {
 		x: 0,
 		y: 0,
@@ -82,8 +86,12 @@
 	export let maxZoom = 1.45;
 
 	$: counts = `${canvas.nodes.length} nodes / ${canvas.edges.length} edges`;
+	$: focusedNodeSet = new Set(focusedNodeIds);
+	$: focusedEdgeSet = new Set(focusedEdgeIds);
+	$: hasFocus = dimUnfocused && (focusedNodeSet.size > 0 || focusedEdgeSet.size > 0);
 	$: flowNodes = layoutPublicAtlasNodes(canvas.nodes).map((node) => {
 		const width = publicAtlasNodeWidth(node);
+		const isFocused = focusedNodeSet.has(node.id);
 		return {
 			id: node.id,
 			type: 'atlas',
@@ -102,28 +110,34 @@
 				owner: node.owner || node.createdBy,
 				notes: node.notes || 'Describe the boundary, handoff, evidence, or next decision.',
 				status: node.status,
-				statusLabel: STATUS_LABELS[node.status]
+				statusLabel: STATUS_LABELS[node.status],
+				focusState: !hasFocus ? 'neutral' : isFocused ? 'focused' : 'dimmed'
 			}
 		} satisfies Node<AtlasFlowNodeData, 'atlas'>;
 	});
-	$: flowEdges = canvas.edges.map((edge) => ({
-		id: edge.id,
-		source: edge.source,
-		target: edge.target,
-		label: edge.label,
-		type: 'smoothstep',
-		focusable: true,
-		ariaRole: 'group',
-		markerEnd: {
-			type: MarkerType.ArrowClosed,
-			width: 16,
-			height: 16,
-			color: '#9f9b90'
-		},
-		style: 'stroke: #9f9b90; stroke-width: 1.35;',
-		labelStyle:
-			'fill: #6f6f67; font-size: 11px; font-weight: 600; paint-order: stroke; stroke: #fbfbf8; stroke-width: 7px;'
-	})) satisfies Edge[];
+	$: flowEdges = canvas.edges.map((edge) => {
+		const nodeFocused = focusedNodeSet.has(edge.source) || focusedNodeSet.has(edge.target);
+		const edgeFocused = focusedEdgeSet.has(edge.id) || nodeFocused;
+		const opacity = hasFocus && !edgeFocused ? 0.18 : 1;
+		const color = hasFocus && edgeFocused ? '#0a0e19' : '#9f9b90';
+		return {
+			id: edge.id,
+			source: edge.source,
+			target: edge.target,
+			label: edge.label,
+			type: 'smoothstep',
+			focusable: true,
+			ariaRole: 'group',
+			markerEnd: {
+				type: MarkerType.ArrowClosed,
+				width: 16,
+				height: 16,
+				color
+			},
+			style: `stroke: ${color}; stroke-width: ${edgeFocused ? 1.8 : 1.35}; opacity: ${opacity};`,
+			labelStyle: `fill: #6f6f67; font-size: 11px; font-weight: 600; paint-order: stroke; stroke: #fbfbf8; stroke-width: 7px; opacity: ${opacity};`
+		};
+	}) satisfies Edge[];
 
 	function handleNodeClick({ node }: { node: Node<AtlasFlowNodeData, 'atlas'> }) {
 		onSelectNode(node.id);

@@ -6,11 +6,13 @@
 		computePublicAtlasReadiness,
 		createPublicAtlasCanvas,
 		createPublicAtlasEdge,
+		createPublicAtlasFocusGroups,
 		createPublicAtlasNode,
 		normalizePublicAtlasCanvas,
 		PUBLIC_ATLAS_LANES,
 		summarizePublicAtlasCanvas,
 		type PublicAtlasCanvas,
+		type PublicAtlasFocusGroupId,
 		type PublicAtlasNode,
 		type PublicAtlasNodeKind,
 		type PublicAtlasNodeStatus,
@@ -61,6 +63,7 @@
 	let starterState = '';
 	let hydrated = false;
 	let addMenuOpen = false;
+	let activeFocusId: PublicAtlasFocusGroupId = 'owner';
 	let agentSuggestions = ['Name the owner', 'Find the approval point', 'Mark the riskiest handoff'];
 	let usage: AgentResponse['usage'] = {
 		tier: 'anonymous',
@@ -83,6 +86,13 @@
 		{ label: 'Approval', text: 'The approval point is...' },
 		{ label: 'Risk', text: 'The riskiest handoff is...' }
 	];
+	const focusControlLabels: Record<PublicAtlasFocusGroupId, string> = {
+		owner: 'Focus owner',
+		run: 'Focus run',
+		wait: 'Focus wait',
+		stop: 'Focus stop',
+		proof: 'Focus proof'
+	};
 
 	function initialUsage(tier: AgentResponse['usage']['tier']): AgentResponse['usage'] {
 		const limits = PUBLIC_ATLAS_LIMITS[tier];
@@ -111,6 +121,10 @@
 			mapped: count > 0
 		};
 	});
+	$: focusGroups = createPublicAtlasFocusGroups(canvas);
+	$: activeFocusGroup = focusGroups.find((group) => group.id === activeFocusId) ?? focusGroups[0];
+	$: activeFocusNodeIds = activeFocusGroup?.nodeIds ?? [];
+	$: activeFocusEdgeIds = activeFocusGroup?.edgeIds ?? [];
 	$: bookingUrl = buildBookingUrl();
 	$: mappedPercent = Math.round((selectedDimensionCount / PUBLIC_ATLAS_LANES.length) * 100);
 	$: leadTierLabel = usage.tier === 'warmLead' ? 'Warm lead' : 'Anonymous map';
@@ -183,6 +197,7 @@
 			'Add the stop condition',
 			'Show where proof should land'
 		];
+		activeFocusId = 'owner';
 		copyState = '';
 		starterState = starter ? `${starter.name} loaded` : 'Starter loaded';
 		saveState = 'Starter loaded';
@@ -334,6 +349,7 @@
 		saveState = 'Draft cleared';
 		starterState = '';
 		addMenuOpen = false;
+		activeFocusId = 'owner';
 		agentSuggestions = ['Name the owner', 'Find the approval point', 'Mark the riskiest handoff'];
 	}
 
@@ -419,11 +435,30 @@
 					</div>
 				</div>
 
+				<div class="focus-strip" aria-label="Atlas focus mode">
+					{#each focusGroups as group}
+						<button
+							type="button"
+							class:active={group.id === activeFocusId}
+							aria-pressed={group.id === activeFocusId}
+							aria-label={focusControlLabels[group.id]}
+							title={group.description}
+							onclick={() => (activeFocusId = group.id)}
+						>
+							<span>{focusControlLabels[group.id]}</span>
+							<strong>{group.nodeIds.length}</strong>
+						</button>
+					{/each}
+				</div>
+
 				<div class="atlas-flow-viewport" aria-label="Atlas flow canvas">
 					<PublicAtlasFlow
 						{canvas}
 						{flowId}
 						{selectedNodeId}
+						focusedNodeIds={activeFocusNodeIds}
+						focusedEdgeIds={activeFocusEdgeIds}
+						dimUnfocused
 						onMoveNode={moveNode}
 						onSelectNode={selectNode}
 					/>
@@ -687,6 +722,7 @@
 	.add-node-options button,
 	.agent-form button,
 	.agent-suggestions button,
+	.focus-strip button,
 	.prompt-row button,
 	.starter-grid button,
 	.summary-actions button,
@@ -897,6 +933,53 @@
 	.add-node-options button:hover,
 	.add-node-trigger:hover {
 		background: var(--color-clear-porcelain-soft, #f2f2f2);
+	}
+
+	.focus-strip {
+		display: grid;
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+		gap: 0.45rem;
+		padding: 0.75rem 0.95rem;
+		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+		background: var(--color-clear-panel, #ffffff);
+	}
+
+	.focus-strip button {
+		display: flex;
+		min-width: 0;
+		min-height: 2.35rem;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.45rem;
+		padding: 0.5rem 0.58rem;
+	}
+
+	.focus-strip button.active {
+		border-color: rgba(10, 14, 25, 0.42);
+		background: var(--color-clear-onyx, #0a0e19);
+		color: #ffffff;
+	}
+
+	.focus-strip button span {
+		overflow: hidden;
+		font-size: 0.76rem;
+		font-weight: 800;
+		line-height: 1;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.focus-strip button strong {
+		display: inline-grid;
+		min-width: 1.28rem;
+		height: 1.28rem;
+		align-items: center;
+		justify-items: center;
+		border-radius: 999px;
+		background: var(--color-clear-porcelain, #f9f9f9);
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 0.7rem;
+		line-height: 1;
 	}
 
 	.atlas-flow-viewport {
@@ -1264,6 +1347,10 @@
 		.atlas-side {
 			position: static;
 		}
+
+		.focus-strip {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
 	}
 
 	@media (max-width: 720px) {
@@ -1278,6 +1365,10 @@
 
 		.field-pair {
 			grid-template-columns: 1fr;
+		}
+
+		.focus-strip {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 
 		.add-node-menu {
