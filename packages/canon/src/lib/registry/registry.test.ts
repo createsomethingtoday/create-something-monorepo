@@ -538,6 +538,98 @@ describe('Canon registry manifest', () => {
 		);
 	});
 
+	it('adds composition patterns as candidates aligned to stable primitives', () => {
+		const patternCandidates = [
+			{
+				id: 'component.patterns-form-layout',
+				exportName: 'FormLayout',
+				tag: 'layout',
+				dependencies: ['component.form-text-field', 'component.clear-action-footer']
+			},
+			{
+				id: 'component.patterns-form-validation',
+				exportName: 'FormValidation',
+				tag: 'validation',
+				dependencies: ['component.form-text-field', 'component.feedback-alert']
+			},
+			{
+				id: 'component.patterns-multi-step-form',
+				exportName: 'MultiStepForm',
+				tag: 'multi-step',
+				dependencies: ['component.form-text-field', 'component.clear-action-footer']
+			},
+			{
+				id: 'component.patterns-empty-state',
+				exportName: 'EmptyState',
+				tag: 'empty-state',
+				dependencies: ['component.button']
+			},
+			{
+				id: 'component.patterns-first-time-user',
+				exportName: 'FirstTimeUser',
+				tag: 'onboarding',
+				dependencies: ['component.button', 'component.feedback-alert']
+			},
+			{
+				id: 'component.patterns-loading-skeleton',
+				exportName: 'LoadingSkeleton',
+				tag: 'skeleton',
+				dependencies: []
+			},
+			{
+				id: 'component.patterns-loading-overlay',
+				exportName: 'LoadingOverlay',
+				tag: 'overlay',
+				dependencies: ['component.feedback-alert']
+			},
+			{
+				id: 'component.patterns-inline-error',
+				exportName: 'InlineError',
+				tag: 'inline',
+				dependencies: ['component.feedback-alert', 'component.form-text-field']
+			},
+			{
+				id: 'component.patterns-error-boundary',
+				exportName: 'ErrorBoundary',
+				tag: 'boundary',
+				dependencies: ['component.clear-error-page', 'component.button']
+			}
+		] as const;
+
+		for (const candidate of patternCandidates) {
+			const item = getCanonRegistryItem(candidate.id);
+			const classification = getCanonPublicExportClassification('./patterns', candidate.exportName);
+
+			expect(
+				candidateRegistryItemIdsForPublicExport('./patterns', candidate.exportName),
+				candidate.exportName
+			).toContain(candidate.id);
+			expect(item?.kind, candidate.id).toBe('component');
+			expect(item?.maturity, candidate.id).toBe('candidate');
+			expect(item?.sourcePath, candidate.id).toBe(
+				`packages/canon/src/lib/patterns/${candidate.exportName}.svelte`
+			);
+			expect(item?.importPath, candidate.id).toBe('@create-something/canon/patterns');
+			expect(item?.docsPath, candidate.id).toBe('/canon/components/patterns');
+			expect(item?.tags, candidate.id).toContain('patterns');
+			expect(item?.tags, candidate.id).toContain(candidate.tag);
+			expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+			for (const dependency of candidate.dependencies) {
+				expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
+			}
+			expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+			expect(item?.contract.accessibility, candidate.id).toBeTruthy();
+			expect(item?.contract.evidence, candidate.id).toBeTruthy();
+			expect(item?.contract.motion, candidate.id).toBeTruthy();
+			expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+			expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
+		}
+
+		expect(searchCanonRegistry('pattern candidate', { maturity: 'candidate' }).map((item) => item.id)).toEqual(
+			expect.arrayContaining(patternCandidates.map(({ id }) => id))
+		);
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();
