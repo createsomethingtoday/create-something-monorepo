@@ -49,6 +49,7 @@ Content from all CREATE SOMETHING properties.
 | `canon_template_get` | Get a Canon template by id or modality for web/chat/app/voice/glasses surfaces, including overlay template packs. |
 | `canon_extension_route` | Route a project/client Canon extension intake packet to project-local, candidate, stable-reuse, or deprecation guidance. |
 | `canon_overlay_review` | Review a project/client Canon overlay manifest for theme, tokens, templates, copy rules, surface policy, registry metadata, and extension-intake gaps. |
+| `canon_overlay_instantiate_preview` | Preview a Canon project/client overlay instantiation plan, generated manifest, and optional eight-file contents without writing files. |
 
 ## Prompts (Judgment Tier)
 

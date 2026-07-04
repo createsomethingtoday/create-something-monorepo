@@ -6,6 +6,10 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { search, findRelated } from './search.js';
+import {
+  createCanonOverlayInstantiatePreview,
+  renderCanonOverlayInstantiatePreview
+} from './canon-overlay-preview.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import type {
   CanonExtensionIntakePacket,
@@ -893,6 +897,52 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonProjectOverlayReview(manifest, review),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_overlay_instantiate_preview',
+    'Preview Canon project/client overlay instantiation without writing files. Use this to inspect the generated manifest, review status, and eight-file overlay plan before running the local Canon CLI.',
+    {
+      id: z.string().describe('Stable overlay id, for example overlay.client-workflow-system'),
+      name: z.string().describe('Human-readable overlay name'),
+      owner: z.string().describe('Owner responsible for overlay evidence and local policy'),
+      sourcePackage: z.string().describe('Source package or project that owns this overlay'),
+      outputRoot: z.string().describe('Target overlay output root for the planned files, for example packages/client/src/canon/overlay'),
+      targetModalities: z.array(z.enum(CANON_REGISTRY_MODALITY_VALUES)).min(1).optional()
+        .describe('Modalities this overlay targets. Defaults to web, chat, app, voice, and glasses.'),
+      tags: z.array(z.string()).optional().describe('Optional overlay tags'),
+      includeContent: z.boolean().optional().describe('Include generated file contents in the preview response')
+    },
+    async ({
+      id,
+      name,
+      owner,
+      sourcePackage,
+      outputRoot,
+      targetModalities,
+      tags,
+      includeContent
+    }) => {
+      const preview = createCanonOverlayInstantiatePreview({
+        id,
+        name,
+        owner,
+        sourcePackage,
+        outputRoot,
+        targetModalities,
+        tags,
+        includeContent: includeContent ?? false
+      });
+      const review = reviewCanonProjectOverlay(preview.manifest);
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonOverlayInstantiatePreview(preview, review, includeContent ?? false),
           ...USER_VISIBLE,
         }]
       };
