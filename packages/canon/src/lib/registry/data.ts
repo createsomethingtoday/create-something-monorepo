@@ -1,4 +1,39 @@
-import type { CanonRegistryManifest } from './schema.js';
+import type {
+	CanonRegistryItem,
+	CanonRegistryManifest,
+	CanonRegistryModality
+} from './schema.js';
+
+type FoundationControlGroup = 'form' | 'feedback' | 'navigation';
+
+type FoundationControlDefinition = {
+	id: string;
+	name: string;
+	group: FoundationControlGroup;
+	description: string;
+	tags: string[];
+	modalities: CanonRegistryModality[];
+	dependencies?: string[];
+	contract: CanonRegistryItem['contract'];
+};
+
+function createFoundationControlItem(definition: FoundationControlDefinition): CanonRegistryItem {
+	return {
+		id: definition.id,
+		name: definition.name,
+		kind: 'component',
+		maturity: 'stable',
+		description: definition.description,
+		ownerPackage: '@create-something/canon',
+		sourcePath: `packages/canon/src/lib/components/${definition.group}/${definition.name}.svelte`,
+		importPath: '@create-something/canon',
+		docsPath: `/canon/components/${definition.group}`,
+		tags: [definition.group, ...definition.tags],
+		modalities: definition.modalities,
+		dependencies: definition.dependencies ?? ['token.canon-core'],
+		contract: definition.contract
+	};
+}
 
 const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 	{
@@ -366,6 +401,274 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 	}
 ];
 
+const FOUNDATION_CONTROL_ITEMS: CanonRegistryManifest['items'] = [
+	createFoundationControlItem({
+		id: 'component.form-text-field',
+		name: 'TextField',
+		group: 'form',
+		description: 'Labeled single-line text input with description, error, and size variants.',
+		tags: ['input', 'text', 'control'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility:
+				'Text inputs need visible labels, described-by help or error text, and keyboard focus.',
+			extension: 'Use form control variants before creating local text input wrappers.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.form-text-area',
+		name: 'TextArea',
+		group: 'form',
+		description: 'Labeled multi-line text input for longer user-entered content.',
+		tags: ['input', 'textarea', 'control'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility:
+				'Text areas need visible labels, described-by help or error text, and keyboard focus.',
+			extension: 'Use when the user must provide prose, notes, or longer structured input.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.form-checkbox',
+		name: 'Checkbox',
+		group: 'form',
+		description: 'Binary option control for explicit opt-in, selection, and setting toggles.',
+		tags: ['input', 'selection', 'binary'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Checkbox state must be programmatically exposed and not depend on color alone.',
+			extension: 'Use for independent binary choices before creating local toggle markup.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.form-checkbox-group',
+		name: 'CheckboxGroup',
+		group: 'form',
+		description: 'Grouped checkbox options with shared label, description, and error treatment.',
+		tags: ['input', 'selection', 'group'],
+		modalities: ['web', 'app'],
+		dependencies: ['token.canon-core', 'component.form-checkbox'],
+		contract: {
+			accessibility:
+				'Grouped checkboxes need a group label and clear relationship between options and errors.',
+			extension: 'Use for multi-select option sets before creating local fieldset wrappers.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.form-radio',
+		name: 'Radio',
+		group: 'form',
+		description: 'Single option control for mutually exclusive selections inside a radio group.',
+		tags: ['input', 'selection', 'single-choice'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Radio state and label must be programmatically exposed for keyboard users.',
+			extension: 'Use inside RadioGroup for mutually exclusive choices.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.form-radio-group',
+		name: 'RadioGroup',
+		group: 'form',
+		description: 'Grouped mutually exclusive options with shared label and validation treatment.',
+		tags: ['input', 'selection', 'group'],
+		modalities: ['web', 'app'],
+		dependencies: ['token.canon-core', 'component.form-radio'],
+		contract: {
+			accessibility:
+				'Radio groups need one selected value, keyboard navigation, and a visible group label.',
+			extension: 'Use for single-choice option sets before creating local segmented inputs.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.form-select',
+		name: 'Select',
+		group: 'form',
+		description: 'Labeled option menu for compact single-value selection.',
+		tags: ['input', 'menu', 'selection'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Select controls need a visible label, valid option text, and error messaging.',
+			extension: 'Use for known option sets before creating local dropdown form controls.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.form-switch',
+		name: 'Switch',
+		group: 'form',
+		description: 'Immediate on/off setting control with explicit checked state.',
+		tags: ['input', 'toggle', 'setting'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Switches need readable labels and state exposed as checked or unchecked.',
+			extension: 'Use for settings that take effect as on/off choices.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.feedback-alert',
+		name: 'Alert',
+		group: 'feedback',
+		description: 'Inline status message for success, warning, error, and informational states.',
+		tags: ['status', 'message', 'notice'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		contract: {
+			accessibility: 'Alert severity and message must be available in text, not only color.',
+			evidence: 'Operational alerts should name the affected object, owner, or recovery route.',
+			extension: 'Use alerts for bounded status messages before creating local notice components.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.feedback-toast',
+		name: 'Toast',
+		group: 'feedback',
+		description: 'Temporary status notification for completion, recovery, and lightweight feedback.',
+		tags: ['status', 'notification', 'message'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility:
+				'Toast content must not be the only place critical information or recovery actions appear.',
+			extension: 'Use for transient confirmations; durable decisions need a persistent surface.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.feedback-dialog',
+		name: 'Dialog',
+		group: 'feedback',
+		description: 'Focused modal surface for confirmation, interruption, and bounded decisions.',
+		tags: ['modal', 'decision', 'focus'],
+		modalities: ['web', 'app'],
+		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		contract: {
+			accessibility: 'Dialogs must trap focus, expose a title, and provide keyboard dismissal rules.',
+			evidence: 'Decision dialogs should name consequence, owner, or rollback path when relevant.',
+			extension: 'Use for focused interruptions before inventing local modal shells.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.feedback-progress',
+		name: 'Progress',
+		group: 'feedback',
+		description: 'Progress indicator for determinate or indeterminate operation state.',
+		tags: ['status', 'loading', 'progress'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		contract: {
+			accessibility: 'Progress state needs text or semantic value when the operation is meaningful.',
+			evidence: 'Long-running operations should expose the active step or receipt path.',
+			extension: 'Use for operation state before creating local loading bars.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.feedback-spinner',
+		name: 'Spinner',
+		group: 'feedback',
+		description: 'Compact indeterminate loading indicator for short waits and inline operations.',
+		tags: ['status', 'loading', 'pending'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Spinners need an accessible label when they communicate active work.',
+			extension: 'Use only for short waits; provide durable state for longer operations.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.feedback-skeleton',
+		name: 'Skeleton',
+		group: 'feedback',
+		description: 'Placeholder loading surface that preserves layout while content resolves.',
+		tags: ['status', 'loading', 'placeholder'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Skeletons must not be announced as real content.',
+			extension: 'Use to preserve layout during loading before creating local placeholder blocks.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.navigation-breadcrumbs',
+		name: 'Breadcrumbs',
+		group: 'navigation',
+		description: 'Hierarchical wayfinding trail for nested routes and content locations.',
+		tags: ['wayfinding', 'route', 'hierarchy'],
+		modalities: ['web', 'app', 'chat'],
+		contract: {
+			accessibility: 'Breadcrumbs need ordered links with a clear current location.',
+			extension: 'Use for nested route context before creating local crumb trails.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.navigation-tabs',
+		name: 'Tabs',
+		group: 'navigation',
+		description: 'Tabbed view switcher for related panels within one workflow context.',
+		tags: ['wayfinding', 'views', 'panels'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Tabs need keyboard navigation, selected state, and associated panels.',
+			extension: 'Use for peer views before creating local segmented navigation.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.navigation-pagination',
+		name: 'Pagination',
+		group: 'navigation',
+		description: 'Paged-list navigation for long result sets and ordered collections.',
+		tags: ['wayfinding', 'pages', 'collection'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Pagination needs descriptive labels and current page state.',
+			extension: 'Use for ordered collections before creating local page controls.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.navigation-tooltip',
+		name: 'Tooltip',
+		group: 'navigation',
+		description: 'Short contextual label or help text for compact controls.',
+		tags: ['help', 'context', 'label'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility:
+				'Tooltips must not contain critical information unavailable through visible text or labels.',
+			extension: 'Use for supplemental hints, not primary instructions.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.navigation-popover',
+		name: 'Popover',
+		group: 'navigation',
+		description: 'Anchored contextual surface for compact controls, filters, and secondary content.',
+		tags: ['overlay', 'context', 'surface'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Popovers need focus management and clear trigger relationships.',
+			extension: 'Use for anchored contextual content before creating local floating panels.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.navigation-dropdown-menu',
+		name: 'DropdownMenu',
+		group: 'navigation',
+		description: 'Menu surface for grouped commands, options, and secondary routes.',
+		tags: ['menu', 'commands', 'options'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Menus need keyboard navigation, roles, and explicit item labels.',
+			extension: 'Use for compact command sets before creating local action menus.'
+		}
+	}),
+	createFoundationControlItem({
+		id: 'component.navigation-drawer',
+		name: 'Drawer',
+		group: 'navigation',
+		description: 'Edge-attached panel for navigation, filters, or secondary workflow content.',
+		tags: ['overlay', 'panel', 'mobile'],
+		modalities: ['web', 'app'],
+		contract: {
+			accessibility: 'Drawers need focus management, close controls, and clear title context.',
+			extension: 'Use for secondary workflow surfaces before creating local side panels.'
+		}
+	})
+];
+
 export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 	schemaVersion: 1,
 	id: 'canon-registry',
@@ -485,6 +788,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 			}
 		},
 		...CLEAR_PRIMITIVE_ITEMS,
+		...FOUNDATION_CONTROL_ITEMS,
 		{
 			id: 'adapter.atlas-graph-artifact',
 			name: 'Atlas Graph Artifact',

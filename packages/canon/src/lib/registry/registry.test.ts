@@ -55,6 +55,49 @@ function clearComponentIdForExport(exportName: string) {
 		.toLowerCase()}`;
 }
 
+function prefixedComponentIdForExport(idPrefix: string, exportName: string) {
+	return `component.${idPrefix}-${exportName
+		.replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+		.toLowerCase()}`;
+}
+
+function publicDefaultExports(relativeIndexPath: string) {
+	const source = readFileSync(join(repoRoot, relativeIndexPath), 'utf-8');
+	return [...source.matchAll(/default as ([A-Za-z0-9]+)/g)].map((match) => match[1]);
+}
+
+function expectPublicComponentBarrelCovered(options: {
+	componentDir: 'form' | 'feedback' | 'navigation';
+	idPrefix: string;
+	docsPath: string;
+	tag: string;
+}) {
+	const exportNames = publicDefaultExports(
+		`packages/canon/src/lib/components/${options.componentDir}/index.ts`
+	);
+	const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
+
+	expect(exportNames.length).toBeGreaterThan(0);
+	expect(new Set(exportNames).size).toBe(exportNames.length);
+
+	for (const exportName of exportNames) {
+		const id = prefixedComponentIdForExport(options.idPrefix, exportName);
+
+		expect(registryIds.has(id), id).toBe(true);
+		const item = getCanonRegistryItem(id);
+
+		expect(item?.kind, id).toBe('component');
+		expect(item?.maturity, id).toBe('stable');
+		expect(item?.sourcePath, id).toBe(
+			`packages/canon/src/lib/components/${options.componentDir}/${exportName}.svelte`
+		);
+		expect(item?.importPath, id).toBe('@create-something/canon');
+		expect(item?.docsPath, id).toBe(options.docsPath);
+		expect(item?.tags, id).toContain(options.tag);
+		expect(item?.dependencies, id).toContain('token.canon-core');
+	}
+}
+
 describe('Canon registry manifest', () => {
 	it('covers every required product modality', () => {
 		expect(listCanonRegistryModalities()).toEqual(['web', 'chat', 'app', 'voice', 'glasses']);
@@ -132,6 +175,27 @@ describe('Canon registry manifest', () => {
 			expect(item?.docsPath, id).toBe('/canon/components/clear');
 			expect(item?.tags, id).toContain('clear');
 		}
+	});
+
+	it('covers every public foundation control primitive in the registry', () => {
+		expectPublicComponentBarrelCovered({
+			componentDir: 'form',
+			idPrefix: 'form',
+			docsPath: '/canon/components/form',
+			tag: 'form'
+		});
+		expectPublicComponentBarrelCovered({
+			componentDir: 'feedback',
+			idPrefix: 'feedback',
+			docsPath: '/canon/components/feedback',
+			tag: 'feedback'
+		});
+		expectPublicComponentBarrelCovered({
+			componentDir: 'navigation',
+			idPrefix: 'navigation',
+			docsPath: '/canon/components/navigation',
+			tag: 'navigation'
+		});
 	});
 
 	it('exposes ClearDecisionPanel as the shared decision surface', () => {

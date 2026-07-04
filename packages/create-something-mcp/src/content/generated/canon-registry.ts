@@ -745,6 +745,608 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.form-text-field",
+      "name": "TextField",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Labeled single-line text input with description, error, and size variants.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/form/TextField.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/form",
+      "tags": [
+        "form",
+        "input",
+        "text",
+        "control"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Text inputs need visible labels, described-by help or error text, and keyboard focus.",
+        "extension": "Use form control variants before creating local text input wrappers."
+      }
+    },
+    {
+      "id": "component.form-text-area",
+      "name": "TextArea",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Labeled multi-line text input for longer user-entered content.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/form/TextArea.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/form",
+      "tags": [
+        "form",
+        "input",
+        "textarea",
+        "control"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Text areas need visible labels, described-by help or error text, and keyboard focus.",
+        "extension": "Use when the user must provide prose, notes, or longer structured input."
+      }
+    },
+    {
+      "id": "component.form-checkbox",
+      "name": "Checkbox",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Binary option control for explicit opt-in, selection, and setting toggles.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/form/Checkbox.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/form",
+      "tags": [
+        "form",
+        "input",
+        "selection",
+        "binary"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Checkbox state must be programmatically exposed and not depend on color alone.",
+        "extension": "Use for independent binary choices before creating local toggle markup."
+      }
+    },
+    {
+      "id": "component.form-checkbox-group",
+      "name": "CheckboxGroup",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Grouped checkbox options with shared label, description, and error treatment.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/form/CheckboxGroup.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/form",
+      "tags": [
+        "form",
+        "input",
+        "selection",
+        "group"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.form-checkbox"
+      ],
+      "contract": {
+        "accessibility": "Grouped checkboxes need a group label and clear relationship between options and errors.",
+        "extension": "Use for multi-select option sets before creating local fieldset wrappers."
+      }
+    },
+    {
+      "id": "component.form-radio",
+      "name": "Radio",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Single option control for mutually exclusive selections inside a radio group.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/form/Radio.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/form",
+      "tags": [
+        "form",
+        "input",
+        "selection",
+        "single-choice"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Radio state and label must be programmatically exposed for keyboard users.",
+        "extension": "Use inside RadioGroup for mutually exclusive choices."
+      }
+    },
+    {
+      "id": "component.form-radio-group",
+      "name": "RadioGroup",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Grouped mutually exclusive options with shared label and validation treatment.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/form/RadioGroup.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/form",
+      "tags": [
+        "form",
+        "input",
+        "selection",
+        "group"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "component.form-radio"
+      ],
+      "contract": {
+        "accessibility": "Radio groups need one selected value, keyboard navigation, and a visible group label.",
+        "extension": "Use for single-choice option sets before creating local segmented inputs."
+      }
+    },
+    {
+      "id": "component.form-select",
+      "name": "Select",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Labeled option menu for compact single-value selection.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/form/Select.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/form",
+      "tags": [
+        "form",
+        "input",
+        "menu",
+        "selection"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Select controls need a visible label, valid option text, and error messaging.",
+        "extension": "Use for known option sets before creating local dropdown form controls."
+      }
+    },
+    {
+      "id": "component.form-switch",
+      "name": "Switch",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Immediate on/off setting control with explicit checked state.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/form/Switch.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/form",
+      "tags": [
+        "form",
+        "input",
+        "toggle",
+        "setting"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Switches need readable labels and state exposed as checked or unchecked.",
+        "extension": "Use for settings that take effect as on/off choices."
+      }
+    },
+    {
+      "id": "component.feedback-alert",
+      "name": "Alert",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Inline status message for success, warning, error, and informational states.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/feedback/Alert.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/feedback",
+      "tags": [
+        "feedback",
+        "status",
+        "message",
+        "notice"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Alert severity and message must be available in text, not only color.",
+        "evidence": "Operational alerts should name the affected object, owner, or recovery route.",
+        "extension": "Use alerts for bounded status messages before creating local notice components."
+      }
+    },
+    {
+      "id": "component.feedback-toast",
+      "name": "Toast",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Temporary status notification for completion, recovery, and lightweight feedback.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/feedback/Toast.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/feedback",
+      "tags": [
+        "feedback",
+        "status",
+        "notification",
+        "message"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Toast content must not be the only place critical information or recovery actions appear.",
+        "extension": "Use for transient confirmations; durable decisions need a persistent surface."
+      }
+    },
+    {
+      "id": "component.feedback-dialog",
+      "name": "Dialog",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Focused modal surface for confirmation, interruption, and bounded decisions.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/feedback/Dialog.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/feedback",
+      "tags": [
+        "feedback",
+        "modal",
+        "decision",
+        "focus"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Dialogs must trap focus, expose a title, and provide keyboard dismissal rules.",
+        "evidence": "Decision dialogs should name consequence, owner, or rollback path when relevant.",
+        "extension": "Use for focused interruptions before inventing local modal shells."
+      }
+    },
+    {
+      "id": "component.feedback-progress",
+      "name": "Progress",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Progress indicator for determinate or indeterminate operation state.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/feedback/Progress.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/feedback",
+      "tags": [
+        "feedback",
+        "status",
+        "loading",
+        "progress"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Progress state needs text or semantic value when the operation is meaningful.",
+        "evidence": "Long-running operations should expose the active step or receipt path.",
+        "extension": "Use for operation state before creating local loading bars."
+      }
+    },
+    {
+      "id": "component.feedback-spinner",
+      "name": "Spinner",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Compact indeterminate loading indicator for short waits and inline operations.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/feedback/Spinner.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/feedback",
+      "tags": [
+        "feedback",
+        "status",
+        "loading",
+        "pending"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Spinners need an accessible label when they communicate active work.",
+        "extension": "Use only for short waits; provide durable state for longer operations."
+      }
+    },
+    {
+      "id": "component.feedback-skeleton",
+      "name": "Skeleton",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Placeholder loading surface that preserves layout while content resolves.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/feedback/Skeleton.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/feedback",
+      "tags": [
+        "feedback",
+        "status",
+        "loading",
+        "placeholder"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Skeletons must not be announced as real content.",
+        "extension": "Use to preserve layout during loading before creating local placeholder blocks."
+      }
+    },
+    {
+      "id": "component.navigation-breadcrumbs",
+      "name": "Breadcrumbs",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Hierarchical wayfinding trail for nested routes and content locations.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/navigation/Breadcrumbs.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "wayfinding",
+        "route",
+        "hierarchy"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Breadcrumbs need ordered links with a clear current location.",
+        "extension": "Use for nested route context before creating local crumb trails."
+      }
+    },
+    {
+      "id": "component.navigation-tabs",
+      "name": "Tabs",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Tabbed view switcher for related panels within one workflow context.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/navigation/Tabs.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "wayfinding",
+        "views",
+        "panels"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Tabs need keyboard navigation, selected state, and associated panels.",
+        "extension": "Use for peer views before creating local segmented navigation."
+      }
+    },
+    {
+      "id": "component.navigation-pagination",
+      "name": "Pagination",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Paged-list navigation for long result sets and ordered collections.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/navigation/Pagination.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "wayfinding",
+        "pages",
+        "collection"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Pagination needs descriptive labels and current page state.",
+        "extension": "Use for ordered collections before creating local page controls."
+      }
+    },
+    {
+      "id": "component.navigation-tooltip",
+      "name": "Tooltip",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Short contextual label or help text for compact controls.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/navigation/Tooltip.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "help",
+        "context",
+        "label"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Tooltips must not contain critical information unavailable through visible text or labels.",
+        "extension": "Use for supplemental hints, not primary instructions."
+      }
+    },
+    {
+      "id": "component.navigation-popover",
+      "name": "Popover",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Anchored contextual surface for compact controls, filters, and secondary content.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/navigation/Popover.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "overlay",
+        "context",
+        "surface"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Popovers need focus management and clear trigger relationships.",
+        "extension": "Use for anchored contextual content before creating local floating panels."
+      }
+    },
+    {
+      "id": "component.navigation-dropdown-menu",
+      "name": "DropdownMenu",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Menu surface for grouped commands, options, and secondary routes.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/navigation/DropdownMenu.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "menu",
+        "commands",
+        "options"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Menus need keyboard navigation, roles, and explicit item labels.",
+        "extension": "Use for compact command sets before creating local action menus."
+      }
+    },
+    {
+      "id": "component.navigation-drawer",
+      "name": "Drawer",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Edge-attached panel for navigation, filters, or secondary workflow content.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/navigation/Drawer.svelte",
+      "importPath": "@create-something/canon",
+      "docsPath": "/canon/components/navigation",
+      "tags": [
+        "navigation",
+        "overlay",
+        "panel",
+        "mobile"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Drawers need focus management, close controls, and clear title context.",
+        "extension": "Use for secondary workflow surfaces before creating local side panels."
+      }
+    },
+    {
       "id": "adapter.atlas-graph-artifact",
       "name": "Atlas Graph Artifact",
       "kind": "adapter",
