@@ -10,12 +10,15 @@
   />
 </svelte:head>
 
-<div class="max-w-4xl mx-auto px-6 py-12">
-  <h1 class="page-title">Operator Workflow Paths</h1>
-  <p class="page-subtitle">
-    Use the Codex app to create your first MCP-backed workflow, then use Canon to make the workflow
-    visible through maps, boundaries, gates, receipts, and handoff artifacts.
-  </p>
+<div class="paths-shell">
+  <header class="paths-hero">
+    <p class="paths-kicker">Operator learning</p>
+    <h1 class="page-title">Operator Workflow Paths</h1>
+    <p class="page-subtitle">
+      Use the Codex app to create your first MCP-backed workflow, then use Canon to make the workflow
+      visible through maps, boundaries, gates, receipts, and handoff artifacts.
+    </p>
+  </header>
 
   <div class="paths-list">
     {#each PATHS as path}
@@ -39,14 +42,50 @@
 </div>
 
 <style>
+  .paths-shell {
+    width: min(56rem, calc(100% - 2.5rem));
+    margin-inline: auto;
+    padding: clamp(3rem, 8vw, 5rem) 0;
+    color: var(--color-clear-onyx, #0a0e19);
+  }
+
+  .paths-hero {
+    display: grid;
+    gap: 0.8rem;
+    margin-bottom: clamp(2rem, 5vw, 3rem);
+  }
+
+  .paths-kicker {
+    width: fit-content;
+    margin: 0;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
+    color: var(--color-clear-grey, #636363);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: var(--font-semibold);
+    line-height: 1.15;
+    text-transform: uppercase;
+  }
+
   .page-title {
+    max-width: 12ch;
+    margin: 0;
+    color: var(--color-clear-onyx, #0a0e19);
     font-size: var(--text-h1);
-    margin-bottom: var(--space-sm);
+    font-weight: var(--font-medium);
+    line-height: 1.02;
+    letter-spacing: 0;
   }
 
   .page-subtitle {
-    color: var(--color-fg-secondary);
-    margin-bottom: var(--space-xl);
+    max-width: 46rem;
+    margin: 0;
+    color: var(--color-clear-grey, #636363);
+    font-size: var(--text-body-lg);
+    line-height: 1.55;
   }
 
   .paths-list {
@@ -58,9 +97,18 @@
   .path-row {
     display: block;
     padding: var(--space-lg);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--color-border-default);
-    background: var(--color-bg-elevated);
+    border-radius: var(--radius-clear-md, 8px);
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    background: var(--color-clear-panel, #ffffff);
+    color: var(--color-clear-onyx, #0a0e19);
+    transition:
+      border-color var(--duration-micro) var(--ease-standard),
+      background var(--duration-micro) var(--ease-standard);
+  }
+
+  .path-row:hover {
+    border-color: var(--color-clear-border-strong, #cecece);
+    background: var(--color-clear-porcelain-soft, #f2f2f2);
   }
 
   .path-header {
@@ -79,22 +127,32 @@
 
   .path-title {
     font-size: var(--text-h3);
+    font-weight: var(--font-semibold);
   }
 
   .path-subtitle {
-    color: var(--color-fg-muted);
+    color: var(--color-clear-grey, #636363);
     font-size: var(--text-body-sm);
   }
 
   .path-description {
-    color: var(--color-fg-secondary);
+    color: var(--color-clear-grey, #636363);
     margin-bottom: var(--space-sm);
+    line-height: var(--leading-relaxed);
   }
 
   .path-meta {
+    flex-wrap: wrap;
     display: flex;
     gap: var(--space-md);
-    color: var(--color-fg-muted);
+    color: var(--color-clear-grey-quiet, #818181);
     font-size: var(--text-body-sm);
+  }
+
+  @media (max-width: 720px) {
+    .path-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
   }
 </style>

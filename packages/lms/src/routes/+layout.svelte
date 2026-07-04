@@ -144,7 +144,7 @@
 
 <SkipToContent />
 
-<div class="layout">
+<div class="layout theme-light">
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".learn"
