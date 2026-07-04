@@ -908,7 +908,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
-      "id": "component.forms-otp-input",
+      "id": "component.forms-otpinput",
       "name": "OTPInput",
       "kind": "component",
       "maturity": "candidate",
