@@ -397,6 +397,44 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "template.canon-project-overlay-template-pack",
+      "name": "Canon Project Overlay Template Pack",
+      "kind": "template",
+      "maturity": "candidate",
+      "description": "Copyable project/client overlay starter pack with theme, tokens, templates, copy rules, surface policy, registry metadata, and a typed manifest.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/overlays/project-template/index.ts",
+      "importPath": "@create-something/canon/overlays/project-template",
+      "docsPath": "/canon/resources/registry",
+      "tags": [
+        "template",
+        "overlay",
+        "starter",
+        "project",
+        "client",
+        "copyable",
+        "governance"
+      ],
+      "modalities": [
+        "web",
+        "chat",
+        "app",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "template.canon-project-overlay-manifest",
+        "template.canon-extension-intake",
+        "token.canon-core",
+        "policy.signal-decision-proof"
+      ],
+      "contract": {
+        "accessibility": "Template packs must include modality policy so thin displays can summarize state without visual-only context.",
+        "evidence": "The starter manifest must review as ready and point to every required overlay artifact path.",
+        "extension": "Projects copy and fill the overlay files; primitive changes still route through Canon extension intake instead of forks."
+      }
+    },
+    {
       "id": "template.web-governed-workflow",
       "name": "Web Governed Workflow Template",
       "kind": "template",

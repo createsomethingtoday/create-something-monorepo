@@ -4,7 +4,11 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { CANON_REGISTRY_MANIFEST as MCP_CANON_REGISTRY_MANIFEST } from '../../../../create-something-mcp/src/content/generated/canon-registry.js';
+import {
+	CANON_PROJECT_OVERLAY_TEMPLATE_FILES,
+	CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST,
+	CANON_PROJECT_OVERLAY_TEMPLATE_ROOT
+} from '../overlays/project-template/index.js';
 import {
 	CANON_REGISTRY_MANIFEST,
 	getCanonRegistryItem,
@@ -20,12 +24,28 @@ const canonPackageJson = JSON.parse(
 ) as {
 	exports: Record<string, unknown>;
 };
+const mcpCanonRegistrySnapshotPath = join(
+	repoRoot,
+	'packages/create-something-mcp/src/content/generated/canon-registry.ts'
+);
 
 function exportKeyForCanonImportPath(importPath: string): string | null {
 	if (importPath === '@create-something/canon') return '.';
 	const prefix = '@create-something/canon/';
 	if (!importPath.startsWith(prefix)) return null;
 	return `./${importPath.slice(prefix.length)}`;
+}
+
+function readMcpCanonRegistrySnapshot() {
+	const source = readFileSync(mcpCanonRegistrySnapshotPath, 'utf-8');
+	const assignment = 'export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = ';
+	const start = source.indexOf(assignment);
+	const end = source.lastIndexOf('\n};');
+
+	expect(start, 'generated MCP Canon registry assignment').toBeGreaterThanOrEqual(0);
+	expect(end, 'generated MCP Canon registry terminator').toBeGreaterThan(start);
+
+	return JSON.parse(source.slice(start + assignment.length, end + 2));
 }
 
 describe('Canon registry manifest', () => {
@@ -74,7 +94,7 @@ describe('Canon registry manifest', () => {
 	});
 
 	it('keeps the MCP Canon registry snapshot synchronized', () => {
-		expect(MCP_CANON_REGISTRY_MANIFEST).toEqual(CANON_REGISTRY_MANIFEST);
+		expect(readMcpCanonRegistrySnapshot()).toEqual(CANON_REGISTRY_MANIFEST);
 	});
 
 	it('exposes ClearDecisionPanel as the shared decision surface', () => {
@@ -109,6 +129,22 @@ describe('Canon registry manifest', () => {
 		expect(item?.modalities).toEqual(['web', 'chat', 'app', 'voice', 'glasses']);
 		expect(item?.dependencies).toContain('template.canon-extension-intake');
 		expect(item?.contract.extension).toContain('named overlay artifacts');
+	});
+
+	it('exposes the Canon project overlay template pack across modalities', () => {
+		const item = getCanonRegistryItem('template.canon-project-overlay-template-pack');
+
+		expect(item?.kind).toBe('template');
+		expect(item?.maturity).toBe('candidate');
+		expect(item?.importPath).toBe('@create-something/canon/overlays/project-template');
+		expect(item?.modalities).toEqual(['web', 'chat', 'app', 'voice', 'glasses']);
+		expect(item?.dependencies).toEqual([
+			'template.canon-project-overlay-manifest',
+			'template.canon-extension-intake',
+			'token.canon-core',
+			'policy.signal-decision-proof'
+		]);
+		expect(item?.contract.extension).toContain('instead of forks');
 	});
 
 	it('exposes the Atlas development handoff template for every modality', () => {
@@ -311,5 +347,30 @@ describe('Canon registry manifest', () => {
 		expect(review.status).toBe('needs-evidence');
 		expect(review.extensionDecisions[0]?.decision.stage).toBe('project-local');
 		expect(review.stopConditions.join(' ')).toContain('repeated-surface evidence');
+	});
+
+	it('keeps the copyable overlay template pack complete and reviewable', () => {
+		for (const file of CANON_PROJECT_OVERLAY_TEMPLATE_FILES) {
+			expect(existsSync(join(repoRoot, CANON_PROJECT_OVERLAY_TEMPLATE_ROOT, file)), file).toBe(true);
+		}
+
+		for (const artifact of CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST.artifacts) {
+			expect(existsSync(join(repoRoot, artifact.path)), artifact.path).toBe(true);
+		}
+
+		const review = reviewCanonProjectOverlay(CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST);
+
+		expect(review.status).toBe('ready');
+		expect(review.missingArtifacts).toEqual([]);
+		expect(review.presentArtifacts).toEqual([
+			'theme',
+			'tokens',
+			'templates',
+			'copy-rules',
+			'surface-policy',
+			'registry'
+		]);
+		expect(review.extensionDecisions[0]?.decision.action).toBe('promote-candidate');
+		expect(review.stopConditions.join(' ')).toContain('Do not fork Canon primitives');
 	});
 });

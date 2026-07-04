@@ -230,6 +230,10 @@
 			"types": "./dist/registry/index.d.ts",
 			"default": "./dist/registry/index.js"
 		},
+		"./overlays/project-template": {
+			"types": "./dist/overlays/project-template/index.d.ts",
+			"default": "./dist/overlays/project-template/index.js"
+		},
 		"./icons": {
 			"types": "./dist/icons/index.d.ts",
 			"svelte": "./dist/icons/index.js"
