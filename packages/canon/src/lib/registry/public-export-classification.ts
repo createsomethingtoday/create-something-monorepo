@@ -314,6 +314,27 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 	},
 	{
 		exportPath: './layout',
+		exportName: 'BentoGrid',
+		classification: 'stable-foundation-candidate',
+		registryPolicy: 'registry-covered',
+		rationale: 'Promoted to component.layout-bento-grid as the stable asymmetric grid primitive.'
+	},
+	{
+		exportPath: './layout',
+		exportName: 'BentoItem',
+		classification: 'stable-foundation-candidate',
+		registryPolicy: 'registry-covered',
+		rationale: 'Promoted to component.layout-bento-item as the stable bento grid child primitive.'
+	},
+	{
+		exportPath: './layout',
+		exportName: 'SplitSection',
+		classification: 'stable-foundation-candidate',
+		registryPolicy: 'registry-covered',
+		rationale: 'Promoted to component.layout-split-section as the stable two-column layout primitive.'
+	},
+	{
+		exportPath: './layout',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'candidate-review',
 		rationale: 'Layout primitives are likely shared, but need responsive and composition contracts first.'

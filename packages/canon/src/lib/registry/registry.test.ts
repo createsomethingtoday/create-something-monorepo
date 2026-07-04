@@ -307,6 +307,50 @@ describe('Canon registry manifest', () => {
 		}
 	});
 
+	it('promotes generic layout primitives while leaving project-specific layout under review', () => {
+		const promotedItems = [
+			{
+				id: 'component.layout-bento-grid',
+				exportName: 'BentoGrid',
+				sourcePath: 'packages/canon/src/lib/layout/BentoGrid.svelte',
+				tag: 'grid',
+				dependency: 'component.layout-bento-item'
+			},
+			{
+				id: 'component.layout-bento-item',
+				exportName: 'BentoItem',
+				sourcePath: 'packages/canon/src/lib/layout/BentoItem.svelte',
+				tag: 'grid-item',
+				dependency: 'token.canon-core'
+			},
+			{
+				id: 'component.layout-split-section',
+				exportName: 'SplitSection',
+				sourcePath: 'packages/canon/src/lib/layout/SplitSection.svelte',
+				tag: 'split',
+				dependency: 'component.layout-section'
+			}
+		];
+
+		for (const promoted of promotedItems) {
+			const item = getCanonRegistryItem(promoted.id);
+			const classification = getCanonPublicExportClassification('./layout', promoted.exportName);
+
+			expect(item?.kind, promoted.id).toBe('component');
+			expect(item?.maturity, promoted.id).toBe('stable');
+			expect(item?.sourcePath, promoted.id).toBe(promoted.sourcePath);
+			expect(item?.importPath, promoted.id).toBe('@create-something/canon/layout');
+			expect(item?.tags, promoted.id).toContain(promoted.tag);
+			expect(item?.dependencies, promoted.id).toContain('token.canon-core');
+			expect(item?.dependencies, promoted.id).toContain(promoted.dependency);
+			expect(classification?.registryPolicy, promoted.exportName).toBe('registry-covered');
+		}
+
+		expect(getCanonPublicExportClassification('./layout', 'ProjectGridInteractive')).toMatchObject({
+			registryPolicy: 'candidate-review'
+		});
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();
