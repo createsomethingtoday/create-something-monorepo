@@ -49,6 +49,20 @@ describe('Canon registry manifest', () => {
 		expect(item?.contract.evidence).toContain('two distinct surfaces');
 	});
 
+	it('exposes the Atlas development handoff template for every modality', () => {
+		const item = getCanonRegistryItem('template.atlas-development-handoff');
+
+		expect(item?.kind).toBe('template');
+		expect(item?.maturity).toBe('candidate');
+		expect(item?.importPath).toBe('@create-something/canon/atlas/handoff');
+		expect(item?.modalities).toEqual(['web', 'chat', 'app', 'voice', 'glasses']);
+		expect(item?.dependencies).toEqual([
+			'adapter.atlas-graph-artifact',
+			'policy.signal-decision-proof'
+		]);
+		expect(item?.contract.evidence).toContain('Linear evidence path');
+	});
+
 	it('keeps one-off overlay extensions project-local', () => {
 		const decision = routeCanonExtensionIntake({
 			id: 'overlay.client-proof-panel',

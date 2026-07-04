@@ -180,6 +180,29 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 			}
 		},
 		{
+			id: 'template.atlas-development-handoff',
+			name: 'Atlas Development Handoff Template',
+			kind: 'template',
+			maturity: 'candidate',
+			description:
+				'Agent-readable handoff packet that turns an Atlas workflow map into Database, Automation, Judgment, Linear, verification, and stop-condition sections.',
+			ownerPackage: '@create-something/canon',
+			sourcePath: 'packages/canon/src/lib/atlas/handoff.ts',
+			importPath: '@create-something/canon/atlas/handoff',
+			docsPath: '/canon/resources/registry',
+			tags: ['atlas', 'handoff', 'linear', 'template', 'agent-contract', 'workflow-map'],
+			modalities: ['web', 'chat', 'app', 'voice', 'glasses'],
+			dependencies: ['adapter.atlas-graph-artifact', 'policy.signal-decision-proof'],
+			contract: {
+				accessibility:
+					'Handoff packets must preserve readable text sections so chat, voice, and thin displays can summarize without relying on visual-only state.',
+				evidence:
+					'Every packet must name the durable record, run path, approval point, stop condition, proof surface, verification command, and Linear evidence path.',
+				extension:
+					'Project overlays may add local context, but the Atlas-to-development packet structure stays Canon-owned.'
+			}
+		},
+		{
 			id: 'policy.signal-decision-proof',
 			name: 'Signal Decision Proof Contract',
 			kind: 'policy',
