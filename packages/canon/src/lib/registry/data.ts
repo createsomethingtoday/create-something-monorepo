@@ -838,6 +838,39 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 	}
 ];
 
+const LAYOUT_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
+	{
+		id: 'component.layout-project-grid-interactive',
+		name: 'ProjectGridInteractive',
+		kind: 'component',
+		maturity: 'candidate',
+		description:
+			'Interactive project grid candidate for portfolio-style cards with hover focus and responsive image metadata.',
+		ownerPackage: '@create-something/canon',
+		sourcePath: 'packages/canon/src/lib/layout/ProjectGridInteractive.svelte',
+		importPath: '@create-something/canon/layout',
+		docsPath: '/canon/components/layout',
+		tags: ['layout', 'project-grid', 'interactive', 'candidate'],
+		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+		dependencies: [
+			'token.canon-core',
+			'component.layout-section',
+			'component.layout-bento-grid',
+			'component.layout-bento-item'
+		],
+		contract: {
+			accessibility:
+				'Project cards must preserve title, location, outcome, image alt text, and route order without depending on hover.',
+			evidence:
+				'Project data must preserve slug, title, hero image, location, optional outcome, display order, and focus variant.',
+			motion:
+				'Sibling dimming, image scaling, and metadata reveal must be optional and reduced-motion safe.',
+			extension:
+				'Promote to stable only after project schema, hover/focus parity, image fallback, and nonvisual summary contracts are documented.'
+		}
+	}
+];
+
 const DIAGRAM_CANDIDATE_ITEMS: CanonRegistryManifest['items'] = [
 	{
 		id: 'component.diagrams-flow-diagram',
@@ -1783,6 +1816,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 			}
 		},
 		...FOUNDATION_PRIMITIVE_ITEMS,
+		...LAYOUT_CANDIDATE_ITEMS,
 		...DIAGRAM_CANDIDATE_ITEMS,
 		...TYPOGRAPHY_CANDIDATE_ITEMS,
 		...ATLAS_RENDERER_CANDIDATE_ITEMS,
