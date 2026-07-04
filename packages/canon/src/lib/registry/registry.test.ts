@@ -405,6 +405,26 @@ describe('Canon registry manifest', () => {
 		);
 	});
 
+	it('adds TypographyHero as a candidate tied to heading and token contracts', () => {
+		const item = getCanonRegistryItem('component.typography-typography-hero');
+		const classification = getCanonPublicExportClassification('./typography', 'TypographyHero');
+
+		expect(item?.kind).toBe('component');
+		expect(item?.maturity).toBe('candidate');
+		expect(item?.sourcePath).toBe('packages/canon/src/lib/typography/TypographyHero.svelte');
+		expect(item?.importPath).toBe('@create-something/canon/typography');
+		expect(item?.docsPath).toBe('/canon/components/typography');
+		expect(item?.tags).toContain('typography');
+		expect(item?.tags).toContain('hero');
+		expect(item?.dependencies).toEqual(['token.canon-core', 'component.heading']);
+		expect(item?.modalities).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
+		expect(item?.contract.accessibility).toContain('semantic heading structure');
+		expect(item?.contract.evidence).toContain('page claim');
+		expect(item?.contract.motion).toContain('reduced-motion');
+		expect(item?.contract.extension).toContain('Promote to stable only after');
+		expect(classification?.registryPolicy).toBe('candidate-review');
+	});
+
 	it('keeps every public Svelte export registry-covered or explicitly classified', () => {
 		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const publicExports = publicSvelteComponentExports();
