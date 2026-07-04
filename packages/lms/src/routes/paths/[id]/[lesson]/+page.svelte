@@ -190,25 +190,25 @@
   }
 
   .breadcrumb-link {
-    color: var(--color-fg-tertiary);
+    color: var(--color-clear-grey, #636363);
     transition: color var(--duration-micro) var(--ease-standard);
   }
 
   .breadcrumb-link:hover {
-    color: var(--color-fg-secondary);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .breadcrumb-separator {
-    color: var(--color-fg-muted);
+    color: var(--color-clear-grey-quiet, #818181);
   }
 
   .breadcrumb-current {
-    color: var(--color-fg-secondary);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .progress-container {
     height: 2px;
-    background: var(--color-bg-surface);
+    background: var(--color-clear-border, #e1e1e1);
     border-radius: var(--radius-full);
     margin-bottom: var(--space-lg);
     overflow: hidden;
@@ -216,7 +216,7 @@
 
   .progress-bar {
     height: 100%;
-    background: var(--color-fg-primary);
+    background: var(--color-clear-onyx, #0a0e19);
     transition: width var(--duration-complex) var(--ease-standard);
   }
 
@@ -228,19 +228,22 @@
   }
 
   .lesson-meta {
-    color: var(--color-fg-muted);
+    color: var(--color-clear-grey, #636363);
     font-size: var(--text-body-sm);
   }
 
   .lesson-title {
+    color: var(--color-clear-onyx, #0a0e19);
     font-size: var(--text-display);
-    font-weight: var(--font-light);
+    font-weight: var(--font-medium);
+    line-height: 0.98;
+    letter-spacing: 0;
     margin-bottom: var(--space-sm);
   }
 
   .lesson-description {
     font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
+    color: var(--color-clear-onyx, #0a0e19);
     line-height: var(--leading-relaxed);
   }
 
@@ -341,23 +344,23 @@
     display: grid;
     gap: var(--space-sm);
     margin: var(--space-lg) 0;
-    padding: var(--space-sm);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
-    background: var(--color-bg-elevated);
+    padding: var(--space-md);
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-md, 8px);
+    background: var(--color-clear-panel, #ffffff);
   }
 
   .prose :global(.learning-figure img) {
     display: block;
     width: 100%;
     height: auto;
-    border-radius: var(--radius-sm);
-    background: var(--color-bg-surface);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-porcelain, #f9f9f9);
   }
 
   .prose :global(.learning-figure figcaption) {
     margin: 0;
-    color: var(--color-fg-muted);
+    color: var(--color-clear-grey, #636363);
     font-size: var(--text-body-sm);
     line-height: var(--leading-relaxed);
   }
