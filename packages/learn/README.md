@@ -1,20 +1,28 @@
 # @createsomething/learn
 
-MCP server for learning Codex by building an MCP.
+MCP server for learning through the Codex app from the lens of creating your first business MCP.
 
-## Install
+## Recommended Setup: Codex App
 
-```bash
-npx @createsomething/learn init
+Open the Codex app and go to:
+
+```text
+Settings -> Integrations & MCP
 ```
 
-Or add directly in Codex:
+Add a local stdio MCP server:
 
-```bash
-codex mcp add learn -- npx -y @createsomething/learn
+```text
+Name: learn
+Command: npx
+Args: -y @createsomething/learn
 ```
 
-You can also configure manually in `~/.codex/config.toml`:
+The CLI helper below exists for technical setup and automation, but the learning experience should start in the Codex app.
+
+## Manual Config
+
+You can also open Codex config from the app settings and configure manually:
 
 ```toml
 [mcp_servers.learn]
@@ -24,7 +32,7 @@ args = ["-y", "@createsomething/learn"]
 
 ## Course
 
-The learning flow is a single path: `codex-mcp`.
+The learning flow is a single path: `codex-mcp`, shown in the LMS as **Build Your First Business MCP**.
 
 Start lesson:
 
@@ -42,6 +50,8 @@ learn_lesson pathId="codex-mcp" lessonId="what-is-codex-and-mcp"
 | `learn_complete` | Mark lesson complete with reflection |
 
 ## CLI
+
+Use this only as a setup helper, not as the learner-facing product surface:
 
 ```bash
 npx @createsomething/learn init        # Setup instructions

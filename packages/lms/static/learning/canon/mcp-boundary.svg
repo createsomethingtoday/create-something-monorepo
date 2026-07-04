@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">MCP boundary diagram</title>
+  <desc id="desc">A diagram showing Codex, a local MCP server, RapidAPI, and an operator approval gate.</desc>
+  <rect width="1200" height="720" fill="#f7f7f7"/>
+  <text x="72" y="96" fill="#0a0e19" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="650">Show the boundary before the tool runs.</text>
+  <text x="72" y="140" fill="#636363" font-family="Inter, Arial, sans-serif" font-size="22">The operator needs to see what Codex can call, what the MCP server owns, and where approval stops action.</text>
+  <g font-family="Inter, Arial, sans-serif">
+    <rect x="78" y="245" width="230" height="170" rx="14" fill="#ffffff" stroke="#d9d9d9"/>
+    <text x="116" y="315" fill="#0a0e19" font-size="30" font-weight="650">Codex app</text>
+    <text x="116" y="352" fill="#636363" font-size="18">Prompt, inspect, decide</text>
+    <path d="M320 330h118" stroke="#2251ff" stroke-width="4" stroke-linecap="round"/>
+    <path d="M426 316l20 14-20 14" fill="none" stroke="#2251ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="458" y="210" width="314" height="240" rx="16" fill="#ffffff" stroke="#0a0e19" stroke-width="2"/>
+    <text x="500" y="276" fill="#0a0e19" font-size="30" font-weight="650">Local MCP server</text>
+    <rect x="500" y="315" width="230" height="64" rx="8" fill="#f2f2f2"/>
+    <text x="526" y="356" fill="#0a0e19" font-size="20" font-weight="650">find_local_businesses</text>
+    <text x="500" y="414" fill="#636363" font-size="18">Schema, rate limits, evidence shape</text>
+    <path d="M785 330h118" stroke="#2251ff" stroke-width="4" stroke-linecap="round"/>
+    <path d="M891 316l20 14-20 14" fill="none" stroke="#2251ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="925" y="245" width="210" height="170" rx="14" fill="#f8fbff" stroke="#b8c7ff"/>
+    <text x="966" y="315" fill="#0a0e19" font-size="30" font-weight="650">RapidAPI</text>
+    <text x="966" y="352" fill="#3553a6" font-size="18">External data source</text>
+    <rect x="398" y="520" width="405" height="84" rx="12" fill="#0a0e19"/>
+    <text x="430" y="555" fill="#ffffff" font-size="22" font-weight="650">Human approval gate</text>
+    <text x="430" y="584" fill="#d9d9d9" font-size="18">No outreach, CRM write, or production change without review.</text>
+  </g>
+</svg>

@@ -337,6 +337,31 @@
     color: var(--color-fg-tertiary);
   }
 
+  .prose :global(.learning-figure) {
+    display: grid;
+    gap: var(--space-sm);
+    margin: var(--space-lg) 0;
+    padding: var(--space-sm);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+  }
+
+  .prose :global(.learning-figure img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-surface);
+  }
+
+  .prose :global(.learning-figure figcaption) {
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+    line-height: var(--leading-relaxed);
+  }
+
   .prose :global(code) {
     font-family: var(--font-mono);
     font-size: 0.9em;

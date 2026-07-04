@@ -2,10 +2,10 @@
 /**
  * CREATE SOMETHING Learn MCP Server
  *
- * Exposes learning tools for the Codex MCP course.
+ * Exposes learning tools for the first business MCP course.
  *
  * @example
- * # In Codex settings, add:
+ * # In Codex app settings, add:
  * {
  *   "mcpServers": {
  *     "learn": {

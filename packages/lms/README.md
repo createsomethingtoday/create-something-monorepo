@@ -6,16 +6,16 @@ CREATE SOMETHING Learning Management System.
 
 ## Purpose
 
-Teaching the ethos through practice. The LMS provides structured learning paths through the CREATE SOMETHING methodology.
+Teaching the ethos through practice. The LMS provides structured learning paths through the CREATE SOMETHING methodology, starting with operator-facing paths for business owners using the Codex app to build their first MCP-backed workflow and Canon image rules to make workflow boundaries, policy gates, receipts, and handoff state visible.
 
 ## Learning Paths
 
 - **Foundations** - Core philosophy and principles
 - **Craft** - Implementation patterns and techniques
 - **Infrastructure** - Cloudflare, deployment, tooling
-- **Agents** - AI-native development workflows
+- **Agents** - AI-native development workflows, including the Build Your First Business MCP path
 - **Method** - The Subtractive Triad in practice
-- **Systems** - Architecture and hermeneutic thinking
+- **Systems** - Architecture, Canon workflow images, and hermeneutic thinking
 - **Partnership** - Collaboration patterns
 - **Advanced** - Deep dives and specializations
 
