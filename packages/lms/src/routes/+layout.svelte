@@ -140,7 +140,7 @@
 <Analytics property="lms" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="lms" localItems={quickAccessItems} />
+<UnifiedSearch currentProperty="lms" localItems={quickAccessItems} showMobileButton={false} />
 
 <SkipToContent />
 
