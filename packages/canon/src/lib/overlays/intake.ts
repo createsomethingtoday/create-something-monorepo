@@ -1,9 +1,10 @@
-import { readdir, readFile } from 'node:fs/promises';
-import { isAbsolute, join, relative, resolve } from 'node:path';
+import { readdir, readFile, stat } from 'node:fs/promises';
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { reviewCanonProjectOverlay } from '../registry/index.js';
+import { CANON_REGISTRY_MANIFEST, reviewCanonProjectOverlay } from '../registry/index.js';
 import type {
+	CanonProjectOverlayIntegrityIssue,
 	CanonProjectOverlayInventory,
 	CanonProjectOverlayInventoryEntry,
 	CanonProjectOverlayManifest,
@@ -90,7 +91,13 @@ export async function buildCanonOverlayIntakeInventory(
 
 	for (const manifestFile of manifestFiles) {
 		const manifest = await loadCanonProjectOverlayManifest(manifestFile);
-		const review = reviewCanonProjectOverlay(manifest);
+		const review = reviewCanonProjectOverlay(manifest, {
+			integrityIssues: await inspectCanonProjectOverlayIntegrity({
+				rootDir,
+				manifestFile,
+				manifest
+			})
+		});
 		entries.push({
 			manifestPath: normalizeRelativePath(rootDir, manifestFile),
 			manifest,
@@ -178,6 +185,13 @@ export function renderCanonOverlayIntakeInventory(
 			`- Summary: ${entry.review.summary}`
 		);
 
+		if (entry.review.integrityIssues.length) {
+			lines.push(`- Integrity issues: ${entry.review.integrityIssues.length}`);
+			for (const issue of entry.review.integrityIssues) {
+				lines.push(`  - ${issue.message}`);
+			}
+		}
+
 		for (const decision of entry.review.extensionDecisions) {
 			lines.push(
 				`- Intake ${decision.packet.id}: ${decision.decision.action} (${decision.decision.stage})`
@@ -218,6 +232,160 @@ function countDecisions(
 				.length,
 		0
 	);
+}
+
+async function inspectCanonProjectOverlayIntegrity({
+	rootDir,
+	manifestFile,
+	manifest
+}: {
+	rootDir: string;
+	manifestFile: string;
+	manifest: CanonProjectOverlayManifest;
+}): Promise<CanonProjectOverlayIntegrityIssue[]> {
+	const overlayRoot = dirname(manifestFile);
+	const packageRoot = overlayRoot.endsWith('/canon-overlay') ? dirname(overlayRoot) : overlayRoot;
+	const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
+	const issues: CanonProjectOverlayIntegrityIssue[] = [];
+
+	if (manifest.sourcePath) {
+		await addMissingPathIssue({
+			issues,
+			rootDir,
+			baseDir: overlayRoot,
+			context: 'manifest.sourcePath',
+			path: manifest.sourcePath,
+			kind: 'missing-source-path'
+		});
+	}
+
+	for (const artifact of manifest.artifacts) {
+		await addMissingPathIssue({
+			issues,
+			rootDir,
+			baseDir: overlayRoot,
+			context: `artifact.${artifact.kind}`,
+			path: artifact.path,
+			kind: 'missing-artifact-file'
+		});
+		for (const registryItemId of artifact.registryItemIds ?? []) {
+			addUnknownRegistryIssue({
+				issues,
+				registryIds,
+				context: `artifact.${artifact.kind}.registryItemIds`,
+				registryItemId
+			});
+		}
+	}
+
+	for (const packet of manifest.extensionIntakes ?? []) {
+		if (packet.sourcePath) {
+			await addMissingPathIssue({
+				issues,
+				rootDir,
+				baseDir: packageRoot,
+				context: `intake.${packet.id}.sourcePath`,
+				path: packet.sourcePath,
+				kind: 'missing-source-path'
+			});
+		}
+		for (const surface of packet.surfaces) {
+			if (!surface.sourcePath) continue;
+			await addMissingPathIssue({
+				issues,
+				rootDir,
+				baseDir: packageRoot,
+				context: `intake.${packet.id}.surface.${surface.surfaceId}.sourcePath`,
+				path: surface.sourcePath,
+				kind: 'missing-source-path'
+			});
+		}
+		for (const registryItemId of packet.dependencies ?? []) {
+			addUnknownRegistryIssue({
+				issues,
+				registryIds,
+				context: `intake.${packet.id}.dependencies`,
+				registryItemId
+			});
+		}
+		if (packet.matchesRegistryItemId) {
+			addUnknownRegistryIssue({
+				issues,
+				registryIds,
+				context: `intake.${packet.id}.matchesRegistryItemId`,
+				registryItemId: packet.matchesRegistryItemId
+			});
+		}
+		if (packet.deprecatesRegistryItemId) {
+			addUnknownRegistryIssue({
+				issues,
+				registryIds,
+				context: `intake.${packet.id}.deprecatesRegistryItemId`,
+				registryItemId: packet.deprecatesRegistryItemId
+			});
+		}
+	}
+
+	return issues;
+}
+
+async function addMissingPathIssue({
+	issues,
+	rootDir,
+	baseDir,
+	context,
+	path,
+	kind
+}: {
+	issues: CanonProjectOverlayIntegrityIssue[];
+	rootDir: string;
+	baseDir: string;
+	context: string;
+	path: string;
+	kind: 'missing-artifact-file' | 'missing-source-path';
+}) {
+	const fullPath = resolve(baseDir, path);
+	if (await pathExists(fullPath)) return;
+
+	const normalizedPath = normalizeRelativePath(rootDir, fullPath);
+	issues.push({
+		kind,
+		context,
+		path: normalizedPath,
+		message:
+			kind === 'missing-artifact-file'
+				? `${context} points to missing overlay artifact path ${normalizedPath}.`
+				: `${context} points to missing source path ${normalizedPath}.`
+	});
+}
+
+function addUnknownRegistryIssue({
+	issues,
+	registryIds,
+	context,
+	registryItemId
+}: {
+	issues: CanonProjectOverlayIntegrityIssue[];
+	registryIds: Set<string>;
+	context: string;
+	registryItemId: string;
+}) {
+	if (registryIds.has(registryItemId)) return;
+	issues.push({
+		kind: 'unknown-registry-item',
+		context,
+		registryItemId,
+		message: `${context} references unknown Canon registry item ${registryItemId}.`
+	});
+}
+
+async function pathExists(path: string) {
+	try {
+		await stat(path);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 async function walk(root: string, visitFile: (filePath: string) => Promise<void>): Promise<void> {

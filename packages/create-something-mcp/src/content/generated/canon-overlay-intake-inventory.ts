@@ -179,6 +179,7 @@ export const CANON_OVERLAY_INTAKE_INVENTORY: CanonProjectOverlayInventory = {
           "registry"
         ],
         "missingArtifacts": [],
+        "integrityIssues": [],
         "extensionDecisions": [
           {
             "packet": {
@@ -264,7 +265,7 @@ export const CANON_OVERLAY_INTAKE_INVENTORY: CanonProjectOverlayInventory = {
           "Do not promote project-local overlay primitives into Canon stable without repeated-surface evidence.",
           "Do not fork Canon primitives; keep local copy, policy, tokens, and templates in named overlay artifacts."
         ],
-        "summary": "Agency Atlas Public Overlay declares the complete Canon overlay artifact set and has no project-local evidence gaps."
+        "summary": "Agency Atlas Public Overlay declares the complete Canon overlay artifact set, valid source evidence, and known Canon registry dependencies."
       }
     },
     {
@@ -423,6 +424,7 @@ export const CANON_OVERLAY_INTAKE_INVENTORY: CanonProjectOverlayInventory = {
           "registry"
         ],
         "missingArtifacts": [],
+        "integrityIssues": [],
         "extensionDecisions": [
           {
             "packet": {
@@ -504,7 +506,7 @@ export const CANON_OVERLAY_INTAKE_INVENTORY: CanonProjectOverlayInventory = {
           "Do not promote project-local overlay primitives into Canon stable without repeated-surface evidence.",
           "Do not fork Canon primitives; keep local copy, policy, tokens, and templates in named overlay artifacts."
         ],
-        "summary": "LMS Workflow Learning Overlay declares the complete Canon overlay artifact set and has no project-local evidence gaps."
+        "summary": "LMS Workflow Learning Overlay declares the complete Canon overlay artifact set, valid source evidence, and known Canon registry dependencies."
       }
     }
   ],

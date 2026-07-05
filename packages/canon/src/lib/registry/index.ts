@@ -3,6 +3,7 @@ import type {
 	CanonExtensionIntakePacket,
 	CanonExtensionRoutingDecision,
 	CanonProjectOverlayArtifactKind,
+	CanonProjectOverlayIntegrityIssue,
 	CanonProjectOverlayInventory,
 	CanonProjectOverlayInventoryEntry,
 	CanonProjectOverlayManifest,
@@ -28,6 +29,7 @@ export type {
 	CanonExtensionSurfaceEvidence,
 	CanonProjectOverlayArtifact,
 	CanonProjectOverlayArtifactKind,
+	CanonProjectOverlayIntegrityIssue,
 	CanonProjectOverlayInventory,
 	CanonProjectOverlayInventoryEntry,
 	CanonProjectOverlayManifest,
@@ -175,7 +177,8 @@ export function routeCanonExtensionIntake(
 }
 
 export function reviewCanonProjectOverlay(
-	manifest: CanonProjectOverlayManifest
+	manifest: CanonProjectOverlayManifest,
+	options: { integrityIssues?: CanonProjectOverlayIntegrityIssue[] } = {}
 ): CanonProjectOverlayReview {
 	const presentArtifacts = CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS.filter((kind) =>
 		manifest.artifacts.some((artifact) => artifact.kind === kind)
@@ -183,23 +186,37 @@ export function reviewCanonProjectOverlay(
 	const missingArtifacts = CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS.filter(
 		(kind) => !presentArtifacts.includes(kind)
 	);
+	const integrityIssues = options.integrityIssues ?? [];
 	const extensionDecisions = (manifest.extensionIntakes ?? []).map((packet) => ({
 		packet,
 		decision: routeCanonExtensionIntake(packet)
 	}));
 	const needsReview = extensionDecisions.some(({ decision }) => decision.action === 'needs-review');
 	const needsEvidence = extensionDecisions.some(({ decision }) => decision.stage === 'project-local');
-	const status = needsReview
-		? 'needs-review'
-		: missingArtifacts.length
+	const missingArtifactFiles = integrityIssues.filter((issue) => issue.kind === 'missing-artifact-file');
+	const needsIntegrityReview = integrityIssues.some((issue) => issue.kind !== 'missing-artifact-file');
+	const status =
+		missingArtifacts.length || missingArtifactFiles.length
 			? 'needs-artifacts'
-			: needsEvidence
-				? 'needs-evidence'
-				: 'ready';
+			: needsReview || needsIntegrityReview
+				? 'needs-review'
+				: needsEvidence
+					? 'needs-evidence'
+					: 'ready';
 	const stopConditions = [
 		...(missingArtifacts.length
 			? [
 					`Add missing overlay artifacts before treating ${manifest.id} as a complete Canon overlay: ${missingArtifacts.join(', ')}.`
+				]
+			: []),
+		...(missingArtifactFiles.length
+			? [
+					`Restore missing overlay artifact file paths before treating ${manifest.id} as complete: ${missingArtifactFiles.map((issue) => issue.path).filter(Boolean).join(', ')}.`
+				]
+			: []),
+		...(needsIntegrityReview
+			? [
+					`Resolve Canon overlay integrity issues before handoff: ${integrityIssues.filter((issue) => issue.kind !== 'missing-artifact-file').map((issue) => issue.message).join('; ')}.`
 				]
 			: []),
 		...extensionDecisions.flatMap(({ decision }) => decision.stopBeforeStable),
@@ -212,12 +229,13 @@ export function reviewCanonProjectOverlay(
 		requiredArtifacts: CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS,
 		presentArtifacts,
 		missingArtifacts,
+		integrityIssues,
 		extensionDecisions,
 		stopConditions: [...new Set(stopConditions)],
 		summary:
 			status === 'ready'
-				? `${manifest.name} declares the complete Canon overlay artifact set and has no project-local evidence gaps.`
-				: `${manifest.name} is ${status}; keep it project-owned until missing artifacts and evidence gaps are resolved.`
+				? `${manifest.name} declares the complete Canon overlay artifact set, valid source evidence, and known Canon registry dependencies.`
+				: `${manifest.name} is ${status}; keep it project-owned until missing artifacts, integrity issues, and evidence gaps are resolved.`
 	};
 }
 

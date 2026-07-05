@@ -259,6 +259,7 @@ export const CANON_OVERLAY_CATALOG: CanonOverlayCatalog = {
           "registry"
         ],
         "missingArtifacts": [],
+        "integrityIssues": [],
         "extensionDecisions": [
           {
             "packet": {
@@ -325,7 +326,7 @@ export const CANON_OVERLAY_CATALOG: CanonOverlayCatalog = {
           "Do not promote project-local overlay primitives into Canon stable without repeated-surface evidence.",
           "Do not fork Canon primitives; keep local copy, policy, tokens, and templates in named overlay artifacts."
         ],
-        "summary": "Canon Project Overlay Template declares the complete Canon overlay artifact set and has no project-local evidence gaps."
+        "summary": "Canon Project Overlay Template declares the complete Canon overlay artifact set, valid source evidence, and known Canon registry dependencies."
       }
     }
   ],

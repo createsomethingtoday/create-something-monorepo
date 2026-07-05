@@ -5163,10 +5163,15 @@ The inventory scans \`apps/\` and \`packages/\` for \`CANON_PROJECT_OVERLAY_MANI
 
 - complete overlays that are ready for handoff
 - overlays missing required artifacts
+- overlays with declared artifact files that no longer exist
+- overlays with source evidence paths that no longer exist
+- overlays with registry dependencies that do not resolve to Canon registry items
 - extension intakes that should stay project-local
 - extension intakes with repeated-surface evidence for Canon candidate review
 
 Agents can read the same inventory through \`canon://overlays/intake\` and the compact index at \`canon://overlays/intake/list\`.
+
+Readiness now means more than a complete manifest shape. A project overlay is ready only when its required artifact set exists on disk, its evidence paths still resolve in the owning package or app, and every declared Canon dependency matches a registry item.
 
 ## Related
 
