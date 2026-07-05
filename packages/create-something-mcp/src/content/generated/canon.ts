@@ -5188,6 +5188,8 @@ Ready overlays can produce candidate intakes when they have repeated-surface evi
 - Candidate readiness report: \`canon://overlays/candidates/<intake-id>/readiness\`
 - Approval record collection: \`canon://overlays/candidates/approval-records\`
 - Candidate approval record: \`canon://overlays/candidates/<intake-id>/approval-record\`
+- Approval target template collection: \`canon://overlays/candidates/approval-target-templates\`
+- Candidate approval target template: \`canon://overlays/candidates/<intake-id>/approval-record/target-template\`
 - Rendered handoff tool: \`canon_overlay_candidate_handoff_get\`
 - Rendered promotion plan tool: \`canon_overlay_candidate_promotion_plan_get\`
 - Rendered readiness tool: \`canon_overlay_candidate_promotion_readiness_get\`
@@ -5222,6 +5224,8 @@ Approval records sit after readiness reports and before implementation. They are
 Use \`canon_overlay_candidate_promotion_approval_record_get\` when a maintainer needs the approval record as Markdown. Use \`overlay:candidate-approval-record\` for the same record from the local repo checkout. Omitting \`--intake\` prints the record list; adding \`--json\` prints the source approval-record data.
 
 Use target templates to produce the compact JSON payload maintainers fill before validation. Target template fields start unset/null; hints are context, not selections. The template does not approve implementation, fill fields, create Linear issues, mutate Canon or project overlays, or mark candidates stable.
+
+Agents can discover target templates through \`canon://overlays/candidates/approval-target-templates\`, the per-candidate \`canon://overlays/candidates/<intake-id>/approval-record/target-template\` resource, or search. Candidate list entries include \`approvalTargetTemplateUri\` next to the approval record and validation path.
 
 Use \`canon_overlay_candidate_promotion_approval_target_template_get\` when a maintainer needs the fillable target JSON as Markdown. Use \`overlay:candidate-approval-target\` for the same template from the local repo checkout. Omitting \`--intake\` prints the target-template list; adding \`--json\` prints the source template data.
 

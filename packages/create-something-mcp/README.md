@@ -19,6 +19,7 @@ Content from all CREATE SOMETHING properties.
 | `papers://list`, `papers://{slug}` | .io | Research papers on methodology, architecture, philosophy |
 | `canon://list`, `canon://{slug}` | .ltd | Canon Design System pages (foundations, concepts, guidelines) |
 | `canon://registry`, `canon://registry/list`, `canon://registry/{id}` | .ltd | Machine-readable Canon registry for components, tokens, templates, adapters, policies, and modalities |
+| `canon://overlays/candidates/...` | .ltd | Canon overlay candidate queue, handoffs, promotion plans, readiness reports, approval records, and approval target templates |
 | `patterns://list`, `patterns://{slug}` | .ltd | Design patterns from the CREATE SOMETHING philosophy |
 | `masters://list`, `masters://{slug}` | .ltd | Philosophical and design masters (Rams, Heidegger, etc.) |
 | `framework://definitions`, `framework://definitions/{tier}` | framework | Three-Tier Framework definitions |

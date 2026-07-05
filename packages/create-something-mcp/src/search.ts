@@ -22,6 +22,9 @@ import {
 import {
   CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS
 } from './content/generated/canon-overlay-candidate-promotion-approval-records.js';
+import {
+  buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection
+} from './canon-overlay-candidate-promotion-approval-record.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -45,6 +48,8 @@ import {
 
 function buildContentIndex(): ContentItem[] {
   const items: ContentItem[] = [];
+  const canonApprovalTargetTemplates =
+    buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection();
 
   // Papers
   for (const p of PAPERS) {
@@ -400,6 +405,53 @@ function buildContentIndex(): ContentItem[] {
       ].join('\n'),
       property: 'ltd',
       uri: record.approvalUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-promotion-approval-target-template:collection',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Promotion Approval Target Templates',
+    description: canonApprovalTargetTemplates.description,
+    content: [
+      canonApprovalTargetTemplates.summary.total.toString(),
+      canonApprovalTargetTemplates.agentContract.useFor.join('\n'),
+      canonApprovalTargetTemplates.agentContract.stopBefore.join('\n'),
+      'target JSON approvalOwner approvalEvidence approvedAt registryAction registryItemId exportPath exportName docsPath maturityTarget implementationOwner',
+      'fillable target template null unset validation hints allowed values'
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/approval-target-templates'
+  });
+
+  for (const template of canonApprovalTargetTemplates.entries) {
+    items.push({
+      id: `canon-overlay-candidate-promotion-approval-target-template:${template.intakeId}`,
+      type: 'canon-registry',
+      title: template.title,
+      description: template.instructions.join(' '),
+      content: [
+        template.approvalRecordId,
+        template.readinessReportId,
+        template.planId,
+        template.candidateId,
+        JSON.stringify({ target: template.target }, null, 2),
+        template.fields.map(field => `${field.id} ${field.label} ${field.required ? 'required' : 'optional'} ${field.value ?? 'UNSET'} ${field.instructions} ${field.hints.join(' ')}`).join('\n'),
+        template.allowedValues.registryActions.join('\n'),
+        template.allowedValues.maturityTargets.join('\n'),
+        template.targetHints.registryItems.map(item => `${item.id} ${item.name} ${item.kind} ${item.maturity} ${item.docsPath ?? ''} ${item.reason}`).join('\n'),
+        template.targetHints.exportPolicies.map(rule => `${rule.exportPath} ${rule.exportName ?? ''} ${rule.classification} ${rule.registryPolicy} ${rule.rationale}`).join('\n'),
+        template.targetHints.docsPaths.join('\n'),
+        template.instructions.join('\n'),
+        template.approvalBoundary.join('\n'),
+        template.agentContract.useFor.join('\n'),
+        template.agentContract.stopBefore.join('\n'),
+        template.targetTemplateUri,
+        template.approvalUri,
+        template.validationUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: template.targetTemplateUri
     });
   }
 

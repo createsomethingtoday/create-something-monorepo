@@ -524,6 +524,23 @@ export interface CanonOverlayCandidatePromotionApprovalTargetTemplate {
   };
 }
 
+export interface CanonOverlayCandidatePromotionApprovalTargetTemplateCollection {
+  schemaVersion: 1;
+  id: 'canon-overlay-candidate-promotion-approval-target-templates';
+  sourceOfTruth: '@create-something/canon/overlays/intake';
+  description: string;
+  entries: CanonOverlayCandidatePromotionApprovalTargetTemplate[];
+  summary: {
+    total: number;
+  };
+  agentContract: {
+    purpose: 'canon-overlay-candidate-promotion-approval-target-templates';
+    primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+    useFor: string[];
+    stopBefore: string[];
+  };
+}
+
 export type CanonOverlayCandidatePromotionApprovalValidationStatus =
   | 'missing-required-fields'
   | 'invalid-targets'
