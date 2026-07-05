@@ -20,6 +20,8 @@ This lesson uses RapidAPI Local Business Data because business owners understand
 
 For the first pass, keep contact extraction off. Use the tool to search, normalize, inspect, and decide.
 
+OpenAI's Codex best-practices guidance recommends giving Codex a clear goal, context, constraints, and done criteria. In this lesson, those become the tool name, input schema, output schema, safety annotations, and checkpoint prompt.
+
 <figure class="learning-figure">
   <img src="/learning/codex-mcp/rapidapi-tool-contract.svg" alt="RapidAPI MCP tool contract showing input schema, read-only MCP tool, RapidAPI Local Business Data, normalized output, and operator review boundary." />
   <figcaption>The tool contract keeps the first workflow read-only: search, normalize, and review before any business action.</figcaption>
@@ -36,6 +38,14 @@ It should call RapidAPI Local Business Data search, accept query, limit, and reg
 ```
 
 The goal is not to make Codex invent a hidden workflow. The goal is to have Codex check that the tool name, schema, output, and errors are specific enough for another Codex session to use safely.
+
+Accept the contract only when Codex can restate:
+
+- what business question the tool answers;
+- what inputs are required;
+- what external endpoint is called;
+- what structured fields come back;
+- what the operator must review before taking action.
 
 ## 2) Add a Local Secret
 
@@ -179,6 +189,11 @@ Find five highly rated coffee shops in Austin, TX so I can compare local positio
 ```
 
 Before adding enrichment, outreach, spreadsheet writes, or CRM sync, prove that Codex can discover the tool, pass valid arguments, receive structured data, and explain failures.
+
+## Official References Used
+
+- [Codex best practices](https://developers.openai.com/codex/learn/best-practices): prompts should include goal, context, constraints, and done criteria.
+- [Model Context Protocol in Codex](https://developers.openai.com/codex/mcp): MCP connects Codex to tools and context through configured servers.
 
 ## Next
 

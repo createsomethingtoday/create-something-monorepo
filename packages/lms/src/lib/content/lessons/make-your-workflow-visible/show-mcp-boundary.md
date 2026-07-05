@@ -6,6 +6,8 @@ duration: 15 min
 
 An MCP workflow needs a clear boundary. Codex can call tools, but the operator must know what the tool can reach, what it returns, and where human approval begins.
 
+OpenAI's Codex MCP documentation describes MCP as the connection layer between Codex and external tools or context. This image makes that connection visible for an operator: Codex is the app surface, the MCP server owns the contract, the external API supplies data, and the human approval gate controls risky action.
+
 For the first business MCP course, that boundary is:
 
 - Codex app: asks the question and inspects the result.
@@ -44,3 +46,7 @@ Human approval required before:
 ```
 
 If "Human approval required before" is vague, stop and define it before adding more capabilities.
+
+## Source note
+
+Reference: [OpenAI Model Context Protocol in Codex](https://developers.openai.com/codex/mcp).

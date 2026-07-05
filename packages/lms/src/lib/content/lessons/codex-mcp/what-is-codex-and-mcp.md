@@ -6,6 +6,21 @@ By the end of this lesson, you should be able to explain this in one sentence:
 
 `You learn Codex by using it to create focused, inspectable MCP capabilities it can call safely.`
 
+## Before You Start
+
+Open these three surfaces before you begin:
+
+1. The Codex app, signed in and pointed at a local project folder.
+2. A browser tab for RapidAPI so you can subscribe to the example business-data endpoint later.
+3. This course page so you can compare your Codex session against the guided checkpoints.
+
+OpenAI's Codex app documentation is the source for this course's working surface: use the Codex app for prompting, reviewing changes, checking Git state, opening settings, and inspecting the built-in terminal.
+
+<figure class="learning-figure">
+  <img src="https://developers.openai.com/images/codex/app/app-screenshot-light.webp" alt="OpenAI Codex app showing a project sidebar, active thread, and review pane." />
+  <figcaption>Source: OpenAI Developers, <a href="https://developers.openai.com/codex/app">Codex app documentation</a>. Use the app as the main workspace for this course.</figcaption>
+</figure>
+
 ## Mental Model
 
 1. You name a business question that comes up repeatedly.
@@ -31,6 +46,11 @@ The skill should not hide the implementation from the learner. Its job is to kee
 
 Use the terminal only as a support surface for build commands, local files, and server output. The learning experience should introduce operators to Codex as an OpenAI app they can return to, not as a command-line product.
 
+<figure class="learning-figure">
+  <img src="https://developers.openai.com/images/codex/app/skill-selector-light.webp" alt="OpenAI Codex app skill selector showing available skills in the chat composer." />
+  <figcaption>Source: OpenAI Developers, <a href="https://developers.openai.com/codex/app/features">Codex app features documentation</a>. Skills are selected inside the app so Codex can follow specialized instructions while you keep the implementation visible.</figcaption>
+</figure>
+
 ## When To Build An MCP
 
 Build an MCP when a capability should be more repeatable, inspectable, and bounded than an ad hoc browser search, spreadsheet copy-paste, shell command, or chat instruction.
@@ -52,6 +72,8 @@ Do not build an MCP just to hide a vague workflow behind a tool. Codex works bes
 ## Protocol Note
 
 This walkthrough uses the Model Context Protocol documentation, the TypeScript MCP SDK, and JSON-schema-shaped tool contracts through Zod. It does not require Protocol Buffers or `.proto` files.
+
+OpenAI's Codex MCP documentation describes MCP as the way Codex connects to tools and context, including local stdio servers and streamable HTTP servers. This course starts with local stdio because it is the shortest path to a visible, inspectable first server.
 
 ## Agentic Engineering Standard
 
@@ -78,6 +100,13 @@ At the end of this course, you should be able to:
 - register the server back into Codex,
 - debug failures with Inspector and Codex config checks,
 - and package the server for reuse.
+
+## Official References Used
+
+- [Codex app](https://developers.openai.com/codex/app): install, sign in, select a project, and send the first message.
+- [Codex app features](https://developers.openai.com/codex/app/features): skills, terminal, browser, image input, modes, threads, worktrees, and Git support.
+- [Model Context Protocol in Codex](https://developers.openai.com/codex/mcp): how Codex connects to MCP servers and discovers tools and context.
+- [Codex best practices](https://developers.openai.com/codex/learn/best-practices): prompt with a goal, context, constraints, and done criteria.
 
 ## Next
 

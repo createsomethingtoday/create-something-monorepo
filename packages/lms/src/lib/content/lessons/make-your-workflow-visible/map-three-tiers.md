@@ -43,3 +43,9 @@ Owner:
 ```
 
 Then inspect the result. If Codex cannot place an item in a lane, the workflow needs more definition before it needs more automation.
+
+## Source note
+
+This exercise pairs the CREATE SOMETHING Database / Automation / Judgment lanes with OpenAI's Codex best-practices guidance: give Codex a clear goal, context, constraints, and done criteria before asking it to build or change a workflow.
+
+Reference: [OpenAI Codex best practices](https://developers.openai.com/codex/learn/best-practices).
