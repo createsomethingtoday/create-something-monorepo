@@ -11,6 +11,7 @@ import {
   CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
 } from './content/generated/canon-public-export-classification.js';
 import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
+import { CANON_OVERLAY_TEMPLATE_FILE_PACK } from './content/generated/canon-overlay-template-files.js';
 import { CANON_OVERLAY_INTAKE_INVENTORY } from './content/generated/canon-overlay-intake-inventory.js';
 import { CANON_OVERLAY_CANDIDATE_QUEUE } from './content/generated/canon-overlay-candidate-queue.js';
 import {
@@ -276,6 +277,7 @@ export function registerResources(server: McpServer) {
           docsPath: template.docsPath,
           targetModalities: template.manifest.targetModalities,
           status: template.review.status,
+          templateFilesUri: `canon://overlays/${template.id}/files`,
           uri: `canon://overlays/${template.id}`
         })), null, 2)
       }]
@@ -294,7 +296,44 @@ export function registerResources(server: McpServer) {
         contents: [{
           uri: uri.href,
           mimeType: 'application/json',
-          text: JSON.stringify(template, null, 2)
+          text: JSON.stringify({
+            ...template,
+            templateFilesUri: `canon://overlays/${template.id}/files`
+          }, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-template-files-overlay-project-template',
+    CANON_OVERLAY_TEMPLATE_FILE_PACK.filesUri,
+    {
+      description: `Canon overlay template file pack: ${CANON_OVERLAY_TEMPLATE_FILE_PACK.summary.totalFiles} starter files for ${CANON_OVERLAY_TEMPLATE_FILE_PACK.templateId}`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_TEMPLATE_FILE_PACK, null, 2)
+      }]
+    })
+  );
+
+  for (const file of CANON_OVERLAY_TEMPLATE_FILE_PACK.files) {
+    server.resource(
+      `canon-overlays-template-file-${file.relativePath.replace(/[^a-z0-9-]/gi, '-')}`,
+      file.uri,
+      {
+        description: file.description,
+        mimeType: file.mimeType
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: file.mimeType,
+          text: file.content
         }]
       })
     );

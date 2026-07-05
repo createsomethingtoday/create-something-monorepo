@@ -8,6 +8,7 @@ import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
+import { CANON_OVERLAY_TEMPLATE_FILE_PACK } from './content/generated/canon-overlay-template-files.js';
 import { CANON_OVERLAY_INTAKE_INVENTORY } from './content/generated/canon-overlay-intake-inventory.js';
 import { CANON_OVERLAY_CANDIDATE_QUEUE } from './content/generated/canon-overlay-candidate-queue.js';
 import {
@@ -115,6 +116,7 @@ function buildContentIndex(): ContentItem[] {
         CANON_OVERLAY_CATALOG.description,
         template.manifest.targetModalities.join(' '),
         template.outputFiles.join(' '),
+        `template files ${CANON_OVERLAY_TEMPLATE_FILE_PACK.filesUri}`,
         template.registryItemIds.join(' '),
         template.review.status,
         template.review.summary,
@@ -124,6 +126,42 @@ function buildContentIndex(): ContentItem[] {
       ].join('\n'),
       property: 'ltd',
       uri: `canon://overlays/${template.id}`
+    });
+  }
+
+  items.push({
+    id: `canon-overlay-template-file-pack:${CANON_OVERLAY_TEMPLATE_FILE_PACK.templateId}`,
+    type: 'canon-registry',
+    title: 'Canon Project Overlay Template File Pack',
+    description: CANON_OVERLAY_TEMPLATE_FILE_PACK.description,
+    content: [
+      CANON_OVERLAY_TEMPLATE_FILE_PACK.templateId,
+      CANON_OVERLAY_TEMPLATE_FILE_PACK.files.map((file) => `${file.relativePath} ${file.description} ${file.mimeType}`).join('\n'),
+      CANON_OVERLAY_TEMPLATE_FILE_PACK.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_TEMPLATE_FILE_PACK.agentContract.stopBefore.join('\n'),
+      'theme.css tokens.json templates surface brief copy rules surface policy registry.json manifest.ts web chat app voice glasses'
+    ].join('\n'),
+    property: 'ltd',
+    uri: CANON_OVERLAY_TEMPLATE_FILE_PACK.filesUri
+  });
+
+  for (const file of CANON_OVERLAY_TEMPLATE_FILE_PACK.files) {
+    items.push({
+      id: `canon-overlay-template-file:${file.templateId}:${file.relativePath}`,
+      type: 'canon-registry',
+      title: `Canon Overlay Template File: ${file.relativePath}`,
+      description: file.description,
+      content: [
+        file.templateId,
+        file.relativePath,
+        file.outputPath,
+        file.mimeType,
+        file.description,
+        file.content,
+        file.uri
+      ].join('\n'),
+      property: 'ltd',
+      uri: file.uri
     });
   }
 
