@@ -49,7 +49,9 @@ function parseArgs(argv) {
 function resolveWranglerBin(runnerCwd, workspaceRoot) {
 	const candidateDirs = [
 		path.join(runnerCwd, 'node_modules', 'wrangler'),
-		path.join(workspaceRoot, 'node_modules', 'wrangler')
+		path.join(runnerCwd, 'node_modules', '.pnpm', 'node_modules', 'wrangler'),
+		path.join(workspaceRoot, 'node_modules', 'wrangler'),
+		path.join(workspaceRoot, 'node_modules', '.pnpm', 'node_modules', 'wrangler')
 	];
 
 	for (const packageDir of candidateDirs) {
