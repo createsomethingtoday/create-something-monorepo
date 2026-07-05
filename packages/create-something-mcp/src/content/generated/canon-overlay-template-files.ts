@@ -1,7 +1,7 @@
 /**
  * Generated Canon overlay template file content — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/project-template/
+ * Source: packages/canon/src/lib/mcp-snapshot/
  */
 
 import type { CanonOverlayTemplateFilePack } from '../types.js';

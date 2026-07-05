@@ -1,7 +1,7 @@
 /**
  * Generated Canon overlay catalog content — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/
+ * Source: packages/canon/src/lib/mcp-snapshot/
  */
 
 import type { CanonOverlayCatalog } from '../types.js';

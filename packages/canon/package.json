@@ -243,6 +243,10 @@
 			"types": "./dist/design-audit/index.d.ts",
 			"default": "./dist/design-audit/index.js"
 		},
+		"./mcp-snapshot": {
+			"types": "./dist/mcp-snapshot/index.d.ts",
+			"default": "./dist/mcp-snapshot/index.js"
+		},
 		"./overlays": {
 			"types": "./dist/overlays/index.d.ts",
 			"default": "./dist/overlays/index.js"

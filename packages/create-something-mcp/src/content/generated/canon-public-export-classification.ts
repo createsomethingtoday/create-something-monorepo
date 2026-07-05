@@ -1,7 +1,7 @@
 /**
  * Generated Canon public export classification content — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
- * Source: packages/canon/src/lib/registry/public-export-classification.ts
+ * Source: packages/canon/src/lib/mcp-snapshot/
  */
 
 import type { CanonPublicExportClassificationRule } from '../types.js';
