@@ -1,11 +1,12 @@
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { reviewCanonProjectOverlay } from '../../registry/index.js';
+import { buildCanonOverlayIntakeInventory } from '../intake.js';
 import {
 	buildCanonProjectOverlayTemplateFilePack,
 	createCanonProjectOverlayManifest,
@@ -46,11 +47,53 @@ describe('Canon project overlay instantiation', () => {
 		expect(result.files).toHaveLength(8);
 		expect(result.files.every((file) => file.action === 'would-create')).toBe(true);
 		expect(existsSync(join(outputRoot, 'manifest.ts'))).toBe(false);
+		expect(result.manifest.extensionIntakes?.[0]?.sourcePath).toBe(
+			'canon-overlay/templates/surface-brief.md'
+		);
+		expect(
+			result.manifest.extensionIntakes?.[0]?.surfaces.every(
+				(surface) => surface.sourcePath === 'canon-overlay/templates/surface-brief.md'
+			)
+		).toBe(true);
 
 		const review = reviewCanonProjectOverlay(result.manifest);
 		expect(review.status).toBe('ready');
 		expect(review.missingArtifacts).toEqual([]);
 		expect(review.extensionDecisions[0]?.decision.action).toBe('promote-candidate');
+	});
+
+	it('writes overlays that pass repo inventory integrity from a package root', async () => {
+		const rootDir = await createTempRoot();
+		const packageRoot = join(rootDir, 'packages/client-workflow');
+		await mkdir(packageRoot, { recursive: true });
+		await writeFile(
+			join(packageRoot, 'package.json'),
+			`${JSON.stringify({ name: '@create-something/client-workflow' }, null, 2)}\n`,
+			'utf-8'
+		);
+
+		await instantiateCanonProjectOverlayTemplate({
+			id: 'overlay.client-workflow',
+			name: 'Client Workflow Overlay',
+			owner: 'client-team',
+			sourcePackage: '@create-something/client-workflow',
+			outputRoot: join(packageRoot, 'canon-overlay'),
+			targetModalities: ['web', 'chat']
+		});
+
+		const inventory = await buildCanonOverlayIntakeInventory({
+			rootDir,
+			searchRoots: ['packages']
+		});
+
+		expect(inventory.summary).toMatchObject({
+			total: 1,
+			ready: 1,
+			needsArtifacts: 0,
+			needsEvidence: 0,
+			needsReview: 0
+		});
+		expect(inventory.entries[0]?.review.integrityIssues).toEqual([]);
 	});
 
 	it('writes the overlay artifact set with rendered project metadata', async () => {
