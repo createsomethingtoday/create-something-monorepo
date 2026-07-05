@@ -5,7 +5,7 @@ Overlay: Agency Atlas Public Overlay (overlay.agency-atlas-public)
 ## Candidate
 
 - Name: Public Atlas workflow proof surface
-- Modalities: web, chat, app
+- Modalities: web, chat, app, voice, glasses
 - Owner: agency-team
 - Primary source path: `src/routes/atlas/+page.svelte`
 
@@ -31,6 +31,8 @@ Public readers need to test CREATE SOMETHING's workflow mapping method before a 
 - Route proof: `src/routes/atlas/+page.svelte` composes story, canvas, and booking handoff around Canon Atlas.
 - Chat proof: `src/lib/components/PublicAtlasCanvas.svelte` sends bounded visitor prompts to `src/routes/api/atlas/public-agent/+server.ts`.
 - App proof: `buildBookingUrl` carries readiness, lane, score, session, and message metadata to `/book`.
+- Voice proof: `canon-overlay/copy-rules.md` constrains spoken handoffs to owner, proof, durable record, and next action.
+- Glasses proof: `canon-overlay/surface-policy.md` keeps HUD output to glanceable state, owner, and next action while policy detail stays on larger surfaces.
 - Tests: `test/public-atlas-route.test.ts` and `test/public-atlas-starter-maps.test.ts`.
 
 ## Extension Intake

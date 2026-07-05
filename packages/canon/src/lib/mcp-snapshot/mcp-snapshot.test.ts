@@ -49,6 +49,10 @@ describe('Canon MCP snapshot', () => {
     expect(
       snapshot.modalityReadinessReport.modalities.find((entry) => entry.modality === 'voice')
         ?.status
-    ).toBe('templated');
+    ).toBe('implemented');
+    expect(
+      snapshot.modalityReadinessReport.modalities.find((entry) => entry.modality === 'glasses')
+        ?.status
+    ).toBe('implemented');
   });
 });

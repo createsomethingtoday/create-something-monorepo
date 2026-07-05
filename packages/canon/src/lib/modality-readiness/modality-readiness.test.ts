@@ -32,16 +32,20 @@ describe('Canon modality readiness', () => {
     expect(statusFor(report, 'web')).toBe('implemented');
     expect(statusFor(report, 'chat')).toBe('implemented');
     expect(statusFor(report, 'app')).toBe('implemented');
-    expect(statusFor(report, 'voice')).toBe('templated');
-    expect(statusFor(report, 'glasses')).toBe('templated');
+    expect(statusFor(report, 'voice')).toBe('implemented');
+    expect(statusFor(report, 'glasses')).toBe('implemented');
     expect(entryFor(report, 'voice').templateIds).toContain('template.chat-decision-brief');
     expect(entryFor(report, 'glasses').templateIds).toContain('template.glasses-routing-hud');
-    expect(entryFor(report, 'voice').evidenceSurfaceCount).toBe(0);
-    expect(entryFor(report, 'glasses').evidenceSurfaceCount).toBe(0);
+    expect(entryFor(report, 'voice').evidenceSurfaceIds).toContain(
+      'agency-atlas-voice-routing-summary:canon-overlay/copy-rules.md'
+    );
+    expect(entryFor(report, 'glasses').evidenceSurfaceIds).toContain(
+      'agency-atlas-glasses-routing-hud:canon-overlay/surface-policy.md'
+    );
     expect(report.summary).toMatchObject({
       totalModalities: 5,
-      implemented: 3,
-      templated: 2,
+      implemented: 5,
+      templated: 0,
       gaps: 0
     });
   });
@@ -60,9 +64,9 @@ describe('Canon modality readiness', () => {
 
     expect(rendered).toContain('# Canon Modality Readiness');
     expect(rendered).toContain('## voice');
-    expect(rendered).toContain('Status: `templated`');
+    expect(rendered).toContain('Status: `implemented`');
     expect(rendered).toContain('## glasses');
-    expect(rendered).toContain('project-overlay surface evidence');
+    expect(rendered).toContain('agency-atlas-glasses-routing-hud:canon-overlay/surface-policy.md');
   });
 });
 

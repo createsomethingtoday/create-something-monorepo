@@ -9,7 +9,9 @@ export const CANON_PROJECT_OVERLAY_MANIFEST: CanonProjectOverlayManifest = {
   "targetModalities": [
     "web",
     "chat",
-    "app"
+    "app",
+    "voice",
+    "glasses"
   ],
   "tags": [
     "canon",
@@ -85,7 +87,9 @@ export const CANON_PROJECT_OVERLAY_MANIFEST: CanonProjectOverlayManifest = {
       "requestedModalities": [
         "web",
         "chat",
-        "app"
+        "app",
+        "voice",
+        "glasses"
       ],
       "owner": "agency-team",
       "sourcePackage": "@create-something/agency",
@@ -125,6 +129,20 @@ export const CANON_PROJECT_OVERLAY_MANIFEST: CanonProjectOverlayManifest = {
           "modality": "web",
           "sourcePath": "src/lib/atlas/surface-policy.ts",
           "proof": "AGENCY_ATLAS_PROOF_PATHS names /services, /atlas, /methodology, /stack, and product routes as public proof surfaces that share the overlay language."
+        },
+        {
+          "surfaceId": "agency-atlas-voice-routing-summary",
+          "name": "Agency Atlas voice routing summary",
+          "modality": "voice",
+          "sourcePath": "canon-overlay/copy-rules.md",
+          "proof": "Voice copy is constrained to short declarative handoffs that name the owner, next step, proof, and durable record without exposing hidden reasoning or private system access."
+        },
+        {
+          "surfaceId": "agency-atlas-glasses-routing-hud",
+          "name": "Agency Atlas glasses routing HUD policy",
+          "modality": "glasses",
+          "sourcePath": "canon-overlay/surface-policy.md",
+          "proof": "Glasses output is limited to glanceable state, owner, and next action while policy bodies, review history, and reasoning stay on larger Canon surfaces."
         }
       ],
       "dependencies": [
