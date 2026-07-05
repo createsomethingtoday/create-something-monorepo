@@ -12,8 +12,7 @@
 export const typography = {
 	// Font families
 	family: {
-		sans:
-			'"ABC Diatype", "Stack Sans Notch", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+		sans: '"ABC Diatype", "Stack Sans Notch", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 		mono: '"ABC Diatype Mono", "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace',
 		serif: '"Martina Plantijn", Georgia, "Times New Roman", serif'
 	},
@@ -50,25 +49,25 @@ export const typography = {
 	// Preferred uses viewport width for smooth scaling
 	scale: {
 		// Display sizes
-		'display-xl': 'clamp(3.5rem, 5vw + 2rem, 7rem)', // 56px → 112px
-		display: 'clamp(2.5rem, 4vw + 1.5rem, 5rem)', // 40px → 80px
+		'display-xl': 'clamp(4.236rem, 6vw + 2rem, 6.854rem)', // φ⁴ max
+		display: 'clamp(2.618rem, 4vw + 1.5rem, 4.236rem)', // φ³ max
 
 		// Headings
-		h1: 'clamp(2rem, 3vw + 1rem, 3.5rem)', // 32px → 56px
-		h2: 'clamp(1.5rem, 2vw + 0.75rem, 2.25rem)', // 24px → 36px
-		h3: 'clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem)', // 20px → 28px
-		h4: 'clamp(1.125rem, 1vw + 0.5rem, 1.5rem)', // 18px → 24px
-		h5: 'clamp(1rem, 0.5vw + 0.75rem, 1.25rem)', // 16px → 20px
-		h6: 'clamp(0.875rem, 0.25vw + 0.75rem, 1rem)', // 14px → 16px
+		h1: 'clamp(1.618rem, 3vw + 1rem, 2.618rem)', // φ² max
+		h2: 'clamp(1.2rem, 2vw + 0.5rem, 1.618rem)', // φ¹ max
+		h3: 'clamp(1.02rem, 1vw + 0.5rem, 1.2rem)', // 1.2¹ max
+		h4: 'clamp(0.931rem, 0.5vw + 0.5rem, 1.095rem)', // √1.2 max
+		h5: '1rem', // base
+		h6: '0.913rem', // 1/√1.2
 
 		// Body sizes
-		'body-lg': '1.125rem', // 18px
-		body: '1rem', // 16px
-		'body-sm': '0.875rem', // 14px
+		'body-lg': '1.095rem', // √1.2
+		body: '1rem', // base
+		'body-sm': '0.913rem', // 1/√1.2
 
 		// Utility sizes
-		caption: '0.75rem', // 12px
-		overline: '0.6875rem' // 11px
+		caption: '0.833rem', // 1/1.2
+		overline: '0.618rem' // 1/φ
 	}
 } as const;
 
