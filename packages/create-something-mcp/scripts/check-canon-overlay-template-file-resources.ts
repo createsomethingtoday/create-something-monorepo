@@ -4,9 +4,7 @@ import assert from 'node:assert/strict';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import {
-  renderCanonProjectOverlayTemplateFiles,
-  CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST,
-  CANON_PROJECT_OVERLAY_TEMPLATE_ROOT
+  buildCanonProjectOverlayTemplateFilePack
 } from '../../canon/src/lib/overlays/project-template/index.js';
 import { CANON_OVERLAY_TEMPLATE_FILE_PACK } from '../src/content/generated/canon-overlay-template-files.js';
 import { CANON_PAGES } from '../src/content/generated/canon.js';
@@ -42,27 +40,15 @@ const server = {
 
 registerResources(server as unknown as McpServer);
 
-const renderedCanonFiles = renderCanonProjectOverlayTemplateFiles({
-  id: CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST.id,
-  name: CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST.name,
-  owner: CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST.owner,
-  sourcePackage: CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST.sourcePackage,
-  outputRoot: CANON_PROJECT_OVERLAY_TEMPLATE_ROOT,
-  targetModalities: CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST.targetModalities,
-  tags: CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST.tags
-});
+const canonFilePack = buildCanonProjectOverlayTemplateFilePack();
 
 assert.equal(CANON_OVERLAY_TEMPLATE_FILE_PACK.templateId, 'overlay.project-template');
 assert.equal(CANON_OVERLAY_TEMPLATE_FILE_PACK.filesUri, 'canon://overlays/overlay.project-template/files');
 assert.equal(CANON_OVERLAY_TEMPLATE_FILE_PACK.files.length, 8);
 assert.deepEqual(
-  CANON_OVERLAY_TEMPLATE_FILE_PACK.files.map(({ relativePath, outputPath, content }) => ({
-    relativePath,
-    path: outputPath,
-    content
-  })),
-  renderedCanonFiles,
-  'Generated MCP overlay template file pack must match the Canon overlay renderer'
+  CANON_OVERLAY_TEMPLATE_FILE_PACK,
+  canonFilePack,
+  'Generated MCP overlay template file pack must match the Canon source helper'
 );
 
 const listResource = requireResource('canon://overlays/list');

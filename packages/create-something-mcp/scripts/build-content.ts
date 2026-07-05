@@ -371,78 +371,9 @@ async function buildCanonOverlayTemplateFiles(): Promise<string> {
     join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'project-template', 'index.ts')
   ).href;
   const template = await import(templateModuleUrl) as {
-    CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST: {
-      id: string;
-      name: string;
-      owner: string;
-      sourcePackage: string;
-      targetModalities: string[];
-      tags?: string[];
-    };
-    CANON_PROJECT_OVERLAY_TEMPLATE_ROOT: string;
-    renderCanonProjectOverlayTemplateFiles: (options: {
-      id: string;
-      name: string;
-      owner: string;
-      sourcePackage: string;
-      outputRoot: string;
-      targetModalities?: string[];
-      tags?: string[];
-    }) => Array<{
-      relativePath: string;
-      path: string;
-      content: string;
-    }>;
+    buildCanonProjectOverlayTemplateFilePack: () => unknown;
   };
-  const manifest = template.CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST;
-  const files = template.renderCanonProjectOverlayTemplateFiles({
-    id: manifest.id,
-    name: manifest.name,
-    owner: manifest.owner,
-    sourcePackage: manifest.sourcePackage,
-    outputRoot: template.CANON_PROJECT_OVERLAY_TEMPLATE_ROOT,
-    targetModalities: manifest.targetModalities,
-    tags: manifest.tags
-  }).map((file) => ({
-    id: `canon-overlay-template-file:${manifest.id}:${file.relativePath}`,
-    templateId: manifest.id,
-    relativePath: file.relativePath,
-    outputPath: file.path,
-    uri: `canon://overlays/${manifest.id}/files/${encodeURIComponent(file.relativePath)}`,
-    mimeType: mimeTypeForOverlayTemplateFile(file.relativePath),
-    content: file.content,
-    description: descriptionForOverlayTemplateFile(file.relativePath)
-  }));
-
-  const pack = {
-    schemaVersion: 1,
-    id: 'canon-overlay-template-file-pack',
-    templateId: manifest.id,
-    templateUri: `canon://overlays/${manifest.id}`,
-    filesUri: `canon://overlays/${manifest.id}/files`,
-    sourceOfTruth: '@create-something/canon/overlays/project-template',
-    description:
-      'Read-only Canon project overlay template file pack generated from the Canon overlay renderer for web, chat, app, voice, and glasses surfaces.',
-    files,
-    summary: {
-      totalFiles: files.length
-    },
-    agentContract: {
-      purpose: 'canon-overlay-template-file-resources',
-      primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
-      useFor: [
-        'inspecting the exact Canon project overlay starter files before instantiation',
-        'copying artifact structure for theme, tokens, templates, copy rules, surface policy, registry metadata, and manifest wiring',
-        'checking overlay file bodies without writing into a project package'
-      ],
-      stopBefore: [
-        'writing template files into apps or packages',
-        'treating a template file as a project-specific overlay approval',
-        'mutating Canon registry, project overlays, candidate queues, or promotion state',
-        'forking Canon primitives instead of using overlay artifacts'
-      ]
-    }
-  };
+  const pack = template.buildCanonProjectOverlayTemplateFilePack();
 
   return `/**
  * Generated Canon overlay template file content — DO NOT EDIT MANUALLY.
@@ -454,37 +385,6 @@ import type { CanonOverlayTemplateFilePack } from '../types.js';
 
 export const CANON_OVERLAY_TEMPLATE_FILE_PACK: CanonOverlayTemplateFilePack = ${JSON.stringify(pack, null, 2)};
 `;
-}
-
-function mimeTypeForOverlayTemplateFile(relativePath: string): string {
-  if (relativePath.endsWith('.css')) return 'text/css';
-  if (relativePath.endsWith('.json')) return 'application/json';
-  if (relativePath.endsWith('.md')) return 'text/markdown';
-  if (relativePath.endsWith('.ts')) return 'text/typescript';
-  return 'text/plain';
-}
-
-function descriptionForOverlayTemplateFile(relativePath: string): string {
-  switch (relativePath) {
-    case 'theme.css':
-      return 'Project-local CSS aliases that point back to Canon tokens.';
-    case 'tokens.json':
-      return 'Design-token aliases for project-specific names without creating a new token scale.';
-    case 'templates/README.md':
-      return 'Overlay template directory guide and template rules.';
-    case 'templates/surface-brief.md':
-      return 'Surface brief template for workflow need, Canon reuse, local overlay artifacts, evidence, and extension intake.';
-    case 'copy-rules.md':
-      return 'Project-local terminology and voice rules that preserve Canon structure.';
-    case 'surface-policy.md':
-      return 'Modality policy for web, chat, app, voice, and glasses overlays.';
-    case 'registry.json':
-      return 'Project-local registry metadata and Canon dependency list.';
-    case 'manifest.ts':
-      return 'TypeScript overlay manifest export for Canon intake inventory.';
-    default:
-      return `Canon project overlay template file: ${relativePath}`;
-  }
 }
 
 async function buildCanonOverlayIntakeInventory(): Promise<string> {
