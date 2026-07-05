@@ -29,6 +29,7 @@ import {
   applyCanonOverlayCandidatePromotionApprovalTarget,
   getCanonOverlayCandidatePromotionApprovalRecord,
   getCanonOverlayCandidatePromotionApprovalTargetTemplate,
+  getCanonOverlayCandidatePromotionApprovalValidationReport,
   listCanonOverlayCandidatePromotionApprovalRecordIds,
   renderCanonOverlayCandidatePromotionApprovalRecord,
   renderCanonOverlayCandidatePromotionApprovalTargetTemplate,
@@ -1246,6 +1247,42 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonOverlayCandidatePromotionApprovalTargetTemplate(template),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_overlay_candidate_promotion_approval_validation_report_get',
+    'Get the current rendered read-only Canon overlay candidate promotion approval validation report by intake id. Use this to inspect generated validation status before maintainer-supplied target validation; it does not fill fields, persist approval, create Linear work, or mutate Canon.',
+    {
+      intakeId: z.string().describe('Candidate intake id, approval record id, readiness report id, plan id, or candidate id, for example overlay.agency-atlas-public.workflow-proof-surface')
+    },
+    async ({ intakeId }) => {
+      const report = getCanonOverlayCandidatePromotionApprovalValidationReport(intakeId);
+
+      if (!report) {
+        const ids = listCanonOverlayCandidatePromotionApprovalRecordIds();
+        return {
+          content: [{
+            type: 'text' as const,
+            text: [
+              `Canon overlay candidate promotion approval validation report not found: ${intakeId}`,
+              '',
+              'Available intake ids:',
+              ...ids.map((id) => `- \`${id}\``)
+            ].join('\n'),
+            ...USER_VISIBLE,
+          }],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonOverlayCandidatePromotionApprovalValidationReport(report),
           ...USER_VISIBLE,
         }]
       };

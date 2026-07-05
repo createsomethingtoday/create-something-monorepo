@@ -5197,6 +5197,7 @@ Ready overlays can produce candidate intakes when they have repeated-surface evi
 - Rendered readiness tool: \`canon_overlay_candidate_promotion_readiness_get\`
 - Rendered approval record tool: \`canon_overlay_candidate_promotion_approval_record_get\`
 - Approval target template tool: \`canon_overlay_candidate_promotion_approval_target_template_get\`
+- Approval validation report tool: \`canon_overlay_candidate_promotion_approval_validation_report_get\`
 - Approval validation tool: \`canon_overlay_candidate_promotion_approval_record_validate\`
 - Local CLI handoff: \`pnpm --filter @create-something/canon overlay:candidate-handoff -- --root . --intake <intake-id>\`
 - Local CLI promotion plan: \`pnpm --filter @create-something/canon overlay:candidate-plan -- --root . --intake <intake-id>\`
@@ -5233,7 +5234,7 @@ Use \`canon_overlay_candidate_promotion_approval_target_template_get\` when a ma
 
 Validate a filled approval record before opening implementation work. Validation reports missing required fields, invalid registry action, invalid maturity target, invalid approval date, and target evidence warnings. It can return \`ready-for-implementation\`, but that is still only a gate check: validation does not approve implementation, persist approval fields, create Linear issues, mutate Canon or project overlays, or mark candidates stable.
 
-Agents can discover current validation reports through \`canon://overlays/candidates/approval-validation-reports\`, the per-candidate \`canon://overlays/candidates/<intake-id>/approval-record/validation\` resource, or search. Candidate list entries include \`approvalValidationUri\` next to the approval record and target-template path. These resources validate the generated approval records as they currently stand; use the validation tool when a maintainer supplies filled target fields.
+Agents can discover current validation reports through \`canon://overlays/candidates/approval-validation-reports\`, the per-candidate \`canon://overlays/candidates/<intake-id>/approval-record/validation\` resource, \`canon_overlay_candidate_promotion_approval_validation_report_get\`, or search. Candidate list entries include \`approvalValidationUri\` next to the approval record and target-template path. These resources and the getter validate the generated approval records as they currently stand; use the validation tool when a maintainer supplies filled target fields.
 
 Use \`canon_overlay_candidate_promotion_approval_record_validate\` when an agent has maintainer-supplied target fields to check in MCP. Use \`overlay:candidate-approval-validate\` for the same validation from the local repo checkout. Add \`--record <path>\` to validate a JSON approval record or target payload, and add \`--strict\` when CI should fail unless the record is ready for implementation.
 
