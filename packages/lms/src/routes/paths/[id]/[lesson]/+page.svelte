@@ -362,6 +362,11 @@
     background: var(--color-clear-panel, #ffffff);
   }
 
+  .prose :global(.learning-figure picture) {
+    display: block;
+    width: 100%;
+  }
+
   .prose :global(.learning-figure img) {
     display: block;
     width: 100%;
@@ -375,6 +380,13 @@
     color: var(--color-clear-grey, #636363);
     font-size: var(--text-body-sm);
     line-height: var(--leading-relaxed);
+  }
+
+  @media (max-width: 640px) {
+    .prose :global(.learning-figure) {
+      gap: var(--space-xs);
+      padding: var(--space-sm);
+    }
   }
 
   .prose :global(code) {

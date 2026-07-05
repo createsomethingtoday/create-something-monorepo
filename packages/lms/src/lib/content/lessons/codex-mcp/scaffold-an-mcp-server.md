@@ -9,7 +9,10 @@ This course uses the Codex app plus a local stdio server because that is the fas
 OpenAI's Codex MCP documentation supports both local stdio MCP servers and streamable HTTP servers. This lesson uses stdio first so the learner can see the package, command, build output, and protocol boundary before adding deployment complexity.
 
 <figure class="learning-figure">
-  <img src="/learning/codex-mcp/mcp-server-skeleton.svg" alt="Minimal local MCP server skeleton showing package files, McpServer, stdio transport, and Codex discovery." />
+  <picture>
+    <source media="(max-width: 640px)" srcset="/learning/codex-mcp/mcp-server-skeleton-mobile.svg" />
+    <img src="/learning/codex-mcp/mcp-server-skeleton.svg" alt="Minimal local MCP server skeleton showing package files, McpServer, stdio transport, and Codex discovery." />
+  </picture>
   <figcaption>The scaffold proves the server can start cleanly before any business workflow is added.</figcaption>
 </figure>
 

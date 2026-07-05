@@ -3,7 +3,7 @@
   <desc id="desc">The smallest local MCP server has a package file, TypeScript config, index file, stdio transport, and stderr-only diagnostics.</desc>
   <rect width="960" height="540" fill="#f5f7fb"/>
   <rect x="56" y="48" width="848" height="444" rx="14" fill="#ffffff" stroke="#1f2933" stroke-width="2"/>
-  <text x="96" y="96" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Smallest Useful MCP Shell</text>
+  <text x="96" y="96" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Smallest useful MCP shell</text>
   <text x="96" y="126" font-family="Inter, Arial, sans-serif" font-size="16" fill="#4b5563">Create only the files needed to prove the server can start cleanly.</text>
 
   <g font-family="Inter, Arial, sans-serif">
@@ -14,19 +14,19 @@
     <text x="126" y="311" font-size="15" fill="#374151">src/index.ts</text>
     <text x="126" y="343" font-size="15" fill="#374151">dist/index.js after build</text>
     <rect x="120" y="368" width="210" height="22" rx="5" fill="#e5e7eb"/>
-    <text x="225" y="384" text-anchor="middle" font-size="12" font-weight="650" fill="#111827">No Business Tool Yet</text>
+    <text x="225" y="384" text-anchor="middle" font-size="12" font-weight="650" fill="#111827">no business tool yet</text>
 
     <rect x="452" y="174" width="180" height="96" rx="10" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
     <text x="542" y="211" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">McpServer</text>
     <text x="542" y="238" text-anchor="middle" font-size="14" fill="#374151">name + version</text>
 
     <rect x="452" y="314" width="180" height="96" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
-    <text x="542" y="351" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">Stdio Transport</text>
-    <text x="542" y="378" text-anchor="middle" font-size="14" fill="#374151">Protocol on stdout</text>
+    <text x="542" y="351" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">Stdio transport</text>
+    <text x="542" y="378" text-anchor="middle" font-size="14" fill="#374151">protocol on stdout</text>
 
     <rect x="710" y="214" width="118" height="156" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
     <text x="769" y="253" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">Codex</text>
-    <text x="769" y="281" text-anchor="middle" font-size="14" fill="#374151">Discovers</text>
+    <text x="769" y="281" text-anchor="middle" font-size="14" fill="#374151">discovers</text>
     <text x="769" y="304" text-anchor="middle" font-size="14" fill="#374151">the server</text>
     <text x="769" y="327" text-anchor="middle" font-size="14" fill="#374151">later</text>
 
