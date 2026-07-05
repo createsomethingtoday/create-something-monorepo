@@ -82,6 +82,7 @@ export type CanonProjectOverlayTemplateFilePack = {
 };
 
 const DEFAULT_MODALITIES: CanonRegistryModality[] = ['web', 'chat', 'app', 'voice', 'glasses'];
+const DEFAULT_OVERLAY_SURFACE_BRIEF_SOURCE_PATH = 'canon-overlay/templates/surface-brief.md';
 
 export function createCanonProjectOverlayManifest(
 	options: Omit<CanonProjectOverlayInstantiateOptions, 'outputRoot' | 'force' | 'dryRun'>
@@ -110,13 +111,13 @@ export function createCanonProjectOverlayManifest(
 			id: `${options.id}.surface-brief`,
 			owner: options.owner,
 			sourcePackage: options.sourcePackage,
-			sourcePath: 'templates/surface-brief.md',
+			sourcePath: DEFAULT_OVERLAY_SURFACE_BRIEF_SOURCE_PATH,
 			requestedModalities: targetModalities,
 			surfaces: packet.surfaces.map((surface, index) => ({
 				...surface,
 				surfaceId: `${targetModalities[index] ?? targetModalities[0]}-${options.id.replace(/^overlay\./, '').replaceAll('.', '-')}-brief-${index + 1}`,
 				modality: targetModalities[index] ?? targetModalities[0],
-				sourcePath: 'templates/surface-brief.md'
+				sourcePath: DEFAULT_OVERLAY_SURFACE_BRIEF_SOURCE_PATH
 			}))
 		}))
 	};
