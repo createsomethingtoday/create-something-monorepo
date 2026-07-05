@@ -51,6 +51,17 @@ function readMcpCanonRegistrySnapshot() {
 	return JSON.parse(source.slice(start + assignment.length, end + 2));
 }
 
+function canonDocsContentPathCandidates(docsPath: string) {
+	if (!docsPath.startsWith('/canon/')) return [];
+
+	const contentPath = docsPath.replace(/^\/canon\//, '');
+
+	return [
+		join(repoRoot, 'packages/ltd/src/lib/content/canon', `${contentPath}.md`),
+		join(repoRoot, 'packages/ltd/src/lib/content/canon', contentPath, 'index.md')
+	];
+}
+
 function clearComponentIdForExport(exportName: string) {
 	return `component.${exportName
 		.replace(/^Clear/, 'clear')
@@ -174,6 +185,20 @@ describe('Canon registry manifest', () => {
 	it('keeps registry source paths backed by repo files', () => {
 		for (const item of CANON_REGISTRY_MANIFEST.items) {
 			expect(existsSync(join(repoRoot, item.sourcePath)), item.id).toBe(true);
+		}
+	});
+
+	it('keeps registry docs paths backed by Canon content pages', () => {
+		for (const item of CANON_REGISTRY_MANIFEST.items) {
+			expect(item.docsPath, item.id).toBeTruthy();
+
+			const candidates = canonDocsContentPathCandidates(item.docsPath);
+
+			expect(candidates.length, item.id).toBeGreaterThan(0);
+			expect(
+				candidates.some((candidate) => existsSync(candidate)),
+				`${item.id} -> ${item.docsPath}`
+			).toBe(true);
 		}
 	});
 

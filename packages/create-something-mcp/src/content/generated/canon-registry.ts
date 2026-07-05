@@ -4208,6 +4208,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "description": "Compact chat response structure for decision state, evidence, owner, next action, and stop condition.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/registry/data.ts",
+      "docsPath": "/canon/resources/registry",
       "tags": [
         "template",
         "chat",
@@ -4234,6 +4235,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "description": "Thin heads-up display structure for ranked work, brief detail access, confirmation, and handoff.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/registry/data.ts",
+      "docsPath": "/canon/resources/registry",
       "tags": [
         "template",
         "glasses",
