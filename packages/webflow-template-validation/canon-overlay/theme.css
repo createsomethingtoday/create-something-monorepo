@@ -1,0 +1,28 @@
+/*
+ * Webflow Template Validation Overlay theme overlay.
+ * Generated from @create-something/canon/overlays/project-template.
+ * Keep aliases pointed at Canon tokens instead of forking primitives.
+ */
+
+:root {
+	--overlay-accent: var(--color-clear-action, #155eef);
+	--overlay-accent-contrast: var(--color-clear-action-contrast, #ffffff);
+	--overlay-surface: var(--color-bg-surface, #ffffff);
+	--overlay-surface-muted: var(--color-bg-subtle, #f6f7f9);
+	--overlay-border: var(--color-border-default, #d9dde5);
+	--overlay-proof: var(--color-clear-proof, #0f766e);
+	--overlay-review: var(--color-clear-review, #a16207);
+	--overlay-block: var(--color-clear-block, #b42318);
+	--overlay-radius: var(--radius-clear, 8px);
+	--overlay-focus-ring: 0 0 0 3px color-mix(in srgb, var(--overlay-accent) 24%, transparent);
+}
+
+[data-canon-overlay='overlay.webflow-template-validation'] {
+	color: var(--color-fg-default, #111827);
+	background: var(--overlay-surface);
+}
+
+[data-canon-overlay='overlay.webflow-template-validation'] :focus-visible {
+	outline: none;
+	box-shadow: var(--overlay-focus-ring);
+}

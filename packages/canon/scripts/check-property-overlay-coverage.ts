@@ -21,6 +21,7 @@ const SKIP_DIRS = new Set([
 export type CanonPropertyOverlayCoverageEntry = {
 	packageName: string;
 	packageDir: string;
+	framework: PropertySurfaceFramework;
 	overlayPath?: string;
 	status: 'covered' | 'missing-overlay' | 'mismatched-source-package' | 'missing-modalities';
 	missingModalities: CanonRegistryModality[];
@@ -30,6 +31,12 @@ export type CanonPropertyOverlayCoverageReport = {
 	id: 'canon-property-overlay-coverage';
 	rootDir: string;
 	requiredPackages: CanonPropertyOverlayCoverageEntry[];
+	excludedPropertySurfaces: Array<{
+		packageName: string;
+		packageDir: string;
+		framework: PropertySurfaceFramework;
+		reason: string;
+	}>;
 	excludedCanonConsumers: Array<{
 		packageName: string;
 		packageDir: string;
@@ -41,6 +48,7 @@ export type CanonPropertyOverlayCoverageReport = {
 		missingOverlay: number;
 		mismatchedSourcePackage: number;
 		missingModalities: number;
+		excludedPropertySurfaces: number;
 		excludedCanonConsumers: number;
 	};
 };
@@ -49,33 +57,43 @@ type PackageInfo = {
 	name: string;
 	dir: string;
 	dependencies: Record<string, string>;
+	createSomethingSurface?: string;
 };
+
+type PropertySurfaceFramework = 'sveltekit' | 'next' | 'vite-react' | 'tauri';
 
 export async function buildCanonPropertyOverlayCoverageReport(rootDir: string) {
 	const root = resolve(rootDir);
 	const packages = await findPackages(root);
 	const directCanonConsumers = packages.filter((pkg) => Boolean(pkg.dependencies['@create-something/canon']));
 	const required: CanonPropertyOverlayCoverageEntry[] = [];
+	const excludedPropertySurfaces: CanonPropertyOverlayCoverageReport['excludedPropertySurfaces'] = [];
 	const excluded: CanonPropertyOverlayCoverageReport['excludedCanonConsumers'] = [];
 
-	for (const pkg of directCanonConsumers) {
-		const rendered = isRenderedSveltePackage(pkg.dir);
-		const canonSource = pkg.name === '@create-something/canon';
+	const requiredSurfaceDirs = new Set<string>();
 
-		if (!rendered || canonSource) {
-			excluded.push({
+	for (const pkg of packages) {
+		const framework = detectPropertySurfaceFramework(pkg.dir);
+		if (!framework) continue;
+
+		const exclusionReason = getPropertySurfaceExclusionReason(pkg);
+		if (exclusionReason) {
+			excludedPropertySurfaces.push({
 				packageName: pkg.name,
 				packageDir: relative(root, pkg.dir),
-				reason: canonSource ? 'canon-source-package' : 'non-rendered-canon-consumer'
+				framework,
+				reason: exclusionReason
 			});
 			continue;
 		}
 
+		requiredSurfaceDirs.add(pkg.dir);
 		const overlayPath = join(pkg.dir, 'canon-overlay/manifest.ts');
 		if (!existsSync(overlayPath)) {
 			required.push({
 				packageName: pkg.name,
 				packageDir: relative(root, pkg.dir),
+				framework,
 				status: 'missing-overlay',
 				missingModalities: REQUIRED_MODALITIES
 			});
@@ -90,6 +108,7 @@ export async function buildCanonPropertyOverlayCoverageReport(rootDir: string) {
 		required.push({
 			packageName: pkg.name,
 			packageDir: relative(root, pkg.dir),
+			framework,
 			overlayPath: relative(root, overlayPath),
 			status:
 				overlay?.sourcePackage !== pkg.name
@@ -101,10 +120,24 @@ export async function buildCanonPropertyOverlayCoverageReport(rootDir: string) {
 		});
 	}
 
+	for (const pkg of directCanonConsumers) {
+		if (requiredSurfaceDirs.has(pkg.dir)) continue;
+		if (detectPropertySurfaceFramework(pkg.dir)) continue;
+
+		excluded.push({
+			packageName: pkg.name,
+			packageDir: relative(root, pkg.dir),
+			reason: 'non-rendered-canon-consumer'
+		});
+	}
+
 	const report: CanonPropertyOverlayCoverageReport = {
 		id: 'canon-property-overlay-coverage',
 		rootDir: root,
 		requiredPackages: required.sort((a, b) => a.packageDir.localeCompare(b.packageDir)),
+		excludedPropertySurfaces: excludedPropertySurfaces.sort((a, b) =>
+			a.packageDir.localeCompare(b.packageDir)
+		),
 		excludedCanonConsumers: excluded.sort((a, b) => a.packageDir.localeCompare(b.packageDir)),
 		summary: {
 			required: required.length,
@@ -113,6 +146,7 @@ export async function buildCanonPropertyOverlayCoverageReport(rootDir: string) {
 			mismatchedSourcePackage: required.filter((entry) => entry.status === 'mismatched-source-package')
 				.length,
 			missingModalities: required.filter((entry) => entry.status === 'missing-modalities').length,
+			excludedPropertySurfaces: excludedPropertySurfaces.length,
 			excludedCanonConsumers: excluded.length
 		}
 	};
@@ -147,6 +181,7 @@ export function renderCanonPropertyOverlayCoverageReport(report: CanonPropertyOv
 		`Missing overlays: ${report.summary.missingOverlay}`,
 		`Mismatched source packages: ${report.summary.mismatchedSourcePackage}`,
 		`Missing modalities: ${report.summary.missingModalities}`,
+		`Excluded property surfaces: ${report.summary.excludedPropertySurfaces}`,
 		`Excluded direct Canon consumers: ${report.summary.excludedCanonConsumers}`,
 		'',
 		'## Required Packages',
@@ -157,8 +192,14 @@ export function renderCanonPropertyOverlayCoverageReport(report: CanonPropertyOv
 				entry.missingModalities.length > 0
 					? ` missing ${entry.missingModalities.join(', ')}`
 					: '';
-			return `- ${entry.status}: ${entry.packageName} (${entry.packageDir})${overlay}${missing}`;
+			return `- ${entry.status}: ${entry.packageName} (${entry.packageDir}, ${entry.framework})${overlay}${missing}`;
 		}),
+		'',
+		'## Excluded Property Surfaces',
+		'',
+		...report.excludedPropertySurfaces.map(
+			(entry) => `- ${entry.reason}: ${entry.packageName} (${entry.packageDir}, ${entry.framework})`
+		),
 		'',
 		'## Excluded Direct Canon Consumers',
 		'',
@@ -192,6 +233,9 @@ async function walkPackages(root: string, dir: string, packages: PackageInfo[]) 
 			dependencies?: Record<string, string>;
 			devDependencies?: Record<string, string>;
 			peerDependencies?: Record<string, string>;
+			createSomething?: {
+				surface?: string;
+			};
 		};
 		if (json.name) {
 			packages.push({
@@ -201,7 +245,8 @@ async function walkPackages(root: string, dir: string, packages: PackageInfo[]) 
 					...json.dependencies,
 					...json.devDependencies,
 					...json.peerDependencies
-				}
+				},
+				createSomethingSurface: json.createSomething?.surface
 			});
 		}
 	}
@@ -212,13 +257,36 @@ async function walkPackages(root: string, dir: string, packages: PackageInfo[]) 
 	}
 }
 
-function isRenderedSveltePackage(dir: string) {
-	return (
+function detectPropertySurfaceFramework(dir: string): PropertySurfaceFramework | undefined {
+	const hasSvelteRoutes =
 		existsSync(join(dir, 'src/routes')) &&
 		['svelte.config.js', 'svelte.config.mjs', 'svelte.config.ts'].some((file) =>
 			existsSync(join(dir, file))
-		)
-	);
+		);
+	if (hasSvelteRoutes) return 'sveltekit';
+
+	const hasNextApp =
+		['next.config.js', 'next.config.mjs', 'next.config.ts'].some((file) =>
+			existsSync(join(dir, file))
+		) &&
+		(existsSync(join(dir, 'app')) || existsSync(join(dir, 'src/app')));
+	if (hasNextApp) return 'next';
+
+	const hasViteReact =
+		['vite.config.js', 'vite.config.mjs', 'vite.config.ts'].some((file) =>
+			existsSync(join(dir, file))
+		) &&
+		(existsSync(join(dir, 'src/client/App.tsx')) || existsSync(join(dir, 'src/App.tsx')));
+	if (hasViteReact) return 'vite-react';
+
+	if (existsSync(join(dir, 'src-tauri/tauri.conf.json'))) return 'tauri';
+	return undefined;
+}
+
+function getPropertySurfaceExclusionReason(pkg: PackageInfo): string | undefined {
+	if (pkg.name === '@create-something/canon') return 'canon-source-package';
+	if (pkg.createSomethingSurface === 'library') return 'canon-support-library';
+	return undefined;
 }
 
 async function readOverlayManifestSummary(overlayPath: string) {
