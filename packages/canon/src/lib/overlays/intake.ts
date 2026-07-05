@@ -92,6 +92,10 @@ export async function findCanonProjectOverlayManifestFiles(
 export async function loadCanonProjectOverlayManifest(
 	manifestPath: string
 ): Promise<CanonProjectOverlayManifest> {
+	const source = await readFile(manifestPath, 'utf-8');
+	const staticManifest = parseStaticCanonProjectOverlayManifest(source);
+	if (staticManifest) return staticManifest;
+
 	const moduleUrl = `${pathToFileURL(manifestPath).href}?canonOverlay=${Date.now()}`;
 	const manifestModule = (await import(moduleUrl)) as CanonOverlayManifestModule;
 	const candidate = manifestModule.CANON_PROJECT_OVERLAY_MANIFEST ?? manifestModule.default;
@@ -101,6 +105,60 @@ export async function loadCanonProjectOverlayManifest(
 	}
 
 	return candidate;
+}
+
+function parseStaticCanonProjectOverlayManifest(source: string): CanonProjectOverlayManifest | undefined {
+	const exportIndex = source.indexOf('CANON_PROJECT_OVERLAY_MANIFEST');
+	if (exportIndex === -1) return undefined;
+
+	const objectStart = source.indexOf('{', exportIndex);
+	if (objectStart === -1) return undefined;
+
+	const objectSource = readBalancedObjectSource(source, objectStart);
+	if (!objectSource) return undefined;
+
+	try {
+		const candidate = JSON.parse(objectSource) as unknown;
+		return isCanonProjectOverlayManifest(candidate) ? candidate : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function readBalancedObjectSource(source: string, startIndex: number): string | undefined {
+	let depth = 0;
+	let inString = false;
+	let escaping = false;
+
+	for (let index = startIndex; index < source.length; index += 1) {
+		const char = source[index];
+
+		if (inString) {
+			if (escaping) {
+				escaping = false;
+				continue;
+			}
+			if (char === '\\') {
+				escaping = true;
+				continue;
+			}
+			if (char === '"') inString = false;
+			continue;
+		}
+
+		if (char === '"') {
+			inString = true;
+			continue;
+		}
+
+		if (char === '{') depth += 1;
+		if (char === '}') {
+			depth -= 1;
+			if (depth === 0) return source.slice(startIndex, index + 1);
+		}
+	}
+
+	return undefined;
 }
 
 export async function buildCanonOverlayIntakeInventory(
