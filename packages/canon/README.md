@@ -315,6 +315,18 @@ not visible to inventory, when any inventoried overlay is not ready, or when an 
 imports package code instead of exporting self-contained data. `pnpm --filter @create-something/canon
 check` runs the same gate after package and Svelte validation.
 
+After Canon is packaged, run the cross-property consumer gate to verify every ready overlay manifest
+still satisfies Canon's public registry contract:
+
+```bash
+pnpm --filter @create-something/canon overlay:consumer-check
+```
+
+`overlay:consumer-check` generates temporary TypeScript fixtures for the inventoried overlays and
+typechecks them against `@create-something/canon/registry` from the built package output. Canon
+`check` runs this gate after `pnpm package`, so a property overlay cannot silently drift away from
+the shared Canon foundation contract or depend on a local build-order accident.
+
 Keep `canon-overlay/manifest.ts` files as plain data exports:
 
 ```ts

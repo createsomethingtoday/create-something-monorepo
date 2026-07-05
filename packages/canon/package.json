@@ -14,7 +14,7 @@
 			"src/lib/styles/tokens.css"
 		],
 		"boot": "pnpm dev",
-		"smoke": "pnpm check && pnpm test && pnpm overlay:check"
+		"smoke": "pnpm check && pnpm test && pnpm overlay:check && pnpm overlay:consumer-check"
 	},
 	"license": "MIT",
 	"scripts": {
@@ -24,9 +24,10 @@
 		"package": "pnpm clean:package-tmp && svelte-kit sync && svelte-package && publint",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"check": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm overlay:check",
+		"check": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm overlay:check && pnpm overlay:consumer-check",
 		"check:watch": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"overlay:check": "tsx scripts/check-overlay-quality-gate.ts",
+		"overlay:consumer-check": "tsx scripts/check-overlay-consumer-compatibility.ts",
 		"overlay:inventory": "tsx scripts/check-project-overlays.ts",
 		"overlay:coverage": "tsx scripts/check-property-overlay-coverage.ts",
 		"overlay:candidate-handoff": "tsx scripts/render-overlay-candidate-handoff.ts",

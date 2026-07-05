@@ -11,7 +11,13 @@ import {
 	inspectOverlayManifestDependencyIssues,
 	renderCanonOverlayQualityGateReport
 } from '../../../scripts/check-overlay-quality-gate.js';
+import {
+	buildCanonOverlayConsumerCompatibilityReport,
+	createCanonOverlayConsumerFixtures,
+	renderCanonOverlayConsumerCompatibilityReport
+} from '../../../scripts/check-overlay-consumer-compatibility.js';
 import { createCanonOverlayIntakeInventory } from './intake.js';
+import type { CanonProjectOverlayManifest } from '../registry/schema.js';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
 
@@ -96,6 +102,102 @@ describe('Canon overlay quality gate', () => {
 			expect(issues.map((issue) => issue.syntax)).toEqual(['import', 'typed-manifest-export']);
 			expect(issues.map((issue) => issue.message).join('\n')).toContain(
 				'export a plain CANON_PROJECT_OVERLAY_MANIFEST object'
+			);
+		} finally {
+			await rm(root, { recursive: true, force: true });
+		}
+	});
+
+	it('generates cross-property consumer fixtures against the public Canon registry export', async () => {
+		const report = await buildCanonOverlayQualityGateReport(repoRoot);
+		const fixtures = createCanonOverlayConsumerFixtures(report.inventory.entries);
+
+		expect(fixtures).toHaveLength(24);
+		expect(fixtures[0]?.source).toContain(
+			"import type { CanonProjectOverlayManifest } from '@create-something/canon/registry';"
+		);
+		expect(fixtures[0]?.source).toContain('satisfies CanonProjectOverlayManifest');
+	});
+
+	it('maps consumer type failures back to the owning overlay manifest', async () => {
+		const root = await mkdtemp(join(tmpdir(), 'canon-overlay-consumer-'));
+		const packageRoot = join(root, 'packages/canon');
+		await mkdir(join(packageRoot, 'dist/registry'), { recursive: true });
+		await writeFile(join(root, 'pnpm-workspace.yaml'), 'packages:\n  - packages/*\n', 'utf-8');
+		await writeFile(
+			join(packageRoot, 'package.json'),
+			JSON.stringify(
+				{
+					name: '@create-something/canon',
+					type: 'module',
+					exports: {
+						'./registry': {
+							types: './dist/registry/index.d.ts',
+							default: './dist/registry/index.js'
+						}
+					}
+				},
+				null,
+				2
+			),
+			'utf-8'
+		);
+		await writeFile(
+			join(packageRoot, 'dist/registry/index.d.ts'),
+			[
+				"export type CanonProjectOverlayManifest = {",
+				'  id: string;',
+				'  name: string;',
+				'  owner: string;',
+				'  sourcePackage: string;',
+				"  targetModalities: Array<'web'>;",
+				'  artifacts: Array<{ kind: string; path: string }>; ',
+				'};',
+				''
+			].join('\n'),
+			'utf-8'
+		);
+
+		const invalidManifest = {
+			id: 'overlay.fixture',
+			name: 'Fixture Overlay',
+			owner: 'canon-team',
+			sourcePackage: '@create-something/fixture',
+			targetModalities: ['browser'],
+			artifacts: [{ kind: 'theme', path: 'canon-overlay/theme.css' }]
+		} as unknown as CanonProjectOverlayManifest;
+
+		const inventory = createCanonOverlayIntakeInventory({
+			rootDir: root,
+			searchRoots: ['packages'],
+			entries: [
+				{
+					manifestPath: 'packages/fixture/canon-overlay/manifest.ts',
+					manifest: invalidManifest,
+					review: {
+						status: 'ready',
+						requiredArtifacts: [],
+						presentArtifacts: [],
+						missingArtifacts: [],
+						integrityIssues: [],
+						extensionDecisions: [],
+						stopConditions: [],
+						summary: 'fixture'
+					}
+				}
+			]
+		});
+
+		try {
+			const report = await buildCanonOverlayConsumerCompatibilityReport(root, { inventory });
+
+			expect(report.summary.compatibilityIssues).toBeGreaterThan(0);
+			expect(report.issues[0]).toMatchObject({
+				manifestPath: 'packages/fixture/canon-overlay/manifest.ts',
+				sourcePackage: '@create-something/fixture'
+			});
+			expect(renderCanonOverlayConsumerCompatibilityReport(report)).toContain(
+				'Compatibility issues: 1'
 			);
 		} finally {
 			await rm(root, { recursive: true, force: true });
