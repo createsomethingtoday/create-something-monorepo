@@ -239,6 +239,10 @@
 			"types": "./dist/registry/index.d.ts",
 			"default": "./dist/registry/index.js"
 		},
+		"./design-audit": {
+			"types": "./dist/design-audit/index.d.ts",
+			"default": "./dist/design-audit/index.js"
+		},
 		"./overlays": {
 			"types": "./dist/overlays/index.d.ts",
 			"default": "./dist/overlays/index.js"

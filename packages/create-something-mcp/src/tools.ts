@@ -5,6 +5,7 @@
 
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { renderCanonDesignAudit } from '@create-something/canon/design-audit';
 import { search, findRelated } from './search.js';
 import {
   createCanonOverlayInstantiatePreview,
@@ -426,39 +427,11 @@ export function registerTools(server: McpServer) {
         .describe('Focus the audit on a specific Canon section (default: all)')
     },
     async ({ design, section }) => {
-      const checks = buildCanonChecks(section || 'all');
-
-      const lines = [
-        `## Canon Design Audit\n`,
-        `**Design:** ${design.slice(0, 300)}\n`,
-        `**Section:** ${section || 'all'}\n`,
-        '### Guiding Principles\n',
-        '| Principle | Question | Guidance |',
-        '|-----------|----------|----------|',
-        '| Subtractive | Can anything be removed? | Every element must earn its existence |',
-        '| Honest Materials | Are tokens used as intended? | Canon tokens encode decisions — respect their purpose |',
-        '| Transparent Use | Does the interface recede? | Zuhandenheit: the design disappears in use |',
-        '| Mathematical Harmony | Does spacing follow the scale? | Golden ratio and modular scale create harmony |',
-        ''
-      ];
-
-      for (const check of checks) {
-        lines.push(`### ${check.area}\n`);
-        for (const item of check.items) {
-          lines.push(`- [ ] ${item}`);
-        }
-        lines.push('');
-      }
-
-      lines.push(
-        '---\n*Canon compliance is not checklist adherence — it is alignment with the philosophy that less reveals more.*'
-      );
-
       return {
         content: [
           {
             type: 'text' as const,
-            text: lines.join('\n'),
+            text: renderCanonDesignAudit({ design, section: section || 'all' }),
             ...USER_VISIBLE
           }
         ]
@@ -1475,79 +1448,4 @@ function analyzeHeidegger(artifact: string, context?: string): string {
   return signals.length > 0
     ? `Observations: ${signals.join(' ')}`
     : 'No disconnection signals. Verify: does this artifact participate in the hermeneutic circle? Does understanding it require the whole, and does the whole benefit from its presence?';
-}
-
-// ============================================================================
-// Canon audit checks
-// ============================================================================
-
-function buildCanonChecks(section: string) {
-  const checks: { area: string; items: string[] }[] = [];
-
-  if (section === 'all' || section === 'colors') {
-    checks.push({
-      area: 'Colors',
-      items: [
-        'Background uses Canon tokens (--bg-primary through --bg-quaternary)?',
-        'Text uses Canon foreground tokens (--fg-primary through --fg-quaternary)?',
-        'Semantic colors only for success/error/warning/info — not decoration?',
-        'Opacity hierarchy instead of new color values?',
-        'WCAG AA contrast maintained (4.5:1 for body, 3:1 for large text)?'
-      ]
-    });
-  }
-
-  if (section === 'all' || section === 'typography') {
-    checks.push({
-      area: 'Typography',
-      items: [
-        'Font family from Canon type stack (Inter, system fallbacks)?',
-        'Font sizes follow the modular scale?',
-        'Line heights match Canon recommendations?',
-        'Heading hierarchy is semantically meaningful?',
-        'Body text optimized for readability (16px base, 1.5-1.75 line height)?'
-      ]
-    });
-  }
-
-  if (section === 'all' || section === 'spacing') {
-    checks.push({
-      area: 'Spacing',
-      items: [
-        'Component internals use Canon tokens (--space-xs through --space-xl)?',
-        'Page-level spacing uses Tailwind utilities (py-16, px-6, gap-8)?',
-        'Avoid --space-2xl and --space-3xl for page padding (too large)?',
-        'Consistent rhythm: related items closer, unrelated items farther?',
-        'Nav offset uses calc(var(--header-height) + var(--space-md))?'
-      ]
-    });
-  }
-
-  if (section === 'all' || section === 'motion') {
-    checks.push({
-      area: 'Motion',
-      items: [
-        'Animations use Canon timing tokens (--duration-fast, --duration-normal)?',
-        'Easing follows Canon curves (--ease-out, --ease-spring)?',
-        'Motion has purpose — entrance, exit, state change?',
-        'Respects prefers-reduced-motion?',
-        'No gratuitous animation — every transition earns its existence?'
-      ]
-    });
-  }
-
-  if (section === 'all' || section === 'layout') {
-    checks.push({
-      area: 'Layout',
-      items: [
-        'Uses Tailwind for structure (flex, grid, gap-*)?',
-        'Glass containers where appropriate (.glass-* classes)?',
-        'Responsive breakpoints follow Canon system?',
-        'Content width constrained for readability?',
-        'Visual hierarchy established through spacing, not decoration?'
-      ]
-    });
-  }
-
-  return checks;
 }
