@@ -1371,6 +1371,22 @@ describe('Canon registry manifest', () => {
 		expect(missingPolicy).toEqual([]);
 	});
 
+	it('keeps candidate-review public Svelte exports backed by registry items', () => {
+		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
+		const publicExports = publicSvelteComponentExports();
+		const uncoveredCandidates = publicExports.filter(({ exportPath, exportName }) => {
+			const hasRegistryItem = candidateRegistryItemIdsForPublicExport(exportPath, exportName).some(
+				(id) => registryIds.has(id)
+			);
+			const classification = getCanonPublicExportClassification(exportPath, exportName);
+
+			return !hasRegistryItem && classification?.registryPolicy === 'candidate-review';
+		});
+
+		expect(publicExports.length).toBeGreaterThan(0);
+		expect(uncoveredCandidates).toEqual([]);
+	});
+
 	it('keeps public export classification rules non-stale and reviewable', () => {
 		const publicExports = publicSvelteComponentExports();
 		const publicExportPaths = new Set(publicExports.map(({ exportPath }) => exportPath));
