@@ -8,6 +8,7 @@ import {
 	buildCanonOverlayCandidateQueue,
 	buildCanonOverlayCandidateReviewPackets,
 	buildCanonOverlayIntakeInventory,
+	findCanonOverlayCandidateReviewPacket,
 	findCanonProjectOverlayManifestFiles,
 	renderCanonOverlayCandidateQueue,
 	renderCanonOverlayCandidateReviewPacket,
@@ -247,6 +248,14 @@ describe('Canon overlay intake inventory', () => {
 		expect(packet?.promotionChecklist.join(' ')).toContain('human maintainer approved');
 		expect(packet?.approvalBoundary.join(' ')).toContain('does not create Linear issues');
 		expect(packet?.agentContract.stopBefore.join(' ')).toContain('automatically opening Linear work');
+		expect(findCanonOverlayCandidateReviewPacket(packets, packet!.intakeId)?.id).toBe(packet?.id);
+		expect(findCanonOverlayCandidateReviewPacket(packets, packet!.id)?.intakeId).toBe(
+			packet?.intakeId
+		);
+		expect(findCanonOverlayCandidateReviewPacket(packets, packet!.candidateId)?.intakeId).toBe(
+			packet?.intakeId
+		);
+		expect(findCanonOverlayCandidateReviewPacket(packets, 'overlay.missing')).toBeUndefined();
 
 		const packetRendered = renderCanonOverlayCandidateReviewPacket(packet!);
 		expect(packetRendered).toContain('Approval Boundary');

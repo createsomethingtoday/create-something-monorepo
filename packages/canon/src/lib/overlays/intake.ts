@@ -400,6 +400,15 @@ export function renderCanonOverlayCandidateReviewPackets(
 	return lines.join('\n');
 }
 
+export function findCanonOverlayCandidateReviewPacket(
+	collection: CanonOverlayCandidateReviewPacketCollection,
+	id: string
+): CanonOverlayCandidateReviewPacket | undefined {
+	return collection.entries.find(
+		(entry) => entry.intakeId === id || entry.id === id || entry.candidateId === id
+	);
+}
+
 function summarizeOverlayInventory(entries: CanonProjectOverlayInventoryEntry[]) {
 	return {
 		total: entries.length,
