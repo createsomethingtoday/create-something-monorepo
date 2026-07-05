@@ -16,6 +16,9 @@ import { CANON_OVERLAY_CANDIDATE_QUEUE } from './content/generated/canon-overlay
 import {
   CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS
 } from './content/generated/canon-overlay-candidate-review-packets.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS
+} from './content/generated/canon-overlay-candidate-promotion-plans.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -375,6 +378,7 @@ export function registerResources(server: McpServer) {
           sourcePackage: entry.sourcePackage,
           reviewUri: entry.reviewUri,
           handoffUri: entry.handoffUri,
+          promotionPlanUri: `canon://overlays/candidates/${entry.intakeId}/promotion-plan`,
           uri: entry.candidateUri
         })), null, 2)
       }]
@@ -428,6 +432,40 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'application/json',
           text: JSON.stringify(packet, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-promotion-plans',
+    'canon://overlays/candidates/promotion-plans',
+    {
+      description: `Canon overlay candidate promotion plans: ${CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.entries.length} approval-gated implementation plans for approved handoffs`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS, null, 2)
+      }]
+    })
+  );
+
+  for (const plan of CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.entries) {
+    server.resource(
+      `canon-overlays-candidate-promotion-plan-${plan.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      plan.planUri,
+      {
+        description: `Canon overlay candidate promotion plan: ${plan.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(plan, null, 2)
         }]
       })
     );

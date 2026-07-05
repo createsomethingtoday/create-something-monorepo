@@ -293,6 +293,61 @@ export interface CanonOverlayCandidateReviewPacketCollection {
   };
 }
 
+export interface CanonOverlayCandidatePromotionPlan {
+  id: string;
+  packetId: string;
+  candidateId: string;
+  intakeId: string;
+  title: string;
+  summary: string;
+  overlayId: string;
+  overlayName: string;
+  manifestPath: string;
+  owner: string;
+  sourcePackage: string;
+  sourcePath?: string;
+  requestedKind: CanonRegistryKind;
+  requestedModalities: CanonRegistryModality[];
+  planUri: string;
+  handoffUri: string;
+  candidateUri: string;
+  reviewUri: string;
+  preconditions: string[];
+  implementationScope: string[];
+  requiredChanges: string[];
+  validationPlan: string[];
+  documentationPlan: string[];
+  compatibilityPlan: string[];
+  stopConditions: string[];
+  approvalBoundary: string[];
+  agentContract: {
+    purpose: 'canon-overlay-candidate-promotion-plan';
+    primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+    useFor: string[];
+    stopBefore: string[];
+  };
+}
+
+export interface CanonOverlayCandidatePromotionPlanCollection {
+  schemaVersion: 1;
+  id: 'canon-overlay-candidate-promotion-plans';
+  sourceOfTruth: '@create-something/canon/overlays/intake';
+  description: string;
+  entries: CanonOverlayCandidatePromotionPlan[];
+  summary: {
+    total: number;
+    overlays: number;
+    byRequestedKind: Array<{ kind: CanonRegistryKind; count: number }>;
+    byModality: Array<{ modality: CanonRegistryModality; count: number }>;
+  };
+  agentContract: {
+    purpose: 'canon-overlay-candidate-promotion-plans';
+    primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+    useFor: string[];
+    stopBefore: string[];
+  };
+}
+
 export interface CanonOverlayModalityContract {
   modality: CanonRegistryModality;
   useFor: string;

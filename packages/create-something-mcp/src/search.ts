@@ -13,6 +13,9 @@ import { CANON_OVERLAY_CANDIDATE_QUEUE } from './content/generated/canon-overlay
 import {
   CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS
 } from './content/generated/canon-overlay-candidate-review-packets.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS
+} from './content/generated/canon-overlay-candidate-promotion-plans.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -245,6 +248,60 @@ function buildContentIndex(): ContentItem[] {
       ].join('\n'),
       property: 'ltd',
       uri: packet.handoffUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-promotion-plan:collection',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Promotion Plans',
+    description: CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.description,
+    content: [
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.summary.total.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.summary.overlays.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.summary.byRequestedKind.map(item => `${item.kind} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.summary.byModality.map(item => `${item.modality} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/promotion-plans'
+  });
+
+  for (const plan of CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.entries) {
+    items.push({
+      id: `canon-overlay-candidate-promotion-plan:${plan.intakeId}`,
+      type: 'canon-registry',
+      title: plan.title,
+      description: plan.summary,
+      content: [
+        plan.packetId,
+        plan.candidateId,
+        plan.overlayId,
+        plan.overlayName,
+        plan.manifestPath,
+        plan.owner,
+        plan.sourcePackage,
+        plan.sourcePath ?? '',
+        plan.requestedKind,
+        plan.requestedModalities.join(' '),
+        plan.preconditions.join('\n'),
+        plan.implementationScope.join('\n'),
+        plan.requiredChanges.join('\n'),
+        plan.validationPlan.join('\n'),
+        plan.documentationPlan.join('\n'),
+        plan.compatibilityPlan.join('\n'),
+        plan.stopConditions.join('\n'),
+        plan.approvalBoundary.join('\n'),
+        plan.agentContract.useFor.join('\n'),
+        plan.agentContract.stopBefore.join('\n'),
+        plan.planUri,
+        plan.handoffUri,
+        plan.candidateUri,
+        plan.reviewUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: plan.planUri
     });
   }
 
