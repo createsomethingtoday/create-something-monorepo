@@ -10,14 +10,17 @@ function linearResponse(nodes: unknown[]): Response {
 }
 
 test('fetches open Linear issues for the requested team', async () => {
-  const calls: RequestInit[] = [];
+  const calls: Array<{ body: { query: string; variables: Record<string, unknown> }; headers: Headers }> = [];
   const queue = await fetchLinearOpenIssues({
     apiKey: 'linear-token',
     teamKey: 'CRE',
     limit: 2,
     now: () => new Date('2026-06-18T23:10:00.000Z'),
     fetch: async (_url, init) => {
-      calls.push(init ?? {});
+      calls.push({
+        body: JSON.parse(String(init?.body)),
+        headers: new Headers(init?.headers)
+      });
       return linearResponse([
         {
           identifier: 'CRE-1',
@@ -49,7 +52,12 @@ test('fetches open Linear issues for the requested team', async () => {
     }
   });
 
-  assert.equal(new Headers(calls[0]?.headers).get('authorization'), 'linear-token');
+  assert.equal(calls[0]?.headers.get('authorization'), 'linear-token');
+  assert.deepEqual(calls[0]?.body.variables.filter, {
+    team: { key: { eq: 'CRE' } },
+    state: { type: { nin: ['completed', 'canceled'] } }
+  });
+  assert.match(calls[0]?.body.query ?? '', /issues\(first: \$first, orderBy: updatedAt, filter: \$filter\)/);
   assert.equal(queue.generated_at, '2026-06-18T23:10:00.000Z');
   assert.deepEqual(queue.issues.map((issue) => issue.identifier), ['CRE-1']);
   assert.equal(queue.issues[0]?.assignee, 'Micah Johnson');

@@ -17,7 +17,10 @@ https://ink.createsomething.agency/ink/linear-open?team=CRE&limit=5
 - Tap once to open issue detail.
 - Tap detail to open a claim confirmation.
 - Tap confirmation to claim the issue through the Ink bridge.
-- Let a double tap exit through the Even system confirmation flow.
+- Let a glasses double tap exit through the Even system confirmation flow.
+- Let an R1 ring double tap jump to the claim confirmation, or cancel back to
+  detail from the confirmation screen. This keeps the ring as a private command
+  shortcut without turning one gesture into a write action.
 - Reuse the Ink bridge as the device-authenticated server-side proxy so the
   phone package never carries a Linear token.
 

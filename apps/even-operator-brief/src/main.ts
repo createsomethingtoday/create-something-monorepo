@@ -1,6 +1,5 @@
 import {
   CreateStartUpPageContainer,
-  OsEventTypeList,
   TextContainerProperty,
   TextContainerUpgrade,
   waitForEvenAppBridge
@@ -11,6 +10,12 @@ import {
   loadingScreen,
   missingTokenScreen
 } from './brief';
+import {
+  inputSourceFromEventSource,
+  resolveOperatorInteraction,
+  type OperatorInteraction,
+  type ViewMode
+} from './interaction';
 import {
   clampSelection,
   formatClaimPrompt,
@@ -39,8 +44,6 @@ type RuntimeConfig = {
   token: string;
 };
 
-type ViewMode = 'queue' | 'detail' | 'claim' | 'message';
-
 const debugElement = document.querySelector<HTMLDivElement>('#debug');
 const config = loadRuntimeConfig();
 let currentQueue: LinearOpenQueue = loadCachedQueue();
@@ -59,32 +62,16 @@ async function start(): Promise<void> {
     await createMainContainer(loadingScreen());
     bridge.onEvenHubEvent((event) => {
       const textEvent = event.textEvent;
-      if (!textEvent || textEvent.containerID !== CONTAINER_ID) return;
+      const inputSource = inputSourceFromEventSource(event.sysEvent?.eventSource);
+      if (textEvent && textEvent.containerID !== CONTAINER_ID) return;
+      if (!textEvent && inputSource !== 'ring') return;
 
-      const eventType = textEvent.eventType;
-      if (eventType === OsEventTypeList.DOUBLE_CLICK_EVENT) {
-        bridge?.shutDownPageContainer(1);
-        return;
-      }
-
-      if (eventType === OsEventTypeList.SCROLL_TOP_EVENT) {
-        handleMove(-1);
-        return;
-      }
-
-      if (eventType === OsEventTypeList.SCROLL_BOTTOM_EVENT) {
-        handleMove(1);
-        return;
-      }
-
-      if (eventType === OsEventTypeList.FOREGROUND_ENTER_EVENT) {
-        void refreshQueue({ silent: true });
-        return;
-      }
-
-      if (eventType === OsEventTypeList.CLICK_EVENT || eventType === undefined) {
-        void handleTap();
-      }
+      const interaction = resolveOperatorInteraction({
+        eventType: textEvent?.eventType ?? event.sysEvent?.eventType,
+        inputSource,
+        viewMode
+      });
+      if (interaction) void applyInteraction(interaction);
     });
   } catch (error) {
     console.warn('Even bridge unavailable; using browser debug renderer.', error);
@@ -105,6 +92,31 @@ async function start(): Promise<void> {
   window.setInterval(() => {
     void refreshQueue({ silent: true });
   }, REFRESH_MS);
+}
+
+async function applyInteraction(interaction: OperatorInteraction): Promise<void> {
+  if (interaction.kind === 'exit') {
+    bridge?.shutDownPageContainer(1);
+    return;
+  }
+
+  if (interaction.kind === 'move') {
+    await handleMove(interaction.delta);
+    return;
+  }
+
+  if (interaction.kind === 'refresh-silent') {
+    await refreshQueue({ silent: true });
+    return;
+  }
+
+  if (interaction.kind === 'set-view') {
+    viewMode = interaction.viewMode;
+    await renderCurrent();
+    return;
+  }
+
+  await handleTap();
 }
 
 async function handleTap(): Promise<void> {
