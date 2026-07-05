@@ -610,6 +610,13 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
       'Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.'
   },
   {
+    exportPath: './library-health',
+    classification: 'registry-artifact',
+    registryPolicy: 'candidate-review',
+    rationale:
+      'Library health aggregates registry, export policy, overlays, modalities, and codification; add a dedicated registry item before calling it stable.'
+  },
+  {
     exportPath: './overlays/project-template',
     classification: 'registry-artifact',
     registryPolicy: 'registry-covered',

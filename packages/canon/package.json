@@ -14,7 +14,7 @@
 			"src/lib/styles/tokens.css"
 		],
 		"boot": "pnpm dev",
-		"smoke": "pnpm check && pnpm test && pnpm overlay:check && pnpm overlay:consumer-check && pnpm codification:check"
+		"smoke": "pnpm check && pnpm test && pnpm overlay:check && pnpm overlay:consumer-check && pnpm codification:check && pnpm library:health"
 	},
 	"license": "MIT",
 	"scripts": {
@@ -24,9 +24,10 @@
 		"package": "pnpm clean:package-tmp && svelte-kit sync && svelte-package && publint",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"check": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm overlay:check && pnpm overlay:consumer-check && pnpm codification:check",
+		"check": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm overlay:check && pnpm overlay:consumer-check && pnpm codification:check && pnpm library:health",
 		"check:watch": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"codification:check": "tsx scripts/check-canon-codification.ts",
+		"library:health": "tsx scripts/check-canon-library-health.ts",
 		"overlay:check": "tsx scripts/check-overlay-quality-gate.ts",
 		"overlay:consumer-check": "tsx scripts/check-overlay-consumer-compatibility.ts",
 		"overlay:inventory": "tsx scripts/check-project-overlays.ts",
@@ -262,6 +263,10 @@
 		"./codification": {
 			"types": "./dist/codification/index.d.ts",
 			"default": "./dist/codification/index.js"
+		},
+		"./library-health": {
+			"types": "./dist/library-health/index.d.ts",
+			"default": "./dist/library-health/index.js"
 		},
 		"./overlays": {
 			"types": "./dist/overlays/index.d.ts",
