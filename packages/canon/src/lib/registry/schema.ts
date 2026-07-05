@@ -328,6 +328,92 @@ export type CanonOverlayCandidatePromotionPlanCollection = {
 	};
 };
 
+export type CanonOverlayCandidatePromotionReadinessStatus =
+	| 'needs-approval'
+	| 'needs-targets'
+	| 'ready-for-implementation';
+
+export type CanonOverlayCandidatePromotionReadinessCheckStatus =
+	| 'ready'
+	| 'review'
+	| 'missing'
+	| 'needs-input';
+
+export type CanonOverlayCandidatePromotionReadinessCheck = {
+	id: string;
+	label: string;
+	status: CanonOverlayCandidatePromotionReadinessCheckStatus;
+	evidence: string[];
+	requiredAction: string;
+};
+
+export type CanonOverlayCandidatePromotionReadinessRegistryMatch = {
+	id: string;
+	name: string;
+	kind: CanonRegistryKind;
+	maturity: CanonRegistryMaturity;
+	modalities: CanonRegistryModality[];
+	docsPath?: string;
+	score: number;
+	reason: string;
+};
+
+export type CanonOverlayCandidatePromotionReadinessExportMatch = {
+	exportPath: string;
+	exportName?: string;
+	classification: string;
+	registryPolicy: string;
+	registryItemIds?: string[];
+	score: number;
+	rationale: string;
+};
+
+export type CanonOverlayCandidatePromotionReadinessReport = {
+	id: string;
+	planId: string;
+	candidateId: string;
+	intakeId: string;
+	title: string;
+	summary: string;
+	status: CanonOverlayCandidatePromotionReadinessStatus;
+	readinessUri: string;
+	planUri: string;
+	handoffUri: string;
+	candidateUri: string;
+	reviewUri: string;
+	checks: CanonOverlayCandidatePromotionReadinessCheck[];
+	relatedRegistryItems: CanonOverlayCandidatePromotionReadinessRegistryMatch[];
+	candidateExportPolicies: CanonOverlayCandidatePromotionReadinessExportMatch[];
+	stopConditions: string[];
+	approvalBoundary: string[];
+	agentContract: {
+		purpose: 'canon-overlay-candidate-promotion-readiness-report';
+		primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+		useFor: string[];
+		stopBefore: string[];
+	};
+};
+
+export type CanonOverlayCandidatePromotionReadinessReportCollection = {
+	schemaVersion: 1;
+	id: 'canon-overlay-candidate-promotion-readiness-reports';
+	sourceOfTruth: '@create-something/canon/overlays/intake';
+	description: string;
+	entries: CanonOverlayCandidatePromotionReadinessReport[];
+	summary: {
+		total: number;
+		needsApproval: number;
+		needsTargets: number;
+		readyForImplementation: number;
+	};
+	agentContract: {
+		purpose: 'canon-overlay-candidate-promotion-readiness-reports';
+		primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+		useFor: string[];
+		stopBefore: string[];
+	};
+};
+
 export type CanonOverlayModalityContract = {
 	modality: CanonRegistryModality;
 	useFor: string;

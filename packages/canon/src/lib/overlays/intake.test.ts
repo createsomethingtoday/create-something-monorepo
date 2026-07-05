@@ -7,14 +7,18 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
 	buildCanonOverlayCandidateQueue,
 	buildCanonOverlayCandidatePromotionPlans,
+	buildCanonOverlayCandidatePromotionReadinessReports,
 	buildCanonOverlayCandidateReviewPackets,
 	buildCanonOverlayIntakeInventory,
 	findCanonOverlayCandidatePromotionPlan,
+	findCanonOverlayCandidatePromotionReadinessReport,
 	findCanonOverlayCandidateReviewPacket,
 	findCanonProjectOverlayManifestFiles,
 	renderCanonOverlayCandidateQueue,
 	renderCanonOverlayCandidatePromotionPlan,
 	renderCanonOverlayCandidatePromotionPlans,
+	renderCanonOverlayCandidatePromotionReadinessReport,
+	renderCanonOverlayCandidatePromotionReadinessReports,
 	renderCanonOverlayCandidateReviewPacket,
 	renderCanonOverlayCandidateReviewPackets,
 	renderCanonOverlayIntakeInventory
@@ -329,6 +333,81 @@ describe('Canon overlay intake inventory', () => {
 		expect(collectionRendered).toContain('Canon Overlay Candidate Promotion Plans');
 		expect(collectionRendered).toContain(
 			'canon://overlays/candidates/overlay.client-a.surface-brief/promotion-plan'
+		);
+	});
+
+	it('builds read-only readiness reports from candidate promotion plans', async () => {
+		const root = await createTempRoot();
+		await writeOverlayManifest(
+			root,
+			'packages/client-a/canon-overlay/manifest.ts',
+			readyManifest('overlay.client-a', 'Client A Overlay', '@create-something/client-a')
+		);
+		await writeOverlayArtifactSet(root, 'packages/client-a/canon-overlay');
+
+		const inventory = await buildCanonOverlayIntakeInventory({ rootDir: root });
+		const queue = buildCanonOverlayCandidateQueue(inventory);
+		const packets = buildCanonOverlayCandidateReviewPackets(queue);
+		const plans = buildCanonOverlayCandidatePromotionPlans(packets);
+		const reports = buildCanonOverlayCandidatePromotionReadinessReports(plans);
+		const report = reports.entries[0];
+
+		expect(reports.id).toBe('canon-overlay-candidate-promotion-readiness-reports');
+		expect(reports.summary).toMatchObject({
+			total: 1,
+			needsApproval: 1,
+			needsTargets: 0,
+			readyForImplementation: 0
+		});
+		expect(report).toMatchObject({
+			id: 'canon-overlay-candidate-promotion-readiness:overlay.client-a.surface-brief',
+			planId: 'canon-overlay-candidate-promotion-plan:overlay.client-a.surface-brief',
+			candidateId: 'overlay.client-a:overlay.client-a.surface-brief',
+			intakeId: 'overlay.client-a.surface-brief',
+			status: 'needs-approval',
+			readinessUri: 'canon://overlays/candidates/overlay.client-a.surface-brief/readiness'
+		});
+		expect(report?.checks.map((check) => check.id)).toEqual([
+			'human-approval',
+			'registry-target',
+			'export-target',
+			'docs-target',
+			'validation-scope',
+			'compatibility-scope'
+		]);
+		expect(report?.checks.find((check) => check.id === 'human-approval')?.status).toBe(
+			'needs-input'
+		);
+		expect(report?.relatedRegistryItems.length).toBeGreaterThan(0);
+		expect(report?.candidateExportPolicies.length).toBeGreaterThan(0);
+		expect(report?.approvalBoundary.join(' ')).toContain('does not approve implementation');
+
+		expect(findCanonOverlayCandidatePromotionReadinessReport(reports, report!.intakeId)?.id).toBe(
+			report?.id
+		);
+		expect(findCanonOverlayCandidatePromotionReadinessReport(reports, report!.id)?.intakeId).toBe(
+			report?.intakeId
+		);
+		expect(
+			findCanonOverlayCandidatePromotionReadinessReport(reports, report!.candidateId)?.intakeId
+		).toBe(report?.intakeId);
+		expect(findCanonOverlayCandidatePromotionReadinessReport(reports, report!.planId)?.intakeId).toBe(
+			report?.intakeId
+		);
+		expect(
+			findCanonOverlayCandidatePromotionReadinessReport(reports, 'overlay.missing')
+		).toBeUndefined();
+
+		const rendered = renderCanonOverlayCandidatePromotionReadinessReport(report!);
+		expect(rendered).toContain('Human Approval');
+		expect(rendered).toContain('Related Registry Items');
+		expect(rendered).toContain('Candidate Export Policies');
+		expect(rendered).toContain('Stop before: automatically creating Linear issues');
+
+		const collectionRendered = renderCanonOverlayCandidatePromotionReadinessReports(reports);
+		expect(collectionRendered).toContain('Canon Overlay Candidate Promotion Readiness Reports');
+		expect(collectionRendered).toContain(
+			'canon://overlays/candidates/overlay.client-a.surface-brief/readiness'
 		);
 	});
 });

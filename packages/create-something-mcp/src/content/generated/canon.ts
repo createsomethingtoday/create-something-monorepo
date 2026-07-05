@@ -5184,10 +5184,14 @@ Ready overlays can produce candidate intakes when they have repeated-surface evi
 - Candidate review packet: \`canon://overlays/candidates/<intake-id>/handoff\`
 - Promotion plan collection: \`canon://overlays/candidates/promotion-plans\`
 - Candidate promotion plan: \`canon://overlays/candidates/<intake-id>/promotion-plan\`
+- Readiness report collection: \`canon://overlays/candidates/readiness-reports\`
+- Candidate readiness report: \`canon://overlays/candidates/<intake-id>/readiness\`
 - Rendered handoff tool: \`canon_overlay_candidate_handoff_get\`
 - Rendered promotion plan tool: \`canon_overlay_candidate_promotion_plan_get\`
+- Rendered readiness tool: \`canon_overlay_candidate_promotion_readiness_get\`
 - Local CLI handoff: \`pnpm --filter @create-something/canon overlay:candidate-handoff -- --root . --intake <intake-id>\`
 - Local CLI promotion plan: \`pnpm --filter @create-something/canon overlay:candidate-plan -- --root . --intake <intake-id>\`
+- Local CLI readiness report: \`pnpm --filter @create-something/canon overlay:candidate-readiness -- --root . --intake <intake-id>\`
 
 The queue is not an approval engine. It gathers overlay id, intake id, requested kind, modalities, source paths, surfaces, dependencies, required evidence, and stop-before-stable notes so Canon maintainers can decide whether to open a promotion slice.
 
@@ -5200,6 +5204,10 @@ Use \`overlay:candidate-handoff\` for the same review packet from the local repo
 After explicit human approval, use promotion plans to scope implementation. Plans turn an approved handoff into preconditions, implementation scope, required changes, validation, documentation, compatibility, stop conditions, and the approval boundary for the next Canon slice. They are read-only artifacts: they do not create Linear issues, edit project overlays, approve implementation, or mark anything stable.
 
 Use \`canon_overlay_candidate_promotion_plan_get\` when a maintainer needs the plan as Markdown rather than JSON. Use \`overlay:candidate-plan\` for the same plan from the local repo checkout. Omitting \`--intake\` prints the plan list; adding \`--json\` prints the source plan data.
+
+Readiness reports sit after promotion plans and before implementation. They compare the plan with current Canon registry and public export policy snapshots, then call out human approval, registry target, export target, docs target, validation, and compatibility readiness. Related registry items and export policies are review hints only; the report does not select targets automatically.
+
+Use \`canon_overlay_candidate_promotion_readiness_get\` when a maintainer needs the readiness report as Markdown. Use \`overlay:candidate-readiness\` for the same report from the local repo checkout. Omitting \`--intake\` prints the report list; adding \`--json\` prints the source readiness data.
 
 Do not treat a queued candidate as stable. Stable promotion still requires Canon-owned export paths, docs, tests, compatibility notes, and registry routing.
 

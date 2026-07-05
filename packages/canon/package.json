@@ -29,6 +29,7 @@
 		"overlay:inventory": "tsx scripts/check-project-overlays.ts",
 		"overlay:candidate-handoff": "tsx scripts/render-overlay-candidate-handoff.ts",
 		"overlay:candidate-plan": "tsx scripts/render-overlay-candidate-plan.ts",
+		"overlay:candidate-readiness": "tsx scripts/render-overlay-candidate-readiness.ts",
 		"overlay:instantiate": "tsx scripts/instantiate-project-overlay.ts",
 		"test": "vitest run",
 		"test:watch": "vitest"

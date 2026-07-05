@@ -16,6 +16,9 @@ import {
 import {
   CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS
 } from './content/generated/canon-overlay-candidate-promotion-plans.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS
+} from './content/generated/canon-overlay-candidate-promotion-readiness-reports.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -302,6 +305,51 @@ function buildContentIndex(): ContentItem[] {
       ].join('\n'),
       property: 'ltd',
       uri: plan.planUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-promotion-readiness:collection',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Promotion Readiness Reports',
+    description: CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.description,
+    content: [
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.summary.total.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.summary.needsApproval.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.summary.needsTargets.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.summary.readyForImplementation.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/readiness-reports'
+  });
+
+  for (const report of CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.entries) {
+    items.push({
+      id: `canon-overlay-candidate-promotion-readiness:${report.intakeId}`,
+      type: 'canon-registry',
+      title: report.title,
+      description: report.summary,
+      content: [
+        report.planId,
+        report.candidateId,
+        report.status,
+        report.checks.map(check => `${check.id} ${check.label} ${check.status} ${check.requiredAction} ${check.evidence.join(' ')}`).join('\n'),
+        report.relatedRegistryItems.map(item => `${item.id} ${item.name} ${item.kind} ${item.maturity} ${item.docsPath ?? ''} ${item.reason}`).join('\n'),
+        report.candidateExportPolicies.map(rule => `${rule.exportPath} ${rule.exportName ?? ''} ${rule.classification} ${rule.registryPolicy} ${rule.rationale}`).join('\n'),
+        report.stopConditions.join('\n'),
+        report.approvalBoundary.join('\n'),
+        report.agentContract.useFor.join('\n'),
+        report.agentContract.stopBefore.join('\n'),
+        report.readinessUri,
+        report.planUri,
+        report.handoffUri,
+        report.candidateUri,
+        report.reviewUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: report.readinessUri
     });
   }
 

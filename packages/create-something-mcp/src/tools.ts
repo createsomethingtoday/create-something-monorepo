@@ -20,6 +20,11 @@ import {
   listCanonOverlayCandidatePromotionPlanIds,
   renderCanonOverlayCandidatePromotionPlan
 } from './canon-overlay-candidate-promotion-plan.js';
+import {
+  getCanonOverlayCandidatePromotionReadinessReport,
+  listCanonOverlayCandidatePromotionReadinessReportIds,
+  renderCanonOverlayCandidatePromotionReadinessReport
+} from './canon-overlay-candidate-promotion-readiness.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import {
   CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
@@ -1111,6 +1116,42 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonOverlayCandidatePromotionPlan(plan),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_overlay_candidate_promotion_readiness_get',
+    'Get a rendered read-only Canon overlay candidate promotion readiness report by intake id. Use this after a promotion plan exists to check human approval, registry target, export target, docs target, validation, and compatibility readiness before implementation starts.',
+    {
+      intakeId: z.string().describe('Candidate intake id, readiness report id, plan id, or candidate id, for example overlay.agency-atlas-public.workflow-proof-surface')
+    },
+    async ({ intakeId }) => {
+      const report = getCanonOverlayCandidatePromotionReadinessReport(intakeId);
+
+      if (!report) {
+        const ids = listCanonOverlayCandidatePromotionReadinessReportIds();
+        return {
+          content: [{
+            type: 'text' as const,
+            text: [
+              `Canon overlay candidate promotion readiness report not found: ${intakeId}`,
+              '',
+              'Available intake ids:',
+              ...ids.map((id) => `- \`${id}\``)
+            ].join('\n'),
+            ...USER_VISIBLE,
+          }],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonOverlayCandidatePromotionReadinessReport(report),
           ...USER_VISIBLE,
         }]
       };
