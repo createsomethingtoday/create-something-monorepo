@@ -58,9 +58,27 @@ export const canonNavigation: NavSection[] = [
 		title: 'Components',
 		items: [
 			{ label: 'Overview', href: '/canon/components' },
+			{ label: 'Atlas', href: '/canon/components/atlas' },
+			{ label: 'Brand', href: '/canon/components/brand' },
 			{ label: 'Button', href: '/canon/components/button' },
 			{ label: 'Card', href: '/canon/components/card' },
-			{ label: 'Navigation', href: '/canon/components/navigation' }
+			{ label: 'Clear Components', href: '/canon/components/clear' },
+			{ label: 'Content', href: '/canon/components/content' },
+			{ label: 'Conversion', href: '/canon/components/conversion' },
+			{ label: 'Diagrams', href: '/canon/components/diagrams' },
+			{ label: 'Feedback', href: '/canon/components/feedback' },
+			{ label: 'Filtering', href: '/canon/components/filtering' },
+			{ label: 'Form Controls', href: '/canon/components/form' },
+			{ label: 'Forms', href: '/canon/components/forms' },
+			{ label: 'Heading', href: '/canon/components/heading' },
+			{ label: 'Icons', href: '/canon/components/icons' },
+			{ label: 'Insights', href: '/canon/components/insights' },
+			{ label: 'Interactive', href: '/canon/components/interactive' },
+			{ label: 'Layout', href: '/canon/components/layout' },
+			{ label: 'Navigation', href: '/canon/components/navigation' },
+			{ label: 'Patterns', href: '/canon/components/patterns' },
+			{ label: 'Skip To Content', href: '/canon/components/skip-to-content' },
+			{ label: 'Typography', href: '/canon/components/typography' }
 		]
 	},
 	{
@@ -85,6 +103,7 @@ export const canonNavigation: NavSection[] = [
 		title: 'Resources',
 		items: [
 			{ label: 'Tokens', href: '/canon/resources/tokens' },
+			{ label: 'Registry', href: '/canon/resources/registry' },
 			{ label: 'Changelog', href: '/canon/resources/changelog' },
 			{ label: 'Contributing', href: '/canon/resources/contributing' },
 			{ label: 'Figma', href: '/canon/resources/figma' }
