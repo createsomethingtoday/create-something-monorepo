@@ -11,7 +11,7 @@ This course uses the Codex app plus a local stdio server because that is the fas
   <figcaption>The scaffold proves the server can start cleanly before any business workflow is added.</figcaption>
 </figure>
 
-## 1) Start With the Codex MCP-Building Skill
+## 1) Start with the Codex MCP-building skill
 
 In the Codex app, start the build with a prompt like this:
 
