@@ -31,12 +31,7 @@ type RegisteredTool = {
 
 const tools: RegisteredTool[] = [];
 const server = {
-  tool(
-    name: string,
-    description: string,
-    _schema: unknown,
-    handler: RegisteredTool['handler']
-  ) {
+  tool(name: string, description: string, _schema: unknown, handler: RegisteredTool['handler']) {
     tools.push({ name, description, handler });
   }
 };
@@ -60,8 +55,11 @@ assert.deepEqual(listCanonOverlayTemplateFilePaths(), [
 
 const renderedPack = renderCanonOverlayTemplateFilePack(pack);
 
-assert.match(renderedPack, /^# Canon overlay template file pack/m);
-assert.match(renderedPack, /File pack resource: canon:\/\/overlays\/overlay\.project-template\/files/);
+assert.match(renderedPack, /^# Canon project overlay template file pack/m);
+assert.match(
+  renderedPack,
+  /File pack resource: canon:\/\/overlays\/overlay\.project-template\/files/
+);
 assert.match(renderedPack, /Primary consumers: codex, mcp, ltd-docs, project-overlays/);
 assert.match(renderedPack, /Stop before:/);
 assert.match(renderedPack, /### templates\/surface-brief\.md/);
@@ -89,7 +87,10 @@ const fileResult = await tool.handler({ relativePath: 'templates/surface-brief.m
 
 assert.equal(fileResult.isError, undefined);
 assert.equal(fileResult.content[0]!.text, renderCanonOverlayTemplateFile(surfaceBrief));
-assert.match(fileResult.content[0]!.text, /Resource: canon:\/\/overlays\/overlay\.project-template\/files\/templates%2Fsurface-brief\.md/);
+assert.match(
+  fileResult.content[0]!.text,
+  /Resource: canon:\/\/overlays\/overlay\.project-template\/files\/templates%2Fsurface-brief\.md/
+);
 
 const encodedResult = await tool.handler({ relativePath: 'templates%2Fsurface-brief.md' });
 
@@ -98,7 +99,10 @@ assert.equal(encodedResult.content[0]!.text, fileResult.content[0]!.text);
 const missingResult = await tool.handler({ relativePath: 'templates/missing.md' });
 
 assert.equal(missingResult.isError, true);
-assert.match(missingResult.content[0]!.text, /Canon overlay template file not found: templates\/missing\.md/);
+assert.match(
+  missingResult.content[0]!.text,
+  /Canon overlay template file not found: templates\/missing\.md/
+);
 assert.match(missingResult.content[0]!.text, /Available file paths:/);
 assert.match(missingResult.content[0]!.text, /surface-policy\.md/);
 
