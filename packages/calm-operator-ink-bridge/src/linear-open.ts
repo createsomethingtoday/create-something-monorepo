@@ -103,6 +103,10 @@ export async function fetchLinearOpenIssues(options: FetchLinearOpenIssuesOption
   const limit = normalizeLimit(options.limit);
   const fetchImpl = options.fetch ?? fetch;
   const first = Math.max(limit * 6, 30);
+  const filter = {
+    team: { key: { eq: team } },
+    state: { type: { nin: ['completed', 'canceled'] } }
+  };
 
   const response = await fetchImpl(LINEAR_API, {
     method: 'POST',
@@ -112,8 +116,8 @@ export async function fetchLinearOpenIssues(options: FetchLinearOpenIssuesOption
     },
     body: JSON.stringify({
       query: `
-        query EvenOpenLinearIssues($first: Int!) {
-          issues(first: $first, orderBy: updatedAt) {
+        query EvenOpenLinearIssues($first: Int!, $filter: IssueFilter) {
+          issues(first: $first, orderBy: updatedAt, filter: $filter) {
             nodes {
               identifier
               title
@@ -128,7 +132,7 @@ export async function fetchLinearOpenIssues(options: FetchLinearOpenIssuesOption
           }
         }
       `,
-      variables: { first }
+      variables: { first, filter }
     })
   });
 
