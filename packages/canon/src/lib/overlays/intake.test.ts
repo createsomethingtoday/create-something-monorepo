@@ -6,15 +6,19 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
 	buildCanonOverlayCandidateQueue,
+	buildCanonOverlayCandidatePromotionApprovalRecords,
 	buildCanonOverlayCandidatePromotionPlans,
 	buildCanonOverlayCandidatePromotionReadinessReports,
 	buildCanonOverlayCandidateReviewPackets,
 	buildCanonOverlayIntakeInventory,
+	findCanonOverlayCandidatePromotionApprovalRecord,
 	findCanonOverlayCandidatePromotionPlan,
 	findCanonOverlayCandidatePromotionReadinessReport,
 	findCanonOverlayCandidateReviewPacket,
 	findCanonProjectOverlayManifestFiles,
 	renderCanonOverlayCandidateQueue,
+	renderCanonOverlayCandidatePromotionApprovalRecord,
+	renderCanonOverlayCandidatePromotionApprovalRecords,
 	renderCanonOverlayCandidatePromotionPlan,
 	renderCanonOverlayCandidatePromotionPlans,
 	renderCanonOverlayCandidatePromotionReadinessReport,
@@ -408,6 +412,99 @@ describe('Canon overlay intake inventory', () => {
 		expect(collectionRendered).toContain('Canon Overlay Candidate Promotion Readiness Reports');
 		expect(collectionRendered).toContain(
 			'canon://overlays/candidates/overlay.client-a.surface-brief/readiness'
+		);
+	});
+
+	it('builds read-only approval records from candidate readiness reports', async () => {
+		const root = await createTempRoot();
+		await writeOverlayManifest(
+			root,
+			'packages/client-a/canon-overlay/manifest.ts',
+			readyManifest('overlay.client-a', 'Client A Overlay', '@create-something/client-a')
+		);
+		await writeOverlayArtifactSet(root, 'packages/client-a/canon-overlay');
+
+		const inventory = await buildCanonOverlayIntakeInventory({ rootDir: root });
+		const queue = buildCanonOverlayCandidateQueue(inventory);
+		const packets = buildCanonOverlayCandidateReviewPackets(queue);
+		const plans = buildCanonOverlayCandidatePromotionPlans(packets);
+		const reports = buildCanonOverlayCandidatePromotionReadinessReports(plans);
+		const approvalRecords = buildCanonOverlayCandidatePromotionApprovalRecords(reports);
+		const record = approvalRecords.entries[0];
+
+		expect(approvalRecords.id).toBe('canon-overlay-candidate-promotion-approval-records');
+		expect(approvalRecords.summary).toMatchObject({
+			total: 1,
+			approvalRequired: 1
+		});
+		expect(record).toMatchObject({
+			id: 'canon-overlay-candidate-promotion-approval-record:overlay.client-a.surface-brief',
+			readinessReportId:
+				'canon-overlay-candidate-promotion-readiness:overlay.client-a.surface-brief',
+			planId: 'canon-overlay-candidate-promotion-plan:overlay.client-a.surface-brief',
+			candidateId: 'overlay.client-a:overlay.client-a.surface-brief',
+			intakeId: 'overlay.client-a.surface-brief',
+			state: 'approval-required',
+			approvalUri: 'canon://overlays/candidates/overlay.client-a.surface-brief/approval-record'
+		});
+		expect(record?.target.registryItemId).toBeNull();
+		expect(
+			record?.requiredFields
+				.filter((field) => field.required)
+				.map((field) => field.id)
+		).toEqual([
+			'approvalOwner',
+			'approvalEvidence',
+			'approvedAt',
+			'registryAction',
+			'registryItemId',
+			'exportPath',
+			'docsPath',
+			'maturityTarget',
+			'implementationOwner'
+		]);
+		expect(
+			record?.requiredFields.find((field) => field.id === 'registryItemId')?.hints.length
+		).toBeGreaterThan(0);
+		expect(record?.targetHints.registryItems.length).toBeGreaterThan(0);
+		expect(record?.targetHints.exportPolicies.length).toBeGreaterThan(0);
+		expect(record?.targetHints.docsPaths.length).toBeGreaterThan(0);
+		expect(record?.approvalBoundary.join(' ')).toContain('does not itself approve implementation');
+
+		expect(
+			findCanonOverlayCandidatePromotionApprovalRecord(approvalRecords, record!.intakeId)?.id
+		).toBe(record?.id);
+		expect(
+			findCanonOverlayCandidatePromotionApprovalRecord(approvalRecords, record!.id)?.intakeId
+		).toBe(record?.intakeId);
+		expect(
+			findCanonOverlayCandidatePromotionApprovalRecord(approvalRecords, record!.candidateId)
+				?.intakeId
+		).toBe(record?.intakeId);
+		expect(
+			findCanonOverlayCandidatePromotionApprovalRecord(approvalRecords, record!.planId)?.intakeId
+		).toBe(record?.intakeId);
+		expect(
+			findCanonOverlayCandidatePromotionApprovalRecord(
+				approvalRecords,
+				record!.readinessReportId
+			)?.intakeId
+		).toBe(record?.intakeId);
+		expect(
+			findCanonOverlayCandidatePromotionApprovalRecord(approvalRecords, 'overlay.missing')
+		).toBeUndefined();
+
+		const rendered = renderCanonOverlayCandidatePromotionApprovalRecord(record!);
+		expect(rendered).toContain('Approval Owner');
+		expect(rendered).toContain('Current value: UNSET');
+		expect(rendered).toContain('Target Hints');
+		expect(rendered).toContain('Stop before: automatically creating Linear work');
+
+		const collectionRendered =
+			renderCanonOverlayCandidatePromotionApprovalRecords(approvalRecords);
+		expect(collectionRendered).toContain('Canon Overlay Candidate Promotion Approval Records');
+		expect(collectionRendered).toContain(
+			'canon://overlays/candidates/overlay.client-a.surface-brief/approval-record'
 		);
 	});
 });

@@ -19,6 +19,9 @@ import {
 import {
   CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS
 } from './content/generated/canon-overlay-candidate-promotion-readiness-reports.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS
+} from './content/generated/canon-overlay-candidate-promotion-approval-records.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -350,6 +353,53 @@ function buildContentIndex(): ContentItem[] {
       ].join('\n'),
       property: 'ltd',
       uri: report.readinessUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-promotion-approval-record:collection',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Promotion Approval Records',
+    description: CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.description,
+    content: [
+      CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.summary.total.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.summary.approvalRequired.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/approval-records'
+  });
+
+  for (const record of CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.entries) {
+    items.push({
+      id: `canon-overlay-candidate-promotion-approval-record:${record.intakeId}`,
+      type: 'canon-registry',
+      title: record.title,
+      description: record.summary,
+      content: [
+        record.readinessReportId,
+        record.planId,
+        record.candidateId,
+        record.state,
+        record.requiredFields.map(field => `${field.id} ${field.label} ${field.required ? 'required' : 'optional'} ${field.value ?? 'UNSET'} ${field.instructions} ${field.hints.join(' ')}`).join('\n'),
+        record.targetHints.registryItems.map(item => `${item.id} ${item.name} ${item.kind} ${item.maturity} ${item.docsPath ?? ''} ${item.reason}`).join('\n'),
+        record.targetHints.exportPolicies.map(rule => `${rule.exportPath} ${rule.exportName ?? ''} ${rule.classification} ${rule.registryPolicy} ${rule.rationale}`).join('\n'),
+        record.targetHints.docsPaths.join('\n'),
+        record.checklist.join('\n'),
+        record.stopConditions.join('\n'),
+        record.approvalBoundary.join('\n'),
+        record.agentContract.useFor.join('\n'),
+        record.agentContract.stopBefore.join('\n'),
+        record.approvalUri,
+        record.readinessUri,
+        record.planUri,
+        record.handoffUri,
+        record.candidateUri,
+        record.reviewUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: record.approvalUri
     });
   }
 

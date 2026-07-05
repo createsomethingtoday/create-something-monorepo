@@ -12,6 +12,11 @@ import type {
 	CanonOverlayCandidateQueueEntry,
 	CanonOverlayCandidatePromotionPlan,
 	CanonOverlayCandidatePromotionPlanCollection,
+	CanonOverlayCandidatePromotionApprovalField,
+	CanonOverlayCandidatePromotionApprovalRecord,
+	CanonOverlayCandidatePromotionApprovalRecordCollection,
+	CanonOverlayCandidatePromotionApprovalState,
+	CanonOverlayCandidatePromotionApprovalTarget,
 	CanonOverlayCandidatePromotionReadinessCheck,
 	CanonOverlayCandidatePromotionReadinessExportMatch,
 	CanonOverlayCandidatePromotionReadinessRegistryMatch,
@@ -665,6 +670,147 @@ export function findCanonOverlayCandidatePromotionReadinessReport(
 	);
 }
 
+export function buildCanonOverlayCandidatePromotionApprovalRecords(
+	reports: CanonOverlayCandidatePromotionReadinessReportCollection
+): CanonOverlayCandidatePromotionApprovalRecordCollection {
+	const entries = reports.entries.map((report) => createCandidatePromotionApprovalRecord(report));
+
+	return {
+		schemaVersion: 1,
+		id: 'canon-overlay-candidate-promotion-approval-records',
+		sourceOfTruth: '@create-something/canon/overlays/intake',
+		description:
+			'Read-only approval-record templates for Canon overlay candidate promotion readiness reports, making maintainer approval, target selection, and implementation ownership explicit before code changes.',
+		entries,
+		summary: {
+			total: entries.length,
+			approvalRequired: countApprovalState(entries, 'approval-required')
+		},
+		agentContract: {
+			purpose: 'canon-overlay-candidate-promotion-approval-records',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'recording the human approval and target-selection fields required before implementation starts',
+				'turning readiness review hints into explicit maintainer choices',
+				'preserving approval evidence as a review artifact without mutating Canon or project overlays'
+			],
+			stopBefore: [
+				'treating an unfilled approval record as approval',
+				'automatically filling target fields from readiness hints',
+				'automatically creating Linear work from approval records',
+				'automatically editing Canon registry, exports, docs, or project overlays',
+				'marking candidates stable from approval-record output'
+			]
+		}
+	};
+}
+
+export function renderCanonOverlayCandidatePromotionApprovalRecord(
+	record: CanonOverlayCandidatePromotionApprovalRecord
+): string {
+	const lines = [
+		`# ${record.title}`,
+		'',
+		`State: ${record.state}`,
+		`Approval record: ${record.approvalUri}`,
+		`Readiness report: ${record.readinessUri}`,
+		`Promotion plan: ${record.planUri}`,
+		`Review packet: ${record.handoffUri}`,
+		`Candidate resource: ${record.candidateUri}`,
+		'',
+		'## Summary',
+		record.summary,
+		'',
+		'## Required Approval Fields',
+		...record.requiredFields.flatMap((field) => [
+			`### ${field.label}`,
+			`- Required: ${field.required ? 'yes' : 'no'}`,
+			`- Current value: ${field.value ?? 'UNSET'}`,
+			`- Instructions: ${field.instructions}`,
+			...(field.hints.length ? field.hints.map((hint) => `- Hint: ${hint}`) : ['- Hint: none']),
+			''
+		]),
+		'## Target Hints',
+		'### Registry Items',
+		...(record.targetHints.registryItems.length
+			? record.targetHints.registryItems.map(
+					(item) =>
+						`- ${item.id}: ${item.name} (${item.maturity}, score ${item.score}) - ${item.reason}`
+				)
+			: ['- None found from current Canon registry snapshot.']),
+		'',
+		'### Export Policies',
+		...(record.targetHints.exportPolicies.length
+			? record.targetHints.exportPolicies.map((rule) => {
+					const label = rule.exportName ? `${rule.exportPath}#${rule.exportName}` : rule.exportPath;
+					return `- ${label}: ${rule.registryPolicy} / ${rule.classification} (score ${rule.score})`;
+				})
+			: ['- None found from current Canon public export policy snapshot.']),
+		'',
+		'### Docs Paths',
+		...(record.targetHints.docsPaths.length
+			? record.targetHints.docsPaths.map((docsPath) => `- ${docsPath}`)
+			: ['- None found from related registry items.']),
+		'',
+		'## Checklist',
+		...record.checklist.map((item) => `- ${item}`),
+		'',
+		'## Stop Conditions',
+		...record.stopConditions.map((item) => `- ${item}`),
+		'',
+		'## Approval Boundary',
+		...record.approvalBoundary.map((item) => `- ${item}`),
+		'',
+		'## Agent Contract',
+		...record.agentContract.useFor.map((item) => `- Use for: ${item}`),
+		...record.agentContract.stopBefore.map((item) => `- Stop before: ${item}`)
+	];
+
+	return lines.join('\n');
+}
+
+export function renderCanonOverlayCandidatePromotionApprovalRecords(
+	collection: CanonOverlayCandidatePromotionApprovalRecordCollection
+): string {
+	const lines = [
+		'# Canon Overlay Candidate Promotion Approval Records',
+		'',
+		`Total records: ${collection.summary.total}`,
+		`Approval required: ${collection.summary.approvalRequired}`
+	];
+
+	if (collection.entries.length === 0) {
+		lines.push('', 'No overlay candidate promotion approval records are available.');
+		return lines.join('\n');
+	}
+
+	for (const record of collection.entries) {
+		lines.push(
+			'',
+			`## ${record.title}`,
+			`- State: ${record.state}`,
+			`- Approval record: ${record.approvalUri}`,
+			`- Readiness: ${record.readinessUri}`
+		);
+	}
+
+	return lines.join('\n');
+}
+
+export function findCanonOverlayCandidatePromotionApprovalRecord(
+	collection: CanonOverlayCandidatePromotionApprovalRecordCollection,
+	id: string
+): CanonOverlayCandidatePromotionApprovalRecord | undefined {
+	return collection.entries.find(
+		(entry) =>
+			entry.intakeId === id ||
+			entry.id === id ||
+			entry.candidateId === id ||
+			entry.planId === id ||
+			entry.readinessReportId === id
+	);
+}
+
 function summarizeOverlayInventory(entries: CanonProjectOverlayInventoryEntry[]) {
 	return {
 		total: entries.length,
@@ -724,6 +870,13 @@ function countReadiness(
 	status: CanonOverlayCandidatePromotionReadinessStatus
 ) {
 	return entries.filter((entry) => entry.status === status).length;
+}
+
+function countApprovalState(
+	entries: CanonOverlayCandidatePromotionApprovalRecord[],
+	state: CanonOverlayCandidatePromotionApprovalState
+) {
+	return entries.filter((entry) => entry.state === state).length;
 }
 
 function createCandidateReviewPacket(
@@ -922,6 +1075,190 @@ function createCandidatePromotionReadinessReport(
 			]
 		}
 	};
+}
+
+function createCandidatePromotionApprovalRecord(
+	report: CanonOverlayCandidatePromotionReadinessReport
+): CanonOverlayCandidatePromotionApprovalRecord {
+	const target: CanonOverlayCandidatePromotionApprovalTarget = {
+		approvalOwner: null,
+		approvalEvidence: null,
+		approvedAt: null,
+		registryAction: null,
+		registryItemId: null,
+		exportPath: null,
+		exportName: null,
+		docsPath: null,
+		maturityTarget: null,
+		implementationOwner: null
+	};
+	const docsPaths = uniqueStrings(
+		report.relatedRegistryItems
+			.map((item) => item.docsPath)
+			.filter((value): value is string => Boolean(value))
+	);
+
+	return {
+		id: `canon-overlay-candidate-promotion-approval-record:${report.intakeId}`,
+		readinessReportId: report.id,
+		planId: report.planId,
+		candidateId: report.candidateId,
+		intakeId: report.intakeId,
+		title: `${report.title.replace(/ readiness report$/, '')} approval record`,
+		summary:
+			`${report.summary} Fill this record before implementation starts; every target remains unset until a maintainer records an explicit choice.`,
+		state: 'approval-required',
+		approvalUri: `canon://overlays/candidates/${report.intakeId}/approval-record`,
+		readinessUri: report.readinessUri,
+		planUri: report.planUri,
+		handoffUri: report.handoffUri,
+		candidateUri: report.candidateUri,
+		reviewUri: report.reviewUri,
+		target,
+		requiredFields: createApprovalFields({ target, report, docsPaths }),
+		targetHints: {
+			registryItems: report.relatedRegistryItems,
+			exportPolicies: report.candidateExportPolicies,
+			docsPaths
+		},
+		checklist: [
+			'Record the human maintainer or role approving implementation.',
+			'Record the approval evidence location, such as PR comment, Linear comment, meeting note, or signed decision.',
+			'Select registry action and registry item id before editing Canon source.',
+			'Select export path and docs path before implementation starts.',
+			'Select maturity target and implementation owner before opening implementation work.',
+			'Carry validation and compatibility requirements from the readiness report into the implementation PR.'
+		],
+		stopConditions: [
+			...report.stopConditions,
+			'Stop if any required approval-record field is still UNSET.',
+			'Stop if target fields were copied from hints without maintainer review.',
+			'Stop before using this record as permission to mutate Canon or project overlays.'
+		],
+		approvalBoundary: [
+			'This approval record is a read-only template and does not itself approve implementation.',
+			'Only a maintainer-filled record with explicit owner, evidence, target, docs, maturity, and implementation owner fields can support opening implementation work.',
+			'The record does not create Linear issues, mutate Canon, mutate project overlays, or mark candidates stable.'
+		],
+		agentContract: {
+			purpose: 'canon-overlay-candidate-promotion-approval-record',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'recording the exact human approval and target choices required before implementation',
+				'keeping readiness hints separate from maintainer-selected targets',
+				'handing an approved candidate into a bounded implementation slice'
+			],
+			stopBefore: [
+				'automatically filling required approval fields',
+				'automatically creating Linear work',
+				'automatically editing Canon source, registry, exports, docs, or project overlays',
+				'treating an unfilled approval record as approval or stable promotion'
+			]
+		}
+	};
+}
+
+function createApprovalFields({
+	target,
+	report,
+	docsPaths
+}: {
+	target: CanonOverlayCandidatePromotionApprovalTarget;
+	report: CanonOverlayCandidatePromotionReadinessReport;
+	docsPaths: string[];
+}): CanonOverlayCandidatePromotionApprovalField[] {
+	const registryHints = report.relatedRegistryItems.map((item) => `${item.id}: ${item.name}`);
+	const exportHints = report.candidateExportPolicies.map((rule) => {
+		const label = rule.exportName ? `${rule.exportPath}#${rule.exportName}` : rule.exportPath;
+		return `${label}: ${rule.registryPolicy} / ${rule.classification}`;
+	});
+
+	return [
+		{
+			id: 'approvalOwner',
+			label: 'Approval Owner',
+			required: true,
+			value: target.approvalOwner,
+			hints: ['Name the maintainer, role, or decision authority who approved implementation.'],
+			instructions: 'Record the human owner responsible for the approval decision.'
+		},
+		{
+			id: 'approvalEvidence',
+			label: 'Approval Evidence',
+			required: true,
+			value: target.approvalEvidence,
+			hints: ['Use a stable PR comment, Linear comment, meeting note, or decision artifact reference.'],
+			instructions: 'Record where the approval decision can be audited.'
+		},
+		{
+			id: 'approvedAt',
+			label: 'Approved At',
+			required: true,
+			value: target.approvedAt,
+			hints: ['Use an ISO 8601 timestamp or exact calendar date.'],
+			instructions: 'Record when the approval decision happened.'
+		},
+		{
+			id: 'registryAction',
+			label: 'Registry Action',
+			required: true,
+			value: target.registryAction,
+			hints: ['Allowed values: reuse-existing, update-existing, create-new.'],
+			instructions: 'Choose how implementation should treat the Canon registry target.'
+		},
+		{
+			id: 'registryItemId',
+			label: 'Registry Item Id',
+			required: true,
+			value: target.registryItemId,
+			hints: registryHints,
+			instructions: 'Record the selected Canon registry item id or the new id to create.'
+		},
+		{
+			id: 'exportPath',
+			label: 'Export Path',
+			required: true,
+			value: target.exportPath,
+			hints: exportHints,
+			instructions: 'Record the package export path that implementation should add or update.'
+		},
+		{
+			id: 'exportName',
+			label: 'Export Name',
+			required: false,
+			value: target.exportName,
+			hints: exportHints,
+			instructions: 'Record the named export when the target is a symbol-level export.'
+		},
+		{
+			id: 'docsPath',
+			label: 'Docs Path',
+			required: true,
+			value: target.docsPath,
+			hints: docsPaths,
+			instructions: 'Record the Canon docs path that implementation must update.'
+		},
+		{
+			id: 'maturityTarget',
+			label: 'Maturity Target',
+			required: true,
+			value: target.maturityTarget,
+			hints: ['Allowed values: experimental, candidate, stable. Stable requires export, docs, tests, compatibility, and registry routing.'],
+			instructions: 'Record the intended Canon maturity after implementation.'
+		},
+		{
+			id: 'implementationOwner',
+			label: 'Implementation Owner',
+			required: true,
+			value: target.implementationOwner,
+			hints: ['Name the maintainer or agent lane responsible for the implementation slice.'],
+			instructions: 'Record who owns the follow-up implementation work.'
+		}
+	];
+}
+
+function uniqueStrings(values: string[]) {
+	return [...new Set(values)].sort();
 }
 
 function createPromotionReadinessChecks({
