@@ -127,6 +127,28 @@ export function flattenNavigation(sections: NavSection[]): NavItem[] {
 	return items;
 }
 
+function pathMatchesNavigationHref(path: string, href: string): boolean {
+	if (href === '/canon') {
+		return path === href;
+	}
+	return path === href || path.startsWith(`${href}/`);
+}
+
+/**
+ * Find the most specific navigation href for a route path.
+ */
+export function findActiveNavHref(path: string, sections: NavSection[]): string | null {
+	const matchingItems = flattenNavigation(sections).filter((item) =>
+		pathMatchesNavigationHref(path, item.href)
+	);
+
+	if (matchingItems.length === 0) {
+		return null;
+	}
+
+	return matchingItems.sort((a, b) => b.href.length - a.href.length)[0].href;
+}
+
 /**
  * Find current section and item from path
  */
@@ -134,14 +156,19 @@ export function findCurrentNavItem(
 	path: string,
 	sections: NavSection[]
 ): { section: NavSection | null; item: NavItem | null } {
+	const activeHref = findActiveNavHref(path, sections);
+	if (!activeHref) {
+		return { section: null, item: null };
+	}
+
 	for (const section of sections) {
 		for (const item of section.items) {
-			if (item.href === path) {
+			if (item.href === activeHref) {
 				return { section, item };
 			}
 			if (item.children) {
 				for (const child of item.children) {
-					if (child.href === path) {
+					if (child.href === activeHref) {
 						return { section, item: child };
 					}
 				}

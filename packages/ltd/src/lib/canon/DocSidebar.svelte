@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
-	import { canonNavigation, type NavSection } from './navigation.js';
+	import { tick } from 'svelte';
+	import { canonNavigation, findActiveNavHref, type NavSection } from './navigation.js';
 
 	interface Props {
 		/** Whether sidebar is open on mobile */
@@ -12,18 +14,26 @@
 	let { mobileOpen = false, onClose }: Props = $props();
 
 	const currentPath = $derived($page.url.pathname);
+	const activeHref = $derived(findActiveNavHref(currentPath, canonNavigation));
 
 	function isActive(href: string): boolean {
-		if (href === '/canon') {
-			return currentPath === '/canon';
-		}
-		return currentPath.startsWith(href);
+		return activeHref === href;
 	}
 
 	function handleLinkClick() {
 		// Close mobile sidebar when link is clicked
 		onClose?.();
 	}
+
+	$effect(() => {
+		if (!browser || !activeHref) return;
+
+		void tick().then(() => {
+			document
+				.querySelector<HTMLAnchorElement>('.nav-link-active')
+				?.scrollIntoView({ block: 'center', inline: 'nearest' });
+		});
+	});
 </script>
 
 <!-- Mobile overlay -->
