@@ -358,6 +358,28 @@ intakes. MCP mirrors the same snapshot at `canon://overlays/intake` and
 `canon://overlays/intake/list` so agents can inspect multi-project feedback before proposing
 Canon changes.
 
+### Repo-wide Codification Audit
+
+Use the codification gate when the question is whether every UI file has a Canon ownership answer:
+
+```bash
+pnpm --filter @create-something/canon codification:check
+```
+
+The audit scans UI source files in `apps/` and `packages/` and assigns one primary classification:
+
+- `canon-owned`: the file lives inside the Canon package boundary.
+- `canon-importing`: the file directly imports the public Canon package.
+- `overlay-governed`: the owning package has `canon-overlay/manifest.ts`.
+- `product-local-exempt`: the file is covered by explicit Canon exemption policy data.
+- `needs-canon-decision`: the file has no Canon import, no overlay, and no exemption.
+
+The command fails only for `needs-canon-decision`. This keeps the operating rule precise: not every
+project component must move into Canon, but every UI file needs a documented Canon relationship.
+Product-local exemptions are source-controlled in `src/lib/codification/codification.ts` with a
+reason and justification, so future agents can distinguish intentional local surfaces from missing
+Canon work.
+
 ## Atlas Graph And Story Primitives
 
 Canon owns the reusable Atlas graph/story contract at
