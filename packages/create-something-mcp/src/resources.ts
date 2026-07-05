@@ -13,6 +13,9 @@ import {
 import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
 import { CANON_OVERLAY_INTAKE_INVENTORY } from './content/generated/canon-overlay-intake-inventory.js';
 import { CANON_OVERLAY_CANDIDATE_QUEUE } from './content/generated/canon-overlay-candidate-queue.js';
+import {
+  CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS
+} from './content/generated/canon-overlay-candidate-review-packets.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -371,6 +374,7 @@ export function registerResources(server: McpServer) {
           requestedModalities: entry.requestedModalities,
           sourcePackage: entry.sourcePackage,
           reviewUri: entry.reviewUri,
+          handoffUri: entry.handoffUri,
           uri: entry.candidateUri
         })), null, 2)
       }]
@@ -390,6 +394,40 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'application/json',
           text: JSON.stringify(entry, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-review-packets',
+    'canon://overlays/candidates/handoffs',
+    {
+      description: `Canon overlay candidate review packets: ${CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.entries.length} handoffs ready for maintainer approval review`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS, null, 2)
+      }]
+    })
+  );
+
+  for (const packet of CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.entries) {
+    server.resource(
+      `canon-overlays-candidate-review-${packet.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      packet.handoffUri,
+      {
+        description: `Canon overlay candidate review packet: ${packet.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(packet, null, 2)
         }]
       })
     );

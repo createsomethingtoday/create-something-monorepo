@@ -197,6 +197,7 @@ export type CanonOverlayCandidateQueueEntry = {
 	rationale: string;
 	reviewUri: string;
 	candidateUri: string;
+	handoffUri: string;
 };
 
 export type CanonOverlayCandidateQueue = {
@@ -213,6 +214,59 @@ export type CanonOverlayCandidateQueue = {
 	};
 	agentContract: {
 		purpose: 'canon-overlay-candidate-review';
+		primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+		useFor: string[];
+		stopBefore: string[];
+	};
+};
+
+export type CanonOverlayCandidateReviewPacket = {
+	id: string;
+	candidateId: string;
+	title: string;
+	summary: string;
+	overlayId: string;
+	overlayName: string;
+	manifestPath: string;
+	intakeId: string;
+	owner: string;
+	sourcePackage: string;
+	sourcePath?: string;
+	requestedKind: CanonRegistryKind;
+	requestedModalities: CanonRegistryModality[];
+	tags: string[];
+	surfaces: CanonExtensionSurfaceEvidence[];
+	dependencies: string[];
+	requiredEvidence: string[];
+	stopBeforeStable: string[];
+	rationale: string;
+	reviewUri: string;
+	candidateUri: string;
+	handoffUri: string;
+	promotionChecklist: string[];
+	approvalBoundary: string[];
+	agentContract: {
+		purpose: 'canon-overlay-candidate-review-packet';
+		primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+		useFor: string[];
+		stopBefore: string[];
+	};
+};
+
+export type CanonOverlayCandidateReviewPacketCollection = {
+	schemaVersion: 1;
+	id: 'canon-overlay-candidate-review-packets';
+	sourceOfTruth: '@create-something/canon/overlays/intake';
+	description: string;
+	entries: CanonOverlayCandidateReviewPacket[];
+	summary: {
+		total: number;
+		overlays: number;
+		byRequestedKind: Array<{ kind: CanonRegistryKind; count: number }>;
+		byModality: Array<{ modality: CanonRegistryModality; count: number }>;
+	};
+	agentContract: {
+		purpose: 'canon-overlay-candidate-review-packets';
 		primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
 		useFor: string[];
 		stopBefore: string[];
