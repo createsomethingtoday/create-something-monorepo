@@ -135,3 +135,38 @@ export type CanonProjectOverlayReview = {
 	stopConditions: string[];
 	summary: string;
 };
+
+export type CanonOverlayModalityContract = {
+	modality: CanonRegistryModality;
+	useFor: string;
+	overlayOwns: string[];
+	canonOwns: string[];
+};
+
+export type CanonProjectOverlayCatalogEntry = {
+	id: string;
+	name: string;
+	summary: string;
+	docsPath: string;
+	registryItemIds: string[];
+	outputFiles: string[];
+	manifest: CanonProjectOverlayManifest;
+	review: CanonProjectOverlayReview;
+};
+
+export type CanonOverlayCatalog = {
+	schemaVersion: 1;
+	id: 'canon-overlay-catalog';
+	sourceOfTruth: '@create-something/canon/overlays';
+	description: string;
+	requiredArtifacts: CanonProjectOverlayArtifactKind[];
+	overlayRules: string[];
+	modalityContracts: CanonOverlayModalityContract[];
+	templates: CanonProjectOverlayCatalogEntry[];
+	agentContract: {
+		purpose: 'canon-overlay-extension-discovery';
+		primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+		useFor: string[];
+		stopBefore: string[];
+	};
+};

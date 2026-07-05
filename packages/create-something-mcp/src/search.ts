@@ -7,6 +7,7 @@ import type { ContentItem } from './content/types.js';
 import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
+import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -79,6 +80,28 @@ function buildContentIndex(): ContentItem[] {
       ].join('\n'),
       property: 'ltd',
       uri: `canon://registry/${item.id}`
+    });
+  }
+
+  for (const template of CANON_OVERLAY_CATALOG.templates) {
+    items.push({
+      id: `canon-overlay:${template.id}`,
+      type: 'canon-registry',
+      title: template.name,
+      description: template.summary,
+      content: [
+        CANON_OVERLAY_CATALOG.description,
+        template.manifest.targetModalities.join(' '),
+        template.outputFiles.join(' '),
+        template.registryItemIds.join(' '),
+        template.review.status,
+        template.review.summary,
+        CANON_OVERLAY_CATALOG.overlayRules.join('\n'),
+        CANON_OVERLAY_CATALOG.agentContract.useFor.join('\n'),
+        CANON_OVERLAY_CATALOG.agentContract.stopBefore.join('\n')
+      ].join('\n'),
+      property: 'ltd',
+      uri: `canon://overlays/${template.id}`
     });
   }
 

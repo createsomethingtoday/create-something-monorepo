@@ -228,7 +228,7 @@ function assertRootCanon(snapshot: NavSnapshot): void {
   assert.equal(snapshot.path, '/canon');
   assert.equal(
     snapshot.totalLinks,
-    52,
+    53,
     'Canon sidebar should expose every registry-backed doc link.'
   );
   assert.deepEqual(snapshot.groupLabels, ['Primitives', 'Workflow', 'Systems']);
@@ -256,7 +256,7 @@ function assertConversionRoute(snapshot: NavSnapshot): void {
   assert.equal(snapshot.path, '/canon/components/conversion');
   assert.equal(
     snapshot.totalLinks,
-    52,
+    53,
     'Canon sidebar should keep the full registry-backed link set.'
   );
   assert.deepEqual(snapshot.groupLabels, ['Primitives', 'Workflow', 'Systems']);

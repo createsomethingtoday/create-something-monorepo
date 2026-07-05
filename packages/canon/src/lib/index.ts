@@ -6,6 +6,7 @@ export * from './components/index.js';
 
 // Machine-readable Canon registry
 export * from './registry/index.js';
+export * from './overlays/index.js';
 
 // Utils (excluding clipboard which conflicts with diagrams export)
 export {

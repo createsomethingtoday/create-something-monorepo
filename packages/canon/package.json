@@ -231,6 +231,10 @@
 			"types": "./dist/registry/index.d.ts",
 			"default": "./dist/registry/index.js"
 		},
+		"./overlays": {
+			"types": "./dist/overlays/index.d.ts",
+			"default": "./dist/overlays/index.js"
+		},
 		"./overlays/project-template": {
 			"types": "./dist/overlays/project-template/index.d.ts",
 			"default": "./dist/overlays/project-template/index.js"

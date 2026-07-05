@@ -156,6 +156,41 @@ export interface CanonProjectOverlayReview {
   summary: string;
 }
 
+export interface CanonOverlayModalityContract {
+  modality: CanonRegistryModality;
+  useFor: string;
+  overlayOwns: string[];
+  canonOwns: string[];
+}
+
+export interface CanonProjectOverlayCatalogEntry {
+  id: string;
+  name: string;
+  summary: string;
+  docsPath: string;
+  registryItemIds: string[];
+  outputFiles: string[];
+  manifest: CanonProjectOverlayManifest;
+  review: CanonProjectOverlayReview;
+}
+
+export interface CanonOverlayCatalog {
+  schemaVersion: 1;
+  id: 'canon-overlay-catalog';
+  sourceOfTruth: '@create-something/canon/overlays';
+  description: string;
+  requiredArtifacts: CanonProjectOverlayArtifactKind[];
+  overlayRules: string[];
+  modalityContracts: CanonOverlayModalityContract[];
+  templates: CanonProjectOverlayCatalogEntry[];
+  agentContract: {
+    purpose: 'canon-overlay-extension-discovery';
+    primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+    useFor: string[];
+    stopBefore: string[];
+  };
+}
+
 export type CanonPublicExportClassification =
   | 'analytics-surface'
   | 'auth-surface'
