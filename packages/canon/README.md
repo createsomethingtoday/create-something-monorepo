@@ -286,6 +286,22 @@ pnpm --filter @create-something/canon overlay:instantiate -- \
 Remove `--dry-run` to write the files. The command skips existing files unless `--force` is
 provided. The generated `manifest.ts` can be passed to `reviewCanonProjectOverlay(...)`.
 
+### Project Overlay Intake Inventory
+
+When multiple projects or clients have local overlays, run the Canon intake inventory from the
+repo root:
+
+```bash
+pnpm --filter @create-something/canon overlay:inventory -- --root .
+```
+
+The inventory scans `apps/` and `packages/` for `CANON_PROJECT_OVERLAY_MANIFEST` exports, skips
+the Canon template itself, reviews each manifest with `reviewCanonProjectOverlay(...)`, and
+summarizes ready overlays, missing artifacts, project-local intakes, and candidate-promotion
+intakes. MCP mirrors the same snapshot at `canon://overlays/intake` and
+`canon://overlays/intake/list` so agents can inspect multi-project feedback before proposing
+Canon changes.
+
 ## Atlas Graph And Story Primitives
 
 Canon owns the reusable Atlas graph/story contract at

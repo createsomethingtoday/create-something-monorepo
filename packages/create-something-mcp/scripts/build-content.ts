@@ -366,6 +366,30 @@ export const CANON_OVERLAY_CATALOG: CanonOverlayCatalog = ${JSON.stringify(catal
 `;
 }
 
+async function buildCanonOverlayIntakeInventory(): Promise<string> {
+  const intakeModuleUrl = pathToFileURL(
+    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'intake.ts')
+  ).href;
+  const intake = await import(intakeModuleUrl) as {
+    buildCanonOverlayIntakeInventory: (options: { rootDir: string; rootLabel?: string }) => Promise<unknown>;
+  };
+  const inventory = await intake.buildCanonOverlayIntakeInventory({
+    rootDir: ROOT,
+    rootLabel: '<repo-root>'
+  });
+
+  return `/**
+ * Generated Canon overlay intake inventory content — DO NOT EDIT MANUALLY.
+ * Run: npm run build:content
+ * Source: packages/canon/src/lib/overlays/intake.ts
+ */
+
+import type { CanonProjectOverlayInventory } from '../types.js';
+
+export const CANON_OVERLAY_INTAKE_INVENTORY: CanonProjectOverlayInventory = ${JSON.stringify(inventory, null, 2)};
+`;
+}
+
 // ============================================================================
 // Build patterns
 // ============================================================================
@@ -608,6 +632,7 @@ async function main() {
     canonRegistry,
     canonPublicExportClassification,
     canonOverlayCatalog,
+    canonOverlayIntakeInventory,
     patterns,
     graph,
     propertyDocs
@@ -617,6 +642,7 @@ async function main() {
     buildCanonRegistry(),
     buildCanonPublicExportClassification(),
     buildCanonOverlayCatalog(),
+    buildCanonOverlayIntakeInventory(),
     buildPatterns(),
     buildGraph(),
     buildPropertyDocuments(),
@@ -629,6 +655,7 @@ async function main() {
     writeFile(join(OUT_DIR, 'canon-registry.ts'), canonRegistry, 'utf-8'),
     writeFile(join(OUT_DIR, 'canon-public-export-classification.ts'), canonPublicExportClassification, 'utf-8'),
     writeFile(join(OUT_DIR, 'canon-overlay-catalog.ts'), canonOverlayCatalog, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-intake-inventory.ts'), canonOverlayIntakeInventory, 'utf-8'),
     writeFile(join(OUT_DIR, 'patterns.ts'), patterns, 'utf-8'),
     writeFile(join(OUT_DIR, 'graph.ts'), graph, 'utf-8'),
     writeFile(join(OUT_DIR, 'property-docs.ts'), propertyDocs.source, 'utf-8'),
@@ -640,6 +667,7 @@ async function main() {
   const canonRegistryCount = (canonRegistry.match(/"id":/g) || []).length - 1;
   const canonPublicExportClassificationCount = (canonPublicExportClassification.match(/"exportPath":/g) || []).length;
   const canonOverlayTemplateCount = (canonOverlayCatalog.match(/"manifest":/g) || []).length;
+  const canonOverlayIntakeCount = (canonOverlayIntakeInventory.match(/"manifestPath":/g) || []).length;
   const patternCount = (patterns.match(/slug:/g) || []).length;
   const nodeCount = (graph.match(/"id":/g) || []).length;
 
@@ -649,6 +677,7 @@ async function main() {
   console.log(`  Canon registry: ${canonRegistryCount} items`);
   console.log(`  Canon export policy: ${canonPublicExportClassificationCount} rules`);
   console.log(`  Canon overlays: ${canonOverlayTemplateCount} templates`);
+  console.log(`  Canon overlay intake: ${canonOverlayIntakeCount} project manifests`);
   console.log(`  Patterns:       ${patternCount}`);
   console.log(`  Graph:          ${nodeCount} nodes`);
   console.log(`  Property docs:  ${propertyDocs.totalCount}`);
