@@ -5,8 +5,10 @@ import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+	buildCanonOverlayCandidateQueue,
 	buildCanonOverlayIntakeInventory,
 	findCanonProjectOverlayManifestFiles,
+	renderCanonOverlayCandidateQueue,
 	renderCanonOverlayIntakeInventory
 } from './intake.js';
 
@@ -161,6 +163,52 @@ describe('Canon overlay intake inventory', () => {
 				})
 			])
 		);
+	});
+
+	it('builds a Canon candidate queue from ready repeated-surface intakes only', async () => {
+		const root = await createTempRoot();
+		await writeOverlayManifest(
+			root,
+			'packages/client-a/canon-overlay/manifest.ts',
+			readyManifest('overlay.client-a', 'Client A Overlay', '@create-something/client-a')
+		);
+		await writeOverlayArtifactSet(root, 'packages/client-a/canon-overlay');
+		await writeOverlayManifest(
+			root,
+			'packages/client-b/canon-overlay/manifest.ts',
+			needsArtifactsManifest('overlay.client-b', 'Client B Overlay', '@create-something/client-b')
+		);
+
+		const inventory = await buildCanonOverlayIntakeInventory({ rootDir: root });
+		const queue = buildCanonOverlayCandidateQueue(inventory);
+
+		expect(queue.id).toBe('canon-overlay-candidate-queue');
+		expect(queue.summary).toMatchObject({
+			total: 1,
+			overlays: 1,
+			byRequestedKind: [{ kind: 'template', count: 1 }]
+		});
+		expect(queue.summary.byModality).toEqual([
+			{ modality: 'chat', count: 1 },
+			{ modality: 'web', count: 1 }
+		]);
+		expect(queue.entries[0]).toMatchObject({
+			overlayId: 'overlay.client-a',
+			intakeId: 'overlay.client-a.surface-brief',
+			title: 'Client A Overlay surface brief',
+			requestedKind: 'template',
+			reviewUri: 'canon://overlays/intake/overlay.client-a',
+			candidateUri: 'canon://overlays/candidates/overlay.client-a.surface-brief',
+			dependencies: ['template.canon-extension-intake']
+		});
+		expect(queue.entries[0]?.requiredEvidence.join(' ')).toContain('At least two surface proofs');
+		expect(queue.entries[0]?.stopBeforeStable.join(' ')).toContain('Do not mark stable');
+		expect(queue.agentContract.stopBefore.join(' ')).toContain('automatically promoting');
+
+		const rendered = renderCanonOverlayCandidateQueue(queue);
+		expect(rendered).toContain('Canon Overlay Candidate Queue');
+		expect(rendered).toContain('Client A Overlay surface brief');
+		expect(rendered).toContain('canon://overlays/intake/overlay.client-a');
 	});
 });
 

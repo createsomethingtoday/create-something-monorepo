@@ -196,6 +196,49 @@ export interface CanonProjectOverlayInventory {
   };
 }
 
+export interface CanonOverlayCandidateQueueEntry {
+  id: string;
+  overlayId: string;
+  overlayName: string;
+  manifestPath: string;
+  intakeId: string;
+  title: string;
+  summary: string;
+  owner: string;
+  sourcePackage: string;
+  sourcePath?: string;
+  requestedKind: CanonRegistryKind;
+  requestedModalities: CanonRegistryModality[];
+  tags: string[];
+  surfaces: CanonExtensionSurfaceEvidence[];
+  dependencies: string[];
+  requiredEvidence: string[];
+  stopBeforeStable: string[];
+  rationale: string;
+  reviewUri: string;
+  candidateUri: string;
+}
+
+export interface CanonOverlayCandidateQueue {
+  schemaVersion: 1;
+  id: 'canon-overlay-candidate-queue';
+  sourceOfTruth: '@create-something/canon/overlays/intake';
+  description: string;
+  entries: CanonOverlayCandidateQueueEntry[];
+  summary: {
+    total: number;
+    overlays: number;
+    byRequestedKind: Array<{ kind: CanonRegistryKind; count: number }>;
+    byModality: Array<{ modality: CanonRegistryModality; count: number }>;
+  };
+  agentContract: {
+    purpose: 'canon-overlay-candidate-review';
+    primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+    useFor: string[];
+    stopBefore: string[];
+  };
+}
+
 export interface CanonOverlayModalityContract {
   modality: CanonRegistryModality;
   useFor: string;

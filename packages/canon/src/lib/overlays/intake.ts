@@ -4,11 +4,14 @@ import { pathToFileURL } from 'node:url';
 
 import { CANON_REGISTRY_MANIFEST, reviewCanonProjectOverlay } from '../registry/index.js';
 import type {
+	CanonOverlayCandidateQueue,
+	CanonOverlayCandidateQueueEntry,
 	CanonProjectOverlayIntegrityIssue,
 	CanonProjectOverlayInventory,
 	CanonProjectOverlayInventoryEntry,
 	CanonProjectOverlayManifest,
 	CanonProjectOverlayReview,
+	CanonRegistryKind,
 	CanonRegistryModality
 } from '../registry/schema.js';
 
@@ -202,6 +205,100 @@ export function renderCanonOverlayIntakeInventory(
 	return lines.join('\n');
 }
 
+export function buildCanonOverlayCandidateQueue(
+	inventory: CanonProjectOverlayInventory
+): CanonOverlayCandidateQueue {
+	const entries: CanonOverlayCandidateQueueEntry[] = inventory.entries.flatMap((entry) => {
+		if (entry.review.status !== 'ready') return [];
+
+		return entry.review.extensionDecisions
+			.filter(({ decision }) => decision.stage === 'candidate')
+			.map(({ packet, decision }) => ({
+				id: `${entry.manifest.id}:${packet.id}`,
+				overlayId: entry.manifest.id,
+				overlayName: entry.manifest.name,
+				manifestPath: entry.manifestPath,
+				intakeId: packet.id,
+				title: packet.title,
+				summary: packet.summary,
+				owner: packet.owner,
+				sourcePackage: packet.sourcePackage,
+				sourcePath: packet.sourcePath,
+				requestedKind: packet.requestedKind,
+				requestedModalities: packet.requestedModalities,
+				tags: packet.tags,
+				surfaces: packet.surfaces,
+				dependencies: packet.dependencies ?? [],
+				requiredEvidence: decision.requiredEvidence,
+				stopBeforeStable: decision.stopBeforeStable,
+				rationale: decision.rationale,
+				reviewUri: `canon://overlays/intake/${entry.manifest.id}`,
+				candidateUri: `canon://overlays/candidates/${packet.id}`
+			}));
+	});
+
+	return {
+		schemaVersion: 1,
+		id: 'canon-overlay-candidate-queue',
+		sourceOfTruth: '@create-something/canon/overlays/intake',
+		description:
+			'Read-only queue of Canon overlay extension intakes that have repeated-surface evidence and are ready for Canon candidate review.',
+		entries,
+		summary: {
+			total: entries.length,
+			overlays: new Set(entries.map((entry) => entry.overlayId)).size,
+			byRequestedKind: countByRequestedKind(entries),
+			byModality: countByModality(entries)
+		},
+		agentContract: {
+			purpose: 'canon-overlay-candidate-review',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'reviewing repeated-surface overlay evidence before Canon promotion work',
+				'prioritizing candidate templates, components, adapters, tokens, or policies by modality and source package',
+				'connecting candidate review back to the owning project overlay manifest and intake review',
+				'keeping Canon stable promotion gated on export path, docs, tests, and compatibility evidence'
+			],
+			stopBefore: [
+				'automatically creating Linear issues from candidate queue entries',
+				'automatically promoting any candidate queue entry into Canon stable',
+				'editing project overlay manifests from the candidate queue',
+				'treating queued candidates as approved production changes'
+			]
+		}
+	};
+}
+
+export function renderCanonOverlayCandidateQueue(queue: CanonOverlayCandidateQueue): string {
+	const lines = [
+		'# Canon Overlay Candidate Queue',
+		'',
+		`Total candidates: ${queue.summary.total}`,
+		`Source overlays: ${queue.summary.overlays}`
+	];
+
+	if (queue.entries.length === 0) {
+		lines.push('', 'No overlay candidates are ready for Canon review.');
+		return lines.join('\n');
+	}
+
+	for (const entry of queue.entries) {
+		lines.push(
+			'',
+			`## ${entry.title}`,
+			`- Candidate: ${entry.intakeId}`,
+			`- Overlay: ${entry.overlayName} (${entry.overlayId})`,
+			`- Requested kind: ${entry.requestedKind}`,
+			`- Modalities: ${entry.requestedModalities.join(', ')}`,
+			`- Source package: ${entry.sourcePackage}`,
+			`- Review: ${entry.reviewUri}`,
+			`- Summary: ${entry.summary}`
+		);
+	}
+
+	return lines.join('\n');
+}
+
 function summarizeOverlayInventory(entries: CanonProjectOverlayInventoryEntry[]) {
 	return {
 		total: entries.length,
@@ -232,6 +329,28 @@ function countDecisions(
 				.length,
 		0
 	);
+}
+
+function countByRequestedKind(entries: CanonOverlayCandidateQueueEntry[]) {
+	const counts = new Map<CanonRegistryKind, number>();
+	for (const entry of entries) {
+		counts.set(entry.requestedKind, (counts.get(entry.requestedKind) ?? 0) + 1);
+	}
+	return [...counts.entries()]
+		.map(([kind, count]) => ({ kind, count }))
+		.sort((a, b) => b.count - a.count || a.kind.localeCompare(b.kind));
+}
+
+function countByModality(entries: CanonOverlayCandidateQueueEntry[]) {
+	const counts = new Map<CanonRegistryModality, number>();
+	for (const entry of entries) {
+		for (const modality of entry.requestedModalities) {
+			counts.set(modality, (counts.get(modality) ?? 0) + 1);
+		}
+	}
+	return [...counts.entries()]
+		.map(([modality, count]) => ({ modality, count }))
+		.sort((a, b) => b.count - a.count || a.modality.localeCompare(b.modality));
 }
 
 async function inspectCanonProjectOverlayIntegrity({

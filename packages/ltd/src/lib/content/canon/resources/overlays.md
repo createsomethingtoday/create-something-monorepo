@@ -75,6 +75,18 @@ Agents can read the same inventory through `canon://overlays/intake` and the com
 
 Readiness now means more than a complete manifest shape. A project overlay is ready only when its required artifact set exists on disk, its evidence paths still resolve in the owning package or app, and every declared Canon dependency matches a registry item.
 
+## Candidate Queue
+
+Ready overlays can produce candidate intakes when they have repeated-surface evidence. Canon exposes those candidates as a read-only queue:
+
+- Full queue: `canon://overlays/candidates`
+- Compact list: `canon://overlays/candidates/list`
+- Candidate detail: `canon://overlays/candidates/<intake-id>`
+
+The queue is not an approval engine. It gathers overlay id, intake id, requested kind, modalities, source paths, surfaces, dependencies, required evidence, and stop-before-stable notes so Canon maintainers can decide whether to open a promotion slice.
+
+Do not treat a queued candidate as stable. Stable promotion still requires Canon-owned export paths, docs, tests, compatibility notes, and registry routing.
+
 ## Related
 
 - [Registry](/canon/resources/registry)
