@@ -14,6 +14,7 @@ import {
 	CANON_REGISTRY_MANIFEST,
 	getCanonRegistryItem,
 	getCanonPublicExportClassification,
+	getCanonPublicExportPathClassification,
 	listCanonRegistryModalities,
 	reviewCanonProjectOverlay,
 	routeCanonExtensionIntake,
@@ -186,6 +187,23 @@ describe('Canon registry manifest', () => {
 				exportKey as string
 			);
 		}
+	});
+
+	it('keeps every public package export path classified by Canon policy', () => {
+		const packageExportPaths = Object.keys(canonPackageJson.exports);
+		const pathPolicyKeys = CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.filter(
+			(rule) => !rule.exportName
+		).map((rule) => rule.exportPath);
+		const duplicatePathPolicies = pathPolicyKeys.filter(
+			(exportPath, index) => pathPolicyKeys.indexOf(exportPath) !== index
+		);
+		const missingPathPolicies = packageExportPaths.filter(
+			(exportPath) => !getCanonPublicExportPathClassification(exportPath)
+		);
+
+		expect(packageExportPaths.length).toBeGreaterThan(0);
+		expect(duplicatePathPolicies).toEqual([]);
+		expect(missingPathPolicies).toEqual([]);
 	});
 
 	it('keeps item modalities inside the required modality set', () => {
@@ -1389,7 +1407,7 @@ describe('Canon registry manifest', () => {
 
 	it('keeps public export classification rules non-stale and reviewable', () => {
 		const publicExports = publicSvelteComponentExports();
-		const publicExportPaths = new Set(publicExports.map(({ exportPath }) => exportPath));
+		const packageExportPaths = new Set(Object.keys(canonPackageJson.exports));
 		const publicExportKeys = new Set(
 			publicExports.map(({ exportPath, exportName }) => `${exportPath}:${exportName}`)
 		);
@@ -1409,7 +1427,7 @@ describe('Canon registry manifest', () => {
 					true
 				);
 			} else {
-				expect(publicExportPaths.has(rule.exportPath), rule.exportPath).toBe(true);
+				expect(packageExportPaths.has(rule.exportPath), rule.exportPath).toBe(true);
 			}
 		}
 	});

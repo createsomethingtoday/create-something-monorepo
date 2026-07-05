@@ -176,6 +176,306 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Authoring modal surface; not a foundation primitive until editor patterns are formalized."
   },
   {
+    "exportPath": ".",
+    "classification": "supporting-api",
+    "registryPolicy": "candidate-review",
+    "rationale": "Root package barrel is a mixed convenience API; individual component exports still need symbol-level policy or registry coverage."
+  },
+  {
+    "exportPath": "./styles/tokens.css",
+    "classification": "token-artifact",
+    "registryPolicy": "registry-covered",
+    "rationale": "Canonical CSS token source is covered by token.canon-core."
+  },
+  {
+    "exportPath": "./styles/canon.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Full stylesheet bundle is a consumption artifact, not a separate registry primitive."
+  },
+  {
+    "exportPath": "./styles/components.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Component stylesheet bundle is governed by component sources and tokens."
+  },
+  {
+    "exportPath": "./styles/editorial.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Editorial stylesheet bundle supports content rendering without becoming a UI primitive."
+  },
+  {
+    "exportPath": "./styles/animations.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Animation CSS is a support artifact governed by motion contracts."
+  },
+  {
+    "exportPath": "./styles/performance.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Performance stylesheet bundle supports product surfaces without separate registry discovery."
+  },
+  {
+    "exportPath": "./styles/glass.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Glass stylesheet bundle is an expressive support artifact, not an agent-default primitive."
+  },
+  {
+    "exportPath": "./styles/prose.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Prose stylesheet bundle supports document rendering and is governed by content contracts."
+  },
+  {
+    "exportPath": "./styles/spacing.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Spacing stylesheet bundle is a token-derived support artifact."
+  },
+  {
+    "exportPath": "./styles/buttons.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Button stylesheet bundle is governed by the Button component and token contracts."
+  },
+  {
+    "exportPath": "./styles/cards.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Card stylesheet bundle is governed by the Card component and token contracts."
+  },
+  {
+    "exportPath": "./styles/grid-patterns.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Grid pattern stylesheet bundle supports layout primitives without separate registry entry."
+  },
+  {
+    "exportPath": "./styles/typography.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Typography stylesheet bundle is governed by token and heading contracts."
+  },
+  {
+    "exportPath": "./styles/interactions.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Interaction stylesheet bundle supports component behavior without separate registry discovery."
+  },
+  {
+    "exportPath": "./styles/vertical-base.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Vertical base stylesheet bundle is a support artifact for property surfaces."
+  },
+  {
+    "exportPath": "./styles/tokens.scss",
+    "classification": "token-artifact",
+    "registryPolicy": "registry-covered",
+    "rationale": "SCSS token export is an alternate consumer format for token.canon-core."
+  },
+  {
+    "exportPath": "./styles/tokens.dtcg.json",
+    "classification": "token-artifact",
+    "registryPolicy": "registry-covered",
+    "rationale": "DTCG token export is an alternate machine-readable format for token.canon-core."
+  },
+  {
+    "exportPath": "./styles/tokens.figma.json",
+    "classification": "token-artifact",
+    "registryPolicy": "registry-covered",
+    "rationale": "Figma token export is an alternate design-tool format for token.canon-core."
+  },
+  {
+    "exportPath": "./styles/canon.json",
+    "classification": "token-artifact",
+    "registryPolicy": "registry-covered",
+    "rationale": "Canon JSON export is a machine-readable token artifact governed by token.canon-core."
+  },
+  {
+    "exportPath": "./components",
+    "classification": "stable-foundation-candidate",
+    "registryPolicy": "candidate-review",
+    "rationale": "Root components barrel mixes stable primitives and review candidates; individual symbols keep explicit policy."
+  },
+  {
+    "exportPath": "./components/form",
+    "classification": "stable-foundation-candidate",
+    "registryPolicy": "registry-covered",
+    "rationale": "Form barrel exposes stable foundation controls already covered by registry item tests."
+  },
+  {
+    "exportPath": "./components/navigation",
+    "classification": "stable-foundation-candidate",
+    "registryPolicy": "registry-covered",
+    "rationale": "Navigation barrel exposes stable foundation controls already covered by registry item tests."
+  },
+  {
+    "exportPath": "./components/feedback",
+    "classification": "stable-foundation-candidate",
+    "registryPolicy": "registry-covered",
+    "rationale": "Feedback barrel exposes stable foundation controls already covered by registry item tests."
+  },
+  {
+    "exportPath": "./experiments",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Experiment root barrel is a staging area and should not become stable registry surface."
+  },
+  {
+    "exportPath": "./experiments/living-arena",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Living arena experiment stays outside the stable registry."
+  },
+  {
+    "exportPath": "./experiments/living-arena-gpu",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "GPU living arena experiment stays outside the stable registry."
+  },
+  {
+    "exportPath": "./utils",
+    "classification": "supporting-api",
+    "registryPolicy": "classified-out",
+    "rationale": "Utility functions support Canon consumers but are not registry UI primitives."
+  },
+  {
+    "exportPath": "./types",
+    "classification": "supporting-api",
+    "registryPolicy": "classified-out",
+    "rationale": "Shared types support Canon consumers without becoming discoverable UI artifacts."
+  },
+  {
+    "exportPath": "./tokens",
+    "classification": "token-artifact",
+    "registryPolicy": "registry-covered",
+    "rationale": "Typed token API is governed by token.canon-core."
+  },
+  {
+    "exportPath": "./tokens/*",
+    "classification": "token-artifact",
+    "registryPolicy": "registry-covered",
+    "rationale": "Wildcard token module exports are governed by token.canon-core."
+  },
+  {
+    "exportPath": "./actions",
+    "classification": "supporting-api",
+    "registryPolicy": "classified-out",
+    "rationale": "Svelte actions support interaction behavior but are not standalone registry primitives."
+  },
+  {
+    "exportPath": "./transitions",
+    "classification": "supporting-api",
+    "registryPolicy": "classified-out",
+    "rationale": "Transition helpers support motion contracts without becoming agent-default primitives."
+  },
+  {
+    "exportPath": "./analytics",
+    "classification": "analytics-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Analytics helpers are instrumentation surfaces, not UI registry artifacts."
+  },
+  {
+    "exportPath": "./api",
+    "classification": "supporting-api",
+    "registryPolicy": "classified-out",
+    "rationale": "API helpers support applications and should be governed outside UI registry discovery."
+  },
+  {
+    "exportPath": "./auth",
+    "classification": "auth-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Auth API surface is security-sensitive platform code, not a UI registry primitive."
+  },
+  {
+    "exportPath": "./auth/server",
+    "classification": "auth-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Server auth surface is security-sensitive platform code, not a UI registry primitive."
+  },
+  {
+    "exportPath": "./gdpr",
+    "classification": "platform-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "GDPR helpers are legal/platform support, governed by policy rather than UI registry."
+  },
+  {
+    "exportPath": "./newsletter",
+    "classification": "platform-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Newsletter helpers are product integration support, not foundation UI primitives."
+  },
+  {
+    "exportPath": "./platform",
+    "classification": "platform-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Platform helpers support property routing and integration without registry promotion."
+  },
+  {
+    "exportPath": "./brand",
+    "classification": "brand-surface",
+    "registryPolicy": "candidate-review",
+    "rationale": "Brand support exports need brand-contract review before any stable registry promotion."
+  },
+  {
+    "exportPath": "./brand/icons.css",
+    "classification": "brand-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Brand icon CSS is an asset stylesheet governed by brand contracts, not UI discovery."
+  },
+  {
+    "exportPath": "./atlas/headless",
+    "classification": "headless-contract",
+    "registryPolicy": "registry-covered",
+    "rationale": "Headless Atlas graph artifact is covered by adapter.atlas-graph-artifact."
+  },
+  {
+    "exportPath": "./atlas/handoff",
+    "classification": "headless-contract",
+    "registryPolicy": "registry-covered",
+    "rationale": "Atlas handoff API is covered by template.atlas-development-handoff."
+  },
+  {
+    "exportPath": "./governance",
+    "classification": "governance-contract",
+    "registryPolicy": "registry-covered",
+    "rationale": "Governance product loop is covered by policy.signal-decision-proof."
+  },
+  {
+    "exportPath": "./governance/products",
+    "classification": "governance-contract",
+    "registryPolicy": "registry-covered",
+    "rationale": "Governance products export is covered by policy.signal-decision-proof."
+  },
+  {
+    "exportPath": "./registry",
+    "classification": "registry-artifact",
+    "registryPolicy": "registry-covered",
+    "rationale": "Registry API is the Canon source of truth for discoverable artifacts and lifecycle rules."
+  },
+  {
+    "exportPath": "./overlays/project-template",
+    "classification": "registry-artifact",
+    "registryPolicy": "registry-covered",
+    "rationale": "Project overlay template pack is covered by template.canon-project-overlay-template-pack."
+  },
+  {
+    "exportPath": "./ascii",
+    "classification": "brand-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "ASCII identity helpers are brand expression support, not stable UI primitives."
+  },
+  {
+    "exportPath": "./validation",
+    "classification": "supporting-api",
+    "registryPolicy": "classified-out",
+    "rationale": "Validation helpers support product code without becoming registry UI artifacts."
+  },
+  {
     "exportPath": "./components/docs",
     "classification": "docs-only",
     "registryPolicy": "classified-out",

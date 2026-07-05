@@ -166,8 +166,14 @@ export type CanonPublicExportClassification =
   | 'docs-only'
   | 'domain-specific'
   | 'experiment'
+  | 'governance-contract'
+  | 'headless-contract'
   | 'platform-surface'
-  | 'stable-foundation-candidate';
+  | 'registry-artifact'
+  | 'stable-foundation-candidate'
+  | 'style-artifact'
+  | 'supporting-api'
+  | 'token-artifact';
 
 export type CanonPublicExportRegistryPolicy =
   | 'candidate-review'

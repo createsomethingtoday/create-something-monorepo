@@ -16,7 +16,8 @@ import type {
 export { CANON_REGISTRY_MANIFEST };
 export {
 	CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES,
-	getCanonPublicExportClassification
+	getCanonPublicExportClassification,
+	getCanonPublicExportPathClassification
 } from './public-export-classification.js';
 export type {
 	CanonExtensionIntakePacket,
