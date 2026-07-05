@@ -11,6 +11,12 @@ import {
   renderCanonOverlayInstantiatePreview
 } from './canon-overlay-preview.js';
 import {
+  getCanonOverlayTemplateFile,
+  listCanonOverlayTemplateFilePaths,
+  renderCanonOverlayTemplateFile,
+  renderCanonOverlayTemplateFilePack
+} from './canon-overlay-template-file-pack.js';
+import {
   getCanonOverlayCandidateReviewPacket,
   listCanonOverlayCandidateReviewPacketIds,
   renderCanonOverlayCandidateReviewHandoff
@@ -912,6 +918,51 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonRegistryItem(item),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_overlay_template_file_get',
+    'Get the rendered read-only Canon project overlay template file pack, or one file by relativePath. Use this before local instantiation to review Canon-owned theme, token, template, copy, surface-policy, registry, and manifest starter files; it does not write files or mutate overlays.',
+    {
+      relativePath: z.string().optional()
+        .describe('Optional template file path such as surface-policy.md or templates/surface-brief.md. Omit to render the full file pack.')
+    },
+    async ({ relativePath }) => {
+      if (relativePath) {
+        const file = getCanonOverlayTemplateFile(relativePath);
+
+        if (!file) {
+          return {
+            content: [{
+              type: 'text' as const,
+              text: [
+                `Canon overlay template file not found: ${relativePath}`,
+                '',
+                `Available file paths: ${listCanonOverlayTemplateFilePaths().join(', ')}`
+              ].join('\n'),
+              ...USER_VISIBLE,
+            }],
+            isError: true,
+          };
+        }
+
+        return {
+          content: [{
+            type: 'text' as const,
+            text: renderCanonOverlayTemplateFile(file),
+            ...USER_VISIBLE,
+          }]
+        };
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonOverlayTemplateFilePack(),
           ...USER_VISIBLE,
         }]
       };
