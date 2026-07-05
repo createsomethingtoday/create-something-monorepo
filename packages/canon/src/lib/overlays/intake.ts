@@ -17,6 +17,7 @@ import type {
 	CanonOverlayCandidatePromotionApprovalRecordCollection,
 	CanonOverlayCandidatePromotionApprovalState,
 	CanonOverlayCandidatePromotionApprovalTarget,
+	CanonOverlayCandidatePromotionApprovalTargetTemplate,
 	CanonOverlayCandidatePromotionApprovalValidationIssue,
 	CanonOverlayCandidatePromotionApprovalValidationReport,
 	CanonOverlayCandidatePromotionApprovalValidationStatus,
@@ -814,6 +815,100 @@ export function findCanonOverlayCandidatePromotionApprovalRecord(
 	);
 }
 
+export function buildCanonOverlayCandidatePromotionApprovalTargetTemplate(
+	record: CanonOverlayCandidatePromotionApprovalRecord
+): CanonOverlayCandidatePromotionApprovalTargetTemplate {
+	return {
+		id: `canon-overlay-candidate-promotion-approval-target-template:${record.intakeId}`,
+		approvalRecordId: record.id,
+		readinessReportId: record.readinessReportId,
+		planId: record.planId,
+		candidateId: record.candidateId,
+		intakeId: record.intakeId,
+		title: `${record.title.replace(/ approval record$/, '')} approval target template`,
+		targetTemplateUri: `${record.approvalUri}/target-template`,
+		approvalUri: record.approvalUri,
+		validationUri: `${record.approvalUri}/validation`,
+		target: createEmptyApprovalTarget(),
+		fields: record.requiredFields.map((field) => ({
+			...field,
+			value: null
+		})),
+		allowedValues: {
+			registryActions: ['reuse-existing', 'update-existing', 'create-new'],
+			maturityTargets: ['experimental', 'candidate', 'stable']
+		},
+		targetHints: record.targetHints,
+		instructions: [
+			'Fill the target object only after a maintainer selects approval owner, evidence, registry action, registry item, export path, docs path, maturity target, and implementation owner.',
+			'Use target hints as review context, not automatic choices.',
+			'Validate the filled target with the approval validation tool before opening implementation work.'
+		],
+		approvalBoundary: [
+			'This target template is read-only and does not approve implementation.',
+			'The template does not fill fields, create Linear issues, mutate Canon, mutate project overlays, or mark candidates stable.',
+			'Only a maintainer-filled target that passes validation can support opening a bounded implementation slice.'
+		],
+		agentContract: {
+			purpose: 'canon-overlay-candidate-promotion-approval-target-template',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'giving maintainers a compact JSON payload to fill from an approval record',
+				'preserving target hints and allowed values next to the fillable target',
+				'handing a filled target into approval validation before implementation starts'
+			],
+			stopBefore: [
+				'automatically filling target fields',
+				'automatically treating target hints as selected targets',
+				'automatically creating Linear work',
+				'automatically editing Canon source, registry, exports, docs, or project overlays'
+			]
+		}
+	};
+}
+
+export function renderCanonOverlayCandidatePromotionApprovalTargetTemplate(
+	template: CanonOverlayCandidatePromotionApprovalTargetTemplate
+): string {
+	const lines = [
+		`# ${template.title}`,
+		'',
+		`Approval target template: ${template.targetTemplateUri}`,
+		`Approval record: ${template.approvalUri}`,
+		`Validation report: ${template.validationUri}`,
+		'',
+		'## Instructions',
+		...template.instructions.map((item) => `- ${item}`),
+		'',
+		'## Target JSON',
+		'```json',
+		JSON.stringify({ target: template.target }, null, 2),
+		'```',
+		'',
+		'## Required Fields',
+		...template.fields.flatMap((field) => [
+			`### ${field.label}`,
+			`- Required: ${field.required ? 'yes' : 'no'}`,
+			`- Current value: ${field.value ?? 'UNSET'}`,
+			`- Instructions: ${field.instructions}`,
+			...(field.hints.length ? field.hints.map((hint) => `- Hint: ${hint}`) : ['- Hint: none']),
+			''
+		]),
+		'## Allowed Values',
+		`- Registry actions: ${template.allowedValues.registryActions.join(', ')}`,
+		`- Maturity targets: ${template.allowedValues.maturityTargets.join(', ')}`,
+		'',
+		'## Approval Boundary',
+		...template.approvalBoundary.map((item) => `- ${item}`),
+		'',
+		'## Agent Contract',
+		...template.agentContract.useFor.map((item) => `- Use for: ${item}`),
+		...template.agentContract.stopBefore.map((item) => `- Stop before: ${item}`)
+	];
+
+	return lines.join('\n');
+}
+
 export function validateCanonOverlayCandidatePromotionApprovalRecord(
 	record: CanonOverlayCandidatePromotionApprovalRecord
 ): CanonOverlayCandidatePromotionApprovalValidationReport {
@@ -1349,18 +1444,7 @@ function createCandidatePromotionReadinessReport(
 function createCandidatePromotionApprovalRecord(
 	report: CanonOverlayCandidatePromotionReadinessReport
 ): CanonOverlayCandidatePromotionApprovalRecord {
-	const target: CanonOverlayCandidatePromotionApprovalTarget = {
-		approvalOwner: null,
-		approvalEvidence: null,
-		approvedAt: null,
-		registryAction: null,
-		registryItemId: null,
-		exportPath: null,
-		exportName: null,
-		docsPath: null,
-		maturityTarget: null,
-		implementationOwner: null
-	};
+	const target = createEmptyApprovalTarget();
 	const docsPaths = uniqueStrings(
 		report.relatedRegistryItems
 			.map((item) => item.docsPath)
@@ -1424,6 +1508,21 @@ function createCandidatePromotionApprovalRecord(
 				'treating an unfilled approval record as approval or stable promotion'
 			]
 		}
+	};
+}
+
+function createEmptyApprovalTarget(): CanonOverlayCandidatePromotionApprovalTarget {
+	return {
+		approvalOwner: null,
+		approvalEvidence: null,
+		approvedAt: null,
+		registryAction: null,
+		registryItemId: null,
+		exportPath: null,
+		exportName: null,
+		docsPath: null,
+		maturityTarget: null,
+		implementationOwner: null
 	};
 }
 

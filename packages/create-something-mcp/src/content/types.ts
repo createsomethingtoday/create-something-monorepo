@@ -496,6 +496,34 @@ export interface CanonOverlayCandidatePromotionApprovalRecord {
   };
 }
 
+export interface CanonOverlayCandidatePromotionApprovalTargetTemplate {
+  id: string;
+  approvalRecordId: string;
+  readinessReportId: string;
+  planId: string;
+  candidateId: string;
+  intakeId: string;
+  title: string;
+  targetTemplateUri: string;
+  approvalUri: string;
+  validationUri: string;
+  target: CanonOverlayCandidatePromotionApprovalTarget;
+  fields: CanonOverlayCandidatePromotionApprovalField[];
+  allowedValues: {
+    registryActions: CanonOverlayCandidatePromotionRegistryAction[];
+    maturityTargets: CanonRegistryMaturity[];
+  };
+  targetHints: CanonOverlayCandidatePromotionApprovalRecord['targetHints'];
+  instructions: string[];
+  approvalBoundary: string[];
+  agentContract: {
+    purpose: 'canon-overlay-candidate-promotion-approval-target-template';
+    primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+    useFor: string[];
+    stopBefore: string[];
+  };
+}
+
 export type CanonOverlayCandidatePromotionApprovalValidationStatus =
   | 'missing-required-fields'
   | 'invalid-targets'
