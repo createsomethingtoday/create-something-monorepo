@@ -177,6 +177,7 @@ function scoreCanonPublicExportClassificationRule(
     rule.exportName ?? '',
     rule.classification,
     rule.registryPolicy,
+    ...(rule.registryItemIds ?? []),
     rule.rationale
   ].map((value) => value.toLowerCase());
 
@@ -254,6 +255,11 @@ function renderCanonPublicExportClassificationRule(
   ];
 
   if (rule.exportName) lines.push(`- Export name: \`${rule.exportName}\``);
+  if (rule.registryItemIds?.length) {
+    lines.push(
+      `- Registry items: ${rule.registryItemIds.map((id) => `\`${id}\``).join(', ')}`
+    );
+  }
 
   lines.push('', rule.rationale);
 

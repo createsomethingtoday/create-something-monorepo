@@ -1411,6 +1411,7 @@ describe('Canon registry manifest', () => {
 		const publicExportKeys = new Set(
 			publicExports.map(({ exportPath, exportName }) => `${exportPath}:${exportName}`)
 		);
+		const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
 		const exactRuleKeys = CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.filter(
 			(rule) => rule.exportName
 		).map((rule) => `${rule.exportPath}:${rule.exportName}`);
@@ -1428,6 +1429,22 @@ describe('Canon registry manifest', () => {
 				);
 			} else {
 				expect(packageExportPaths.has(rule.exportPath), rule.exportPath).toBe(true);
+			}
+
+			if (rule.registryPolicy === 'registry-covered') {
+				expect(
+					rule.registryItemIds?.length,
+					`${rule.exportPath}:${rule.exportName ?? '*'}`
+				).toBeGreaterThan(0);
+				for (const registryItemId of rule.registryItemIds ?? []) {
+					expect(registryIds.has(registryItemId), `${rule.exportPath}:${registryItemId}`).toBe(
+						true
+					);
+				}
+			} else {
+				expect(rule.registryItemIds ?? [], `${rule.exportPath}:${rule.exportName ?? '*'}`).toEqual(
+					[]
+				);
 			}
 		}
 	});
