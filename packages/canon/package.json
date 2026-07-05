@@ -251,6 +251,10 @@
 			"types": "./dist/lint-contract/index.d.ts",
 			"default": "./dist/lint-contract/index.js"
 		},
+		"./modality-readiness": {
+			"types": "./dist/modality-readiness/index.d.ts",
+			"default": "./dist/modality-readiness/index.js"
+		},
 		"./overlays": {
 			"types": "./dist/overlays/index.d.ts",
 			"default": "./dist/overlays/index.js"
