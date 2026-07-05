@@ -1,6 +1,7 @@
 import { colors } from '../tokens/colors.js';
 import { radius } from '../tokens/radius.js';
 import { shadows } from '../tokens/shadows.js';
+import { typography } from '../tokens/typography.js';
 
 export type CanonLintCategory = 'color' | 'radius' | 'shadow' | 'typography' | 'spacing';
 
@@ -101,7 +102,7 @@ export const CANON_TAILWIND_DESIGN_MAPPINGS: CanonLintMapping[] = [
     tailwind: /^text-white\/46$/,
     canon: 'var(--color-fg-muted)',
     category: 'color',
-    description: 'rgba(255, 255, 255, 0.46) - WCAG AA compliant'
+    description: `${colors.foreground.muted} - WCAG AA compliant`
   },
   {
     tailwind: /^text-white\/20$/,
@@ -170,43 +171,43 @@ export const CANON_TAILWIND_DESIGN_MAPPINGS: CanonLintMapping[] = [
     tailwind: 'text-xs',
     canon: 'var(--text-caption)',
     category: 'typography',
-    description: '0.833rem'
+    description: typography.scale.caption
   },
   {
     tailwind: 'text-sm',
     canon: 'var(--text-body-sm)',
     category: 'typography',
-    description: '0.913rem'
+    description: typography.scale['body-sm']
   },
   {
     tailwind: 'text-base',
     canon: 'var(--text-body)',
     category: 'typography',
-    description: '1rem'
+    description: typography.scale.body
   },
   {
     tailwind: 'text-lg',
     canon: 'var(--text-body-lg)',
     category: 'typography',
-    description: '1.095rem'
+    description: typography.scale['body-lg']
   },
   {
     tailwind: 'text-xl',
     canon: 'var(--text-h3)',
     category: 'typography',
-    description: 'clamp(1.02rem, 1vw + 0.5rem, 1.2rem)'
+    description: typography.scale.h3
   },
   {
     tailwind: 'text-2xl',
     canon: 'var(--text-h2)',
     category: 'typography',
-    description: 'clamp(1.2rem, 2vw + 0.5rem, 1.618rem)'
+    description: typography.scale.h2
   },
   {
     tailwind: 'text-3xl',
     canon: 'var(--text-h1)',
     category: 'typography',
-    description: 'clamp(1.618rem, 3vw + 1rem, 2.618rem)'
+    description: typography.scale.h1
   },
   { tailwind: /^text-\d+xl$/, canon: 'var(--text-*)', category: 'typography' },
 
