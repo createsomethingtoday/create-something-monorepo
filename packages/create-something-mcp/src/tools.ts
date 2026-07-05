@@ -10,6 +10,11 @@ import {
   createCanonOverlayInstantiatePreview,
   renderCanonOverlayInstantiatePreview
 } from './canon-overlay-preview.js';
+import {
+  getCanonOverlayCandidateReviewPacket,
+  listCanonOverlayCandidateReviewPacketIds,
+  renderCanonOverlayCandidateReviewHandoff
+} from './canon-overlay-candidate-handoff.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import {
   CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
@@ -1029,6 +1034,42 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonExtensionRoutingDecision(packet, decision),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_overlay_candidate_handoff_get',
+    'Get a rendered read-only Canon overlay candidate review handoff by intake id. Use this after reading canon://overlays/candidates/list when a maintainer needs the approval boundary, source URIs, evidence, surfaces, and promotion checklist before opening implementation work.',
+    {
+      intakeId: z.string().describe('Candidate intake id, packet id, or candidate id, for example overlay.agency-atlas-public.workflow-proof-surface')
+    },
+    async ({ intakeId }) => {
+      const packet = getCanonOverlayCandidateReviewPacket(intakeId);
+
+      if (!packet) {
+        const ids = listCanonOverlayCandidateReviewPacketIds();
+        return {
+          content: [{
+            type: 'text' as const,
+            text: [
+              `Canon overlay candidate review packet not found: ${intakeId}`,
+              '',
+              'Available intake ids:',
+              ...ids.map((id) => `- \`${id}\``)
+            ].join('\n'),
+            ...USER_VISIBLE,
+          }],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonOverlayCandidateReviewHandoff(packet),
           ...USER_VISIBLE,
         }]
       };
