@@ -27,6 +27,8 @@ Settings -> Integrations & MCP
 
 Use this app surface as the main operator experience. The terminal is only supporting the local build and the MCP server process.
 
+OpenAI's Codex app settings documentation identifies this as the place to connect external tools through MCP, enable recommended servers, add your own server, and complete OAuth flows when a future server requires them. The same documentation notes that MCP configuration is stored in `config.toml`, which lets the app and other Codex surfaces share the same server setup.
+
 If the app offers an **Add MCP server** flow, add a local stdio server with:
 
 ```text
@@ -59,6 +61,11 @@ Do not commit credentials to the repo. Keep RapidAPI keys in local Codex app con
 
 Return to **Settings -> Integrations & MCP** and confirm `codex-demo` is enabled.
 
+<figure class="learning-figure">
+  <img src="https://developers.openai.com/images/codex/app/modes-light.webp" alt="OpenAI Codex app composer showing local, worktree, and cloud modes." />
+  <figcaption>Source: OpenAI Developers, <a href="https://developers.openai.com/codex/app/features">Codex app features documentation</a>. Stay in the Codex app after registration so the learner can prompt, inspect, and iterate from one operator-facing surface.</figcaption>
+</figure>
+
 ## 4) Reload Codex Session
 
 After saving config, restart the Codex app session so the new server is discovered. If you are inside a long-running thread, start a fresh session before treating a missing tool as a server bug.
@@ -86,6 +93,12 @@ At this point you should be able to prove:
 - The server has access to `RAPIDAPI_KEY` through local configuration.
 - The tool is discoverable in a fresh Codex app session.
 - A real Codex app prompt can call the tool and read structured local business data.
+
+## Official References Used
+
+- [Codex app settings](https://developers.openai.com/codex/app/settings): MCP server configuration lives under Settings -> Integrations & MCP.
+- [Codex config basics](https://developers.openai.com/codex/config-basic): user-level and project-level `config.toml` locations and precedence.
+- [Model Context Protocol in Codex](https://developers.openai.com/codex/mcp): how Codex reads MCP server configuration.
 
 ## Next
 

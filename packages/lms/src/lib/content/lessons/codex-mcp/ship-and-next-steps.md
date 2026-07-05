@@ -46,4 +46,31 @@ You now have the core skill this platform focuses on:
 
 `Use the Codex app effectively by giving it custom, inspectable business capabilities.`
 
+## Final Operator Receipt
+
+Before calling the course complete, write a short receipt that another operator could follow:
+
+```text
+MCP name:
+Business question it answers:
+Read-only tools:
+External APIs reached:
+Secrets required:
+Build command:
+Codex app registration proof:
+Inspector proof:
+Codex chat proof:
+Known limits:
+Next safe extension:
+Approval required before:
+```
+
+This receipt is the handoff artifact. It proves that the learner did not only copy code; they created a bounded Codex capability with visible evidence and a next safe step.
+
 If you can add and validate a new tool quickly, you are ready to build domain-specific MCP servers for real AI-native operator workflows.
+
+## Official References Used
+
+- [Codex app](https://developers.openai.com/codex/app): Codex app project, chat, review, terminal, Git, and worktree surfaces.
+- [Codex app settings](https://developers.openai.com/codex/app/settings): MCP server configuration and integrations surface.
+- [Codex best practices](https://developers.openai.com/codex/learn/best-practices): prompt, review, configuration, and MCP usage habits.

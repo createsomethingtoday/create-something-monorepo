@@ -30,6 +30,8 @@ Use the MCP-building skill to review this local stdio MCP server.
 Check the TypeScript build, tool registration, Zod input schema, outputSchema, structuredContent, annotations, stderr-only logging, Codex config, and actionable RapidAPI errors.
 ```
 
+OpenAI's Codex best-practices guidance emphasizes giving Codex context and constraints. When debugging, paste the exact error, the expected behavior, the command you ran, and the "done when" condition so Codex can recover without guessing.
+
 2. Rebuild:
 ```bash
 pnpm --filter @create-something/codex-demo-mcp build
@@ -92,6 +94,20 @@ For tools that write, require a safer contract:
 ## Checkpoint
 
 A working MCP is not just "the tool ran once." It is working when you can reproduce success, reproduce failure, and give Codex enough evidence to recover.
+
+Capture this evidence before you ship:
+
+- the successful build command;
+- the Codex app MCP settings state;
+- the Inspector tool list or call result;
+- one successful Codex app prompt;
+- one intentional failure with an actionable error message.
+
+## Official References Used
+
+- [Codex best practices](https://developers.openai.com/codex/learn/best-practices): provide context, constraints, and clear done criteria.
+- [Codex app features](https://developers.openai.com/codex/app/features): use the integrated terminal, browser, image input, and review surfaces while iterating.
+- [Model Context Protocol in Codex](https://developers.openai.com/codex/mcp): Codex MCP support and configuration model.
 
 ## Next
 
