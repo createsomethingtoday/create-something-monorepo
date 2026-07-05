@@ -474,6 +474,38 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS: CanonOverlayCandidatePromo
 `;
 }
 
+async function buildCanonOverlayCandidatePromotionReadinessReports(): Promise<string> {
+  const intakeModuleUrl = pathToFileURL(
+    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'intake.ts')
+  ).href;
+  const intake = await import(intakeModuleUrl) as {
+    buildCanonOverlayIntakeInventory: (options: { rootDir: string; rootLabel?: string }) => Promise<unknown>;
+    buildCanonOverlayCandidateQueue: (inventory: unknown) => unknown;
+    buildCanonOverlayCandidateReviewPackets: (queue: unknown) => unknown;
+    buildCanonOverlayCandidatePromotionPlans: (packets: unknown) => unknown;
+    buildCanonOverlayCandidatePromotionReadinessReports: (plans: unknown) => unknown;
+  };
+  const inventory = await intake.buildCanonOverlayIntakeInventory({
+    rootDir: ROOT,
+    rootLabel: '<repo-root>'
+  });
+  const queue = intake.buildCanonOverlayCandidateQueue(inventory);
+  const packets = intake.buildCanonOverlayCandidateReviewPackets(queue);
+  const plans = intake.buildCanonOverlayCandidatePromotionPlans(packets);
+  const reports = intake.buildCanonOverlayCandidatePromotionReadinessReports(plans);
+
+  return `/**
+ * Generated Canon overlay candidate promotion readiness report content — DO NOT EDIT MANUALLY.
+ * Run: npm run build:content
+ * Source: packages/canon/src/lib/overlays/intake.ts
+ */
+
+import type { CanonOverlayCandidatePromotionReadinessReportCollection } from '../types.js';
+
+export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCandidatePromotionReadinessReportCollection = ${JSON.stringify(reports, null, 2)};
+`;
+}
+
 // ============================================================================
 // Build patterns
 // ============================================================================
@@ -720,6 +752,7 @@ async function main() {
     canonOverlayCandidateQueue,
     canonOverlayCandidateReviewPackets,
     canonOverlayCandidatePromotionPlans,
+    canonOverlayCandidatePromotionReadinessReports,
     patterns,
     graph,
     propertyDocs
@@ -733,6 +766,7 @@ async function main() {
     buildCanonOverlayCandidateQueue(),
     buildCanonOverlayCandidateReviewPackets(),
     buildCanonOverlayCandidatePromotionPlans(),
+    buildCanonOverlayCandidatePromotionReadinessReports(),
     buildPatterns(),
     buildGraph(),
     buildPropertyDocuments(),
@@ -749,6 +783,7 @@ async function main() {
     writeFile(join(OUT_DIR, 'canon-overlay-candidate-queue.ts'), canonOverlayCandidateQueue, 'utf-8'),
     writeFile(join(OUT_DIR, 'canon-overlay-candidate-review-packets.ts'), canonOverlayCandidateReviewPackets, 'utf-8'),
     writeFile(join(OUT_DIR, 'canon-overlay-candidate-promotion-plans.ts'), canonOverlayCandidatePromotionPlans, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-candidate-promotion-readiness-reports.ts'), canonOverlayCandidatePromotionReadinessReports, 'utf-8'),
     writeFile(join(OUT_DIR, 'patterns.ts'), patterns, 'utf-8'),
     writeFile(join(OUT_DIR, 'graph.ts'), graph, 'utf-8'),
     writeFile(join(OUT_DIR, 'property-docs.ts'), propertyDocs.source, 'utf-8'),
@@ -764,6 +799,7 @@ async function main() {
   const canonOverlayCandidateCount = (canonOverlayCandidateQueue.match(/"intakeId":/g) || []).length;
   const canonOverlayCandidateReviewPacketCount = (canonOverlayCandidateReviewPackets.match(/"candidateId":/g) || []).length;
   const canonOverlayCandidatePromotionPlanCount = (canonOverlayCandidatePromotionPlans.match(/"planUri":/g) || []).length;
+  const canonOverlayCandidatePromotionReadinessReportCount = (canonOverlayCandidatePromotionReadinessReports.match(/"readinessUri":/g) || []).length;
   const patternCount = (patterns.match(/slug:/g) || []).length;
   const nodeCount = (graph.match(/"id":/g) || []).length;
 
@@ -777,6 +813,7 @@ async function main() {
   console.log(`  Canon overlay candidates: ${canonOverlayCandidateCount} candidates`);
   console.log(`  Canon overlay review packets: ${canonOverlayCandidateReviewPacketCount} packets`);
   console.log(`  Canon overlay promotion plans: ${canonOverlayCandidatePromotionPlanCount} plans`);
+  console.log(`  Canon overlay readiness reports: ${canonOverlayCandidatePromotionReadinessReportCount} reports`);
   console.log(`  Patterns:       ${patternCount}`);
   console.log(`  Graph:          ${nodeCount} nodes`);
   console.log(`  Property docs:  ${propertyDocs.totalCount}`);

@@ -2,12 +2,22 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { CANON_REGISTRY_MANIFEST, reviewCanonProjectOverlay } from '../registry/index.js';
+import {
+	CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES,
+	CANON_REGISTRY_MANIFEST,
+	reviewCanonProjectOverlay
+} from '../registry/index.js';
 import type {
 	CanonOverlayCandidateQueue,
 	CanonOverlayCandidateQueueEntry,
 	CanonOverlayCandidatePromotionPlan,
 	CanonOverlayCandidatePromotionPlanCollection,
+	CanonOverlayCandidatePromotionReadinessCheck,
+	CanonOverlayCandidatePromotionReadinessExportMatch,
+	CanonOverlayCandidatePromotionReadinessRegistryMatch,
+	CanonOverlayCandidatePromotionReadinessReport,
+	CanonOverlayCandidatePromotionReadinessReportCollection,
+	CanonOverlayCandidatePromotionReadinessStatus,
 	CanonOverlayCandidateReviewPacket,
 	CanonOverlayCandidateReviewPacketCollection,
 	CanonProjectOverlayIntegrityIssue,
@@ -527,6 +537,134 @@ export function findCanonOverlayCandidatePromotionPlan(
 	);
 }
 
+export function buildCanonOverlayCandidatePromotionReadinessReports(
+	plans: CanonOverlayCandidatePromotionPlanCollection
+): CanonOverlayCandidatePromotionReadinessReportCollection {
+	const entries = plans.entries.map((plan) => createCandidatePromotionReadinessReport(plan));
+
+	return {
+		schemaVersion: 1,
+		id: 'canon-overlay-candidate-promotion-readiness-reports',
+		sourceOfTruth: '@create-something/canon/overlays/intake',
+		description:
+			'Read-only readiness reports for Canon overlay candidate promotion plans, showing approval, registry, export, docs, validation, compatibility, and stop-condition gaps before implementation starts.',
+		entries,
+		summary: {
+			total: entries.length,
+			needsApproval: countReadiness(entries, 'needs-approval'),
+			needsTargets: countReadiness(entries, 'needs-targets'),
+			readyForImplementation: countReadiness(entries, 'ready-for-implementation')
+		},
+		agentContract: {
+			purpose: 'canon-overlay-candidate-promotion-readiness-reports',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'checking whether an approved promotion plan has enough Canon target information to start implementation',
+				'comparing candidates with current Canon registry and public export policy snapshots',
+				'keeping human approval and target selection explicit before code changes'
+			],
+			stopBefore: [
+				'treating readiness as human approval',
+				'automatically creating Linear work from readiness reports',
+				'automatically editing Canon registry, exports, docs, or project overlays',
+				'marking candidates stable from readiness output'
+			]
+		}
+	};
+}
+
+export function renderCanonOverlayCandidatePromotionReadinessReport(
+	report: CanonOverlayCandidatePromotionReadinessReport
+): string {
+	const lines = [
+		`# ${report.title}`,
+		'',
+		`Status: ${report.status}`,
+		`Readiness report: ${report.readinessUri}`,
+		`Promotion plan: ${report.planUri}`,
+		`Review packet: ${report.handoffUri}`,
+		`Candidate resource: ${report.candidateUri}`,
+		'',
+		'## Summary',
+		report.summary,
+		'',
+		'## Checks',
+		...report.checks.flatMap((check) => [
+			`### ${check.label}`,
+			`- Status: ${check.status}`,
+			`- Required action: ${check.requiredAction}`,
+			...check.evidence.map((item) => `- Evidence: ${item}`),
+			''
+		]),
+		'## Related Registry Items',
+		...(report.relatedRegistryItems.length
+			? report.relatedRegistryItems.map(
+					(item) =>
+						`- ${item.id}: ${item.name} (${item.maturity}, score ${item.score}) - ${item.reason}`
+				)
+			: ['- None found from current Canon registry snapshot.']),
+		'',
+		'## Candidate Export Policies',
+		...(report.candidateExportPolicies.length
+			? report.candidateExportPolicies.map((rule) => {
+					const label = rule.exportName ? `${rule.exportPath}#${rule.exportName}` : rule.exportPath;
+					return `- ${label}: ${rule.registryPolicy} / ${rule.classification} (score ${rule.score})`;
+				})
+			: ['- None found from current Canon public export policy snapshot.']),
+		'',
+		'## Stop Conditions',
+		...report.stopConditions.map((item) => `- ${item}`),
+		'',
+		'## Approval Boundary',
+		...report.approvalBoundary.map((item) => `- ${item}`),
+		'',
+		'## Agent Contract',
+		...report.agentContract.useFor.map((item) => `- Use for: ${item}`),
+		...report.agentContract.stopBefore.map((item) => `- Stop before: ${item}`)
+	];
+
+	return lines.join('\n');
+}
+
+export function renderCanonOverlayCandidatePromotionReadinessReports(
+	collection: CanonOverlayCandidatePromotionReadinessReportCollection
+): string {
+	const lines = [
+		'# Canon Overlay Candidate Promotion Readiness Reports',
+		'',
+		`Total reports: ${collection.summary.total}`,
+		`Needs approval: ${collection.summary.needsApproval}`,
+		`Needs targets: ${collection.summary.needsTargets}`,
+		`Ready for implementation: ${collection.summary.readyForImplementation}`
+	];
+
+	if (collection.entries.length === 0) {
+		lines.push('', 'No overlay candidate promotion readiness reports are available.');
+		return lines.join('\n');
+	}
+
+	for (const report of collection.entries) {
+		lines.push(
+			'',
+			`## ${report.title}`,
+			`- Status: ${report.status}`,
+			`- Readiness: ${report.readinessUri}`,
+			`- Plan: ${report.planUri}`
+		);
+	}
+
+	return lines.join('\n');
+}
+
+export function findCanonOverlayCandidatePromotionReadinessReport(
+	collection: CanonOverlayCandidatePromotionReadinessReportCollection,
+	id: string
+): CanonOverlayCandidatePromotionReadinessReport | undefined {
+	return collection.entries.find(
+		(entry) => entry.intakeId === id || entry.id === id || entry.candidateId === id || entry.planId === id
+	);
+}
+
 function summarizeOverlayInventory(entries: CanonProjectOverlayInventoryEntry[]) {
 	return {
 		total: entries.length,
@@ -579,6 +717,13 @@ function countByModality(entries: Array<{ requestedModalities: CanonRegistryModa
 	return [...counts.entries()]
 		.map(([modality, count]) => ({ modality, count }))
 		.sort((a, b) => b.count - a.count || a.modality.localeCompare(b.modality));
+}
+
+function countReadiness(
+	entries: CanonOverlayCandidatePromotionReadinessReport[],
+	status: CanonOverlayCandidatePromotionReadinessStatus
+) {
+	return entries.filter((entry) => entry.status === status).length;
 }
 
 function createCandidateReviewPacket(
@@ -720,6 +865,278 @@ function createCandidatePromotionPlan(
 			]
 		}
 	};
+}
+
+function createCandidatePromotionReadinessReport(
+	plan: CanonOverlayCandidatePromotionPlan
+): CanonOverlayCandidatePromotionReadinessReport {
+	const relatedRegistryItems = findRelatedRegistryItems(plan);
+	const candidateExportPolicies = findCandidateExportPolicies(plan);
+	const checks = createPromotionReadinessChecks({
+		plan,
+		relatedRegistryItems,
+		candidateExportPolicies
+	});
+	const status = deriveReadinessStatus(checks);
+
+	return {
+		id: `canon-overlay-candidate-promotion-readiness:${plan.intakeId}`,
+		planId: plan.id,
+		candidateId: plan.candidateId,
+		intakeId: plan.intakeId,
+		title: `${plan.title.replace(/ promotion plan$/, '')} readiness report`,
+		summary:
+			`${plan.summary} This readiness report compares the plan with current Canon registry and public export policy snapshots before implementation starts.`,
+		status,
+		readinessUri: `canon://overlays/candidates/${plan.intakeId}/readiness`,
+		planUri: plan.planUri,
+		handoffUri: plan.handoffUri,
+		candidateUri: plan.candidateUri,
+		reviewUri: plan.reviewUri,
+		checks,
+		relatedRegistryItems,
+		candidateExportPolicies,
+		stopConditions: [
+			...plan.stopConditions,
+			'Stop if readiness output is used as approval instead of evidence for a maintainer decision.',
+			'Stop if no Canon registry id, export path, docs path, and validation scope have been selected.'
+		],
+		approvalBoundary: [
+			'This readiness report is read-only and does not approve implementation, create Linear issues, mutate overlays, or mark anything stable.',
+			'Human approval and target selection must be recorded outside this report before implementation starts.',
+			'Use related registry items and export policies as review hints, not automatic target choices.'
+		],
+		agentContract: {
+			purpose: 'canon-overlay-candidate-promotion-readiness-report',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'checking whether promotion work has approval and target-selection prerequisites',
+				'finding likely registry or export-policy neighbors before implementation',
+				'carrying missing target evidence into a follow-up implementation slice'
+			],
+			stopBefore: [
+				'automatically creating Linear issues',
+				'automatically selecting registry ids or export paths',
+				'automatically editing Canon or project overlays',
+				'treating readiness as stable promotion'
+			]
+		}
+	};
+}
+
+function createPromotionReadinessChecks({
+	plan,
+	relatedRegistryItems,
+	candidateExportPolicies
+}: {
+	plan: CanonOverlayCandidatePromotionPlan;
+	relatedRegistryItems: CanonOverlayCandidatePromotionReadinessRegistryMatch[];
+	candidateExportPolicies: CanonOverlayCandidatePromotionReadinessExportMatch[];
+}): CanonOverlayCandidatePromotionReadinessCheck[] {
+	const relatedDocsPaths = relatedRegistryItems
+		.map((item) => item.docsPath)
+		.filter((value): value is string => Boolean(value));
+
+	return [
+		{
+			id: 'human-approval',
+			label: 'Human Approval',
+			status: 'needs-input',
+			evidence: [
+				'Promotion plans and readiness reports cannot verify approval automatically.',
+				`Plan approval boundary: ${plan.approvalBoundary.join(' ')}`
+			],
+			requiredAction: 'Record explicit maintainer approval before implementation starts.'
+		},
+		{
+			id: 'registry-target',
+			label: 'Canon Registry Target',
+			status: relatedRegistryItems.length ? 'review' : 'missing',
+			evidence: relatedRegistryItems.length
+				? relatedRegistryItems.map(
+						(item) => `${item.id} is a ${item.kind} ${item.maturity} item with overlapping evidence.`
+					)
+				: ['No likely registry neighbor was found in the current Canon registry snapshot.'],
+			requiredAction:
+				'Choose whether to reuse, update, or create a Canon registry item id before editing implementation code.'
+		},
+		{
+			id: 'export-target',
+			label: 'Canon Export Target',
+			status: candidateExportPolicies.length ? 'review' : 'missing',
+			evidence: candidateExportPolicies.length
+				? candidateExportPolicies.map((rule) => {
+						const label = rule.exportName ? `${rule.exportPath}#${rule.exportName}` : rule.exportPath;
+						return `${label} is ${rule.registryPolicy} / ${rule.classification}.`;
+					})
+				: ['No likely public export policy neighbor was found in the current Canon export policy snapshot.'],
+			requiredAction:
+				'Select the Canon export path and confirm whether public export policy needs a new or updated rule.'
+		},
+		{
+			id: 'docs-target',
+			label: 'Canon Docs Target',
+			status: relatedDocsPaths.length ? 'review' : 'missing',
+			evidence: relatedDocsPaths.length
+				? relatedDocsPaths.map((docsPath) => `Related registry docs path: ${docsPath}.`)
+				: ['No docs path can be selected automatically from the promotion plan.'],
+			requiredAction: 'Choose the nearest Canon docs page and update it during implementation.'
+		},
+		{
+			id: 'validation-scope',
+			label: 'Validation Scope',
+			status: plan.validationPlan.length ? 'ready' : 'missing',
+			evidence: plan.validationPlan,
+			requiredAction: 'Run and record the focused Canon, MCP, and docs validation commands.'
+		},
+		{
+			id: 'compatibility-scope',
+			label: 'Compatibility Scope',
+			status: plan.compatibilityPlan.length ? 'ready' : 'missing',
+			evidence: plan.compatibilityPlan,
+			requiredAction: 'Name migration, rollback, or keep-local behavior before stable promotion.'
+		}
+	];
+}
+
+function deriveReadinessStatus(
+	checks: CanonOverlayCandidatePromotionReadinessCheck[]
+): CanonOverlayCandidatePromotionReadinessStatus {
+	if (checks.some((check) => check.id === 'human-approval' && check.status === 'needs-input')) {
+		return 'needs-approval';
+	}
+	if (checks.some((check) => check.status === 'missing' || check.status === 'review')) {
+		return 'needs-targets';
+	}
+	return 'ready-for-implementation';
+}
+
+function findRelatedRegistryItems(
+	plan: CanonOverlayCandidatePromotionPlan
+): CanonOverlayCandidatePromotionReadinessRegistryMatch[] {
+	return CANON_REGISTRY_MANIFEST.items
+		.map((item) => {
+			const score = scoreRegistryItemForPlan(item, plan);
+			const modalityOverlap = item.modalities.filter((modality) =>
+				plan.requestedModalities.includes(modality)
+			);
+			return {
+				item,
+				score,
+				modalityOverlap
+			};
+		})
+		.filter(({ item, score, modalityOverlap }) => score > 0 && (item.kind === plan.requestedKind || modalityOverlap.length > 0))
+		.sort((a, b) => b.score - a.score || a.item.id.localeCompare(b.item.id))
+		.slice(0, 5)
+		.map(({ item, score, modalityOverlap }) => ({
+			id: item.id,
+			name: item.name,
+			kind: item.kind,
+			maturity: item.maturity,
+			modalities: item.modalities,
+			docsPath: item.docsPath,
+			score,
+			reason:
+				item.kind === plan.requestedKind
+					? `Matches requested kind and overlaps ${modalityOverlap.length} requested modalities.`
+					: `Overlaps ${modalityOverlap.length} requested modalities.`
+		}));
+}
+
+function findCandidateExportPolicies(
+	plan: CanonOverlayCandidatePromotionPlan
+): CanonOverlayCandidatePromotionReadinessExportMatch[] {
+	return CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
+		.map((rule) => ({
+			rule,
+			score: scoreExportRuleForPlan(rule, plan)
+		}))
+		.filter(({ rule, score }) => score > 0 && rule.registryPolicy !== 'classified-out')
+		.sort((a, b) => b.score - a.score || a.rule.exportPath.localeCompare(b.rule.exportPath))
+		.slice(0, 5)
+		.map(({ rule, score }) => ({
+			exportPath: rule.exportPath,
+			classification: rule.classification,
+			registryPolicy: rule.registryPolicy,
+			score,
+			rationale: rule.rationale,
+			...(rule.exportName ? { exportName: rule.exportName } : {}),
+			...(rule.registryItemIds ? { registryItemIds: rule.registryItemIds } : {})
+		}));
+}
+
+function scoreRegistryItemForPlan(
+	item: (typeof CANON_REGISTRY_MANIFEST.items)[number],
+	plan: CanonOverlayCandidatePromotionPlan
+) {
+	const tokens = tokenizePlan(plan);
+	const haystack = [
+		item.id,
+		item.name,
+		item.kind,
+		item.maturity,
+		item.description,
+		item.sourcePath,
+		item.importPath ?? '',
+		item.docsPath ?? '',
+		...item.tags,
+		...item.modalities,
+		...(item.dependencies ?? []),
+		item.contract.accessibility ?? '',
+		item.contract.evidence ?? '',
+		item.contract.motion ?? '',
+		item.contract.extension ?? ''
+	]
+		.join(' ')
+		.toLowerCase();
+
+	let score = item.kind === plan.requestedKind ? 4 : 0;
+	score += item.modalities.filter((modality) => plan.requestedModalities.includes(modality)).length;
+	for (const token of tokens) {
+		if (haystack.includes(token)) score += 1;
+	}
+	return score;
+}
+
+function scoreExportRuleForPlan(
+	rule: (typeof CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES)[number],
+	plan: CanonOverlayCandidatePromotionPlan
+) {
+	const tokens = tokenizePlan(plan);
+	const haystack = [
+		rule.exportPath,
+		rule.exportName ?? '',
+		rule.classification,
+		rule.registryPolicy,
+		...(rule.registryItemIds ?? []),
+		rule.rationale
+	]
+		.join(' ')
+		.toLowerCase();
+
+	let score = rule.registryPolicy === 'candidate-review' ? 2 : 0;
+	for (const token of tokens) {
+		if (haystack.includes(token)) score += 1;
+	}
+	return score;
+}
+
+function tokenizePlan(plan: CanonOverlayCandidatePromotionPlan) {
+	return [
+		plan.title,
+		plan.summary,
+		plan.overlayId,
+		plan.overlayName,
+		plan.sourcePackage,
+		plan.sourcePath ?? '',
+		plan.requestedKind,
+		...plan.requestedModalities
+	]
+		.join(' ')
+		.toLowerCase()
+		.split(/[^a-z0-9]+/)
+		.filter((token) => token.length >= 4);
 }
 
 async function inspectCanonProjectOverlayIntegrity({

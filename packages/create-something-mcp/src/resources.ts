@@ -19,6 +19,9 @@ import {
 import {
   CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS
 } from './content/generated/canon-overlay-candidate-promotion-plans.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS
+} from './content/generated/canon-overlay-candidate-promotion-readiness-reports.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -379,6 +382,7 @@ export function registerResources(server: McpServer) {
           reviewUri: entry.reviewUri,
           handoffUri: entry.handoffUri,
           promotionPlanUri: `canon://overlays/candidates/${entry.intakeId}/promotion-plan`,
+          readinessUri: `canon://overlays/candidates/${entry.intakeId}/readiness`,
           uri: entry.candidateUri
         })), null, 2)
       }]
@@ -466,6 +470,40 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'application/json',
           text: JSON.stringify(plan, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-promotion-readiness-reports',
+    'canon://overlays/candidates/readiness-reports',
+    {
+      description: `Canon overlay candidate promotion readiness reports: ${CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.entries.length} read-only readiness checks before implementation starts`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS, null, 2)
+      }]
+    })
+  );
+
+  for (const report of CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.entries) {
+    server.resource(
+      `canon-overlays-candidate-promotion-readiness-${report.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      report.readinessUri,
+      {
+        description: `Canon overlay candidate promotion readiness report: ${report.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(report, null, 2)
         }]
       })
     );
