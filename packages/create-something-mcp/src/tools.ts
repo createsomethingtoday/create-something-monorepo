@@ -26,9 +26,12 @@ import {
   renderCanonOverlayCandidatePromotionReadinessReport
 } from './canon-overlay-candidate-promotion-readiness.js';
 import {
+  applyCanonOverlayCandidatePromotionApprovalTarget,
   getCanonOverlayCandidatePromotionApprovalRecord,
   listCanonOverlayCandidatePromotionApprovalRecordIds,
-  renderCanonOverlayCandidatePromotionApprovalRecord
+  renderCanonOverlayCandidatePromotionApprovalRecord,
+  renderCanonOverlayCandidatePromotionApprovalValidationReport,
+  validateCanonOverlayCandidatePromotionApprovalRecord
 } from './canon-overlay-candidate-promotion-approval-record.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import {
@@ -73,6 +76,18 @@ const USER_VISIBLE = {
 const CANON_REGISTRY_KIND_VALUES = ['component', 'token', 'template', 'adapter', 'policy'] as const;
 const CANON_REGISTRY_MODALITY_VALUES = ['web', 'chat', 'app', 'voice', 'glasses'] as const;
 const CANON_REGISTRY_MATURITY_VALUES = ['stable', 'candidate', 'experimental'] as const;
+const CANON_APPROVAL_TARGET_SCHEMA = z.object({
+  approvalOwner: z.string().nullable().optional(),
+  approvalEvidence: z.string().nullable().optional(),
+  approvedAt: z.string().nullable().optional(),
+  registryAction: z.string().nullable().optional(),
+  registryItemId: z.string().nullable().optional(),
+  exportPath: z.string().nullable().optional(),
+  exportName: z.string().nullable().optional(),
+  docsPath: z.string().nullable().optional(),
+  maturityTarget: z.string().nullable().optional(),
+  implementationOwner: z.string().nullable().optional(),
+});
 const CANON_PUBLIC_EXPORT_CLASSIFICATION_VALUES = [
   'analytics-surface',
   'auth-surface',
@@ -1193,6 +1208,48 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonOverlayCandidatePromotionApprovalRecord(record),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_overlay_candidate_promotion_approval_record_validate',
+    'Validate a Canon overlay candidate promotion approval record by intake id, optionally with maintainer-supplied target fields. Use this before opening implementation work; it reports missing fields and invalid target values but does not persist approval, create Linear work, or mutate Canon.',
+    {
+      intakeId: z.string().describe('Candidate intake id, approval record id, readiness report id, plan id, or candidate id, for example overlay.agency-atlas-public.workflow-proof-surface'),
+      target: CANON_APPROVAL_TARGET_SCHEMA.optional().describe('Optional maintainer-supplied approval target fields to validate without persisting them')
+    },
+    async ({ intakeId, target }) => {
+      const record = getCanonOverlayCandidatePromotionApprovalRecord(intakeId);
+
+      if (!record) {
+        const ids = listCanonOverlayCandidatePromotionApprovalRecordIds();
+        return {
+          content: [{
+            type: 'text' as const,
+            text: [
+              `Canon overlay candidate promotion approval record not found: ${intakeId}`,
+              '',
+              'Available intake ids:',
+              ...ids.map((id) => `- \`${id}\``)
+            ].join('\n'),
+            ...USER_VISIBLE,
+          }],
+          isError: true,
+        };
+      }
+
+      const recordToValidate = target
+        ? applyCanonOverlayCandidatePromotionApprovalTarget(record, target)
+        : record;
+      const validation = validateCanonOverlayCandidatePromotionApprovalRecord(recordToValidate);
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonOverlayCandidatePromotionApprovalValidationReport(validation),
           ...USER_VISIBLE,
         }]
       };

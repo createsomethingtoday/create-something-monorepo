@@ -4,6 +4,10 @@ import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import type {
+	CanonOverlayCandidatePromotionApprovalRecord,
+	CanonOverlayCandidatePromotionApprovalTarget
+} from '../registry/schema.js';
 import {
 	buildCanonOverlayCandidateQueue,
 	buildCanonOverlayCandidatePromotionApprovalRecords,
@@ -19,13 +23,15 @@ import {
 	renderCanonOverlayCandidateQueue,
 	renderCanonOverlayCandidatePromotionApprovalRecord,
 	renderCanonOverlayCandidatePromotionApprovalRecords,
+	renderCanonOverlayCandidatePromotionApprovalValidationReport,
 	renderCanonOverlayCandidatePromotionPlan,
 	renderCanonOverlayCandidatePromotionPlans,
 	renderCanonOverlayCandidatePromotionReadinessReport,
 	renderCanonOverlayCandidatePromotionReadinessReports,
 	renderCanonOverlayCandidateReviewPacket,
 	renderCanonOverlayCandidateReviewPackets,
-	renderCanonOverlayIntakeInventory
+	renderCanonOverlayIntakeInventory,
+	validateCanonOverlayCandidatePromotionApprovalRecord
 } from './intake.js';
 
 const tempRoots: string[] = [];
@@ -507,6 +513,74 @@ describe('Canon overlay intake inventory', () => {
 			'canon://overlays/candidates/overlay.client-a.surface-brief/approval-record'
 		);
 	});
+
+	it('validates approval records before implementation starts', async () => {
+		const root = await createTempRoot();
+		await writeOverlayManifest(
+			root,
+			'packages/client-a/canon-overlay/manifest.ts',
+			readyManifest('overlay.client-a', 'Client A Overlay', '@create-something/client-a')
+		);
+		await writeOverlayArtifactSet(root, 'packages/client-a/canon-overlay');
+
+		const inventory = await buildCanonOverlayIntakeInventory({ rootDir: root });
+		const queue = buildCanonOverlayCandidateQueue(inventory);
+		const packets = buildCanonOverlayCandidateReviewPackets(queue);
+		const plans = buildCanonOverlayCandidatePromotionPlans(packets);
+		const reports = buildCanonOverlayCandidatePromotionReadinessReports(plans);
+		const approvalRecords = buildCanonOverlayCandidatePromotionApprovalRecords(reports);
+		const record = approvalRecords.entries[0]!;
+
+		const emptyValidation = validateCanonOverlayCandidatePromotionApprovalRecord(record);
+
+		expect(emptyValidation.status).toBe('missing-required-fields');
+		expect(emptyValidation.summary).toMatchObject({
+			readyForImplementation: false,
+			missingRequiredFields: 9,
+			errorCount: 9
+		});
+		expect(emptyValidation.issues.map((issue) => issue.fieldId)).toEqual([
+			'approvalOwner',
+			'approvalEvidence',
+			'approvedAt',
+			'registryAction',
+			'registryItemId',
+			'exportPath',
+			'docsPath',
+			'maturityTarget',
+			'implementationOwner'
+		]);
+
+		const filledRecord = fillApprovalRecord(record);
+		const readyValidation = validateCanonOverlayCandidatePromotionApprovalRecord(filledRecord);
+
+		expect(readyValidation.status).toBe('ready-for-implementation');
+		expect(readyValidation.summary).toMatchObject({
+			readyForImplementation: true,
+			errorCount: 0,
+			missingRequiredFields: 0
+		});
+
+		const invalidRecord = fillApprovalRecord(record, {
+			approvedAt: 'not a date',
+			registryAction: 'delete-existing',
+			maturityTarget: 'retired'
+		});
+		const invalidValidation = validateCanonOverlayCandidatePromotionApprovalRecord(invalidRecord);
+
+		expect(invalidValidation.status).toBe('invalid-targets');
+		expect(invalidValidation.issues.map((issue) => issue.code)).toEqual([
+			'invalid-approved-at',
+			'invalid-registry-action',
+			'invalid-maturity-target'
+		]);
+
+		const rendered = renderCanonOverlayCandidatePromotionApprovalValidationReport(emptyValidation);
+		expect(rendered).toContain('Missing required fields: 9');
+		expect(rendered).toContain('Ready for implementation: no');
+		expect(rendered).toContain('does not itself approve implementation');
+		expect(rendered).toContain('Stop before: automatically creating Linear work');
+	});
 });
 
 async function writeOverlayManifest(root: string, relativePath: string, manifest: unknown) {
@@ -531,6 +605,37 @@ async function writeFileAt(root: string, relativePath: string, content: string) 
 	const filePath = join(root, relativePath);
 	await mkdir(dirname(filePath), { recursive: true });
 	await writeFile(filePath, content, 'utf-8');
+}
+
+function fillApprovalRecord(
+	record: CanonOverlayCandidatePromotionApprovalRecord,
+	overrides: Partial<Record<keyof CanonOverlayCandidatePromotionApprovalTarget, string | null>> = {}
+): CanonOverlayCandidatePromotionApprovalRecord {
+	const registryItem = record.targetHints.registryItems[0]!;
+	const exportPolicy = record.targetHints.exportPolicies[0]!;
+	const docsPath = record.targetHints.docsPaths[0]!;
+	const target = {
+		approvalOwner: 'Micah Johnson',
+		approvalEvidence: 'Linear CRE-1012 approval validation fixture',
+		approvedAt: '2026-07-05',
+		registryAction: 'reuse-existing',
+		registryItemId: registryItem.id,
+		exportPath: exportPolicy.exportPath,
+		exportName: exportPolicy.exportName ?? null,
+		docsPath,
+		maturityTarget: 'candidate',
+		implementationOwner: 'Canon implementation lane',
+		...overrides
+	} as CanonOverlayCandidatePromotionApprovalTarget;
+
+	return {
+		...record,
+		target,
+		requiredFields: record.requiredFields.map((field) => ({
+			...field,
+			value: target[field.id]
+		}))
+	};
 }
 
 function readyManifest(id: string, name: string, sourcePackage: string): {

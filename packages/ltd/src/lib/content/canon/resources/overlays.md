@@ -94,10 +94,12 @@ Ready overlays can produce candidate intakes when they have repeated-surface evi
 - Rendered promotion plan tool: `canon_overlay_candidate_promotion_plan_get`
 - Rendered readiness tool: `canon_overlay_candidate_promotion_readiness_get`
 - Rendered approval record tool: `canon_overlay_candidate_promotion_approval_record_get`
+- Approval validation tool: `canon_overlay_candidate_promotion_approval_record_validate`
 - Local CLI handoff: `pnpm --filter @create-something/canon overlay:candidate-handoff -- --root . --intake <intake-id>`
 - Local CLI promotion plan: `pnpm --filter @create-something/canon overlay:candidate-plan -- --root . --intake <intake-id>`
 - Local CLI readiness report: `pnpm --filter @create-something/canon overlay:candidate-readiness -- --root . --intake <intake-id>`
 - Local CLI approval record: `pnpm --filter @create-something/canon overlay:candidate-approval-record -- --root . --intake <intake-id>`
+- Local CLI approval validation: `pnpm --filter @create-something/canon overlay:candidate-approval-validate -- --root . --intake <intake-id>`
 
 The queue is not an approval engine. It gathers overlay id, intake id, requested kind, modalities, source paths, surfaces, dependencies, required evidence, and stop-before-stable notes so Canon maintainers can decide whether to open a promotion slice.
 
@@ -118,6 +120,10 @@ Use `canon_overlay_candidate_promotion_readiness_get` when a maintainer needs th
 Approval records sit after readiness reports and before implementation. They are fillable contracts for maintainer approval, approval evidence, registry action, selected registry item, export path, docs path, maturity target, and implementation owner. Target choices remain unset until a maintainer records them. The approval record is a read-only template: it does not approve implementation, create Linear issues, mutate Canon or project overlays, or mark candidates stable.
 
 Use `canon_overlay_candidate_promotion_approval_record_get` when a maintainer needs the approval record as Markdown. Use `overlay:candidate-approval-record` for the same record from the local repo checkout. Omitting `--intake` prints the record list; adding `--json` prints the source approval-record data.
+
+Validate a filled approval record before opening implementation work. Validation reports missing required fields, invalid registry action, invalid maturity target, invalid approval date, and target evidence warnings. It can return `ready-for-implementation`, but that is still only a gate check: validation does not approve implementation, persist approval fields, create Linear issues, mutate Canon or project overlays, or mark candidates stable.
+
+Use `canon_overlay_candidate_promotion_approval_record_validate` when an agent has maintainer-supplied target fields to check in MCP. Use `overlay:candidate-approval-validate` for the same validation from the local repo checkout. Add `--record <path>` to validate a JSON approval record or target payload, and add `--strict` when CI should fail unless the record is ready for implementation.
 
 Do not treat a queued candidate as stable. Stable promotion still requires Canon-owned export paths, docs, tests, compatibility notes, and registry routing.
 
