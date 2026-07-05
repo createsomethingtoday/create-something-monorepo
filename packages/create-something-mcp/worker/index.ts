@@ -26,6 +26,7 @@ import { registerPrompts } from '../src/prompts.js';
 // Content counts
 import { PAPERS } from '../src/content/generated/papers.js';
 import { CANON_PAGES } from '../src/content/generated/canon.js';
+import { CANON_REGISTRY_MANIFEST } from '../src/content/generated/canon-registry.js';
 import { PATTERNS } from '../src/content/generated/patterns.js';
 import { GRAPH_NODES, GRAPH_EDGES } from '../src/content/generated/graph.js';
 import { MASTERS } from '../src/content/masters.js';
@@ -105,6 +106,7 @@ export default {
         content: {
           papers: PAPERS.length,
           canon_pages: CANON_PAGES.length,
+          canon_registry_items: CANON_REGISTRY_MANIFEST.items.length,
           patterns: PATTERNS.length,
           masters: MASTERS.length,
           graph_nodes: GRAPH_NODES.length,
@@ -113,8 +115,8 @@ export default {
           products: PRODUCTS.length,
         },
         capabilities: {
-          resources: `${PAPERS.length + CANON_PAGES.length + PATTERNS.length + MASTERS.length + 10 + 2 + 1 + 1} URIs (Database tier)`,
-          tools: '5 tools (Automation tier — search, relate, classify, apply_triad, audit_design)',
+          resources: `${PAPERS.length + CANON_PAGES.length + CANON_REGISTRY_MANIFEST.items.length + PATTERNS.length + MASTERS.length + 13 + 2 + 1 + 1} URIs (Database tier)`,
+          tools: '11 tools (Automation tier — search, relate, classify, apply_triad, audit_design, canon_registry_search, canon_registry_get, canon_template_get, canon_extension_route, canon_overlay_review, canon_overlay_instantiate_preview)',
           prompts: '5 prompts (Judgment tier — architecture_review, design_review, triad_analysis, mcp_design, research_dive)',
         },
         properties: {

@@ -130,6 +130,14 @@
       href: '/dify/ship-dify-app-with-mcp-tools'
     },
     {
+      eyebrow: 'Publish',
+      icon: 'document',
+      title: 'Template marketplace proof',
+      detail:
+        'Package the first reusable Dify template with English setup steps, smoke checks, and no private examples.',
+      href: '/dify/template-marketplace-proof'
+    },
+    {
       eyebrow: 'Compare',
       icon: 'document',
       title: 'Dify vs n8n',

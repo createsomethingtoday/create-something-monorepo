@@ -29,7 +29,7 @@ export const colors = {
 		primary: '#ffffff',
 		secondary: 'rgba(255, 255, 255, 0.8)',
 		tertiary: 'rgba(255, 255, 255, 0.6)',
-		muted: 'rgba(255, 255, 255, 0.4)',
+		muted: 'rgba(255, 255, 255, 0.46)',
 		subtle: 'rgba(255, 255, 255, 0.2)'
 	},
 

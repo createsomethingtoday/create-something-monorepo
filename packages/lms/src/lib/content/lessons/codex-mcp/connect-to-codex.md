@@ -4,23 +4,41 @@
 
 Register your local MCP server so Codex can discover and call it.
 
+<figure class="learning-figure">
+  <img src="/learning/codex-mcp/codex-mcp-settings.svg" alt="Codex app settings panel showing an enabled codex-demo MCP server with command, args, local environment, and fresh session step." />
+  <figcaption>Registration happens in the Codex app. The local build and secret only support that operator-facing setup.</figcaption>
+</figure>
+
 ## 1) Build First
+
+Use the terminal for the build step only:
 
 ```bash
 pnpm --filter @create-something/codex-demo-mcp build
 ```
 
-## 2) Add MCP Config
+## 2) Open Codex App MCP Settings
 
-Use the Codex MCP CLI to register your local server:
+Open the Codex app, then go to:
 
-```bash
-codex mcp add codex-demo -- node "$(pwd)/packages/codex-demo-mcp/dist/index.js"
+```text
+Settings -> Integrations & MCP
 ```
 
-This writes server config to your Codex config and uses an absolute path based on the current repo.
+Use this app surface as the main operator experience. The terminal is only supporting the local build and the MCP server process.
 
-The same server can be represented directly in `~/.codex/config.toml`:
+OpenAI's Codex app settings documentation identifies this as the place to connect external tools through MCP, enable recommended servers, add your own server, and complete OAuth flows when a future server requires them. The same documentation notes that MCP configuration is stored in `config.toml`, which lets the app and other Codex surfaces share the same server setup.
+
+If the app offers an **Add MCP server** flow, add a local stdio server with:
+
+```text
+Name: codex-demo
+Command: node
+Args: /absolute/path/to/repo/packages/codex-demo-mcp/dist/index.js
+Environment: RAPIDAPI_KEY=your_rapidapi_key
+```
+
+For advanced setup, open the Codex config from the app settings and add the same server in `config.toml`:
 
 ```toml
 [mcp_servers.codex-demo]
@@ -31,36 +49,40 @@ args = ["/absolute/path/to/repo/packages/codex-demo-mcp/dist/index.js"]
 If a server needs environment variables, put them in local config or a secret manager. Do not commit credentials to the repo:
 
 ```toml
-[mcp_servers.internal-status]
+[mcp_servers.codex-demo]
 command = "node"
-args = ["/absolute/path/to/server/dist/index.js"]
-env = { INTERNAL_STATUS_API_URL = "https://example.internal" }
+args = ["/absolute/path/to/repo/packages/codex-demo-mcp/dist/index.js"]
+env = { RAPIDAPI_KEY = "your_rapidapi_key" }
 ```
 
-## 3) Verify Registration
+Do not commit credentials to the repo. Keep RapidAPI keys in local Codex app configuration or a secret manager.
 
-```bash
-codex mcp list
-codex mcp get codex-demo
-```
+## 3) Verify Registration in the App
+
+Return to **Settings -> Integrations & MCP** and confirm `codex-demo` is enabled.
+
+<figure class="learning-figure">
+  <img src="https://developers.openai.com/images/codex/app/modes-light.webp" alt="OpenAI Codex app composer showing local, worktree, and cloud modes." />
+  <figcaption>Source: OpenAI Developers, <a href="https://developers.openai.com/codex/app/features">Codex app features documentation</a>. Stay in the Codex app after registration so the learner can prompt, inspect, and iterate from one operator-facing surface.</figcaption>
+</figure>
 
 ## 4) Reload Codex Session
 
-After saving config, restart your Codex session so the new server is discovered. If you are inside a long-running Codex desktop thread, start a fresh session before treating a missing tool as a server bug.
+After saving config, restart the Codex app session so the new server is discovered. If you are inside a long-running thread, start a fresh session before treating a missing tool as a server bug.
 
 ## 5) Verify in Chat
 
-Ask Codex:
+In the Codex app, ask:
 
 ```text
-Use the codex-demo MCP tool echo_text with text "hello from mcp".
+Use the codex-demo MCP tool find_local_businesses to find five coffee shops in Austin, TX.
 ```
 
-If connected correctly, you should see a response containing `Echo: hello from mcp`.
+If connected correctly, you should see a response with a count and structured business records. Review the result before making claims about the market.
 
 ## Auth Note
 
-`codex mcp login` and `codex mcp logout` are for auth-capable servers. The local stdio server in this course does not need an auth login flow.
+The local stdio server in this course does not need an OAuth login flow. If a future MCP server uses OAuth, let the Codex app start and manage that auth flow from its MCP settings.
 
 ## Checkpoint
 
@@ -68,8 +90,15 @@ At this point you should be able to prove:
 
 - Codex knows the server name.
 - The server command points at the built file.
-- The tool is discoverable in a fresh session.
-- A real Codex prompt can call the tool and read the result.
+- The server has access to `RAPIDAPI_KEY` through local configuration.
+- The tool is discoverable in a fresh Codex app session.
+- A real Codex app prompt can call the tool and read structured local business data.
+
+## Official References Used
+
+- [Codex app settings](https://developers.openai.com/codex/app/settings): MCP server configuration lives under Settings -> Integrations & MCP.
+- [Codex config basics](https://developers.openai.com/codex/config-basic): user-level and project-level `config.toml` locations and precedence.
+- [Model Context Protocol in Codex](https://developers.openai.com/codex/mcp): how Codex reads MCP server configuration.
 
 ## Next
 

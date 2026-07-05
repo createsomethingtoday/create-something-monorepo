@@ -15,6 +15,7 @@
 
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { basename, join, relative } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const OUT_DIR = join(import.meta.dirname, '..', 'src', 'content', 'generated');
@@ -299,6 +300,57 @@ ${entries.join(',\n')}
 }
 
 // ============================================================================
+// Build Canon MCP snapshot modules
+// ============================================================================
+
+interface CanonMcpSnapshot {
+  registryManifest: unknown;
+  publicExportClassificationRules: unknown[];
+  overlayCatalog: unknown;
+  overlayTemplateFilePack: unknown;
+  overlayIntakeInventory: unknown;
+  overlayCandidateQueue: unknown;
+  overlayCandidateReviewPackets: unknown;
+  overlayCandidatePromotionPlans: unknown;
+  overlayCandidatePromotionReadinessReports: unknown;
+  overlayCandidatePromotionApprovalRecords: unknown;
+}
+
+async function buildCanonMcpSnapshot(): Promise<CanonMcpSnapshot> {
+  const snapshotModuleUrl = pathToFileURL(
+    join(ROOT, 'packages', 'canon', 'src', 'lib', 'mcp-snapshot', 'index.ts')
+  ).href;
+  const snapshotModule = await import(snapshotModuleUrl) as {
+    buildCanonMcpSnapshot: (options: { rootDir: string; rootLabel?: string }) => Promise<CanonMcpSnapshot>;
+  };
+
+  return snapshotModule.buildCanonMcpSnapshot({
+    rootDir: ROOT,
+    rootLabel: '<repo-root>'
+  });
+}
+
+function renderCanonSnapshotModule(options: {
+  description: string;
+  source: string;
+  typeName: string;
+  typeAnnotation?: string;
+  constName: string;
+  value: unknown;
+}): string {
+  return `/**
+ * ${options.description} — DO NOT EDIT MANUALLY.
+ * Run: npm run build:content
+ * Source: ${options.source}
+ */
+
+import type { ${options.typeName} } from '../types.js';
+
+export const ${options.constName}: ${options.typeAnnotation ?? options.typeName} = ${JSON.stringify(options.value, null, 2)};
+`;
+}
+
+// ============================================================================
 // Build patterns
 // ============================================================================
 
@@ -534,18 +586,108 @@ async function main() {
   await mkdir(OUT_DIR, { recursive: true });
 
   // Build all content in parallel
-  const [papers, canon, patterns, graph, propertyDocs] = await Promise.all([
+  const [
+    papers,
+    canon,
+    canonMcpSnapshot,
+    patterns,
+    graph,
+    propertyDocs
+  ] = await Promise.all([
     buildPapers(),
     buildCanon(),
+    buildCanonMcpSnapshot(),
     buildPatterns(),
     buildGraph(),
     buildPropertyDocuments(),
   ]);
 
+  const canonRegistry = renderCanonSnapshotModule({
+    description: 'Generated Canon registry content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonRegistryManifest',
+    constName: 'CANON_REGISTRY_MANIFEST',
+    value: canonMcpSnapshot.registryManifest
+  });
+  const canonPublicExportClassification = renderCanonSnapshotModule({
+    description: 'Generated Canon public export classification content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonPublicExportClassificationRule',
+    typeAnnotation: 'CanonPublicExportClassificationRule[]',
+    constName: 'CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES',
+    value: canonMcpSnapshot.publicExportClassificationRules
+  });
+  const canonOverlayCatalog = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay catalog content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCatalog',
+    constName: 'CANON_OVERLAY_CATALOG',
+    value: canonMcpSnapshot.overlayCatalog
+  });
+  const canonOverlayTemplateFiles = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay template file content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayTemplateFilePack',
+    constName: 'CANON_OVERLAY_TEMPLATE_FILE_PACK',
+    value: canonMcpSnapshot.overlayTemplateFilePack
+  });
+  const canonOverlayIntakeInventory = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay intake inventory content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonProjectOverlayInventory',
+    constName: 'CANON_OVERLAY_INTAKE_INVENTORY',
+    value: canonMcpSnapshot.overlayIntakeInventory
+  });
+  const canonOverlayCandidateQueue = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay candidate queue content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCandidateQueue',
+    constName: 'CANON_OVERLAY_CANDIDATE_QUEUE',
+    value: canonMcpSnapshot.overlayCandidateQueue
+  });
+  const canonOverlayCandidateReviewPackets = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay candidate review packet content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCandidateReviewPacketCollection',
+    constName: 'CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS',
+    value: canonMcpSnapshot.overlayCandidateReviewPackets
+  });
+  const canonOverlayCandidatePromotionPlans = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay candidate promotion plan content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCandidatePromotionPlanCollection',
+    constName: 'CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS',
+    value: canonMcpSnapshot.overlayCandidatePromotionPlans
+  });
+  const canonOverlayCandidatePromotionReadinessReports = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay candidate promotion readiness report content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCandidatePromotionReadinessReportCollection',
+    constName: 'CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS',
+    value: canonMcpSnapshot.overlayCandidatePromotionReadinessReports
+  });
+  const canonOverlayCandidatePromotionApprovalRecords = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay candidate promotion approval record content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCandidatePromotionApprovalRecordCollection',
+    constName: 'CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS',
+    value: canonMcpSnapshot.overlayCandidatePromotionApprovalRecords
+  });
+
   // Write generated files
   await Promise.all([
     writeFile(join(OUT_DIR, 'papers.ts'), papers, 'utf-8'),
     writeFile(join(OUT_DIR, 'canon.ts'), canon, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-registry.ts'), canonRegistry, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-public-export-classification.ts'), canonPublicExportClassification, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-catalog.ts'), canonOverlayCatalog, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-template-files.ts'), canonOverlayTemplateFiles, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-intake-inventory.ts'), canonOverlayIntakeInventory, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-candidate-queue.ts'), canonOverlayCandidateQueue, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-candidate-review-packets.ts'), canonOverlayCandidateReviewPackets, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-candidate-promotion-plans.ts'), canonOverlayCandidatePromotionPlans, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-candidate-promotion-readiness-reports.ts'), canonOverlayCandidatePromotionReadinessReports, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-candidate-promotion-approval-records.ts'), canonOverlayCandidatePromotionApprovalRecords, 'utf-8'),
     writeFile(join(OUT_DIR, 'patterns.ts'), patterns, 'utf-8'),
     writeFile(join(OUT_DIR, 'graph.ts'), graph, 'utf-8'),
     writeFile(join(OUT_DIR, 'property-docs.ts'), propertyDocs.source, 'utf-8'),
@@ -554,12 +696,30 @@ async function main() {
   // Count content
   const paperCount = (papers.match(/slug:/g) || []).length;
   const canonCount = (canon.match(/slug:/g) || []).length;
+  const canonRegistryCount = (canonRegistry.match(/"id":/g) || []).length - 1;
+  const canonPublicExportClassificationCount = (canonPublicExportClassification.match(/"exportPath":/g) || []).length;
+  const canonOverlayTemplateCount = (canonOverlayCatalog.match(/"manifest":/g) || []).length;
+  const canonOverlayIntakeCount = (canonOverlayIntakeInventory.match(/"manifestPath":/g) || []).length;
+  const canonOverlayCandidateCount = (canonOverlayCandidateQueue.match(/"intakeId":/g) || []).length;
+  const canonOverlayCandidateReviewPacketCount = (canonOverlayCandidateReviewPackets.match(/"candidateId":/g) || []).length;
+  const canonOverlayCandidatePromotionPlanCount = (canonOverlayCandidatePromotionPlans.match(/"planUri":/g) || []).length;
+  const canonOverlayCandidatePromotionReadinessReportCount = (canonOverlayCandidatePromotionReadinessReports.match(/"readinessUri":/g) || []).length;
+  const canonOverlayCandidatePromotionApprovalRecordCount = (canonOverlayCandidatePromotionApprovalRecords.match(/"approvalUri":/g) || []).length;
   const patternCount = (patterns.match(/slug:/g) || []).length;
   const nodeCount = (graph.match(/"id":/g) || []).length;
 
   console.log('Content built successfully:');
   console.log(`  Papers:         ${paperCount}`);
   console.log(`  Canon:          ${canonCount}`);
+  console.log(`  Canon registry: ${canonRegistryCount} items`);
+  console.log(`  Canon export policy: ${canonPublicExportClassificationCount} rules`);
+  console.log(`  Canon overlays: ${canonOverlayTemplateCount} templates`);
+  console.log(`  Canon overlay intake: ${canonOverlayIntakeCount} project manifests`);
+  console.log(`  Canon overlay candidates: ${canonOverlayCandidateCount} candidates`);
+  console.log(`  Canon overlay review packets: ${canonOverlayCandidateReviewPacketCount} packets`);
+  console.log(`  Canon overlay promotion plans: ${canonOverlayCandidatePromotionPlanCount} plans`);
+  console.log(`  Canon overlay readiness reports: ${canonOverlayCandidatePromotionReadinessReportCount} reports`);
+  console.log(`  Canon overlay approval records: ${canonOverlayCandidatePromotionApprovalRecordCount} records`);
   console.log(`  Patterns:       ${patternCount}`);
   console.log(`  Graph:          ${nodeCount} nodes`);
   console.log(`  Property docs:  ${propertyDocs.totalCount}`);

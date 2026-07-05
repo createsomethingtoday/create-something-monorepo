@@ -6,6 +6,27 @@
 import type { ContentItem } from './content/types.js';
 import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
+import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
+import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
+import { CANON_OVERLAY_TEMPLATE_FILE_PACK } from './content/generated/canon-overlay-template-files.js';
+import { CANON_OVERLAY_INTAKE_INVENTORY } from './content/generated/canon-overlay-intake-inventory.js';
+import { CANON_OVERLAY_CANDIDATE_QUEUE } from './content/generated/canon-overlay-candidate-queue.js';
+import {
+  CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS
+} from './content/generated/canon-overlay-candidate-review-packets.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS
+} from './content/generated/canon-overlay-candidate-promotion-plans.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS
+} from './content/generated/canon-overlay-candidate-promotion-readiness-reports.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS
+} from './content/generated/canon-overlay-candidate-promotion-approval-records.js';
+import {
+  buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection,
+  buildCanonOverlayCandidatePromotionApprovalValidationReportCollection
+} from './canon-overlay-candidate-promotion-approval-record.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -29,6 +50,10 @@ import {
 
 function buildContentIndex(): ContentItem[] {
   const items: ContentItem[] = [];
+  const canonApprovalTargetTemplates =
+    buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection();
+  const canonApprovalValidationReports =
+    buildCanonOverlayCandidatePromotionApprovalValidationReportCollection();
 
   // Papers
   for (const p of PAPERS) {
@@ -53,6 +78,464 @@ function buildContentIndex(): ContentItem[] {
       content: c.content,
       property: 'ltd',
       uri: `canon://${c.slug}`
+    });
+  }
+
+  for (const item of CANON_REGISTRY_MANIFEST.items) {
+    items.push({
+      id: `canon-registry:${item.id}`,
+      type: 'canon-registry',
+      title: item.name,
+      description: item.description,
+      content: [
+        item.kind,
+        item.maturity,
+        item.sourcePath,
+        item.importPath ?? '',
+        item.docsPath ?? '',
+        item.tags.join(' '),
+        item.modalities.join(' '),
+        item.dependencies?.join(' ') ?? '',
+        item.contract.accessibility ?? '',
+        item.contract.evidence ?? '',
+        item.contract.motion ?? '',
+        item.contract.extension ?? ''
+      ].join('\n'),
+      property: 'ltd',
+      uri: `canon://registry/${item.id}`
+    });
+  }
+
+  for (const template of CANON_OVERLAY_CATALOG.templates) {
+    items.push({
+      id: `canon-overlay:${template.id}`,
+      type: 'canon-registry',
+      title: template.name,
+      description: template.summary,
+      content: [
+        CANON_OVERLAY_CATALOG.description,
+        template.manifest.targetModalities.join(' '),
+        template.outputFiles.join(' '),
+        `template files ${CANON_OVERLAY_TEMPLATE_FILE_PACK.filesUri}`,
+        template.registryItemIds.join(' '),
+        template.review.status,
+        template.review.summary,
+        CANON_OVERLAY_CATALOG.overlayRules.join('\n'),
+        CANON_OVERLAY_CATALOG.agentContract.useFor.join('\n'),
+        CANON_OVERLAY_CATALOG.agentContract.stopBefore.join('\n')
+      ].join('\n'),
+      property: 'ltd',
+      uri: `canon://overlays/${template.id}`
+    });
+  }
+
+  items.push({
+    id: `canon-overlay-template-file-pack:${CANON_OVERLAY_TEMPLATE_FILE_PACK.templateId}`,
+    type: 'canon-registry',
+    title: 'Canon Project Overlay Template File Pack',
+    description: CANON_OVERLAY_TEMPLATE_FILE_PACK.description,
+    content: [
+      CANON_OVERLAY_TEMPLATE_FILE_PACK.templateId,
+      CANON_OVERLAY_TEMPLATE_FILE_PACK.files.map((file) => `${file.relativePath} ${file.description} ${file.mimeType}`).join('\n'),
+      CANON_OVERLAY_TEMPLATE_FILE_PACK.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_TEMPLATE_FILE_PACK.agentContract.stopBefore.join('\n'),
+      'theme.css tokens.json templates surface brief copy rules surface policy registry.json manifest.ts web chat app voice glasses'
+    ].join('\n'),
+    property: 'ltd',
+    uri: CANON_OVERLAY_TEMPLATE_FILE_PACK.filesUri
+  });
+
+  for (const file of CANON_OVERLAY_TEMPLATE_FILE_PACK.files) {
+    items.push({
+      id: `canon-overlay-template-file:${file.templateId}:${file.relativePath}`,
+      type: 'canon-registry',
+      title: `Canon Overlay Template File: ${file.relativePath}`,
+      description: file.description,
+      content: [
+        file.templateId,
+        file.relativePath,
+        file.outputPath,
+        file.mimeType,
+        file.description,
+        file.content,
+        file.uri
+      ].join('\n'),
+      property: 'ltd',
+      uri: file.uri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-intake:inventory',
+    type: 'canon-registry',
+    title: 'Canon Overlay Intake Inventory',
+    description: CANON_OVERLAY_INTAKE_INVENTORY.description,
+    content: [
+      CANON_OVERLAY_INTAKE_INVENTORY.summary.total.toString(),
+      CANON_OVERLAY_INTAKE_INVENTORY.summary.ready.toString(),
+      CANON_OVERLAY_INTAKE_INVENTORY.summary.needsArtifacts.toString(),
+      CANON_OVERLAY_INTAKE_INVENTORY.summary.needsEvidence.toString(),
+      CANON_OVERLAY_INTAKE_INVENTORY.summary.candidateIntakes.toString(),
+      CANON_OVERLAY_INTAKE_INVENTORY.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_INTAKE_INVENTORY.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/intake'
+  });
+
+  for (const entry of CANON_OVERLAY_INTAKE_INVENTORY.entries) {
+    items.push({
+      id: `canon-overlay-intake:${entry.manifest.id}`,
+      type: 'canon-registry',
+      title: entry.manifest.name,
+      description: entry.review.summary,
+      content: [
+        entry.manifestPath,
+        entry.manifest.owner,
+        entry.manifest.sourcePackage,
+        entry.manifest.targetModalities.join(' '),
+        entry.review.status,
+        entry.review.missingArtifacts.join(' '),
+        entry.review.integrityIssues.map(issue => `${issue.kind} ${issue.context} ${issue.path ?? ''} ${issue.registryItemId ?? ''} ${issue.message}`).join('\n'),
+        entry.review.stopConditions.join('\n'),
+        entry.review.extensionDecisions.map(decision => `${decision.packet.id} ${decision.decision.stage} ${decision.decision.action}`).join('\n')
+      ].join('\n'),
+      property: 'ltd',
+      uri: `canon://overlays/intake/${entry.manifest.id}`
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate:queue',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Queue',
+    description: CANON_OVERLAY_CANDIDATE_QUEUE.description,
+    content: [
+      CANON_OVERLAY_CANDIDATE_QUEUE.summary.total.toString(),
+      CANON_OVERLAY_CANDIDATE_QUEUE.summary.overlays.toString(),
+      CANON_OVERLAY_CANDIDATE_QUEUE.summary.byRequestedKind.map(item => `${item.kind} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_QUEUE.summary.byModality.map(item => `${item.modality} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_QUEUE.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_CANDIDATE_QUEUE.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates'
+  });
+
+  for (const entry of CANON_OVERLAY_CANDIDATE_QUEUE.entries) {
+    items.push({
+      id: `canon-overlay-candidate:${entry.intakeId}`,
+      type: 'canon-registry',
+      title: entry.title,
+      description: entry.summary,
+      content: [
+        entry.overlayId,
+        entry.overlayName,
+        entry.manifestPath,
+        entry.owner,
+        entry.sourcePackage,
+        entry.sourcePath ?? '',
+        entry.requestedKind,
+        entry.requestedModalities.join(' '),
+        entry.tags.join(' '),
+        entry.dependencies.join(' '),
+        entry.surfaces.map(surface => `${surface.surfaceId} ${surface.name} ${surface.modality} ${surface.sourcePath ?? ''} ${surface.proof ?? ''}`).join('\n'),
+        entry.requiredEvidence.join('\n'),
+        entry.stopBeforeStable.join('\n'),
+        entry.rationale,
+        entry.reviewUri,
+        entry.handoffUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: entry.candidateUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-review:packets',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Review Packets',
+    description: CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.description,
+    content: [
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.summary.total.toString(),
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.summary.overlays.toString(),
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.summary.byRequestedKind.map(item => `${item.kind} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.summary.byModality.map(item => `${item.modality} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/handoffs'
+  });
+
+  for (const packet of CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.entries) {
+    items.push({
+      id: `canon-overlay-candidate-review:${packet.intakeId}`,
+      type: 'canon-registry',
+      title: packet.title,
+      description: packet.summary,
+      content: [
+        packet.candidateId,
+        packet.overlayId,
+        packet.overlayName,
+        packet.manifestPath,
+        packet.owner,
+        packet.sourcePackage,
+        packet.sourcePath ?? '',
+        packet.requestedKind,
+        packet.requestedModalities.join(' '),
+        packet.tags.join(' '),
+        packet.dependencies.join(' '),
+        packet.surfaces.map(surface => `${surface.surfaceId} ${surface.name} ${surface.modality} ${surface.sourcePath ?? ''} ${surface.proof ?? ''}`).join('\n'),
+        packet.requiredEvidence.join('\n'),
+        packet.stopBeforeStable.join('\n'),
+        packet.promotionChecklist.join('\n'),
+        packet.approvalBoundary.join('\n'),
+        packet.agentContract.useFor.join('\n'),
+        packet.agentContract.stopBefore.join('\n'),
+        packet.rationale,
+        packet.reviewUri,
+        packet.candidateUri,
+        packet.handoffUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: packet.handoffUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-promotion-plan:collection',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Promotion Plans',
+    description: CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.description,
+    content: [
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.summary.total.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.summary.overlays.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.summary.byRequestedKind.map(item => `${item.kind} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.summary.byModality.map(item => `${item.modality} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/promotion-plans'
+  });
+
+  for (const plan of CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.entries) {
+    items.push({
+      id: `canon-overlay-candidate-promotion-plan:${plan.intakeId}`,
+      type: 'canon-registry',
+      title: plan.title,
+      description: plan.summary,
+      content: [
+        plan.packetId,
+        plan.candidateId,
+        plan.overlayId,
+        plan.overlayName,
+        plan.manifestPath,
+        plan.owner,
+        plan.sourcePackage,
+        plan.sourcePath ?? '',
+        plan.requestedKind,
+        plan.requestedModalities.join(' '),
+        plan.preconditions.join('\n'),
+        plan.implementationScope.join('\n'),
+        plan.requiredChanges.join('\n'),
+        plan.validationPlan.join('\n'),
+        plan.documentationPlan.join('\n'),
+        plan.compatibilityPlan.join('\n'),
+        plan.stopConditions.join('\n'),
+        plan.approvalBoundary.join('\n'),
+        plan.agentContract.useFor.join('\n'),
+        plan.agentContract.stopBefore.join('\n'),
+        plan.planUri,
+        plan.handoffUri,
+        plan.candidateUri,
+        plan.reviewUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: plan.planUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-promotion-readiness:collection',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Promotion Readiness Reports',
+    description: CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.description,
+    content: [
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.summary.total.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.summary.needsApproval.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.summary.needsTargets.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.summary.readyForImplementation.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/readiness-reports'
+  });
+
+  for (const report of CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.entries) {
+    items.push({
+      id: `canon-overlay-candidate-promotion-readiness:${report.intakeId}`,
+      type: 'canon-registry',
+      title: report.title,
+      description: report.summary,
+      content: [
+        report.planId,
+        report.candidateId,
+        report.status,
+        report.checks.map(check => `${check.id} ${check.label} ${check.status} ${check.requiredAction} ${check.evidence.join(' ')}`).join('\n'),
+        report.relatedRegistryItems.map(item => `${item.id} ${item.name} ${item.kind} ${item.maturity} ${item.docsPath ?? ''} ${item.reason}`).join('\n'),
+        report.candidateExportPolicies.map(rule => `${rule.exportPath} ${rule.exportName ?? ''} ${rule.classification} ${rule.registryPolicy} ${rule.rationale}`).join('\n'),
+        report.stopConditions.join('\n'),
+        report.approvalBoundary.join('\n'),
+        report.agentContract.useFor.join('\n'),
+        report.agentContract.stopBefore.join('\n'),
+        report.readinessUri,
+        report.planUri,
+        report.handoffUri,
+        report.candidateUri,
+        report.reviewUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: report.readinessUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-promotion-approval-record:collection',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Promotion Approval Records',
+    description: CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.description,
+    content: [
+      CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.summary.total.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.summary.approvalRequired.toString(),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/approval-records'
+  });
+
+  for (const record of CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.entries) {
+    items.push({
+      id: `canon-overlay-candidate-promotion-approval-record:${record.intakeId}`,
+      type: 'canon-registry',
+      title: record.title,
+      description: record.summary,
+      content: [
+        record.readinessReportId,
+        record.planId,
+        record.candidateId,
+        record.state,
+        record.requiredFields.map(field => `${field.id} ${field.label} ${field.required ? 'required' : 'optional'} ${field.value ?? 'UNSET'} ${field.instructions} ${field.hints.join(' ')}`).join('\n'),
+        record.targetHints.registryItems.map(item => `${item.id} ${item.name} ${item.kind} ${item.maturity} ${item.docsPath ?? ''} ${item.reason}`).join('\n'),
+        record.targetHints.exportPolicies.map(rule => `${rule.exportPath} ${rule.exportName ?? ''} ${rule.classification} ${rule.registryPolicy} ${rule.rationale}`).join('\n'),
+        record.targetHints.docsPaths.join('\n'),
+        record.checklist.join('\n'),
+        record.stopConditions.join('\n'),
+        record.approvalBoundary.join('\n'),
+        record.agentContract.useFor.join('\n'),
+        record.agentContract.stopBefore.join('\n'),
+        record.approvalUri,
+        record.readinessUri,
+        record.planUri,
+        record.handoffUri,
+        record.candidateUri,
+        record.reviewUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: record.approvalUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-promotion-approval-target-template:collection',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Promotion Approval Target Templates',
+    description: canonApprovalTargetTemplates.description,
+    content: [
+      canonApprovalTargetTemplates.summary.total.toString(),
+      canonApprovalTargetTemplates.agentContract.useFor.join('\n'),
+      canonApprovalTargetTemplates.agentContract.stopBefore.join('\n'),
+      'target JSON approvalOwner approvalEvidence approvedAt registryAction registryItemId exportPath exportName docsPath maturityTarget implementationOwner',
+      'fillable target template null unset validation hints allowed values'
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/approval-target-templates'
+  });
+
+  for (const template of canonApprovalTargetTemplates.entries) {
+    items.push({
+      id: `canon-overlay-candidate-promotion-approval-target-template:${template.intakeId}`,
+      type: 'canon-registry',
+      title: template.title,
+      description: template.instructions.join(' '),
+      content: [
+        template.approvalRecordId,
+        template.readinessReportId,
+        template.planId,
+        template.candidateId,
+        JSON.stringify({ target: template.target }, null, 2),
+        template.fields.map(field => `${field.id} ${field.label} ${field.required ? 'required' : 'optional'} ${field.value ?? 'UNSET'} ${field.instructions} ${field.hints.join(' ')}`).join('\n'),
+        template.allowedValues.registryActions.join('\n'),
+        template.allowedValues.maturityTargets.join('\n'),
+        template.targetHints.registryItems.map(item => `${item.id} ${item.name} ${item.kind} ${item.maturity} ${item.docsPath ?? ''} ${item.reason}`).join('\n'),
+        template.targetHints.exportPolicies.map(rule => `${rule.exportPath} ${rule.exportName ?? ''} ${rule.classification} ${rule.registryPolicy} ${rule.rationale}`).join('\n'),
+        template.targetHints.docsPaths.join('\n'),
+        template.instructions.join('\n'),
+        template.approvalBoundary.join('\n'),
+        template.agentContract.useFor.join('\n'),
+        template.agentContract.stopBefore.join('\n'),
+        template.targetTemplateUri,
+        template.approvalUri,
+        template.validationUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: template.targetTemplateUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-promotion-approval-validation:collection',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Promotion Approval Validation Reports',
+    description: canonApprovalValidationReports.description,
+    content: [
+      canonApprovalValidationReports.summary.total.toString(),
+      canonApprovalValidationReports.summary.missingRequiredFields.toString(),
+      canonApprovalValidationReports.summary.invalidTargets.toString(),
+      canonApprovalValidationReports.summary.readyForImplementation.toString(),
+      canonApprovalValidationReports.agentContract.useFor.join('\n'),
+      canonApprovalValidationReports.agentContract.stopBefore.join('\n'),
+      'validation missing required fields invalid targets ready for implementation approval boundary'
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/approval-validation-reports'
+  });
+
+  for (const report of canonApprovalValidationReports.entries) {
+    items.push({
+      id: `canon-overlay-candidate-promotion-approval-validation:${report.intakeId}`,
+      type: 'canon-registry',
+      title: report.title,
+      description: `${report.status}: ${report.summary.missingRequiredFields} missing required fields, ${report.summary.invalidTargetFields} invalid target fields`,
+      content: [
+        report.approvalRecordId,
+        report.readinessReportId,
+        report.planId,
+        report.candidateId,
+        report.status,
+        report.summary.readyForImplementation ? 'ready for implementation' : 'not ready for implementation',
+        report.issues.map(issue => `${issue.code} ${issue.severity} ${issue.fieldId ?? ''} ${issue.message} ${issue.evidence.join(' ')}`).join('\n'),
+        report.approvalBoundary.join('\n'),
+        report.agentContract.useFor.join('\n'),
+        report.agentContract.stopBefore.join('\n'),
+        report.approvalUri,
+        report.validationUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: report.validationUri
     });
   }
 

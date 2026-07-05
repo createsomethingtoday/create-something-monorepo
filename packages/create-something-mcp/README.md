@@ -18,6 +18,9 @@ Content from all CREATE SOMETHING properties.
 |-------------|----------|-------------|
 | `papers://list`, `papers://{slug}` | .io | Research papers on methodology, architecture, philosophy |
 | `canon://list`, `canon://{slug}` | .ltd | Canon Design System pages (foundations, concepts, guidelines) |
+| `canon://registry`, `canon://registry/list`, `canon://registry/{id}` | .ltd | Machine-readable Canon registry for components, tokens, templates, adapters, policies, and modalities |
+| `canon://overlays`, `canon://overlays/{id}`, `canon://overlays/{id}/files`, `canon://overlays/{id}/files/...` | .ltd | Canon overlay catalog, project-overlay templates, and read-only template file packs |
+| `canon://overlays/candidates/...` | .ltd | Canon overlay candidate queue, handoffs, promotion plans, readiness reports, approval records, approval target templates, and approval validation reports |
 | `patterns://list`, `patterns://{slug}` | .ltd | Design patterns from the CREATE SOMETHING philosophy |
 | `masters://list`, `masters://{slug}` | .ltd | Philosophical and design masters (Rams, Heidegger, etc.) |
 | `framework://definitions`, `framework://definitions/{tier}` | framework | Three-Tier Framework definitions |
@@ -43,6 +46,13 @@ Content from all CREATE SOMETHING properties.
 | `classify_component` | Classify a component into Three-Tier Framework tier(s) with confidence and rationale. |
 | `apply_triad` | Apply the Subtractive Triad (DRY, Rams, Heidegger) to an artifact. |
 | `audit_design` | Audit a design against the Canon Design System. |
+| `canon_registry_search` | Search Canon components, tokens, templates, adapters, and policies by query, modality, kind, and maturity. |
+| `canon_registry_get` | Get one Canon registry item with source path, import path, docs path, dependencies, modalities, and contract notes. |
+| `canon_template_get` | Get a Canon template by id or modality for web/chat/app/voice/glasses surfaces, including overlay template packs. |
+| `canon_overlay_template_file_get` | Get the rendered read-only Canon project overlay template file pack, or one template file by relative path, without writing files. |
+| `canon_extension_route` | Route a project/client Canon extension intake packet to project-local, candidate, stable-reuse, or deprecation guidance. |
+| `canon_overlay_review` | Review a project/client Canon overlay manifest for theme, tokens, templates, copy rules, surface policy, registry metadata, and extension-intake gaps. |
+| `canon_overlay_instantiate_preview` | Preview a Canon project/client overlay instantiation plan, generated manifest, and optional eight-file contents without writing files. |
 
 ## Prompts (Judgment Tier)
 
@@ -129,20 +139,20 @@ Worker deploys include telemetry via `@create-something/mcp-core` and the `TELEM
 |-------|-------|
 | Entry point | `README.md`, `src/index.ts`, `worker/index.ts` |
 | Boot command | `pnpm --filter=@create-something/mcp build && node packages/create-something-mcp/dist/index.js` for local stdio, or `cd packages/create-something-mcp/worker && npm run dev` for the Worker runtime |
-| Smoke command | `pnpm --filter=@create-something/mcp typecheck && pnpm --filter=@create-something/mcp build` |
-| Validation surfaces | typecheck output, content build artifacts in `src/content/generated/`, stdio startup, Worker logs via `npm run tail`, telemetry rows in `mcp_tool_invocations` and `mcp_run_counts` |
+| Smoke command | `pnpm --filter=@create-something/mcp typecheck && pnpm --filter=@create-something/mcp test && pnpm --filter=@create-something/mcp build` |
+| Validation surfaces | typecheck output, Canon overlay preview parity check, content build artifacts in `src/content/generated/`, stdio startup, Worker logs via `npm run tail`, telemetry rows in `mcp_tool_invocations` and `mcp_run_counts` |
 | UI validation path | none |
 | Escalation rule | Stop if the remote Worker behavior, telemetry, or embedded content output disagrees with local stdio behavior and the mismatch cannot be reproduced from the checked-in content pipeline. |
 
 ## Content Pipeline
 
-Content is extracted from the monorepo's source files and compiled into JSON:
+Content and the Canon registry are extracted from the monorepo's source files and compiled into JSON:
 
 ```bash
 pnpm --filter=@create-something/mcp build:content
 ```
 
-This generates files in `src/content/generated/` (papers, canon, patterns, graph, property-docs). Other content (masters, praxis, products, framework) is hand-authored in `src/content/`.
+This generates files in `src/content/generated/` (papers, canon, canon-registry, patterns, graph, property-docs). Other content (masters, praxis, products, framework) is hand-authored in `src/content/`.
 
 Playbook data is imported from `@create-something/playbook-mcp` (canonical source) — not duplicated.
 

@@ -1,3 +1,12 @@
+import {
+	createPublicAtlasDevelopmentHandoff,
+	type PublicAtlasDevelopmentHandoff as AtlasDevelopmentHandoff
+} from '@create-something/canon/atlas/handoff';
+import {
+	normalizePublicAtlasCanvas,
+	type PublicAtlasCanvas
+} from '@create-something/canon/atlas/headless';
+
 export type CaptureSurface =
 	| 'newsletter'
 	| 'contact'
@@ -42,6 +51,7 @@ export interface CaptureReviewRecord {
 	updated_at?: string | null;
 	excerpt?: string | null;
 	metadata?: Record<string, unknown>;
+	atlas_handoff?: AtlasDevelopmentHandoff | null;
 	review?: CaptureReviewDecisionSummary;
 	classification: CaptureClassification;
 }
@@ -186,6 +196,8 @@ interface AtlasSessionRow {
 	email_hash: string | null;
 	readiness_slug: string | null;
 	readiness_score: number | null;
+	canvas_json: string | null;
+	summary: string | null;
 	source: string | null;
 	created_at: string | null;
 	updated_at: string | null;
@@ -274,7 +286,6 @@ const VALID_RECOMMENDED_ACTIONS = new Set<CaptureRecommendedAction>([
 	'suppress',
 ]);
 const VALID_CONFIDENCE = new Set<CaptureClassification['confidence']>(['high', 'medium', 'low']);
-
 function normalizeEmail(value: string | null | undefined): string | null {
 	const normalized = value?.trim().toLowerCase();
 	return normalized || null;
@@ -288,6 +299,28 @@ function emailDomain(email: string | null): string | null {
 function localPart(email: string | null): string {
 	const at = email?.lastIndexOf('@') ?? -1;
 	return at >= 0 ? email?.slice(0, at) ?? '' : '';
+}
+
+function parseAtlasCanvas(value: string | null): PublicAtlasCanvas | null {
+	if (!value) return null;
+
+	try {
+		return normalizePublicAtlasCanvas(JSON.parse(value));
+	} catch {
+		return null;
+	}
+}
+
+function buildAtlasDevelopmentHandoff(row: AtlasSessionRow): AtlasDevelopmentHandoff | null {
+	const canvas = parseAtlasCanvas(row.canvas_json);
+	if (!canvas) return null;
+
+	return createPublicAtlasDevelopmentHandoff({
+		sessionId: row.id,
+		canvas,
+		source: row.source,
+		summary: row.summary
+	});
 }
 
 function isGeneratedLookingEmail(email: string | null): boolean {
@@ -883,7 +916,7 @@ export async function buildCaptureReview(
 		const rows = await queryAll<AtlasSessionRow>(
 			db,
 			`SELECT id, email_hash, readiness_slug, readiness_score, source, created_at, updated_at,
-			        substr(summary, 1, 220) AS summary_excerpt
+			        canvas_json, summary, substr(summary, 1, 220) AS summary_excerpt
 			   FROM public_atlas_sessions
 			  WHERE email_hash IS NOT NULL
 			  ORDER BY datetime(COALESCE(updated_at, created_at)) DESC
@@ -893,6 +926,7 @@ export async function buildCaptureReview(
 
 		for (const row of rows) {
 			const matchedEmail = await matchAtlasEmailHash(row.email_hash, knownEmails);
+			const atlasHandoff = buildAtlasDevelopmentHandoff(row);
 			addRecord(records, {
 				id: row.id,
 				surface: 'public_atlas',
@@ -907,7 +941,10 @@ export async function buildCaptureReview(
 				metadata: {
 					readiness_score: row.readiness_score,
 					hash_matched_from_known_email: Boolean(matchedEmail),
+					atlas_handoff_title: atlasHandoff?.title,
+					atlas_handoff_lane: atlasHandoff?.lane,
 				},
+				atlas_handoff: atlasHandoff,
 			});
 		}
 	}

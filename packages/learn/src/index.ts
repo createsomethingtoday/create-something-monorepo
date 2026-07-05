@@ -1,10 +1,10 @@
 /**
  * @createsomething/learn
  *
- * MCP server for the CREATE SOMETHING Codex MCP course.
+ * MCP server for the CREATE SOMETHING first business MCP course.
  *
  * @example
- * // In Codex settings:
+ * // In Codex app settings:
  * {
  *   "mcpServers": {
  *     "learn": {

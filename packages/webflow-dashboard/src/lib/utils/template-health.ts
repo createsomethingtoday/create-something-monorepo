@@ -571,7 +571,7 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 			addActionOnce(actions, {
 				title: 'Maintain direct-access readiness',
 				description:
-					'This template is out of marketplace search. Keep its detail page, fulfillment link, and buyer access accurate while it is detail-only.',
+					'This template is out of marketplace search. Keep its detail page and buyer access accurate while it is detail-only.',
 				priority: 'medium'
 			});
 		}

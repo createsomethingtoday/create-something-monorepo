@@ -2,7 +2,7 @@
   /**
    * Progress Page
    *
-   * Shows lesson completion and time spent for the Codex MCP course.
+   * Shows lesson completion and time spent for the first business MCP course.
    */
 
   import type { PageData } from './$types';
@@ -60,7 +60,7 @@
       </button>
     </div>
     <p class="page-subtitle">
-      Welcome back{user?.name ? `, ${user.name}` : ''}. Continue the Codex MCP course.
+      Welcome back{user?.name ? `, ${user.name}` : ''}. Continue learning Codex by creating your first business MCP.
     </p>
   </header>
 
@@ -167,7 +167,7 @@
       <p>
         Start with
         <a href="/paths/codex-mcp/what-is-codex-and-mcp">Lesson 1</a>
-        to begin building your MCP server with Codex.
+        to begin creating your MCP server in Codex.
       </p>
     </section>
   {/if}

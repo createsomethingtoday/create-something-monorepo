@@ -21,6 +21,8 @@ export interface TemplateDetailImage {
 export interface TemplateDetailOfferInput {
   templateSlug?: string;
   price?: string;
+  /** The pre-offer price, for strikethrough/savings when `price` already reflects the applied sale price. */
+  originalPrice?: string;
   marketplaceTemplateId?: string;
   offerEnabled?: boolean;
   offerMode?: TemplateDetailOfferMode;
@@ -39,6 +41,7 @@ export interface TemplateDetailOfferState {
   mode: TemplateDetailOfferMode;
   priceLabel: string;
   offerPriceLabel: string;
+  originalPriceLabel: string;
   badgeLabel: string;
   primaryHref: string;
   primaryTarget?: string;
@@ -178,7 +181,9 @@ function resolveMode(input: TemplateDetailOfferInput, hasOffer: boolean): Templa
   if (input.isFree || isFreePrice(input.price)) return 'free';
   if (hasOffer && input.offerMode === 'fulfillment_link') return 'fulfillment_link';
   if (hasOffer && input.offerMode === 'free') return 'free';
-  if (hasOffer) return 'fulfillment_link';
+  // Price-change offers are applied to the real template price and sold through
+  // standard Marketplace checkout; only explicit fulfillment offers swap the CTA.
+  if (hasOffer) return 'marketplace';
   return input.offerMode === 'free' ? 'free' : 'marketplace';
 }
 
@@ -187,7 +192,7 @@ function offerBadge(mode: TemplateDetailOfferMode, label: string, hasOffer: bool
   if (!hasOffer && mode !== 'free') return '';
   if (mode === 'free') return 'Free template';
   if (mode === 'fulfillment_link') return 'Creator fulfillment';
-  return '';
+  return hasOffer ? 'Limited-time price' : '';
 }
 
 function marketplacePrimaryLabel(priceLabel: string): string {
@@ -201,7 +206,6 @@ function marketplacePrimaryLabel(priceLabel: string): string {
 function primaryLabel(mode: TemplateDetailOfferMode, hasOffer: boolean, priceLabel: string): string {
   if (mode === 'free') return 'Use for free';
   if (mode === 'fulfillment_link') return 'Get creator offer';
-  if (hasOffer) return 'Get creator offer';
   return marketplacePrimaryLabel(priceLabel);
 }
 
@@ -227,7 +231,7 @@ function secondaryCopy(mode: TemplateDetailOfferMode, hasOffer: boolean, visibil
     return 'Limited creator offer. After this window, the listing may move to detail-only access or a marketplace lifecycle review.';
   }
   if (hasOffer) {
-    return 'Limited creator offer. Availability returns to the standard Marketplace path unless the listing enters a lifecycle review.';
+    return 'Limited-time price applied at standard Webflow Marketplace checkout.';
   }
   return 'Purchase through Webflow Marketplace checkout.';
 }
@@ -235,7 +239,6 @@ function secondaryCopy(mode: TemplateDetailOfferMode, hasOffer: boolean, visibil
 function purchaseType(mode: TemplateDetailOfferMode, hasOffer: boolean): string {
   if (mode === 'free') return 'free';
   if (mode === 'fulfillment_link') return 'fulfillment_link';
-  if (hasOffer) return 'fulfillment_link';
   return 'marketplace_checkout';
 }
 
@@ -287,15 +290,16 @@ export function resolveTemplateDetailOffer(input: TemplateDetailOfferInput): Tem
   const priceLabel = isFreeTemplate ? 'Free' : compact(input.price) || DEFAULT_PRICE;
   const hasOffer = Boolean(input.offerEnabled && (offerPriceLabel || compact(input.offerLabel) || fulfillmentUrl.href));
   const mode = resolveMode(input, hasOffer);
-  const activePrimaryLink = hasOffer ? fulfillmentUrl : checkoutFallbackUrl;
+  const activePrimaryLink = hasOffer && mode === 'fulfillment_link' ? fulfillmentUrl : checkoutFallbackUrl;
   const fallbackPrimaryLink = checkoutFallbackUrl.href ? checkoutFallbackUrl : fulfillmentUrl;
   const primaryLink = activePrimaryLink.href ? activePrimaryLink : fallbackPrimaryLink;
 
-  const originalPrice = parsePrice(priceLabel);
-  const offerPrice = parsePrice(offerPriceLabel);
+  const originalPriceLabel = compact(input.originalPrice);
+  const originalPrice = parsePrice(originalPriceLabel) ?? parsePrice(priceLabel);
+  const currentPrice = parsePrice(offerPriceLabel) ?? parsePrice(priceLabel);
   const savings =
-    hasOffer && offerPriceLabel && originalPrice && offerPrice !== null && offerPrice < originalPrice
-      ? Math.round((1 - offerPrice / originalPrice) * 100)
+    hasOffer && originalPrice && currentPrice !== null && currentPrice < originalPrice
+      ? Math.round((1 - currentPrice / originalPrice) * 100)
       : 0;
   const expiresLabel = formatDateLabel(input.offerEndsAt);
 
@@ -304,6 +308,7 @@ export function resolveTemplateDetailOffer(input: TemplateDetailOfferInput): Tem
     mode,
     priceLabel,
     offerPriceLabel,
+    originalPriceLabel,
     badgeLabel: offerBadge(mode, compact(input.offerLabel), hasOffer),
     primaryHref: primaryLink.href || '#',
     primaryTarget: primaryLink.target,

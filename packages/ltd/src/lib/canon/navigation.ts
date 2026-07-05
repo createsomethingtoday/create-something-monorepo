@@ -7,23 +7,28 @@
 
 export interface NavItem {
 	label: string;
-	href: string;
+	href?: string;
 	/** Child items for nested navigation */
 	children?: NavItem[];
 	/** Whether this is an external link */
 	external?: boolean;
 	/** Badge text (e.g., "New", "Beta") */
 	badge?: string;
+	/** Whether this group should be open before route-specific expansion */
+	defaultOpen?: boolean;
 }
 
 export interface NavSection {
 	title: string;
 	items: NavItem[];
+	/** Whether this section should be open before route-specific expansion */
+	defaultOpen?: boolean;
 }
 
 export const canonNavigation: NavSection[] = [
 	{
 		title: 'Getting Started',
+		defaultOpen: true,
 		items: [
 			{ label: 'Introduction', href: '/canon' },
 			{ label: 'Philosophy', href: '/canon/foundations/philosophy' },
@@ -56,11 +61,45 @@ export const canonNavigation: NavSection[] = [
 	},
 	{
 		title: 'Components',
+		defaultOpen: true,
 		items: [
 			{ label: 'Overview', href: '/canon/components' },
-			{ label: 'Button', href: '/canon/components/button' },
-			{ label: 'Card', href: '/canon/components/card' },
-			{ label: 'Navigation', href: '/canon/components/navigation' }
+			{
+				label: 'Primitives',
+				children: [
+					{ label: 'Button', href: '/canon/components/button' },
+					{ label: 'Card', href: '/canon/components/card' },
+					{ label: 'Heading', href: '/canon/components/heading' },
+					{ label: 'Icons', href: '/canon/components/icons' },
+					{ label: 'Layout', href: '/canon/components/layout' },
+					{ label: 'Skip To Content', href: '/canon/components/skip-to-content' },
+					{ label: 'Typography', href: '/canon/components/typography' }
+				]
+			},
+			{
+				label: 'Workflow',
+				children: [
+					{ label: 'Clear Components', href: '/canon/components/clear' },
+					{ label: 'Content', href: '/canon/components/content' },
+					{ label: 'Conversion', href: '/canon/components/conversion' },
+					{ label: 'Feedback', href: '/canon/components/feedback' },
+					{ label: 'Filtering', href: '/canon/components/filtering' },
+					{ label: 'Form Controls', href: '/canon/components/form' },
+					{ label: 'Forms', href: '/canon/components/forms' },
+					{ label: 'Insights', href: '/canon/components/insights' }
+				]
+			},
+			{
+				label: 'Systems',
+				children: [
+					{ label: 'Atlas', href: '/canon/components/atlas' },
+					{ label: 'Brand', href: '/canon/components/brand' },
+					{ label: 'Diagrams', href: '/canon/components/diagrams' },
+					{ label: 'Interactive', href: '/canon/components/interactive' },
+					{ label: 'Navigation', href: '/canon/components/navigation' },
+					{ label: 'Patterns', href: '/canon/components/patterns' }
+				]
+			}
 		]
 	},
 	{
@@ -85,6 +124,8 @@ export const canonNavigation: NavSection[] = [
 		title: 'Resources',
 		items: [
 			{ label: 'Tokens', href: '/canon/resources/tokens' },
+			{ label: 'Registry', href: '/canon/resources/registry' },
+			{ label: 'Overlays', href: '/canon/resources/overlays' },
 			{ label: 'Changelog', href: '/canon/resources/changelog' },
 			{ label: 'Contributing', href: '/canon/resources/contributing' },
 			{ label: 'Figma', href: '/canon/resources/figma' }
@@ -97,15 +138,43 @@ export const canonNavigation: NavSection[] = [
  */
 export function flattenNavigation(sections: NavSection[]): NavItem[] {
 	const items: NavItem[] = [];
+	const pushItem = (item: NavItem) => {
+		if (item.href) {
+			items.push(item);
+		}
+		for (const child of item.children ?? []) {
+			pushItem(child);
+		}
+	};
+
 	for (const section of sections) {
 		for (const item of section.items) {
-			items.push(item);
-			if (item.children) {
-				items.push(...item.children);
-			}
+			pushItem(item);
 		}
 	}
 	return items;
+}
+
+function pathMatchesNavigationHref(path: string, href: string): boolean {
+	if (href === '/canon') {
+		return path === href;
+	}
+	return path === href || path.startsWith(`${href}/`);
+}
+
+/**
+ * Find the most specific navigation href for a route path.
+ */
+export function findActiveNavHref(path: string, sections: NavSection[]): string | null {
+	const matchingItems = flattenNavigation(sections).filter((item) =>
+		item.href ? pathMatchesNavigationHref(path, item.href) : false
+	);
+
+	if (matchingItems.length === 0) {
+		return null;
+	}
+
+	return matchingItems.sort((a, b) => (b.href?.length ?? 0) - (a.href?.length ?? 0))[0].href ?? null;
 }
 
 /**
@@ -115,14 +184,19 @@ export function findCurrentNavItem(
 	path: string,
 	sections: NavSection[]
 ): { section: NavSection | null; item: NavItem | null } {
+	const activeHref = findActiveNavHref(path, sections);
+	if (!activeHref) {
+		return { section: null, item: null };
+	}
+
 	for (const section of sections) {
 		for (const item of section.items) {
-			if (item.href === path) {
+			if (item.href === activeHref) {
 				return { section, item };
 			}
 			if (item.children) {
 				for (const child of item.children) {
-					if (child.href === path) {
+					if (child.href === activeHref) {
 						return { section, item: child };
 					}
 				}

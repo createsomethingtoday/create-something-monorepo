@@ -190,6 +190,132 @@ repeatable image-generation contract, see the public Canon Images guideline in
 For component-level usage rules, see
 [`src/lib/components/clear/README.md`](./src/lib/components/clear/README.md).
 
+## Canon Registry
+
+Canon exposes a machine-readable registry at `@create-something/canon/registry`.
+This is the foundation for agent discovery, content MCP resources, templates,
+project overlays, and modality-specific UI guidance.
+
+The registry classifies Canon artifacts as:
+
+- `component`: Svelte primitives such as `Button`, `Navigation`, and `ClearDecisionPanel`
+- `token`: CSS and design-token sources
+- `template`: reusable compositions for governed workflows
+- `adapter`: renderer-independent contracts such as Atlas graph artifacts
+- `policy`: rules and product loops such as Signal -> Decision -> Proof
+
+Each registry item carries source path, import path, docs path, maturity,
+supported modalities (`web`, `chat`, `app`, `voice`, `glasses`), dependencies,
+and contract notes for accessibility, evidence, motion, and extension.
+
+Project and client surfaces should extend Canon through this lifecycle:
+
+1. `project-local`: local overlay owns the need and evidence.
+2. `candidate`: repeated across at least two surfaces or clients.
+3. `canon-stable`: Canon owns export, docs, tests, and compatibility.
+4. `deprecated`: Canon preserves migration guidance and replacement routing.
+
+```typescript
+import {
+  routeCanonExtensionIntake,
+  searchCanonRegistry,
+  getCanonRegistryItem
+} from '@create-something/canon/registry';
+
+const glassesTemplates = searchCanonRegistry('routing evidence', {
+  kind: 'template',
+  modality: 'glasses'
+});
+
+const decisionPanel = getCanonRegistryItem('component.clear-decision-panel');
+
+const routing = routeCanonExtensionIntake({
+  id: 'overlay.client-proof-panel',
+  title: 'Client Proof Panel',
+  summary: 'A client-local proof panel that may become a shared primitive.',
+  requestedKind: 'component',
+  requestedModalities: ['web'],
+  owner: 'client-team',
+  sourcePackage: '@create-something/agency',
+  sourcePath: 'packages/agency/src/lib/ClientProofPanel.svelte',
+  tags: ['proof', 'client'],
+  surfaces: [
+    {
+      surfaceId: 'agency-client-launch',
+      name: 'Agency client launch',
+      modality: 'web',
+      proof: 'Live launch receipt or review evidence'
+    }
+  ]
+});
+```
+
+Use `template.canon-extension-intake` when a project or client surface wants to feed a
+pattern back into Canon. The packet must name the owner, source package, requested kind,
+modalities, tags, evidence surfaces, dependencies, and any existing Canon item it matches or
+deprecates.
+
+`routeCanonExtensionIntake(...)` applies the shared promotion rule:
+
+| Evidence | Routing |
+|----------|---------|
+| Matches a stable registry item | use the existing Canon item instead of forking |
+| One distinct surface | keep project-local and collect proof |
+| Two or more distinct surfaces | promote to `candidate` for Canon review |
+| Deprecates an existing item | keep migration guidance and replacement routing discoverable |
+
+Do not mark an overlay `canon-stable` until Canon owns the export path, docs, tests, and
+compatibility notes.
+
+### Project Overlay Instantiation
+
+Use the Canon overlay template pack when a project or client needs local theme, token, template,
+copy, surface-policy, and registry artifacts without forking Canon primitives.
+
+Inspect the canonical starter files without writing anything:
+
+```bash
+pnpm --filter @create-something/canon overlay:template-files
+pnpm --filter @create-something/canon overlay:template-files -- --path surface-policy.md
+pnpm --filter @create-something/canon overlay:template-files -- --path templates/surface-brief.md --json
+```
+
+The `overlay:template-files` command is read-only. It prints the canonical file pack or one
+file for review and copy planning; it does not instantiate overlays, write files, create Linear
+work, mutate Canon, mutate project overlays, or approve candidate promotion.
+
+Instantiate project-specific files only after the starter pack is reviewed:
+
+```bash
+pnpm --filter @create-something/canon overlay:instantiate -- \
+  --id overlay.client-workflow \
+  --name "Client Workflow Overlay" \
+  --owner client-team \
+  --source-package @create-something/client \
+  --out ./packages/client/canon-overlay \
+  --modalities web,chat \
+  --dry-run
+```
+
+Remove `--dry-run` to write the files. The command skips existing files unless `--force` is
+provided. The generated `manifest.ts` can be passed to `reviewCanonProjectOverlay(...)`.
+
+### Project Overlay Intake Inventory
+
+When multiple projects or clients have local overlays, run the Canon intake inventory from the
+repo root:
+
+```bash
+pnpm --filter @create-something/canon overlay:inventory -- --root .
+```
+
+The inventory scans `apps/` and `packages/` for `CANON_PROJECT_OVERLAY_MANIFEST` exports, skips
+the Canon template itself, reviews each manifest with `reviewCanonProjectOverlay(...)`, and
+summarizes ready overlays, missing artifacts, project-local intakes, and candidate-promotion
+intakes. MCP mirrors the same snapshot at `canon://overlays/intake` and
+`canon://overlays/intake/list` so agents can inspect multi-project feedback before proposing
+Canon changes.
+
 ## Atlas Graph And Story Primitives
 
 Canon owns the reusable Atlas graph/story contract at
@@ -239,6 +365,17 @@ copying third-party identity.
 ```css
 @import '@create-something/canon/styles/performance.css';
 ```
+
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `src/lib/index.ts`, `src/lib/registry/index.ts`, `src/lib/styles/tokens.css` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm check && pnpm test` |
+| Validation surfaces | `svelte-check`, `vitest`, `svelte-package`, `publint`, registry generated content in `@create-something/mcp` |
+| UI validation path | Downstream .ltd Canon docs and Canon-consuming property routes |
+| Escalation rule | Stop before changing Canon semantics, Clear/Atlas/governance contracts, or registry lifecycle without source-adjacent tests and public docs alignment. |
 
 Use the performance layer for labs, systems maps, operational dashboards, simulation surfaces, and
 high-stakes decision rooms where clarity needs more physical energy than a standard SaaS panel.

@@ -149,3 +149,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.ltd-clear-shell {
+  background: var(--color-clear-porcelain, #f9f9f9);
+  color: var(--color-clear-onyx, #0a0e19);
+}

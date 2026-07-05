@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">MCP debugging loop</title>
+  <desc id="desc">A repeatable MCP debugging loop checks build output, Codex settings, Inspector, stderr logs, and RapidAPI responses.</desc>
+  <rect width="960" height="540" fill="#f8fafc"/>
+  <rect x="56" y="48" width="848" height="444" rx="14" fill="#ffffff" stroke="#1f2933" stroke-width="2"/>
+  <text x="96" y="96" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Debug From the Boundary Inward</text>
+  <text x="96" y="126" font-family="Inter, Arial, sans-serif" font-size="16" fill="#4b5563">A useful MCP failure is reproducible, isolated, and visible to the operator.</text>
+
+  <g font-family="Inter, Arial, sans-serif">
+    <circle cx="196" cy="238" r="70" fill="#eef2ff" stroke="#3730a3" stroke-width="2"/>
+    <text x="196" y="226" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">Build</text>
+    <text x="196" y="252" text-anchor="middle" font-size="14" fill="#374151">dist exists</text>
+
+    <circle cx="364" cy="238" r="70" fill="#ecfeff" stroke="#0e7490" stroke-width="2"/>
+    <text x="364" y="226" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">Codex Config</text>
+    <text x="364" y="252" text-anchor="middle" font-size="14" fill="#374151">Command + env</text>
+
+    <circle cx="532" cy="238" r="70" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+    <text x="532" y="226" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">Inspector</text>
+    <text x="532" y="252" text-anchor="middle" font-size="14" fill="#374151">Tool listed</text>
+
+    <circle cx="700" cy="238" r="70" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
+    <text x="700" y="226" text-anchor="middle" font-size="17" font-weight="700" fill="#111827">Runtime</text>
+    <text x="700" y="252" text-anchor="middle" font-size="14" fill="#374151">stderr + API</text>
+
+    <path d="M274 238 H284" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M442 238 H452" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M610 238 H620" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M700 310 C654 390 242 390 196 310" fill="none" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+  </g>
+
+  <rect x="154" y="410" width="652" height="42" rx="8" fill="#111827"/>
+  <text x="480" y="437" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="15" fill="#ffffff">Do not treat a chat failure as mysterious until each boundary has one piece of evidence.</text>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#111827"/>
+    </marker>
+  </defs>
+</svg>

@@ -5,9 +5,21 @@
   "type": "module",
   "main": "dist/index.js",
   "exports": {
-    ".": "./dist/index.js",
-    "./playbooks": "./dist/playbooks.js",
-    "./catalog": "./dist/catalog.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./playbooks": {
+      "types": "./dist/playbooks.d.ts",
+      "import": "./dist/playbooks.js",
+      "default": "./dist/playbooks.js"
+    },
+    "./catalog": {
+      "types": "./dist/catalog.d.ts",
+      "import": "./dist/catalog.js",
+      "default": "./dist/catalog.js"
+    }
   },
   "bin": {
     "playbook-mcp": "dist/index.js"

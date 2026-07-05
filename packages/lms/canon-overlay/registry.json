@@ -1,0 +1,21 @@
+{
+  "id": "overlay.lms-workflow-learning",
+  "name": "LMS Workflow Learning Overlay",
+  "owner": "learning-team",
+  "sourcePackage": "@create-something/lms",
+  "targetModalities": [
+    "web",
+    "app",
+    "chat"
+  ],
+  "registryItemIds": [
+    "token.canon-core",
+    "component.clear-decision-panel",
+    "component.clear-proof-strip",
+    "template.canon-project-overlay-template-pack",
+    "template.canon-project-overlay-manifest",
+    "template.canon-extension-intake",
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "LMS workflow-learning overlays teach Canon proof concepts through lesson content, path navigation, progress receipts, and event metadata. Promote only repeated learning-surface templates; keep course copy, route IDs, and learner telemetry project-local."
+}

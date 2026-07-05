@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createPublicAtlasCanvas,
+  createPublicAtlasFocusGroups,
   createPublicAtlasGraphArtifact,
+  createPublicAtlasEdge,
   createPublicAtlasNode,
   layoutPublicAtlasNodes,
   normalizePublicAtlasCanvas
@@ -83,5 +85,70 @@ describe('public Atlas editable layout', () => {
     expect(positioned.map((node) => node.x)).toEqual([72, 398, 1060]);
     expect(positioned.map((node) => node.y)).toEqual([190, 132, 132]);
     expect(positioned.map((node) => node.width)).toEqual([274, 274, 274]);
+  });
+});
+
+describe('public Atlas focus groups', () => {
+  it('derives owner run wait stop and proof focus groups from the graph contract', () => {
+    const owner = createPublicAtlasNode('actor', {
+      id: 'actor_owner',
+      label: 'Ops owner',
+      status: 'wait'
+    });
+    const workflow = createPublicAtlasNode('data', {
+      id: 'data_workflow',
+      label: 'Ticket handoff',
+      status: 'wait'
+    });
+    const system = createPublicAtlasNode('system', {
+      id: 'system_route',
+      label: 'Route ticket',
+      status: 'run'
+    });
+    const human = createPublicAtlasNode('human', {
+      id: 'human_review',
+      label: 'CX review',
+      status: 'wait'
+    });
+    const boundary = createPublicAtlasNode('constraint', {
+      id: 'constraint_stop',
+      label: 'Refund threshold',
+      status: 'stop'
+    });
+    const receipt = createPublicAtlasNode('touchpoint', {
+      id: 'touchpoint_receipt',
+      label: 'Case receipt',
+      status: 'run'
+    });
+    const canvas = normalizePublicAtlasCanvas({
+      version: 1,
+      id: 'focus-test',
+      nodes: [owner, workflow, system, human, boundary, receipt],
+      edges: [
+        createPublicAtlasEdge(owner.id, workflow.id, { id: 'edge_owner_workflow', label: 'owns' }),
+        createPublicAtlasEdge(workflow.id, system.id, { id: 'edge_workflow_system', label: 'triggers' }),
+        createPublicAtlasEdge(system.id, human.id, { id: 'edge_system_human', label: 'waits for' }),
+        createPublicAtlasEdge(workflow.id, boundary.id, { id: 'edge_workflow_boundary', label: 'bounded by' }),
+        createPublicAtlasEdge(human.id, receipt.id, { id: 'edge_human_receipt', label: 'reviewed in' })
+      ],
+      createdAt: '2026-07-04T00:00:00.000Z',
+      updatedAt: '2026-07-04T00:00:00.000Z'
+    });
+
+    const groups = createPublicAtlasFocusGroups(canvas);
+
+    expect(groups.map((group) => group.id)).toEqual(['owner', 'run', 'wait', 'stop', 'proof']);
+    expect(groups.find((group) => group.id === 'owner')?.nodeIds).toEqual([
+      'actor_owner',
+      'data_workflow'
+    ]);
+    expect(groups.find((group) => group.id === 'run')?.nodeIds).toEqual(['system_route']);
+    expect(groups.find((group) => group.id === 'wait')?.nodeIds).toEqual([
+      'data_workflow',
+      'human_review'
+    ]);
+    expect(groups.find((group) => group.id === 'stop')?.nodeIds).toEqual(['constraint_stop']);
+    expect(groups.find((group) => group.id === 'proof')?.nodeIds).toEqual(['touchpoint_receipt']);
+    expect(groups.find((group) => group.id === 'proof')?.edgeIds).toEqual(['edge_human_receipt']);
   });
 });

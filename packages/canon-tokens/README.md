@@ -191,6 +191,17 @@ See [tokens.css](./tokens.css) for the complete 750+ line reference with mathema
 - [@create-something/canon](https://www.npmjs.com/package/@create-something/canon) — Full Svelte component library
 - [Documentation](https://createsomething.io/docs) — Full design system docs
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `tokens.css`, `tokens.json` |
+| Boot command | `pnpm check` |
+| Smoke command | `pnpm check` |
+| Validation surfaces | token files exist and `tokens.json` parses |
+| UI validation path | none |
+| Escalation rule | Stop before renaming tokens or changing values without checking full Canon package consumers and public docs. |
+
 ## License
 
 MIT

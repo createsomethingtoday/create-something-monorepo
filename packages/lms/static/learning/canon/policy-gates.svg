@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Policy gate chart</title>
+  <desc id="desc">A policy gate chart with run, review, stop, escalate, and complete states.</desc>
+  <rect width="1200" height="720" fill="#f7f7f7"/>
+  <text x="72" y="96" fill="#0a0e19" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="650">Policy turns automation into operations.</text>
+  <text x="72" y="140" fill="#636363" font-family="Inter, Arial, sans-serif" font-size="22">A useful image shows what can run, what needs review, and what must stop.</text>
+  <g font-family="Inter, Arial, sans-serif">
+    <rect x="80" y="235" width="192" height="235" rx="14" fill="#eef5ef" stroke="#b8cbbb"/>
+    <text x="126" y="302" fill="#0a0e19" font-size="30" font-weight="650">Run</text>
+    <text x="112" y="348" fill="#4e6f55" font-size="18">Low-risk read</text>
+    <text x="112" y="376" fill="#4e6f55" font-size="18">or local draft.</text>
+    <rect x="294" y="235" width="192" height="235" rx="14" fill="#fff9ec" stroke="#ead4a2"/>
+    <text x="336" y="302" fill="#0a0e19" font-size="30" font-weight="650">Review</text>
+    <text x="326" y="348" fill="#806224" font-size="18">Operator checks</text>
+    <text x="326" y="376" fill="#806224" font-size="18">before action.</text>
+    <rect x="508" y="235" width="192" height="235" rx="14" fill="#fff2f2" stroke="#efb8b8"/>
+    <text x="562" y="302" fill="#0a0e19" font-size="30" font-weight="650">Stop</text>
+    <text x="540" y="348" fill="#9b2c2c" font-size="18">Unsafe, vague,</text>
+    <text x="540" y="376" fill="#9b2c2c" font-size="18">or unowned.</text>
+    <rect x="722" y="235" width="192" height="235" rx="14" fill="#f8fbff" stroke="#b8c7ff"/>
+    <text x="754" y="302" fill="#0a0e19" font-size="30" font-weight="650">Escalate</text>
+    <text x="754" y="348" fill="#3553a6" font-size="18">Route to owner</text>
+    <text x="754" y="376" fill="#3553a6" font-size="18">or specialist.</text>
+    <rect x="936" y="235" width="192" height="235" rx="14" fill="#0a0e19"/>
+    <text x="968" y="302" fill="#ffffff" font-size="30" font-weight="650">Complete</text>
+    <text x="968" y="348" fill="#d9d9d9" font-size="18">Receipt recorded</text>
+    <text x="968" y="376" fill="#d9d9d9" font-size="18">with next step.</text>
+  </g>
+  <path d="M160 548h880" stroke="#d9d9d9" stroke-width="3"/>
+  <circle cx="176" cy="548" r="9" fill="#4e6f55"/>
+  <circle cx="390" cy="548" r="9" fill="#806224"/>
+  <circle cx="604" cy="548" r="9" fill="#9b2c2c"/>
+  <circle cx="818" cy="548" r="9" fill="#3553a6"/>
+  <circle cx="1032" cy="548" r="9" fill="#0a0e19"/>
+</svg>

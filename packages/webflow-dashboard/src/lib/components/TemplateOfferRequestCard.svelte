@@ -9,7 +9,7 @@
 	} from '$lib/utils/template-lifecycle-policy';
 	import { toast } from '$lib/stores/toast';
 	import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Textarea } from './ui';
-	import { CheckCircle2, Link, Send, Tag } from 'lucide-svelte';
+	import { CheckCircle2, Send, Tag } from 'lucide-svelte';
 
 	interface Props {
 		asset: Asset;
@@ -35,7 +35,6 @@
 
 	let offerLabel = $state('');
 	let offerPrice = $state('');
-	let fulfillmentUrl = $state('');
 	let startsAt = $state('');
 	let endsAt = $state(defaultEndDate);
 	let offerStrategy = $state<OfferStrategy>('Creator-managed price test');
@@ -110,7 +109,6 @@
 				body: JSON.stringify({
 					offerLabel,
 					offerPrice,
-					fulfillmentUrl,
 					startsAt: startsAt || undefined,
 					endsAt,
 					offerStrategy,
@@ -125,18 +123,16 @@
 				success?: boolean;
 				message?: string;
 				offerId?: string;
-				approvalStatus?: 'Approved' | 'Pending';
+				approvalStatus?: 'Pending';
 			};
 
 			if (!response.ok || !result.success) {
-				throw new Error(result.message || 'Failed to submit offer request');
+				throw new Error(result.message || 'Failed to submit price change request');
 			}
 
 			successMessage =
-				result.approvalStatus === 'Approved'
-					? 'Offer accepted. Search visibility and public offer fields will follow the lifecycle policy.'
-					: 'Offer request submitted for marketplace review before any archive or delist action.';
-			toast.success(result.approvalStatus === 'Approved' ? 'Offer accepted' : 'Offer request submitted');
+				'Price change request submitted. Marketplace review applies the new price to your template before any public change.';
+			toast.success('Price change request submitted');
 			trackEvent('template_offer_request_submitted', {
 				asset_id: asset.id,
 				offer_strategy: offerStrategy,
@@ -145,7 +141,6 @@
 				has_active_offer: hasActiveOffer,
 				automation_code: health.automation.code,
 				automation_confidence: health.automation.confidence,
-				has_fulfillment_url: Boolean(fulfillmentUrl.trim()),
 				has_offer_price: Boolean(offerPrice.trim()),
 				requires_visibility_ack: requiresVisibilityAck,
 				visibility_terms_accepted: visibilityTermsAccepted,
@@ -157,12 +152,11 @@
 				offer_id: result.offerId
 			});
 
-			fulfillmentUrl = '';
 			notes = '';
 			termsAccepted = false;
 			visibilityTermsAccepted = false;
 		} catch (err) {
-			errorMessage = err instanceof Error ? err.message : 'Failed to submit offer request';
+			errorMessage = err instanceof Error ? err.message : 'Failed to submit price change request';
 			toast.error(errorMessage);
 			trackEvent('template_offer_request_failed', {
 				asset_id: asset.id,
@@ -171,7 +165,6 @@
 				has_active_offer: hasActiveOffer,
 				automation_code: health.automation.code,
 				automation_confidence: health.automation.confidence,
-				has_fulfillment_url: Boolean(fulfillmentUrl.trim()),
 				has_offer_price: Boolean(offerPrice.trim()),
 				requires_visibility_ack: requiresVisibilityAck,
 				visibility_terms_accepted: visibilityTermsAccepted,
@@ -192,21 +185,19 @@
 		<div class="offer-request-header">
 			<div class="offer-request-title">
 				<Tag size={16} />
-				<CardTitle>Request Limited Offer</CardTitle>
+				<CardTitle>Request Recovery Price Change</CardTitle>
 			</div>
-			{#if hasActiveOffer}
-				<Badge variant="info">Current offer mirrored</Badge>
-			{:else}
-				<Badge variant="secondary">Approval required</Badge>
-			{/if}
+			<Badge variant="secondary">Applied by marketplace review</Badge>
 		</div>
 	</CardHeader>
 	<CardContent>
 		{#if canSurfaceOfferRequest}
 			<div class="offer-request-intro">
 				<p>
-					Submit a creator-managed fulfillment link and sale price. Offers that pass policy can
-					move quickly; archive or delist outcomes still go through marketplace review.
+					This template is in a search-visibility review window. Request a temporary price change
+					as a recovery test: marketplace review applies the new price to your template's
+					checkout, the template stays searchable during the window, and buyer response decides
+					what happens next. For a standard price change outside this window, contact support.
 				</p>
 				{#if asset.priceString || asset.activeOfferPrice !== undefined}
 					<div class="price-context">
@@ -246,7 +237,7 @@
 					</div>
 
 					<div class="form-field">
-						<Label for="offerPrice">Offer price</Label>
+						<Label for="offerPrice">Requested price</Label>
 						<Input
 							id="offerPrice"
 							bind:value={offerPrice}
@@ -258,21 +249,6 @@
 							required
 							oninput={resetMessages}
 						/>
-					</div>
-
-					<div class="form-field form-field--wide">
-						<Label for="fulfillmentUrl">Fulfillment link</Label>
-						<div class="input-with-icon">
-							<Link size={14} />
-							<Input
-								id="fulfillmentUrl"
-								bind:value={fulfillmentUrl}
-								type="url"
-								placeholder="https://..."
-								required
-								oninput={resetMessages}
-							/>
-						</div>
 					</div>
 
 					<div class="form-field">
@@ -337,8 +313,9 @@
 				<label class="terms-row">
 					<input type="checkbox" bind:checked={termsAccepted} required onchange={resetMessages} />
 					<span>
-						I confirm this link is intended for this template offer, existing buyer access is not
-						affected, and the offer must pass policy before it appears publicly.
+						I understand this price change is applied to my template's checkout price by
+						marketplace review, existing buyer access is not affected, and the outcome of this
+						window informs the template's search visibility.
 					</span>
 				</label>
 
@@ -384,8 +361,9 @@
 		{:else}
 			<div class="offer-unavailable">
 				<p>
-					Limited offers are available for active offer management or recovery-eligible templates
-					flagged by marketplace health policy.
+					Recovery price changes become available when marketplace health policy flags this
+					template for a search-visibility review. For a standard price change at any time,
+					contact support.
 				</p>
 			</div>
 		{/if}
@@ -396,7 +374,6 @@
 	.offer-request-header,
 	.offer-request-title,
 	.form-message,
-	.input-with-icon,
 	.price-context,
 	.terms-row {
 		display: flex;
@@ -458,20 +435,6 @@
 
 	.form-field--wide {
 		grid-column: 1 / -1;
-	}
-
-	.input-with-icon {
-		gap: 0.45rem;
-	}
-
-	.input-with-icon :global(svg) {
-		color: var(--color-fg-muted);
-		flex: 0 0 auto;
-	}
-
-	.input-with-icon :global(.input) {
-		flex: 1 1 auto;
-		min-width: 0;
 	}
 
 	.native-select {

@@ -225,7 +225,13 @@ These components are based on the exported project at `/Users/micahjohnson/Downl
 | **Cato Case Studies Landing** | Improved Case Studies landing page with featured story, result proof, and customer story grid | `caseStudiesJson`, `showFeatured`, `linkMode`, `pathPrefix` |
 | **Cato Case Study Detail** | CMS-bindable case study detail template with customer profile, challenge, solution, results, and related stories | `slug`, `clientName`, `challengeHtml`, `solutionHtml`, `challengeImage`, `solutionImage`, `resultsJson`, `caseStudiesJson`, `backHref` |
 
-The June 18, 2026 Cato request should be implemented as separate About dropdown pages, not team sections inside the main About page. Use `Cato Leadership Page` for 3 leadership profiles by default (Ryan Zackon placeholder, Lainy Jahnke, Ethan Weinberg), and use `Cato Board of Directors Page` for 5 board profiles by default (Bala Iyer, Andy James, Heather Matzke-Hamlin, John Courtney, Tiffani Shaw). Brian Weichel is removed from the default profile set. Override with `leadershipJson` or `boardJson` only when Cato provides updated approved content.
+The June 18, 2026 Cato request should be implemented as separate About dropdown pages, not team sections inside the main About page. Use `Cato Leadership Page` for 3 leadership profiles by default (Ryan Zackon placeholder, Lainy Jahnke, Ethan Weinberg), and use `Cato Board of Directors Page` for board profiles. Brian Weichel is removed from the default profile set. Per Cato's July 2, 2026 email, Andy James and Lainy Jahnke should not appear as Board of Directors members. Override with `leadershipJson`, `boardJson`, or the people endpoint only when Cato provides updated approved content.
+
+#### Cato People Endpoint Contract
+
+`Cato About Page`, `Cato Leadership Page`, and `Cato Board of Directors Page` can fetch leadership and board records from `People Endpoint URL` when `Fetch Endpoint People` is enabled. The default endpoint is `https://cato-supply-insights-cms.createsomething.workers.dev/api/cato/team`; JSON props remain explicit Designer overrides.
+
+The endpoint may return an array directly or an object containing `people`, `items`, `members`, or `records`. Each record should include `name`, `role`, optional `bio`, optional image data (`imageUrl`, `photo`, `headshot`, or a nested image object/array with `url`, `src`, `href`, or `fileUrl`), optional `linkedinUrl`, `group` (`leadership` or `board`), and optional `order`. Webflow-style `fieldData` records are supported.
 
 #### Cato-Specific Webflow Library
 

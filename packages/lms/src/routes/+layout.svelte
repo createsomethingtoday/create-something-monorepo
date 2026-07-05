@@ -82,19 +82,27 @@
   const quickAccessItems = [
     {
       id: 'nav-course',
-      label: 'Codex MCP Course',
-      description: 'Learn Codex by building one MCP server',
+      label: 'Build Your First Business MCP',
+      description: 'Learn Codex by creating an MCP for business data',
       href: '/paths/codex-mcp',
       icon: '🧩',
-      keywords: ['codex', 'mcp', 'course', 'server']
+      keywords: ['codex', 'mcp', 'course', 'server', 'business', 'operator', 'rapidapi']
+    },
+    {
+      id: 'nav-canon-images',
+      label: 'Make Your Workflow Visible',
+      description: 'Learn Canon by turning workflows into proof images',
+      href: '/paths/make-your-workflow-visible',
+      icon: '🗺️',
+      keywords: ['canon', 'images', 'workflow', 'policy', 'receipt', 'handoff']
     },
     {
       id: 'nav-paths',
-      label: 'Course Overview',
-      description: 'See all lessons in order',
+      label: 'Path Overview',
+      description: 'See all operator learning paths',
       href: '/paths',
       icon: '🛤️',
-      keywords: ['lessons', 'curriculum', 'overview']
+      keywords: ['lessons', 'curriculum', 'overview', 'paths']
     },
     {
       id: 'nav-progress',
@@ -108,10 +116,12 @@
 
   // DRY: Centralized copy for meta tags and components
   const SITE_COPY = {
-    tagline: 'Learn Codex Through MCP',
-    descriptionFull: 'A straightforward course for learning Codex by building and shipping a real MCP server.',
-    descriptionShort: 'Learn Codex by building a real MCP server.',
-    descriptionFooter: 'A straightforward course for learning Codex by building and shipping a real MCP server.'
+    tagline: 'Operator Workflow Learning Paths',
+    descriptionFull:
+      'Practical paths for business owners learning Codex, MCP creation, and Canon workflow images.',
+    descriptionShort: 'Learn Codex and Canon by creating operator workflows.',
+    descriptionFooter:
+      'Practical paths for business owners learning to build MCP workflows and make them visible with Canon.'
   } as const;
 </script>
 
@@ -130,11 +140,11 @@
 <Analytics property="lms" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="lms" localItems={quickAccessItems} />
+<UnifiedSearch currentProperty="lms" localItems={quickAccessItems} showMobileButton={false} />
 
 <SkipToContent />
 
-<div class="layout">
+<div class="layout theme-light">
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".learn"
@@ -184,6 +194,7 @@
   }
 
   :global(.nav-clear .nav-logo) {
+    max-width: calc(100% - 3.5rem);
     gap: 0.18rem;
   }
 
@@ -223,12 +234,22 @@
   }
 
   @media (max-width: 480px) {
-    :global(.nav-clear .nav-logo-mark) {
-      display: none;
+    :global(.nav-clear .nav-logo) {
+      gap: 0.14rem;
     }
 
-    :global(.nav-clear .nav-logo-text) {
-      font-size: 0.95rem;
+    :global(.nav-clear .nav-logo-mark) {
+      width: 1.35rem;
+      height: 1.35rem;
+      margin-right: 0.32rem;
+    }
+
+    :global(.nav-clear .nav-logo .nav-logo-text) {
+      font-size: 0.9rem !important;
+    }
+
+    :global(.nav-clear .nav-logo .nav-logo-suffix) {
+      font-size: 0.68rem !important;
     }
   }
 </style>

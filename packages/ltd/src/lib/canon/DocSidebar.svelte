@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
-	import { canonNavigation, type NavSection } from './navigation.js';
+	import { tick } from 'svelte';
+	import { canonNavigation, findActiveNavHref, type NavSection } from './navigation.js';
 
 	interface Props {
 		/** Whether sidebar is open on mobile */
@@ -12,18 +14,44 @@
 	let { mobileOpen = false, onClose }: Props = $props();
 
 	const currentPath = $derived($page.url.pathname);
+	const activeHref = $derived(findActiveNavHref(currentPath, canonNavigation));
 
 	function isActive(href: string): boolean {
-		if (href === '/canon') {
-			return currentPath === '/canon';
-		}
-		return currentPath.startsWith(href);
+		return activeHref === href;
+	}
+
+	function itemContainsActiveHref(item: NavSection['items'][number]): boolean {
+		if (!activeHref) return false;
+		if (item.href === activeHref) return true;
+		return item.children?.some((child) => itemContainsActiveHref(child)) ?? false;
+	}
+
+	function sectionContainsActiveHref(section: NavSection): boolean {
+		return section.items.some((item) => itemContainsActiveHref(item));
+	}
+
+	function isSectionOpen(section: NavSection): boolean {
+		return section.defaultOpen === true || sectionContainsActiveHref(section);
+	}
+
+	function isGroupOpen(item: NavSection['items'][number]): boolean {
+		return item.defaultOpen === true || itemContainsActiveHref(item);
 	}
 
 	function handleLinkClick() {
 		// Close mobile sidebar when link is clicked
 		onClose?.();
 	}
+
+	$effect(() => {
+		if (!browser || !activeHref) return;
+
+		void tick().then(() => {
+			document
+				.querySelector<HTMLAnchorElement>('.nav-link-active')
+				?.scrollIntoView({ block: 'center', inline: 'nearest' });
+		});
+	});
 </script>
 
 <!-- Mobile overlay -->
@@ -53,27 +81,60 @@
 
 	<nav class="sidebar-nav" aria-label="Documentation navigation">
 		{#each canonNavigation as section}
-			<div class="nav-section">
-				<h3 class="nav-section-title">{section.title}</h3>
+			<details class="nav-section" open={isSectionOpen(section)}>
+				<summary class="nav-section-summary">
+					<span class="nav-section-title">{section.title}</span>
+				</summary>
 				<ul class="nav-list">
 					{#each section.items as item}
 						<li>
-							<a
-								href={item.href}
-								class="nav-link"
-								class:nav-link-active={isActive(item.href)}
-								onclick={handleLinkClick}
-								aria-current={isActive(item.href) ? 'page' : undefined}
-							>
-								<span class="nav-link-text">{item.label}</span>
-								{#if item.badge}
-									<span class="nav-badge">{item.badge}</span>
-								{/if}
-							</a>
+							{#if item.children?.length}
+								<details class="nav-group" open={isGroupOpen(item)}>
+									<summary class="nav-group-summary">
+										<span class="nav-link-text">{item.label}</span>
+										{#if item.badge}
+											<span class="nav-badge">{item.badge}</span>
+										{/if}
+									</summary>
+									<ul class="nav-sublist">
+										{#each item.children as child}
+											<li>
+												{#if child.href}
+													<a
+														href={child.href}
+														class="nav-link nav-sublink"
+														class:nav-link-active={isActive(child.href)}
+														onclick={handleLinkClick}
+														aria-current={isActive(child.href) ? 'page' : undefined}
+													>
+														<span class="nav-link-text">{child.label}</span>
+														{#if child.badge}
+															<span class="nav-badge">{child.badge}</span>
+														{/if}
+													</a>
+												{/if}
+											</li>
+										{/each}
+									</ul>
+								</details>
+							{:else if item.href}
+								<a
+									href={item.href}
+									class="nav-link"
+									class:nav-link-active={isActive(item.href)}
+									onclick={handleLinkClick}
+									aria-current={isActive(item.href) ? 'page' : undefined}
+								>
+									<span class="nav-link-text">{item.label}</span>
+									{#if item.badge}
+										<span class="nav-badge">{item.badge}</span>
+									{/if}
+								</a>
+							{/if}
 						</li>
 					{/each}
 				</ul>
-			</div>
+			</details>
 		{/each}
 	</nav>
 
@@ -188,11 +249,36 @@
 	}
 
 	.nav-section {
-		margin-bottom: var(--space-lg);
+		margin-bottom: var(--space-sm);
 	}
 
 	.nav-section:last-child {
 		margin-bottom: 0;
+	}
+
+	.nav-section-summary,
+	.nav-group-summary {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.nav-section-summary {
+		padding: var(--space-xs);
+		border-radius: var(--radius-md);
+	}
+
+	.nav-section-summary:hover,
+	.nav-group-summary:hover {
+		background: var(--color-hover);
+	}
+
+	.nav-section-summary::marker,
+	.nav-group-summary::marker {
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
 	}
 
 	.nav-section-title {
@@ -201,14 +287,39 @@
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-wider);
-		margin-bottom: var(--space-xs);
-		padding: 0 var(--space-xs);
+	}
+
+	.nav-section[open] > .nav-section-summary {
+		margin-bottom: var(--space-2xs, 0.25rem);
 	}
 
 	.nav-list {
 		list-style: none;
 		margin: 0;
 		padding: 0;
+	}
+
+	.nav-group {
+		margin-bottom: 2px;
+	}
+
+	.nav-group-summary {
+		padding: var(--space-xs);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+	}
+
+	.nav-group[open] > .nav-group-summary {
+		color: var(--color-fg-primary);
+	}
+
+	.nav-sublist {
+		list-style: none;
+		margin: 2px 0 var(--space-xs) 0;
+		padding: 0 0 0 var(--space-sm);
+		border-left: 1px solid var(--color-border-default);
 	}
 
 	.nav-link {
@@ -221,6 +332,10 @@
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
 		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.nav-sublink {
+		padding-left: var(--space-sm);
 	}
 
 	.nav-link:hover {

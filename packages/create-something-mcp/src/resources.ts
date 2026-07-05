@@ -6,6 +6,30 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
+import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
+import {
+  CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
+} from './content/generated/canon-public-export-classification.js';
+import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
+import { CANON_OVERLAY_TEMPLATE_FILE_PACK } from './content/generated/canon-overlay-template-files.js';
+import { CANON_OVERLAY_INTAKE_INVENTORY } from './content/generated/canon-overlay-intake-inventory.js';
+import { CANON_OVERLAY_CANDIDATE_QUEUE } from './content/generated/canon-overlay-candidate-queue.js';
+import {
+  CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS
+} from './content/generated/canon-overlay-candidate-review-packets.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS
+} from './content/generated/canon-overlay-candidate-promotion-plans.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS
+} from './content/generated/canon-overlay-candidate-promotion-readiness-reports.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS
+} from './content/generated/canon-overlay-candidate-promotion-approval-records.js';
+import {
+  buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection,
+  buildCanonOverlayCandidatePromotionApprovalValidationReportCollection
+} from './canon-overlay-candidate-promotion-approval-record.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -25,6 +49,11 @@ import {
 } from './content/framework.js';
 
 export function registerResources(server: McpServer) {
+  const canonApprovalTargetTemplates =
+    buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection();
+  const canonApprovalValidationReports =
+    buildCanonOverlayCandidatePromotionApprovalValidationReportCollection();
+
   // ==========================================================================
   // Papers (.io)
   // ==========================================================================
@@ -97,6 +126,540 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'text/markdown',
           text: `# ${page.title}\n\n**Section:** ${page.section}\n\n${page.content}`
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-registry',
+    'canon://registry',
+    { description: `Canon registry: ${CANON_REGISTRY_MANIFEST.items.length} machine-readable components, tokens, templates, adapters, and policies`, mimeType: 'application/json' },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_REGISTRY_MANIFEST, null, 2)
+      }]
+    })
+  );
+
+  server.resource(
+    'canon-registry-list',
+    'canon://registry/list',
+    { description: 'Index of Canon registry items for agent and template discovery', mimeType: 'application/json' },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_REGISTRY_MANIFEST.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          kind: item.kind,
+          maturity: item.maturity,
+          modalities: item.modalities,
+          uri: `canon://registry/${item.id}`
+        })), null, 2)
+      }]
+    })
+  );
+
+  for (const item of CANON_REGISTRY_MANIFEST.items) {
+    server.resource(
+      `canon-registry-${item.id.replace(/[^a-z0-9-]/gi, '-')}`,
+      `canon://registry/${item.id}`,
+      { description: `Canon registry ${item.kind}: ${item.name}`, mimeType: 'application/json' },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(item, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-public-export-policy',
+    'canon://public-export-policy',
+    {
+      description: `Canon public export policy: ${CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.length} registry classification rules`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES, null, 2)
+      }]
+    })
+  );
+
+  server.resource(
+    'canon-public-export-policy-list',
+    'canon://public-export-policy/list',
+    {
+      description: 'Index of Canon public exports that are classified for registry promotion policy',
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.map(rule => ({
+          exportPath: rule.exportPath,
+          exportName: rule.exportName,
+          classification: rule.classification,
+          registryPolicy: rule.registryPolicy,
+          uri: rule.exportName
+            ? `canon://public-export-policy/${encodeURIComponent(rule.exportPath)}/${rule.exportName}`
+            : `canon://public-export-policy/${encodeURIComponent(rule.exportPath)}`
+        })), null, 2)
+      }]
+    })
+  );
+
+  for (const rule of CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES) {
+    const exportLabel = rule.exportName ? `${rule.exportPath}#${rule.exportName}` : `${rule.exportPath}#*`;
+    const resourceName = `canon-public-export-policy-${exportLabel.replace(/[^a-z0-9-]/gi, '-')}`;
+    const resourceUri = rule.exportName
+      ? `canon://public-export-policy/${encodeURIComponent(rule.exportPath)}/${rule.exportName}`
+      : `canon://public-export-policy/${encodeURIComponent(rule.exportPath)}`;
+
+    server.resource(
+      resourceName,
+      resourceUri,
+      {
+        description: `Canon public export policy: ${exportLabel}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(rule, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays',
+    'canon://overlays',
+    {
+      description: `Canon overlay catalog: ${CANON_OVERLAY_CATALOG.templates.length} templates for extending Canon across web, chat, app, voice, and glasses`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CATALOG, null, 2)
+      }]
+    })
+  );
+
+  server.resource(
+    'canon-overlays-list',
+    'canon://overlays/list',
+    {
+      description: 'Index of Canon overlay templates and required artifact contracts',
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CATALOG.templates.map(template => ({
+          id: template.id,
+          name: template.name,
+          summary: template.summary,
+          docsPath: template.docsPath,
+          targetModalities: template.manifest.targetModalities,
+          status: template.review.status,
+          templateFilesUri: `canon://overlays/${template.id}/files`,
+          uri: `canon://overlays/${template.id}`
+        })), null, 2)
+      }]
+    })
+  );
+
+  for (const template of CANON_OVERLAY_CATALOG.templates) {
+    server.resource(
+      `canon-overlays-${template.id.replace(/[^a-z0-9-]/gi, '-')}`,
+      `canon://overlays/${template.id}`,
+      {
+        description: `Canon overlay template: ${template.name}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify({
+            ...template,
+            templateFilesUri: `canon://overlays/${template.id}/files`
+          }, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-template-files-overlay-project-template',
+    CANON_OVERLAY_TEMPLATE_FILE_PACK.filesUri,
+    {
+      description: `Canon overlay template file pack: ${CANON_OVERLAY_TEMPLATE_FILE_PACK.summary.totalFiles} starter files for ${CANON_OVERLAY_TEMPLATE_FILE_PACK.templateId}`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_TEMPLATE_FILE_PACK, null, 2)
+      }]
+    })
+  );
+
+  for (const file of CANON_OVERLAY_TEMPLATE_FILE_PACK.files) {
+    server.resource(
+      `canon-overlays-template-file-${file.relativePath.replace(/[^a-z0-9-]/gi, '-')}`,
+      file.uri,
+      {
+        description: file.description,
+        mimeType: file.mimeType
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: file.mimeType,
+          text: file.content
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-intake',
+    'canon://overlays/intake',
+    {
+      description: `Canon overlay intake inventory: ${CANON_OVERLAY_INTAKE_INVENTORY.entries.length} project overlay manifests discovered for review`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_INTAKE_INVENTORY, null, 2)
+      }]
+    })
+  );
+
+  server.resource(
+    'canon-overlays-intake-list',
+    'canon://overlays/intake/list',
+    {
+      description: 'Index of discovered Canon project overlay manifests and review statuses',
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_INTAKE_INVENTORY.entries.map(entry => ({
+          id: entry.manifest.id,
+          name: entry.manifest.name,
+          manifestPath: entry.manifestPath,
+          status: entry.review.status,
+          candidateIntakes: entry.review.extensionDecisions.filter(decision => decision.decision.stage === 'candidate').length,
+          uri: `canon://overlays/intake/${entry.manifest.id}`
+        })), null, 2)
+      }]
+    })
+  );
+
+  for (const entry of CANON_OVERLAY_INTAKE_INVENTORY.entries) {
+    server.resource(
+      `canon-overlays-intake-${entry.manifest.id.replace(/[^a-z0-9-]/gi, '-')}`,
+      `canon://overlays/intake/${entry.manifest.id}`,
+      {
+        description: `Canon overlay intake review: ${entry.manifest.name}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(entry, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidates',
+    'canon://overlays/candidates',
+    {
+      description: `Canon overlay candidate queue: ${CANON_OVERLAY_CANDIDATE_QUEUE.entries.length} candidate intakes ready for Canon review`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CANDIDATE_QUEUE, null, 2)
+      }]
+    })
+  );
+
+  server.resource(
+    'canon-overlays-candidates-list',
+    'canon://overlays/candidates/list',
+    {
+      description: 'Index of Canon overlay candidate intakes ready for review',
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CANDIDATE_QUEUE.entries.map(entry => ({
+          id: entry.intakeId,
+          title: entry.title,
+          overlayId: entry.overlayId,
+          requestedKind: entry.requestedKind,
+          requestedModalities: entry.requestedModalities,
+          sourcePackage: entry.sourcePackage,
+          reviewUri: entry.reviewUri,
+          handoffUri: entry.handoffUri,
+          promotionPlanUri: `canon://overlays/candidates/${entry.intakeId}/promotion-plan`,
+          readinessUri: `canon://overlays/candidates/${entry.intakeId}/readiness`,
+          approvalRecordUri: `canon://overlays/candidates/${entry.intakeId}/approval-record`,
+          approvalTargetTemplateUri: `canon://overlays/candidates/${entry.intakeId}/approval-record/target-template`,
+          approvalValidationUri: `canon://overlays/candidates/${entry.intakeId}/approval-record/validation`,
+          uri: entry.candidateUri
+        })), null, 2)
+      }]
+    })
+  );
+
+  for (const entry of CANON_OVERLAY_CANDIDATE_QUEUE.entries) {
+    server.resource(
+      `canon-overlays-candidate-${entry.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      entry.candidateUri,
+      {
+        description: `Canon overlay candidate intake: ${entry.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(entry, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-review-packets',
+    'canon://overlays/candidates/handoffs',
+    {
+      description: `Canon overlay candidate review packets: ${CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.entries.length} handoffs ready for maintainer approval review`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS, null, 2)
+      }]
+    })
+  );
+
+  for (const packet of CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.entries) {
+    server.resource(
+      `canon-overlays-candidate-review-${packet.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      packet.handoffUri,
+      {
+        description: `Canon overlay candidate review packet: ${packet.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(packet, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-promotion-plans',
+    'canon://overlays/candidates/promotion-plans',
+    {
+      description: `Canon overlay candidate promotion plans: ${CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.entries.length} approval-gated implementation plans for approved handoffs`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS, null, 2)
+      }]
+    })
+  );
+
+  for (const plan of CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS.entries) {
+    server.resource(
+      `canon-overlays-candidate-promotion-plan-${plan.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      plan.planUri,
+      {
+        description: `Canon overlay candidate promotion plan: ${plan.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(plan, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-promotion-readiness-reports',
+    'canon://overlays/candidates/readiness-reports',
+    {
+      description: `Canon overlay candidate promotion readiness reports: ${CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.entries.length} read-only readiness checks before implementation starts`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS, null, 2)
+      }]
+    })
+  );
+
+  for (const report of CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS.entries) {
+    server.resource(
+      `canon-overlays-candidate-promotion-readiness-${report.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      report.readinessUri,
+      {
+        description: `Canon overlay candidate promotion readiness report: ${report.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(report, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-promotion-approval-records',
+    'canon://overlays/candidates/approval-records',
+    {
+      description: `Canon overlay candidate promotion approval records: ${CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.entries.length} read-only templates for maintainer approval and target selection before implementation starts`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS, null, 2)
+      }]
+    })
+  );
+
+  for (const record of CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.entries) {
+    server.resource(
+      `canon-overlays-candidate-promotion-approval-record-${record.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      record.approvalUri,
+      {
+        description: `Canon overlay candidate promotion approval record: ${record.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(record, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-promotion-approval-target-templates',
+    'canon://overlays/candidates/approval-target-templates',
+    {
+      description: `Canon overlay candidate promotion approval target templates: ${canonApprovalTargetTemplates.entries.length} fillable target JSON templates before approval validation`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(canonApprovalTargetTemplates, null, 2)
+      }]
+    })
+  );
+
+  for (const template of canonApprovalTargetTemplates.entries) {
+    server.resource(
+      `canon-overlays-candidate-promotion-approval-target-template-${template.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      template.targetTemplateUri,
+      {
+        description: `Canon overlay candidate promotion approval target template: ${template.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(template, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-promotion-approval-validation-reports',
+    'canon://overlays/candidates/approval-validation-reports',
+    {
+      description: `Canon overlay candidate promotion approval validation reports: ${canonApprovalValidationReports.entries.length} read-only validation checks before implementation work`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(canonApprovalValidationReports, null, 2)
+      }]
+    })
+  );
+
+  for (const report of canonApprovalValidationReports.entries) {
+    server.resource(
+      `canon-overlays-candidate-promotion-approval-validation-${report.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      report.validationUri,
+      {
+        description: `Canon overlay candidate promotion approval validation report: ${report.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(report, null, 2)
         }]
       })
     );

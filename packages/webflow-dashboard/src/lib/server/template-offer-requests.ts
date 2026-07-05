@@ -9,7 +9,6 @@ import { isRecoveryOfferStrategy } from '../utils/template-lifecycle-policy';
 export interface TemplateOfferRequestBody {
 	offerLabel?: unknown;
 	offerPrice?: unknown;
-	fulfillmentUrl?: unknown;
 	startsAt?: unknown;
 	endsAt?: unknown;
 	offerStrategy?: unknown;
@@ -58,23 +57,6 @@ function optionalString(value: unknown, field: string): string | undefined {
 	}
 	const trimmed = value.trim();
 	return trimmed || undefined;
-}
-
-function parseHttpsUrl(value: unknown): string {
-	const rawUrl = requireString(value, 'Fulfillment URL');
-
-	let parsed: URL;
-	try {
-		parsed = new URL(rawUrl);
-	} catch {
-		throw error(400, 'Fulfillment URL must be a valid URL');
-	}
-
-	if (parsed.protocol !== 'https:') {
-		throw error(400, 'Fulfillment URL must use HTTPS');
-	}
-
-	return parsed.toString();
 }
 
 function parseOfferPrice(value: unknown, policy: TemplateOfferPolicyContext): number {
@@ -234,7 +216,6 @@ export function normalizeTemplateOfferRequestBody(
 		creatorEmail,
 		offerLabel,
 		offerPrice: parseOfferPrice(body.offerPrice, policy),
-		fulfillmentUrl: parseHttpsUrl(body.fulfillmentUrl),
 		startsAt,
 		endsAt,
 		offerStrategy,

@@ -4,6 +4,11 @@
 // Components
 export * from './components/index.js';
 
+// Machine-readable Canon registry
+export * from './registry/index.js';
+export * from './overlays/index.js';
+export * from './modality-readiness/index.js';
+
 // Utils (excluding clipboard which conflicts with diagrams export)
 export {
     markExperimentCompleted,
