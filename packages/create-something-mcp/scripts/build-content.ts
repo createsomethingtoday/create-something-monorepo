@@ -444,6 +444,36 @@ export const CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS: CanonOverlayCandidateReview
 `;
 }
 
+async function buildCanonOverlayCandidatePromotionPlans(): Promise<string> {
+  const intakeModuleUrl = pathToFileURL(
+    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'intake.ts')
+  ).href;
+  const intake = await import(intakeModuleUrl) as {
+    buildCanonOverlayIntakeInventory: (options: { rootDir: string; rootLabel?: string }) => Promise<unknown>;
+    buildCanonOverlayCandidateQueue: (inventory: unknown) => unknown;
+    buildCanonOverlayCandidateReviewPackets: (queue: unknown) => unknown;
+    buildCanonOverlayCandidatePromotionPlans: (packets: unknown) => unknown;
+  };
+  const inventory = await intake.buildCanonOverlayIntakeInventory({
+    rootDir: ROOT,
+    rootLabel: '<repo-root>'
+  });
+  const queue = intake.buildCanonOverlayCandidateQueue(inventory);
+  const packets = intake.buildCanonOverlayCandidateReviewPackets(queue);
+  const plans = intake.buildCanonOverlayCandidatePromotionPlans(packets);
+
+  return `/**
+ * Generated Canon overlay candidate promotion plan content — DO NOT EDIT MANUALLY.
+ * Run: npm run build:content
+ * Source: packages/canon/src/lib/overlays/intake.ts
+ */
+
+import type { CanonOverlayCandidatePromotionPlanCollection } from '../types.js';
+
+export const CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS: CanonOverlayCandidatePromotionPlanCollection = ${JSON.stringify(plans, null, 2)};
+`;
+}
+
 // ============================================================================
 // Build patterns
 // ============================================================================
@@ -689,6 +719,7 @@ async function main() {
     canonOverlayIntakeInventory,
     canonOverlayCandidateQueue,
     canonOverlayCandidateReviewPackets,
+    canonOverlayCandidatePromotionPlans,
     patterns,
     graph,
     propertyDocs
@@ -701,6 +732,7 @@ async function main() {
     buildCanonOverlayIntakeInventory(),
     buildCanonOverlayCandidateQueue(),
     buildCanonOverlayCandidateReviewPackets(),
+    buildCanonOverlayCandidatePromotionPlans(),
     buildPatterns(),
     buildGraph(),
     buildPropertyDocuments(),
@@ -716,6 +748,7 @@ async function main() {
     writeFile(join(OUT_DIR, 'canon-overlay-intake-inventory.ts'), canonOverlayIntakeInventory, 'utf-8'),
     writeFile(join(OUT_DIR, 'canon-overlay-candidate-queue.ts'), canonOverlayCandidateQueue, 'utf-8'),
     writeFile(join(OUT_DIR, 'canon-overlay-candidate-review-packets.ts'), canonOverlayCandidateReviewPackets, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-candidate-promotion-plans.ts'), canonOverlayCandidatePromotionPlans, 'utf-8'),
     writeFile(join(OUT_DIR, 'patterns.ts'), patterns, 'utf-8'),
     writeFile(join(OUT_DIR, 'graph.ts'), graph, 'utf-8'),
     writeFile(join(OUT_DIR, 'property-docs.ts'), propertyDocs.source, 'utf-8'),
@@ -730,6 +763,7 @@ async function main() {
   const canonOverlayIntakeCount = (canonOverlayIntakeInventory.match(/"manifestPath":/g) || []).length;
   const canonOverlayCandidateCount = (canonOverlayCandidateQueue.match(/"intakeId":/g) || []).length;
   const canonOverlayCandidateReviewPacketCount = (canonOverlayCandidateReviewPackets.match(/"candidateId":/g) || []).length;
+  const canonOverlayCandidatePromotionPlanCount = (canonOverlayCandidatePromotionPlans.match(/"planUri":/g) || []).length;
   const patternCount = (patterns.match(/slug:/g) || []).length;
   const nodeCount = (graph.match(/"id":/g) || []).length;
 
@@ -742,6 +776,7 @@ async function main() {
   console.log(`  Canon overlay intake: ${canonOverlayIntakeCount} project manifests`);
   console.log(`  Canon overlay candidates: ${canonOverlayCandidateCount} candidates`);
   console.log(`  Canon overlay review packets: ${canonOverlayCandidateReviewPacketCount} packets`);
+  console.log(`  Canon overlay promotion plans: ${canonOverlayCandidatePromotionPlanCount} plans`);
   console.log(`  Patterns:       ${patternCount}`);
   console.log(`  Graph:          ${nodeCount} nodes`);
   console.log(`  Property docs:  ${propertyDocs.totalCount}`);

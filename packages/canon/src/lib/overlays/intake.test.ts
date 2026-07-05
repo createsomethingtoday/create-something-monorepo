@@ -6,11 +6,15 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
 	buildCanonOverlayCandidateQueue,
+	buildCanonOverlayCandidatePromotionPlans,
 	buildCanonOverlayCandidateReviewPackets,
 	buildCanonOverlayIntakeInventory,
+	findCanonOverlayCandidatePromotionPlan,
 	findCanonOverlayCandidateReviewPacket,
 	findCanonProjectOverlayManifestFiles,
 	renderCanonOverlayCandidateQueue,
+	renderCanonOverlayCandidatePromotionPlan,
+	renderCanonOverlayCandidatePromotionPlans,
 	renderCanonOverlayCandidateReviewPacket,
 	renderCanonOverlayCandidateReviewPackets,
 	renderCanonOverlayIntakeInventory
@@ -266,6 +270,65 @@ describe('Canon overlay intake inventory', () => {
 		expect(collectionRendered).toContain('Canon Overlay Candidate Review Packets');
 		expect(collectionRendered).toContain(
 			'canon://overlays/candidates/overlay.client-a.surface-brief/handoff'
+		);
+	});
+
+	it('builds approval-gated promotion plans from candidate review packets', async () => {
+		const root = await createTempRoot();
+		await writeOverlayManifest(
+			root,
+			'packages/client-a/canon-overlay/manifest.ts',
+			readyManifest('overlay.client-a', 'Client A Overlay', '@create-something/client-a')
+		);
+		await writeOverlayArtifactSet(root, 'packages/client-a/canon-overlay');
+
+		const inventory = await buildCanonOverlayIntakeInventory({ rootDir: root });
+		const queue = buildCanonOverlayCandidateQueue(inventory);
+		const packets = buildCanonOverlayCandidateReviewPackets(queue);
+		const plans = buildCanonOverlayCandidatePromotionPlans(packets);
+		const plan = plans.entries[0];
+
+		expect(plans.id).toBe('canon-overlay-candidate-promotion-plans');
+		expect(plans.summary).toMatchObject({
+			total: 1,
+			overlays: 1,
+			byRequestedKind: [{ kind: 'template', count: 1 }]
+		});
+		expect(plan).toMatchObject({
+			id: 'canon-overlay-candidate-promotion-plan:overlay.client-a.surface-brief',
+			packetId: 'canon-overlay-candidate-review:overlay.client-a.surface-brief',
+			candidateId: 'overlay.client-a:overlay.client-a.surface-brief',
+			intakeId: 'overlay.client-a.surface-brief',
+			planUri: 'canon://overlays/candidates/overlay.client-a.surface-brief/promotion-plan',
+			handoffUri: 'canon://overlays/candidates/overlay.client-a.surface-brief/handoff'
+		});
+		expect(plan?.preconditions.join(' ')).toContain('Human maintainer approval');
+		expect(plan?.requiredChanges.join(' ')).toContain('registry metadata');
+		expect(plan?.validationPlan.join(' ')).toContain('MCP parity');
+		expect(plan?.stopConditions.join(' ')).toContain('Stop if human approval is missing');
+		expect(plan?.approvalBoundary.join(' ')).toContain('does not approve implementation');
+
+		expect(findCanonOverlayCandidatePromotionPlan(plans, plan!.intakeId)?.id).toBe(plan?.id);
+		expect(findCanonOverlayCandidatePromotionPlan(plans, plan!.id)?.intakeId).toBe(
+			plan?.intakeId
+		);
+		expect(findCanonOverlayCandidatePromotionPlan(plans, plan!.candidateId)?.intakeId).toBe(
+			plan?.intakeId
+		);
+		expect(findCanonOverlayCandidatePromotionPlan(plans, plan!.packetId)?.intakeId).toBe(
+			plan?.intakeId
+		);
+		expect(findCanonOverlayCandidatePromotionPlan(plans, 'overlay.missing')).toBeUndefined();
+
+		const rendered = renderCanonOverlayCandidatePromotionPlan(plan!);
+		expect(rendered).toContain('Canon-owned export path');
+		expect(rendered).toContain('Stop if human approval is missing');
+		expect(rendered).toContain('Stable promotion still requires Canon-owned export path');
+
+		const collectionRendered = renderCanonOverlayCandidatePromotionPlans(plans);
+		expect(collectionRendered).toContain('Canon Overlay Candidate Promotion Plans');
+		expect(collectionRendered).toContain(
+			'canon://overlays/candidates/overlay.client-a.surface-brief/promotion-plan'
 		);
 	});
 });

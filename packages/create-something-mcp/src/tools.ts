@@ -15,6 +15,11 @@ import {
   listCanonOverlayCandidateReviewPacketIds,
   renderCanonOverlayCandidateReviewHandoff
 } from './canon-overlay-candidate-handoff.js';
+import {
+  getCanonOverlayCandidatePromotionPlan,
+  listCanonOverlayCandidatePromotionPlanIds,
+  renderCanonOverlayCandidatePromotionPlan
+} from './canon-overlay-candidate-promotion-plan.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import {
   CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
@@ -1070,6 +1075,42 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonOverlayCandidateReviewHandoff(packet),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_overlay_candidate_promotion_plan_get',
+    'Get a rendered read-only Canon overlay candidate promotion plan by intake id. Use this only after explicit human approval of the candidate handoff, when a maintainer needs implementation scope, required changes, validation, documentation, compatibility, and stop conditions.',
+    {
+      intakeId: z.string().describe('Candidate intake id, plan id, packet id, or candidate id, for example overlay.agency-atlas-public.workflow-proof-surface')
+    },
+    async ({ intakeId }) => {
+      const plan = getCanonOverlayCandidatePromotionPlan(intakeId);
+
+      if (!plan) {
+        const ids = listCanonOverlayCandidatePromotionPlanIds();
+        return {
+          content: [{
+            type: 'text' as const,
+            text: [
+              `Canon overlay candidate promotion plan not found: ${intakeId}`,
+              '',
+              'Available intake ids:',
+              ...ids.map((id) => `- \`${id}\``)
+            ].join('\n'),
+            ...USER_VISIBLE,
+          }],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonOverlayCandidatePromotionPlan(plan),
           ...USER_VISIBLE,
         }]
       };

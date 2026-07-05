@@ -6,6 +6,8 @@ import { CANON_REGISTRY_MANIFEST, reviewCanonProjectOverlay } from '../registry/
 import type {
 	CanonOverlayCandidateQueue,
 	CanonOverlayCandidateQueueEntry,
+	CanonOverlayCandidatePromotionPlan,
+	CanonOverlayCandidatePromotionPlanCollection,
 	CanonOverlayCandidateReviewPacket,
 	CanonOverlayCandidateReviewPacketCollection,
 	CanonProjectOverlayIntegrityIssue,
@@ -409,6 +411,122 @@ export function findCanonOverlayCandidateReviewPacket(
 	);
 }
 
+export function buildCanonOverlayCandidatePromotionPlans(
+	packets: CanonOverlayCandidateReviewPacketCollection
+): CanonOverlayCandidatePromotionPlanCollection {
+	const entries = packets.entries.map((packet) => createCandidatePromotionPlan(packet));
+
+	return {
+		schemaVersion: 1,
+		id: 'canon-overlay-candidate-promotion-plans',
+		sourceOfTruth: '@create-something/canon/overlays/intake',
+		description:
+			'Read-only implementation plans for Canon overlay candidates after explicit human approval, preserving export, docs, tests, compatibility, and stop-condition requirements before stable promotion.',
+		entries,
+		summary: {
+			total: entries.length,
+			overlays: new Set(entries.map((entry) => entry.overlayId)).size,
+			byRequestedKind: countByRequestedKind(entries),
+			byModality: countByModality(entries)
+		},
+		agentContract: {
+			purpose: 'canon-overlay-candidate-promotion-plans',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'planning a bounded Canon implementation slice after a human approves a candidate handoff',
+				'checking export, docs, tests, compatibility, MCP content, and rollback expectations before stable promotion',
+				'keeping candidate implementation work separate from approval and Linear issue creation',
+				'turning repeated-surface overlay evidence into a reviewable implementation checklist'
+			],
+			stopBefore: [
+				'automatically creating Linear issues from promotion plans',
+				'automatically approving or marking any candidate stable',
+				'editing project overlay manifests while rendering promotion plans',
+				'treating a plan as production permission without explicit human approval'
+			]
+		}
+	};
+}
+
+export function renderCanonOverlayCandidatePromotionPlan(
+	plan: CanonOverlayCandidatePromotionPlan
+): string {
+	const lines = [
+		`# ${plan.title}`,
+		'',
+		`Candidate: ${plan.candidateId}`,
+		`Overlay: ${plan.overlayName} (${plan.overlayId})`,
+		`Manifest: ${plan.manifestPath}`,
+		`Requested kind: ${plan.requestedKind}`,
+		`Modalities: ${plan.requestedModalities.join(', ')}`,
+		`Source package: ${plan.sourcePackage}`,
+		`Promotion plan: ${plan.planUri}`,
+		`Review packet: ${plan.handoffUri}`,
+		`Candidate resource: ${plan.candidateUri}`,
+		`Overlay review: ${plan.reviewUri}`,
+		'',
+		'## Summary',
+		plan.summary,
+		'',
+		'## Preconditions',
+		...plan.preconditions.map((item) => `- ${item}`),
+		'',
+		'## Implementation Scope',
+		...plan.implementationScope.map((item) => `- ${item}`),
+		'',
+		'## Required Changes',
+		...plan.requiredChanges.map((item) => `- ${item}`),
+		'',
+		'## Validation Plan',
+		...plan.validationPlan.map((item) => `- ${item}`),
+		'',
+		'## Documentation Plan',
+		...plan.documentationPlan.map((item) => `- ${item}`),
+		'',
+		'## Compatibility Plan',
+		...plan.compatibilityPlan.map((item) => `- ${item}`),
+		'',
+		'## Stop Conditions',
+		...plan.stopConditions.map((item) => `- ${item}`),
+		'',
+		'## Approval Boundary',
+		...plan.approvalBoundary.map((item) => `- ${item}`)
+	];
+
+	return lines.join('\n');
+}
+
+export function renderCanonOverlayCandidatePromotionPlans(
+	collection: CanonOverlayCandidatePromotionPlanCollection
+): string {
+	const lines = [
+		'# Canon Overlay Candidate Promotion Plans',
+		'',
+		`Total plans: ${collection.summary.total}`,
+		`Source overlays: ${collection.summary.overlays}`
+	];
+
+	if (collection.entries.length === 0) {
+		lines.push('', 'No overlay candidate promotion plans are available.');
+		return lines.join('\n');
+	}
+
+	for (const plan of collection.entries) {
+		lines.push('', `## ${plan.title}`, `- Plan: ${plan.planUri}`, `- Handoff: ${plan.handoffUri}`);
+	}
+
+	return lines.join('\n');
+}
+
+export function findCanonOverlayCandidatePromotionPlan(
+	collection: CanonOverlayCandidatePromotionPlanCollection,
+	id: string
+): CanonOverlayCandidatePromotionPlan | undefined {
+	return collection.entries.find(
+		(entry) => entry.intakeId === id || entry.id === id || entry.candidateId === id || entry.packetId === id
+	);
+}
+
 function summarizeOverlayInventory(entries: CanonProjectOverlayInventoryEntry[]) {
 	return {
 		total: entries.length,
@@ -441,7 +559,7 @@ function countDecisions(
 	);
 }
 
-function countByRequestedKind(entries: CanonOverlayCandidateQueueEntry[]) {
+function countByRequestedKind(entries: Array<{ requestedKind: CanonRegistryKind }>) {
 	const counts = new Map<CanonRegistryKind, number>();
 	for (const entry of entries) {
 		counts.set(entry.requestedKind, (counts.get(entry.requestedKind) ?? 0) + 1);
@@ -451,7 +569,7 @@ function countByRequestedKind(entries: CanonOverlayCandidateQueueEntry[]) {
 		.sort((a, b) => b.count - a.count || a.kind.localeCompare(b.kind));
 }
 
-function countByModality(entries: CanonOverlayCandidateQueueEntry[]) {
+function countByModality(entries: Array<{ requestedModalities: CanonRegistryModality[] }>) {
 	const counts = new Map<CanonRegistryModality, number>();
 	for (const entry of entries) {
 		for (const modality of entry.requestedModalities) {
@@ -513,6 +631,92 @@ function createCandidateReviewPacket(
 				'automatically opening Linear work from the packet',
 				'automatically editing Canon registry or stable exports',
 				'overriding stop-before-stable requirements'
+			]
+		}
+	};
+}
+
+function createCandidatePromotionPlan(
+	packet: CanonOverlayCandidateReviewPacket
+): CanonOverlayCandidatePromotionPlan {
+	return {
+		id: `canon-overlay-candidate-promotion-plan:${packet.intakeId}`,
+		packetId: packet.id,
+		candidateId: packet.candidateId,
+		intakeId: packet.intakeId,
+		title: `${packet.title.replace(/ review packet$/, '')} promotion plan`,
+		summary: packet.summary,
+		overlayId: packet.overlayId,
+		overlayName: packet.overlayName,
+		manifestPath: packet.manifestPath,
+		owner: packet.owner,
+		sourcePackage: packet.sourcePackage,
+		sourcePath: packet.sourcePath,
+		requestedKind: packet.requestedKind,
+		requestedModalities: packet.requestedModalities,
+		planUri: `canon://overlays/candidates/${packet.intakeId}/promotion-plan`,
+		handoffUri: packet.handoffUri,
+		candidateUri: packet.candidateUri,
+		reviewUri: packet.reviewUri,
+		preconditions: [
+			'Human maintainer approval is recorded outside this plan before implementation starts.',
+			'Candidate review packet has been read and current source paths still resolve.',
+			'Implementation owner confirms the candidate should move toward Canon candidate or stable work instead of remaining project-local.'
+		],
+		implementationScope: [
+			`Evaluate the ${packet.requestedKind} candidate for Canon-owned source, export, docs, tests, compatibility, and registry routing.`,
+			`Preserve the owning overlay as evidence: ${packet.overlayName} (${packet.overlayId}).`,
+			`Cover modalities: ${packet.requestedModalities.join(', ')}.`,
+			`Review source package ${packet.sourcePackage}${packet.sourcePath ? ` at ${packet.sourcePath}` : ''}.`
+		],
+		requiredChanges: [
+			'Choose the Canon source module, package export path, registry item id, and maturity target before editing.',
+			'Add or update Canon source implementation only after confirming no stable registry item already satisfies the candidate.',
+			'Update Canon registry metadata with kind, modalities, dependencies, docs path, and contract notes.',
+			'Update MCP generated content and public Canon docs for the new or changed Canon primitive.',
+			'Keep project overlay artifacts as evidence; do not mutate them as part of promotion planning.'
+		],
+		validationPlan: [
+			'Run focused Canon tests for the touched source and registry behavior.',
+			'Run Canon build or package check covering public exports.',
+			'Run MCP parity/build checks if generated registry, overlay, or docs content changes.',
+			'Run .ltd check if public Canon docs change.',
+			'Record exact commands and evidence in the promotion PR or Linear issue.'
+		],
+		documentationPlan: [
+			'Document the Canon-owned behavior and import path in the nearest Canon docs page.',
+			'Link the promoted item back to the registry and overlay evidence where useful.',
+			'Call out modality responsibilities for web, chat, app, voice, or glasses as applicable.'
+		],
+		compatibilityPlan: [
+			'Preserve existing project overlay behavior until Canon consumers intentionally migrate.',
+			'Name any breaking API, token, copy, or policy change before promotion.',
+			'Include rollback or keep-local guidance if the candidate remains project-owned.'
+		],
+		stopConditions: [
+			...packet.stopBeforeStable,
+			'Stop if human approval is missing or ambiguous.',
+			'Stop if source paths, surface proofs, or required evidence are stale.',
+			'Stop if implementation would create a fork instead of a Canon-owned export and registry item.',
+			'Stop before creating Linear work automatically from this plan.'
+		],
+		approvalBoundary: [
+			'This plan is read-only and does not approve implementation, create Linear issues, mutate overlays, or mark anything stable.',
+			'Open implementation work only after explicit human approval.',
+			'Stable promotion still requires Canon-owned export path, docs, tests, compatibility notes, and registry routing.'
+		],
+		agentContract: {
+			purpose: 'canon-overlay-candidate-promotion-plan',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'planning implementation after candidate approval',
+				'checking promotion scope before editing Canon',
+				'carrying evidence and stop conditions into a follow-up PR'
+			],
+			stopBefore: [
+				'automatically creating Linear issues',
+				'automatically editing Canon source',
+				'treating the plan as approval or stable promotion'
 			]
 		}
 	};
