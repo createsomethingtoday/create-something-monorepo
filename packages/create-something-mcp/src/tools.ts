@@ -63,8 +63,14 @@ const CANON_PUBLIC_EXPORT_CLASSIFICATION_VALUES = [
   'docs-only',
   'domain-specific',
   'experiment',
+  'governance-contract',
+  'headless-contract',
   'platform-surface',
-  'stable-foundation-candidate'
+  'registry-artifact',
+  'stable-foundation-candidate',
+  'style-artifact',
+  'supporting-api',
+  'token-artifact'
 ] as const;
 const CANON_PUBLIC_EXPORT_REGISTRY_POLICY_VALUES = [
   'candidate-review',
