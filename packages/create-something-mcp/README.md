@@ -19,7 +19,7 @@ Content from all CREATE SOMETHING properties.
 | `papers://list`, `papers://{slug}` | .io | Research papers on methodology, architecture, philosophy |
 | `canon://list`, `canon://{slug}` | .ltd | Canon Design System pages (foundations, concepts, guidelines) |
 | `canon://registry`, `canon://registry/list`, `canon://registry/{id}` | .ltd | Machine-readable Canon registry for components, tokens, templates, adapters, policies, and modalities |
-| `canon://overlays`, `canon://overlays/{id}`, `canon://overlays/{id}/files/...` | .ltd | Canon overlay catalog, project-overlay templates, and read-only template file packs |
+| `canon://overlays`, `canon://overlays/{id}`, `canon://overlays/{id}/files`, `canon://overlays/{id}/files/...` | .ltd | Canon overlay catalog, project-overlay templates, and read-only template file packs |
 | `canon://overlays/candidates/...` | .ltd | Canon overlay candidate queue, handoffs, promotion plans, readiness reports, approval records, approval target templates, and approval validation reports |
 | `patterns://list`, `patterns://{slug}` | .ltd | Design patterns from the CREATE SOMETHING philosophy |
 | `masters://list`, `masters://{slug}` | .ltd | Philosophical and design masters (Rams, Heidegger, etc.) |
@@ -49,6 +49,7 @@ Content from all CREATE SOMETHING properties.
 | `canon_registry_search` | Search Canon components, tokens, templates, adapters, and policies by query, modality, kind, and maturity. |
 | `canon_registry_get` | Get one Canon registry item with source path, import path, docs path, dependencies, modalities, and contract notes. |
 | `canon_template_get` | Get a Canon template by id or modality for web/chat/app/voice/glasses surfaces, including overlay template packs. |
+| `canon_overlay_template_file_get` | Get the rendered read-only Canon project overlay template file pack, or one template file by relative path, without writing files. |
 | `canon_extension_route` | Route a project/client Canon extension intake packet to project-local, candidate, stable-reuse, or deprecation guidance. |
 | `canon_overlay_review` | Review a project/client Canon overlay manifest for theme, tokens, templates, copy rules, surface policy, registry metadata, and extension-intake gaps. |
 | `canon_overlay_instantiate_preview` | Preview a Canon project/client overlay instantiation plan, generated manifest, and optional eight-file contents without writing files. |

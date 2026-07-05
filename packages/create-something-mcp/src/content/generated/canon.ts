@@ -5150,10 +5150,13 @@ Start with \`overlay.project-template\`.
 - Template resource: \`canon://overlays/overlay.project-template\`
 - Template file pack: \`canon://overlays/overlay.project-template/files\`
 - Template file resource: \`canon://overlays/overlay.project-template/files/<encoded-path>\`
+- Template file tool: \`canon_overlay_template_file_get\`
 
 The template pack renders eight files: \`theme.css\`, \`tokens.json\`, \`templates/README.md\`, \`templates/surface-brief.md\`, \`copy-rules.md\`, \`surface-policy.md\`, \`registry.json\`, and \`manifest.ts\`.
 
-Agents can inspect the file pack before instantiation through MCP resources or search. The collection includes the rendered file bodies, MIME types, output paths, and per-file URIs. Use these resources for review and copy planning only; use \`canon_overlay_instantiate_preview\` or the local instantiate CLI when a project-specific id, owner, source package, output root, and modality set are needed.
+Agents can inspect the file pack before instantiation through MCP resources, search, or \`canon_overlay_template_file_get\`. The collection includes the rendered file bodies, MIME types, output paths, and per-file URIs. Use these resources and the getter for review and copy planning only; use \`canon_overlay_instantiate_preview\` or the local instantiate CLI when a project-specific id, owner, source package, output root, and modality set are needed.
+
+Use \`canon_overlay_template_file_get\` without a \`relativePath\` to render the full pack as Markdown, or pass a file such as \`surface-policy.md\` or \`templates/surface-brief.md\` to render one file. The tool does not write template files, instantiate overlays, create Linear work, mutate Canon, mutate project overlays, or approve candidate promotion.
 
 ## Intake Inventory
 
