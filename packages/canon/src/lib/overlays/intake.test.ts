@@ -11,6 +11,7 @@ import type {
 import {
 	buildCanonOverlayCandidateQueue,
 	buildCanonOverlayCandidatePromotionApprovalRecords,
+	buildCanonOverlayCandidatePromotionApprovalTargetTemplate,
 	buildCanonOverlayCandidatePromotionPlans,
 	buildCanonOverlayCandidatePromotionReadinessReports,
 	buildCanonOverlayCandidateReviewPackets,
@@ -23,6 +24,7 @@ import {
 	renderCanonOverlayCandidateQueue,
 	renderCanonOverlayCandidatePromotionApprovalRecord,
 	renderCanonOverlayCandidatePromotionApprovalRecords,
+	renderCanonOverlayCandidatePromotionApprovalTargetTemplate,
 	renderCanonOverlayCandidatePromotionApprovalValidationReport,
 	renderCanonOverlayCandidatePromotionPlan,
 	renderCanonOverlayCandidatePromotionPlans,
@@ -580,6 +582,55 @@ describe('Canon overlay intake inventory', () => {
 		expect(rendered).toContain('Ready for implementation: no');
 		expect(rendered).toContain('does not itself approve implementation');
 		expect(rendered).toContain('Stop before: automatically creating Linear work');
+	});
+
+	it('builds fillable approval target templates without selecting targets', async () => {
+		const root = await createTempRoot();
+		await writeOverlayManifest(
+			root,
+			'packages/client-a/canon-overlay/manifest.ts',
+			readyManifest('overlay.client-a', 'Client A Overlay', '@create-something/client-a')
+		);
+		await writeOverlayArtifactSet(root, 'packages/client-a/canon-overlay');
+
+		const inventory = await buildCanonOverlayIntakeInventory({ rootDir: root });
+		const queue = buildCanonOverlayCandidateQueue(inventory);
+		const packets = buildCanonOverlayCandidateReviewPackets(queue);
+		const plans = buildCanonOverlayCandidatePromotionPlans(packets);
+		const reports = buildCanonOverlayCandidatePromotionReadinessReports(plans);
+		const approvalRecords = buildCanonOverlayCandidatePromotionApprovalRecords(reports);
+		const record = approvalRecords.entries[0]!;
+		const template = buildCanonOverlayCandidatePromotionApprovalTargetTemplate(record);
+
+		expect(template).toMatchObject({
+			id: 'canon-overlay-candidate-promotion-approval-target-template:overlay.client-a.surface-brief',
+			approvalRecordId: record.id,
+			readinessReportId: record.readinessReportId,
+			planId: record.planId,
+			candidateId: record.candidateId,
+			intakeId: record.intakeId,
+			targetTemplateUri:
+				'canon://overlays/candidates/overlay.client-a.surface-brief/approval-record/target-template',
+			validationUri:
+				'canon://overlays/candidates/overlay.client-a.surface-brief/approval-record/validation'
+		});
+		expect(Object.values(template.target).every((value) => value === null)).toBe(true);
+		expect(template.fields.map((field) => field.id)).toEqual(record.requiredFields.map((field) => field.id));
+		expect(template.allowedValues.registryActions).toEqual([
+			'reuse-existing',
+			'update-existing',
+			'create-new'
+		]);
+		expect(template.allowedValues.maturityTargets).toEqual(['experimental', 'candidate', 'stable']);
+		expect(template.targetHints.registryItems.length).toBeGreaterThan(0);
+		expect(template.targetHints.exportPolicies.length).toBeGreaterThan(0);
+		expect(template.approvalBoundary.join(' ')).toContain('does not approve implementation');
+
+		const rendered = renderCanonOverlayCandidatePromotionApprovalTargetTemplate(template);
+		expect(rendered).toContain('Target JSON');
+		expect(rendered).toContain('"approvalOwner": null');
+		expect(rendered).toContain('Registry actions: reuse-existing, update-existing, create-new');
+		expect(rendered).toContain('Stop before: automatically filling target fields');
 	});
 });
 

@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 
 import {
   applyCanonOverlayCandidatePromotionApprovalTarget,
+  buildCanonOverlayCandidatePromotionApprovalTargetTemplate,
   getCanonOverlayCandidatePromotionApprovalRecord,
   listCanonOverlayCandidatePromotionApprovalRecordIds,
   renderCanonOverlayCandidatePromotionApprovalRecord,
+  renderCanonOverlayCandidatePromotionApprovalTargetTemplate,
   renderCanonOverlayCandidatePromotionApprovalValidationReport,
   validateCanonOverlayCandidatePromotionApprovalRecord
 } from '../src/canon-overlay-candidate-promotion-approval-record.js';
@@ -28,6 +30,17 @@ assert.match(rendered, /Current value: UNSET/);
 assert.match(rendered, /## Target Hints/);
 assert.match(rendered, /does not itself approve implementation/);
 assert.match(rendered, /Stop before: automatically creating Linear work/);
+
+const template = buildCanonOverlayCandidatePromotionApprovalTargetTemplate(record);
+const renderedTemplate = renderCanonOverlayCandidatePromotionApprovalTargetTemplate(template);
+
+assert.equal(template.targetTemplateUri, `${record.approvalUri}/target-template`);
+assert.equal(Object.values(template.target).every((value) => value === null), true);
+assert.ok(template.allowedValues.registryActions.includes('reuse-existing'));
+assert.ok(template.allowedValues.maturityTargets.includes('candidate'));
+assert.match(renderedTemplate, /Target JSON/);
+assert.match(renderedTemplate, /"approvalOwner": null/);
+assert.match(renderedTemplate, /Stop before: automatically filling target fields/);
 
 const byCandidateId = getCanonOverlayCandidatePromotionApprovalRecord(record.candidateId);
 const byPlanId = getCanonOverlayCandidatePromotionApprovalRecord(record.planId);

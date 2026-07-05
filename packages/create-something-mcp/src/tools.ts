@@ -27,9 +27,11 @@ import {
 } from './canon-overlay-candidate-promotion-readiness.js';
 import {
   applyCanonOverlayCandidatePromotionApprovalTarget,
+  buildCanonOverlayCandidatePromotionApprovalTargetTemplate,
   getCanonOverlayCandidatePromotionApprovalRecord,
   listCanonOverlayCandidatePromotionApprovalRecordIds,
   renderCanonOverlayCandidatePromotionApprovalRecord,
+  renderCanonOverlayCandidatePromotionApprovalTargetTemplate,
   renderCanonOverlayCandidatePromotionApprovalValidationReport,
   validateCanonOverlayCandidatePromotionApprovalRecord
 } from './canon-overlay-candidate-promotion-approval-record.js';
@@ -1208,6 +1210,44 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text' as const,
           text: renderCanonOverlayCandidatePromotionApprovalRecord(record),
+          ...USER_VISIBLE,
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    'canon_overlay_candidate_promotion_approval_target_template_get',
+    'Get a rendered fillable Canon overlay candidate promotion approval target template by intake id. Use this to copy and fill target JSON before validation; it does not fill fields, persist approval, create Linear work, or mutate Canon.',
+    {
+      intakeId: z.string().describe('Candidate intake id, approval record id, readiness report id, plan id, or candidate id, for example overlay.agency-atlas-public.workflow-proof-surface')
+    },
+    async ({ intakeId }) => {
+      const record = getCanonOverlayCandidatePromotionApprovalRecord(intakeId);
+
+      if (!record) {
+        const ids = listCanonOverlayCandidatePromotionApprovalRecordIds();
+        return {
+          content: [{
+            type: 'text' as const,
+            text: [
+              `Canon overlay candidate promotion approval record not found: ${intakeId}`,
+              '',
+              'Available intake ids:',
+              ...ids.map((id) => `- \`${id}\``)
+            ].join('\n'),
+            ...USER_VISIBLE,
+          }],
+          isError: true,
+        };
+      }
+
+      const template = buildCanonOverlayCandidatePromotionApprovalTargetTemplate(record);
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: renderCanonOverlayCandidatePromotionApprovalTargetTemplate(template),
           ...USER_VISIBLE,
         }]
       };
