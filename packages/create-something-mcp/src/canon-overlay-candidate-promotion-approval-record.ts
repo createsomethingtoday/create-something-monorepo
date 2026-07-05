@@ -5,6 +5,7 @@ import type {
   CanonOverlayCandidatePromotionApprovalRecord,
   CanonOverlayCandidatePromotionApprovalTarget,
   CanonOverlayCandidatePromotionApprovalTargetTemplate,
+  CanonOverlayCandidatePromotionApprovalTargetTemplateCollection,
   CanonOverlayCandidatePromotionApprovalValidationIssue,
   CanonOverlayCandidatePromotionApprovalValidationReport,
   CanonOverlayCandidatePromotionApprovalValidationStatus
@@ -27,6 +28,51 @@ export function getCanonOverlayCandidatePromotionApprovalRecord(
       record.planId === intakeId ||
       record.readinessReportId === intakeId
   );
+}
+
+export function buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection(): CanonOverlayCandidatePromotionApprovalTargetTemplateCollection {
+  const entries = CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.entries.map((record) =>
+    buildCanonOverlayCandidatePromotionApprovalTargetTemplate(record)
+  );
+
+  return {
+    schemaVersion: 1,
+    id: 'canon-overlay-candidate-promotion-approval-target-templates',
+    sourceOfTruth: '@create-something/canon/overlays/intake',
+    description:
+      'Derived fillable target templates for Canon overlay candidate promotion approval records, keeping target JSON, allowed values, hints, and approval boundaries discoverable before validation.',
+    entries,
+    summary: {
+      total: entries.length
+    },
+    agentContract: {
+      purpose: 'canon-overlay-candidate-promotion-approval-target-templates',
+      primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+      useFor: [
+        'discovering fillable approval target templates through MCP resources and search',
+        'copying compact target JSON for maintainer-filled approval validation',
+        'keeping target hints and allowed values available without selecting them automatically'
+      ],
+      stopBefore: [
+        'automatically filling target fields',
+        'automatically treating target hints as selected targets',
+        'automatically creating Linear work',
+        'automatically editing Canon source, registry, exports, docs, or project overlays',
+        'treating a target template as approval or stable promotion'
+      ]
+    }
+  };
+}
+
+export function listCanonOverlayCandidatePromotionApprovalTargetTemplates(): CanonOverlayCandidatePromotionApprovalTargetTemplate[] {
+  return buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection().entries;
+}
+
+export function getCanonOverlayCandidatePromotionApprovalTargetTemplate(
+  intakeId: string
+): CanonOverlayCandidatePromotionApprovalTargetTemplate | undefined {
+  const record = getCanonOverlayCandidatePromotionApprovalRecord(intakeId);
+  return record ? buildCanonOverlayCandidatePromotionApprovalTargetTemplate(record) : undefined;
 }
 
 export function renderCanonOverlayCandidatePromotionApprovalRecord(

@@ -27,8 +27,8 @@ import {
 } from './canon-overlay-candidate-promotion-readiness.js';
 import {
   applyCanonOverlayCandidatePromotionApprovalTarget,
-  buildCanonOverlayCandidatePromotionApprovalTargetTemplate,
   getCanonOverlayCandidatePromotionApprovalRecord,
+  getCanonOverlayCandidatePromotionApprovalTargetTemplate,
   listCanonOverlayCandidatePromotionApprovalRecordIds,
   renderCanonOverlayCandidatePromotionApprovalRecord,
   renderCanonOverlayCandidatePromotionApprovalTargetTemplate,
@@ -1223,15 +1223,15 @@ export function registerTools(server: McpServer) {
       intakeId: z.string().describe('Candidate intake id, approval record id, readiness report id, plan id, or candidate id, for example overlay.agency-atlas-public.workflow-proof-surface')
     },
     async ({ intakeId }) => {
-      const record = getCanonOverlayCandidatePromotionApprovalRecord(intakeId);
+      const template = getCanonOverlayCandidatePromotionApprovalTargetTemplate(intakeId);
 
-      if (!record) {
+      if (!template) {
         const ids = listCanonOverlayCandidatePromotionApprovalRecordIds();
         return {
           content: [{
             type: 'text' as const,
             text: [
-              `Canon overlay candidate promotion approval record not found: ${intakeId}`,
+              `Canon overlay candidate promotion approval target template not found: ${intakeId}`,
               '',
               'Available intake ids:',
               ...ids.map((id) => `- \`${id}\``)
@@ -1241,8 +1241,6 @@ export function registerTools(server: McpServer) {
           isError: true,
         };
       }
-
-      const template = buildCanonOverlayCandidatePromotionApprovalTargetTemplate(record);
 
       return {
         content: [{

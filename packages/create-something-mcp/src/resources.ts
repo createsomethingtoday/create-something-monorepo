@@ -25,6 +25,9 @@ import {
 import {
   CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS
 } from './content/generated/canon-overlay-candidate-promotion-approval-records.js';
+import {
+  buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection
+} from './canon-overlay-candidate-promotion-approval-record.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -44,6 +47,9 @@ import {
 } from './content/framework.js';
 
 export function registerResources(server: McpServer) {
+  const canonApprovalTargetTemplates =
+    buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection();
+
   // ==========================================================================
   // Papers (.io)
   // ==========================================================================
@@ -387,6 +393,7 @@ export function registerResources(server: McpServer) {
           promotionPlanUri: `canon://overlays/candidates/${entry.intakeId}/promotion-plan`,
           readinessUri: `canon://overlays/candidates/${entry.intakeId}/readiness`,
           approvalRecordUri: `canon://overlays/candidates/${entry.intakeId}/approval-record`,
+          approvalTargetTemplateUri: `canon://overlays/candidates/${entry.intakeId}/approval-record/target-template`,
           uri: entry.candidateUri
         })), null, 2)
       }]
@@ -542,6 +549,40 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'application/json',
           text: JSON.stringify(record, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-promotion-approval-target-templates',
+    'canon://overlays/candidates/approval-target-templates',
+    {
+      description: `Canon overlay candidate promotion approval target templates: ${canonApprovalTargetTemplates.entries.length} fillable target JSON templates before approval validation`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(canonApprovalTargetTemplates, null, 2)
+      }]
+    })
+  );
+
+  for (const template of canonApprovalTargetTemplates.entries) {
+    server.resource(
+      `canon-overlays-candidate-promotion-approval-target-template-${template.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      template.targetTemplateUri,
+      {
+        description: `Canon overlay candidate promotion approval target template: ${template.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(template, null, 2)
         }]
       })
     );
