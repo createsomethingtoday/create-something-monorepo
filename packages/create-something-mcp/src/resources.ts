@@ -26,7 +26,8 @@ import {
   CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS
 } from './content/generated/canon-overlay-candidate-promotion-approval-records.js';
 import {
-  buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection
+  buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection,
+  buildCanonOverlayCandidatePromotionApprovalValidationReportCollection
 } from './canon-overlay-candidate-promotion-approval-record.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
@@ -49,6 +50,8 @@ import {
 export function registerResources(server: McpServer) {
   const canonApprovalTargetTemplates =
     buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection();
+  const canonApprovalValidationReports =
+    buildCanonOverlayCandidatePromotionApprovalValidationReportCollection();
 
   // ==========================================================================
   // Papers (.io)
@@ -394,6 +397,7 @@ export function registerResources(server: McpServer) {
           readinessUri: `canon://overlays/candidates/${entry.intakeId}/readiness`,
           approvalRecordUri: `canon://overlays/candidates/${entry.intakeId}/approval-record`,
           approvalTargetTemplateUri: `canon://overlays/candidates/${entry.intakeId}/approval-record/target-template`,
+          approvalValidationUri: `canon://overlays/candidates/${entry.intakeId}/approval-record/validation`,
           uri: entry.candidateUri
         })), null, 2)
       }]
@@ -583,6 +587,40 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'application/json',
           text: JSON.stringify(template, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-promotion-approval-validation-reports',
+    'canon://overlays/candidates/approval-validation-reports',
+    {
+      description: `Canon overlay candidate promotion approval validation reports: ${canonApprovalValidationReports.entries.length} read-only validation checks before implementation work`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(canonApprovalValidationReports, null, 2)
+      }]
+    })
+  );
+
+  for (const report of canonApprovalValidationReports.entries) {
+    server.resource(
+      `canon-overlays-candidate-promotion-approval-validation-${report.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      report.validationUri,
+      {
+        description: `Canon overlay candidate promotion approval validation report: ${report.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(report, null, 2)
         }]
       })
     );

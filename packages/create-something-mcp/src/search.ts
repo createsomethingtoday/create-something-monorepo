@@ -23,7 +23,8 @@ import {
   CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS
 } from './content/generated/canon-overlay-candidate-promotion-approval-records.js';
 import {
-  buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection
+  buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection,
+  buildCanonOverlayCandidatePromotionApprovalValidationReportCollection
 } from './canon-overlay-candidate-promotion-approval-record.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
@@ -50,6 +51,8 @@ function buildContentIndex(): ContentItem[] {
   const items: ContentItem[] = [];
   const canonApprovalTargetTemplates =
     buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection();
+  const canonApprovalValidationReports =
+    buildCanonOverlayCandidatePromotionApprovalValidationReportCollection();
 
   // Papers
   for (const p of PAPERS) {
@@ -452,6 +455,49 @@ function buildContentIndex(): ContentItem[] {
       ].join('\n'),
       property: 'ltd',
       uri: template.targetTemplateUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-promotion-approval-validation:collection',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Promotion Approval Validation Reports',
+    description: canonApprovalValidationReports.description,
+    content: [
+      canonApprovalValidationReports.summary.total.toString(),
+      canonApprovalValidationReports.summary.missingRequiredFields.toString(),
+      canonApprovalValidationReports.summary.invalidTargets.toString(),
+      canonApprovalValidationReports.summary.readyForImplementation.toString(),
+      canonApprovalValidationReports.agentContract.useFor.join('\n'),
+      canonApprovalValidationReports.agentContract.stopBefore.join('\n'),
+      'validation missing required fields invalid targets ready for implementation approval boundary'
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/approval-validation-reports'
+  });
+
+  for (const report of canonApprovalValidationReports.entries) {
+    items.push({
+      id: `canon-overlay-candidate-promotion-approval-validation:${report.intakeId}`,
+      type: 'canon-registry',
+      title: report.title,
+      description: `${report.status}: ${report.summary.missingRequiredFields} missing required fields, ${report.summary.invalidTargetFields} invalid target fields`,
+      content: [
+        report.approvalRecordId,
+        report.readinessReportId,
+        report.planId,
+        report.candidateId,
+        report.status,
+        report.summary.readyForImplementation ? 'ready for implementation' : 'not ready for implementation',
+        report.issues.map(issue => `${issue.code} ${issue.severity} ${issue.fieldId ?? ''} ${issue.message} ${issue.evidence.join(' ')}`).join('\n'),
+        report.approvalBoundary.join('\n'),
+        report.agentContract.useFor.join('\n'),
+        report.agentContract.stopBefore.join('\n'),
+        report.approvalUri,
+        report.validationUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: report.validationUri
     });
   }
 

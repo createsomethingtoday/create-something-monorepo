@@ -8,6 +8,7 @@ import type {
   CanonOverlayCandidatePromotionApprovalTargetTemplateCollection,
   CanonOverlayCandidatePromotionApprovalValidationIssue,
   CanonOverlayCandidatePromotionApprovalValidationReport,
+  CanonOverlayCandidatePromotionApprovalValidationReportCollection,
   CanonOverlayCandidatePromotionApprovalValidationStatus
 } from './content/types.js';
 
@@ -73,6 +74,53 @@ export function getCanonOverlayCandidatePromotionApprovalTargetTemplate(
 ): CanonOverlayCandidatePromotionApprovalTargetTemplate | undefined {
   const record = getCanonOverlayCandidatePromotionApprovalRecord(intakeId);
   return record ? buildCanonOverlayCandidatePromotionApprovalTargetTemplate(record) : undefined;
+}
+
+export function buildCanonOverlayCandidatePromotionApprovalValidationReportCollection(): CanonOverlayCandidatePromotionApprovalValidationReportCollection {
+  const entries = CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.entries.map((record) =>
+    validateCanonOverlayCandidatePromotionApprovalRecord(record)
+  );
+
+  return {
+    schemaVersion: 1,
+    id: 'canon-overlay-candidate-promotion-approval-validation-reports',
+    sourceOfTruth: '@create-something/canon/overlays/intake',
+    description:
+      'Derived validation reports for Canon overlay candidate promotion approval records, showing missing fields and target issues before implementation work starts.',
+    entries,
+    summary: {
+      total: entries.length,
+      missingRequiredFields: countValidationReports(entries, 'missing-required-fields'),
+      invalidTargets: countValidationReports(entries, 'invalid-targets'),
+      readyForImplementation: countValidationReports(entries, 'ready-for-implementation')
+    },
+    agentContract: {
+      purpose: 'canon-overlay-candidate-promotion-approval-validation-reports',
+      primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+      useFor: [
+        'discovering validation status for generated approval records through MCP resources and search',
+        'showing missing approval target fields before implementation work starts',
+        'preserving validation evidence next to approval records and target templates'
+      ],
+      stopBefore: [
+        'automatically filling approval-record fields',
+        'automatically creating Linear work',
+        'automatically editing Canon source, registry, exports, docs, or project overlays',
+        'treating validation success as approval or stable promotion'
+      ]
+    }
+  };
+}
+
+export function listCanonOverlayCandidatePromotionApprovalValidationReports(): CanonOverlayCandidatePromotionApprovalValidationReport[] {
+  return buildCanonOverlayCandidatePromotionApprovalValidationReportCollection().entries;
+}
+
+export function getCanonOverlayCandidatePromotionApprovalValidationReport(
+  intakeId: string
+): CanonOverlayCandidatePromotionApprovalValidationReport | undefined {
+  const record = getCanonOverlayCandidatePromotionApprovalRecord(intakeId);
+  return record ? validateCanonOverlayCandidatePromotionApprovalRecord(record) : undefined;
 }
 
 export function renderCanonOverlayCandidatePromotionApprovalRecord(
@@ -369,6 +417,13 @@ function countValidationIssues(
   severity: CanonOverlayCandidatePromotionApprovalValidationIssue['severity']
 ) {
   return issues.filter((issue) => issue.severity === severity).length;
+}
+
+function countValidationReports(
+  reports: CanonOverlayCandidatePromotionApprovalValidationReport[],
+  status: CanonOverlayCandidatePromotionApprovalValidationStatus
+) {
+  return reports.filter((report) => report.status === status).length;
 }
 
 function determineApprovalValidationStatus({
