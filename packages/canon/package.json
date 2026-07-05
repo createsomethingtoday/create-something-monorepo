@@ -27,6 +27,7 @@
 		"check": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"overlay:inventory": "tsx scripts/check-project-overlays.ts",
+		"overlay:coverage": "tsx scripts/check-property-overlay-coverage.ts",
 		"overlay:candidate-handoff": "tsx scripts/render-overlay-candidate-handoff.ts",
 		"overlay:candidate-plan": "tsx scripts/render-overlay-candidate-plan.ts",
 		"overlay:candidate-approval-record": "tsx scripts/render-overlay-candidate-approval-record.ts",

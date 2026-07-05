@@ -1,0 +1,22 @@
+{
+  "id": "overlay.webflow-apps-admin-audit",
+  "name": "Webflow Apps Admin Audit Overlay",
+  "owner": "webflow-apps-team",
+  "sourcePackage": "@create-something/webflow-apps-audit-dashboard",
+  "targetModalities": [
+    "web",
+    "chat",
+    "app",
+    "voice",
+    "glasses"
+  ],
+  "registryItemIds": [
+    "token.canon-core",
+    "component.clear-decision-panel",
+    "component.clear-proof-strip",
+    "template.canon-project-overlay-manifest",
+    "template.canon-extension-intake",
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "Webflow Apps Admin Audit Overlay keeps webflow app audit dashboard surface local while reusing Canon structure. Promote only the repeated audit-dashboard structure to Canon. Keep Webflow app review policy, reviewer exceptions, and operational data local."
+}

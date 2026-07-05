@@ -1,0 +1,22 @@
+{
+  "id": "overlay.tend-database",
+  "name": "Tend Database Overlay",
+  "owner": "tend-team",
+  "sourcePackage": "@create-something/tend",
+  "targetModalities": [
+    "web",
+    "chat",
+    "app",
+    "voice",
+    "glasses"
+  ],
+  "registryItemIds": [
+    "token.canon-core",
+    "component.clear-decision-panel",
+    "component.clear-proof-strip",
+    "template.canon-project-overlay-manifest",
+    "template.canon-extension-intake",
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "Tend Database Overlay keeps database source management surface local while reusing Canon structure. Promote only the repeated database-source structure to Canon. Keep Tend vertical schemas, SDK behavior, and customer data policy local."
+}

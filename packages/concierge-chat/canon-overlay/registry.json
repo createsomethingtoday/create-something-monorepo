@@ -1,0 +1,22 @@
+{
+  "id": "overlay.concierge-chat-staffing",
+  "name": "Concierge Chat Staffing Overlay",
+  "owner": "concierge-team",
+  "sourcePackage": "@create-something/concierge-chat",
+  "targetModalities": [
+    "web",
+    "chat",
+    "app",
+    "voice",
+    "glasses"
+  ],
+  "registryItemIds": [
+    "token.canon-core",
+    "component.clear-decision-panel",
+    "component.clear-proof-strip",
+    "template.canon-project-overlay-manifest",
+    "template.canon-extension-intake",
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "Concierge Chat Staffing Overlay keeps staffing concierge chat surface local while reusing Canon structure. Promote only the reusable concierge handoff structure to Canon. Keep Abundance/staffing language, job data, nurse/facility positioning, and Dify routing local."
+}
