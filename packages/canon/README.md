@@ -311,8 +311,21 @@ pnpm --filter @create-something/canon overlay:check
 
 The quality gate composes property-surface coverage and intake inventory. It fails when a rendered
 Canon-consuming property is missing `canon-overlay/manifest.ts`, when a covered property overlay is
-not visible to inventory, or when any inventoried overlay is not ready. `pnpm --filter
-@create-something/canon check` runs the same gate after package and Svelte validation.
+not visible to inventory, when any inventoried overlay is not ready, or when an overlay manifest
+imports package code instead of exporting self-contained data. `pnpm --filter @create-something/canon
+check` runs the same gate after package and Svelte validation.
+
+Keep `canon-overlay/manifest.ts` files as plain data exports:
+
+```ts
+export const CANON_PROJECT_OVERLAY_MANIFEST = {
+  "id": "overlay.client-workflow"
+};
+```
+
+Do not import Canon types or other package modules from checked-in overlay manifests. Downstream
+property typechecks can run before Canon `dist` exists, so manifest files must stay readable by
+static inventory and safe for package-local `tsc --noEmit`.
 
 Use `--verbose` to print the full coverage and inventory report in one command:
 

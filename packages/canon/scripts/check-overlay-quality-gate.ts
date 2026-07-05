@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -20,15 +20,24 @@ export type CanonOverlayQualityGateReport = {
 	rootDir: string;
 	coverage: CanonPropertyOverlayCoverageReport;
 	inventory: CanonProjectOverlayInventory;
+	manifestDependencyIssues: CanonOverlayManifestDependencyIssue[];
 	summary: {
 		requiredPropertySurfaces: number;
 		coveredPropertySurfaces: number;
 		totalOverlays: number;
 		readyOverlays: number;
 		notReadyOverlays: number;
+		manifestDependencyIssues: number;
 		candidateIntakes: number;
 		projectLocalIntakes: number;
 	};
+};
+
+export type CanonOverlayManifestDependencyIssue = {
+	manifestPath: string;
+	line: number;
+	syntax: 'import' | 're-export' | 'typed-manifest-export';
+	message: string;
 };
 
 export async function buildCanonOverlayQualityGateReport(
@@ -37,12 +46,14 @@ export async function buildCanonOverlayQualityGateReport(
 	const root = resolveRepoRoot(rootDir);
 	const coverage = await buildCanonPropertyOverlayCoverageReport(root);
 	const inventory = await buildCanonOverlayIntakeInventory({ rootDir: root });
+	const manifestDependencyIssues = inspectOverlayManifestDependencyIssues(root, inventory);
 
 	return {
 		id: 'canon-overlay-quality-gate',
 		rootDir: root,
 		coverage,
 		inventory,
+		manifestDependencyIssues,
 		summary: {
 			requiredPropertySurfaces: coverage.summary.required,
 			coveredPropertySurfaces: coverage.summary.covered,
@@ -52,6 +63,7 @@ export async function buildCanonOverlayQualityGateReport(
 				inventory.summary.needsArtifacts +
 				inventory.summary.needsEvidence +
 				inventory.summary.needsReview,
+			manifestDependencyIssues: manifestDependencyIssues.length,
 			candidateIntakes: inventory.summary.candidateIntakes,
 			projectLocalIntakes: inventory.summary.projectLocalIntakes
 		}
@@ -89,6 +101,17 @@ export function assertCanonOverlayQualityGate(report: CanonOverlayQualityGateRep
 			].join('\n')
 		);
 	}
+
+	if (report.manifestDependencyIssues.length > 0) {
+		throw new Error(
+			[
+				'Canon overlay quality gate failed: overlay manifests must be self-contained data exports.',
+				...report.manifestDependencyIssues.map(
+					(issue) => `- ${issue.manifestPath}:${issue.line}: ${issue.message}`
+				)
+			].join('\n')
+		);
+	}
 }
 
 export function renderCanonOverlayQualityGateReport(
@@ -104,6 +127,7 @@ export function renderCanonOverlayQualityGateReport(
 		`Total overlays: ${report.summary.totalOverlays}`,
 		`Ready overlays: ${report.summary.readyOverlays}`,
 		`Not-ready overlays: ${report.summary.notReadyOverlays}`,
+		`Manifest dependency issues: ${report.summary.manifestDependencyIssues}`,
 		`Candidate intakes: ${report.summary.candidateIntakes}`,
 		`Project-local intakes: ${report.summary.projectLocalIntakes}`
 	];
@@ -121,6 +145,54 @@ export function renderCanonOverlayQualityGateReport(
 		'',
 		renderCanonOverlayIntakeInventory(report.inventory)
 	].join('\n');
+}
+
+export function inspectOverlayManifestDependencyIssues(
+	rootDir: string,
+	inventory: CanonProjectOverlayInventory
+): CanonOverlayManifestDependencyIssue[] {
+	const issues: CanonOverlayManifestDependencyIssue[] = [];
+
+	for (const entry of inventory.entries) {
+		const manifestPath = entry.manifestPath;
+		if (!manifestPath.endsWith('/canon-overlay/manifest.ts')) continue;
+
+		const source = readFileSync(resolve(rootDir, manifestPath), 'utf-8');
+		const lines = source.split(/\r?\n/);
+
+		lines.forEach((line, index) => {
+			const trimmed = line.trim();
+			if (/^import\s/.test(trimmed)) {
+				issues.push({
+					manifestPath,
+					line: index + 1,
+					syntax: 'import',
+					message:
+						'remove imports from canon-overlay manifests; export a plain CANON_PROJECT_OVERLAY_MANIFEST object instead'
+				});
+			}
+			if (/^export\s+.*\s+from\s+['"]/.test(trimmed)) {
+				issues.push({
+					manifestPath,
+					line: index + 1,
+					syntax: 're-export',
+					message:
+						'remove re-exports from canon-overlay manifests; inventory should not depend on package module resolution'
+				});
+			}
+			if (/^export\s+const\s+CANON_PROJECT_OVERLAY_MANIFEST\s*:/.test(trimmed)) {
+				issues.push({
+					manifestPath,
+					line: index + 1,
+					syntax: 'typed-manifest-export',
+					message:
+						'remove manifest type annotations so downstream package typechecks do not require Canon dist to exist first'
+				});
+			}
+		});
+	}
+
+	return issues;
 }
 
 export function resolveRepoRoot(rootDir: string) {
