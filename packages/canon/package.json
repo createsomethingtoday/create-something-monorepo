@@ -247,6 +247,10 @@
 			"types": "./dist/mcp-snapshot/index.d.ts",
 			"default": "./dist/mcp-snapshot/index.js"
 		},
+		"./lint-contract": {
+			"types": "./dist/lint-contract/index.d.ts",
+			"default": "./dist/lint-contract/index.js"
+		},
 		"./overlays": {
 			"types": "./dist/overlays/index.d.ts",
 			"default": "./dist/overlays/index.js"
