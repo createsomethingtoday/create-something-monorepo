@@ -2,9 +2,12 @@
 import assert from 'node:assert/strict';
 
 import {
+  applyCanonOverlayCandidatePromotionApprovalTarget,
   getCanonOverlayCandidatePromotionApprovalRecord,
   listCanonOverlayCandidatePromotionApprovalRecordIds,
-  renderCanonOverlayCandidatePromotionApprovalRecord
+  renderCanonOverlayCandidatePromotionApprovalRecord,
+  renderCanonOverlayCandidatePromotionApprovalValidationReport,
+  validateCanonOverlayCandidatePromotionApprovalRecord
 } from '../src/canon-overlay-candidate-promotion-approval-record.js';
 
 const ids = listCanonOverlayCandidatePromotionApprovalRecordIds();
@@ -37,5 +40,60 @@ assert.equal(byCandidateId?.intakeId, record.intakeId);
 assert.equal(byPlanId?.intakeId, record.intakeId);
 assert.equal(byReadinessReportId?.intakeId, record.intakeId);
 assert.equal(byRecordId?.intakeId, record.intakeId);
+
+const emptyValidation = validateCanonOverlayCandidatePromotionApprovalRecord(record);
+
+assert.equal(emptyValidation.status, 'missing-required-fields');
+assert.equal(emptyValidation.summary.readyForImplementation, false);
+assert.equal(emptyValidation.summary.missingRequiredFields, 9);
+
+const registryItem = record.targetHints.registryItems[0]!;
+const exportPolicy = record.targetHints.exportPolicies[0]!;
+const docsPath = record.targetHints.docsPaths[0]!;
+const filledRecord = applyCanonOverlayCandidatePromotionApprovalTarget(record, {
+  approvalOwner: 'Micah Johnson',
+  approvalEvidence: 'Linear CRE-1012 MCP validation fixture',
+  approvedAt: '2026-07-05',
+  registryAction: 'reuse-existing',
+  registryItemId: registryItem.id,
+  exportPath: exportPolicy.exportPath,
+  exportName: exportPolicy.exportName ?? null,
+  docsPath,
+  maturityTarget: 'candidate',
+  implementationOwner: 'Canon implementation lane'
+});
+const readyValidation = validateCanonOverlayCandidatePromotionApprovalRecord(filledRecord);
+
+assert.equal(readyValidation.status, 'ready-for-implementation');
+assert.equal(readyValidation.summary.readyForImplementation, true);
+assert.equal(readyValidation.summary.errorCount, 0);
+
+const invalidRecord = applyCanonOverlayCandidatePromotionApprovalTarget(record, {
+  approvalOwner: 'Micah Johnson',
+  approvalEvidence: 'Linear CRE-1012 MCP invalid fixture',
+  approvedAt: 'not a date',
+  registryAction: 'delete-existing',
+  registryItemId: registryItem.id,
+  exportPath: exportPolicy.exportPath,
+  exportName: exportPolicy.exportName ?? null,
+  docsPath,
+  maturityTarget: 'retired',
+  implementationOwner: 'Canon implementation lane'
+});
+const invalidValidation = validateCanonOverlayCandidatePromotionApprovalRecord(invalidRecord);
+
+assert.equal(invalidValidation.status, 'invalid-targets');
+assert.deepEqual(invalidValidation.issues.map((issue) => issue.code), [
+  'invalid-approved-at',
+  'invalid-registry-action',
+  'invalid-maturity-target'
+]);
+
+const renderedValidation = renderCanonOverlayCandidatePromotionApprovalValidationReport(emptyValidation);
+
+assert.match(renderedValidation, /Missing required fields: 9/);
+assert.match(renderedValidation, /Ready for implementation: no/);
+assert.match(renderedValidation, /does not itself approve implementation/);
+assert.match(renderedValidation, /Stop before: automatically creating Linear work/);
 
 console.log('Canon overlay candidate promotion approval-record tool smoke passed.');

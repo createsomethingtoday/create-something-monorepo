@@ -1,7 +1,13 @@
 import {
   CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS
 } from './content/generated/canon-overlay-candidate-promotion-approval-records.js';
-import type { CanonOverlayCandidatePromotionApprovalRecord } from './content/types.js';
+import type {
+  CanonOverlayCandidatePromotionApprovalRecord,
+  CanonOverlayCandidatePromotionApprovalTarget,
+  CanonOverlayCandidatePromotionApprovalValidationIssue,
+  CanonOverlayCandidatePromotionApprovalValidationReport,
+  CanonOverlayCandidatePromotionApprovalValidationStatus
+} from './content/types.js';
 
 export function listCanonOverlayCandidatePromotionApprovalRecordIds(): string[] {
   return CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.entries.map(
@@ -93,4 +99,278 @@ export function renderCanonOverlayCandidatePromotionApprovalRecord(
   ].filter((line): line is string => line !== undefined);
 
   return lines.join('\n');
+}
+
+export function applyCanonOverlayCandidatePromotionApprovalTarget(
+  record: CanonOverlayCandidatePromotionApprovalRecord,
+  target: Partial<Record<keyof CanonOverlayCandidatePromotionApprovalTarget, string | null>>
+): CanonOverlayCandidatePromotionApprovalRecord {
+  const nextTarget = {
+    ...record.target,
+    ...target
+  } as CanonOverlayCandidatePromotionApprovalTarget;
+
+  return {
+    ...record,
+    target: nextTarget,
+    requiredFields: record.requiredFields.map((field) => ({
+      ...field,
+      value: nextTarget[field.id]
+    }))
+  };
+}
+
+export function validateCanonOverlayCandidatePromotionApprovalRecord(
+  record: CanonOverlayCandidatePromotionApprovalRecord
+): CanonOverlayCandidatePromotionApprovalValidationReport {
+  const issues = createApprovalValidationIssues(record);
+  const errorCount = countValidationIssues(issues, 'error');
+  const warningCount = countValidationIssues(issues, 'warning');
+  const missingRequiredFields = issues.filter(
+    (issue) => issue.code === 'missing-required-field'
+  ).length;
+  const invalidTargetFields = issues.filter(
+    (issue) => issue.code !== 'missing-required-field' && issue.severity === 'error'
+  ).length;
+  const status = determineApprovalValidationStatus({
+    errorCount,
+    missingRequiredFields
+  });
+
+  return {
+    id: `canon-overlay-candidate-promotion-approval-validation:${record.intakeId}`,
+    approvalRecordId: record.id,
+    readinessReportId: record.readinessReportId,
+    planId: record.planId,
+    candidateId: record.candidateId,
+    intakeId: record.intakeId,
+    title: `${record.title.replace(/ approval record$/, '')} approval validation`,
+    status,
+    approvalUri: record.approvalUri,
+    validationUri: `${record.approvalUri}/validation`,
+    summary: {
+      totalIssues: issues.length,
+      errorCount,
+      warningCount,
+      missingRequiredFields,
+      invalidTargetFields,
+      readyForImplementation: status === 'ready-for-implementation'
+    },
+    issues,
+    approvalBoundary: [
+      'Validation checks whether a maintainer-filled approval record is complete enough to support opening implementation work.',
+      'Validation does not itself approve implementation, create Linear issues, mutate Canon, mutate project overlays, or mark candidates stable.',
+      'Warnings require maintainer review even when no blocking validation errors remain.'
+    ],
+    agentContract: {
+      purpose: 'canon-overlay-candidate-promotion-approval-validation',
+      primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+      useFor: [
+        'checking that approval owner, evidence, targets, docs path, maturity, and implementation owner are filled before implementation starts',
+        'catching invalid approval target values before Canon source edits begin',
+        'preserving the boundary between validation evidence and implementation approval'
+      ],
+      stopBefore: [
+        'automatically filling approval-record fields',
+        'automatically creating Linear work',
+        'automatically editing Canon source, registry, exports, docs, or project overlays',
+        'treating validation success as approval or stable promotion'
+      ]
+    }
+  };
+}
+
+export function renderCanonOverlayCandidatePromotionApprovalValidationReport(
+  report: CanonOverlayCandidatePromotionApprovalValidationReport
+): string {
+  const lines: Array<string | undefined> = [
+    `# ${report.title}`,
+    '',
+    `Status: ${report.status}`,
+    `Ready for implementation: ${report.summary.readyForImplementation ? 'yes' : 'no'}`,
+    `Approval record: ${report.approvalUri}`,
+    `Validation report: ${report.validationUri}`,
+    '',
+    '## Summary',
+    `- Total issues: ${report.summary.totalIssues}`,
+    `- Errors: ${report.summary.errorCount}`,
+    `- Warnings: ${report.summary.warningCount}`,
+    `- Missing required fields: ${report.summary.missingRequiredFields}`,
+    `- Invalid target fields: ${report.summary.invalidTargetFields}`,
+    '',
+    '## Issues',
+    ...(report.issues.length
+      ? report.issues.flatMap((issue) => [
+          `### ${issue.code}`,
+          `- Severity: ${issue.severity}`,
+          issue.fieldId ? `- Field: ${issue.fieldId}` : undefined,
+          `- Message: ${issue.message}`,
+          ...(issue.evidence.length
+            ? issue.evidence.map((item) => `- Evidence: ${item}`)
+            : ['- Evidence: none']),
+          ''
+        ])
+      : ['No validation issues found.']),
+    '',
+    '## Approval Boundary',
+    ...report.approvalBoundary.map((item) => `- ${item}`),
+    '',
+    '## Agent Contract',
+    ...report.agentContract.useFor.map((item) => `- Use for: ${item}`),
+    ...report.agentContract.stopBefore.map((item) => `- Stop before: ${item}`)
+  ].filter((line): line is string => line !== undefined);
+
+  return lines.join('\n');
+}
+
+function countValidationIssues(
+  issues: CanonOverlayCandidatePromotionApprovalValidationIssue[],
+  severity: CanonOverlayCandidatePromotionApprovalValidationIssue['severity']
+) {
+  return issues.filter((issue) => issue.severity === severity).length;
+}
+
+function determineApprovalValidationStatus({
+  errorCount,
+  missingRequiredFields
+}: {
+  errorCount: number;
+  missingRequiredFields: number;
+}): CanonOverlayCandidatePromotionApprovalValidationStatus {
+  if (missingRequiredFields > 0) return 'missing-required-fields';
+  if (errorCount > 0) return 'invalid-targets';
+  return 'ready-for-implementation';
+}
+
+function createApprovalValidationIssues(
+  record: CanonOverlayCandidatePromotionApprovalRecord
+): CanonOverlayCandidatePromotionApprovalValidationIssue[] {
+  const issues: CanonOverlayCandidatePromotionApprovalValidationIssue[] = [];
+  const target = record.target;
+
+  for (const field of record.requiredFields) {
+    if (!field.required) continue;
+    if (!hasApprovalValue(target[field.id])) {
+      issues.push({
+        code: 'missing-required-field',
+        severity: 'error',
+        fieldId: field.id,
+        message: `${field.label} must be set by a maintainer before implementation starts.`,
+        evidence: [field.instructions, ...field.hints]
+      });
+    }
+  }
+
+  if (hasApprovalValue(target.approvedAt) && Number.isNaN(Date.parse(target.approvedAt))) {
+    issues.push({
+      code: 'invalid-approved-at',
+      severity: 'error',
+      fieldId: 'approvedAt',
+      message: 'Approved At must be an ISO 8601 timestamp or exact calendar date.',
+      evidence: [`Received: ${target.approvedAt}`]
+    });
+  }
+
+  if (
+    hasApprovalValue(target.registryAction) &&
+    !isCanonOverlayCandidatePromotionRegistryAction(target.registryAction)
+  ) {
+    issues.push({
+      code: 'invalid-registry-action',
+      severity: 'error',
+      fieldId: 'registryAction',
+      message: 'Registry Action must be reuse-existing, update-existing, or create-new.',
+      evidence: [`Received: ${target.registryAction}`]
+    });
+  }
+
+  if (hasApprovalValue(target.maturityTarget) && !isCanonRegistryMaturity(target.maturityTarget)) {
+    issues.push({
+      code: 'invalid-maturity-target',
+      severity: 'error',
+      fieldId: 'maturityTarget',
+      message: 'Maturity Target must be experimental, candidate, or stable.',
+      evidence: [`Received: ${target.maturityTarget}`]
+    });
+  }
+
+  if (
+    (target.registryAction === 'reuse-existing' || target.registryAction === 'update-existing') &&
+    hasApprovalValue(target.registryItemId) &&
+    !record.targetHints.registryItems.some((item) => item.id === target.registryItemId)
+  ) {
+    issues.push({
+      code: 'registry-target-not-found',
+      severity: 'error',
+      fieldId: 'registryItemId',
+      message:
+        'Registry Item Id must match a current related registry item when reusing or updating an existing Canon target.',
+      evidence: [
+        `Received: ${target.registryItemId}`,
+        `Known related ids: ${record.targetHints.registryItems.map((item) => item.id).join(', ')}`
+      ]
+    });
+  }
+
+  if (
+    target.registryAction === 'create-new' &&
+    hasApprovalValue(target.registryItemId) &&
+    record.targetHints.registryItems.some((item) => item.id === target.registryItemId)
+  ) {
+    issues.push({
+      code: 'registry-target-already-exists',
+      severity: 'warning',
+      fieldId: 'registryItemId',
+      message:
+        'Registry Item Id already appears in related registry hints even though Registry Action is create-new.',
+      evidence: [`Received: ${target.registryItemId}`]
+    });
+  }
+
+  if (
+    hasApprovalValue(target.exportPath) &&
+    !record.targetHints.exportPolicies.some((rule) => {
+      if (rule.exportPath !== target.exportPath) return false;
+      return !hasApprovalValue(target.exportName) || rule.exportName === target.exportName;
+    })
+  ) {
+    issues.push({
+      code: 'export-target-not-found',
+      severity: 'warning',
+      fieldId: 'exportPath',
+      message:
+        'Export Path is not present in current target hints; maintainer should verify it before implementation starts.',
+      evidence: [
+        `Received: ${target.exportName ? `${target.exportPath}#${target.exportName}` : target.exportPath}`,
+        `Known export hints: ${record.targetHints.exportPolicies
+          .map((rule) => (rule.exportName ? `${rule.exportPath}#${rule.exportName}` : rule.exportPath))
+          .join(', ')}`
+      ]
+    });
+  }
+
+  if (hasApprovalValue(target.docsPath) && !record.targetHints.docsPaths.includes(target.docsPath)) {
+    issues.push({
+      code: 'docs-target-not-found',
+      severity: 'warning',
+      fieldId: 'docsPath',
+      message:
+        'Docs Path is not present in current target hints; maintainer should verify it before implementation starts.',
+      evidence: [`Received: ${target.docsPath}`, `Known docs hints: ${record.targetHints.docsPaths.join(', ')}`]
+    });
+  }
+
+  return issues;
+}
+
+function hasApprovalValue(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isCanonOverlayCandidatePromotionRegistryAction(value: string) {
+  return value === 'reuse-existing' || value === 'update-existing' || value === 'create-new';
+}
+
+function isCanonRegistryMaturity(value: string) {
+  return value === 'experimental' || value === 'candidate' || value === 'stable';
 }

@@ -496,6 +496,60 @@ export interface CanonOverlayCandidatePromotionApprovalRecord {
   };
 }
 
+export type CanonOverlayCandidatePromotionApprovalValidationStatus =
+  | 'missing-required-fields'
+  | 'invalid-targets'
+  | 'ready-for-implementation';
+
+export type CanonOverlayCandidatePromotionApprovalValidationSeverity = 'error' | 'warning';
+
+export type CanonOverlayCandidatePromotionApprovalValidationIssueCode =
+  | 'missing-required-field'
+  | 'invalid-approved-at'
+  | 'invalid-registry-action'
+  | 'invalid-maturity-target'
+  | 'registry-target-not-found'
+  | 'registry-target-already-exists'
+  | 'export-target-not-found'
+  | 'docs-target-not-found';
+
+export interface CanonOverlayCandidatePromotionApprovalValidationIssue {
+  code: CanonOverlayCandidatePromotionApprovalValidationIssueCode;
+  severity: CanonOverlayCandidatePromotionApprovalValidationSeverity;
+  fieldId?: keyof CanonOverlayCandidatePromotionApprovalTarget;
+  message: string;
+  evidence: string[];
+}
+
+export interface CanonOverlayCandidatePromotionApprovalValidationReport {
+  id: string;
+  approvalRecordId: string;
+  readinessReportId: string;
+  planId: string;
+  candidateId: string;
+  intakeId: string;
+  title: string;
+  status: CanonOverlayCandidatePromotionApprovalValidationStatus;
+  approvalUri: string;
+  validationUri: string;
+  summary: {
+    totalIssues: number;
+    errorCount: number;
+    warningCount: number;
+    missingRequiredFields: number;
+    invalidTargetFields: number;
+    readyForImplementation: boolean;
+  };
+  issues: CanonOverlayCandidatePromotionApprovalValidationIssue[];
+  approvalBoundary: string[];
+  agentContract: {
+    purpose: 'canon-overlay-candidate-promotion-approval-validation';
+    primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+    useFor: string[];
+    stopBefore: string[];
+  };
+}
+
 export interface CanonOverlayCandidatePromotionApprovalRecordCollection {
   schemaVersion: 1;
   id: 'canon-overlay-candidate-promotion-approval-records';
