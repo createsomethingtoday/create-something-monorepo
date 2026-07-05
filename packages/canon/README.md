@@ -6,7 +6,10 @@
 
 ## Philosophy
 
-Canon is the unified design system for all CREATE SOMETHING properties (.ltd, .agency, .space, .io). Every component, token, and style lives here. Properties only consume—they never define local components.
+Canon is the unified design system for all CREATE SOMETHING properties and client surfaces.
+Canon owns stable primitives, tokens, templates, registry policy, and compatibility contracts.
+Properties and clients extend Canon through overlays, candidate intake, and source-controlled
+exemptions instead of forking primitives or inventing parallel design-system rules.
 
 ## Installation
 
@@ -379,6 +382,26 @@ project component must move into Canon, but every UI file needs a documented Can
 Product-local exemptions are source-controlled in `src/lib/codification/codification.ts` with a
 reason and justification, so future agents can distinguish intentional local surfaces from missing
 Canon work.
+
+### Canon Library Health
+
+Use the health report when deciding what to improve next in the Canon library:
+
+```bash
+pnpm --filter @create-something/canon library:health
+pnpm --filter @create-something/canon library:health -- --verbose
+pnpm --filter @create-something/canon library:health -- --json
+```
+
+The report aggregates the current registry maturity, public export classification policy, overlay
+inventory, modality readiness, and repo-wide codification audit. It is intentionally exposed from
+`@create-something/canon/library-health`, not the root browser-facing Canon barrel, because it
+depends on Node-backed repo scanners.
+
+Treat `candidate-review` output as the promotion backlog, not as a failing state. A candidate
+becomes stable only after Canon owns export path, docs, focused tests, compatibility notes, and
+registry routing. The health command fails only when the foundation has actual blockers such as
+not-ready overlays, modality gaps, or UI files with `needs-canon-decision`.
 
 ## Atlas Graph And Story Primitives
 
