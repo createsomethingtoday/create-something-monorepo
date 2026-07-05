@@ -9,6 +9,7 @@ import { CANON_PAGES } from './content/generated/canon.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
 import { CANON_OVERLAY_INTAKE_INVENTORY } from './content/generated/canon-overlay-intake-inventory.js';
+import { CANON_OVERLAY_CANDIDATE_QUEUE } from './content/generated/canon-overlay-candidate-queue.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -143,6 +144,51 @@ function buildContentIndex(): ContentItem[] {
       ].join('\n'),
       property: 'ltd',
       uri: `canon://overlays/intake/${entry.manifest.id}`
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate:queue',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Queue',
+    description: CANON_OVERLAY_CANDIDATE_QUEUE.description,
+    content: [
+      CANON_OVERLAY_CANDIDATE_QUEUE.summary.total.toString(),
+      CANON_OVERLAY_CANDIDATE_QUEUE.summary.overlays.toString(),
+      CANON_OVERLAY_CANDIDATE_QUEUE.summary.byRequestedKind.map(item => `${item.kind} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_QUEUE.summary.byModality.map(item => `${item.modality} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_QUEUE.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_CANDIDATE_QUEUE.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates'
+  });
+
+  for (const entry of CANON_OVERLAY_CANDIDATE_QUEUE.entries) {
+    items.push({
+      id: `canon-overlay-candidate:${entry.intakeId}`,
+      type: 'canon-registry',
+      title: entry.title,
+      description: entry.summary,
+      content: [
+        entry.overlayId,
+        entry.overlayName,
+        entry.manifestPath,
+        entry.owner,
+        entry.sourcePackage,
+        entry.sourcePath ?? '',
+        entry.requestedKind,
+        entry.requestedModalities.join(' '),
+        entry.tags.join(' '),
+        entry.dependencies.join(' '),
+        entry.surfaces.map(surface => `${surface.surfaceId} ${surface.name} ${surface.modality} ${surface.sourcePath ?? ''} ${surface.proof ?? ''}`).join('\n'),
+        entry.requiredEvidence.join('\n'),
+        entry.stopBeforeStable.join('\n'),
+        entry.rationale,
+        entry.reviewUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: entry.candidateUri
     });
   }
 

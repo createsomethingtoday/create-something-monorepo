@@ -390,6 +390,32 @@ export const CANON_OVERLAY_INTAKE_INVENTORY: CanonProjectOverlayInventory = ${JS
 `;
 }
 
+async function buildCanonOverlayCandidateQueue(): Promise<string> {
+  const intakeModuleUrl = pathToFileURL(
+    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'intake.ts')
+  ).href;
+  const intake = await import(intakeModuleUrl) as {
+    buildCanonOverlayIntakeInventory: (options: { rootDir: string; rootLabel?: string }) => Promise<unknown>;
+    buildCanonOverlayCandidateQueue: (inventory: unknown) => unknown;
+  };
+  const inventory = await intake.buildCanonOverlayIntakeInventory({
+    rootDir: ROOT,
+    rootLabel: '<repo-root>'
+  });
+  const queue = intake.buildCanonOverlayCandidateQueue(inventory);
+
+  return `/**
+ * Generated Canon overlay candidate queue content — DO NOT EDIT MANUALLY.
+ * Run: npm run build:content
+ * Source: packages/canon/src/lib/overlays/intake.ts
+ */
+
+import type { CanonOverlayCandidateQueue } from '../types.js';
+
+export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = ${JSON.stringify(queue, null, 2)};
+`;
+}
+
 // ============================================================================
 // Build patterns
 // ============================================================================
@@ -633,6 +659,7 @@ async function main() {
     canonPublicExportClassification,
     canonOverlayCatalog,
     canonOverlayIntakeInventory,
+    canonOverlayCandidateQueue,
     patterns,
     graph,
     propertyDocs
@@ -643,6 +670,7 @@ async function main() {
     buildCanonPublicExportClassification(),
     buildCanonOverlayCatalog(),
     buildCanonOverlayIntakeInventory(),
+    buildCanonOverlayCandidateQueue(),
     buildPatterns(),
     buildGraph(),
     buildPropertyDocuments(),
@@ -656,6 +684,7 @@ async function main() {
     writeFile(join(OUT_DIR, 'canon-public-export-classification.ts'), canonPublicExportClassification, 'utf-8'),
     writeFile(join(OUT_DIR, 'canon-overlay-catalog.ts'), canonOverlayCatalog, 'utf-8'),
     writeFile(join(OUT_DIR, 'canon-overlay-intake-inventory.ts'), canonOverlayIntakeInventory, 'utf-8'),
+    writeFile(join(OUT_DIR, 'canon-overlay-candidate-queue.ts'), canonOverlayCandidateQueue, 'utf-8'),
     writeFile(join(OUT_DIR, 'patterns.ts'), patterns, 'utf-8'),
     writeFile(join(OUT_DIR, 'graph.ts'), graph, 'utf-8'),
     writeFile(join(OUT_DIR, 'property-docs.ts'), propertyDocs.source, 'utf-8'),
@@ -668,6 +697,7 @@ async function main() {
   const canonPublicExportClassificationCount = (canonPublicExportClassification.match(/"exportPath":/g) || []).length;
   const canonOverlayTemplateCount = (canonOverlayCatalog.match(/"manifest":/g) || []).length;
   const canonOverlayIntakeCount = (canonOverlayIntakeInventory.match(/"manifestPath":/g) || []).length;
+  const canonOverlayCandidateCount = (canonOverlayCandidateQueue.match(/"intakeId":/g) || []).length;
   const patternCount = (patterns.match(/slug:/g) || []).length;
   const nodeCount = (graph.match(/"id":/g) || []).length;
 
@@ -678,6 +708,7 @@ async function main() {
   console.log(`  Canon export policy: ${canonPublicExportClassificationCount} rules`);
   console.log(`  Canon overlays: ${canonOverlayTemplateCount} templates`);
   console.log(`  Canon overlay intake: ${canonOverlayIntakeCount} project manifests`);
+  console.log(`  Canon overlay candidates: ${canonOverlayCandidateCount} candidates`);
   console.log(`  Patterns:       ${patternCount}`);
   console.log(`  Graph:          ${nodeCount} nodes`);
   console.log(`  Property docs:  ${propertyDocs.totalCount}`);
