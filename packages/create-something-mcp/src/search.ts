@@ -10,6 +10,9 @@ import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
 import { CANON_OVERLAY_INTAKE_INVENTORY } from './content/generated/canon-overlay-intake-inventory.js';
 import { CANON_OVERLAY_CANDIDATE_QUEUE } from './content/generated/canon-overlay-candidate-queue.js';
+import {
+  CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS
+} from './content/generated/canon-overlay-candidate-review-packets.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -185,10 +188,63 @@ function buildContentIndex(): ContentItem[] {
         entry.requiredEvidence.join('\n'),
         entry.stopBeforeStable.join('\n'),
         entry.rationale,
-        entry.reviewUri
+        entry.reviewUri,
+        entry.handoffUri
       ].join('\n'),
       property: 'ltd',
       uri: entry.candidateUri
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-candidate-review:packets',
+    type: 'canon-registry',
+    title: 'Canon Overlay Candidate Review Packets',
+    description: CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.description,
+    content: [
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.summary.total.toString(),
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.summary.overlays.toString(),
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.summary.byRequestedKind.map(item => `${item.kind} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.summary.byModality.map(item => `${item.modality} ${item.count}`).join('\n'),
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/candidates/handoffs'
+  });
+
+  for (const packet of CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS.entries) {
+    items.push({
+      id: `canon-overlay-candidate-review:${packet.intakeId}`,
+      type: 'canon-registry',
+      title: packet.title,
+      description: packet.summary,
+      content: [
+        packet.candidateId,
+        packet.overlayId,
+        packet.overlayName,
+        packet.manifestPath,
+        packet.owner,
+        packet.sourcePackage,
+        packet.sourcePath ?? '',
+        packet.requestedKind,
+        packet.requestedModalities.join(' '),
+        packet.tags.join(' '),
+        packet.dependencies.join(' '),
+        packet.surfaces.map(surface => `${surface.surfaceId} ${surface.name} ${surface.modality} ${surface.sourcePath ?? ''} ${surface.proof ?? ''}`).join('\n'),
+        packet.requiredEvidence.join('\n'),
+        packet.stopBeforeStable.join('\n'),
+        packet.promotionChecklist.join('\n'),
+        packet.approvalBoundary.join('\n'),
+        packet.agentContract.useFor.join('\n'),
+        packet.agentContract.stopBefore.join('\n'),
+        packet.rationale,
+        packet.reviewUri,
+        packet.candidateUri,
+        packet.handoffUri
+      ].join('\n'),
+      property: 'ltd',
+      uri: packet.handoffUri
     });
   }
 

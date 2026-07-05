@@ -5180,8 +5180,12 @@ Ready overlays can produce candidate intakes when they have repeated-surface evi
 - Full queue: \`canon://overlays/candidates\`
 - Compact list: \`canon://overlays/candidates/list\`
 - Candidate detail: \`canon://overlays/candidates/<intake-id>\`
+- Review packet collection: \`canon://overlays/candidates/handoffs\`
+- Candidate review packet: \`canon://overlays/candidates/<intake-id>/handoff\`
 
 The queue is not an approval engine. It gathers overlay id, intake id, requested kind, modalities, source paths, surfaces, dependencies, required evidence, and stop-before-stable notes so Canon maintainers can decide whether to open a promotion slice.
+
+Each queued candidate also has a review packet. The packet turns the queue entry into a stable handoff with the owning overlay manifest, source package, surfaces, evidence requirements, promotion checklist, and explicit approval boundary. Agents can use it to prepare Canon implementation work after human approval, but the packet does not create Linear issues, edit project overlays, or approve stable promotion.
 
 Do not treat a queued candidate as stable. Stable promotion still requires Canon-owned export paths, docs, tests, compatibility notes, and registry routing.
 

@@ -1,25 +1,26 @@
 /**
- * Generated Canon overlay candidate queue content — DO NOT EDIT MANUALLY.
+ * Generated Canon overlay candidate review packet content — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
  * Source: packages/canon/src/lib/overlays/intake.ts
  */
 
-import type { CanonOverlayCandidateQueue } from '../types.js';
+import type { CanonOverlayCandidateReviewPacketCollection } from '../types.js';
 
-export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = {
+export const CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS: CanonOverlayCandidateReviewPacketCollection = {
   "schemaVersion": 1,
-  "id": "canon-overlay-candidate-queue",
+  "id": "canon-overlay-candidate-review-packets",
   "sourceOfTruth": "@create-something/canon/overlays/intake",
-  "description": "Read-only queue of Canon overlay extension intakes that have repeated-surface evidence and are ready for Canon candidate review.",
+  "description": "Read-only review packets for Canon overlay candidate intakes, including approval boundaries and promotion evidence before Canon implementation work starts.",
   "entries": [
     {
-      "id": "overlay.agency-atlas-public:overlay.agency-atlas-public.workflow-proof-surface",
+      "id": "canon-overlay-candidate-review:overlay.agency-atlas-public.workflow-proof-surface",
+      "candidateId": "overlay.agency-atlas-public:overlay.agency-atlas-public.workflow-proof-surface",
+      "title": "Agency public Atlas workflow proof surface review packet",
+      "summary": "A candidate Canon pattern for turning a public web route, chat-assisted canvas, and booking handoff into one reusable workflow-proof surface without forking Atlas primitives.",
       "overlayId": "overlay.agency-atlas-public",
       "overlayName": "Agency Atlas Public Overlay",
       "manifestPath": "packages/agency/canon-overlay/manifest.ts",
       "intakeId": "overlay.agency-atlas-public.workflow-proof-surface",
-      "title": "Agency public Atlas workflow proof surface",
-      "summary": "A candidate Canon pattern for turning a public web route, chat-assisted canvas, and booking handoff into one reusable workflow-proof surface without forking Atlas primitives.",
       "owner": "agency-team",
       "sourcePackage": "@create-something/agency",
       "sourcePath": "src/routes/atlas/+page.svelte",
@@ -89,16 +90,48 @@ export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = {
       "rationale": "The proposal has evidence from at least two surfaces, so Canon should evaluate it as a shared candidate instead of leaving it project-local.",
       "reviewUri": "canon://overlays/intake/overlay.agency-atlas-public",
       "candidateUri": "canon://overlays/candidates/overlay.agency-atlas-public.workflow-proof-surface",
-      "handoffUri": "canon://overlays/candidates/overlay.agency-atlas-public.workflow-proof-surface/handoff"
+      "handoffUri": "canon://overlays/candidates/overlay.agency-atlas-public.workflow-proof-surface/handoff",
+      "promotionChecklist": [
+        "Confirm a human maintainer approved opening Canon promotion work from this packet.",
+        "Review the owning overlay manifest, source package, source path, surfaces, and proofs.",
+        "Verify every required evidence item has current source or test coverage.",
+        "Decide whether the candidate becomes a Canon registry item, template, adapter, token, policy, or remains project-local.",
+        "Update Canon export path, docs, tests, MCP generated content, and compatibility notes before any stable promotion."
+      ],
+      "approvalBoundary": [
+        "This packet is read-only and does not create Linear issues, mutate overlay manifests, or approve stable promotion.",
+        "Open promotion work only after explicit human approval.",
+        "Do not mark stable until every stop-before-stable item is resolved."
+      ],
+      "agentContract": {
+        "purpose": "canon-overlay-candidate-review-packet",
+        "primaryConsumers": [
+          "codex",
+          "mcp",
+          "ltd-docs",
+          "project-overlays"
+        ],
+        "useFor": [
+          "turning a queued overlay candidate into a reviewable handoff",
+          "checking candidate source evidence before implementation planning",
+          "preparing a bounded promotion slice after human approval"
+        ],
+        "stopBefore": [
+          "automatically opening Linear work from the packet",
+          "automatically editing Canon registry or stable exports",
+          "overriding stop-before-stable requirements"
+        ]
+      }
     },
     {
-      "id": "overlay.lms-workflow-learning:overlay.lms-workflow-learning.lesson-proof-surface",
+      "id": "canon-overlay-candidate-review:overlay.lms-workflow-learning.lesson-proof-surface",
+      "candidateId": "overlay.lms-workflow-learning:overlay.lms-workflow-learning.lesson-proof-surface",
+      "title": "Workflow learning proof surface review packet",
+      "summary": "A candidate Canon learning template for teaching workflow proof across lesson content, path navigation, progress receipts, and event telemetry without promoting one course's copy into Canon stable.",
       "overlayId": "overlay.lms-workflow-learning",
       "overlayName": "LMS Workflow Learning Overlay",
       "manifestPath": "packages/lms/canon-overlay/manifest.ts",
       "intakeId": "overlay.lms-workflow-learning.lesson-proof-surface",
-      "title": "Workflow learning proof surface",
-      "summary": "A candidate Canon learning template for teaching workflow proof across lesson content, path navigation, progress receipts, and event telemetry without promoting one course's copy into Canon stable.",
       "owner": "learning-team",
       "sourcePackage": "@create-something/lms",
       "sourcePath": "src/lib/content/lessons/make-your-workflow-visible/what-images-prove.md",
@@ -164,7 +197,38 @@ export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = {
       "rationale": "The proposal has evidence from at least two surfaces, so Canon should evaluate it as a shared candidate instead of leaving it project-local.",
       "reviewUri": "canon://overlays/intake/overlay.lms-workflow-learning",
       "candidateUri": "canon://overlays/candidates/overlay.lms-workflow-learning.lesson-proof-surface",
-      "handoffUri": "canon://overlays/candidates/overlay.lms-workflow-learning.lesson-proof-surface/handoff"
+      "handoffUri": "canon://overlays/candidates/overlay.lms-workflow-learning.lesson-proof-surface/handoff",
+      "promotionChecklist": [
+        "Confirm a human maintainer approved opening Canon promotion work from this packet.",
+        "Review the owning overlay manifest, source package, source path, surfaces, and proofs.",
+        "Verify every required evidence item has current source or test coverage.",
+        "Decide whether the candidate becomes a Canon registry item, template, adapter, token, policy, or remains project-local.",
+        "Update Canon export path, docs, tests, MCP generated content, and compatibility notes before any stable promotion."
+      ],
+      "approvalBoundary": [
+        "This packet is read-only and does not create Linear issues, mutate overlay manifests, or approve stable promotion.",
+        "Open promotion work only after explicit human approval.",
+        "Do not mark stable until every stop-before-stable item is resolved."
+      ],
+      "agentContract": {
+        "purpose": "canon-overlay-candidate-review-packet",
+        "primaryConsumers": [
+          "codex",
+          "mcp",
+          "ltd-docs",
+          "project-overlays"
+        ],
+        "useFor": [
+          "turning a queued overlay candidate into a reviewable handoff",
+          "checking candidate source evidence before implementation planning",
+          "preparing a bounded promotion slice after human approval"
+        ],
+        "stopBefore": [
+          "automatically opening Linear work from the packet",
+          "automatically editing Canon registry or stable exports",
+          "overriding stop-before-stable requirements"
+        ]
+      }
     }
   ],
   "summary": {
@@ -192,7 +256,7 @@ export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = {
     ]
   },
   "agentContract": {
-    "purpose": "canon-overlay-candidate-review",
+    "purpose": "canon-overlay-candidate-review-packets",
     "primaryConsumers": [
       "codex",
       "mcp",
@@ -200,16 +264,16 @@ export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = {
       "project-overlays"
     ],
     "useFor": [
-      "reviewing repeated-surface overlay evidence before Canon promotion work",
-      "prioritizing candidate templates, components, adapters, tokens, or policies by modality and source package",
-      "connecting candidate review back to the owning project overlay manifest and intake review",
-      "keeping Canon stable promotion gated on export path, docs, tests, and compatibility evidence"
+      "preparing a human-reviewable handoff before opening Canon promotion work",
+      "checking required evidence, surfaces, dependencies, and stop-before-stable constraints in one packet",
+      "keeping candidate review anchored to the owning overlay manifest and candidate queue entry",
+      "recording the approval boundary between project-local evidence and Canon stable implementation"
     ],
     "stopBefore": [
-      "automatically creating Linear issues from candidate queue entries",
-      "automatically promoting any candidate queue entry into Canon stable",
-      "editing project overlay manifests from the candidate queue",
-      "treating queued candidates as approved production changes"
+      "automatically creating Linear issues from review packets",
+      "automatically promoting review packets into Canon stable registry items",
+      "editing project overlay manifests while rendering review packets",
+      "treating review packets as production approval without human review"
     ]
   }
 };

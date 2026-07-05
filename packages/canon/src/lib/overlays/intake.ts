@@ -6,6 +6,8 @@ import { CANON_REGISTRY_MANIFEST, reviewCanonProjectOverlay } from '../registry/
 import type {
 	CanonOverlayCandidateQueue,
 	CanonOverlayCandidateQueueEntry,
+	CanonOverlayCandidateReviewPacket,
+	CanonOverlayCandidateReviewPacketCollection,
 	CanonProjectOverlayIntegrityIssue,
 	CanonProjectOverlayInventory,
 	CanonProjectOverlayInventoryEntry,
@@ -233,7 +235,8 @@ export function buildCanonOverlayCandidateQueue(
 				stopBeforeStable: decision.stopBeforeStable,
 				rationale: decision.rationale,
 				reviewUri: `canon://overlays/intake/${entry.manifest.id}`,
-				candidateUri: `canon://overlays/candidates/${packet.id}`
+				candidateUri: `canon://overlays/candidates/${packet.id}`,
+				handoffUri: `canon://overlays/candidates/${packet.id}/handoff`
 			}));
 	});
 
@@ -299,6 +302,104 @@ export function renderCanonOverlayCandidateQueue(queue: CanonOverlayCandidateQue
 	return lines.join('\n');
 }
 
+export function buildCanonOverlayCandidateReviewPackets(
+	queue: CanonOverlayCandidateQueue
+): CanonOverlayCandidateReviewPacketCollection {
+	const entries = queue.entries.map((entry) => createCandidateReviewPacket(entry));
+
+	return {
+		schemaVersion: 1,
+		id: 'canon-overlay-candidate-review-packets',
+		sourceOfTruth: '@create-something/canon/overlays/intake',
+		description:
+			'Read-only review packets for Canon overlay candidate intakes, including approval boundaries and promotion evidence before Canon implementation work starts.',
+		entries,
+		summary: {
+			total: entries.length,
+			overlays: new Set(entries.map((entry) => entry.overlayId)).size,
+			byRequestedKind: countByRequestedKind(entries),
+			byModality: countByModality(entries)
+		},
+		agentContract: {
+			purpose: 'canon-overlay-candidate-review-packets',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'preparing a human-reviewable handoff before opening Canon promotion work',
+				'checking required evidence, surfaces, dependencies, and stop-before-stable constraints in one packet',
+				'keeping candidate review anchored to the owning overlay manifest and candidate queue entry',
+				'recording the approval boundary between project-local evidence and Canon stable implementation'
+			],
+			stopBefore: [
+				'automatically creating Linear issues from review packets',
+				'automatically promoting review packets into Canon stable registry items',
+				'editing project overlay manifests while rendering review packets',
+				'treating review packets as production approval without human review'
+			]
+		}
+	};
+}
+
+export function renderCanonOverlayCandidateReviewPacket(
+	packet: CanonOverlayCandidateReviewPacket
+): string {
+	const lines = [
+		`# ${packet.title}`,
+		'',
+		`Candidate: ${packet.candidateId}`,
+		`Overlay: ${packet.overlayName} (${packet.overlayId})`,
+		`Manifest: ${packet.manifestPath}`,
+		`Requested kind: ${packet.requestedKind}`,
+		`Modalities: ${packet.requestedModalities.join(', ')}`,
+		`Source package: ${packet.sourcePackage}`,
+		`Candidate resource: ${packet.candidateUri}`,
+		`Overlay review: ${packet.reviewUri}`,
+		'',
+		'## Summary',
+		packet.summary,
+		'',
+		'## Surfaces',
+		...packet.surfaces.map(
+			(surface) =>
+				`- ${surface.name} (${surface.modality}): ${surface.sourcePath ?? surface.surfaceId}${
+					surface.proof ? ` - ${surface.proof}` : ''
+				}`
+		),
+		'',
+		'## Required Evidence',
+		...packet.requiredEvidence.map((item) => `- ${item}`),
+		'',
+		'## Promotion Checklist',
+		...packet.promotionChecklist.map((item) => `- ${item}`),
+		'',
+		'## Approval Boundary',
+		...packet.approvalBoundary.map((item) => `- ${item}`)
+	];
+
+	return lines.join('\n');
+}
+
+export function renderCanonOverlayCandidateReviewPackets(
+	collection: CanonOverlayCandidateReviewPacketCollection
+): string {
+	const lines = [
+		'# Canon Overlay Candidate Review Packets',
+		'',
+		`Total packets: ${collection.summary.total}`,
+		`Source overlays: ${collection.summary.overlays}`
+	];
+
+	if (collection.entries.length === 0) {
+		lines.push('', 'No overlay candidate review packets are available.');
+		return lines.join('\n');
+	}
+
+	for (const packet of collection.entries) {
+		lines.push('', `## ${packet.title}`, `- Handoff: ${packet.handoffUri}`, `- Candidate: ${packet.candidateUri}`);
+	}
+
+	return lines.join('\n');
+}
+
 function summarizeOverlayInventory(entries: CanonProjectOverlayInventoryEntry[]) {
 	return {
 		total: entries.length,
@@ -351,6 +452,61 @@ function countByModality(entries: CanonOverlayCandidateQueueEntry[]) {
 	return [...counts.entries()]
 		.map(([modality, count]) => ({ modality, count }))
 		.sort((a, b) => b.count - a.count || a.modality.localeCompare(b.modality));
+}
+
+function createCandidateReviewPacket(
+	entry: CanonOverlayCandidateQueueEntry
+): CanonOverlayCandidateReviewPacket {
+	return {
+		id: `canon-overlay-candidate-review:${entry.intakeId}`,
+		candidateId: entry.id,
+		title: `${entry.title} review packet`,
+		summary: entry.summary,
+		overlayId: entry.overlayId,
+		overlayName: entry.overlayName,
+		manifestPath: entry.manifestPath,
+		intakeId: entry.intakeId,
+		owner: entry.owner,
+		sourcePackage: entry.sourcePackage,
+		sourcePath: entry.sourcePath,
+		requestedKind: entry.requestedKind,
+		requestedModalities: entry.requestedModalities,
+		tags: entry.tags,
+		surfaces: entry.surfaces,
+		dependencies: entry.dependencies,
+		requiredEvidence: entry.requiredEvidence,
+		stopBeforeStable: entry.stopBeforeStable,
+		rationale: entry.rationale,
+		reviewUri: entry.reviewUri,
+		candidateUri: entry.candidateUri,
+		handoffUri: entry.handoffUri,
+		promotionChecklist: [
+			'Confirm a human maintainer approved opening Canon promotion work from this packet.',
+			'Review the owning overlay manifest, source package, source path, surfaces, and proofs.',
+			'Verify every required evidence item has current source or test coverage.',
+			'Decide whether the candidate becomes a Canon registry item, template, adapter, token, policy, or remains project-local.',
+			'Update Canon export path, docs, tests, MCP generated content, and compatibility notes before any stable promotion.'
+		],
+		approvalBoundary: [
+			'This packet is read-only and does not create Linear issues, mutate overlay manifests, or approve stable promotion.',
+			'Open promotion work only after explicit human approval.',
+			'Do not mark stable until every stop-before-stable item is resolved.'
+		],
+		agentContract: {
+			purpose: 'canon-overlay-candidate-review-packet',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'turning a queued overlay candidate into a reviewable handoff',
+				'checking candidate source evidence before implementation planning',
+				'preparing a bounded promotion slice after human approval'
+			],
+			stopBefore: [
+				'automatically opening Linear work from the packet',
+				'automatically editing Canon registry or stable exports',
+				'overriding stop-before-stable requirements'
+			]
+		}
+	};
 }
 
 async function inspectCanonProjectOverlayIntegrity({

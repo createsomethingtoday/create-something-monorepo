@@ -6,9 +6,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
 	buildCanonOverlayCandidateQueue,
+	buildCanonOverlayCandidateReviewPackets,
 	buildCanonOverlayIntakeInventory,
 	findCanonProjectOverlayManifestFiles,
 	renderCanonOverlayCandidateQueue,
+	renderCanonOverlayCandidateReviewPacket,
+	renderCanonOverlayCandidateReviewPackets,
 	renderCanonOverlayIntakeInventory
 } from './intake.js';
 
@@ -199,6 +202,7 @@ describe('Canon overlay intake inventory', () => {
 			requestedKind: 'template',
 			reviewUri: 'canon://overlays/intake/overlay.client-a',
 			candidateUri: 'canon://overlays/candidates/overlay.client-a.surface-brief',
+			handoffUri: 'canon://overlays/candidates/overlay.client-a.surface-brief/handoff',
 			dependencies: ['template.canon-extension-intake']
 		});
 		expect(queue.entries[0]?.requiredEvidence.join(' ')).toContain('At least two surface proofs');
@@ -209,6 +213,51 @@ describe('Canon overlay intake inventory', () => {
 		expect(rendered).toContain('Canon Overlay Candidate Queue');
 		expect(rendered).toContain('Client A Overlay surface brief');
 		expect(rendered).toContain('canon://overlays/intake/overlay.client-a');
+	});
+
+	it('builds review handoff packets from the Canon candidate queue', async () => {
+		const root = await createTempRoot();
+		await writeOverlayManifest(
+			root,
+			'packages/client-a/canon-overlay/manifest.ts',
+			readyManifest('overlay.client-a', 'Client A Overlay', '@create-something/client-a')
+		);
+		await writeOverlayArtifactSet(root, 'packages/client-a/canon-overlay');
+
+		const inventory = await buildCanonOverlayIntakeInventory({ rootDir: root });
+		const queue = buildCanonOverlayCandidateQueue(inventory);
+		const packets = buildCanonOverlayCandidateReviewPackets(queue);
+		const packet = packets.entries[0];
+
+		expect(packets.id).toBe('canon-overlay-candidate-review-packets');
+		expect(packets.summary).toMatchObject({
+			total: 1,
+			overlays: 1,
+			byRequestedKind: [{ kind: 'template', count: 1 }]
+		});
+		expect(packet).toMatchObject({
+			id: 'canon-overlay-candidate-review:overlay.client-a.surface-brief',
+			candidateId: 'overlay.client-a:overlay.client-a.surface-brief',
+			overlayId: 'overlay.client-a',
+			intakeId: 'overlay.client-a.surface-brief',
+			handoffUri: 'canon://overlays/candidates/overlay.client-a.surface-brief/handoff',
+			candidateUri: 'canon://overlays/candidates/overlay.client-a.surface-brief',
+			reviewUri: 'canon://overlays/intake/overlay.client-a'
+		});
+		expect(packet?.promotionChecklist.join(' ')).toContain('human maintainer approved');
+		expect(packet?.approvalBoundary.join(' ')).toContain('does not create Linear issues');
+		expect(packet?.agentContract.stopBefore.join(' ')).toContain('automatically opening Linear work');
+
+		const packetRendered = renderCanonOverlayCandidateReviewPacket(packet!);
+		expect(packetRendered).toContain('Approval Boundary');
+		expect(packetRendered).toContain('Open promotion work only after explicit human approval');
+		expect(packetRendered).toContain('Do not mark stable');
+
+		const collectionRendered = renderCanonOverlayCandidateReviewPackets(packets);
+		expect(collectionRendered).toContain('Canon Overlay Candidate Review Packets');
+		expect(collectionRendered).toContain(
+			'canon://overlays/candidates/overlay.client-a.surface-brief/handoff'
+		);
 	});
 });
 
