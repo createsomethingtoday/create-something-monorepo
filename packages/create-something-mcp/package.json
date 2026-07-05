@@ -24,7 +24,7 @@
     "dev": "tsc --watch",
     "lint": "pnpm run typecheck",
     "start": "node dist/index.js",
-    "test": "pnpm run test:overlay-preview && pnpm run test:overlay-catalog && pnpm run test:overlay-template-file-resources && pnpm run test:overlay-template-file-tool && pnpm run test:overlay-intake && pnpm run test:overlay-candidates && pnpm run test:overlay-candidate-reviews && pnpm run test:overlay-candidate-promotion-plans && pnpm run test:overlay-candidate-promotion-readiness && pnpm run test:overlay-candidate-promotion-approval-records && pnpm run test:overlay-candidate-handoff-tool && pnpm run test:overlay-candidate-promotion-plan-tool && pnpm run test:overlay-candidate-promotion-readiness-tool && pnpm run test:overlay-candidate-promotion-approval-record-tool && pnpm run test:overlay-candidate-promotion-approval-target-template-resources && pnpm run test:overlay-candidate-promotion-approval-validation-resources && pnpm run test:overlay-candidate-promotion-approval-validation-report-tool && pnpm run test:canon-export-policy",
+    "test": "pnpm run test:overlay-preview && pnpm run test:overlay-catalog && pnpm run test:overlay-template-file-resources && pnpm run test:overlay-template-file-tool && pnpm run test:overlay-intake && pnpm run test:overlay-candidates && pnpm run test:overlay-candidate-reviews && pnpm run test:overlay-candidate-promotion-plans && pnpm run test:overlay-candidate-promotion-readiness && pnpm run test:overlay-candidate-promotion-approval-records && pnpm run test:overlay-candidate-handoff-tool && pnpm run test:overlay-candidate-promotion-plan-tool && pnpm run test:overlay-candidate-promotion-readiness-tool && pnpm run test:overlay-candidate-promotion-approval-record-tool && pnpm run test:overlay-candidate-promotion-approval-target-template-resources && pnpm run test:overlay-candidate-promotion-approval-validation-resources && pnpm run test:overlay-candidate-promotion-approval-validation-report-tool && pnpm run test:canon-export-policy && pnpm run test:canon-registry-tool-renderers",
     "test:overlay-preview": "tsx scripts/check-canon-overlay-preview-parity.ts",
     "test:overlay-catalog": "tsx scripts/check-canon-overlay-catalog-parity.ts",
     "test:overlay-template-file-resources": "pnpm --filter @create-something/playbook-mcp build && tsx scripts/check-canon-overlay-template-file-resources.ts",
@@ -43,6 +43,7 @@
     "test:overlay-candidate-promotion-approval-validation-resources": "pnpm --filter @create-something/playbook-mcp build && tsx scripts/check-canon-overlay-candidate-promotion-approval-validation-resources.ts",
     "test:overlay-candidate-promotion-approval-validation-report-tool": "pnpm --filter @create-something/playbook-mcp build && tsx scripts/check-canon-overlay-candidate-promotion-approval-validation-report-tool.ts",
     "test:canon-export-policy": "tsx scripts/check-canon-public-export-classification-parity.ts",
+    "test:canon-registry-tool-renderers": "pnpm --filter @create-something/canon package && tsx scripts/check-canon-registry-tool-renderers.ts",
     "test:smoke": "pnpm run test:overlay-preview",
     "typecheck": "tsc --noEmit"
   },
