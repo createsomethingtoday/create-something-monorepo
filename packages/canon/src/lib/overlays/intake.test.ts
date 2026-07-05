@@ -30,6 +30,7 @@ describe('Canon overlay intake inventory', () => {
 			'packages/client-a/canon-overlay/manifest.ts',
 			readyManifest('overlay.client-a', 'Client A Overlay', '@create-something/client-a')
 		);
+		await writeOverlayArtifactSet(root, 'packages/client-a/canon-overlay');
 		await writeOverlayManifest(
 			root,
 			'packages/canon/src/lib/overlays/project-template/manifest.ts',
@@ -50,6 +51,7 @@ describe('Canon overlay intake inventory', () => {
 			'packages/client-a/canon-overlay/manifest.ts',
 			readyManifest('overlay.client-a', 'Client A Overlay', '@create-something/client-a')
 		);
+		await writeOverlayArtifactSet(root, 'packages/client-a/canon-overlay');
 		await writeOverlayManifest(
 			root,
 			'apps/client-b/canon-overlay/manifest.ts',
@@ -83,33 +85,139 @@ describe('Canon overlay intake inventory', () => {
 		expect(rendered).toContain('Intake overlay.client-a.surface-brief: promote-candidate');
 		expect(rendered).toContain('Client B Overlay');
 	});
+
+	it('flags stale source paths and unknown registry IDs before an overlay can be ready', async () => {
+		const root = await createTempRoot();
+		const manifest = readyManifest(
+			'overlay.client-c',
+			'Client C Overlay',
+			'@create-something/client-c'
+		);
+		manifest.artifacts[0]?.registryItemIds?.push('component.not-real');
+		manifest.extensionIntakes[0] = {
+			...manifest.extensionIntakes[0],
+			sourcePath: 'src/routes/missing/+page.svelte',
+			dependencies: ['template.canon-extension-intake', 'policy.not-real'],
+			surfaces: [
+				{
+					surfaceId: 'client-c.web',
+					name: 'Client C Web',
+					modality: 'web',
+					sourcePath: 'src/routes/exists/+page.svelte'
+				},
+				{
+					surfaceId: 'client-c.chat',
+					name: 'Client C Chat',
+					modality: 'chat',
+					sourcePath: 'src/lib/missing-chat.ts'
+				}
+			]
+		};
+
+		await writeOverlayManifest(root, 'packages/client-c/canon-overlay/manifest.ts', manifest);
+		await writeOverlayArtifactSet(root, 'packages/client-c/canon-overlay');
+		await writeFileAt(root, 'packages/client-c/src/routes/exists/+page.svelte', '<main />\n');
+
+		const inventory = await buildCanonOverlayIntakeInventory({ rootDir: root });
+		const review = inventory.entries[0]?.review;
+
+		expect(review?.status).toBe('needs-review');
+		expect(review?.integrityIssues.map((issue) => issue.kind)).toEqual([
+			'unknown-registry-item',
+			'missing-source-path',
+			'missing-source-path',
+			'unknown-registry-item'
+		]);
+		expect(review?.integrityIssues.map((issue) => issue.message).join(' ')).toContain(
+			'src/routes/missing/+page.svelte'
+		);
+		expect(review?.integrityIssues.map((issue) => issue.message).join(' ')).toContain(
+			'component.not-real'
+		);
+		expect(inventory.summary).toMatchObject({
+			ready: 0,
+			needsReview: 1
+		});
+	});
+
+	it('flags missing declared artifact files as artifact gaps', async () => {
+		const root = await createTempRoot();
+		await writeOverlayManifest(
+			root,
+			'packages/client-d/canon-overlay/manifest.ts',
+			readyManifest('overlay.client-d', 'Client D Overlay', '@create-something/client-d')
+		);
+
+		const inventory = await buildCanonOverlayIntakeInventory({ rootDir: root });
+		const review = inventory.entries[0]?.review;
+
+		expect(review?.status).toBe('needs-artifacts');
+		expect(review?.missingArtifacts).toEqual([]);
+		expect(review?.integrityIssues).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					kind: 'missing-artifact-file',
+					path: 'packages/client-d/canon-overlay/theme.css'
+				})
+			])
+		);
+	});
 });
 
 async function writeOverlayManifest(root: string, relativePath: string, manifest: unknown) {
-	const filePath = join(root, relativePath);
-	await mkdir(dirname(filePath), { recursive: true });
-	await writeFile(
-		filePath,
+	await writeFileAt(
+		root,
+		relativePath,
 		`export const CANON_PROJECT_OVERLAY_MANIFEST = ${JSON.stringify(manifest, null, 2)};\n`,
-		'utf-8'
 	);
 }
 
-function readyManifest(id: string, name: string, sourcePackage: string) {
+async function writeOverlayArtifactSet(root: string, overlayRoot: string) {
+	await writeFileAt(root, `${overlayRoot}/theme.css`, ':root {}\n');
+	await writeFileAt(root, `${overlayRoot}/tokens.json`, '{}\n');
+	await mkdir(join(root, overlayRoot, 'templates'), { recursive: true });
+	await writeFileAt(root, `${overlayRoot}/templates/surface-brief.md`, '# Surface Brief\n');
+	await writeFileAt(root, `${overlayRoot}/copy-rules.md`, '# Copy Rules\n');
+	await writeFileAt(root, `${overlayRoot}/surface-policy.md`, '# Surface Policy\n');
+	await writeFileAt(root, `${overlayRoot}/registry.json`, '{}\n');
+}
+
+async function writeFileAt(root: string, relativePath: string, content: string) {
+	const filePath = join(root, relativePath);
+	await mkdir(dirname(filePath), { recursive: true });
+	await writeFile(filePath, content, 'utf-8');
+}
+
+function readyManifest(id: string, name: string, sourcePackage: string): {
+	id: string;
+	name: string;
+	owner: string;
+	sourcePackage: string;
+	sourcePath: string;
+	targetModalities: string[];
+	tags: string[];
+	artifacts: Array<{ kind: string; path: string; registryItemIds?: string[] }>;
+	extensionIntakes: Array<Record<string, unknown>>;
+} {
 	return {
 		id,
 		name,
 		owner: 'client-team',
 		sourcePackage,
+		sourcePath: 'manifest.ts',
 		targetModalities: ['web', 'chat'],
 		tags: ['canon', 'overlay'],
 		artifacts: [
-			{ kind: 'theme', path: 'theme.css' },
-			{ kind: 'tokens', path: 'tokens.json' },
-			{ kind: 'templates', path: 'templates' },
-			{ kind: 'copy-rules', path: 'copy-rules.md' },
-			{ kind: 'surface-policy', path: 'surface-policy.md' },
-			{ kind: 'registry', path: 'registry.json' }
+			{ kind: 'theme', path: 'theme.css', registryItemIds: ['token.canon-core'] },
+			{ kind: 'tokens', path: 'tokens.json', registryItemIds: ['token.canon-core'] },
+			{ kind: 'templates', path: 'templates', registryItemIds: ['template.canon-extension-intake'] },
+			{ kind: 'copy-rules', path: 'copy-rules.md', registryItemIds: ['policy.signal-decision-proof'] },
+			{
+				kind: 'surface-policy',
+				path: 'surface-policy.md',
+				registryItemIds: ['policy.signal-decision-proof']
+			},
+			{ kind: 'registry', path: 'registry.json', registryItemIds: ['component.clear-proof-strip'] }
 		],
 		extensionIntakes: [
 			{
@@ -121,6 +229,7 @@ function readyManifest(id: string, name: string, sourcePackage: string) {
 				owner: 'client-team',
 				sourcePackage,
 				tags: ['proof'],
+				dependencies: ['template.canon-extension-intake'],
 				surfaces: [
 					{ surfaceId: `${id}.web`, name: `${name} Web`, modality: 'web' },
 					{ surfaceId: `${id}.chat`, name: `${name} Chat`, modality: 'chat' }

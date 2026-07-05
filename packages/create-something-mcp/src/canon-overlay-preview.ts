@@ -142,6 +142,7 @@ export function renderCanonOverlayInstantiatePreview(
     `- Required artifacts: ${review.requiredArtifacts.map((kind) => `\`${kind}\``).join(', ')}`,
     `- Present artifacts: ${review.presentArtifacts.map((kind) => `\`${kind}\``).join(', ') || 'none'}`,
     `- Missing artifacts: ${review.missingArtifacts.map((kind) => `\`${kind}\``).join(', ') || 'none'}`,
+    `- Integrity issues: ${review.integrityIssues.length}`,
     `- Summary: ${review.summary}`
   );
 

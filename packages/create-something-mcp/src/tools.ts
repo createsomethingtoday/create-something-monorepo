@@ -406,6 +406,7 @@ function reviewCanonProjectOverlay(
   const missingArtifacts = CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS.filter(
     (kind) => !presentArtifacts.includes(kind)
   );
+  const integrityIssues: CanonProjectOverlayReview['integrityIssues'] = [];
   const extensionDecisions = (manifest.extensionIntakes ?? []).map((packet) => ({
     packet,
     decision: routeCanonExtensionIntake(packet)
@@ -435,11 +436,12 @@ function reviewCanonProjectOverlay(
     requiredArtifacts: CANON_PROJECT_OVERLAY_REQUIRED_ARTIFACTS,
     presentArtifacts,
     missingArtifacts,
+    integrityIssues,
     extensionDecisions,
     stopConditions: [...new Set(stopConditions)],
     summary:
       status === 'ready'
-        ? `${manifest.name} declares the complete Canon overlay artifact set and has no project-local evidence gaps.`
+        ? `${manifest.name} declares the complete Canon overlay artifact set and has no project-local evidence gaps. Filesystem integrity is checked by canon://overlays/intake.`
         : `${manifest.name} is ${status}; keep it project-owned until missing artifacts and evidence gaps are resolved.`
   };
 }
@@ -466,6 +468,7 @@ function renderCanonProjectOverlayReview(
   lines.push(`- Required: ${review.requiredArtifacts.map((kind) => `\`${kind}\``).join(', ')}`);
   lines.push(`- Present: ${review.presentArtifacts.map((kind) => `\`${kind}\``).join(', ') || 'none'}`);
   lines.push(`- Missing: ${review.missingArtifacts.map((kind) => `\`${kind}\``).join(', ') || 'none'}`);
+  lines.push(`- Integrity issues: ${review.integrityIssues.length}`);
 
   for (const artifact of manifest.artifacts) {
     const details = [`\`${artifact.kind}\``, `path: \`${artifact.path}\``];

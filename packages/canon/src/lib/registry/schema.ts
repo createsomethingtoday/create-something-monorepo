@@ -123,11 +123,20 @@ export type CanonProjectOverlayManifest = {
 	extensionIntakes?: CanonExtensionIntakePacket[];
 };
 
+export type CanonProjectOverlayIntegrityIssue = {
+	kind: 'missing-artifact-file' | 'missing-source-path' | 'unknown-registry-item';
+	context: string;
+	path?: string;
+	registryItemId?: string;
+	message: string;
+};
+
 export type CanonProjectOverlayReview = {
 	status: 'ready' | 'needs-artifacts' | 'needs-evidence' | 'needs-review';
 	requiredArtifacts: CanonProjectOverlayArtifactKind[];
 	presentArtifacts: CanonProjectOverlayArtifactKind[];
 	missingArtifacts: CanonProjectOverlayArtifactKind[];
+	integrityIssues: CanonProjectOverlayIntegrityIssue[];
 	extensionDecisions: Array<{
 		packet: CanonExtensionIntakePacket;
 		decision: CanonExtensionRoutingDecision;

@@ -137,6 +137,7 @@ function buildContentIndex(): ContentItem[] {
         entry.manifest.targetModalities.join(' '),
         entry.review.status,
         entry.review.missingArtifacts.join(' '),
+        entry.review.integrityIssues.map(issue => `${issue.kind} ${issue.context} ${issue.path ?? ''} ${issue.registryItemId ?? ''} ${issue.message}`).join('\n'),
         entry.review.stopConditions.join('\n'),
         entry.review.extensionDecisions.map(decision => `${decision.packet.id} ${decision.decision.stage} ${decision.decision.action}`).join('\n')
       ].join('\n'),

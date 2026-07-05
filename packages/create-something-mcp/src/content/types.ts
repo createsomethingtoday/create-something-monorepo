@@ -143,11 +143,20 @@ export interface CanonProjectOverlayManifest {
   extensionIntakes?: CanonExtensionIntakePacket[];
 }
 
+export interface CanonProjectOverlayIntegrityIssue {
+  kind: 'missing-artifact-file' | 'missing-source-path' | 'unknown-registry-item';
+  context: string;
+  path?: string;
+  registryItemId?: string;
+  message: string;
+}
+
 export interface CanonProjectOverlayReview {
   status: 'ready' | 'needs-artifacts' | 'needs-evidence' | 'needs-review';
   requiredArtifacts: CanonProjectOverlayArtifactKind[];
   presentArtifacts: CanonProjectOverlayArtifactKind[];
   missingArtifacts: CanonProjectOverlayArtifactKind[];
+  integrityIssues: CanonProjectOverlayIntegrityIssue[];
   extensionDecisions: Array<{
     packet: CanonExtensionIntakePacket;
     decision: CanonExtensionRoutingDecision;
