@@ -668,6 +668,37 @@ export interface CanonOverlayCatalog {
   };
 }
 
+export interface CanonOverlayTemplateFile {
+  id: string;
+  templateId: string;
+  relativePath: string;
+  outputPath: string;
+  uri: string;
+  mimeType: string;
+  content: string;
+  description: string;
+}
+
+export interface CanonOverlayTemplateFilePack {
+  schemaVersion: 1;
+  id: 'canon-overlay-template-file-pack';
+  templateId: string;
+  templateUri: string;
+  filesUri: string;
+  sourceOfTruth: '@create-something/canon/overlays/project-template';
+  description: string;
+  files: CanonOverlayTemplateFile[];
+  summary: {
+    totalFiles: number;
+  };
+  agentContract: {
+    purpose: 'canon-overlay-template-file-resources';
+    primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+    useFor: string[];
+    stopBefore: string[];
+  };
+}
+
 export type CanonPublicExportClassification =
   | 'analytics-surface'
   | 'auth-surface'
