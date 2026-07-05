@@ -566,6 +566,42 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
       'Registry API is the Canon source of truth for discoverable artifacts and lifecycle rules.'
   },
   {
+    exportPath: './design-audit',
+    classification: 'registry-artifact',
+    registryPolicy: 'registry-covered',
+    registryItemIds: ['policy.signal-decision-proof'],
+    rationale:
+      'Design audit checks operationalize Canon token, layout, motion, and accessibility policy for agent and human review.'
+  },
+  {
+    exportPath: './mcp-snapshot',
+    classification: 'registry-artifact',
+    registryPolicy: 'registry-covered',
+    registryItemIds: [
+      'template.canon-project-overlay-template-pack',
+      'template.canon-project-overlay-manifest',
+      'template.canon-extension-intake'
+    ],
+    rationale:
+      'MCP snapshot bundles Canon registry, overlays, candidate review, and readiness artifacts for agent-facing consumers.'
+  },
+  {
+    exportPath: './lint-contract',
+    classification: 'registry-artifact',
+    registryPolicy: 'registry-covered',
+    registryItemIds: ['token.canon-core'],
+    rationale:
+      'Lint contract maps consumer utility usage back to Canon token artifacts without duplicating design-system policy.'
+  },
+  {
+    exportPath: './modality-readiness',
+    classification: 'registry-artifact',
+    registryPolicy: 'registry-covered',
+    registryItemIds: ['template.canon-project-overlay-manifest', 'template.canon-extension-intake'],
+    rationale:
+      'Modality readiness report audits web, chat, app, voice, and glasses implementation evidence from registry and overlay inventory.'
+  },
+  {
     exportPath: './overlays/project-template',
     classification: 'registry-artifact',
     registryPolicy: 'registry-covered',
