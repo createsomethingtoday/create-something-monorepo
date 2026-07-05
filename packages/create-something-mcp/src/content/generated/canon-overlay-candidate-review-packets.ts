@@ -1,7 +1,7 @@
 /**
  * Generated Canon overlay candidate review packet content — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/intake.ts
+ * Source: packages/canon/src/lib/mcp-snapshot/
  */
 
 import type { CanonOverlayCandidateReviewPacketCollection } from '../types.js';

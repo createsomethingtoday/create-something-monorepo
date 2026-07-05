@@ -1,7 +1,7 @@
 /**
  * Generated Canon overlay intake inventory content — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/intake.ts
+ * Source: packages/canon/src/lib/mcp-snapshot/
  */
 
 import type { CanonProjectOverlayInventory } from '../types.js';

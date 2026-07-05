@@ -300,264 +300,53 @@ ${entries.join(',\n')}
 }
 
 // ============================================================================
-// Build Canon registry snapshot
+// Build Canon MCP snapshot modules
 // ============================================================================
 
-async function buildCanonRegistry(): Promise<string> {
-  const registryModuleUrl = pathToFileURL(
-    join(ROOT, 'packages', 'canon', 'src', 'lib', 'registry', 'index.ts')
-  ).href;
-  const registry = await import(registryModuleUrl) as {
-    getCanonRegistryManifest: () => unknown;
-  };
-  const manifest = registry.getCanonRegistryManifest();
-
-  return `/**
- * Generated Canon registry content — DO NOT EDIT MANUALLY.
- * Run: npm run build:content
- * Source: packages/canon/src/lib/registry/
- */
-
-import type { CanonRegistryManifest } from '../types.js';
-
-export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = ${JSON.stringify(manifest, null, 2)};
-`;
+interface CanonMcpSnapshot {
+  registryManifest: unknown;
+  publicExportClassificationRules: unknown[];
+  overlayCatalog: unknown;
+  overlayTemplateFilePack: unknown;
+  overlayIntakeInventory: unknown;
+  overlayCandidateQueue: unknown;
+  overlayCandidateReviewPackets: unknown;
+  overlayCandidatePromotionPlans: unknown;
+  overlayCandidatePromotionReadinessReports: unknown;
+  overlayCandidatePromotionApprovalRecords: unknown;
 }
 
-async function buildCanonPublicExportClassification(): Promise<string> {
-  const registryModuleUrl = pathToFileURL(
-    join(ROOT, 'packages', 'canon', 'src', 'lib', 'registry', 'index.ts')
+async function buildCanonMcpSnapshot(): Promise<CanonMcpSnapshot> {
+  const snapshotModuleUrl = pathToFileURL(
+    join(ROOT, 'packages', 'canon', 'src', 'lib', 'mcp-snapshot', 'index.ts')
   ).href;
-  const registry = await import(registryModuleUrl) as {
-    CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: unknown[];
+  const snapshotModule = await import(snapshotModuleUrl) as {
+    buildCanonMcpSnapshot: (options: { rootDir: string; rootLabel?: string }) => Promise<CanonMcpSnapshot>;
   };
-  const rules = registry.CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES;
 
-  return `/**
- * Generated Canon public export classification content — DO NOT EDIT MANUALLY.
- * Run: npm run build:content
- * Source: packages/canon/src/lib/registry/public-export-classification.ts
- */
-
-import type { CanonPublicExportClassificationRule } from '../types.js';
-
-export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassificationRule[] = ${JSON.stringify(rules, null, 2)};
-`;
-}
-
-async function buildCanonOverlayCatalog(): Promise<string> {
-  const overlaysModuleUrl = pathToFileURL(
-    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'index.ts')
-  ).href;
-  const overlays = await import(overlaysModuleUrl) as {
-    getCanonOverlayCatalog: () => unknown;
-  };
-  const catalog = overlays.getCanonOverlayCatalog();
-
-  return `/**
- * Generated Canon overlay catalog content — DO NOT EDIT MANUALLY.
- * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/
- */
-
-import type { CanonOverlayCatalog } from '../types.js';
-
-export const CANON_OVERLAY_CATALOG: CanonOverlayCatalog = ${JSON.stringify(catalog, null, 2)};
-`;
-}
-
-async function buildCanonOverlayTemplateFiles(): Promise<string> {
-  const templateModuleUrl = pathToFileURL(
-    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'project-template', 'index.ts')
-  ).href;
-  const template = await import(templateModuleUrl) as {
-    buildCanonProjectOverlayTemplateFilePack: () => unknown;
-  };
-  const pack = template.buildCanonProjectOverlayTemplateFilePack();
-
-  return `/**
- * Generated Canon overlay template file content — DO NOT EDIT MANUALLY.
- * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/project-template/
- */
-
-import type { CanonOverlayTemplateFilePack } from '../types.js';
-
-export const CANON_OVERLAY_TEMPLATE_FILE_PACK: CanonOverlayTemplateFilePack = ${JSON.stringify(pack, null, 2)};
-`;
-}
-
-async function buildCanonOverlayIntakeInventory(): Promise<string> {
-  const intakeModuleUrl = pathToFileURL(
-    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'intake.ts')
-  ).href;
-  const intake = await import(intakeModuleUrl) as {
-    buildCanonOverlayIntakeInventory: (options: { rootDir: string; rootLabel?: string }) => Promise<unknown>;
-  };
-  const inventory = await intake.buildCanonOverlayIntakeInventory({
+  return snapshotModule.buildCanonMcpSnapshot({
     rootDir: ROOT,
     rootLabel: '<repo-root>'
   });
-
-  return `/**
- * Generated Canon overlay intake inventory content — DO NOT EDIT MANUALLY.
- * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/intake.ts
- */
-
-import type { CanonProjectOverlayInventory } from '../types.js';
-
-export const CANON_OVERLAY_INTAKE_INVENTORY: CanonProjectOverlayInventory = ${JSON.stringify(inventory, null, 2)};
-`;
 }
 
-async function buildCanonOverlayCandidateQueue(): Promise<string> {
-  const intakeModuleUrl = pathToFileURL(
-    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'intake.ts')
-  ).href;
-  const intake = await import(intakeModuleUrl) as {
-    buildCanonOverlayIntakeInventory: (options: { rootDir: string; rootLabel?: string }) => Promise<unknown>;
-    buildCanonOverlayCandidateQueue: (inventory: unknown) => unknown;
-  };
-  const inventory = await intake.buildCanonOverlayIntakeInventory({
-    rootDir: ROOT,
-    rootLabel: '<repo-root>'
-  });
-  const queue = intake.buildCanonOverlayCandidateQueue(inventory);
-
+function renderCanonSnapshotModule(options: {
+  description: string;
+  source: string;
+  typeName: string;
+  typeAnnotation?: string;
+  constName: string;
+  value: unknown;
+}): string {
   return `/**
- * Generated Canon overlay candidate queue content — DO NOT EDIT MANUALLY.
+ * ${options.description} — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/intake.ts
+ * Source: ${options.source}
  */
 
-import type { CanonOverlayCandidateQueue } from '../types.js';
+import type { ${options.typeName} } from '../types.js';
 
-export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = ${JSON.stringify(queue, null, 2)};
-`;
-}
-
-async function buildCanonOverlayCandidateReviewPackets(): Promise<string> {
-  const intakeModuleUrl = pathToFileURL(
-    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'intake.ts')
-  ).href;
-  const intake = await import(intakeModuleUrl) as {
-    buildCanonOverlayIntakeInventory: (options: { rootDir: string; rootLabel?: string }) => Promise<unknown>;
-    buildCanonOverlayCandidateQueue: (inventory: unknown) => unknown;
-    buildCanonOverlayCandidateReviewPackets: (queue: unknown) => unknown;
-  };
-  const inventory = await intake.buildCanonOverlayIntakeInventory({
-    rootDir: ROOT,
-    rootLabel: '<repo-root>'
-  });
-  const queue = intake.buildCanonOverlayCandidateQueue(inventory);
-  const packets = intake.buildCanonOverlayCandidateReviewPackets(queue);
-
-  return `/**
- * Generated Canon overlay candidate review packet content — DO NOT EDIT MANUALLY.
- * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/intake.ts
- */
-
-import type { CanonOverlayCandidateReviewPacketCollection } from '../types.js';
-
-export const CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS: CanonOverlayCandidateReviewPacketCollection = ${JSON.stringify(packets, null, 2)};
-`;
-}
-
-async function buildCanonOverlayCandidatePromotionPlans(): Promise<string> {
-  const intakeModuleUrl = pathToFileURL(
-    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'intake.ts')
-  ).href;
-  const intake = await import(intakeModuleUrl) as {
-    buildCanonOverlayIntakeInventory: (options: { rootDir: string; rootLabel?: string }) => Promise<unknown>;
-    buildCanonOverlayCandidateQueue: (inventory: unknown) => unknown;
-    buildCanonOverlayCandidateReviewPackets: (queue: unknown) => unknown;
-    buildCanonOverlayCandidatePromotionPlans: (packets: unknown) => unknown;
-  };
-  const inventory = await intake.buildCanonOverlayIntakeInventory({
-    rootDir: ROOT,
-    rootLabel: '<repo-root>'
-  });
-  const queue = intake.buildCanonOverlayCandidateQueue(inventory);
-  const packets = intake.buildCanonOverlayCandidateReviewPackets(queue);
-  const plans = intake.buildCanonOverlayCandidatePromotionPlans(packets);
-
-  return `/**
- * Generated Canon overlay candidate promotion plan content — DO NOT EDIT MANUALLY.
- * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/intake.ts
- */
-
-import type { CanonOverlayCandidatePromotionPlanCollection } from '../types.js';
-
-export const CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS: CanonOverlayCandidatePromotionPlanCollection = ${JSON.stringify(plans, null, 2)};
-`;
-}
-
-async function buildCanonOverlayCandidatePromotionReadinessReports(): Promise<string> {
-  const intakeModuleUrl = pathToFileURL(
-    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'intake.ts')
-  ).href;
-  const intake = await import(intakeModuleUrl) as {
-    buildCanonOverlayIntakeInventory: (options: { rootDir: string; rootLabel?: string }) => Promise<unknown>;
-    buildCanonOverlayCandidateQueue: (inventory: unknown) => unknown;
-    buildCanonOverlayCandidateReviewPackets: (queue: unknown) => unknown;
-    buildCanonOverlayCandidatePromotionPlans: (packets: unknown) => unknown;
-    buildCanonOverlayCandidatePromotionReadinessReports: (plans: unknown) => unknown;
-  };
-  const inventory = await intake.buildCanonOverlayIntakeInventory({
-    rootDir: ROOT,
-    rootLabel: '<repo-root>'
-  });
-  const queue = intake.buildCanonOverlayCandidateQueue(inventory);
-  const packets = intake.buildCanonOverlayCandidateReviewPackets(queue);
-  const plans = intake.buildCanonOverlayCandidatePromotionPlans(packets);
-  const reports = intake.buildCanonOverlayCandidatePromotionReadinessReports(plans);
-
-  return `/**
- * Generated Canon overlay candidate promotion readiness report content — DO NOT EDIT MANUALLY.
- * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/intake.ts
- */
-
-import type { CanonOverlayCandidatePromotionReadinessReportCollection } from '../types.js';
-
-export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCandidatePromotionReadinessReportCollection = ${JSON.stringify(reports, null, 2)};
-`;
-}
-
-async function buildCanonOverlayCandidatePromotionApprovalRecords(): Promise<string> {
-  const intakeModuleUrl = pathToFileURL(
-    join(ROOT, 'packages', 'canon', 'src', 'lib', 'overlays', 'intake.ts')
-  ).href;
-  const intake = await import(intakeModuleUrl) as {
-    buildCanonOverlayIntakeInventory: (options: { rootDir: string; rootLabel?: string }) => Promise<unknown>;
-    buildCanonOverlayCandidateQueue: (inventory: unknown) => unknown;
-    buildCanonOverlayCandidateReviewPackets: (queue: unknown) => unknown;
-    buildCanonOverlayCandidatePromotionPlans: (packets: unknown) => unknown;
-    buildCanonOverlayCandidatePromotionReadinessReports: (plans: unknown) => unknown;
-    buildCanonOverlayCandidatePromotionApprovalRecords: (reports: unknown) => unknown;
-  };
-  const inventory = await intake.buildCanonOverlayIntakeInventory({
-    rootDir: ROOT,
-    rootLabel: '<repo-root>'
-  });
-  const queue = intake.buildCanonOverlayCandidateQueue(inventory);
-  const packets = intake.buildCanonOverlayCandidateReviewPackets(queue);
-  const plans = intake.buildCanonOverlayCandidatePromotionPlans(packets);
-  const reports = intake.buildCanonOverlayCandidatePromotionReadinessReports(plans);
-  const approvalRecords = intake.buildCanonOverlayCandidatePromotionApprovalRecords(reports);
-
-  return `/**
- * Generated Canon overlay candidate promotion approval record content — DO NOT EDIT MANUALLY.
- * Run: npm run build:content
- * Source: packages/canon/src/lib/overlays/intake.ts
- */
-
-import type { CanonOverlayCandidatePromotionApprovalRecordCollection } from '../types.js';
-
-export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCandidatePromotionApprovalRecordCollection = ${JSON.stringify(approvalRecords, null, 2)};
+export const ${options.constName}: ${options.typeAnnotation ?? options.typeName} = ${JSON.stringify(options.value, null, 2)};
 `;
 }
 
@@ -800,36 +589,90 @@ async function main() {
   const [
     papers,
     canon,
-    canonRegistry,
-    canonPublicExportClassification,
-    canonOverlayCatalog,
-    canonOverlayTemplateFiles,
-    canonOverlayIntakeInventory,
-    canonOverlayCandidateQueue,
-    canonOverlayCandidateReviewPackets,
-    canonOverlayCandidatePromotionPlans,
-    canonOverlayCandidatePromotionReadinessReports,
-    canonOverlayCandidatePromotionApprovalRecords,
+    canonMcpSnapshot,
     patterns,
     graph,
     propertyDocs
   ] = await Promise.all([
     buildPapers(),
     buildCanon(),
-    buildCanonRegistry(),
-    buildCanonPublicExportClassification(),
-    buildCanonOverlayCatalog(),
-    buildCanonOverlayTemplateFiles(),
-    buildCanonOverlayIntakeInventory(),
-    buildCanonOverlayCandidateQueue(),
-    buildCanonOverlayCandidateReviewPackets(),
-    buildCanonOverlayCandidatePromotionPlans(),
-    buildCanonOverlayCandidatePromotionReadinessReports(),
-    buildCanonOverlayCandidatePromotionApprovalRecords(),
+    buildCanonMcpSnapshot(),
     buildPatterns(),
     buildGraph(),
     buildPropertyDocuments(),
   ]);
+
+  const canonRegistry = renderCanonSnapshotModule({
+    description: 'Generated Canon registry content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonRegistryManifest',
+    constName: 'CANON_REGISTRY_MANIFEST',
+    value: canonMcpSnapshot.registryManifest
+  });
+  const canonPublicExportClassification = renderCanonSnapshotModule({
+    description: 'Generated Canon public export classification content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonPublicExportClassificationRule',
+    typeAnnotation: 'CanonPublicExportClassificationRule[]',
+    constName: 'CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES',
+    value: canonMcpSnapshot.publicExportClassificationRules
+  });
+  const canonOverlayCatalog = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay catalog content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCatalog',
+    constName: 'CANON_OVERLAY_CATALOG',
+    value: canonMcpSnapshot.overlayCatalog
+  });
+  const canonOverlayTemplateFiles = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay template file content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayTemplateFilePack',
+    constName: 'CANON_OVERLAY_TEMPLATE_FILE_PACK',
+    value: canonMcpSnapshot.overlayTemplateFilePack
+  });
+  const canonOverlayIntakeInventory = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay intake inventory content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonProjectOverlayInventory',
+    constName: 'CANON_OVERLAY_INTAKE_INVENTORY',
+    value: canonMcpSnapshot.overlayIntakeInventory
+  });
+  const canonOverlayCandidateQueue = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay candidate queue content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCandidateQueue',
+    constName: 'CANON_OVERLAY_CANDIDATE_QUEUE',
+    value: canonMcpSnapshot.overlayCandidateQueue
+  });
+  const canonOverlayCandidateReviewPackets = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay candidate review packet content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCandidateReviewPacketCollection',
+    constName: 'CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS',
+    value: canonMcpSnapshot.overlayCandidateReviewPackets
+  });
+  const canonOverlayCandidatePromotionPlans = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay candidate promotion plan content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCandidatePromotionPlanCollection',
+    constName: 'CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS',
+    value: canonMcpSnapshot.overlayCandidatePromotionPlans
+  });
+  const canonOverlayCandidatePromotionReadinessReports = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay candidate promotion readiness report content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCandidatePromotionReadinessReportCollection',
+    constName: 'CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS',
+    value: canonMcpSnapshot.overlayCandidatePromotionReadinessReports
+  });
+  const canonOverlayCandidatePromotionApprovalRecords = renderCanonSnapshotModule({
+    description: 'Generated Canon overlay candidate promotion approval record content',
+    source: 'packages/canon/src/lib/mcp-snapshot/',
+    typeName: 'CanonOverlayCandidatePromotionApprovalRecordCollection',
+    constName: 'CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS',
+    value: canonMcpSnapshot.overlayCandidatePromotionApprovalRecords
+  });
 
   // Write generated files
   await Promise.all([

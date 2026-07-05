@@ -1,7 +1,7 @@
 /**
  * Generated Canon registry content — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
- * Source: packages/canon/src/lib/registry/
+ * Source: packages/canon/src/lib/mcp-snapshot/
  */
 
 import type { CanonRegistryManifest } from '../types.js';
