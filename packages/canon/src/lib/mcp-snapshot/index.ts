@@ -12,6 +12,10 @@ import {
   CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES,
   getCanonRegistryManifest
 } from '../registry/index.js';
+import {
+  buildCanonModalityReadinessReport,
+  type CanonModalityReadinessReport
+} from '../modality-readiness/index.js';
 import type {
   CanonOverlayCandidatePromotionApprovalRecordCollection,
   CanonOverlayCandidatePromotionPlanCollection,
@@ -42,6 +46,7 @@ export type CanonMcpSnapshot = {
   overlayCandidatePromotionPlans: CanonOverlayCandidatePromotionPlanCollection;
   overlayCandidatePromotionReadinessReports: CanonOverlayCandidatePromotionReadinessReportCollection;
   overlayCandidatePromotionApprovalRecords: CanonOverlayCandidatePromotionApprovalRecordCollection;
+  modalityReadinessReport: CanonModalityReadinessReport;
 };
 
 export async function buildCanonMcpSnapshot(
@@ -62,9 +67,10 @@ export async function buildCanonMcpSnapshot(
     buildCanonOverlayCandidatePromotionReadinessReports(overlayCandidatePromotionPlans);
   const overlayCandidatePromotionApprovalRecords =
     buildCanonOverlayCandidatePromotionApprovalRecords(overlayCandidatePromotionReadinessReports);
+  const registryManifest = getCanonRegistryManifest();
 
   return {
-    registryManifest: getCanonRegistryManifest(),
+    registryManifest,
     publicExportClassificationRules: CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES,
     overlayCatalog: getCanonOverlayCatalog(),
     overlayTemplateFilePack: buildCanonProjectOverlayTemplateFilePack(),
@@ -73,6 +79,10 @@ export async function buildCanonMcpSnapshot(
     overlayCandidateReviewPackets,
     overlayCandidatePromotionPlans,
     overlayCandidatePromotionReadinessReports,
-    overlayCandidatePromotionApprovalRecords
+    overlayCandidatePromotionApprovalRecords,
+    modalityReadinessReport: buildCanonModalityReadinessReport({
+      registryManifest,
+      overlayInventory: overlayIntakeInventory
+    })
   };
 }

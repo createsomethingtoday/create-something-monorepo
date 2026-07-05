@@ -33,5 +33,22 @@ describe('Canon MCP snapshot', () => {
     expect(snapshot.overlayCandidatePromotionReadinessReports.entries.length).toBe(
       snapshot.overlayCandidatePromotionApprovalRecords.entries.length
     );
+    expect(snapshot.modalityReadinessReport.sourceOfTruth).toBe(
+      '@create-something/canon/modality-readiness'
+    );
+    expect(snapshot.modalityReadinessReport.modalities.map((entry) => entry.modality)).toEqual([
+      'web',
+      'chat',
+      'app',
+      'voice',
+      'glasses'
+    ]);
+    expect(
+      snapshot.modalityReadinessReport.modalities.find((entry) => entry.modality === 'web')?.status
+    ).toBe('implemented');
+    expect(
+      snapshot.modalityReadinessReport.modalities.find((entry) => entry.modality === 'voice')
+        ?.status
+    ).toBe('templated');
   });
 });
