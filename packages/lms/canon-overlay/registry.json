@@ -6,7 +6,9 @@
   "targetModalities": [
     "web",
     "app",
-    "chat"
+    "chat",
+    "voice",
+    "glasses"
   ],
   "registryItemIds": [
     "token.canon-core",
