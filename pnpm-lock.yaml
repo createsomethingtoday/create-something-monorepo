@@ -1083,6 +1083,9 @@ importers:
 
   packages/create-something-mcp:
     dependencies:
+      '@create-something/canon':
+        specifier: workspace:*
+        version: link:../canon
       '@create-something/playbook-mcp':
         specifier: workspace:*
         version: link:../playbook-mcp
