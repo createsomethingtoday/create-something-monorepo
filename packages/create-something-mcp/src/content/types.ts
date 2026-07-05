@@ -185,6 +185,7 @@ export interface CanonPublicExportClassificationRule {
   exportName?: string;
   classification: CanonPublicExportClassification;
   registryPolicy: CanonPublicExportRegistryPolicy;
+  registryItemIds?: string[];
   rationale: string;
 }
 

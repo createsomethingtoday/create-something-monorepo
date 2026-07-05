@@ -27,6 +27,7 @@ export type CanonPublicExportClassificationRule = {
 	exportName?: string;
 	classification: CanonPublicExportClassification;
 	registryPolicy: CanonPublicExportRegistryPolicy;
+	registryItemIds?: string[];
 	rationale: string;
 };
 
@@ -57,6 +58,7 @@ const ROOT_COMPONENT_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportName: 'Heading',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['component.heading'],
 		rationale: 'Promoted to component.heading as the stable semantic typography primitive.'
 	},
 	{
@@ -162,6 +164,7 @@ const ROOT_COMPONENT_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportName: 'SkipToContent',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['component.skip-to-content'],
 		rationale: 'Promoted to component.skip-to-content as the stable keyboard bypass primitive.'
 	},
 	{
@@ -213,6 +216,7 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportPath: './styles/tokens.css',
 		classification: 'token-artifact',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['token.canon-core'],
 		rationale: 'Canonical CSS token source is covered by token.canon-core.'
 	},
 	{
@@ -303,24 +307,28 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportPath: './styles/tokens.scss',
 		classification: 'token-artifact',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['token.canon-core'],
 		rationale: 'SCSS token export is an alternate consumer format for token.canon-core.'
 	},
 	{
 		exportPath: './styles/tokens.dtcg.json',
 		classification: 'token-artifact',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['token.canon-core'],
 		rationale: 'DTCG token export is an alternate machine-readable format for token.canon-core.'
 	},
 	{
 		exportPath: './styles/tokens.figma.json',
 		classification: 'token-artifact',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['token.canon-core'],
 		rationale: 'Figma token export is an alternate design-tool format for token.canon-core.'
 	},
 	{
 		exportPath: './styles/canon.json',
 		classification: 'token-artifact',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['token.canon-core'],
 		rationale: 'Canon JSON export is a machine-readable token artifact governed by token.canon-core.'
 	},
 	{
@@ -334,12 +342,31 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportPath: './components/form',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: [
+			'component.form-text-field',
+			'component.form-text-area',
+			'component.form-checkbox',
+			'component.form-checkbox-group',
+			'component.form-radio',
+			'component.form-radio-group',
+			'component.form-select',
+			'component.form-switch'
+		],
 		rationale: 'Form barrel exposes stable foundation controls already covered by registry item tests.'
 	},
 	{
 		exportPath: './components/navigation',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: [
+			'component.navigation-breadcrumbs',
+			'component.navigation-tabs',
+			'component.navigation-pagination',
+			'component.navigation-tooltip',
+			'component.navigation-popover',
+			'component.navigation-dropdown-menu',
+			'component.navigation-drawer'
+		],
 		rationale:
 			'Navigation barrel exposes stable foundation controls already covered by registry item tests.'
 	},
@@ -347,6 +374,14 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportPath: './components/feedback',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: [
+			'component.feedback-alert',
+			'component.feedback-toast',
+			'component.feedback-dialog',
+			'component.feedback-progress',
+			'component.feedback-spinner',
+			'component.feedback-skeleton'
+		],
 		rationale: 'Feedback barrel exposes stable foundation controls already covered by registry item tests.'
 	},
 	{
@@ -383,12 +418,14 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportPath: './tokens',
 		classification: 'token-artifact',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['token.canon-core'],
 		rationale: 'Typed token API is governed by token.canon-core.'
 	},
 	{
 		exportPath: './tokens/*',
 		classification: 'token-artifact',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['token.canon-core'],
 		rationale: 'Wildcard token module exports are governed by token.canon-core.'
 	},
 	{
@@ -461,36 +498,45 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportPath: './atlas/headless',
 		classification: 'headless-contract',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['adapter.atlas-graph-artifact'],
 		rationale: 'Headless Atlas graph artifact is covered by adapter.atlas-graph-artifact.'
 	},
 	{
 		exportPath: './atlas/handoff',
 		classification: 'headless-contract',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['template.atlas-development-handoff'],
 		rationale: 'Atlas handoff API is covered by template.atlas-development-handoff.'
 	},
 	{
 		exportPath: './governance',
 		classification: 'governance-contract',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['policy.signal-decision-proof'],
 		rationale: 'Governance product loop is covered by policy.signal-decision-proof.'
 	},
 	{
 		exportPath: './governance/products',
 		classification: 'governance-contract',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['policy.signal-decision-proof'],
 		rationale: 'Governance products export is covered by policy.signal-decision-proof.'
 	},
 	{
 		exportPath: './registry',
 		classification: 'registry-artifact',
 		registryPolicy: 'registry-covered',
+		registryItemIds: [
+			'template.canon-extension-intake',
+			'template.canon-project-overlay-manifest'
+		],
 		rationale: 'Registry API is the Canon source of truth for discoverable artifacts and lifecycle rules.'
 	},
 	{
 		exportPath: './overlays/project-template',
 		classification: 'registry-artifact',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['template.canon-project-overlay-template-pack'],
 		rationale: 'Project overlay template pack is covered by template.canon-project-overlay-template-pack.'
 	},
 	{
@@ -603,6 +649,7 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportName: 'Icon',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['component.icon'],
 		rationale: 'Promoted to component.icon as the stable accessible icon primitive.'
 	},
 	{
@@ -623,6 +670,7 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportName: 'Section',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['component.layout-section'],
 		rationale: 'Promoted to component.layout-section as the stable page section primitive.'
 	},
 	{
@@ -630,6 +678,7 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportName: 'SectionHeader',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['component.layout-section-header'],
 		rationale: 'Promoted to component.layout-section-header as the stable section heading pattern.'
 	},
 	{
@@ -637,6 +686,7 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportName: 'BentoGrid',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['component.layout-bento-grid'],
 		rationale: 'Promoted to component.layout-bento-grid as the stable asymmetric grid primitive.'
 	},
 	{
@@ -644,6 +694,7 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportName: 'BentoItem',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['component.layout-bento-item'],
 		rationale: 'Promoted to component.layout-bento-item as the stable bento grid child primitive.'
 	},
 	{
@@ -651,6 +702,7 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportName: 'SplitSection',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['component.layout-split-section'],
 		rationale: 'Promoted to component.layout-split-section as the stable two-column layout primitive.'
 	},
 	{
@@ -777,6 +829,7 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 		exportName: 'Tabs',
 		classification: 'stable-foundation-candidate',
 		registryPolicy: 'registry-covered',
+		registryItemIds: ['component.navigation-tabs'],
 		rationale: 'Covered by component.navigation-tabs as the stable tabbed view switcher primitive.'
 	},
 	{
