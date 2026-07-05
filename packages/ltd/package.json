@@ -14,7 +14,7 @@
 			"src/routes/standards/+page.svelte"
 		],
 		"boot": "pnpm dev",
-		"smoke": "pnpm check"
+		"smoke": "pnpm check && pnpm smoke:canon-sidebar"
 	},
 	"scripts": {
 		"prebuild": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package",
@@ -22,8 +22,10 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
+		"smoke": "pnpm check && pnpm smoke:canon-sidebar",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
+		"smoke:canon-sidebar": "tsx scripts/canon-sidebar-smoke.ts",
 		"deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=createsomething-ltd",
 		"deploy:preview": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=createsomething-ltd --branch=preview",
 		"cf-typegen": "node ../../scripts/run-wrangler.mjs types"
