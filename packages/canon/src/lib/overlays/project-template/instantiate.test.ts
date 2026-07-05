@@ -133,7 +133,8 @@ describe('Canon project overlay instantiation', () => {
 
 		const manifestTs = await readFile(join(outputRoot, 'manifest.ts'), 'utf-8');
 		expect(manifestTs).toContain('Sales Console Overlay');
-		expect(manifestTs).toContain('@create-something/canon/registry');
+		expect(manifestTs).toContain('export const CANON_PROJECT_OVERLAY_MANIFEST = {');
+		expect(manifestTs).not.toContain('@create-something/canon/registry');
 		expect(reviewCanonProjectOverlay(result.manifest).status).toBe('ready');
 	});
 
@@ -238,7 +239,8 @@ describe('Canon project overlay instantiation', () => {
 		const markdown = renderCanonProjectOverlayTemplateFilePackMarkdown(pack);
 		expect(markdown).toContain('# Canon project overlay template file pack');
 		expect(markdown).toContain('## File Contents');
-		expect(markdown).toContain('```ts\nimport type { CanonProjectOverlayManifest }');
+		expect(markdown).toContain('```ts\nexport const CANON_PROJECT_OVERLAY_MANIFEST = {');
+		expect(markdown).not.toContain('@create-something/canon/registry');
 		expect(markdown).toContain('Stop before:');
 	});
 
