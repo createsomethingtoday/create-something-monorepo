@@ -17,7 +17,7 @@ Open these three surfaces before you begin:
 OpenAI's Codex app documentation is the source for this course's working surface: use the Codex app for prompting, reviewing changes, checking Git state, opening settings, and inspecting the built-in terminal.
 
 <figure class="learning-figure">
-  <img src="https://developers.openai.com/images/codex/app/app-screenshot-light.webp" alt="OpenAI Codex app showing a project sidebar, active thread, and review pane." />
+  <img src="https://developers.openai.com/images/codex/app/app-screenshot-light.webp" alt="OpenAI Codex app showing a project sidebar, active thread, and review pane." loading="lazy" decoding="async" referrerpolicy="no-referrer" />
   <figcaption>Source: OpenAI Developers, <a href="https://developers.openai.com/codex/app">Codex app documentation</a>. Use the app as the main workspace for this course.</figcaption>
 </figure>
 
@@ -47,7 +47,7 @@ The skill should not hide the implementation from the learner. Its job is to kee
 Use the terminal only as a support surface for build commands, local files, and server output. The learning experience should introduce operators to Codex as an OpenAI app they can return to, not as a command-line product.
 
 <figure class="learning-figure">
-  <img src="https://developers.openai.com/images/codex/app/skill-selector-light.webp" alt="OpenAI Codex app skill selector showing available skills in the chat composer." />
+  <img src="https://developers.openai.com/images/codex/app/skill-selector-light.webp" alt="OpenAI Codex app skill selector showing available skills in the chat composer." loading="lazy" decoding="async" referrerpolicy="no-referrer" />
   <figcaption>Source: OpenAI Developers, <a href="https://developers.openai.com/codex/app/features">Codex app features documentation</a>. Skills are selected inside the app so Codex can follow specialized instructions while you keep the implementation visible.</figcaption>
 </figure>
 

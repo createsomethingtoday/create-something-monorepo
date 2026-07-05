@@ -62,7 +62,7 @@ Do not commit credentials to the repo. Keep RapidAPI keys in local Codex app con
 Return to **Settings -> Integrations & MCP** and confirm `codex-demo` is enabled.
 
 <figure class="learning-figure">
-  <img src="https://developers.openai.com/images/codex/app/modes-light.webp" alt="OpenAI Codex app composer showing local, worktree, and cloud modes." />
+  <img src="https://developers.openai.com/images/codex/app/modes-light.webp" alt="OpenAI Codex app composer showing local, worktree, and cloud modes." loading="lazy" decoding="async" referrerpolicy="no-referrer" />
   <figcaption>Source: OpenAI Developers, <a href="https://developers.openai.com/codex/app/features">Codex app features documentation</a>. Stay in the Codex app after registration so the learner can prompt, inspect, and iterate from one operator-facing surface.</figcaption>
 </figure>
 
