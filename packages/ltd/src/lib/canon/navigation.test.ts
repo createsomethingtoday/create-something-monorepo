@@ -51,6 +51,7 @@ describe('Canon documentation navigation', () => {
 		assert.equal(flattenedHrefs.has('/canon/components/conversion'), true);
 		assert.equal(flattenedHrefs.has('/canon/components/atlas'), true);
 		assert.equal(flattenedHrefs.has('/canon/resources/registry'), true);
+		assert.equal(flattenedHrefs.has('/canon/resources/overlays'), true);
 		assert.equal(flattenedHrefs.has(undefined), false);
 	});
 });

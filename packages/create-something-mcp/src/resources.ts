@@ -10,6 +10,7 @@ import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import {
   CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
 } from './content/generated/canon-public-export-classification.js';
+import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -213,6 +214,64 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'application/json',
           text: JSON.stringify(rule, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays',
+    'canon://overlays',
+    {
+      description: `Canon overlay catalog: ${CANON_OVERLAY_CATALOG.templates.length} templates for extending Canon across web, chat, app, voice, and glasses`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CATALOG, null, 2)
+      }]
+    })
+  );
+
+  server.resource(
+    'canon-overlays-list',
+    'canon://overlays/list',
+    {
+      description: 'Index of Canon overlay templates and required artifact contracts',
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CATALOG.templates.map(template => ({
+          id: template.id,
+          name: template.name,
+          summary: template.summary,
+          docsPath: template.docsPath,
+          targetModalities: template.manifest.targetModalities,
+          status: template.review.status,
+          uri: `canon://overlays/${template.id}`
+        })), null, 2)
+      }]
+    })
+  );
+
+  for (const template of CANON_OVERLAY_CATALOG.templates) {
+    server.resource(
+      `canon-overlays-${template.id.replace(/[^a-z0-9-]/gi, '-')}`,
+      `canon://overlays/${template.id}`,
+      {
+        description: `Canon overlay template: ${template.name}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(template, null, 2)
         }]
       })
     );

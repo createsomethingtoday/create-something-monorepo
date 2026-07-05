@@ -125,6 +125,7 @@ export const canonNavigation: NavSection[] = [
 		items: [
 			{ label: 'Tokens', href: '/canon/resources/tokens' },
 			{ label: 'Registry', href: '/canon/resources/registry' },
+			{ label: 'Overlays', href: '/canon/resources/overlays' },
 			{ label: 'Changelog', href: '/canon/resources/changelog' },
 			{ label: 'Contributing', href: '/canon/resources/contributing' },
 			{ label: 'Figma', href: '/canon/resources/figma' }
