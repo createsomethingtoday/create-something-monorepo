@@ -136,6 +136,37 @@ export type CanonProjectOverlayReview = {
 	summary: string;
 };
 
+export type CanonProjectOverlayInventoryEntry = {
+	manifestPath: string;
+	manifest: CanonProjectOverlayManifest;
+	review: CanonProjectOverlayReview;
+};
+
+export type CanonProjectOverlayInventory = {
+	schemaVersion: 1;
+	id: 'canon-overlay-intake-inventory';
+	sourceOfTruth: '@create-something/canon/overlays/intake';
+	description: string;
+	rootDir: string;
+	searchRoots: string[];
+	entries: CanonProjectOverlayInventoryEntry[];
+	summary: {
+		total: number;
+		ready: number;
+		needsArtifacts: number;
+		needsEvidence: number;
+		needsReview: number;
+		candidateIntakes: number;
+		projectLocalIntakes: number;
+	};
+	agentContract: {
+		purpose: 'canon-overlay-intake-inventory';
+		primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+		useFor: string[];
+		stopBefore: string[];
+	};
+};
+
 export type CanonOverlayModalityContract = {
 	modality: CanonRegistryModality;
 	useFor: string;

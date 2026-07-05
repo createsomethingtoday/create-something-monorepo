@@ -31,6 +31,7 @@ import {
   CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
 } from './content/generated/canon-public-export-classification.js';
 import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
+import { CANON_OVERLAY_INTAKE_INVENTORY } from './content/generated/canon-overlay-intake-inventory.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -65,5 +66,5 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 
 console.error('CREATE SOMETHING Content MCP running on stdio');
-console.error(`Content: ${PAPERS.length} papers, ${CANON_PAGES.length} canon pages, ${CANON_REGISTRY_MANIFEST.items.length} canon registry items, ${CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.length} canon export policy rules, ${CANON_OVERLAY_CATALOG.templates.length} canon overlay templates, ${PATTERNS.length} patterns, ${MASTERS.length} masters, ${GRAPH_NODES.length} graph nodes, ${PRAXIS_EXERCISES.length} exercises, ${PRODUCTS.length} products, ${HOST_PLAYBOOKS.length} host playbooks, ${PROPERTY_DOCUMENTS.length} property docs`);
+console.error(`Content: ${PAPERS.length} papers, ${CANON_PAGES.length} canon pages, ${CANON_REGISTRY_MANIFEST.items.length} canon registry items, ${CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES.length} canon export policy rules, ${CANON_OVERLAY_CATALOG.templates.length} canon overlay templates, ${CANON_OVERLAY_INTAKE_INVENTORY.entries.length} canon overlay intake manifests, ${PATTERNS.length} patterns, ${MASTERS.length} masters, ${GRAPH_NODES.length} graph nodes, ${PRAXIS_EXERCISES.length} exercises, ${PRODUCTS.length} products, ${HOST_PLAYBOOKS.length} host playbooks, ${PROPERTY_DOCUMENTS.length} property docs`);
 console.error('Capabilities: Resources (Database) + Tools (Automation) + Prompts (Judgment)');

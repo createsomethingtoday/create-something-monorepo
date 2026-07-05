@@ -5151,6 +5151,23 @@ Start with \`overlay.project-template\`.
 
 The template pack renders eight files: \`theme.css\`, \`tokens.json\`, \`templates/README.md\`, \`templates/surface-brief.md\`, \`copy-rules.md\`, \`surface-policy.md\`, \`registry.json\`, and \`manifest.ts\`.
 
+## Intake Inventory
+
+Multiple projects can feed Canon without creating a second design-system fork by checking their overlay manifests into the project that owns the local surface, then running the Canon intake inventory.
+
+\`\`\`bash
+pnpm --filter @create-something/canon overlay:inventory -- --root .
+\`\`\`
+
+The inventory scans \`apps/\` and \`packages/\` for \`CANON_PROJECT_OVERLAY_MANIFEST\` exports, skips the Canon template itself, reviews every discovered manifest with \`reviewCanonProjectOverlay(...)\`, and reports:
+
+- complete overlays that are ready for handoff
+- overlays missing required artifacts
+- extension intakes that should stay project-local
+- extension intakes with repeated-surface evidence for Canon candidate review
+
+Agents can read the same inventory through \`canon://overlays/intake\` and the compact index at \`canon://overlays/intake/list\`.
+
 ## Related
 
 - [Registry](/canon/resources/registry)

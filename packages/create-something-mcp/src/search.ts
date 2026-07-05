@@ -8,6 +8,7 @@ import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
 import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
+import { CANON_OVERLAY_INTAKE_INVENTORY } from './content/generated/canon-overlay-intake-inventory.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -102,6 +103,45 @@ function buildContentIndex(): ContentItem[] {
       ].join('\n'),
       property: 'ltd',
       uri: `canon://overlays/${template.id}`
+    });
+  }
+
+  items.push({
+    id: 'canon-overlay-intake:inventory',
+    type: 'canon-registry',
+    title: 'Canon Overlay Intake Inventory',
+    description: CANON_OVERLAY_INTAKE_INVENTORY.description,
+    content: [
+      CANON_OVERLAY_INTAKE_INVENTORY.summary.total.toString(),
+      CANON_OVERLAY_INTAKE_INVENTORY.summary.ready.toString(),
+      CANON_OVERLAY_INTAKE_INVENTORY.summary.needsArtifacts.toString(),
+      CANON_OVERLAY_INTAKE_INVENTORY.summary.needsEvidence.toString(),
+      CANON_OVERLAY_INTAKE_INVENTORY.summary.candidateIntakes.toString(),
+      CANON_OVERLAY_INTAKE_INVENTORY.agentContract.useFor.join('\n'),
+      CANON_OVERLAY_INTAKE_INVENTORY.agentContract.stopBefore.join('\n')
+    ].join('\n'),
+    property: 'ltd',
+    uri: 'canon://overlays/intake'
+  });
+
+  for (const entry of CANON_OVERLAY_INTAKE_INVENTORY.entries) {
+    items.push({
+      id: `canon-overlay-intake:${entry.manifest.id}`,
+      type: 'canon-registry',
+      title: entry.manifest.name,
+      description: entry.review.summary,
+      content: [
+        entry.manifestPath,
+        entry.manifest.owner,
+        entry.manifest.sourcePackage,
+        entry.manifest.targetModalities.join(' '),
+        entry.review.status,
+        entry.review.missingArtifacts.join(' '),
+        entry.review.stopConditions.join('\n'),
+        entry.review.extensionDecisions.map(decision => `${decision.packet.id} ${decision.decision.stage} ${decision.decision.action}`).join('\n')
+      ].join('\n'),
+      property: 'ltd',
+      uri: `canon://overlays/intake/${entry.manifest.id}`
     });
   }
 

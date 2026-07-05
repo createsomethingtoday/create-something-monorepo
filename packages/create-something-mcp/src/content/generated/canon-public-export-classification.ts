@@ -548,6 +548,15 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items."
   },
   {
+    "exportPath": "./overlays/intake",
+    "classification": "registry-artifact",
+    "registryPolicy": "registry-covered",
+    "registryItemIds": [
+      "template.canon-extension-intake"
+    ],
+    "rationale": "Overlay intake inventory scans project overlay manifests and routes extension-intake evidence without promoting primitives automatically."
+  },
+  {
     "exportPath": "./ascii",
     "classification": "brand-surface",
     "registryPolicy": "classified-out",

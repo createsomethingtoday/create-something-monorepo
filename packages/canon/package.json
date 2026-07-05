@@ -26,6 +26,7 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
+		"overlay:inventory": "tsx scripts/check-project-overlays.ts",
 		"overlay:instantiate": "tsx scripts/instantiate-project-overlay.ts",
 		"test": "vitest run",
 		"test:watch": "vitest"
@@ -238,6 +239,10 @@
 		"./overlays/project-template": {
 			"types": "./dist/overlays/project-template/index.d.ts",
 			"default": "./dist/overlays/project-template/index.js"
+		},
+		"./overlays/intake": {
+			"types": "./dist/overlays/intake.d.ts",
+			"default": "./dist/overlays/intake.js"
 		},
 		"./icons": {
 			"types": "./dist/icons/index.d.ts",

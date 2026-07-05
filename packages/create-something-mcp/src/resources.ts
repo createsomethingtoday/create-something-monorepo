@@ -11,6 +11,7 @@ import {
   CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES
 } from './content/generated/canon-public-export-classification.js';
 import { CANON_OVERLAY_CATALOG } from './content/generated/canon-overlay-catalog.js';
+import { CANON_OVERLAY_INTAKE_INVENTORY } from './content/generated/canon-overlay-intake-inventory.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -272,6 +273,63 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'application/json',
           text: JSON.stringify(template, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-intake',
+    'canon://overlays/intake',
+    {
+      description: `Canon overlay intake inventory: ${CANON_OVERLAY_INTAKE_INVENTORY.entries.length} project overlay manifests discovered for review`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_INTAKE_INVENTORY, null, 2)
+      }]
+    })
+  );
+
+  server.resource(
+    'canon-overlays-intake-list',
+    'canon://overlays/intake/list',
+    {
+      description: 'Index of discovered Canon project overlay manifests and review statuses',
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_INTAKE_INVENTORY.entries.map(entry => ({
+          id: entry.manifest.id,
+          name: entry.manifest.name,
+          manifestPath: entry.manifestPath,
+          status: entry.review.status,
+          candidateIntakes: entry.review.extensionDecisions.filter(decision => decision.decision.stage === 'candidate').length,
+          uri: `canon://overlays/intake/${entry.manifest.id}`
+        })), null, 2)
+      }]
+    })
+  );
+
+  for (const entry of CANON_OVERLAY_INTAKE_INVENTORY.entries) {
+    server.resource(
+      `canon-overlays-intake-${entry.manifest.id.replace(/[^a-z0-9-]/gi, '-')}`,
+      `canon://overlays/intake/${entry.manifest.id}`,
+      {
+        description: `Canon overlay intake review: ${entry.manifest.name}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(entry, null, 2)
         }]
       })
     );
