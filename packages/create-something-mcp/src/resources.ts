@@ -22,6 +22,9 @@ import {
 import {
   CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS
 } from './content/generated/canon-overlay-candidate-promotion-readiness-reports.js';
+import {
+  CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS
+} from './content/generated/canon-overlay-candidate-promotion-approval-records.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
 import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
@@ -383,6 +386,7 @@ export function registerResources(server: McpServer) {
           handoffUri: entry.handoffUri,
           promotionPlanUri: `canon://overlays/candidates/${entry.intakeId}/promotion-plan`,
           readinessUri: `canon://overlays/candidates/${entry.intakeId}/readiness`,
+          approvalRecordUri: `canon://overlays/candidates/${entry.intakeId}/approval-record`,
           uri: entry.candidateUri
         })), null, 2)
       }]
@@ -504,6 +508,40 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'application/json',
           text: JSON.stringify(report, null, 2)
+        }]
+      })
+    );
+  }
+
+  server.resource(
+    'canon-overlays-candidate-promotion-approval-records',
+    'canon://overlays/candidates/approval-records',
+    {
+      description: `Canon overlay candidate promotion approval records: ${CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.entries.length} read-only templates for maintainer approval and target selection before implementation starts`,
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS, null, 2)
+      }]
+    })
+  );
+
+  for (const record of CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS.entries) {
+    server.resource(
+      `canon-overlays-candidate-promotion-approval-record-${record.intakeId.replace(/[^a-z0-9-]/gi, '-')}`,
+      record.approvalUri,
+      {
+        description: `Canon overlay candidate promotion approval record: ${record.title}`,
+        mimeType: 'application/json'
+      },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(record, null, 2)
         }]
       })
     );

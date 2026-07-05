@@ -5186,12 +5186,16 @@ Ready overlays can produce candidate intakes when they have repeated-surface evi
 - Candidate promotion plan: \`canon://overlays/candidates/<intake-id>/promotion-plan\`
 - Readiness report collection: \`canon://overlays/candidates/readiness-reports\`
 - Candidate readiness report: \`canon://overlays/candidates/<intake-id>/readiness\`
+- Approval record collection: \`canon://overlays/candidates/approval-records\`
+- Candidate approval record: \`canon://overlays/candidates/<intake-id>/approval-record\`
 - Rendered handoff tool: \`canon_overlay_candidate_handoff_get\`
 - Rendered promotion plan tool: \`canon_overlay_candidate_promotion_plan_get\`
 - Rendered readiness tool: \`canon_overlay_candidate_promotion_readiness_get\`
+- Rendered approval record tool: \`canon_overlay_candidate_promotion_approval_record_get\`
 - Local CLI handoff: \`pnpm --filter @create-something/canon overlay:candidate-handoff -- --root . --intake <intake-id>\`
 - Local CLI promotion plan: \`pnpm --filter @create-something/canon overlay:candidate-plan -- --root . --intake <intake-id>\`
 - Local CLI readiness report: \`pnpm --filter @create-something/canon overlay:candidate-readiness -- --root . --intake <intake-id>\`
+- Local CLI approval record: \`pnpm --filter @create-something/canon overlay:candidate-approval-record -- --root . --intake <intake-id>\`
 
 The queue is not an approval engine. It gathers overlay id, intake id, requested kind, modalities, source paths, surfaces, dependencies, required evidence, and stop-before-stable notes so Canon maintainers can decide whether to open a promotion slice.
 
@@ -5208,6 +5212,10 @@ Use \`canon_overlay_candidate_promotion_plan_get\` when a maintainer needs the p
 Readiness reports sit after promotion plans and before implementation. They compare the plan with current Canon registry and public export policy snapshots, then call out human approval, registry target, export target, docs target, validation, and compatibility readiness. Related registry items and export policies are review hints only; the report does not select targets automatically.
 
 Use \`canon_overlay_candidate_promotion_readiness_get\` when a maintainer needs the readiness report as Markdown. Use \`overlay:candidate-readiness\` for the same report from the local repo checkout. Omitting \`--intake\` prints the report list; adding \`--json\` prints the source readiness data.
+
+Approval records sit after readiness reports and before implementation. They are fillable contracts for maintainer approval, approval evidence, registry action, selected registry item, export path, docs path, maturity target, and implementation owner. Target choices remain unset until a maintainer records them. The approval record is a read-only template: it does not approve implementation, create Linear issues, mutate Canon or project overlays, or mark candidates stable.
+
+Use \`canon_overlay_candidate_promotion_approval_record_get\` when a maintainer needs the approval record as Markdown. Use \`overlay:candidate-approval-record\` for the same record from the local repo checkout. Omitting \`--intake\` prints the record list; adding \`--json\` prints the source approval-record data.
 
 Do not treat a queued candidate as stable. Stable promotion still requires Canon-owned export paths, docs, tests, compatibility notes, and registry routing.
 

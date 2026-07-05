@@ -414,6 +414,86 @@ export type CanonOverlayCandidatePromotionReadinessReportCollection = {
 	};
 };
 
+export type CanonOverlayCandidatePromotionApprovalState = 'approval-required';
+
+export type CanonOverlayCandidatePromotionRegistryAction =
+	| 'reuse-existing'
+	| 'update-existing'
+	| 'create-new';
+
+export type CanonOverlayCandidatePromotionApprovalTarget = {
+	approvalOwner: string | null;
+	approvalEvidence: string | null;
+	approvedAt: string | null;
+	registryAction: CanonOverlayCandidatePromotionRegistryAction | null;
+	registryItemId: string | null;
+	exportPath: string | null;
+	exportName: string | null;
+	docsPath: string | null;
+	maturityTarget: CanonRegistryMaturity | null;
+	implementationOwner: string | null;
+};
+
+export type CanonOverlayCandidatePromotionApprovalField = {
+	id: keyof CanonOverlayCandidatePromotionApprovalTarget;
+	label: string;
+	required: boolean;
+	value: string | null;
+	hints: string[];
+	instructions: string;
+};
+
+export type CanonOverlayCandidatePromotionApprovalRecord = {
+	id: string;
+	readinessReportId: string;
+	planId: string;
+	candidateId: string;
+	intakeId: string;
+	title: string;
+	summary: string;
+	state: CanonOverlayCandidatePromotionApprovalState;
+	approvalUri: string;
+	readinessUri: string;
+	planUri: string;
+	handoffUri: string;
+	candidateUri: string;
+	reviewUri: string;
+	target: CanonOverlayCandidatePromotionApprovalTarget;
+	requiredFields: CanonOverlayCandidatePromotionApprovalField[];
+	targetHints: {
+		registryItems: CanonOverlayCandidatePromotionReadinessRegistryMatch[];
+		exportPolicies: CanonOverlayCandidatePromotionReadinessExportMatch[];
+		docsPaths: string[];
+	};
+	checklist: string[];
+	stopConditions: string[];
+	approvalBoundary: string[];
+	agentContract: {
+		purpose: 'canon-overlay-candidate-promotion-approval-record';
+		primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+		useFor: string[];
+		stopBefore: string[];
+	};
+};
+
+export type CanonOverlayCandidatePromotionApprovalRecordCollection = {
+	schemaVersion: 1;
+	id: 'canon-overlay-candidate-promotion-approval-records';
+	sourceOfTruth: '@create-something/canon/overlays/intake';
+	description: string;
+	entries: CanonOverlayCandidatePromotionApprovalRecord[];
+	summary: {
+		total: number;
+		approvalRequired: number;
+	};
+	agentContract: {
+		purpose: 'canon-overlay-candidate-promotion-approval-records';
+		primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+		useFor: string[];
+		stopBefore: string[];
+	};
+};
+
 export type CanonOverlayModalityContract = {
 	modality: CanonRegistryModality;
 	useFor: string;
