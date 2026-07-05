@@ -115,6 +115,7 @@
     "graph:analyze": "tsx scripts/build-knowledge-graph/analyze.ts",
     "graph:analyze:create": "tsx scripts/build-knowledge-graph/analyze.ts --create",
     "exports": "tsx scripts/list-exports.ts",
+    "exports:test": "node --test scripts/test/list-exports.test.mjs",
     "agent:legibility:check": "node scripts/agent-legibility-check.mjs",
     "agent:legibility:map": "node scripts/agent-legibility-map.mjs",
     "agent:legibility:test": "node --test scripts/test/agent-legibility.test.mjs",
