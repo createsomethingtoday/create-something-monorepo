@@ -1,0 +1,22 @@
+{
+  "id": "overlay.notion-agent-workspace",
+  "name": "Notion Agent Workspace Overlay",
+  "owner": "notion-agent-team",
+  "sourcePackage": "@create-something/notion-agent",
+  "targetModalities": [
+    "web",
+    "chat",
+    "app",
+    "voice",
+    "glasses"
+  ],
+  "registryItemIds": [
+    "token.canon-core",
+    "component.clear-decision-panel",
+    "component.clear-proof-strip",
+    "template.canon-project-overlay-manifest",
+    "template.canon-extension-intake",
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "Notion Agent Workspace Overlay keeps notion agent workspace surface local while reusing Canon structure. Promote only the repeated workspace-agent structure to Canon. Keep Notion OAuth, tool execution, database schemas, and workspace-specific copy local."
+}

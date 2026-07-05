@@ -1,0 +1,22 @@
+{
+  "id": "overlay.maverick-industry",
+  "name": "Maverick Industry Overlay",
+  "owner": "maverick-team",
+  "sourcePackage": "@create-something/maverick",
+  "targetModalities": [
+    "web",
+    "chat",
+    "app",
+    "voice",
+    "glasses"
+  ],
+  "registryItemIds": [
+    "token.canon-core",
+    "component.clear-decision-panel",
+    "component.clear-proof-strip",
+    "template.canon-project-overlay-manifest",
+    "template.canon-extension-intake",
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "Maverick Industry Overlay keeps industry service proof surface local while reusing Canon structure. Promote only the repeated industry-service structure to Canon. Keep Maverick claims, sector language, product names, and contact policy local."
+}

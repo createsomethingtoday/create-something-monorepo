@@ -1,0 +1,22 @@
+{
+  "id": "overlay.spritz-reading",
+  "name": "Spritz Reading Overlay",
+  "owner": "spritz-team",
+  "sourcePackage": "@create-something/spritz",
+  "targetModalities": [
+    "web",
+    "chat",
+    "app",
+    "voice",
+    "glasses"
+  ],
+  "registryItemIds": [
+    "token.canon-core",
+    "component.clear-decision-panel",
+    "component.clear-proof-strip",
+    "template.canon-project-overlay-manifest",
+    "template.canon-extension-intake",
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "Spritz Reading Overlay keeps reading component proof surface local while reusing Canon structure. Promote only the repeated component-demo structure to Canon. Keep Spritz timing, ORP behavior, and package API local."
+}
