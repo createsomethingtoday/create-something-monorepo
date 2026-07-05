@@ -7,8 +7,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { reviewCanonProjectOverlay } from '../../registry/index.js';
 import {
+	buildCanonProjectOverlayTemplateFilePack,
 	createCanonProjectOverlayManifest,
+	getCanonProjectOverlayTemplateFile,
 	instantiateCanonProjectOverlayTemplate,
+	listCanonProjectOverlayTemplateFilePaths,
+	renderCanonProjectOverlayTemplateFileMarkdown,
+	renderCanonProjectOverlayTemplateFilePackMarkdown,
 	renderCanonProjectOverlayTemplateFiles
 } from './index.js';
 
@@ -146,5 +151,71 @@ describe('Canon project overlay instantiation', () => {
 			'voice, glasses'
 		);
 		expect(reviewCanonProjectOverlay(manifest).status).toBe('ready');
+	});
+
+	it('renders the canonical template file pack for local CLI and agent review', () => {
+		const pack = buildCanonProjectOverlayTemplateFilePack();
+
+		expect(pack.templateId).toBe('overlay.project-template');
+		expect(pack.filesUri).toBe('canon://overlays/overlay.project-template/files');
+		expect(pack.summary.totalFiles).toBe(8);
+		expect(pack.files.map((file) => file.relativePath)).toEqual([
+			'theme.css',
+			'tokens.json',
+			'templates/README.md',
+			'templates/surface-brief.md',
+			'copy-rules.md',
+			'surface-policy.md',
+			'registry.json',
+			'manifest.ts'
+		]);
+		expect(listCanonProjectOverlayTemplateFilePaths()).toEqual(
+			pack.files.map((file) => file.relativePath)
+		);
+		expect(pack.agentContract.stopBefore.join('\n')).toContain('writing template files');
+
+		const renderedFiles = renderCanonProjectOverlayTemplateFiles({
+			id: 'overlay.project-template',
+			name: 'Canon Project Overlay Template',
+			owner: 'project-owner',
+			sourcePackage: '@create-something/example-project',
+			outputRoot: 'packages/canon/src/lib/overlays/project-template',
+			targetModalities: ['web', 'chat', 'app', 'voice', 'glasses'],
+			tags: ['canon', 'overlay', 'template', 'project', 'client', 'governance']
+		});
+
+		expect(
+			pack.files.map((file) => ({
+				relativePath: file.relativePath,
+				path: file.outputPath,
+				content: file.content
+			}))
+		).toEqual(renderedFiles);
+
+		const markdown = renderCanonProjectOverlayTemplateFilePackMarkdown(pack);
+		expect(markdown).toContain('# Canon project overlay template file pack');
+		expect(markdown).toContain('## File Contents');
+		expect(markdown).toContain('```ts\nimport type { CanonProjectOverlayManifest }');
+		expect(markdown).toContain('Stop before:');
+	});
+
+	it('renders one canonical template file by plain or encoded path', () => {
+		const surfaceBrief = getCanonProjectOverlayTemplateFile('templates/surface-brief.md');
+		const encodedSurfaceBrief = getCanonProjectOverlayTemplateFile(
+			'templates%2Fsurface-brief.md'
+		);
+
+		expect(surfaceBrief?.relativePath).toBe('templates/surface-brief.md');
+		expect(encodedSurfaceBrief?.relativePath).toBe('templates/surface-brief.md');
+		expect(surfaceBrief?.uri).toBe(
+			'canon://overlays/overlay.project-template/files/templates%2Fsurface-brief.md'
+		);
+
+		const rendered = renderCanonProjectOverlayTemplateFileMarkdown(surfaceBrief!);
+
+		expect(rendered).toContain('### templates/surface-brief.md');
+		expect(rendered).toContain('```md\n# Surface Brief');
+		expect(rendered).toContain('Workflow Need');
+		expect(getCanonProjectOverlayTemplateFile('templates/missing.md')).toBeUndefined();
 	});
 });

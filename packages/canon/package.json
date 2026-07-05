@@ -33,6 +33,7 @@
 		"overlay:candidate-approval-target": "tsx scripts/render-overlay-candidate-approval-target-template.ts",
 		"overlay:candidate-approval-validate": "tsx scripts/validate-overlay-candidate-approval-record.ts",
 		"overlay:candidate-readiness": "tsx scripts/render-overlay-candidate-readiness.ts",
+		"overlay:template-files": "tsx scripts/render-project-overlay-template-files.ts",
 		"overlay:instantiate": "tsx scripts/instantiate-project-overlay.ts",
 		"test": "vitest run",
 		"test:watch": "vitest"

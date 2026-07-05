@@ -5151,12 +5151,15 @@ Start with \`overlay.project-template\`.
 - Template file pack: \`canon://overlays/overlay.project-template/files\`
 - Template file resource: \`canon://overlays/overlay.project-template/files/<encoded-path>\`
 - Template file tool: \`canon_overlay_template_file_get\`
+- Local template file CLI: \`pnpm --filter @create-something/canon overlay:template-files\`
 
 The template pack renders eight files: \`theme.css\`, \`tokens.json\`, \`templates/README.md\`, \`templates/surface-brief.md\`, \`copy-rules.md\`, \`surface-policy.md\`, \`registry.json\`, and \`manifest.ts\`.
 
 Agents can inspect the file pack before instantiation through MCP resources, search, or \`canon_overlay_template_file_get\`. The collection includes the rendered file bodies, MIME types, output paths, and per-file URIs. Use these resources and the getter for review and copy planning only; use \`canon_overlay_instantiate_preview\` or the local instantiate CLI when a project-specific id, owner, source package, output root, and modality set are needed.
 
 Use \`canon_overlay_template_file_get\` without a \`relativePath\` to render the full pack as Markdown, or pass a file such as \`surface-policy.md\` or \`templates/surface-brief.md\` to render one file. The tool does not write template files, instantiate overlays, create Linear work, mutate Canon, mutate project overlays, or approve candidate promotion.
+
+Use \`overlay:template-files\` for the same read-only starter pack from a local repo checkout. Omit \`--path\` to print the full pack, add \`--path <relative-path>\` to print one file, and add \`--json\` when another script needs structured output. This command has the same write boundary as the MCP getter: it prints source files only and does not instantiate overlays or approve promotion.
 
 ## Intake Inventory
 

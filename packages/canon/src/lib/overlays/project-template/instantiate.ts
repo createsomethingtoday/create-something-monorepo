@@ -6,7 +6,10 @@ import type {
 	CanonProjectOverlayManifest,
 	CanonRegistryModality
 } from '../../registry/schema.js';
-import { CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST } from './manifest.js';
+import {
+	CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST,
+	CANON_PROJECT_OVERLAY_TEMPLATE_ROOT
+} from './manifest.js';
 
 const CANON_PROJECT_OVERLAY_OUTPUT_FILES = [
 	'theme.css',
@@ -45,6 +48,37 @@ export type CanonProjectOverlayInstantiateResult = {
 	dryRun: boolean;
 	outputRoot: string;
 	summary: string;
+};
+
+export type CanonProjectOverlayTemplateFile = {
+	id: string;
+	templateId: string;
+	relativePath: (typeof CANON_PROJECT_OVERLAY_OUTPUT_FILES)[number];
+	outputPath: string;
+	uri: string;
+	mimeType: string;
+	content: string;
+	description: string;
+};
+
+export type CanonProjectOverlayTemplateFilePack = {
+	schemaVersion: 1;
+	id: 'canon-overlay-template-file-pack';
+	templateId: string;
+	templateUri: string;
+	filesUri: string;
+	sourceOfTruth: '@create-something/canon/overlays/project-template';
+	description: string;
+	files: CanonProjectOverlayTemplateFile[];
+	summary: {
+		totalFiles: number;
+	};
+	agentContract: {
+		purpose: 'canon-overlay-template-file-resources';
+		primaryConsumers: Array<'codex' | 'mcp' | 'ltd-docs' | 'project-overlays'>;
+		useFor: string[];
+		stopBefore: string[];
+	};
 };
 
 const DEFAULT_MODALITIES: CanonRegistryModality[] = ['web', 'chat', 'app', 'voice', 'glasses'];
@@ -139,6 +173,135 @@ export function renderCanonProjectOverlayTemplateFiles(
 	return files;
 }
 
+export function buildCanonProjectOverlayTemplateFilePack(): CanonProjectOverlayTemplateFilePack {
+	const manifest = CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST;
+	const files = renderCanonProjectOverlayTemplateFiles({
+		id: manifest.id,
+		name: manifest.name,
+		owner: manifest.owner,
+		sourcePackage: manifest.sourcePackage,
+		outputRoot: CANON_PROJECT_OVERLAY_TEMPLATE_ROOT,
+		targetModalities: manifest.targetModalities,
+		tags: manifest.tags
+	}).map((file) => ({
+		id: `canon-overlay-template-file:${manifest.id}:${file.relativePath}`,
+		templateId: manifest.id,
+		relativePath: file.relativePath,
+		outputPath: file.path,
+		uri: `canon://overlays/${manifest.id}/files/${encodeURIComponent(file.relativePath)}`,
+		mimeType: mimeTypeForOverlayTemplateFile(file.relativePath),
+		content: file.content,
+		description: descriptionForOverlayTemplateFile(file.relativePath)
+	}));
+
+	return {
+		schemaVersion: 1,
+		id: 'canon-overlay-template-file-pack',
+		templateId: manifest.id,
+		templateUri: `canon://overlays/${manifest.id}`,
+		filesUri: `canon://overlays/${manifest.id}/files`,
+		sourceOfTruth: '@create-something/canon/overlays/project-template',
+		description:
+			'Read-only Canon project overlay template file pack generated from the Canon overlay renderer for web, chat, app, voice, and glasses surfaces.',
+		files,
+		summary: {
+			totalFiles: files.length
+		},
+		agentContract: {
+			purpose: 'canon-overlay-template-file-resources',
+			primaryConsumers: ['codex', 'mcp', 'ltd-docs', 'project-overlays'],
+			useFor: [
+				'inspecting the exact Canon project overlay starter files before instantiation',
+				'copying artifact structure for theme, tokens, templates, copy rules, surface policy, registry metadata, and manifest wiring',
+				'checking overlay file bodies without writing into a project package'
+			],
+			stopBefore: [
+				'writing template files into apps or packages',
+				'treating a template file as a project-specific overlay approval',
+				'mutating Canon registry, project overlays, candidate queues, or promotion state',
+				'forking Canon primitives instead of using overlay artifacts'
+			]
+		}
+	};
+}
+
+export function listCanonProjectOverlayTemplateFilePaths(): string[] {
+	return buildCanonProjectOverlayTemplateFilePack().files.map((file) => file.relativePath);
+}
+
+export function getCanonProjectOverlayTemplateFile(
+	relativePath: string
+): CanonProjectOverlayTemplateFile | undefined {
+	const normalizedPath = normalizeOverlayTemplateFilePath(relativePath);
+	return buildCanonProjectOverlayTemplateFilePack().files.find(
+		(file) => file.relativePath === normalizedPath
+	);
+}
+
+export function renderCanonProjectOverlayTemplateFilePackMarkdown(
+	pack = buildCanonProjectOverlayTemplateFilePack()
+): string {
+	const lines = [
+		'# Canon project overlay template file pack',
+		'',
+		`- Template: ${pack.templateId}`,
+		`- Template resource: ${pack.templateUri}`,
+		`- File pack resource: ${pack.filesUri}`,
+		`- Source of truth: ${pack.sourceOfTruth}`,
+		`- Files: ${pack.summary.totalFiles}`,
+		'',
+		pack.description,
+		'',
+		'## Files',
+		'',
+		'| Path | MIME type | Resource |',
+		'| --- | --- | --- |'
+	];
+
+	for (const file of pack.files) {
+		lines.push(`| ${file.relativePath} | ${file.mimeType} | ${file.uri} |`);
+	}
+
+	lines.push(
+		'',
+		'## Agent Contract',
+		'',
+		`- Purpose: ${pack.agentContract.purpose}`,
+		`- Primary consumers: ${pack.agentContract.primaryConsumers.join(', ')}`,
+		'',
+		'Use for:'
+	);
+
+	for (const use of pack.agentContract.useFor) lines.push(`- ${use}`);
+
+	lines.push('', 'Stop before:');
+
+	for (const stop of pack.agentContract.stopBefore) lines.push(`- ${stop}`);
+
+	lines.push('', '## File Contents');
+
+	for (const file of pack.files) {
+		lines.push('', renderCanonProjectOverlayTemplateFileMarkdown(file));
+	}
+
+	return lines.join('\n');
+}
+
+export function renderCanonProjectOverlayTemplateFileMarkdown(
+	file: CanonProjectOverlayTemplateFile
+): string {
+	return [
+		`### ${file.relativePath}`,
+		'',
+		`- Resource: ${file.uri}`,
+		`- Output path: ${file.outputPath}`,
+		`- MIME type: ${file.mimeType}`,
+		`- Description: ${file.description}`,
+		'',
+		fencedTemplateFileContent(file.relativePath, file.content)
+	].join('\n');
+}
+
 export async function instantiateCanonProjectOverlayTemplate(
 	options: CanonProjectOverlayInstantiateOptions
 ): Promise<CanonProjectOverlayInstantiateResult> {
@@ -202,6 +365,57 @@ function relativeOverlayArtifactPath(kind: CanonProjectOverlayManifest['artifact
 		case 'registry':
 			return 'registry.json';
 	}
+}
+
+function normalizeOverlayTemplateFilePath(relativePath: string): string {
+	try {
+		return decodeURIComponent(relativePath).replace(/^\/+/g, '');
+	} catch {
+		return relativePath.replace(/^\/+/g, '');
+	}
+}
+
+function mimeTypeForOverlayTemplateFile(relativePath: string): string {
+	if (relativePath.endsWith('.css')) return 'text/css';
+	if (relativePath.endsWith('.json')) return 'application/json';
+	if (relativePath.endsWith('.md')) return 'text/markdown';
+	if (relativePath.endsWith('.ts')) return 'text/typescript';
+	return 'text/plain';
+}
+
+function descriptionForOverlayTemplateFile(relativePath: string): string {
+	switch (relativePath) {
+		case 'theme.css':
+			return 'Project-local CSS aliases that point back to Canon tokens.';
+		case 'tokens.json':
+			return 'Design-token aliases for project-specific names without creating a new token scale.';
+		case 'templates/README.md':
+			return 'Overlay template directory guide and template rules.';
+		case 'templates/surface-brief.md':
+			return 'Surface brief template for workflow need, Canon reuse, local overlay artifacts, evidence, and extension intake.';
+		case 'copy-rules.md':
+			return 'Project-local terminology and voice rules that preserve Canon structure.';
+		case 'surface-policy.md':
+			return 'Modality policy for web, chat, app, voice, and glasses overlays.';
+		case 'registry.json':
+			return 'Project-local registry metadata and Canon dependency list.';
+		case 'manifest.ts':
+			return 'TypeScript overlay manifest export for Canon intake inventory.';
+		default:
+			return `Canon project overlay template file: ${relativePath}`;
+	}
+}
+
+function fencedTemplateFileContent(relativePath: string, content: string): string {
+	const language = relativePath.endsWith('.ts')
+		? 'ts'
+		: relativePath.endsWith('.json')
+			? 'json'
+			: relativePath.endsWith('.css')
+				? 'css'
+				: 'md';
+
+	return `\`\`\`${language}\n${content}\`\`\``;
 }
 
 function renderThemeCss(manifest: CanonProjectOverlayManifest): string {

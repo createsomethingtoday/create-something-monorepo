@@ -5,12 +5,19 @@ export {
 export { CANON_PROJECT_OVERLAY_TEMPLATE_FILES } from './files.js';
 
 export {
+	buildCanonProjectOverlayTemplateFilePack,
 	createCanonProjectOverlayManifest,
+	getCanonProjectOverlayTemplateFile,
 	instantiateCanonProjectOverlayTemplate,
+	listCanonProjectOverlayTemplateFilePaths,
+	renderCanonProjectOverlayTemplateFileMarkdown,
+	renderCanonProjectOverlayTemplateFilePackMarkdown,
 	renderCanonProjectOverlayTemplateFiles
 } from './instantiate.js';
 export type {
 	CanonProjectOverlayInstantiateFile,
 	CanonProjectOverlayInstantiateOptions,
-	CanonProjectOverlayInstantiateResult
+	CanonProjectOverlayInstantiateResult,
+	CanonProjectOverlayTemplateFile,
+	CanonProjectOverlayTemplateFilePack
 } from './instantiate.js';

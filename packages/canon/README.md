@@ -272,6 +272,20 @@ compatibility notes.
 Use the Canon overlay template pack when a project or client needs local theme, token, template,
 copy, surface-policy, and registry artifacts without forking Canon primitives.
 
+Inspect the canonical starter files without writing anything:
+
+```bash
+pnpm --filter @create-something/canon overlay:template-files
+pnpm --filter @create-something/canon overlay:template-files -- --path surface-policy.md
+pnpm --filter @create-something/canon overlay:template-files -- --path templates/surface-brief.md --json
+```
+
+The `overlay:template-files` command is read-only. It prints the canonical file pack or one
+file for review and copy planning; it does not instantiate overlays, write files, create Linear
+work, mutate Canon, mutate project overlays, or approve candidate promotion.
+
+Instantiate project-specific files only after the starter pack is reviewed:
+
 ```bash
 pnpm --filter @create-something/canon overlay:instantiate -- \
   --id overlay.client-workflow \
