@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
@@ -21,7 +21,26 @@ import {
 	searchCanonRegistry
 } from './index.js';
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
+function findRepoRoot(startPath: string) {
+	let currentPath = startPath;
+
+	while (true) {
+		if (
+			existsSync(join(currentPath, 'pnpm-workspace.yaml')) &&
+			existsSync(join(currentPath, 'packages/canon/package.json'))
+		) {
+			return currentPath;
+		}
+
+		const parentPath = dirname(currentPath);
+		if (parentPath === currentPath) {
+			throw new Error(`Unable to find repository root from ${startPath}`);
+		}
+		currentPath = parentPath;
+	}
+}
+
+const repoRoot = findRepoRoot(dirname(fileURLToPath(import.meta.url)));
 const canonPackageJson = JSON.parse(
 	readFileSync(join(repoRoot, 'packages/canon/package.json'), 'utf-8')
 ) as {
@@ -31,6 +50,7 @@ const mcpCanonRegistrySnapshotPath = join(
 	repoRoot,
 	'packages/create-something-mcp/src/content/generated/canon-registry.ts'
 );
+const canonDocsNavigationPath = join(repoRoot, 'packages/ltd/src/lib/canon/navigation.ts');
 
 function exportKeyForCanonImportPath(importPath: string): string | null {
 	if (importPath === '@create-something/canon') return '.';
@@ -60,6 +80,11 @@ function canonDocsContentPathCandidates(docsPath: string) {
 		join(repoRoot, 'packages/ltd/src/lib/content/canon', `${contentPath}.md`),
 		join(repoRoot, 'packages/ltd/src/lib/content/canon', contentPath, 'index.md')
 	];
+}
+
+function canonDocsNavigationLinks() {
+	const source = readFileSync(canonDocsNavigationPath, 'utf-8');
+	return [...source.matchAll(/href:\s*['"`]([^'"`]+)['"`]/g)].map((match) => match[1]);
 }
 
 function clearComponentIdForExport(exportName: string) {
@@ -200,6 +225,19 @@ describe('Canon registry manifest', () => {
 				`${item.id} -> ${item.docsPath}`
 			).toBe(true);
 		}
+	});
+
+	it('keeps registry docs paths discoverable in Canon documentation navigation', () => {
+		const navigationLinks = new Set(canonDocsNavigationLinks());
+		const registryDocsPaths = [
+			...new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.docsPath).filter(Boolean))
+		].sort();
+		const missingNavigationLinks = registryDocsPaths.filter(
+			(docsPath) => !navigationLinks.has(docsPath)
+		);
+
+		expect(registryDocsPaths.length).toBeGreaterThan(0);
+		expect(missingNavigationLinks).toEqual([]);
 	});
 
 	it('keeps Canon import paths aligned with package exports', () => {
