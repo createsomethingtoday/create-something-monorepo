@@ -32,7 +32,7 @@ export interface PromotionResult {
 }
 
 export interface NotificationQueue {
-	send(message: unknown): Promise<void>;
+	send(message: unknown): Promise<unknown>;
 }
 
 export interface PromotionContext {
