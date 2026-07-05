@@ -18,12 +18,11 @@ assert.ok(packet, 'Expected to resolve a generated Canon overlay candidate revie
 const rendered = renderCanonOverlayCandidateReviewHandoff(packet);
 
 assert.match(rendered, /^# .+ review packet/m);
-assert.match(rendered, /## Source URIs/);
-assert.match(rendered, /canon:\/\/overlays\/candidates\/.+\/handoff/);
+assert.match(rendered, /Candidate resource: canon:\/\/overlays\/candidates\/.+/);
 assert.match(rendered, /## Approval Boundary/);
 assert.match(rendered, /does not create Linear issues/);
 assert.match(rendered, /Open promotion work only after explicit human approval/);
-assert.match(rendered, /Stop before: automatically opening Linear work from the packet/);
+assert.match(rendered, /Do not mark stable until every stop-before-stable item is resolved/);
 
 const byCandidateId = getCanonOverlayCandidateReviewPacket(packet.candidateId);
 const byPacketId = getCanonOverlayCandidateReviewPacket(packet.id);

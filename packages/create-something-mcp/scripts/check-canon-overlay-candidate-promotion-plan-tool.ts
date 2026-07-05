@@ -18,13 +18,13 @@ assert.ok(plan, 'Expected to resolve a generated Canon overlay candidate promoti
 const rendered = renderCanonOverlayCandidatePromotionPlan(plan);
 
 assert.match(rendered, /^# .+ promotion plan/m);
-assert.match(rendered, /## Source URIs/);
+assert.match(rendered, /Promotion plan: canon:\/\/overlays\/candidates\/.+\/promotion-plan/);
 assert.match(rendered, /canon:\/\/overlays\/candidates\/.+\/promotion-plan/);
 assert.match(rendered, /## Preconditions/);
 assert.match(rendered, /Human maintainer approval/);
 assert.match(rendered, /## Approval Boundary/);
 assert.match(rendered, /does not approve implementation/);
-assert.match(rendered, /Stop before: automatically creating Linear issues/);
+assert.match(rendered, /Stop before creating Linear work automatically from this plan/);
 
 const byCandidateId = getCanonOverlayCandidatePromotionPlan(plan.candidateId);
 const byPacketId = getCanonOverlayCandidatePromotionPlan(plan.packetId);

@@ -13,12 +13,15 @@ assert.equal(ids.length, 2, 'Expected the MCP readiness helper to see both gener
 
 const report = getCanonOverlayCandidatePromotionReadinessReport(ids[0]!);
 
-assert.ok(report, 'Expected to resolve a generated Canon overlay candidate promotion readiness report');
+assert.ok(
+  report,
+  'Expected to resolve a generated Canon overlay candidate promotion readiness report'
+);
 
 const rendered = renderCanonOverlayCandidatePromotionReadinessReport(report);
 
 assert.match(rendered, /^# .+ readiness report/m);
-assert.match(rendered, /## Source URIs/);
+assert.match(rendered, /Readiness report: canon:\/\/overlays\/candidates\/.+\/readiness/);
 assert.match(rendered, /canon:\/\/overlays\/candidates\/.+\/readiness/);
 assert.match(rendered, /## Checks/);
 assert.match(rendered, /Human Approval/);
