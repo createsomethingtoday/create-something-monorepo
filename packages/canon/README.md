@@ -302,8 +302,25 @@ provided. The generated `manifest.ts` can be passed to `reviewCanonProjectOverla
 
 ### Project Overlay Intake Inventory
 
-When multiple projects or clients have local overlays, run the Canon intake inventory from the
-repo root:
+When multiple projects or clients have local overlays, run the Canon overlay quality gate from
+the repo root:
+
+```bash
+pnpm --filter @create-something/canon overlay:check
+```
+
+The quality gate composes property-surface coverage and intake inventory. It fails when a rendered
+Canon-consuming property is missing `canon-overlay/manifest.ts`, when a covered property overlay is
+not visible to inventory, or when any inventoried overlay is not ready. `pnpm --filter
+@create-something/canon check` runs the same gate after package and Svelte validation.
+
+Use `--verbose` to print the full coverage and inventory report in one command:
+
+```bash
+pnpm --filter @create-something/canon overlay:check -- --verbose
+```
+
+Use the narrower inventory command when you only need the detailed overlay review output:
 
 ```bash
 pnpm --filter @create-something/canon overlay:inventory -- --root .

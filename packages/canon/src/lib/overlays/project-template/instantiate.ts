@@ -630,9 +630,7 @@ function renderRegistryJson(manifest: CanonProjectOverlayManifest) {
 }
 
 function renderManifestTs(manifest: CanonProjectOverlayManifest): string {
-	return `import type { CanonProjectOverlayManifest } from '@create-something/canon/registry';
-
-export const CANON_PROJECT_OVERLAY_MANIFEST: CanonProjectOverlayManifest = ${JSON.stringify(
+	return `export const CANON_PROJECT_OVERLAY_MANIFEST = ${JSON.stringify(
 		manifest,
 		null,
 		2

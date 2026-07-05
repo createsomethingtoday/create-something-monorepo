@@ -1,6 +1,4 @@
-import type { CanonProjectOverlayManifest } from '@create-something/canon/registry';
-
-export const CANON_PROJECT_OVERLAY_MANIFEST: CanonProjectOverlayManifest = {
+export const CANON_PROJECT_OVERLAY_MANIFEST = {
   "id": "overlay.clearway-conversion",
   "name": "Clearway Conversion Overlay",
   "owner": "clearway-team",

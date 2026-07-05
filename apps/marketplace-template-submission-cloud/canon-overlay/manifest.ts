@@ -1,6 +1,4 @@
-import type { CanonProjectOverlayManifest } from '@create-something/canon/registry';
-
-export const CANON_PROJECT_OVERLAY_MANIFEST: CanonProjectOverlayManifest = {
+export const CANON_PROJECT_OVERLAY_MANIFEST = {
   "id": "overlay.marketplace-template-submission-cloud",
   "name": "Marketplace Template Submission Cloud Overlay",
   "owner": "webflow-marketplace-team",

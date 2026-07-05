@@ -54,8 +54,8 @@ src/lib/
 |-------|-------|
 | Entry point | `README.md`, `src/lib/index.ts`, `src/lib/registry/index.ts`, `src/lib/styles/tokens.css` |
 | Boot command | `pnpm dev` |
-| Smoke command | `pnpm check && pnpm test` |
-| Validation surfaces | package build output, `svelte-check`, registry tests, Atlas/governance tests, generated MCP registry snapshot |
+| Smoke command | `pnpm check && pnpm test && pnpm overlay:check` |
+| Validation surfaces | package build output, `svelte-check`, registry tests, Atlas/governance tests, generated MCP registry snapshot, Canon overlay quality gate |
 | UI validation path | Canon consumers such as .ltd Canon docs and .agency Atlas/Clear surfaces |
 | Escalation rule | Stop if a change moves source-of-truth state out of Canon, forks the Atlas graph contract, copies third-party brand identity, or promotes a project-local overlay without evidence. |
 
@@ -81,7 +81,7 @@ src/lib/
 | add a registry item | `src/lib/registry/data.ts` and `src/lib/registry/registry.test.ts` |
 | change exported components | `src/lib/components/index.ts` and `package.json` exports |
 | update Clear guidance | `src/lib/components/clear/README.md` and `.ltd` Canon docs |
-| validate package behavior | `pnpm check && pnpm test` |
+| validate package behavior | `pnpm check && pnpm test && pnpm overlay:check` |
 
 ---
 
