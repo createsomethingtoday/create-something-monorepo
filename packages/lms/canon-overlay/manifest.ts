@@ -9,7 +9,9 @@ export const CANON_PROJECT_OVERLAY_MANIFEST: CanonProjectOverlayManifest = {
   "targetModalities": [
     "web",
     "app",
-    "chat"
+    "chat",
+    "voice",
+    "glasses"
   ],
   "tags": [
     "canon",
@@ -83,7 +85,9 @@ export const CANON_PROJECT_OVERLAY_MANIFEST: CanonProjectOverlayManifest = {
       "requestedModalities": [
         "web",
         "app",
-        "chat"
+        "chat",
+        "voice",
+        "glasses"
       ],
       "owner": "learning-team",
       "sourcePackage": "@create-something/lms",
@@ -123,6 +127,20 @@ export const CANON_PROJECT_OVERLAY_MANIFEST: CanonProjectOverlayManifest = {
           "modality": "chat",
           "sourcePath": "src/routes/api/events/+server.ts",
           "proof": "Authenticated event API records property, event type, and metadata from CREATE SOMETHING properties, giving chat/agent handoffs a durable learning event channel."
+        },
+        {
+          "surfaceId": "lms-learning-voice-coach",
+          "name": "Learning voice coach policy",
+          "modality": "voice",
+          "sourcePath": "canon-overlay/copy-rules.md",
+          "proof": "Overlay copy rules constrain spoken learning guidance to path, lesson, object, state, proof, owner, and next exercise instead of reading full lesson content."
+        },
+        {
+          "surfaceId": "lms-learning-glasses-progress",
+          "name": "Learning glasses progress policy",
+          "modality": "glasses",
+          "sourcePath": "canon-overlay/surface-policy.md",
+          "proof": "Overlay surface policy keeps thin displays to current path, lesson state, progress receipt, owner, and next action while lesson bodies stay on web/app surfaces."
         }
       ],
       "dependencies": [

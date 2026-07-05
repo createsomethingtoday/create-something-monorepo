@@ -1,6 +1,6 @@
 # LMS Workflow Learning Overlay Surface Policy
 
-This policy keeps @create-something/lms workflow-learning overlays portable across web, app, chat without forking Canon.
+This policy keeps @create-something/lms workflow-learning overlays portable across web, app, chat, voice, glasses without forking Canon.
 
 ## Web
 
@@ -27,11 +27,15 @@ This policy keeps @create-something/lms workflow-learning overlays portable acro
 
 - Speak status, owner, and next action.
 - Do not read long policy text. Point to the receipt or durable record.
+- Summarize the current path, lesson, object/state/proof/owner exercise, and next action.
+- Route long lesson content, progress tables, and event metadata to web/app surfaces.
 
 ## Glasses
 
 - Show only glanceable state, owner, and next action.
 - Keep reasoning, review history, and policy bodies on larger surfaces.
+- Show current path, lesson state, progress receipt, owner, and next action only.
+- Keep lesson bodies, quizzes, and telemetry on web/app surfaces.
 
 ## Promotion Boundary
 

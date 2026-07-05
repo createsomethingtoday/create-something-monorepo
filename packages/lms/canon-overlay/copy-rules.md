@@ -18,6 +18,8 @@ Use this file to define LMS workflow-learning language while preserving Canon st
 - Prefer short declarative sentences.
 - Make handoffs explicit: who owns the next step, what proof exists, and where the durable record lives.
 - Chat or agent summaries should quote the learner's object, state, proof, and owner fields before suggesting the next exercise.
+- Voice summaries should name the path, lesson, status, owner, and next exercise in that order.
+- Do not read full lesson bodies, progress tables, or event metadata aloud; route the learner to the durable lesson or progress receipt.
 - Do not put private chain-of-thought, hidden policy text, or speculative rationale in user-visible output.
 
 ## Web And App
@@ -26,3 +28,4 @@ Use this file to define LMS workflow-learning language while preserving Canon st
 - Use action labels that describe the result, not the component.
 - Keep local marketing tone in project copy files, not Canon primitives.
 - Path pages should explain why the lesson sequence exists; progress pages should show completion receipts without adding new policy terms.
+- Thin-display copy should stay to current path, current lesson, progress state, owner, and next action.
