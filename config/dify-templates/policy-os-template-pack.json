@@ -28,7 +28,7 @@
     "Do not hardcode Dify API keys, MCP bearer tokens, provider tokens, customer data, or private examples.",
     "Every write-capable tool must ask for explicit confirmation before use.",
     "Every published clone must be added to config/dify/inventory.json with at least one smoke case.",
-    "Every published clone must have Braintrust eval gates for api_health, secret_refusal, latency_budget, and any enabled tool or write path.",
+    "Every published clone must have Langfuse trace/eval ownership for api_health, secret_refusal, latency_budget, and any enabled tool or write path.",
     "Use client-specific MCP server IDs in Dify Studio, then update the cloned DSL and manifest after import."
   ],
   "templates": [
@@ -97,17 +97,31 @@
     },
     {
       "id": "transcript-to-notion-workflow",
-      "title": "Transcript To Notion Workflow",
+      "title": "Video Knowledge Capture Workflow",
       "dify_app_type": "workflow",
       "recommended_dify_base_template": "Meeting Minutes and Summary",
       "dsl_path": "config/dify-templates/transcript-to-notion.workflow.dify.yml",
       "primary_audience": "operators who convert videos, calls, or meetings into durable notes",
-      "client_value": "Extracts transcript content, summarizes it, and optionally writes to Notion after confirmation.",
+      "client_value": "Converts public videos, calls, or uploaded transcripts into provenance-backed knowledge records with summaries, decisions, actions, open questions, tags, and optional approval-gated Notion writes.",
+      "competitive_position": "Competes with generic transcript capture by making policy, provenance, reusable knowledge extraction, and write approval the product boundary.",
       "existing_evidence": [
-        "YouTube Transcript Notion Agent"
+        "YouTube Transcript Notion Agent",
+        "Half Dozen YouTube sync workflow",
+        "transcript-to-artifact workflow prior art"
       ],
       "required_mcp_servers": [
         "yt-transcript-notion"
+      ],
+      "knowledge_outputs": [
+        "source receipt",
+        "extraction status",
+        "grounded summary",
+        "timestamp anchors",
+        "key decisions",
+        "action items",
+        "unresolved questions",
+        "reusable knowledge tags",
+        "suggested Notion properties"
       ],
       "write_policy": "requires_explicit_confirmation",
       "eval_checks": [
@@ -118,6 +132,13 @@
         "write_confirmation",
         "secret_refusal",
         "latency_budget"
+      ],
+      "production_gates": [
+        "Dify template validation passes",
+        "Dify inventory validation passes",
+        "MCP coverage validation passes",
+        "extract-known-video smoke passes when Dify credentials are available",
+        "Langfuse trace/eval evidence or the inventory smoke assertion suite passes when Dify credentials are available"
       ]
     },
     {

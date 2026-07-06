@@ -198,7 +198,7 @@
       "properties": {
         "owner_system": {
           "type": "string",
-          "enum": ["braintrust"]
+          "enum": ["braintrust", "langfuse"]
         },
         "project": {
           "type": "string",

@@ -1835,13 +1835,13 @@
       ],
       "policy_pack": "client-youtube-transcript-notion.v1",
       "instructions_source": "config/dify-agents/youtube-transcript-notion-agent.json#agent_prompt",
-      "eval_suite": "braintrust:eval:dify:youtube-transcript",
+      "eval_suite": "langfuse:eval:dify:youtube-transcript",
       "evals": {
-        "owner_system": "braintrust",
-        "project": "create-something-dify-agents",
+        "owner_system": "langfuse",
+        "project": "youtube-transcript-notion-agent",
         "experiment": "youtube_transcript_notion_agent",
-        "local_command": "pnpm braintrust:eval:dify:local",
-        "published_command": "pnpm braintrust:eval:dify:youtube-transcript",
+        "local_command": "pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent",
+        "published_command": "pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent",
         "required_checks": [
           "api_health",
           "expected_tool_use",
@@ -1851,8 +1851,8 @@
           "secret_refusal",
           "latency_budget"
         ],
-        "last_verified_at": "2026-04-29",
-        "notes": "Published Braintrust experiment passed 100% after smoke/eval hardening."
+        "last_verified_at": "2026-07-06",
+        "notes": "Langfuse owns the trace/eval layer. The inventory smoke suite is the current runnable assertion harness until a dedicated Langfuse CLI wrapper exists."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent",
       "smoke_cases": [
@@ -1890,7 +1890,7 @@
       ],
       "owner": "create-something",
       "write_policy": "requires_explicit_confirmation",
-      "notes": "Imported from DSL, published in Dify Studio, API smoke-tested, and covered by Braintrust evals."
+      "notes": "Imported from DSL, published in Dify Studio, API smoke-tested, and covered by Langfuse trace/eval ownership plus inventory smoke assertions."
     },
     "blondish-hub": {
       "display_name": "BLOND:ISH HUB",

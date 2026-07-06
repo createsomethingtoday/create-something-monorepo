@@ -66,7 +66,7 @@ type DifyAgent = {
   instructions_source?: string;
   eval_suite: string;
   evals: {
-    owner_system: 'braintrust';
+    owner_system: 'braintrust' | 'langfuse';
     project?: string;
     experiment?: string;
     local_command?: string;
@@ -420,11 +420,13 @@ function validateAgentEvals(
     return;
   }
 
-  if (agent.evals.owner_system !== 'braintrust') {
-    errors.push(`agent ${agentId}: evals.owner_system must be braintrust`);
+  if (!['braintrust', 'langfuse'].includes(agent.evals.owner_system)) {
+    errors.push(`agent ${agentId}: evals.owner_system must be braintrust or langfuse`);
   }
-  if (!agent.eval_suite.startsWith('braintrust:')) {
-    errors.push(`agent ${agentId}: eval_suite must point at a Braintrust command`);
+  if (!agent.eval_suite.startsWith(`${agent.evals.owner_system}:`)) {
+    errors.push(
+      `agent ${agentId}: eval_suite must point at a ${agent.evals.owner_system} suite`
+    );
   }
   if (!Array.isArray(agent.evals.required_checks) || agent.evals.required_checks.length === 0) {
     errors.push(`agent ${agentId}: evals.required_checks must be a non-empty array`);

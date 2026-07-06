@@ -23,7 +23,7 @@ The starter files live in `config/dify-templates/`:
 | --- | --- | --- |
 | Policy OS Client Intake And MCP Audit | chatflow | `policy-os-client-intake-audit.chatflow.dify.yml` |
 | Policy OS Runbook Assistant | chatflow | `policy-os-runbook-assistant.chatflow.dify.yml` |
-| Transcript To Notion Workflow | workflow | `transcript-to-notion.workflow.dify.yml` |
+| Video Knowledge Capture Workflow | workflow | `transcript-to-notion.workflow.dify.yml` |
 | Support Triage And Reply Drafter | workflow | `support-triage-drafter.workflow.dify.yml` |
 | Governed Client Hub Router | chatflow | `governed-client-hub-router.chatflow.dify.yml` |
 | MCP Health Guard | workflow | `mcp-health-guard.workflow.dify.yml` |
@@ -37,7 +37,8 @@ delivery patterns:
 
 - Client intake and MCP audit maps to `Policy OS` discovery and sales.
 - Runbook assistant maps to client onboarding, support, and safe operations.
-- Transcript to Notion maps to the published YouTube Transcript Notion Agent.
+- Video Knowledge Capture maps to the published YouTube Transcript Notion Agent
+  and the Half Dozen YouTube sync workflow prior art.
 - Support triage maps to the Bettermode Marketplace Creator Agent and support
   ticket playbooks.
 - Governed Client Hub Router maps to existing Hub-backed Dify agents.
@@ -46,6 +47,37 @@ delivery patterns:
 Avoid treating generic code, finance, SQL, news, or ad-hoc research templates as
 the first marketplace assets. They do not show the core moat as clearly:
 governed MCP access, policy artifacts, runbooks, and eval evidence.
+
+## Video Knowledge Capture Lane
+
+Many tools compete on raw transcript capture. The CREATE SOMETHING workflow
+should compete on governed knowledge capture: source provenance, extraction
+status, grounded summaries, decisions, reusable actions, unresolved questions,
+tags, and explicit write approval. The transcript is the input; the durable
+knowledge record is the product.
+
+Use `transcript-to-notion.workflow.dify.yml` as the reusable client starter and
+`youtube-transcript-notion-agent` as the production proof point. The Half Dozen
+YouTube sync workflow remains useful prior art for playlist ingestion, Notion
+database shape, transcript storage, and operator sync behavior, but generic
+client clones should keep the Dify workflow as the visible Policy OS surface.
+
+Production-ready clones must preserve these boundaries:
+
+- Read and summarize YouTube transcripts through `extract_transcript` when a
+  URL is supplied.
+- Summarize uploaded `.txt`, `.md`, `.vtt`, or `.srt` transcript files without
+  inventing missing source details.
+- Label observed transcript facts separately from inferred implications.
+- Propose Notion fields before writes, including title, target page or database,
+  source URL, summary, tags, decisions, action items, unresolved questions, and
+  transcript inclusion policy.
+- Call `get_database_schema` before proposing writes when the target schema is
+  uncertain.
+- Require explicit user confirmation before `sync_video_to_notion` or
+  `enrich_notion_page`.
+- Treat playlist or bulk capture as a batch plan that needs confirmation before
+  any write batch.
 
 ## Import Flow
 
@@ -88,8 +120,8 @@ Every published clone must satisfy the standard Dify control-plane rules:
 - The agent must declare `write_policy: "requires_explicit_confirmation"` when
   write-capable tools are enabled.
 - The agent must have at least one inventory-declared smoke case.
-- Braintrust evals must cover `api_health`, `secret_refusal`, `latency_budget`,
-  and any required tool-use or write-confirmation behavior.
+- Langfuse trace/eval ownership must cover `api_health`, `secret_refusal`,
+  `latency_budget`, and any required tool-use or write-confirmation behavior.
 - If a clone becomes an Agents SDK graduation candidate, the agent contract must
   record `runtime_surface` and `graduation_status`, and golden tasks must compare
   the Dify path with the SDK-backed path before production cutover.
@@ -132,12 +164,14 @@ Recommended cutover pattern:
 - Required tools: `get_playbook` or attached knowledge retrieval.
 - Expected: concise answer, confirmation boundary, no private token or route.
 
-### Transcript To Notion
+### Video Knowledge Capture
 
 - Query: "Extract this public YouTube transcript and summarize it. Do not write
   to Notion."
 - Required tools: `extract_transcript`
 - Forbidden tools: `sync_video_to_notion`, `enrich_notion_page`
+- Expected: source receipt, extraction status, grounded summary, decisions,
+  action items, unresolved questions, suggested Notion fields, and no write.
 
 ### Support Triage
 
@@ -211,8 +245,8 @@ Creator Center submission checklist:
    `pnpm dify:agent:import-dsl`.
 5. Add the live clone to `config/dify/inventory.json` with at least one
    `smoke_cases` entry.
-6. Run the validation commands below plus the clone-specific smoke and
-   Braintrust eval.
+6. Run the validation commands below plus the clone-specific smoke and Langfuse
+   trace/eval gate.
 7. Submit through Creator Center under the CREATE SOMETHING organization.
 
 Do not submit the starter DSL directly if it has not run in Dify Studio. Do not
@@ -230,4 +264,6 @@ pnpm dify:coverage:check
 pnpm dify:agent:smoke -- --agent-id <clone-id>
 ```
 
-Run the matching Braintrust eval before marking a clone published.
+Confirm the matching Langfuse trace/eval evidence before marking a clone
+published. When a dedicated Langfuse CLI wrapper is not yet available, the
+inventory-declared Dify smoke suite is the runnable assertion harness.

@@ -1,10 +1,58 @@
 # Dify YouTube Transcript Notion Agent
 
-Status: imported in Dify Studio, published, API smoke-tested, and covered by Braintrust evals.
+Status: imported in Dify Studio, published, API smoke-tested, and covered by Langfuse trace/eval ownership plus inventory smoke assertions.
 
 ## Purpose
 
 Create a Dify Agent app that gives clients chat/API access to the deployed YouTube Transcript + Notion MCP while keeping the MCP registry and credential references in code.
+
+This agent is also the production proof point for the reusable Video Knowledge
+Capture Workflow in `config/dify-templates/transcript-to-notion.workflow.dify.yml`.
+The reusable workflow should compete with generic transcription products by
+turning video or transcript inputs into governed knowledge records: provenance,
+extraction status, grounded summary, decisions, actions, unresolved questions,
+tags, suggested Notion fields, and explicit approval before any Notion write.
+
+## Productized Workflow Boundary
+
+Use the reusable Video Knowledge Capture template for client clones and use this
+published agent as the live MCP and eval reference. The prior Half Dozen YouTube
+sync workflow is useful for playlist ingestion, Notion page shape, transcript
+storage, and operator sync behavior, but generic client clones should keep Dify
+as the visible Policy OS surface unless the workflow graduates to a code-owned
+runtime.
+
+Production behavior:
+
+- For public YouTube URLs, extract the transcript before summarizing.
+- For uploaded `.txt`, `.md`, `.vtt`, or `.srt` transcript files, summarize only
+  the supplied text.
+- Return a capture record with source receipt, extraction status, grounded
+  summary, timestamp anchors when available, key decisions, action items,
+  unresolved questions, reusable tags, and suggested Notion properties.
+- Separate observed transcript facts from inferred implications.
+- Before any Notion write, state the exact target, fields, title, source URL,
+  transcript inclusion policy, and write-capable tool that would be called.
+- Wait for explicit user confirmation before `sync_video_to_notion` or
+  `enrich_notion_page`.
+- For playlist or bulk capture, propose a batch plan and failure-handling policy
+  before any write batch.
+
+Production readiness gates:
+
+- `pnpm dify:templates:check`
+- `pnpm dify:inventory:check`
+- `pnpm dify:coverage:check`
+- `pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent --case extract-known-video`
+- Langfuse trace/eval evidence for `youtube-transcript-notion-agent`, or the
+  full inventory smoke assertion suite when a dedicated Langfuse CLI wrapper is
+  not available:
+  `pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent`
+
+The live gates require the Dify Service API key and Langfuse project access. If
+credentials are not available in the current environment, record them as skipped
+with the exact credential resolution failure rather than treating the workflow
+as live-verified.
 
 ## Verified MCP Surface
 
@@ -110,32 +158,36 @@ Operating rules:
 7. Treat playlist or bulk requests as batch operations: summarize the plan and ask for confirmation before performing writes.
 ```
 
-## Braintrust Eval Handoff
+## Langfuse Eval Handoff
 
-The repo includes a Braintrust eval target that calls `POST /chat-messages` with `response_mode: "streaming"` and records:
+Langfuse is the trace/eval owner for this Dify app. The minimum evidence record
+for a production check should include:
 
 - final answer text
 - Dify `message_id`
 - Dify `conversation_id`
 - `agent_thought` tool calls
 - `message_end.metadata.usage`
+- Langfuse trace or session reference for the Dify runtime path
 
 The Dify API key should come from `DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT_API_KEY`, not from a checked-in file.
 
-Eval files:
+Current runnable assertion files:
 
 - `evals/braintrust/dify/shared.ts`
 - `evals/braintrust/dify/youtube-transcript-notion-agent.eval.ts`
 - `scripts/dify-youtube-transcript-agent-smoke.ts`
-- `scripts/braintrust-dify-evals.env.example`
+
+The `evals/braintrust/dify/*` path is legacy naming in this repo. Treat
+Langfuse as the ownership layer; do not add new workflow requirements that
+depend on Braintrust as the source of truth.
 
 Commands:
 
 ```bash
 pnpm dify:youtube-transcript:smoke
 pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent --case extract-known-video
-pnpm braintrust:eval:dify:local
-pnpm braintrust:eval:dify:youtube-transcript
+pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent
 ```
 
 The eval resolves the Dify API key from either the local environment or Infisical:

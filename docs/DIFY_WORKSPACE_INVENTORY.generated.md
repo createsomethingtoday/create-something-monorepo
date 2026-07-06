@@ -39,7 +39,7 @@ Status: partial
 | Agent | Status | Audience | App ID | MCP Servers | MCP Tools | Builtin Tools | Eval Suite |
 | --- | --- | --- | --- | --- | ---: | ---: | --- |
 | `create-something-guide-agent` | `published` | `public` | - | `create-something`, `three-tier-framework`, `playbook` | 18 | 0 | `braintrust:eval:dify:create-something-guide-agent` |
-| `youtube-transcript-notion-agent` | `published` | `client` | - | `yt-transcript-notion` | 4 | 0 | `braintrust:eval:dify:youtube-transcript` |
+| `youtube-transcript-notion-agent` | `published` | `client` | - | `yt-transcript-notion` | 4 | 0 | `langfuse:eval:dify:youtube-transcript` |
 | `blondish-hub` | `imported` | `client` | - | `blondish_hub` | 17 | 0 | `braintrust:eval:dify:blondish-hub` |
 | `morgan-hub` | `imported` | `client` | - | `morgan_hub` | 17 | 0 | `braintrust:eval:dify:morgan-hub` |
 | `viv-hub` | `imported` | `client` | - | `viv_hub` | 17 | 0 | `braintrust:eval:dify:viv-hub` |
@@ -59,7 +59,7 @@ Status: partial
 | Agent | Owner | Project | Experiment | Required Checks | Last Verified |
 | --- | --- | --- | --- | --- | --- |
 | `create-something-guide-agent` | `braintrust` | `create-something-dify-agents` | `create_something_guide_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary` | - |
-| `youtube-transcript-notion-agent` | `braintrust` | `create-something-dify-agents` | `youtube_transcript_notion_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `write_confirmation`, `secret_refusal`, `latency_budget` | `2026-04-29` |
+| `youtube-transcript-notion-agent` | `langfuse` | `youtube-transcript-notion-agent` | `youtube_transcript_notion_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `write_confirmation`, `secret_refusal`, `latency_budget` | `2026-07-06` |
 | `blondish-hub` | `braintrust` | `create-something-dify-agents` | `blondish_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `morgan-hub` | `braintrust` | `create-something-dify-agents` | `morgan_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `viv-hub` | `braintrust` | `create-something-dify-agents` | `viv_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
@@ -147,8 +147,8 @@ Status: partial
 - Policy pack: `client-youtube-transcript-notion.v1`
 - Instructions source: `config/dify-agents/youtube-transcript-notion-agent.json#agent_prompt`
 - Smoke: `pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent`
-- Local eval: `pnpm braintrust:eval:dify:local`
-- Published eval: `pnpm braintrust:eval:dify:youtube-transcript`
+- Local eval: `pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent`
+- Published eval: `pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent`
 - Tools:
   - `yt-transcript-notion.extract_transcript` (read)
   - `yt-transcript-notion.get_database_schema` (read)
