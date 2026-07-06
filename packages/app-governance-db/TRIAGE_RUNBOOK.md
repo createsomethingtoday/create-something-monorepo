@@ -11,13 +11,13 @@ The standing loop for agent-managed triage with receipts. Any Claude Code sessio
 ## Phase 1 — Sync (needs Slack MCP)
 
 1. `governance_sync_status` — get cursor per `slack_channel` source. Skip sources named "(on-demand)".
-2. Per source with a cursor: `slack_read_channel` with `oldest=<cursor_value>`, detailed, limit 100. New messages → `governance_record_items` (external_id `<channel>:<ts>`, cursor_value = newest ts). The pusher pattern lives at `packages/app-governance-db/scripts/` lineage; inserts are idempotent.
+2. Per source with a cursor: `slack_read_channel` with `oldest=<cursor_value>`, detailed, limit 100. New messages → `governance_record_items` (external_id `<channel>:<ts>`, cursor_value = newest ts). Pusher: `python3 packages/app-governance-db/scripts/slack-dump-push.py <dump-file> <CHANNEL_ID> [--set-cursor]` (cwd = monorepo root; handles authorless Slack Connect messages); inserts are idempotent.
 3. Sources with no cursor yet: full backfill (newest page with cursor set, older pages without), cap 800 messages.
 
 ## Phase 1.5 — Doc-change check (needs local openapi-internal checkout)
 
 From the monorepo root: `node packages/app-governance-db/scripts/check-doc-changes.mjs --pull`
-Pulls the checkout (graceful if offline), diffs governed doc paths, auto-notifies doc-path subscribers on newer commits via `governance_record_doc_change` (first observation baselines silently), and sets the `docs_repo` sync cursor to repo HEAD.
+Fetches origin/main with the micahwithwf account token (graceful if offline; never touches the local working branch), diffs governed doc paths on the published branch, auto-notifies doc-path subscribers on newer commits via `governance_record_doc_change` (first observation baselines silently), and sets the `docs_repo` sync cursor to repo HEAD.
 
 ## Phase 2 — Triage (governance MCP only)
 
