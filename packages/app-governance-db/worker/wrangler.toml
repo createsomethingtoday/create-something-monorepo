@@ -1,0 +1,25 @@
+name = "app-governance-db"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[[routes]]
+pattern = "app-governance.mcp.createsomething.agency"
+custom_domain = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "app-governance-db"
+database_id = "65e0fa00-e934-47b6-a154-baccd09afa1c"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "AppGovernanceMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AppGovernanceMCP"]
