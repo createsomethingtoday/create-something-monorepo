@@ -46,9 +46,10 @@ describe('Canon documentation navigation', () => {
 		);
 		assert.equal(
 			componentsSection.items.reduce((count, item) => count + (item.children?.length ?? 0), 0),
-			21
+			22
 		);
 		assert.equal(flattenedHrefs.has('/canon/components/conversion'), true);
+		assert.equal(flattenedHrefs.has('/canon/components/data'), true);
 		assert.equal(flattenedHrefs.has('/canon/components/atlas'), true);
 		assert.equal(flattenedHrefs.has('/canon/resources/registry'), true);
 		assert.equal(flattenedHrefs.has('/canon/resources/overlays'), true);

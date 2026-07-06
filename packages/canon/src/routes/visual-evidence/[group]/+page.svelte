@@ -39,6 +39,8 @@
 	import ClearStateRows from '$lib/components/clear/ClearStateRows.svelte';
 	import ClearUseCaseBand from '$lib/components/clear/ClearUseCaseBand.svelte';
 	import ClearWorkflowMiniArtifact from '$lib/components/clear/ClearWorkflowMiniArtifact.svelte';
+	import DataTable, { type DataTableColumn } from '$lib/components/data/DataTable.svelte';
+	import StatusBadge, { type StatusBadgeTone } from '$lib/components/data/StatusBadge.svelte';
 
 	let { data }: { data: { group: string } } = $props();
 	let textValue = $state('operator@example.com');
@@ -68,6 +70,34 @@
 		{ label: 'Gate', value: 'Passed' },
 		{ label: 'Rollback', value: 'Named' }
 	];
+
+	const findingColumns: DataTableColumn[] = [
+		{ key: 'id', label: 'ID', mono: true, width: '4.5rem' },
+		{ key: 'title', label: 'Finding', sortable: true },
+		{ key: 'status', label: 'Status' },
+		{ key: 'priority', label: 'Priority' },
+		{ key: 'updated_at', label: 'Updated', mono: true, align: 'right', sortable: true }
+	];
+	const findingRows = [
+		{ id: 'f-42', title: 'Cursor stale beyond 24h', status: 'needs_decision', priority: 'P0', updated_at: '2026-07-05T18:12:04Z' },
+		{ id: 'f-41', title: 'Webhook retries exhausted', status: 'flagged', priority: 'P1', updated_at: '2026-07-05T16:40:19Z' },
+		{ id: 'f-39', title: 'Categorize new intake items', status: 'in_progress', priority: 'P2', updated_at: '2026-07-04T22:05:51Z' },
+		{ id: 'f-35', title: 'Backfill notification receipts', status: 'shipped', priority: 'P2', updated_at: '2026-07-03T09:18:33Z' },
+		{ id: 'f-28', title: 'Legacy source audit', status: 'parked', priority: 'P3', updated_at: '2026-06-27T11:02:47Z' }
+	];
+	const statusTones: Record<string, { tone: StatusBadgeTone; emphasis?: boolean }> = {
+		needs_decision: { tone: 'warning', emphasis: true },
+		flagged: { tone: 'warning' },
+		in_progress: { tone: 'info' },
+		shipped: { tone: 'success' },
+		parked: { tone: 'neutral' }
+	};
+	const priorityTones: Record<string, StatusBadgeTone> = {
+		P0: 'error',
+		P1: 'warning',
+		P2: 'info',
+		P3: 'neutral'
+	};
 </script>
 
 <svelte:head>
@@ -162,6 +192,62 @@
 				<Tooltip content="Open command search" delay={0}>
 					<Button variant="ghost">Search</Button>
 				</Tooltip>
+			</div>
+		</section>
+	{:else if data.group === 'data'}
+		<section class="data-stack" aria-label="Database-layer visual evidence">
+			<div class="data-panel">
+				<h2 class="data-panel-title">Findings <span class="data-count">5</span></h2>
+				<DataTable
+					caption="Findings queue"
+					columns={findingColumns}
+					rows={findingRows}
+					rowKey={(row) => row.id}
+					sortKey="updated_at"
+					sortDirection="desc"
+					onsort={() => {}}
+					onrowclick={() => {}}
+				>
+					{#snippet cell({ column, value })}
+						{#if column.key === 'status'}
+							<StatusBadge
+								label={String(value).replace('_', ' ')}
+								tone={statusTones[String(value)]?.tone ?? 'neutral'}
+								emphasis={statusTones[String(value)]?.emphasis ?? false}
+								variant="dot"
+							/>
+						{:else if column.key === 'priority'}
+							<StatusBadge label={String(value)} tone={priorityTones[String(value)] ?? 'neutral'} />
+						{:else}
+							{String(value ?? '')}
+						{/if}
+					{/snippet}
+				</DataTable>
+			</div>
+			<div class="data-panel">
+				<h2 class="data-panel-title">Dense variant</h2>
+				<DataTable columns={findingColumns.slice(0, 3)} rows={findingRows.slice(0, 3)} dense />
+			</div>
+			<div class="data-panel">
+				<h2 class="data-panel-title">Empty state</h2>
+				<DataTable columns={findingColumns} rows={[]} />
+			</div>
+			<div class="data-panel">
+				<h2 class="data-panel-title">StatusBadge tones</h2>
+				<div class="badge-row">
+					<StatusBadge label="shipped" tone="success" />
+					<StatusBadge label="failed" tone="error" />
+					<StatusBadge label="needs decision" tone="warning" emphasis />
+					<StatusBadge label="in progress" tone="info" />
+					<StatusBadge label="parked" tone="neutral" />
+				</div>
+				<div class="badge-row">
+					<StatusBadge label="current" tone="success" variant="dot" />
+					<StatusBadge label="aging" tone="warning" variant="dot" />
+					<StatusBadge label="stale" tone="error" variant="dot" />
+					<StatusBadge label="queued" tone="info" variant="dot" />
+					<StatusBadge label="skipped" tone="neutral" variant="dot" />
+				</div>
 			</div>
 		</section>
 	{:else}
@@ -382,6 +468,43 @@
 		padding: 1rem;
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
+	}
+
+	.data-stack {
+		display: grid;
+		gap: 1.5rem;
+		max-width: 72rem;
+		margin: 0 auto;
+	}
+
+	.data-panel {
+		min-width: 0;
+		padding: 1rem;
+		background: var(--color-shell-surface, var(--color-bg-surface));
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.data-panel-title {
+		margin: 0 0 0.75rem;
+		font-size: var(--text-h3);
+		font-weight: var(--font-medium);
+	}
+
+	.data-count {
+		font-family: var(--font-mono);
+		color: var(--color-fg-muted);
+	}
+
+	.badge-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		align-items: center;
+	}
+
+	.badge-row + .badge-row {
+		margin-top: 0.75rem;
 	}
 
 	@media (max-width: 760px) {

@@ -25,7 +25,7 @@ describe('Canon stable component depth', () => {
 		const report = buildCanonStableComponentDepthReport(REPO_ROOT);
 
 		expect(report.sourceOfTruth).toBe('@create-something/canon/stable-component-depth');
-		expect(report.summary.stableComponents).toBe(120);
+		expect(report.summary.stableComponents).toBe(122);
 		expect(report.components).toHaveLength(report.summary.stableComponents);
 		expect(report.summary.totalDimensionChecks).toBe(
 			report.summary.stableComponents * DIMENSIONS.length

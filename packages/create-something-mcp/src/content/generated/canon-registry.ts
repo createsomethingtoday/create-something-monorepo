@@ -2720,6 +2720,70 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "component.data-table",
+      "name": "DataTable",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Dense database-layer table primitive with real table semantics, controlled sorting, row activation, mono machine-value columns, and sticky-header support.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/data/DataTable.svelte",
+      "importPath": "@create-something/canon/components/data",
+      "docsPath": "/canon/components/data",
+      "tags": [
+        "data",
+        "table",
+        "database-layer",
+        "records"
+      ],
+      "modalities": [
+        "web",
+        "app"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "Tables must keep real table semantics (thead, th scope, optional sr-only caption), expose aria-sort on the active column, and make clickable rows keyboard-activatable via Enter and Space so screen readers and keyboard users get the grid for free.",
+        "evidence": "Row data must preserve stable identity (rowKey), column keys, sort key and direction, and machine values (ids, cursors, timestamps) rendered as monospace tabular-nums text.",
+        "motion": "Row hover and sort-glyph transitions use micro-duration tokens only; tables render with no entrance animation and respect reduced-motion contexts.",
+        "extension": "Sorting stays controlled by the parent (the query layer owns ordering) across web and app modalities; chat and voice surfaces should summarize the underlying records instead of rendering the grid."
+      }
+    },
+    {
+      "id": "component.status-badge",
+      "name": "StatusBadge",
+      "kind": "component",
+      "maturity": "stable",
+      "description": "Semantic state indicator for database-layer surfaces with success, error, warning, info, and neutral tones in pill and dot variants.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/components/data/StatusBadge.svelte",
+      "importPath": "@create-something/canon/components/data",
+      "docsPath": "/canon/components/data",
+      "tags": [
+        "data",
+        "status",
+        "badge",
+        "database-layer",
+        "state"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.canon-core"
+      ],
+      "contract": {
+        "accessibility": "State must never be color-only: the visible label carries the state text, the dot variant marks its dot aria-hidden, and emphasis is expressed through weight and border rather than hue alone.",
+        "evidence": "Badge tones map lifecycle and priority states to Canon semantic token families (success, error, warning, info, neutral) per the database-layer design doc; chart series colors are never used for state.",
+        "motion": "Tone and variant transitions use micro-duration tokens only and remain legible when motion is reduced.",
+        "extension": "Chat, voice, and glasses modalities read the badge as plain state text; new lifecycles reuse the five semantic tones instead of inventing per-category hues."
+      }
+    },
+    {
       "id": "component.clear-page-section",
       "name": "ClearPageSection",
       "kind": "component",

@@ -100,6 +100,10 @@
 			"types": "./dist/components/docs/index.d.ts",
 			"svelte": "./dist/components/docs/index.js"
 		},
+		"./components/data": {
+			"types": "./dist/components/data/index.d.ts",
+			"svelte": "./dist/components/data/index.js"
+		},
 		"./domains/ltd": {
 			"types": "./dist/domains/ltd/index.d.ts",
 			"svelte": "./dist/domains/ltd/index.js"
@@ -374,6 +378,7 @@
 		"@types/better-sqlite3": "^7.6.12",
 		"@types/three": "^0.170.0",
 		"@webgpu/types": "^0.1.69",
+		"jsdom": "^27.4.0",
 		"lucide-svelte": "^0.562.0",
 		"publint": "^0.3.14",
 		"svelte": "^5.41.0",

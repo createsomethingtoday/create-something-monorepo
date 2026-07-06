@@ -99,6 +99,16 @@ export {
 // Documentation components (live docs - components ARE the documentation)
 export { TokenSwatch, TokenGrid } from './docs/index.js';
 
+// Database-layer primitives (docs/CANON_DATABASE_LAYER_DESIGN.md)
+export {
+  DataTable,
+  StatusBadge,
+  type DataTableColumn,
+  type DataTableSortDirection,
+  type StatusBadgeTone,
+  type StatusBadgeVariant
+} from './data/index.js';
+
 // Page action components
 export { default as PageActions } from './PageActions.svelte';
 export { default as MarkdownPreviewModal } from './MarkdownPreviewModal.svelte';

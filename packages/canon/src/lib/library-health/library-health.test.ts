@@ -18,14 +18,14 @@ describe('Canon library health', () => {
 		expect(report.status).toBe('ready');
 		expect(() => assertCanonLibraryHealthReport(report)).not.toThrow();
 		expect(report.registry).toMatchObject({
-			totalItems: 130,
-			stableItems: 123,
+			totalItems: 132,
+			stableItems: 125,
 			candidateItems: 7,
 			experimentalItems: 0
 		});
 		expect(report.components).toMatchObject({
-			total: 120,
-			stable: 120,
+			total: 122,
+			stable: 122,
 			candidate: 0,
 			experimental: 0
 		});
