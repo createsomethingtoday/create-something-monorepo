@@ -140,10 +140,10 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			lane_slug: laneSlug,
 			display_name: displayName,
 			required_toolkits: REQUIRED_LANE_TOOLKITS,
-			observability_baseline: {
-				telemetry: true,
-				braintrust: true,
-			},
+				observability_baseline: {
+					telemetry: true,
+					langfuse: true,
+				},
 			approved_exception: approvedException,
 			last_updated_by: actor,
 		};

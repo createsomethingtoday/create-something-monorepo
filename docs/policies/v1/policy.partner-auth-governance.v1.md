@@ -40,7 +40,7 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 14. Lane-scoped bearer and strict-session issuance MUST derive the effective `allowed_tool_prefixes` from the named lane record and MUST bind the credential to the lane host.
 15. Lane-scoped bearer and strict-session issuance MUST deny when client identity mapping, active consent, or lane identity subject binding is missing, even if the named lane itself is already provisioned.
 16. Vault-backed worker/runtime tokens used to bootstrap or verify named lanes are operator-only controls and MUST NOT be repurposed as customer-delivered bearer artifacts.
-17. Telemetry and Braintrust tracing are mandatory baseline observability controls for partner-managed named lanes.
+17. Telemetry and Langfuse tracing are mandatory baseline observability controls for partner-managed named lanes.
 18. Those observability traces MUST include explicit account attribution, at minimum `account_id`, `tenant_id`, and the lane slug or bound host, for issuance, denial, and routed-call evidence.
 19. Operator-assisted white-glove onboarding is an approved partner-governed pathway for initial customer access delivery when a named lane or client hub is being set up directly with the customer.
 20. White-glove onboarding MAY deliver a managed bearer credential or an approved legacy credential before the customer has logged into `.agency`, but the governing partner route MUST still record actor trace, recipient, delivery channel, effective scope, and the follow-on self-service surface.

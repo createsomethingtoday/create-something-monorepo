@@ -14,12 +14,12 @@ For instruction-only changes, update the existing Natalia, Mariana, Eric, and Vi
 
 Use the checked-in manifest prompt as the source of truth:
 
-| Agent   | Source prompt |
-| ------- | ------------- |
-| Eric    | `config/dify-agents/eric-hub.json#agent_prompt` |
+| Agent   | Source prompt                                      |
+| ------- | -------------------------------------------------- |
+| Eric    | `config/dify-agents/eric-hub.json#agent_prompt`    |
 | Natalia | `config/dify-agents/natalia-hub.json#agent_prompt` |
 | Mariana | `config/dify-agents/mariana-hub.json#agent_prompt` |
-| Vicki   | `config/dify-agents/vicki-hub.json#agent_prompt` |
+| Vicki   | `config/dify-agents/vicki-hub.json#agent_prompt`   |
 
 To print a paste-ready prompt for one agent:
 
@@ -34,12 +34,12 @@ Manual update flow for the current XML-style Dify Instructions field:
 1. Open the existing Dify app.
 2. Confirm the Instructions field still includes the XML wrapper, Dify variables, `output_format`, and examples.
 3. Do not replace the whole field with the compact `agent_prompt` if that wrapper is present.
-4. Patch only the placeholder/utility-page policy paragraphs from the current `agent_prompt`.
+4. Patch only the relevant policy paragraphs from the current `agent_prompt`, including the output-boundary rule that forbids hidden reasoning and `<think>` text.
 5. Preserve the XML wrapper, variables, output format, examples, tool list, model settings, visibility, and API keys.
 6. Save or publish the existing app.
 7. Export the app DSL from Dify Studio.
 8. Reconcile the exported DSL back into `config/dify-agents/{agent}.dify.yml` if Dify rewrites the saved app.
-9. Run `pnpm dify:inventory:check`, `pnpm dify:reviewer-hubs:smoke`, and `pnpm braintrust:eval:dify:reviewer-hubs:local`.
+9. Run `pnpm dify:inventory:check`, `pnpm dify:reviewer-hubs:smoke`, `pnpm dify:reviewer-hubs:identity-smoke`, and `pnpm langfuse:eval:dify:reviewer-hubs:local`.
 
 If the live Instructions field is already a plain compact prompt with no XML wrapper:
 
@@ -49,7 +49,7 @@ If the live Instructions field is already a plain compact prompt with no XML wra
 4. Save or publish the existing app.
 5. Export the app DSL from Dify Studio.
 6. Reconcile the exported DSL back into `config/dify-agents/{agent}.dify.yml` if Dify rewrites the saved app.
-7. Run `pnpm dify:inventory:check`, `pnpm dify:reviewer-hubs:smoke`, and `pnpm braintrust:eval:dify:reviewer-hubs:local`.
+7. Run `pnpm dify:inventory:check`, `pnpm dify:reviewer-hubs:smoke`, `pnpm dify:reviewer-hubs:identity-smoke`, and `pnpm langfuse:eval:dify:reviewer-hubs:local`.
 
 Create a new imported app only when app structure, tool wiring, or a staging clone is intentionally changing. Deletion should be a separate migration step after the replacement app has passed smoke and eval checks and all callers have moved to the new API key.
 

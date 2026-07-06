@@ -9,7 +9,7 @@ workers_dev = true
 enabled = true
 
 [vars]
-BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
+LANGFUSE_PROJECT_NAME = "CREATE SOMETHING"
 MCP_ACCOUNT_ID = "spotify-agent"
 SPOTIFY_RAPIDAPI_HOST = "spotify23.p.rapidapi.com"
 

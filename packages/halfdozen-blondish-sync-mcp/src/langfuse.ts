@@ -35,33 +35,34 @@ export async function emitLangfuseToolInvocation(env: Env, invocation: LangfuseT
   const traceId = crypto.randomUUID();
 
   try {
-    client.trace({
+    const metadata = {
+      server: runtime.serverName,
+      client: runtime.clientSlug,
+      tenant: runtime.tenantSlug,
+      tool: invocation.toolName,
+      action,
+      duration_ms: invocation.durationMs,
+      success,
+      ok: typeof output.ok === 'boolean' ? output.ok : null,
+      error,
+      created: numberOrNull(output.created),
+      updated: numberOrNull(output.updated),
+      skipped: numberOrNull(output.skipped),
+      error_count: numberOrNull(output.error_count),
+      missing_hd_rows_count: numberOrNull(output.missing_hd_rows_count),
+      contract_field_drifts_count: numberOrNull(output.contract_field_drifts_count),
+      body_drifts_count: numberOrNull(output.body_drifts_count),
+      reverse_status_drifts_count: numberOrNull(output.reverse_status_drifts_count),
+      duplicate_hd_matches_count: numberOrNull(output.duplicate_hd_matches_count),
+    };
+    const trace = client.trace({
       id: traceId,
       name: `mcp:${runtime.serverName}:${invocation.toolName}`,
       input: {
         tool: invocation.toolName,
       },
       output,
-      metadata: {
-        server: runtime.serverName,
-        client: runtime.clientSlug,
-        tenant: runtime.tenantSlug,
-        tool: invocation.toolName,
-        action,
-        duration_ms: invocation.durationMs,
-        success,
-        ok: typeof output.ok === 'boolean' ? output.ok : null,
-        error,
-        created: numberOrNull(output.created),
-        updated: numberOrNull(output.updated),
-        skipped: numberOrNull(output.skipped),
-        error_count: numberOrNull(output.error_count),
-        missing_hd_rows_count: numberOrNull(output.missing_hd_rows_count),
-        contract_field_drifts_count: numberOrNull(output.contract_field_drifts_count),
-        body_drifts_count: numberOrNull(output.body_drifts_count),
-        reverse_status_drifts_count: numberOrNull(output.reverse_status_drifts_count),
-        duplicate_hd_matches_count: numberOrNull(output.duplicate_hd_matches_count),
-      },
+      metadata,
       sessionId: runtime.clientSlug,
       userId: runtime.tenantSlug,
       tags: [
@@ -74,6 +75,16 @@ export async function emitLangfuseToolInvocation(env: Env, invocation: LangfuseT
         success ? 'success' : 'error',
       ],
     });
+    trace
+      .span({
+        name: `execute:${invocation.toolName}`,
+        input: { tool: invocation.toolName },
+        output,
+        metadata,
+        level: success ? 'DEFAULT' : 'ERROR',
+        statusMessage: error ?? undefined,
+      })
+      .end();
     await client.flushAsync();
   } catch (traceError) {
     console.warn('Langfuse trace emission failed', sanitizeError(traceError));

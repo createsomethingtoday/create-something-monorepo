@@ -169,7 +169,7 @@
       icon: 'folder',
       title: 'What operators keep',
       detail:
-        'Dify DSL snapshots, Langfuse traces, Braintrust runs, prompt variants, credentials, account records, and incident notes.'
+        'Dify DSL snapshots, Langfuse traces, Langfuse runs, prompt variants, credentials, account records, and incident notes.'
     },
     {
       eyebrow: 'Decision',

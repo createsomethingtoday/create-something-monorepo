@@ -11,7 +11,7 @@ It is intentionally narrow:
 
 It does **not** replace runtime governance in the Hub or policy engine. It complements:
 
-- `evals/braintrust/mcp/*` for live telemetry-oriented evals
+- `evals/langfuse/mcp/*` for live telemetry-oriented evals
 - `scripts/policy-os-live-verify.sh` for shell-based policy verification
 - `packages/policy-os-engine/*` for runtime decisioning
 

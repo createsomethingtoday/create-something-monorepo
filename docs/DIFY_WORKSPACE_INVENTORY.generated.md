@@ -38,41 +38,41 @@ Status: partial
 
 | Agent | Status | Audience | App ID | MCP Servers | MCP Tools | Builtin Tools | Eval Suite |
 | --- | --- | --- | --- | --- | ---: | ---: | --- |
-| `create-something-guide-agent` | `published` | `public` | - | `create-something`, `three-tier-framework`, `playbook` | 18 | 0 | `braintrust:eval:dify:create-something-guide-agent` |
-| `youtube-transcript-notion-agent` | `published` | `client` | - | `yt-transcript-notion` | 4 | 0 | `braintrust:eval:dify:youtube-transcript` |
-| `blondish-hub` | `imported` | `client` | - | `blondish_hub` | 17 | 0 | `braintrust:eval:dify:blondish-hub` |
-| `morgan-hub` | `imported` | `client` | - | `morgan_hub` | 17 | 0 | `braintrust:eval:dify:morgan-hub` |
-| `viv-hub` | `imported` | `client` | - | `viv_hub` | 17 | 0 | `braintrust:eval:dify:viv-hub` |
-| `c3-hub` | `imported` | `client` | - | `c3_hub` | 17 | 0 | `braintrust:eval:dify:c3-hub` |
-| `aaron-hub` | `imported` | `client` | - | `aaron_hub` | 17 | 0 | `braintrust:eval:dify:aaron-hub` |
-| `abundance-hub` | `published` | `client` | - | `abundance-jobs` | 4 | 0 | `braintrust:eval:dify:abundance-hub` |
-| `shea-hub` | `imported` | `client` | - | `shea_hub` | 17 | 0 | `braintrust:eval:dify:shea-hub` |
-| `pablo-hub` | `imported` | `client` | - | `pablo_hub` | 17 | 0 | `braintrust:eval:dify:pablo-hub` |
-| `eric-hub` | `imported` | `client` | - | `eric_hub` | 17 | 4 | `braintrust:eval:dify:eric-hub` |
-| `natalia-hub` | `imported` | `client` | - | `natalia_hub` | 17 | 4 | `braintrust:eval:dify:natalia-hub` |
-| `mariana-hub` | `imported` | `client` | - | `mariana_hub` | 17 | 4 | `braintrust:eval:dify:mariana-hub` |
-| `vicki-hub` | `imported` | `client` | - | `vicki_hub` | 17 | 4 | `braintrust:eval:dify:vicki-hub` |
-| `template-review-hub` | `imported` | `client` | - | `template-review` | 17 | 4 | `braintrust:eval:dify:template-review-hub` |
+| `create-something-guide-agent` | `published` | `public` | - | `create-something`, `three-tier-framework`, `playbook` | 18 | 0 | `langfuse:eval:dify:create-something-guide-agent` |
+| `youtube-transcript-notion-agent` | `published` | `client` | - | `yt-transcript-notion` | 4 | 0 | `langfuse:eval:dify:youtube-transcript` |
+| `blondish-hub` | `imported` | `client` | - | `blondish_hub` | 17 | 0 | `langfuse:eval:dify:blondish-hub` |
+| `morgan-hub` | `imported` | `client` | - | `morgan_hub` | 17 | 0 | `langfuse:eval:dify:morgan-hub` |
+| `viv-hub` | `imported` | `client` | - | `viv_hub` | 17 | 0 | `langfuse:eval:dify:viv-hub` |
+| `c3-hub` | `imported` | `client` | - | `c3_hub` | 17 | 0 | `langfuse:eval:dify:c3-hub` |
+| `aaron-hub` | `imported` | `client` | - | `aaron_hub` | 17 | 0 | `langfuse:eval:dify:aaron-hub` |
+| `abundance-hub` | `published` | `client` | - | `abundance-jobs` | 4 | 0 | `langfuse:eval:dify:abundance-hub` |
+| `shea-hub` | `imported` | `client` | - | `shea_hub` | 17 | 0 | `langfuse:eval:dify:shea-hub` |
+| `pablo-hub` | `imported` | `client` | - | `pablo_hub` | 17 | 0 | `langfuse:eval:dify:pablo-hub` |
+| `eric-hub` | `imported` | `client` | - | `eric_hub` | 17 | 4 | `langfuse:eval:dify:eric-hub` |
+| `natalia-hub` | `imported` | `client` | - | `natalia_hub` | 17 | 4 | `langfuse:eval:dify:natalia-hub` |
+| `mariana-hub` | `imported` | `client` | - | `mariana_hub` | 17 | 4 | `langfuse:eval:dify:mariana-hub` |
+| `vicki-hub` | `imported` | `client` | - | `vicki_hub` | 17 | 4 | `langfuse:eval:dify:vicki-hub` |
+| `template-review-hub` | `imported` | `client` | - | `template-review` | 17 | 4 | `langfuse:eval:dify:template-review-hub` |
 
 ## Eval Coverage
 
 | Agent | Owner | Project | Experiment | Required Checks | Last Verified |
 | --- | --- | --- | --- | --- | --- |
-| `create-something-guide-agent` | `braintrust` | `create-something-dify-agents` | `create_something_guide_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary` | - |
-| `youtube-transcript-notion-agent` | `braintrust` | `create-something-dify-agents` | `youtube_transcript_notion_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `write_confirmation`, `secret_refusal`, `latency_budget` | `2026-04-29` |
-| `blondish-hub` | `braintrust` | `create-something-dify-agents` | `blondish_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `morgan-hub` | `braintrust` | `create-something-dify-agents` | `morgan_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `viv-hub` | `braintrust` | `create-something-dify-agents` | `viv_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `c3-hub` | `braintrust` | `create-something-dify-agents` | `c3_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `aaron-hub` | `braintrust` | `create-something-dify-agents` | `aaron_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `abundance-hub` | `braintrust` | `create-something-dify-agents` | `abundance_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | `2026-05-14` |
-| `shea-hub` | `braintrust` | `create-something-dify-agents` | `shea_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `pablo-hub` | `braintrust` | `create-something-dify-agents` | `pablo_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `eric-hub` | `braintrust` | `create-something-dify-agents` | `eric_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `natalia-hub` | `braintrust` | `create-something-dify-agents` | `natalia_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `mariana-hub` | `braintrust` | `create-something-dify-agents` | `mariana_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `vicki-hub` | `braintrust` | `create-something-dify-agents` | `vicki_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `template-review-hub` | `braintrust` | `create-something-dify-agents` | `template_review_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | `2026-06-03` |
+| `create-something-guide-agent` | `langfuse` | `create-something-dify-agents` | `create_something_guide_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary` | - |
+| `youtube-transcript-notion-agent` | `langfuse` | `create-something-dify-agents` | `youtube_transcript_notion_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `write_confirmation`, `secret_refusal`, `latency_budget` | `2026-04-29` |
+| `blondish-hub` | `langfuse` | `create-something-dify-agents` | `blondish_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `morgan-hub` | `langfuse` | `create-something-dify-agents` | `morgan_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `viv-hub` | `langfuse` | `create-something-dify-agents` | `viv_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `c3-hub` | `langfuse` | `create-something-dify-agents` | `c3_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `aaron-hub` | `langfuse` | `create-something-dify-agents` | `aaron_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `abundance-hub` | `langfuse` | `create-something-dify-agents` | `abundance_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | `2026-05-14` |
+| `shea-hub` | `langfuse` | `create-something-dify-agents` | `shea_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `pablo-hub` | `langfuse` | `create-something-dify-agents` | `pablo_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `eric-hub` | `langfuse` | `create-something-dify-agents` | `eric_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `natalia-hub` | `langfuse` | `create-something-dify-agents` | `natalia_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `mariana-hub` | `langfuse` | `create-something-dify-agents` | `mariana_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `vicki-hub` | `langfuse` | `create-something-dify-agents` | `vicki_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `template-review-hub` | `langfuse` | `create-something-dify-agents` | `template_review_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | `2026-06-03` |
 
 ## Smoke Cases
 
@@ -119,8 +119,8 @@ Status: partial
 - Policy pack: `public-create-something-guide-agent.v1`
 - Instructions source: `config/dify-agents/create-something-guide-agent.json#agent_prompt`
 - Smoke: `pnpm dify:agent:smoke -- --agent-id create-something-guide-agent`
-- Local eval: `pnpm braintrust:eval:dify:local`
-- Published eval: `pnpm braintrust:eval:dify:create-something-guide-agent`
+- Local eval: `pnpm langfuse:eval:dify:local`
+- Published eval: `pnpm langfuse:eval:dify:create-something-guide-agent`
 - Tools:
   - `create-something.search` (read)
   - `create-something.relate` (read)
@@ -147,8 +147,8 @@ Status: partial
 - Policy pack: `client-youtube-transcript-notion.v1`
 - Instructions source: `config/dify-agents/youtube-transcript-notion-agent.json#agent_prompt`
 - Smoke: `pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent`
-- Local eval: `pnpm braintrust:eval:dify:local`
-- Published eval: `pnpm braintrust:eval:dify:youtube-transcript`
+- Local eval: `pnpm langfuse:eval:dify:local`
+- Published eval: `pnpm langfuse:eval:dify:youtube-transcript`
 - Tools:
   - `yt-transcript-notion.extract_transcript` (read)
   - `yt-transcript-notion.get_database_schema` (read)
@@ -286,8 +286,8 @@ Status: partial
 - Policy pack: `client-abundance-hub.v1`
 - Instructions source: `config/dify-agents/abundance-hub.json#agent_prompt`
 - Smoke: `pnpm dify:abundance-hub:smoke`
-- Local eval: `pnpm braintrust:eval:dify:abundance-hub:local`
-- Published eval: `pnpm braintrust:eval:dify:abundance-hub`
+- Local eval: `pnpm langfuse:eval:dify:abundance-hub:local`
+- Published eval: `pnpm langfuse:eval:dify:abundance-hub`
 - Tools:
   - `abundance-jobs.get_job` (read)
   - `abundance-jobs.list_public_jobs` (read)
@@ -470,8 +470,8 @@ Status: partial
 - Policy pack: `client-template-review-hub.v1`
 - Instructions source: `config/dify-agents/template-review-hub.json#agent_prompt`
 - Smoke: `pnpm dify:agent:smoke -- --agent-id template-review-hub`
-- Local eval: `pnpm braintrust:eval:dify:template-review-hub:local`
-- Published eval: `pnpm braintrust:eval:dify:template-review-hub`
+- Local eval: `pnpm langfuse:eval:dify:template-review-hub:local`
+- Published eval: `pnpm langfuse:eval:dify:template-review-hub`
 - Tools:
   - `template-review.hub_describe_proxy_tool` (read)
   - `template-review.hub_execute_proxy_tool` (external_side_effect, confirmation required)

@@ -149,7 +149,7 @@ Required evidence sources:
 
 - workflow logs
 - approval inbox records
-- trace/eval tooling such as Braintrust
+- trace/eval tooling such as Langfuse
 - incident notes
 
 Required review cadence:

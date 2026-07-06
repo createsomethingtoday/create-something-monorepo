@@ -20,18 +20,18 @@ Authorization: Bearer <MCP_API_KEY>
 
 The Worker accepts `MCP_API_KEY`, with `OPERATOR_API_TOKEN` as an optional fallback for operator clients. The deployed bearer value is stored in Infisical as `HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY` in `prod:/`.
 
-## Braintrust
+## Langfuse
 
-Braintrust is optional but supported as a first-class telemetry sink. When
-`BRAINTRUST_API_KEY` is configured on the Worker, every append-only telemetry
-event is mirrored into Braintrust as a tool span. Set `BRAINTRUST_PROJECT_NAME`
-or `BRAINTRUST_PROJECT_ID` when the events should land in a specific Braintrust
+Langfuse is optional but supported as a first-class telemetry sink. When
+`LANGFUSE_SECRET_KEY` is configured on the Worker, every append-only telemetry
+event is mirrored into Langfuse as a tool span. Set `LANGFUSE_PROJECT_NAME`
+or `LANGFUSE_PUBLIC_KEY` when the events should land in a specific Langfuse
 project.
 
 For native Notion agents that cannot be invoked programmatically, use this MCP
-as the Braintrust bridge: the agent records run starts, checks, writes, cleanup,
+as the Langfuse bridge: the agent records run starts, checks, writes, cleanup,
 scores, and final outcomes through the tools below, and the Worker sends the
-same evidence to Braintrust.
+same evidence to Langfuse.
 
 ## Tools
 
@@ -41,31 +41,31 @@ same evidence to Braintrust.
 - `record_write_test`
 - `record_cleanup_result`
 - `record_langfuse_evidence`
-- `record_braintrust_evidence`
+- `record_langfuse_evidence`
 - `record_score`
 - `finish_eval_run`
 - `get_eval_run`
 - `list_recent_eval_runs`
 
-Recommended Braintrust-first sequence:
+Recommended Langfuse-first sequence:
 
 1. `start_eval_run`
 2. `record_schema_check` and `record_permission_check`
 3. `record_write_test` and `record_cleanup_result` when a reversible test runs
-4. `record_braintrust_evidence` for traces, logs, experiments, datasets, scores, and permalinks
+4. `record_langfuse_evidence` for traces, logs, experiments, datasets, scores, and permalinks
 5. `record_score` once per category, including overall
 6. `finish_eval_run`
 
 ## Native Notion Agent Instruction Patch
 
-The live Notion `AGENT ANALYZER` instructions should treat Braintrust as the
+The live Notion `AGENT ANALYZER` instructions should treat Langfuse as the
 first-class runtime evidence layer:
 
-- Test Reports must include `Braintrust evidence reviewed`, including trace/span
+- Test Reports must include `Langfuse evidence reviewed`, including trace/span
   ids, experiment refs, dataset refs, score refs, log refs, permalinks, and a
   telemetry completeness note. If no evidence is available, write
-  `No Braintrust evidence found`.
-- Braintrust is the system of record for evaluation runtime evidence. Notion
+  `No Langfuse evidence found`.
+- Langfuse is the system of record for evaluation runtime evidence. Notion
   remains the system of record for evaluation outcomes, Test Reports, tasks, and
   status changes.
 - Langfuse may stay as supporting or fallback evidence while it remains
@@ -73,7 +73,7 @@ first-class runtime evidence layer:
   system.
 - When the Telemetry MCP is available, every evaluation run should call:
   `start_eval_run`, schema and permission checks, any write and cleanup events,
-  `record_braintrust_evidence`, category scores including `overall`, and
+  `record_langfuse_evidence`, category scores including `overall`, and
   `finish_eval_run`.
 
 Transcript-derived business guardrails:

@@ -25,7 +25,7 @@ const TEMPLATE_REQUIREMENTS = {
     'Use Ona.com as the design and communication foundation',
     'CREATE SOMETHING artifact language',
     'system maps, MCP boundaries, policy gates, receipts, validation proof, owners',
-    'Braintrust is not required unless a separate scored image-quality rubric exists',
+    'Langfuse is not required unless a separate scored image-quality rubric exists',
   ],
   'image-metadata.md': [
     '## Original Visuals',
@@ -38,7 +38,7 @@ const TEMPLATE_REQUIREMENTS = {
     '## Collected Screenshots',
     'Primary owned visual is placed in the article body',
     'No generated image is treated as durable source-of-truth evidence',
-    'Braintrust is excluded unless this asset is part of a separate scored rubric',
+    'Langfuse is excluded unless this asset is part of a separate scored rubric',
   ],
 };
 

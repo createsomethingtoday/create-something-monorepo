@@ -63,7 +63,7 @@ assert.match(
 assert.match(renderedPack, /Primary consumers: codex, mcp, ltd-docs, project-overlays/);
 assert.match(renderedPack, /Stop before:/);
 assert.match(renderedPack, /### templates\/surface-brief\.md/);
-assert.match(renderedPack, /```ts\nimport type \{ CanonProjectOverlayManifest \}/);
+assert.match(renderedPack, /```ts\nexport const CANON_PROJECT_OVERLAY_MANIFEST = \{/);
 
 const surfaceBrief = getCanonOverlayTemplateFile('templates/surface-brief.md');
 const encodedSurfaceBrief = getCanonOverlayTemplateFile('templates%2Fsurface-brief.md');

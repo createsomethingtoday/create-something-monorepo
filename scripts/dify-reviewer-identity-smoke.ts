@@ -8,7 +8,7 @@ import {
   callDifyChat,
   observationsContain,
   type DifyChatOutput
-} from '../evals/braintrust/dify/shared.js';
+} from '../evals/langfuse/dify/shared.js';
 
 type SecretRef = {
   environment: string;
@@ -54,6 +54,7 @@ type IdentityResult = {
   downstreamTools: string[];
   forbiddenDownstreamToolsUsed: string[];
   hasExpectedObservation: boolean;
+  hasInternalToolLeakage: boolean;
   error?: string;
 };
 
@@ -82,6 +83,16 @@ const FORBIDDEN_DOWNSTREAM_TOOLS = [
   'hub_refresh_connections',
   'hub_set_discovery',
   'hub_update_state'
+];
+
+const INTERNAL_TOOL_LEAK_PATTERNS = [
+  /<\s*\/?\s*think\b[^>]*>/i,
+  /\brecipient_name\b/i,
+  /\btool_input\b/i,
+  /\bagent_thoughts?\b/i,
+  /<function=/i,
+  /<\|channel=/i,
+  /\bto=functions\./i
 ];
 
 function parseArgs(argv: string[]): Options {
@@ -225,6 +236,10 @@ function answerMatchesExpected(answer: string, expectedEmail: string): boolean {
   return answer.trim().toLowerCase() === expectedEmail.toLowerCase();
 }
 
+function hasInternalToolLeakage(answer: string): boolean {
+  return INTERNAL_TOOL_LEAK_PATTERNS.some((pattern) => pattern.test(answer));
+}
+
 async function runTarget(
   inventory: DifyInventory,
   options: Options,
@@ -261,6 +276,7 @@ async function runTarget(
     FORBIDDEN_DOWNSTREAM_TOOLS.includes(tool)
   );
   const hasExpectedObservation = observationsContain(output, target.expectedEmail);
+  const leaksInternalToolText = hasInternalToolLeakage(output.answer);
   const usedHubExecute = output.toolCalls.some((call) => call.tool === 'hub_execute_proxy_tool');
   const ok =
     !output.skipped &&
@@ -268,6 +284,7 @@ async function runTarget(
     usedHubExecute &&
     hasExpectedObservation &&
     answerMatchesExpected(output.answer, target.expectedEmail) &&
+    !leaksInternalToolText &&
     downstreamTools.includes('webflow-template-review-mcp__template_review_get_review_context') &&
     forbiddenDownstreamToolsUsed.length === 0;
 
@@ -284,6 +301,7 @@ async function runTarget(
     downstreamTools,
     forbiddenDownstreamToolsUsed,
     hasExpectedObservation,
+    hasInternalToolLeakage: leaksInternalToolText,
     error: output.reason ?? output.error
   };
 }

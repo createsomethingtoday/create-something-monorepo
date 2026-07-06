@@ -9,7 +9,7 @@ this repo.
 Dify remains the right default for client-accessible agents because it gives us a
 usable chat surface, app publishing, MCP tool wiring, run logs, and Service API
 access that can be traced through Dify-native Langfuse and evaluated through
-Braintrust where CREATE SOMETHING owns the MCP boundary.
+Langfuse where CREATE SOMETHING owns the MCP boundary.
 
 Do not move agent governance into workflow automation tools. Workflow systems can
 still be useful for operational jobs, but they should not become the source of
@@ -27,7 +27,7 @@ Use this split:
 - `config/dify-agents/*.dify.yml`: importable Dify app DSL snapshot
 - `docs/DIFY_WORKSPACE_INVENTORY.generated.md`: generated operator view
 - `docs/DIFY_MCP_COVERAGE.generated.md`: MCP-to-Dify coverage backlog
-- `evals/braintrust/dify/`: Dify Service API evals and scorers
+- `evals/langfuse/dify/`: Dify Service API evals and scorers
 - Langfuse: Dify-native app traces, sessions, prompt/model behavior, latency,
   cost, and runtime errors
 - Infisical: all Dify app API keys and MCP bearer tokens
@@ -96,7 +96,7 @@ MCP eval acceptance. Langfuse owns the app-runtime trace.
 8. Add or review the compact agent manifest with instructions and secret references.
 9. Map the agent to allowed MCP servers and enabled tools in the inventory.
 10. Connect or verify Dify-native Langfuse tracing for the app runtime.
-11. Add Braintrust eval gates in `evals.required_checks` for the MCP contracts
+11. Add Langfuse eval gates in `evals.required_checks` for the MCP contracts
     CREATE SOMETHING owns.
 12. Run an inventory-driven Dify Service API smoke:
 
@@ -114,9 +114,9 @@ MCP eval acceptance. Langfuse owns the app-runtime trace.
     pnpm dify:agent:smoke -- --agent-id client-example-agent
     ```
 
-14. Add and run the dedicated Braintrust eval.
+14. Add and run the dedicated Langfuse eval.
 15. Publish or keep published only after Langfuse tracing is connected and the
-    required Braintrust MCP gates pass.
+    required Langfuse MCP gates pass.
 
 The scaffold command defaults to a dry run. Use `--write-manifest` and
 `--write-inventory` only when you are ready to add the draft agent contract to
@@ -154,10 +154,10 @@ Use two evidence streams:
 
 - Langfuse for Dify app traces: sessions, prompt/model behavior, latency, cost,
   runtime errors, and operator debugging.
-- Braintrust for CREATE SOMETHING-owned MCP gates: expected tool use, forbidden
+- Langfuse for CREATE SOMETHING-owned MCP gates: expected tool use, forbidden
   tool use, write confirmation, secret refusal, and policy-boundary regressions.
 
-Every Dify agent with CREATE SOMETHING-owned MCP tools must have Braintrust-owned
+Every Dify agent with CREATE SOMETHING-owned MCP tools must have Langfuse-owned
 eval gates. The inventory validator enforces a minimum:
 
 - `api_health`
@@ -197,4 +197,4 @@ the same across Cloud, Premium, and self-hosted deployments.
 - Do not give one client-facing agent every MCP tool by default.
 - Do not expose write-capable tools without confirmation evals.
 - Do not publish an agent that lacks Langfuse tracing, a Service API smoke, and
-  the required Braintrust MCP evals.
+  the required Langfuse MCP evals.

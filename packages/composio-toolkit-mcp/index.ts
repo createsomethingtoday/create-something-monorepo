@@ -1,7 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
-import { initLogger, type Logger, type Span } from 'braintrust';
+import { Langfuse } from 'langfuse';
 import {
   ComposioClient,
   type ComposioToolDef,
@@ -16,9 +16,11 @@ interface Env {
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
   COMPOSIO_ENTITY_RESOLUTION_MODE?: string;
   COMPOSIO_TOOL_CACHE_SECONDS?: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_ID?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_HOST?: string;
+  LANGFUSE_BASE_URL?: string;
+  LANGFUSE_PROJECT_NAME?: string;
 }
 
 type ToolkitRuntime = {
@@ -40,7 +42,7 @@ type EntityResolutionMode = 'header_required' | 'compat';
 const SERVER_NAME = 'composio-toolkit-mcp';
 const SERVER_VERSION = '0.1.0';
 const DEFAULT_CACHE_SECONDS = 300;
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 const ZOOM_TRANSCRIPT_STATUS_TOOL = 'zoom_latest_transcript_status';
 const ZOOM_LIST_TRANSCRIPTS_TOOL = 'zoom_list_available_transcripts';
 const DEFAULT_ZOOM_LOOKBACK_DAYS = 7;
@@ -57,9 +59,8 @@ const ZOOM_TOOL_NAMES = {
 
 const runtimeCache = new Map<string, ToolkitRuntime>();
 const pendingRuntimeLoads = new Map<string, Promise<ToolkitRuntime>>();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let braintrustLogger: Logger<any> | null = null;
-let braintrustLoggerKey: string | null = null;
+let langfuseClient: Langfuse | null = null;
+let langfuseLoggerKey: string | null = null;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -83,9 +84,9 @@ export default {
             authConfigMapEntries: Object.keys(buildAuthConfigMap(env)).length,
             defaultEntity: env.COMPOSIO_DEFAULT_ENTITY_ID ?? 'default',
             entityResolutionMode: resolveEntityResolutionMode(env),
-            braintrustApiKey: Boolean(env.BRAINTRUST_API_KEY),
-            braintrustProjectId: resolveBraintrustProjectId(env),
-            braintrustProject: resolveBraintrustProjectName(env),
+            langfusePublicKey: Boolean(env.LANGFUSE_PUBLIC_KEY),
+            langfuseSecretKey: Boolean(env.LANGFUSE_SECRET_KEY),
+            langfuseProject: resolveLangfuseProjectName(env),
           },
           cache: {
             ttlSeconds: parsePositiveInt(env.COMPOSIO_TOOL_CACHE_SECONDS, DEFAULT_CACHE_SECONDS),
@@ -143,7 +144,7 @@ export default {
 function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request): Server {
   const client = new ComposioClient({ apiKey: env.COMPOSIO_API_KEY! });
   const authConfigMap = buildAuthConfigMap(env);
-  const logger = getBraintrustLogger(env);
+  const logger = getLangfuseLogger(env);
   const isZoomToolkit = runtime.toolkitSlug === 'zoom';
 
   const managementTools: Tool[] = [
@@ -360,7 +361,7 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
         const success = result.isError !== true;
         const error = explicitError ?? (success ? undefined : extractToolErrorMessage(result));
 
-        emitBraintrustInvocation(logger, {
+        emitLangfuseInvocation(logger, {
           serverName: `${SERVER_NAME}:${runtime.toolkitSlug}`,
           toolkitSlug: runtime.toolkitSlug,
           toolName,
@@ -375,7 +376,7 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           error,
         }).catch((emitError) => {
           console.warn(
-            `[telemetry] braintrust emit failed for ${runtime.toolkitSlug}:${toolName}:`,
+            `[telemetry] langfuse emit failed for ${runtime.toolkitSlug}:${toolName}:`,
             emitError,
           );
         });
@@ -2004,46 +2005,36 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   return parsed;
 }
 
-function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
-  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
-  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+function resolveLangfuseProjectName(env: { LANGFUSE_PROJECT_NAME?: string }): string {
+  const configured = env.LANGFUSE_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_LANGFUSE_PROJECT_NAME;
 }
 
-function resolveBraintrustProjectId(env: { BRAINTRUST_PROJECT_ID?: string }): string | null {
-  const configured = env.BRAINTRUST_PROJECT_ID?.trim();
-  return configured && configured.length > 0 ? configured : null;
-}
+function getLangfuseLogger(env: Env): Langfuse | null {
+  const publicKey = env.LANGFUSE_PUBLIC_KEY?.trim();
+  const secretKey = env.LANGFUSE_SECRET_KEY?.trim();
+  if (!publicKey || !secretKey) return null;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getBraintrustLogger(env: Env): Logger<any> | null {
-  const apiKey = env.BRAINTRUST_API_KEY?.trim();
-  if (!apiKey) return null;
+  const projectName = resolveLangfuseProjectName(env);
+  const host = env.LANGFUSE_HOST?.trim() || env.LANGFUSE_BASE_URL?.trim() || 'https://us.cloud.langfuse.com';
+  const nextKey = `${publicKey}::${secretKey}::${host}::${projectName}`;
 
-  const projectName = resolveBraintrustProjectName(env);
-  const projectId = resolveBraintrustProjectId(env);
-  const nextKey = `${apiKey}::${projectId ?? ''}::${projectName}`;
-
-  if (!braintrustLogger || braintrustLoggerKey !== nextKey) {
-    const loggerConfig: Parameters<typeof initLogger>[0] = {
-      apiKey,
-      projectName,
-      asyncFlush: true,
-      setCurrent: true,
-    };
-    if (projectId) {
-      (loggerConfig as Record<string, unknown>).projectId = projectId;
-    }
-
-    braintrustLogger = initLogger(loggerConfig);
-    braintrustLoggerKey = nextKey;
+  if (!langfuseClient || langfuseLoggerKey !== nextKey) {
+    langfuseClient = new Langfuse({
+      publicKey,
+      secretKey,
+      baseUrl: host,
+      flushAt: 1,
+      flushInterval: 250,
+    });
+    langfuseLoggerKey = nextKey;
   }
 
-  return braintrustLogger;
+  return langfuseClient;
 }
 
-async function emitBraintrustInvocation(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  logger: Logger<any>,
+async function emitLangfuseInvocation(
+  client: Langfuse,
   args: {
     serverName: string;
     toolkitSlug: string;
@@ -2059,31 +2050,37 @@ async function emitBraintrustInvocation(
     requestId?: string | null;
   },
 ): Promise<void> {
-  await logger.traced(
-    (span: Span) => {
-      span.log({
-        input: args.input,
-        output: args.output,
-        error: args.error,
-        tags: ['mcp', SERVER_NAME, args.toolkitSlug, args.toolName],
-        metadata: {
-          server: args.serverName,
-          toolkit: args.toolkitSlug,
-          tool: args.toolName,
-          composioToolSlug: args.composioToolSlug,
-          accountId: args.accountId,
-          durationMs: args.durationMs,
-          success: args.success,
-          correlationId: args.correlationId ?? null,
-          requestId: args.requestId ?? null,
-        },
-      });
-    },
-    {
-      name: `mcp:${args.serverName}:${args.toolName}`,
-      type: 'tool',
-    },
-  );
+  const metadata = {
+    server: args.serverName,
+    toolkit: args.toolkitSlug,
+    tool: args.toolName,
+    composioToolSlug: args.composioToolSlug,
+    accountId: args.accountId,
+    durationMs: args.durationMs,
+    success: args.success,
+    error: args.error,
+    correlationId: args.correlationId ?? null,
+    requestId: args.requestId ?? null,
+  };
+  const trace = client.trace({
+    name: `mcp:${args.serverName}:${args.toolName}`,
+    userId: args.accountId,
+    input: args.input,
+    output: args.output,
+    metadata,
+    tags: ['mcp', SERVER_NAME, args.toolkitSlug, args.toolName],
+  });
+  trace
+    .span({
+      name: `execute:${args.toolName}`,
+      input: args.input,
+      output: args.output,
+      metadata,
+      level: args.success ? 'DEFAULT' : 'ERROR',
+      statusMessage: args.error,
+    })
+    .end();
+  await client.flushAsync();
 }
 
 function resolveInvocationTraceContext(extra: unknown, request: Request): {

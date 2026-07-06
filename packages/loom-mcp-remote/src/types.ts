@@ -16,10 +16,10 @@ export interface Env {
   MIGRATION_SIGNING_SECRET?: string;
   LOOM_REPO_ID?: string;
   LOOM_NOTION_TOKEN?: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
-  BRAINTRUST_PROJECT_ID?: string;
-  BRAINTRUST_ENABLED?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
+  LANGFUSE_ENABLED?: string;
 }
 
 export interface TaskRow {

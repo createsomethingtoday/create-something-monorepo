@@ -158,9 +158,9 @@ Credential handling rule:
 
 ---
 
-## 6. Braintrust positioning
+## 6. Langfuse positioning
 
-When Braintrust is part of the discussion:
+When Langfuse is part of the discussion:
 
 - use it for traces, evals, and observability
 - use it to inspect policy outcomes and runtime behavior
@@ -191,7 +191,7 @@ When Braintrust is part of the discussion:
 ### Part 4. Evidence
 
 - show where runbooks and golden-task checks live
-- show where Braintrust or logs are used for evidence
+- show where Langfuse or logs are used for evidence
 
 ---
 

@@ -254,16 +254,16 @@ function isIssuableStatus(status: string): boolean {
 	return status === 'active' || status === 'initialized';
 }
 
-function resolveObservabilityBaseline(metadata: Record<string, unknown>): { telemetry: true; braintrust: true } {
+function resolveObservabilityBaseline(metadata: Record<string, unknown>): { telemetry: true; langfuse: true } {
 	const baseline = metadata.observability_baseline;
 	if (baseline && typeof baseline === 'object' && !Array.isArray(baseline)) {
 		return {
 			telemetry: true,
-			braintrust: true,
+			langfuse: true,
 		};
 	}
 	return {
 		telemetry: true,
-		braintrust: true,
+		langfuse: true,
 	};
 }

@@ -41,11 +41,11 @@
     "notes": "The shared Abundance MCP bearer is enough for MCP initialize and list_public_jobs tools/call. The MCP uses standard Streamable HTTP session headers after initialize; it does not require a user identity session for this read-only smoke."
   },
   "evals": {
-    "owner_system": "braintrust",
+    "owner_system": "langfuse",
     "project": "create-something-dify-agents",
     "experiment": "abundance_hub",
-    "local_command": "pnpm braintrust:eval:dify:abundance-hub:local",
-    "published_command": "pnpm braintrust:eval:dify:abundance-hub",
+    "local_command": "pnpm langfuse:eval:dify:abundance-hub:local",
+    "published_command": "pnpm langfuse:eval:dify:abundance-hub",
     "required_checks": [
       "api_health",
       "expected_tool_use",
@@ -59,18 +59,17 @@
     "last_verified_at": "2026-05-14",
     "local_result": "passed: 100%",
     "published_result": "passed: 100%",
-    "braintrust_url": "https://www.braintrust.dev/app/CREATE%20SOMETHING/p/create-something-dify-agents/experiments/abundance_hub",
-    "notes": "The Braintrust suite calls the live Dify Service API and verifies Abundance Jobs MCP tool routing, no speculative send_job_to_funnel writes, secret refusal, latency budget, Dify trace IDs, and the Braintrust/Langfuse observability contract."
+    "langfuse_url": "https://www.langfuse.dev/app/CREATE%20SOMETHING/p/create-something-dify-agents/experiments/abundance_hub",
+    "notes": "The Langfuse suite calls the live Dify Service API and verifies Abundance Jobs MCP tool routing, no speculative send_job_to_funnel writes, secret refusal, latency budget, Dify trace IDs, and the Langfuse/Langfuse observability contract."
   },
   "observability": {
-    "braintrust": {
-      "project": "create-something-dify-agents",
-      "experiment": "abundance_hub"
-    },
     "langfuse": {
       "project": "abundance-hub",
       "environment": "prod",
-      "trace_join_keys": ["message_id", "conversation_id"]
+      "trace_join_keys": [
+        "message_id",
+        "conversation_id"
+      ]
     }
   },
   "mcp_server": {
@@ -92,13 +91,23 @@
       "name": "get_job",
       "enabled": true,
       "write_capability": false,
-      "dsl_parameters": ["include_raw_payload", "job_id"]
+      "dsl_parameters": [
+        "include_raw_payload",
+        "job_id"
+      ]
     },
     {
       "name": "list_public_jobs",
       "enabled": true,
       "write_capability": false,
-      "dsl_parameters": ["limit", "offset", "source_system", "specialty", "state", "status"]
+      "dsl_parameters": [
+        "limit",
+        "offset",
+        "source_system",
+        "specialty",
+        "state",
+        "status"
+      ]
     },
     {
       "name": "search_public_jobs",
@@ -118,7 +127,9 @@
       "name": "send_job_to_funnel",
       "enabled": true,
       "write_capability": true,
-      "dsl_parameters": ["job_id"],
+      "dsl_parameters": [
+        "job_id"
+      ],
       "requires_user_confirmation": true
     }
   ],

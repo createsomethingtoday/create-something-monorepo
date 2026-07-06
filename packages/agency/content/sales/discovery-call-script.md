@@ -149,10 +149,10 @@ Pivot:
 
 > "Do you want connectivity only, or governed execution with measurable reliability?"
 
-### Objection: "Can Braintrust handle the policy?"
+### Objection: "Can Langfuse handle the policy?"
 Response:
 
-> "Braintrust helps us trace, evaluate, and tune runtime behavior. It is not the approval or policy enforcement layer. The policy boundary still has to be designed explicitly."
+> "Langfuse helps us trace, evaluate, and tune runtime behavior. It is not the approval or policy enforcement layer. The policy boundary still has to be designed explicitly."
 
 Pivot:
 

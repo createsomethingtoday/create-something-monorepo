@@ -118,5 +118,5 @@ The workflow is considered ready for release only if:
 
 ## Notes
 
-- Braintrust may capture traces and eval evidence for these checks.
-- Braintrust does not enforce approval or block decisions.
+- Langfuse may capture traces and eval evidence for these checks.
+- Langfuse does not enforce approval or block decisions.

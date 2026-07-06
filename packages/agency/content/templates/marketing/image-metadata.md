@@ -59,4 +59,4 @@ a case study, a tool comparison, or agent behavior.
 - [ ] Captions and alt text are written.
 - [ ] Refresh dates are assigned.
 - [ ] No generated image is treated as durable source-of-truth evidence.
-- [ ] Braintrust is excluded unless this asset is part of a separate scored rubric.
+- [ ] Langfuse is excluded unless this asset is part of a separate scored rubric.

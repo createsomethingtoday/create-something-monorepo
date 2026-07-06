@@ -1,0 +1,187 @@
+name: Langfuse MCP Evals
+
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  pull_request:
+    paths:
+      - 'evals/langfuse/mcp/**'
+      - 'scripts/langfuse-mcp-evals.env.example'
+      - 'scripts/langfuse-eval-runner.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/langfuse-mcp-evals.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'evals/langfuse/mcp/**'
+      - 'scripts/langfuse-mcp-evals.env.example'
+      - 'scripts/langfuse-eval-runner.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/langfuse-mcp-evals.yml'
+  workflow_dispatch:
+    inputs:
+      run_live:
+        description: 'Also run the live Langfuse emit job'
+        required: false
+        default: false
+        type: boolean
+      run_local:
+        description: 'Run the local eval job without Langfuse credentials'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: langfuse-mcp-evals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evals-local:
+    name: MCP Evals (Local)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ (github.event_name != 'schedule' || vars.ENABLE_LANGFUSE_MCP_EVALS_SCHEDULE == 'true') && (github.event_name != 'workflow_dispatch' || github.event.inputs.run_local != 'false') }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: List MCP evaluators
+        run: pnpm langfuse:eval:mcp:list
+
+      - name: Run MCP evaluators locally
+        run: pnpm langfuse:eval:mcp:local | tee langfuse-mcp-evals.local.jsonl
+
+      - name: Upload local eval artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: langfuse-mcp-evals-local
+          path: langfuse-mcp-evals.local.jsonl
+          if-no-files-found: warn
+
+  evals-live:
+    name: MCP Evals (Langfuse Emit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: evals-local
+    if: ${{ always() && (github.event_name != 'schedule' || vars.ENABLE_LANGFUSE_MCP_EVALS_SCHEDULE == 'true') && (needs.evals-local.result == 'success' || needs.evals-local.result == 'skipped') && ((github.event_name == 'workflow_dispatch' && github.event.inputs.run_live == 'true') || (github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request')) }}
+    env:
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+      LANGFUSE_BASE_URL: ${{ vars.LANGFUSE_BASE_URL }}
+      LANGFUSE_PROJECT_NAME: ${{ vars.LANGFUSE_PROJECT_NAME }}
+      HALFDOZEN_AGENT_ROUTE_TOKEN: ${{ secrets.HALFDOZEN_AGENT_ROUTE_TOKEN }}
+      MCP_FLEET_CONTRACT_URL: ${{ vars.MCP_FLEET_CONTRACT_URL }}
+      MCP_FLEET_CONTRACT_QUERY: ${{ vars.MCP_FLEET_CONTRACT_QUERY }}
+      MCP_FLEET_ERROR_URL: ${{ vars.MCP_FLEET_ERROR_URL }}
+      MCP_FLEET_ERROR_QUERY: ${{ vars.MCP_FLEET_ERROR_QUERY }}
+      MCP_ACCOUNT_ISOLATION_URL: ${{ vars.MCP_ACCOUNT_ISOLATION_URL }}
+      MCP_ACCOUNT_ISOLATION_TOKEN: ${{ secrets.MCP_ACCOUNT_ISOLATION_TOKEN }}
+      MCP_ACCOUNT_HEADER_NAME: ${{ vars.MCP_ACCOUNT_HEADER_NAME }}
+      MCP_ACCOUNT_FIELD_PATH: ${{ vars.MCP_ACCOUNT_FIELD_PATH }}
+      MCP_ACCOUNT_A: ${{ vars.MCP_ACCOUNT_A }}
+      MCP_ACCOUNT_B: ${{ vars.MCP_ACCOUNT_B }}
+      MCP_ACCOUNT_ISOLATION_BODY_JSON: ${{ vars.MCP_ACCOUNT_ISOLATION_BODY_JSON }}
+
+    steps:
+      - name: Check live eval prerequisites
+        id: prereqs
+        run: |
+          if [ -z "${LANGFUSE_PUBLIC_KEY}" ] || [ -z "${LANGFUSE_SECRET_KEY}" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Langfuse keys are unset; skipping live Langfuse emit job."
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.prereqs.outputs.enabled == 'true'
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        if: steps.prereqs.outputs.enabled == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        if: steps.prereqs.outputs.enabled == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.prereqs.outputs.enabled == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Run MCP evaluators with Langfuse emit
+        if: steps.prereqs.outputs.enabled == 'true'
+        run: pnpm langfuse:eval:mcp | tee langfuse-mcp-evals.live.jsonl
+
+      - name: Enforce live eval emission
+        if: steps.prereqs.outputs.enabled == 'true'
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+
+          const path = 'langfuse-mcp-evals.live.jsonl';
+          const raw = fs.readFileSync(path, 'utf8').trim();
+          if (!raw) {
+            console.error('No output found from Langfuse eval run.');
+            process.exit(1);
+          }
+
+          const summaries = raw
+            .split('\n')
+            .filter(Boolean)
+            .map((line) => {
+              try {
+                return JSON.parse(line);
+              } catch {
+                return null;
+              }
+            })
+            .filter(Boolean);
+
+          const run = summaries.find((row) => row.langfuseEvalRun)?.langfuseEvalRun;
+          if (!run) {
+            console.error('No langfuseEvalRun summary found.');
+            process.exit(1);
+          }
+          if (run.failed !== 0 || run.emittedToLangfuse !== true) {
+            console.error(`Langfuse eval run failed or did not emit: ${JSON.stringify(run)}`);
+            process.exit(1);
+          }
+
+          console.log('All live evals passed and emitted to Langfuse.');
+          NODE
+
+      - name: Upload live eval artifact
+        if: always() && steps.prereqs.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: langfuse-mcp-evals-live
+          path: langfuse-mcp-evals.live.jsonl
+          if-no-files-found: warn

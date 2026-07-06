@@ -92,6 +92,6 @@ We will also define:
 
 ## Notes on observability
 
-If tracing or evals are part of the plan, we may recommend Braintrust for runtime visibility.
+If tracing or evals are part of the plan, we may recommend Langfuse for runtime visibility.
 
-Braintrust is used for observability and tuning, not as the enforcement mechanism for workflow policy.
+Langfuse is used for observability and tuning, not as the enforcement mechanism for workflow policy.

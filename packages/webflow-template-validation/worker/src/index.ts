@@ -15,6 +15,7 @@ import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
 import { validateInteractions, type CmsTemplateHint } from './validators/interactions-validator';
 import { fetchHTML } from './utils/fetch-utils';
+import { Langfuse } from 'langfuse';
 import {
 	ValidationRequest,
 	ValidationResponse,
@@ -42,6 +43,7 @@ const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
 const REVIEW_JOB_EVENT_LIMIT = 250;
+const DEFAULT_LANGFUSE_HOST = 'https://us.cloud.langfuse.com';
 const AIRTABLE_BASE_ID = 'appMoIgXMTTTNIc3p';
 const AIRTABLE_TABLE_ID = 'tblRwzpWoLgE9MrUm';
 const DEFAULT_SUBMISSION_WINDOW_MS = 15 * 60 * 1000;
@@ -55,6 +57,8 @@ const BRIDGE_USAGE_MAX_RECORDS = 1000;
 const BRIDGE_USAGE_DEFAULT_LIMIT = 50;
 const BRIDGE_USAGE_MAX_LIMIT = 250;
 const encoder = new TextEncoder();
+let langfuseClient: Langfuse | null = null;
+let langfuseClientKey: string | null = null;
 
 const TERMINAL_STATUSES = new Set<ReviewStatusResponse['status']>([
 	'completed',
@@ -2419,47 +2423,58 @@ async function emitTelemetry(env: unknown, event: TelemetryEvent): Promise<void>
 	} else {
 		console.log(line);
 	}
-	await emitBraintrustTrace(env, payload).catch(() => undefined);
+	await emitLangfuseTrace(env, payload).catch(() => undefined);
 }
 
-async function emitBraintrustTrace(
+async function emitLangfuseTrace(
 	env: unknown,
 	payload: Record<string, unknown>
 ): Promise<void> {
-	const apiKey = readEnvString(env, 'BRAINTRUST_API_KEY');
-	const projectId = readEnvString(env, 'BRAINTRUST_PROJECT_ID');
-	if (!apiKey || !projectId) return;
+	const publicKey = readEnvString(env, 'LANGFUSE_PUBLIC_KEY');
+	const secretKey = readEnvString(env, 'LANGFUSE_SECRET_KEY');
+	if (!publicKey || !secretKey) return;
 
-	const body = {
-		events: [
-			{
-				id: crypto.randomUUID(),
-				created: new Date().toISOString(),
-				input: payload,
-				metadata: {
-					correlationId: payload.correlationId,
-					source: 'webflow-validation-worker'
-				}
-			}
-		]
-	};
+	const host =
+		readEnvString(env, 'LANGFUSE_BASE_URL') ??
+		readEnvString(env, 'LANGFUSE_HOST') ??
+		DEFAULT_LANGFUSE_HOST;
+	const projectName = readEnvString(env, 'LANGFUSE_PROJECT_NAME') ?? 'webflow-validation-worker';
+	const nextKey = `${publicKey}::${secretKey}::${host}::${projectName}`;
 
-	const response = await fetch(
-		`https://api.braintrust.dev/v1/project_logs/${projectId}/insert`,
-		{
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${apiKey}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(body)
-		}
-	);
-
-	if (!response.ok) {
-		const text = await response.text().catch(() => '');
-		console.warn(`Braintrust trace failed: ${response.status} ${text}`);
+	if (!langfuseClient || langfuseClientKey !== nextKey) {
+		langfuseClient = new Langfuse({
+			publicKey,
+			secretKey,
+			baseUrl: host,
+			flushAt: 1,
+			flushInterval: 250
+		});
+		langfuseClientKey = nextKey;
 	}
+
+	const trace = langfuseClient.trace({
+		name: 'webflow-validation-worker:event',
+		input: payload,
+		metadata: {
+			correlationId: payload.correlationId,
+			projectName,
+			source: 'webflow-validation-worker'
+		},
+		tags: ['webflow', 'validation', String(payload.event ?? 'event')]
+	});
+	trace
+		.span({
+			name: String(payload.event ?? 'validation-event'),
+			input: payload,
+			metadata: {
+				correlationId: payload.correlationId,
+				level: payload.level,
+				source: 'webflow-validation-worker'
+			},
+			level: payload.level === 'error' ? 'ERROR' : 'DEFAULT'
+		})
+		.end();
+	await langfuseClient.flushAsync();
 }
 
 function normalizeSiteUrl(value: string | null): string | null {

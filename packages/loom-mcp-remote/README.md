@@ -46,7 +46,7 @@ This syncs:
 - `MIGRATION_ADMIN_TOKEN`
 - `MIGRATION_SIGNING_SECRET`
 - `LOOM_NOTION_TOKEN` when configured
-- Braintrust secrets when telemetry sync is enabled
+- Langfuse secrets when telemetry sync is enabled
 
 Hub runtimes that broker this server also need `LOOM_MCP_API_TOKEN`:
 

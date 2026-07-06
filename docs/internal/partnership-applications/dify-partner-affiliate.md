@@ -28,7 +28,7 @@ CREATE SOMETHING can help Dify customers move from experimentation to governed p
 - Register and document MCP server cards and tool boundaries.
 - Package Dify apps, workflows, and DSL snapshots.
 - Define allowed, approval-needed, and blocked action states.
-- Run Dify agent smoke checks and Braintrust eval gates.
+- Run Dify agent smoke checks and Langfuse eval gates.
 - Produce client-safe runbooks and release evidence.
 - Train operators on where Dify ends and the policy layer begins.
 
@@ -47,7 +47,7 @@ Marketplace submissions should be treated as distribution and authority builders
 
 Use this answer when the affiliate application asks what has already been built:
 
-CREATE SOMETHING has built a Dify-first control plane for agent systems over MCPs. The repo includes Dify workspace inventory, MCP coverage artifacts, Dify DSL snapshots, compact agent manifests, secret-refusal checks, Braintrust eval suites, and a public trust catalog that exposes only sanitized evidence.
+CREATE SOMETHING has built a Dify-first control plane for agent systems over MCPs. The repo includes Dify workspace inventory, MCP coverage artifacts, Dify DSL snapshots, compact agent manifests, secret-refusal checks, Langfuse eval suites, and a public trust catalog that exposes only sanitized evidence.
 
 Public and sanitized proof includes the CREATE SOMETHING Guide Agent, public read-only MCP cards, and generated trust evidence. Internal delivery proof includes client and workflow agents such as Abundance Hub, YouTube Transcript Notion Agent, and Webflow Marketplace Creator Agent.
 

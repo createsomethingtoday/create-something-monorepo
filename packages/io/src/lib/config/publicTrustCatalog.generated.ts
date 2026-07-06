@@ -19,7 +19,7 @@ export const PUBLIC_TRUST_CATALOG = {
       "toolCount": 5,
       "riskSummary": "Read-only public knowledge surface. No write tools, private client hubs, raw traces, or credential references are included in the public card.",
       "policyPack": "public-readonly-mcp.v1",
-      "evalSuite": "braintrust:eval:mcp:public-trust",
+      "evalSuite": "langfuse:eval:mcp:public-trust",
       "evalStatus": "pass",
       "requiredChecks": [
         "auth_not_required",
@@ -35,10 +35,6 @@ export const PUBLIC_TRUST_CATALOG = {
       "evidenceRef": "mcp/create-something",
       "evidenceSummary": "The public card is limited to read-only content search, relationship traversal, classification, triad analysis, and design audit guidance over owned public CREATE SOMETHING material.",
       "observability": {
-        "braintrust": {
-          "project": "create-something-mcp",
-          "experiment": "create_something_public_trust"
-        },
         "langfuse": {
           "project": "create-something-mcp",
           "environment": "production"
@@ -108,7 +104,7 @@ export const PUBLIC_TRUST_CATALOG = {
       "toolCount": 14,
       "riskSummary": "Read-only workflow guidance surface. Secret-echoing config generation is excluded from the public guide agent and public snippets are generated without credential values.",
       "policyPack": "public-playbook-mcp.v1",
-      "evalSuite": "braintrust:eval:mcp:public-trust",
+      "evalSuite": "langfuse:eval:mcp:public-trust",
       "evalStatus": "pass",
       "requiredChecks": [
         "auth_not_required",
@@ -124,10 +120,6 @@ export const PUBLIC_TRUST_CATALOG = {
       "evidenceRef": "mcp/playbook",
       "evidenceSummary": "The public card covers read-only host playbooks, workflow retrieval, outcome playbooks, MCP discovery, and connection verification guidance.",
       "observability": {
-        "braintrust": {
-          "project": "playbook-mcp",
-          "experiment": "playbook_public_trust"
-        },
         "langfuse": {
           "project": "playbook-mcp",
           "environment": "production"
@@ -197,7 +189,7 @@ export const PUBLIC_TRUST_CATALOG = {
       "toolCount": 6,
       "riskSummary": "Read-only advisory framework surface. It returns structured analysis and does not access private tenant state.",
       "policyPack": "public-three-tier-framework.v1",
-      "evalSuite": "braintrust:eval:mcp:public-trust",
+      "evalSuite": "langfuse:eval:mcp:public-trust",
       "evalStatus": "pass",
       "requiredChecks": [
         "auth_not_required",
@@ -213,10 +205,6 @@ export const PUBLIC_TRUST_CATALOG = {
       "evidenceRef": "mcp/three-tier-framework",
       "evidenceSummary": "The public card covers read-only framework classification, debugging, MCP analysis, policy artifact identification, metaphor mapping, and architecture comparison.",
       "observability": {
-        "braintrust": {
-          "project": "three-tier-framework-mcp",
-          "experiment": "three_tier_framework_public_trust"
-        },
         "langfuse": {
           "project": "three-tier-framework-mcp",
           "environment": "production"
@@ -288,7 +276,7 @@ export const PUBLIC_TRUST_CATALOG = {
       "toolCount": 18,
       "riskSummary": "No write-capable tools, private client hubs, broad connector surfaces, or credential-backed MCP cards are enabled.",
       "policyPack": "public-create-something-guide-agent.v1",
-      "evalSuite": "braintrust:eval:dify:create-something-guide-agent",
+      "evalSuite": "langfuse:eval:dify:create-something-guide-agent",
       "evalStatus": "pass",
       "requiredChecks": [
         "api_health",
@@ -307,10 +295,6 @@ export const PUBLIC_TRUST_CATALOG = {
       "evidenceRef": "agent/create-something-guide-agent",
       "evidenceSummary": "The public guide agent is a published read-only Dify agent backed only by the three public read-only MCPs in this catalog.",
       "observability": {
-        "braintrust": {
-          "project": "create-something-dify-agents",
-          "experiment": "create_something_guide_agent"
-        },
         "langfuse": {
           "project": "create-something-guide-agent",
           "environment": "public"

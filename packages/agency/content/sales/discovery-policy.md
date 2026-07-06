@@ -119,20 +119,20 @@ If a workflow cannot be described in these terms, it is not ready for Policy OS.
 
 ---
 
-## Braintrust standard
+## Langfuse standard
 
-Braintrust is an observability and eval layer.
+Langfuse is an observability and eval layer.
 
 It is not the policy control plane.
 
-Use Braintrust for:
+Use Langfuse for:
 
 - decision traces
 - evals
 - runtime observation
 - regression visibility
 
-Do not describe Braintrust as the mechanism that enforces `allow`, `approval-required`, or `block`.
+Do not describe Langfuse as the mechanism that enforces `allow`, `approval-required`, or `block`.
 Those belong in policy artifacts, workflow controls, and runtime enforcement paths.
 
 ---

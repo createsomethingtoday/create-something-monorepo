@@ -62,7 +62,7 @@ type DifyAgent = {
   instructions_source: string;
   eval_suite: string;
   evals: {
-    owner_system: 'braintrust';
+    owner_system: 'langfuse';
     project?: string;
     experiment?: string;
     required_checks: EvalCheck[];
@@ -103,7 +103,7 @@ const ROOT = process.cwd();
 const INVENTORY_PATH = resolve(ROOT, 'config/dify/inventory.json');
 const AGENTS_DIR = resolve(ROOT, 'config/dify-agents');
 const DEFAULT_DIFY_API_BASE_URL = 'https://api.dify.ai/v1';
-const DEFAULT_BRAINTRUST_PROJECT = 'create-something-dify-agents';
+const DEFAULT_LANGFUSE_PROJECT = 'create-something-dify-agents';
 
 const args = parseArgs(process.argv.slice(2));
 
@@ -284,18 +284,18 @@ function buildInventoryEntry(
     enabled_tools: tools.map((tool) => `${options.serverId}.${tool.name}`),
     policy_pack: options.policyPack,
     instructions_source: `${manifestPath}#agent_prompt`,
-    eval_suite: `braintrust:eval:dify:${options.agentId}`,
+    eval_suite: `langfuse:eval:dify:${options.agentId}`,
     evals: {
-      owner_system: 'braintrust',
-      project: DEFAULT_BRAINTRUST_PROJECT,
+      owner_system: 'langfuse',
+      project: DEFAULT_LANGFUSE_PROJECT,
       experiment: toSnakeCase(options.agentId),
       required_checks: requiredChecks,
-      notes: 'Scaffolded. Add a dedicated Braintrust eval before publishing.'
+      notes: 'Scaffolded. Add a dedicated Langfuse eval before publishing.'
     },
     owner: options.owner,
     write_policy: writeCapable ? 'requires_explicit_confirmation' : 'none',
     notes:
-      'Scaffolded Dify agent entry. Import/publish in Dify Studio, then add smoke and Braintrust eval commands.'
+      'Scaffolded Dify agent entry. Import/publish in Dify Studio, then add smoke and Langfuse eval commands.'
   };
 }
 
@@ -377,7 +377,7 @@ function printResult(
     '1. Import or configure the Dify app in Studio with the listed MCP server and tools.'
   );
   console.log('2. Store the Dify Service API key at the generated Infisical path.');
-  console.log('3. Add a Dify smoke script and Braintrust eval under evals/braintrust/dify/.');
+  console.log('3. Add a Dify smoke script and Langfuse eval under evals/langfuse/dify/.');
   console.log('4. Run pnpm dify:inventory:generate and pnpm dify:inventory:check.');
 }
 

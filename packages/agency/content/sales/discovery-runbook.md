@@ -141,13 +141,13 @@ If you cannot confidently state those three outputs, do not position the session
 
 ---
 
-## Braintrust usage standard
+## Langfuse usage standard
 
-When Braintrust appears in the conversation, frame it correctly:
+When Langfuse appears in the conversation, frame it correctly:
 
-- Braintrust provides traces, evals, and observability
-- Braintrust helps inspect policy outcomes and runtime behavior
-- Braintrust does not replace policy artifacts or approval logic
+- Langfuse provides traces, evals, and observability
+- Langfuse helps inspect policy outcomes and runtime behavior
+- Langfuse does not replace policy artifacts or approval logic
 
 Use it as evidence infrastructure, not as the governance mechanism itself.
 

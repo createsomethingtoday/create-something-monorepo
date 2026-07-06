@@ -34,7 +34,7 @@ The differentiated package is OpenAI plus the CREATE SOMETHING control layer:
 - MCP tool schemas and custom connector boundaries.
 - Policy OS approval, blocked-state, and escalation artifacts.
 - OpenAI Agents SDK smoke tests against named MCP scenarios.
-- Braintrust tracing and eval scaffolds for MCP and agent runs.
+- Langfuse tracing and eval scaffolds for MCP and agent runs.
 - ChatGPT MCP OAuth compatibility that still delivers managed bearer tokens
   through the existing identity and Hub resolver path.
 - Public stack boundaries that keep model hosts replaceable.
@@ -56,7 +56,7 @@ Use this concise positioning summary:
 | OpenAI role in stack boundary | `packages/agency/src/routes/stack/+page.svelte` | Shows OpenAI as the reasoning and agent host while CREATE SOMETHING owns tool schemas, prompts, approval behavior, eval gates, and model-routing notes. |
 | Judgment layer dogfood loop | `docs/guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md` | Shows the internal rule: OpenAI generates evidence and candidate actions; CREATE SOMETHING policy decides allowed, blocked, or escalated behavior. |
 | Agents SDK MCP smoke | `docs/OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md` | Shows scenario-wired OpenAI Agents SDK runs against Half Dozen MCP servers, including required-tool coverage and blocked-tool filters. |
-| Braintrust observability | `docs/BRAINTRUST_TRACING_QUICKSTART.md` | Shows OpenAI call tracing, Agents SDK tracing, and the warning that raw traces do not replace governed MCP policy metadata. |
+| Langfuse observability | `docs/LANGFUSE_TRACING_QUICKSTART.md` | Shows OpenAI call tracing, Agents SDK tracing, and the warning that raw traces do not replace governed MCP policy metadata. |
 | ChatGPT MCP compatibility | `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md` | Shows how ChatGPT can connect to MCP hubs while identity-worker still delivers managed bearer credentials through governed resolver behavior. |
 | Hub route authorization | `docs/policies/v1/policy.hub-route-authorization.v1.md` | Shows default-deny protected discovery and execution, human review for destructive/control-plane routes, and brokered service-first discovery. |
 | MCP credential delivery | `docs/policies/v1/policy.mcp-credential-delivery.v1.md` | Shows host-bound managed bearer tokens, revocation, audit records, and the requirement not to expose shared runtime guardrail tokens. |
@@ -118,7 +118,7 @@ whole offer. The CREATE SOMETHING claim remains:
 - `Automation`: MCP tools, Workers, Agents SDK scenarios, Dify agents, Notion
   workers, and Hub routing.
 - `Judgment`: Policy OS artifacts, approval states, blocked states, eval gates,
-  Braintrust scorecards, and operator escalation.
+  Langfuse scorecards, and operator escalation.
 
 ## Submission Assets
 
@@ -129,7 +129,7 @@ Prepare these only if a current OpenAI program path is selected:
 - Primary proof: governed MCP and ChatGPT-compatible agent systems.
 - Public reference page: `/stack` and `/partners`, not a standalone `/openai`
   page until a concrete program path exists.
-- Internal proof: Agents SDK smoke, Braintrust tracing quickstart, ChatGPT MCP
+- Internal proof: Agents SDK smoke, Langfuse tracing quickstart, ChatGPT MCP
   OAuth managed bearer contract, and policy route authorization docs.
 - Compliance note: no official partnership, certification, reseller, affiliate,
   or Frontier Alliance claim until OpenAI grants the relevant authorization.

@@ -31,6 +31,15 @@ let config: ObservabilityConfig = {
   flushInterval: 5000
 };
 
+function endpointBaseUrl(value: string | undefined): string | undefined {
+  if (!value?.trim()) return undefined;
+  try {
+    return new URL(value.trim()).origin;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Initialize the observability client.
  * Call once at application startup.
@@ -41,7 +50,12 @@ export function initObservability(options: ObservabilityConfig = {}): Langfuse |
   // Check for required keys
   const publicKey = options.publicKey || process.env.LANGFUSE_PUBLIC_KEY;
   const secretKey = options.secretKey || process.env.LANGFUSE_SECRET_KEY;
-  const host = options.host || process.env.LANGFUSE_BASE_URL || process.env.LANGFUSE_HOST || 'https://us.cloud.langfuse.com';
+  const host =
+    options.host ||
+    process.env.LANGFUSE_BASE_URL ||
+    process.env.LANGFUSE_HOST ||
+    endpointBaseUrl(process.env.LANGFUSE_MCP_ENDPOINT) ||
+    'https://us.cloud.langfuse.com';
 
   if (!publicKey || !secretKey) {
     console.warn('[observability] Missing LANGFUSE_PUBLIC_KEY or LANGFUSE_SECRET_KEY. Tracing disabled.');

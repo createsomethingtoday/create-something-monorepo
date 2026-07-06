@@ -689,7 +689,7 @@ function sanitizeProviderData(tool: SpotifyToolDefinition, data: unknown): unkno
   if (!tool.redactLyrics) return data;
   return {
     redacted_for_trace: true,
-    redaction_policy: 'Full lyrics are omitted from MCP output and Braintrust traces.',
+    redaction_policy: 'Full lyrics are omitted from MCP output and Langfuse traces.',
     data: redactLyrics(data),
   };
 }

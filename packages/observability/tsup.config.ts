@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/atlas.ts', 'src/mcp.ts', 'src/braintrust.ts', 'src/openai-agents.ts'],
+  entry: ['src/index.ts', 'src/atlas.ts', 'src/mcp.ts', 'src/langfuse.ts', 'src/openai-agents.ts'],
   format: ['esm'],
   dts: true,
   // This package is built by multiple downstream prebuild hooks in parallel.

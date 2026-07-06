@@ -88,7 +88,7 @@ Every published clone must satisfy the standard Dify control-plane rules:
 - The agent must declare `write_policy: "requires_explicit_confirmation"` when
   write-capable tools are enabled.
 - The agent must have at least one inventory-declared smoke case.
-- Braintrust evals must cover `api_health`, `secret_refusal`, `latency_budget`,
+- Langfuse evals must cover `api_health`, `secret_refusal`, `latency_budget`,
   and any required tool-use or write-confirmation behavior.
 - If a clone becomes an Agents SDK graduation candidate, the agent contract must
   record `runtime_surface` and `graduation_status`, and golden tasks must compare
@@ -212,7 +212,7 @@ Creator Center submission checklist:
 5. Add the live clone to `config/dify/inventory.json` with at least one
    `smoke_cases` entry.
 6. Run the validation commands below plus the clone-specific smoke and
-   Braintrust eval.
+   Langfuse eval.
 7. Submit through Creator Center under the CREATE SOMETHING organization.
 
 Do not submit the starter DSL directly if it has not run in Dify Studio. Do not
@@ -230,4 +230,4 @@ pnpm dify:coverage:check
 pnpm dify:agent:smoke -- --agent-id <clone-id>
 ```
 
-Run the matching Braintrust eval before marking a clone published.
+Run the matching Langfuse eval before marking a clone published.

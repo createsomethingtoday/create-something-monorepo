@@ -1,42 +1,45 @@
 /**
- * OpenAI Agents SDK tracing -> Braintrust.
+ * OpenAI Agents SDK tracing -> Langfuse.
  *
- * This bridges `@openai/agents` span events into Braintrust spans so you can
- * debug agent runs in Braintrust (even when you are not calling the OpenAI SDK
+ * This bridges `@openai/agents` span events into Langfuse spans so you can
+ * debug agent runs in Langfuse (even when you are not calling the OpenAI SDK
  * directly).
  *
- * Enable by calling `registerOpenAIAgentsBraintrustTracing()` once at startup.
+ * Enable by calling `registerOpenAIAgentsLangfuseTracing()` once at startup.
  */
 
 import type { Span as AgentsSpan, SpanData, Trace as AgentsTrace, TracingProcessor } from '@openai/agents';
 import { addTraceProcessor, setTraceProcessors } from '@openai/agents';
 
-import { flush, initBraintrust, isBraintrustEnabled, startSpan, type BraintrustConfig } from './braintrust.js';
+import {
+  createLangfuseTrace,
+  flush,
+  initLangfuse,
+  isLangfuseEnabled,
+  type LangfuseConfig,
+} from './langfuse.js';
+import type { LangfuseTraceClient } from 'langfuse';
 
-export type OpenAIAgentsBraintrustTracingConfig = {
+export type OpenAIAgentsLangfuseTracingConfig = {
   enabled?: boolean;
   projectName?: string;
   tags?: string[];
-  braintrust?: BraintrustConfig;
+  langfuse?: LangfuseConfig;
   /**
    * By default, the OpenAI Agents SDK auto-installs an exporter that sends traces
    * to OpenAI (`/v1/traces/ingest`). In most client deployments we only want
-   * Braintrust, so this defaults to `true` to replace the processors.
+   * Langfuse, so this defaults to `true` to replace the processors.
    */
   replaceTraceProcessors?: boolean;
 };
 
 let installed = false;
 
-function nowSeconds(): number {
-  return Date.now() / 1000;
-}
-
-function isoToSeconds(value: string | null): number | undefined {
+function isoToMillis(value: string | null): number | undefined {
   if (!value) return undefined;
   const ms = Date.parse(value);
   if (Number.isNaN(ms)) return undefined;
-  return ms / 1000;
+  return ms;
 }
 
 function spanDisplayName(data: SpanData): string {
@@ -174,44 +177,41 @@ function spanEvent(data: SpanData): {
   }
 }
 
-class BraintrustAgentsTraceProcessor implements TracingProcessor {
+class LangfuseAgentsTraceProcessor implements TracingProcessor {
   #tags: string[];
-  #rootSpans = new Map<string, ReturnType<typeof startSpan>>();
+  #traces = new Map<string, LangfuseTraceClient>();
 
   constructor(tags: string[] = []) {
     this.#tags = tags;
   }
 
   async onTraceStart(trace: AgentsTrace): Promise<void> {
-    if (!isBraintrustEnabled()) return;
+    if (!isLangfuseEnabled()) return;
 
-    const root = startSpan({
+    const root = createLangfuseTrace({
       name: `openai_agents:${trace.name}`,
-      spanId: trace.traceId,
-      startTime: nowSeconds(),
-      spanAttributes: {
+      sessionId: trace.groupId ?? trace.traceId,
+      metadata: {
         type: 'openai_agents',
-        kind: 'trace'
+        kind: 'trace',
+        openai_agents_trace_id: trace.traceId,
+        group_id: trace.groupId,
+        trace_metadata: trace.metadata,
       },
-      event: {
-        tags: ['openai-agents', ...this.#tags],
-        metadata: {
-          openai_agents_trace_id: trace.traceId,
-          group_id: trace.groupId,
-          trace_metadata: trace.metadata
-        }
-      }
+      tags: ['openai-agents', ...this.#tags],
     });
 
-    this.#rootSpans.set(trace.traceId, root);
+    if (root) this.#traces.set(trace.traceId, root);
   }
 
   async onTraceEnd(trace: AgentsTrace): Promise<void> {
-    const root = this.#rootSpans.get(trace.traceId);
+    const root = this.#traces.get(trace.traceId);
     if (!root) return;
 
-    root.end({ endTime: nowSeconds() });
-    this.#rootSpans.delete(trace.traceId);
+    root.update({
+      output: { endedAt: new Date().toISOString() },
+    });
+    this.#traces.delete(trace.traceId);
   }
 
   async onSpanStart(_span: AgentsSpan<any>): Promise<void> {
@@ -219,50 +219,53 @@ class BraintrustAgentsTraceProcessor implements TracingProcessor {
   }
 
   async onSpanEnd(span: AgentsSpan<any>): Promise<void> {
-    if (!isBraintrustEnabled()) return;
+    if (!isLangfuseEnabled()) return;
 
     const data = span.spanData;
-    const startedAt = isoToSeconds(span.startedAt);
-    const endedAt = isoToSeconds(span.endedAt);
+    const startedAt = isoToMillis(span.startedAt);
 
     const baseEvent = spanEvent(data);
     const errorMessage = span.error?.message ?? null;
 
-    const btSpan = startSpan({
-      name: `openai_agents:${spanDisplayName(data)}`,
-      spanId: span.spanId,
-      startTime: startedAt,
-      parentSpanIds: {
-        rootSpanId: span.traceId,
-        spanId: span.parentId ?? span.traceId
-      },
-      spanAttributes: {
-        type: 'openai_agents',
-        span_type: data.type
-      },
-      event: {
-        tags: ['openai-agents', ...this.#tags],
-        input: baseEvent.input,
-        output: baseEvent.output,
+    const trace =
+      this.#traces.get(span.traceId) ??
+      createLangfuseTrace({
+        name: `openai_agents:${span.traceId}`,
+        sessionId: span.traceId,
         metadata: {
-          ...(baseEvent.metadata ?? {}),
+          type: 'openai_agents',
           openai_agents_trace_id: span.traceId,
-          openai_agents_span_id: span.spanId,
-          openai_agents_parent_id: span.parentId,
-          openai_agents_previous_span_id: span.previousSpan?.spanId,
-          openai_agents_trace_metadata: span.traceMetadata
+          recovered: true,
         },
-        metrics: {
-          ...(baseEvent.metrics ?? {}),
-          ...(startedAt !== undefined && endedAt !== undefined
-            ? { duration_s: Math.max(0, endedAt - startedAt) }
-            : {})
-        },
-        ...(errorMessage ? { error: errorMessage } : {})
-      }
+        tags: ['openai-agents', ...this.#tags],
+      });
+
+    if (!trace) return;
+    this.#traces.set(span.traceId, trace);
+
+    const langfuseSpan = trace.span({
+      name: `openai_agents:${spanDisplayName(data)}`,
+      id: span.spanId,
+      startTime: startedAt === undefined ? undefined : new Date(startedAt),
+      input: baseEvent.input,
+      output: baseEvent.output,
+      metadata: {
+        ...(baseEvent.metadata ?? {}),
+        metrics: baseEvent.metrics,
+        openai_agents_trace_id: span.traceId,
+        openai_agents_span_id: span.spanId,
+        openai_agents_parent_id: span.parentId,
+        openai_agents_previous_span_id: span.previousSpan?.spanId,
+        openai_agents_trace_metadata: span.traceMetadata,
+        span_type: data.type,
+      },
+      level: errorMessage ? 'ERROR' : 'DEFAULT',
+      statusMessage: errorMessage ?? undefined,
     });
 
-    btSpan.end({ endTime: endedAt });
+    langfuseSpan.end({
+      output: baseEvent.output,
+    });
   }
 
   async shutdown(_timeout?: number): Promise<void> {
@@ -275,25 +278,25 @@ class BraintrustAgentsTraceProcessor implements TracingProcessor {
 }
 
 /**
- * Register a Braintrust tracing processor for the OpenAI Agents SDK.
+ * Register a Langfuse tracing processor for the OpenAI Agents SDK.
  *
  * This is safe to call multiple times (idempotent).
  */
-export function registerOpenAIAgentsBraintrustTracing(
-  options: OpenAIAgentsBraintrustTracingConfig = {}
+export function registerOpenAIAgentsLangfuseTracing(
+  options: OpenAIAgentsLangfuseTracingConfig = {}
 ): boolean {
   const enabled = options.enabled ?? true;
   if (!enabled) return false;
 
-  initBraintrust({
-    ...(options.braintrust ?? {}),
-    projectName: options.projectName ?? options.braintrust?.projectName
+  initLangfuse({
+    ...(options.langfuse ?? {}),
+    projectName: options.projectName ?? options.langfuse?.projectName
   });
 
-  if (!isBraintrustEnabled()) return false;
+  if (!isLangfuseEnabled()) return false;
   if (installed) return true;
 
-  const processor = new BraintrustAgentsTraceProcessor(options.tags ?? []);
+  const processor = new LangfuseAgentsTraceProcessor(options.tags ?? []);
   const replace = options.replaceTraceProcessors ?? true;
   if (replace) {
     setTraceProcessors([processor]);

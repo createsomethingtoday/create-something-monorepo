@@ -257,9 +257,9 @@ function isIssuableStatus(status: string): boolean {
 	return status === 'active' || status === 'initialized';
 }
 
-function resolveObservabilityBaseline(_metadata: Record<string, unknown>): { telemetry: true; braintrust: true } {
+function resolveObservabilityBaseline(_metadata: Record<string, unknown>): { telemetry: true; langfuse: true } {
 	return {
 		telemetry: true,
-		braintrust: true,
+		langfuse: true,
 	};
 }

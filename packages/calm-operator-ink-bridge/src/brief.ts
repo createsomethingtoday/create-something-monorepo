@@ -73,7 +73,7 @@ function selectHealth(snapshots: StoredHealthSnapshot[]): StoredHealthSnapshot |
 function headlineForAlert(alert: StoredAlert): string {
   switch (alert.state) {
     case 'operator_priority':
-      if (payloadString(alert, 'signal') === 'braintrust') return 'QUALITY DRIFT';
+      if (payloadString(alert, 'signal') === 'langfuse') return 'QUALITY DRIFT';
       if (payloadString(alert, 'signal') === 'health') return 'HEALTH ATTENTION';
       return 'OPERATOR PRIORITY';
     case 'mcp_attention':

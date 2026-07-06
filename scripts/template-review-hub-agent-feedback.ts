@@ -7,7 +7,7 @@ import {
   buildDifyClientConfig,
   callDifyChat,
   type DifyChatOutput
-} from '../evals/braintrust/dify/shared.js';
+} from '../evals/langfuse/dify/shared.js';
 import {
   AirtableClient,
   type TemplateReviewAsset,

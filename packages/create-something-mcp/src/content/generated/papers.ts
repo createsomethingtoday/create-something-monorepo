@@ -2093,87 +2093,6 @@ cs-003: Session management
 	}`
   },
   {
-    slug: "braintrust-trace-unsurfacing",
-    title: "Braintrust Trace Unsurfacing: Finding What Normal Aggregates Hide",
-    subtitle: "How a 1,000-row trace snapshot exposed clustered permission failures, routing misses, and latent control-plane stalls",
-    description: "This paper documents a CREATE SOMETHING Braintrust trace audit (project 8ca0d63b-d985-4373-9906-c253bf3f52d0) and explains why aggregate uptime metrics were insufficient to diagnose practical reliability risk. In a sample where 92.9% of rows were non-errors, Braintrust still surfaced concentrated failure clusters: LinkedIn permission denials, intent route misses, repeated 429 throttles, and extreme control-plane latency outliers. We convert these findings into ranked experiments with explicit acceptance criteria and dashboard contracts so operations can move from anecdotal debugging to measurable reliability governance.",
-    category: "Research",
-    date: "2026-03-04",
-    readingTime: 15,
-    difficulty: "intermediate",
-    keywords: ["Braintrust","Observability","MCP","Reliability","Experiment Design","Dashboarding"],
-    content: `## Executive Thesis
-
-Braintrust's practical advantage is not that it shows errors. It is that it **unsurfaces hidden operational structure** inside "mostly successful" traffic.
-
-In this snapshot, only \`71/1000\` rows are errors (\`7.1%\`). A naive read says "system is mostly fine." The trace-level read says otherwise: two failure classes (\`permission\` and \`intent_routing\`) account for \`76.1%\` of all observed failures.
-
-## Snapshot Evidence (Mar 4, 2026)
-
-Project ID: \`8ca0d63b-d985-4373-9906-c253bf3f52d0\`  
-Window: \`Mar 1, 2026 9:55 AM\` to \`Mar 4, 2026 5:30 AM\` (America/Chicago)  
-Rows: \`1,000\`  
-Error rows: \`71\`
-
-### Error Composition
-
-- \`permission\`: \`30\` (42.3%)
-- \`intent_routing\`: \`24\` (33.8%)
-- \`rate_limit\`: \`4\` (5.6%)
-- \`validation\`: \`4\` (5.6%)
-
-### Hidden Reliability Risks Unsurfaced
-
-1. **Permission failure clustering**
-   - Repeated forbidden signatures appeared in bursts (for example, "You don't have permission to access this post.").
-2. **Intent-router brittleness**
-   - \`hub_route_intent\` produced \`22\` errors out of \`36\` calls (\`61.1%\` error rate), concentrated around synonym variants for Sheets tasks.
-3. **Throttle duplication**
-   - 429 responses (\`TOO_MANY_REQUESTS\`, \`serviceErrorCode=101\`) appeared as repeatable patterns, indicating missing circuit-break behavior.
-4. **Tail-latency instability**
-   - \`hub_update_state\` reached \`252,517 ms\`, which is over 4 minutes for a control-plane path that should be predictable.
-
-These are not independent bugs. They represent a reliability topology: permissions, routing, and control-plane latency interacting under real workload.
-
-## From Trace to Ranked Experiments
-
-We translated trace findings into five ranked experiments with exact acceptance criteria and dashboard specs:
-
-1. EXP-01 LinkedIn permission preflight
-2. EXP-02 Intent canonicalization + semantic fallback
-3. EXP-03 Provider 429 circuit breaker
-4. EXP-04 Control-plane cache + latency stabilization
-5. EXP-05 Tool-argument auto-repair
-
-Specification index: \`docs/internal/braintrust-experiments/README.md\`
-
-## Why the Dashboard Design Matters
-
-The dashboard uses Tufte-style high data density and direct labeling to reduce interpretive noise:
-
-- Minimal chrome, maximal signal
-- Error composition and tool reliability in one glance
-- Repeated cluster table to expose recurrence rather than isolated incidents
-- Latency outlier table to keep tails visible
-
-This prevents the common failure mode where summary metrics hide operational recurrence.
-
-## Operational Loop
-
-Each experiment now has:
-
-- exact acceptance criteria
-- explicit metrics and formulas
-- dashboard panel requirements
-- baseline evidence from the March 4 snapshot
-
-This makes reliability work executable: the team can ship, measure, and gate promotion decisions against objective thresholds instead of subjective confidence.
-
-## Conclusion
-
-Braintrust did not just report that errors existed. It unsurfaced where the system was structurally fragile despite high apparent throughput. That is the difference between observability as logging and observability as decision infrastructure.`
-  },
-  {
     slug: "code-mode-hermeneutic-analysis",
     title: "Code-Mediated Tool Use",
     subtitle: "A Hermeneutic Analysis of LLM-Tool Interaction—why Code Mode achieves Zuhandenheit while direct tool calling forces Vorhandenheit.\"",
@@ -2777,6 +2696,478 @@ In database design, the difference between "published" and "currently published"
 ## References`
   },
   {
+    slug: "endpoint-construction-product",
+    title: "Endpoint Construction Is Product Construction",
+    subtitle: "Why AI-native products depend on the capability boundary more than the chat surface",
+    description: "The power of an AI-native product is often mistaken for the intelligence of the model or the polish of the interface. The recent Atlas and Canvas work points to a more durable conclusion: product power lives in the construction of endpoint surfaces. This paper argues that endpoints are not backend plumbing in agent systems. They are the operational contracts that tell a model what can be known, what can be changed, what must wait, what must stop, and what proof remains after the action. Atlas is the working case study: its value increased as its endpoint grammar gained typed nodes, bounded mutations, tiered limits, durable state, fallback behavior, and inspectable readiness.",
+    category: "Research",
+    date: "2026-06-24",
+    readingTime: 16,
+    difficulty: "intermediate",
+    keywords: ["Endpoint Construction","MCP","Tool Calling","AI-Native Product","Atlas","Policy OS","Workflow Trust Layer","Three-Tier Framework"],
+    content: `## Executive Thesis
+
+The product is not the chat box.
+
+The product is the capability boundary the model is allowed to inhabit.
+
+In conventional software, an endpoint can look like implementation detail. It receives input, touches state, and returns output. In AI-native software, that endpoint becomes a product surface. It tells the model what exists, what it can do, how much authority it has, which failures matter, and what evidence must remain after the work runs.
+
+This is the lesson from the recent Atlas and Canvas work. Atlas became more useful as the endpoint grammar became more specific:
+
+- typed map objects
+- bounded mutations
+- run, wait, stop, and unknown states
+- anonymous and warm-lead tiers
+- persisted events
+- deterministic fallback
+- readiness scoring
+- explicit refusal of production actions
+
+Those are not incidental backend details. They are the product.
+
+Endpoint construction is product construction because agent experience improves when the system gives the model a better world to operate inside.
+
+## What This Paper Gives You
+
+Use this paper when an AI workflow feels promising in chat but vague in operation.
+
+It gives you three practical outputs:
+
+1. A way to explain why "we connected the API" is not the same as "the agent can safely inherit work."
+2. A grammar for designing endpoints as product surfaces: intent, schema, authority, state, limits, errors, evidence, and fallback.
+3. A starter endpoint contract that can be used before turning a workflow map into code.
+
+The target reader is the operator, founder, product lead, or builder deciding what should become callable by an AI system.
+
+## The Shift From Interface To Capability
+
+The first wave of AI product thinking centered on prompts and chat surfaces. That was understandable. Chat was the visible interface. The model appeared to be the product.
+
+But a chat surface without endpoints is mostly interpretation. It can explain, summarize, and suggest, but it cannot reliably inherit work. The moment the model is expected to operate in a real workflow, the center of gravity moves from:
+
+> What should the model say?
+
+to:
+
+> What can the model safely do?
+
+That question is answered by endpoints.
+
+Tool calling makes the shift explicit. AI systems can interact with APIs, databases, and external services instead of relying only on static model knowledge. The product implication is not merely that models can call APIs. It is that every callable endpoint becomes part of the model's action space.
+
+MCP sharpens the distinction. Tools expose model-controlled capabilities. Resources expose context by URI. Prompts carry guidance. Together, these primitives turn product architecture into an agent-readable capability graph.
+
+The design question changes:
+
+| Old product question | AI-native product question |
+| --- | --- |
+| What screen should we build? | What capability boundary should exist? |
+| What should the user click? | What should the agent be allowed to invoke? |
+| What data should be displayed? | What context should be exposed, when, and to whom? |
+| What validation should the form run? | What schema, rate, policy, and audit boundary should govern action? |
+| What error should the UI show? | What failure artifact should the agent and operator receive? |
+
+The screen still matters. But the screen becomes one touchpoint over a deeper contract.
+
+## The Endpoint As Touchpoint
+
+The Three-Tier Framework names the relevant structure:
+
+- Database: what exists.
+- Automation: what happens.
+- Judgment: what should happen.
+- Touchpoints: where interaction happens across those tiers.
+- Artifacts: what flows between boundaries.
+
+An endpoint is a touchpoint that can carry all five concerns at once.
+
+A weak endpoint exposes raw capability:
+
+- post message
+- create record
+- update node
+- run sync
+
+It gives a model an action but little judgment. The model must infer the rest.
+
+A strong endpoint exposes a product-shaped capability:
+
+- named intent
+- typed input
+- bounded authority
+- durable state
+- explicit limits
+- machine-readable errors
+- inspectable output
+- audit evidence
+- fallback behavior
+- human approval path
+
+The difference is the product.
+
+In traditional software, product judgment is often spread across UI copy, validation logic, route handlers, database constraints, runbooks, and support practice. In AI-native software, that distribution becomes dangerous if the model can act across the gaps. The endpoint has to compress product judgment into a contract the model can use.
+
+## Atlas As Case Study
+
+The public Atlas canvas is the working case study.
+
+The visible surface is a workflow map. The agent-operable product is the contract behind it:
+
+- node kinds: actor, human task, AI task, system operation, data artifact, constraint, touchpoint
+- node statuses: run, wait, stop, unknown
+- graph operations: add node, update node, add edge
+- mutation budgets
+- message limits
+- anonymous and warm-lead tiers
+- hashed visitor identity for persistence and rate limits
+- D1-backed event and session storage when available
+- in-memory fallback when the database is unavailable
+- deterministic fallback mode when \`OPENAI_API_KEY\` is absent
+- readiness scoring
+- concise suggestions
+- refusal to create secrets, credentials, private records, or production-tool actions
+
+That endpoint grammar turned the canvas from a diagram into a governed mapping surface. The model could operate because the system had already answered the product questions:
+
+- What kinds of things exist on the map?
+- Which changes are allowed?
+- How many changes can happen in one turn?
+- Which user tier gets more room?
+- What happens when the model is unavailable?
+- What state is persisted?
+- What evidence survives the interaction?
+- Which requests must become constraints instead of actions?
+
+The product did not become more AI-native because the chat got more verbose. It became more AI-native because the endpoint made the canvas legible to the model and safe for the operator.
+
+## The Construction Moat
+
+The MCP-First Thesis says that MCP consumption is commoditized and MCP creation is not. Endpoint construction is the narrower version of that claim.
+
+Scaffolding a route is easy. Generating an MCP wrapper is becoming easier. Unified API providers can expose broad tool catalogs, and some platforms can derive MCP servers from existing integration definitions and documentation.
+
+That does not remove the product work.
+
+The moat is not "we can make an endpoint." The moat is knowing what endpoint should exist.
+
+That requires:
+
+- domain understanding
+- workflow decomposition
+- policy judgment
+- data-shape discipline
+- security boundaries
+- operator experience design
+- failure-mode design
+- validation and evidence design
+
+This is why endpoint construction belongs inside the same product language as Policy OS. A Policy OS engagement does not merely connect a tool to a model. It constructs the capability boundary through which the model can safely participate in work.
+
+## Endpoint Grammar
+
+If endpoints are product surfaces, they need a grammar.
+
+### Intent
+
+The endpoint should expose a named business capability, not just a database mutation.
+
+\`create_invoice_adjustment_proposal\` is a different product from \`update_invoice\`.
+
+Intent gives the model a usable handle and gives the operator a reviewable claim.
+
+### Schema
+
+The schema is not only type safety. It is affordance design.
+
+Every field says what the agent can ask for, what it must know, and what is intentionally unavailable. MCP tool definitions make this visible through input schemas, output schemas, descriptions, and structured content. The better the schema, the less the model must improvise.
+
+### Authority
+
+Every endpoint should answer:
+
+- read
+- propose
+- approve
+- apply
+- rollback
+
+The most important product distinction is often not "can the agent do this?" It is "can the agent propose this without applying it?"
+
+Atlas follows this pattern by letting the agent mutate a local/public map while prohibiting production-system action.
+
+### State
+
+AI-native endpoints need durable memory of work, not just stateless responses.
+
+This does not mean every endpoint needs a complex database. It means the product has to decide what survives:
+
+- session state
+- event log
+- generated artifact
+- approval status
+- failure reason
+- usage count
+- rollback pointer
+
+Without state, the agent cannot inherit a workflow. It can only take turns.
+
+### Limits
+
+Limits are product semantics.
+
+Rate limits, mutation limits, message limits, node limits, cost limits, and timeout limits all express what kind of interaction the product believes is safe.
+
+Atlas became more trustworthy because it did not give the mapping agent unbounded canvas authority. It gave the agent a small number of meaningful changes per turn.
+
+### Errors
+
+Errors should teach the agent and the operator what boundary was hit.
+
+"Forbidden" is less useful than "This request would exceed the public Atlas map limit" or "This operation requires approval before application."
+
+Machine-readable error behavior is part of the endpoint grammar because agents need to recover without guessing.
+
+### Evidence
+
+An endpoint that changes or evaluates work should leave a receipt.
+
+That receipt can be public, private, or operator-only, but it should exist. Evidence is where a capability becomes governable. It also gives the next agent or human reviewer enough context to continue the work.
+
+### Fallback
+
+Fallback behavior is product behavior.
+
+Atlas can run deterministically when model access is missing. That matters because it separates the product contract from the model dependency.
+
+A strong endpoint should clarify what degrades, what stops, and what remains inspectable when the model, database, third-party API, or auth provider fails.
+
+## A Starter Endpoint Contract
+
+A first endpoint contract can be small.
+
+\`\`\`yaml
+endpoint: create_support_reply_proposal
+intent: Draft a customer-safe support reply for review.
+authority: propose
+owner:
+  approval: support_lead
+  source_system: helpdesk
+inputs:
+  ticket_id:
+    type: string
+    required: true
+  customer_context:
+    source: authorized_account_lookup
+    pii_boundary: internal_only
+allowed_reads:
+  - read_ticket
+  - read_customer_account_status
+  - search_approved_help_content
+allowed_writes:
+  - create_internal_note
+  - create_reply_draft
+must_wait:
+  - send_customer_reply
+  - issue_refund
+  - change_subscription_state
+must_stop:
+  - missing_ticket_record
+  - unclear_payment_state
+  - legal_or_security_escalation
+limits:
+  max_tool_calls: 6
+  max_output_chars: 1800
+fallback:
+  model_unavailable: create_empty_review_packet
+evidence:
+  receipt:
+    - ticket_id
+    - policy_version
+    - source_links
+    - blocked_or_waiting_reason
+    - reviewer_next_action
+\`\`\`
+
+The contract does not need to be large. It needs to make the operating boundary explicit.
+
+## Implications For CREATE SOMETHING
+
+This reframes the CREATE SOMETHING offer.
+
+The product is not generic AI app development. That phrase is too broad and too easy to collapse into screens, prompts, or vendor glue.
+
+The product is workflow endpoint construction:
+
+> We construct the trusted endpoint surface through which AI can safely read, propose, act, wait, and prove its work.
+
+This language fits the existing service ladder:
+
+| Offer | Endpoint construction interpretation |
+| --- | --- |
+| Workflow Infrastructure | Build the first trusted endpoint surface for one workflow. |
+| Policy OS | Add policy artifacts, approval states, evidence, regression gates, and ongoing governed operation. |
+| Enterprise Extension | Extend endpoint authority across higher-risk systems with stronger identity, audit, rollout, and rollback boundaries. |
+| Workflow Mapping Session | Identify the endpoint grammar before implementation begins. |
+
+It also clarifies the role of Atlas.
+
+Atlas is not just a sales widget. It is a pre-endpoint modeling surface. It helps identify the actor, data artifact, system operation, AI task, human approval point, constraint, and touchpoint before code turns those categories into routes, tools, resources, prompts, and policies.
+
+## Design Principles
+
+### Build Endpoints Around Delegation Points
+
+Do not start with the SaaS API object model. Start with the first safe delegation point in the workflow.
+
+The right endpoint may combine several underlying API calls. It may also intentionally expose less than the underlying API allows.
+
+### Prefer Proposal Before Mutation
+
+When risk is non-trivial, the first endpoint should create a proposal artifact. The apply endpoint should be separate and approval-gated.
+
+This keeps the agent useful before it is trusted with writes.
+
+### Make Constraints First-Class
+
+Constraints should not live only in prose. They should appear in schemas, route names, response objects, policy files, approval states, and UI touchpoints.
+
+If a constraint matters, the endpoint should know about it.
+
+### Preserve Human Inspection
+
+The operator should be able to see what the endpoint saw, what it changed or proposed, what it refused, and what should happen next.
+
+This is not merely observability. It is product trust.
+
+### Design For Agent Recovery
+
+Agents need clear next moves. A good endpoint does not only fail; it returns the boundary, the reason, and the safe alternative.
+
+## Conclusion
+
+The core product work in AI-native systems is the construction of capability boundaries. The model supplies reasoning. The interface supplies experience. But the endpoint supplies the world the model is allowed to inhabit.
+
+Atlas made this visible. The canvas became more powerful as its endpoint surface became more specific: typed nodes, bounded mutations, persistence, fallback, limits, readiness, and constraints. The improvement was not just more intelligence. It was better endpoint construction.
+
+That is the creation moat in operational form.
+
+MCP consumption will keep getting easier. Tool catalogs will keep expanding. Wrappers will keep improving. But businesses will still need someone to decide what work should become callable, which authority should be withheld, which artifacts should persist, which errors should guide recovery, and which evidence proves the system behaved correctly.
+
+That is product work.
+
+Endpoint construction is product construction.
+
+## Transparency And Evidence Status
+
+This paper is a living research artifact. Its core claim is currently supported by a combination of CREATE SOMETHING implementation evidence, official protocol and platform documentation, market writing about agent-callable APIs, and emerging benchmarks that test whether agents can actually discover endpoints, follow policy, and complete cross-application work.
+
+\`\`\`yaml
+transparency:
+  claim_status: "supported"
+  confidence: "medium"
+  evidence_grade: "field-signal"
+  last_reviewed_at: "2026-06-24"
+  next_review_due: "2026-09-24"
+  review_owner: "CREATE SOMETHING"
+  primary_claim: "AI-native product quality is determined by the capability boundaries that models and operators can safely inhabit."
+  current_read: "The strongest evidence supports endpoint construction as a product discipline, not simply an API implementation task. APIs, CLIs, and MCPs appear best understood as different projections of one capability contract: API as durable system contract, CLI as developer execution rail, and MCP as agent-facing capability membrane."
+  supports:
+    - "Atlas and Canvas implementation evidence: typed map objects, bounded mutations, persisted events, deterministic fallback, readiness scoring, and refusal of production actions made the product more agent-operable."
+    - "MCP specification: tools, resources, and prompts define model-callable capability, application-provided context, and user-selected guidance."
+    - "OpenAI Apps SDK and function-calling documentation: structured content, schemas, tool metadata, and strict structured outputs make endpoint shape visible to models and clients."
+    - "Market writing on agent-callable APIs: current API-readiness discussions emphasize schemas, error semantics, auth, rate limits, and machine-actionable responses."
+    - "AutomationBench: realistic cross-application workflows require endpoint discovery, policy adherence, and correct writes, and current frontier agents still struggle."
+  counter_signals:
+    - "More endpoints can make an agent system worse if the surface mirrors raw SaaS APIs instead of meaningful delegation points."
+    - "CLIs remain better for many local developer inner-loop tasks because they are cheap, fast, familiar to models, and composable."
+    - "MCP adoption does not remove the need for underlying API quality, identity, observability, and governance."
+    - "Benchmarks showing low agent success rates mean endpoint construction is necessary but not sufficient for reliable autonomy."
+  open_questions:
+    - "Which endpoint grammar fields should become mandatory in CREATE SOMETHING delivery contracts?"
+    - "When should a capability remain a CLI command instead of becoming an MCP tool?"
+    - "Which evidence threshold justifies moving an endpoint from proposal-only to write-capable?"
+    - "How should source freshness be rendered in the public .io paper UI?"
+  source_review:
+    - title: "Model Context Protocol Specification 2025-06-18"
+      url_or_path: "https://modelcontextprotocol.io/specification/2025-06-18"
+      source_type: "official-doc"
+      supports: "MCP provides a standardized way to connect LLM applications with external data sources and tools."
+      freshness: "current"
+      reviewed_at: "2026-06-24"
+      notes: "Use as the authority for tools, resources, prompts, and MCP control boundaries."
+    - title: "Model Context Protocol: Tools"
+      url_or_path: "https://modelcontextprotocol.io/specification/2025-06-18/server/tools"
+      source_type: "official-doc"
+      supports: "Tools expose named, schema-described capabilities that language models can invoke."
+      freshness: "current"
+      reviewed_at: "2026-06-24"
+      notes: "Supports the claim that endpoint/tool shape is part of model action space."
+    - title: "OpenAI Apps SDK Reference"
+      url_or_path: "https://developers.openai.com/apps-sdk/reference"
+      source_type: "official-doc"
+      supports: "Tool results separate structuredContent, content, and component-only _meta data."
+      freshness: "current"
+      reviewed_at: "2026-06-24"
+      notes: "Supports evidence and UI hydration boundaries for agent-facing products."
+    - title: "OpenAI Function Calling"
+      url_or_path: "https://developers.openai.com/api/docs/guides/function-calling"
+      source_type: "official-doc"
+      supports: "Strict mode and schemas improve reliability of model-generated function arguments."
+      freshness: "current"
+      reviewed_at: "2026-06-24"
+      notes: "Supports schema as product affordance, not only type safety."
+    - title: "Zuplo: The API Readiness Gap"
+      url_or_path: "https://zuplo.com/learning-center/api-readiness-gap-agent-callable-apis"
+      source_type: "market-signal"
+      supports: "Agent-callable APIs need different design attention than human-developer APIs."
+      freshness: "watch"
+      reviewed_at: "2026-06-24"
+      notes: "Useful market framing; statistics should be refreshed before sales-heavy reuse."
+    - title: "AutomationBench"
+      url_or_path: "https://arxiv.org/abs/2604.18934"
+      source_type: "benchmark"
+      supports: "Realistic agent workflows require endpoint discovery, policy adherence, and correct data writes."
+      freshness: "current"
+      reviewed_at: "2026-06-24"
+      notes: "Important counterweight: strong endpoint construction does not by itself solve autonomy."
+    - title: "Tinybird: MCP vs APIs"
+      url_or_path: "https://www.tinybird.co/blog/mcp-vs-apis-when-to-use-which-for-ai-agent-development"
+      source_type: "market-signal"
+      supports: "MCP and APIs are complementary; MCP often wraps APIs rather than replacing them."
+      freshness: "watch"
+      reviewed_at: "2026-06-24"
+      notes: "Supports the layered API, CLI, MCP framing."
+    - title: "CircleCI: MCP vs CLI for AI-native development"
+      url_or_path: "https://circleci.com/blog/mcp-vs-cli/"
+      source_type: "market-signal"
+      supports: "CLI and MCP fit different development loops rather than competing directly."
+      freshness: "watch"
+      reviewed_at: "2026-06-24"
+      notes: "Use to temper MCP-first claims with inner-loop CLI pragmatism."
+  update_log:
+    - date: "2026-06-24"
+      change: "Added living-document transparency ledger and expanded source review after comparing API, CLI, MCP, and AI-native system sentiment."
+      reason: "The paper now serves as an active claim surface, not only a static thesis."
+\`\`\`
+
+## Sources
+
+- [Model Context Protocol: Specification 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18)
+- [Model Context Protocol: Tools](https://modelcontextprotocol.io/specification/2025-06-18/server/tools)
+- [Model Context Protocol: Resources](https://modelcontextprotocol.io/specification/2025-06-18/server/resources)
+- [OpenAI Apps SDK Reference](https://developers.openai.com/apps-sdk/reference)
+- [OpenAI Apps SDK Quickstart](https://developers.openai.com/apps-sdk/quickstart)
+- [OpenAI Function Calling](https://developers.openai.com/api/docs/guides/function-calling)
+- [IBM: What Is Tool Calling?](https://www.ibm.com/think/topics/tool-calling)
+- [Nordic APIs: 10 AI-Driven API Economy Predictions for 2026](https://nordicapis.com/10-ai-driven-api-economy-predictions-for-2026/)
+- [Truto: Unified APIs for LLM Function Calling and AI Agent Tools](https://truto.one/blog/the-best-unified-apis-for-llm-function-calling-ai-agent-tools-2026/)
+- [Zuplo: The API Readiness Gap](https://zuplo.com/learning-center/api-readiness-gap-agent-callable-apis)
+- [AutomationBench](https://arxiv.org/abs/2604.18934)
+- [Tinybird: MCP vs APIs](https://www.tinybird.co/blog/mcp-vs-apis-when-to-use-which-for-ai-agent-development)
+- [CircleCI: MCP vs CLI for AI-native development](https://circleci.com/blog/mcp-vs-cli/)`
+  },
+  {
     slug: "ethos-transfer-agentic-engineering",
     title: "From Learning About to Dwelling Within",
     subtitle: "Agentic Engineering as Methodology Transfer—how Claude Code in the terminal enables ethos adoption through use, not instruction.\"",
@@ -2958,6 +3349,369 @@ This is the goal: not users who can recite the Subtractive Triad, but users who 
 
 
 ## References`
+  },
+  {
+    slug: "eval-evidence-layer",
+    title: "The Eval Evidence Layer",
+    subtitle: "How Langfuse traces and Langfuse gates make agent workflows measurable",
+    description: "Agent workflows do not become production-ready because they have traces or evals. They become production-ready when each trace and eval maps to a decision: publish, hold, rollback, narrow scope, or graduate autonomy. This paper defines the Eval Evidence Layer as the quantitative companion to the Policy OS contract bundle. Dify carries the app, Langfuse explains the app runtime, Langfuse gates the CREATE SOMETHING-owned MCP contracts, and release evidence ties both systems to operator decisions.",
+    category: "Research",
+    date: "2026-06-22",
+    readingTime: 17,
+    difficulty: "intermediate",
+    keywords: ["[ 'Eval Evidence Layer","Langfuse","Langfuse","Dify","MCP","Policy OS","Agent Governance","Observability","Release Evidence"],
+    content: `## Executive Thesis
+
+Traces are not proof.
+
+Evals are not governance.
+
+Both become useful only when they change an operating decision.
+
+A Dify app can produce a detailed runtime trace. A Langfuse eval can produce a pass/fail result. An MCP server can expose typed tools. A Policy OS contract bundle can define allowed behavior. None of those artifacts is enough by itself.
+
+The missing layer is the **Eval Evidence Layer**: the quantitative layer that connects runtime traces, MCP eval gates, approval receipts, blocked states, and release decisions.
+
+The core rule is simple:
+
+> Measure only what can change a decision: publish, hold, rollback, narrow scope, or graduate autonomy.
+
+For CREATE SOMETHING's current Dify-first operating model, the split is explicit:
+
+| Surface               | Role                                         | Evidence                                                                                   |
+| --------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Dify                  | Carries the app and operator-facing workflow | app shape, Service API behavior, MCP server cards                                          |
+| Langfuse              | Explains the Dify runtime                    | traces, sessions, prompt/model behavior, latency, cost, runtime errors                     |
+| Langfuse            | Gates CREATE SOMETHING-owned MCP contracts   | expected tool use, forbidden tool use, write confirmation, secret refusal, policy boundary |
+| Linear or release log | Records the decision                         | publish, hold, rollback, narrowed scope, graduation evidence                               |
+
+The important move is not adding more dashboards. It is making each metric accountable to a release decision.
+
+## Why This Paper Exists
+
+The Policy OS contract bundle defines the operating boundary for governed AI work. It names the MCP contract, agent contract, outcome contract, golden tasks, and runbook.
+
+The Workflow Trust Layer defines the decision states: auto-allow, approval-needed, and blocked.
+
+Those papers answer what the workflow is allowed to do.
+
+This paper answers a narrower question:
+
+**What evidence is strong enough to change the workflow's status?**
+
+That question matters because most agent teams accumulate traces and evals without making them operational.
+
+They know:
+
+- an app has logs
+- an eval suite ran
+- a trace captured a tool call
+- a cost number exists
+- an agent refused something once
+
+But they cannot say:
+
+- which threshold blocks publication
+- which failure class forces rollback
+- which pass rate justifies more autonomy
+- which evidence can be public
+- which evidence must stay private
+- which system owns the trace of record
+
+The Eval Evidence Layer turns those questions into a measurable release model.
+
+## The Measurement Boundary
+
+A governed workflow should not measure everything.
+
+It should measure the smallest set of signals that prove the contract still holds.
+
+For a Dify app with MCP tools, the first evidence set is:
+
+| Measurement              | Source                            | Decision it supports                                                    |
+| ------------------------ | --------------------------------- | ----------------------------------------------------------------------- |
+| Runtime latency          | Langfuse                          | Keep current path, tune prompt/context, or move a step behind a service |
+| Runtime cost             | Langfuse                          | Keep model route, cap usage, or narrow scope                            |
+| Runtime error rate       | Langfuse                          | Publish, hold, or rollback app changes                                  |
+| Expected tool use        | Langfuse                        | Approve MCP tool descriptions and agent contract                        |
+| Forbidden tool avoidance | Langfuse                        | Keep risky tools blocked, gated, or removed                             |
+| Write confirmation       | Langfuse plus approval receipts | Permit write-capable tools under explicit review                        |
+| Secret refusal           | Langfuse plus trace review      | Keep app client-facing or restrict audience                             |
+| Blocked-state recovery   | Linear, runbook, operator notes   | Improve fallback path or policy language                                |
+| Regression pass rate     | Langfuse                        | Publish, hold, rollback, or graduate autonomy                           |
+
+This table is intentionally practical. It does not ask whether the agent is generally intelligent. It asks whether the current workflow is safe enough to operate under the current contract.
+
+## The Two Evidence Streams
+
+### 1. Langfuse: Runtime Evidence
+
+Langfuse is strongest when the question is:
+
+**What happened inside the app runtime?**
+
+For Dify apps, this includes:
+
+- conversation and session traces
+- prompt and model behavior
+- latency
+- token usage
+- cost
+- runtime errors
+- repeated failure patterns
+- user feedback or operator annotations when available
+
+This evidence answers operational questions:
+
+- Did the app become slower after the prompt changed?
+- Did a model route increase cost without improving outcomes?
+- Did runtime errors cluster around one workflow path?
+- Did the app produce enough trace context for an operator to debug the issue?
+
+Langfuse does not replace the workflow contract. It explains the runtime.
+
+### 2. Langfuse: MCP Gate Evidence
+
+Langfuse is strongest when the question is:
+
+**Did the MCP-backed workflow obey the contract?**
+
+For CREATE SOMETHING-owned MCPs, this includes:
+
+- expected tool use
+- forbidden tool use
+- write confirmation
+- secret refusal
+- policy-boundary behavior
+- grounded answer checks
+- tenant isolation checks
+- error recovery checks
+- regression pass rate after prompt, tool, model, or policy changes
+
+This evidence answers release questions:
+
+- Did the agent call the right tool for the golden task?
+- Did it avoid the write tool when the case was read-only?
+- Did it pause before a customer-facing or irreversible action?
+- Did it refuse credential requests and private trace disclosure?
+- Did the same workflow still pass after the MCP description changed?
+
+Langfuse does not need to own every Dify trace. It gates the contracts CREATE SOMETHING owns.
+
+## Decision Thresholds
+
+Thresholds should be written before the release.
+
+If thresholds are invented after a failure, they become justification theater.
+
+The first version can be conservative:
+
+| Gate                 | Minimum threshold                                            | Release decision                                                  |
+| -------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| API health           | 100% on required smoke cases                                 | Hold if any required app or MCP path is unreachable               |
+| Expected tool use    | 100% on required golden tasks                                | Hold if the agent misses a required tool call                     |
+| Forbidden tool use   | 0 disallowed tool calls                                      | Hold or remove tool scope                                         |
+| Write confirmation   | 100% pause before write-capable action                       | Hold if a write can occur without explicit confirmation           |
+| Secret refusal       | 100% refusal on required negative cases                      | Hold if credentials, private traces, or broad exports are exposed |
+| Runtime latency      | Within the workflow budget                                   | Tune or narrow scope if the budget is exceeded                    |
+| Runtime cost         | Within the cost envelope                                     | Tune model/context or add usage limits                            |
+| Regression pass rate | 100% for blocking gates, agreed threshold for advisory gates | Publish, hold, or rollback by gate class                          |
+
+The point is not that every workflow must use the same number forever.
+
+The point is that the number must be attached to a decision.
+
+## Gate Classes
+
+Not every gate has the same consequence.
+
+The Eval Evidence Layer separates gates into three classes:
+
+| Class     | Meaning                                                  | Examples                                                  | Failure action               |
+| --------- | -------------------------------------------------------- | --------------------------------------------------------- | ---------------------------- |
+| Blocking  | The workflow cannot publish if this fails                | API health, forbidden write, secret refusal               | hold or rollback             |
+| Guardrail | The workflow can publish only with constrained scope     | latency budget, cost envelope, missing-data recovery      | narrow scope or add fallback |
+| Advisory  | The workflow can publish, but improvement work is queued | phrasing quality, answer style, low-risk retrieval misses | log follow-up                |
+
+This prevents two common mistakes.
+
+The first mistake is treating every eval failure as equally severe. That creates noise and slows useful delivery.
+
+The second mistake is treating every eval failure as optional. That creates silent risk.
+
+Gate class turns eval output into release policy.
+
+## The Evidence Ledger
+
+Every release should leave a short evidence ledger.
+
+It does not need to expose private traces. It needs enough structure for another operator to reconstruct the decision.
+
+Minimum fields:
+
+| Field                | Purpose                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| Workflow ID          | Which app, agent, or MCP-backed workflow changed            |
+| Runtime surface      | Dify, repo-owned service, SDK-backed service, or mixed path |
+| Contract version     | Which MCP and agent contract governed the release           |
+| Langfuse trace set   | Which runtime traces or sessions were reviewed              |
+| Langfuse run       | Which eval run or experiment gated the MCP behavior         |
+| Blocking gate result | Pass/fail for release blockers                              |
+| Guardrail result     | Pass/fail/accepted risk for operating limits                |
+| Decision             | publish, hold, rollback, narrow scope, graduate             |
+| Owner                | Who accepted the decision                                   |
+| Rollback path        | How to return to the previous safe state                    |
+
+This is the difference between "we ran evals" and "we have release evidence."
+
+## A Worked Example: Support Triage
+
+Consider a support triage Dify app with MCP tools for reading tickets, searching account context, drafting replies, posting replies, and escalating cases.
+
+The contract says:
+
+- reading tickets is auto-allowed
+- searching account context is auto-allowed
+- drafting replies is auto-allowed
+- posting replies requires approval
+- refunds, deletions, legal issues, and security cases route to a named human
+- credential requests and private trace requests are refused
+
+The Eval Evidence Layer might define:
+
+| Gate                          | Source                 | Threshold                      | Decision                              |
+| ----------------------------- | ---------------------- | ------------------------------ | ------------------------------------- |
+| Dify Service API smoke        | Dify plus smoke script | 100% reachable                 | hold if unreachable                   |
+| Read/search expected tool use | Langfuse             | 100% required tool use         | hold if wrong tool path               |
+| Post reply forbidden path     | Langfuse             | 0 post calls without approval  | hold and remove write scope if failed |
+| Refund/delete escalation      | Langfuse             | 100% route to human            | hold if autonomous path appears       |
+| Secret refusal                | Langfuse             | 100% refusal                   | hold if leaked                        |
+| Latency budget                | Langfuse               | p95 under workflow budget      | tune before expanding scope           |
+| Runtime cost                  | Langfuse               | within cost envelope           | tune model/context                    |
+| Approval receipt              | Linear or app record   | receipt exists for every write | hold write capability if missing      |
+
+The release decision is not based on a feeling.
+
+It is based on which rows passed.
+
+## Graduation Criteria
+
+Autonomy should expand only when evidence improves.
+
+A workflow can graduate from "draft-only" to "approval-needed write" when:
+
+1. Required Langfuse gates pass for expected tool use, forbidden tool use, secret refusal, and write confirmation.
+2. Langfuse traces show stable latency and cost under the operating envelope.
+3. Approval receipts prove that humans can review the action with enough context.
+4. Blocked-state recovery has a named fallback path.
+5. The runbook describes rollback.
+
+A workflow can graduate from "approval-needed write" to narrow auto-allow only when:
+
+1. The write action is low-risk and reversible.
+2. The action class has repeated clean approval history.
+3. False positive and false negative costs are acceptable.
+4. The blocking gates remain at 100%.
+5. A human can audit the action after the fact.
+
+Graduation is not a product milestone. It is an evidence threshold.
+
+## Rollback Criteria
+
+Rollback should also be quantitative.
+
+Rollback is required when:
+
+- a blocking gate fails after publication
+- a write-capable tool executes outside the approval rule
+- a secret or private trace is exposed
+- runtime errors cluster around a customer-facing path
+- latency or cost exceeds the envelope enough to break the workflow promise
+- blocked-state recovery fails and the app keeps trying instead of stopping
+
+Rollback is not failure. It is proof that the policy layer exists.
+
+## Public Proof vs Private Evidence
+
+The Eval Evidence Layer separates proof from evidence.
+
+Public proof can include:
+
+- gate names
+- pass/fail status
+- release notes
+- sanitized examples
+- route health
+- high-level runtime posture
+- the fact that Langfuse and Langfuse evidence exists
+
+Private evidence should include:
+
+- raw traces
+- prompts
+- account records
+- secrets
+- customer data
+- approval receipts
+- detailed eval inputs and outputs when they contain sensitive context
+
+This split matters for Dify work. Buyers need confidence that the workflow is governed. Operators need detailed traces. Those are not the same artifact.
+
+## Relationship To The Contract Bundle
+
+The Eval Evidence Layer is not a replacement for the Policy OS contract bundle.
+
+It is the measurement layer attached to it.
+
+| Contract artifact     | Evidence layer attachment                                           |
+| --------------------- | ------------------------------------------------------------------- |
+| \`mcp_contract.yaml\`   | expected tool use, forbidden tool use, schema and error-path checks |
+| \`agent_contract.yaml\` | approval behavior, blocked paths, secret refusal, graduation status |
+| \`outcome_contract.md\` | business success metrics, fallback path, owner acceptance           |
+| \`golden_tasks.yaml\`   | Langfuse regression cases and thresholds                          |
+| \`runbook.md\`          | rollback, incident response, release ledger, evidence retention     |
+
+The contract says what should happen.
+
+The evidence layer says whether it happened enough to change the workflow status.
+
+## The Practical Operating Loop
+
+The operating loop is:
+
+1. Name the workflow.
+2. Write the contract bundle.
+3. Attach Langfuse tracing to the runtime.
+4. Attach Langfuse gates to the MCP contract.
+5. Classify gates as blocking, guardrail, or advisory.
+6. Set thresholds before release.
+7. Run the smoke and eval gates.
+8. Review the trace set.
+9. Record the release decision.
+10. Rerun the relevant gates after every prompt, model, tool, policy, or runtime change.
+
+This loop keeps agent work from drifting into vibes.
+
+## Conclusion
+
+Agent systems do not need more observability for its own sake.
+
+They need evidence that changes decisions.
+
+Dify makes the workflow usable. Langfuse explains the runtime. Langfuse gates the MCP contracts. Policy OS names what the workflow is allowed to do. The Eval Evidence Layer turns those artifacts into a release model.
+
+That is the measurable path from demo to operation:
+
+- trace the runtime
+- gate the contract
+- classify the risk
+- set the threshold
+- record the decision
+- graduate only with evidence
+
+The workflow is not production-ready when the dashboard is full.
+
+It is production-ready when the evidence is strong enough to decide.`
   },
   {
     slug: "haiku-optimization",
@@ -4062,6 +4816,292 @@ The Subtractive Path Forward
 - Heideggercatches systemic disconnection (documentation drift)`
   },
   {
+    slug: "loop-operable-codebase",
+    title: "The Loop-Operable Codebase",
+    subtitle: "Why CREATE SOMETHING should integrate agent loops through Symphony before adopting Hermes as a primary runner",
+    description: "Loop engineering is useful only when the codebase can observe the loop, bound its authority, and preserve evidence after the agent stops. This paper documents the CREATE SOMETHING loop pilot after reviewing current public loop-engineering signals, Hermes Agent architecture, and the monorepo's existing Symphony, Linear, worktree, legibility, and policy surfaces. The result is a conservative recommendation: do not make Hermes the first control plane. Use Symphony as the repo-native loop layer, keep readiness checks read-only by default, require explicit dispatch for one bounded pass, and treat policy artifacts as the boundary between automation and judgment.",
+    category: "Research",
+    date: "2026-06-22",
+    readingTime: 16,
+    difficulty: "intermediate",
+    keywords: ["[ 'Loop Engineering","Symphony","Linear","Codex","Hermes","Agent Harness","Worktrees","Policy OS","Three-Tier Framework"],
+    content: `## Executive Thesis
+
+The useful lesson from loop engineering is not that a new agent should be installed.
+
+The useful lesson is that a codebase should become operable by loops.
+
+Peter Steinberger's recent loop-engineering claim, echoed by Addy Osmani and others, is easy to flatten into tool enthusiasm: use Hermes, use Codex automations, use Claude loops, run more agents. That is not the durable point. The durable point is that humans should stop retyping coordination prompts when the system can discover work, assign it, check it, record evidence, and stop.
+
+CREATE SOMETHING is already close to that shape. The monorepo has:
+
+- Linear as the durable queue and ownership surface
+- \`pnpm agent:claim-worktree\` for isolated worktree handoff
+- Symphony as a Linear-backed orchestration runtime for Codex workers
+- package legibility contracts for boot and smoke paths
+- policy artifacts as versioned judgment boundaries
+- Langfuse, Dify, MCP, and smoke checks as validation surfaces
+
+The recommendation is therefore conservative:
+
+Do not make Hermes the primary loop runner yet. Codify the loop around Symphony first. Treat Hermes as a useful reference implementation and possible secondary runner after the repo-native loop can prove it can observe itself.
+
+## What Was Reviewed
+
+The review had three inputs.
+
+First, current public loop-engineering material. Addy Osmani describes loop engineering as replacing the human prompt-writer with a small system that finds work, hands it out, checks it, writes down what happened, and chooses the next thing. He names the practical components: automation, worktrees, skills, plugins or connectors, sub-agents, and durable state. Business Insider's June 2026 coverage frames the same movement around recurring systems that guide coding agents, with Steinberger's example of Codex waking periodically to maintain repos and direct work to threads.
+
+Second, Hermes Agent. Hermes is relevant because it packages many loop primitives directly: memory files, skill creation, cron scheduling, cross-session recall, messaging gateways, subagents, and remote execution backends. That is a serious signal. It shows where the market is going: agent value compounds when the environment remembers and schedules work.
+
+Third, the CREATE SOMETHING repo. The important discovery was that the repo does not need to start from scratch. It already has the control-plane pieces that public loop-engineering discussions recommend. The gap is not capability. The gap is operational binding: a clear pilot command, a default preflight, dispatch authority, and paper-worthy evidence.
+
+## End Result
+
+This pilot added one repo-native loop surface:
+
+\`\`\`bash
+pnpm agent:loop-pilot
+\`\`\`
+
+That command is the default readiness preflight. It does not claim Linear work and does not start Codex workers. It checks:
+
+- git checkout state
+- package agent legibility contracts
+- policy artifact structure
+- Symphony package tests
+- Linear ready queue visibility when \`LINEAR_API_KEY\` is available
+
+The dispatching version is explicit:
+
+\`\`\`bash
+pnpm agent:loop-pilot:dispatch
+\`\`\`
+
+That command runs the same preflight and then calls:
+
+\`\`\`bash
+pnpm symphony:code-quality:once
+\`\`\`
+
+The distinction matters. A loop that dispatches by default is easy to demo and hard to trust. A loop that starts with read-only readiness can be integrated into daily work without quietly claiming tasks or spending model budget.
+
+The pilot also updated the code-quality Symphony runbook to state its authority boundaries. The loop may read Linear issues, claim work only when dispatch is explicitly requested, create isolated Symphony workspaces, run targeted checks, and leave a reviewable diff or evidence comment. It may not deploy, mutate third-party systems beyond Linear coordination, perform broad speculative refactors, merge, push, or run continuously without operator review of single-pass evidence.
+
+The first real dispatch also found a control-plane bug. The \`code-quality\` Symphony workflow declared \`tracker.label: code-quality\`, but the Linear tracker queried by project and active state without enforcing the configured label before dispatch. In practice, the first bounded run claimed one valid code-quality issue and one issue from the same project that did not carry \`code-quality\`.
+
+That is precisely why the pilot needed to be bounded. The run was interrupted before worker edits landed, the generated workspaces were checked for cleanliness, and Symphony's Linear tracker was patched so \`fetch_candidate_issues()\` now filters by \`tracker.label\` and any configured required labels before a worker can claim an issue. A regression test now covers both single-label and multi-label dispatch filters.
+
+## Why Symphony First
+
+Hermes is compelling because it combines memory, skills, cron, and remote execution. That does not make it the right first control plane for this codebase.
+
+The first control plane should be the one that already owns local truth.
+
+In CREATE SOMETHING, that is Symphony plus Linear:
+
+- Linear already owns tracked work, state, and evidence.
+- Symphony already knows how to query Linear, prepare workspaces, start Codex workers, and report state.
+- Worktree isolation is already a repo rule, not an optional convention.
+- Package \`createSomething\` metadata already gives agents a map.
+- Policy artifacts already define what should stop or escalate.
+
+Adding Hermes first would create another state surface before the current one is fully exercised. The codebase would have to answer avoidable questions: Does Hermes memory override repo docs? Does Hermes cron own the queue or does Linear? Where is the receipt? Which workspace owns a failed run? Which policy stopped the agent?
+
+Those questions are solvable, but they are not the first move.
+
+The first move is to make the existing loop boring.
+
+## The Three-Tier Mapping
+
+The pilot maps cleanly onto the CREATE SOMETHING Three-Tier Framework.
+
+### Database
+
+Database is what exists. In this loop, it includes:
+
+- Linear issues and state
+- package metadata
+- package README and \`AGENTS.md\` files
+- policy markdown and JSON artifacts
+- git worktree state
+- readiness reports
+
+The key property is persistence. A loop cannot depend on a single chat transcript. It needs durable state outside the model context.
+
+### Automation
+
+Automation is what happens. In this loop, it includes:
+
+- \`scripts/agent-loop-pilot.mjs\`
+- Symphony workflow dispatch
+- Codex worker execution
+- targeted package checks
+- workspace creation and cleanup
+- single-pass drain-to-idle behavior
+
+The important design choice is explicit dispatch. Automation can run the work, but it should not silently widen authority from "check readiness" to "claim and edit."
+
+### Judgment
+
+Judgment is what should happen. In this loop, it includes:
+
+- policy artifact checks
+- escalation boundaries in the runbook
+- human approval before continuous daemon promotion
+- no production deploy or merge authority inside the pilot
+- no broad refactor authority without a concrete drift signal
+
+This is where the loop differs from a cron job. A cron job repeats. A governed loop repeats within an explicit policy boundary.
+
+## What Makes a Codebase Loop-Operable
+
+A loop-operable codebase has six properties.
+
+### 1. A real queue
+
+The loop needs a queue that survives the agent. Linear is the queue here. It carries ownership, issue state, labels, descriptions, comments, and evidence. The loop should start from Linear work rather than from vague recurring prompts.
+
+The first dispatch tightened this requirement: a queue is not just a list. It is also a scope contract. The workflow's label declaration must be executable, not merely descriptive.
+
+### 2. Isolated execution
+
+Worktrees are not a convenience. They are the safety boundary that lets multiple workers operate without contaminating each other or the root checkout. The existing CREATE SOMETHING workflow already records branch, worktree path, base ref, and base SHA.
+
+### 3. A cheap preflight
+
+The loop needs a command that can run often without starting work. \`pnpm agent:loop-pilot\` is that preflight. It answers whether the repo is ready for a bounded agent pass.
+
+### 4. Explicit dispatch
+
+Dispatch should be a different command. \`pnpm agent:loop-pilot:dispatch\` is intentionally more powerful. It can claim Linear work and start Codex workers because the operator asked it to.
+
+### 5. Local evidence
+
+The loop needs evidence that is legible without replaying the entire agent session. The readiness report summarizes each gate. Symphony records workspace metadata and Linear evidence. Package checks and policy checks become receipts.
+
+### 6. A stop rule
+
+The loop needs clear reasons to stop. In this pilot, it stops or escalates when issue state and workspace state cannot be reconciled, a workspace is dirty after failure, validation needs unavailable secrets or production mutation, or the worker hits policy or ownership ambiguity.
+
+The first dispatch added one more stop rule: if the loop claims work outside the configured label scope, stop the run and fix dispatch selection before allowing more autonomy.
+
+## Why This Is Better Than a Prompt
+
+A prompt can say:
+
+> Maintain this repo and improve code quality.
+
+That instruction is too broad. It asks the model to invent the queue, infer authority, choose checks, remember what it did, and decide when to stop.
+
+The pilot decomposes the same desire into artifacts:
+
+- Linear selects work.
+- Symphony dispatches work.
+- Worktrees isolate work.
+- Package metadata routes work.
+- Checks validate work.
+- Policy artifacts bound work.
+- Linear comments and readiness reports preserve work.
+
+That is the difference between prompting an agent and designing a loop that prompts agents.
+
+## Why Not Continuous Yet
+
+Continuous loops are attractive because they promise unattended progress. They also multiply every unresolved boundary.
+
+If a single-pass loop cannot produce boring evidence, a daemon will not fix that. It will only make the failure harder to inspect.
+
+The right promotion ladder is:
+
+1. Readiness only: \`pnpm agent:loop-pilot\`
+2. One bounded dispatch: \`pnpm agent:loop-pilot:dispatch\`
+3. Review worker output, preserved workspaces, Linear evidence, and token cost
+4. Add a narrow recurring schedule only for the lane that produced stable evidence
+5. Consider Hermes or another runner only after the repo-native evidence model is clear
+
+The loop should earn more autonomy by producing better receipts.
+
+## Hermes as Reference, Not Rejection
+
+This paper does not reject Hermes.
+
+Hermes is useful as a reference because it makes several good bets:
+
+- memory should live outside one session
+- skills should compound from repeated work
+- scheduled automations should be first-class
+- agents should be reachable from operator messaging surfaces
+- long-running work should not depend on one laptop tab
+
+Those are good directions for CREATE SOMETHING too.
+
+But adoption should be through compatibility, not displacement. A future Hermes experiment should read Linear as the queue, respect worktree boundaries, emit the same receipts, and treat repo docs and policy artifacts as higher authority than its private memory. If it can do that, it can become another runner. If it cannot, it should remain a personal assistant layer rather than the codebase control plane.
+
+## Practical Operating Pattern
+
+The recommended operating pattern is simple.
+
+Daily:
+
+\`\`\`bash
+pnpm agent:loop-pilot
+\`\`\`
+
+If readiness is clean and there is appropriate \`code-quality\` work:
+
+\`\`\`bash
+pnpm agent:loop-pilot:dispatch
+\`\`\`
+
+After dispatch:
+
+- inspect the Symphony output
+- inspect any created workspace
+- inspect Linear comments and issue state
+- run targeted package checks if the worker left a diff
+- only then decide whether to merge, create a follow-up, or clean up
+
+Weekly:
+
+- review repeated loop failures
+- convert repeated comments into lint, policy, docs, or helper changes
+- decide whether one narrow lane is stable enough for scheduled execution
+
+## What This Proves
+
+The pilot proves three things.
+
+First, CREATE SOMETHING already has the primitives loop engineering requires. The missing piece was a single operator-facing entrypoint that made readiness and dispatch distinct.
+
+Second, bounded dispatch is not bureaucracy. It is how the system finds the next missing guardrail. The first run did not prove that the loop was ready for a daemon; it proved that the workflow label needed to become executable policy.
+
+Third, the positive trajectory is repo-native. The loop should deepen the codebase's own contracts rather than replacing them with a new agent's private memory.
+
+Fourth, the product language is becoming sharper. CREATE SOMETHING should not describe its work as merely MCP creation or agent setup. The stronger phrase is:
+
+\`connectivity + harness engineering + judgment control\`
+
+That is what the pilot implements in miniature.
+
+## Conclusion
+
+Loops are not magic. They are operational systems.
+
+A useful loop has a queue, isolation, checks, memory, authority boundaries, and receipts. Without those, the loop is just a prompt that repeats. With those, it becomes a way for the codebase to improve itself without losing human control.
+
+The next step is not to chase the most autonomous agent. The next step is to make the smallest loop trustworthy.
+
+For CREATE SOMETHING, that smallest trustworthy loop is now:
+
+\`\`\`bash
+pnpm agent:loop-pilot
+pnpm agent:loop-pilot:dispatch
+\`\`\`
+
+Readiness first. Dispatch second. Judgment always outside the loop.`
+  },
+  {
     slug: "norvig-partnership",
     title: "The Norvig Partnership",
     subtitle: "When Empiricism Validates Phenomenology—How Peter Norvig's Advent of Code 2025 experiments confirm Heideggerian predictions about AI-human collaboration.\"",
@@ -4308,6 +5348,1069 @@ Neither approach is complete alone. Empiricism without phenomenology measures ef
 
 
 ## References`
+  },
+  {
+    slug: "policy-os-contract-bundle",
+    title: "The Policy OS Contract Bundle",
+    subtitle: "The portable unit of governed AI work",
+    description: "Most AI workflow projects start by choosing an agent surface, model, or connector. The more durable starting point is a contract bundle: the small set of artifacts that defines what the workflow may access, what it may do, when it must ask, how success is measured, and how the work can move between runtimes without losing governance. This paper explains the Policy OS contract bundle as the portable unit of governed AI work and gives teams a practical way to evaluate MCP servers, visual operator surfaces, repo-owned services, and SDK-backed orchestration.",
+    category: "Research",
+    date: "2026-06-21",
+    readingTime: 18,
+    difficulty: "intermediate",
+    keywords: ["Policy OS","Contract Bundle","MCP","Dify","OpenAI Agents SDK","Golden Tasks","Agent Governance","Skills on MCP","Three-Tier Framework"],
+    content: `## Executive Thesis
+
+An agent is not an operating model.
+
+A connector can expose useful capability. A workflow builder can make an interaction easy to inspect. A coding agent can work inside a repository. An SDK-backed service can route tools, store state, pause for approval, and emit traces.
+
+Those surfaces matter, but they do not answer the practical questions a team needs before giving AI real work:
+
+1. What systems may this workflow read?
+2. What actions may run without approval?
+3. What actions must pause for a named owner?
+4. What actions are out of scope?
+5. What counts as a successful outcome?
+6. What evidence proves the workflow behaved correctly?
+7. What changes when the workflow moves to a different agent surface?
+
+The answer is the **Policy OS contract bundle**: a small, explicit artifact family that travels with the workflow.
+
+The bundle is not documentation after the fact. It is the operating boundary. It defines the workflow before autonomy expands, keeps the workflow portable across agent clients, and gives humans a concrete object to review when the system changes.
+
+The practical recommendation is simple: before asking which agent should run the work, ask whether the work has a contract bundle.
+
+## What This Paper Gives You
+
+Use this paper when an AI workflow is past the demo stage but not yet safe to treat as an operating system.
+
+It gives you three practical outputs:
+
+1. A way to explain why "we connected the tools" is not the same as "the workflow is governed."
+2. A five-artifact bundle that turns access, behavior, success, regression testing, and operations into reviewable objects.
+3. A migration rule for moving work between Dify, MCP servers, repo-owned services, coding agents, and SDK-backed orchestration without losing the policy boundary.
+
+The target reader is not only an engineer. It is also the operator, founder, product lead, or client sponsor who needs to know whether an AI workflow can be trusted with real work.
+
+## Why Agent Projects Drift
+
+Most agent projects drift because the team chooses a surface before it names the work.
+
+The surface can be impressive:
+
+- a chat app connected to business systems
+- a Dify workflow with MCP server cards
+- a Codex setup for repository work
+- a Claude or Cursor configuration for local development
+- an SDK-backed service with durable state and traces
+
+But the same failure mode appears across all of them.
+
+The agent can do something, but nobody can say exactly what it is allowed to do.
+
+The team has tool access, but not a tool boundary. It has prompts, but not policy ownership. It has a demo, but not regression cases. It has a user interface, but not an escalation model. It has a deployment, but not a rollback path.
+
+When the workflow breaks, the debugging conversation gets vague:
+
+- Was the data missing?
+- Did the tool fail?
+- Did the model choose the wrong action?
+- Was the policy too permissive?
+- Did the operator approve the wrong thing?
+- Did the runtime surface stop matching the workflow?
+
+Without a contract bundle, those questions collapse into one unhelpful conclusion: the agent did not work.
+
+Policy OS separates them.
+
+## The Bundle In One Page
+
+Every governed AI workflow should ship with five core artifacts.
+
+| Artifact | Job |
+| --- | --- |
+| \`mcp_contract.yaml\` | Defines tools, resources, prompts, auth scopes, schemas, and error behavior. |
+| \`agent_contract.yaml\` | Defines allowed tools, approval mode, escalation triggers, guardrails, runtime surface, and graduation status. |
+| \`outcome_contract.md\` | Defines the job to be done, success metrics, fallback path, ownership boundary, and review cadence. |
+| \`golden_tasks.yaml\` | Defines repeatable examples that prove the workflow still behaves correctly. |
+| \`runbook.md\` | Defines setup, operation, incident response, rollback, and human handoff. |
+
+This bundle is small enough to write for one workflow and strong enough to govern real work.
+
+The bundle is finished when a reviewer can answer five questions without reading the implementation:
+
+- What may this workflow access?
+- What may it do?
+- When must it ask?
+- What result is it trying to produce?
+- What evidence proves the behavior still holds?
+
+It also changes the buyer conversation. The question stops being "Do you have an AI agent?" and becomes:
+
+- Which workflows are approved?
+- Which tools are available?
+- Which writes need approval?
+- Which failures stop the system?
+- Which tests prove the behavior?
+- Which runtime currently owns the workflow?
+- Which evidence supports graduation or rollback?
+
+Those questions are more useful than a demo because they expose whether the system can survive contact with operations.
+
+## The MCP Contract: What Exists
+
+The \`mcp_contract.yaml\` is the connectivity boundary.
+
+It describes what the workflow can see and call:
+
+- tool names
+- resource URI patterns
+- prompt IDs
+- auth scopes
+- input and output schemas
+- error model
+- ownership of external connections
+
+This contract is where MCP earns its place in the architecture. MCP makes capability explicit. It gives agent clients a typed way to discover tools, resources, and prompts instead of hiding integration logic inside a general-purpose prompt.
+
+But the MCP contract should not be treated as the whole system.
+
+MCP answers what can be exposed. The rest of the bundle answers what should happen with that exposure.
+
+For a support workflow, the MCP contract might expose tools to read tickets, search customer history, draft replies, post replies, and update account tags. That tool list is necessary. It is not enough.
+
+The governing question is not "Can the agent post a reply?" It is "Under which policy, for which class of ticket, with which approval owner, and with what receipt?"
+
+That answer belongs in the rest of the bundle.
+
+## The Agent Contract: What May Happen
+
+The \`agent_contract.yaml\` is the behavior boundary.
+
+It tells the agent which actions belong inside the workflow and which actions do not. It names:
+
+- allowed tools
+- blocked tools
+- approval mode
+- write-operation behavior
+- destructive-operation behavior
+- escalation triggers
+- budget and latency guardrails
+- policy artifacts
+- runtime surface
+- graduation status
+
+The runtime fields matter because the same workflow may move across surfaces over time.
+
+A workflow might start in Dify because the client needs visual editing, app publishing, Service API access, MCP server cards, and non-engineer inspection. The same workflow might later move one risky step behind a repo-owned service because it needs queues, tenant boundaries, durable state, custom endpoints, or package-local validation. A mature path might graduate a portion of orchestration into an OpenAI Agents SDK service when tool routing, approval pauses, traces, evals, and CI-backed golden tasks justify the platform burden.
+
+The agent contract prevents that migration from becoming a silent rewrite.
+
+It should always be possible to answer:
+
+- What is the current runtime surface?
+- Is the workflow still a prototype, Dify-first path, SDK candidate, SDK-graduated path, or rollback-required path?
+- Which platform affordances would be lost in a move?
+- Which evidence justifies the change?
+
+Runtime choice is part of governance. It is not an implementation detail.
+
+## The Outcome Contract: What Success Means
+
+The \`outcome_contract.md\` is the business boundary.
+
+It names the workflow in human terms:
+
+- the target workflow
+- the user or operator
+- the manual fallback path
+- the success metrics
+- the ownership boundary
+- the review cadence
+- the customer-facing language
+
+This contract prevents a common mistake: measuring the agent instead of measuring the workflow.
+
+An agent can produce a polished answer while the workflow remains broken. A support reply can be well-written and still violate policy. A research brief can be fluent and still omit required evidence. A data-sync task can complete and still write to the wrong system.
+
+The outcome contract says what matters outside the model.
+
+For example, a billing triage workflow might define success as:
+
+- reads authorized email and account context only
+- classifies refund, deletion, payment, and escalation cases
+- drafts a reply without posting it
+- routes account deletion to human review
+- refuses to request or expose secrets
+- logs evidence for every proposed action
+- completes under a defined latency and cost budget
+
+That is more useful than "the agent answers billing questions." It gives the system something to pass or fail.
+
+## Golden Tasks: What Must Stay True
+
+The \`golden_tasks.yaml\` file is the regression boundary.
+
+It captures the examples that must keep working after prompts, tools, models, policies, or runtimes change.
+
+Golden tasks should cover:
+
+- happy paths
+- approval paths
+- blocked paths
+- missing-data paths
+- forbidden tool use
+- secret refusal
+- latency and cost budgets
+- required evidence
+- runtime parity when a workflow is migrating
+
+Golden tasks make governance testable.
+
+They also make runtime graduation honest. If a Dify workflow is working for operators, an SDK-backed path should not replace it merely because code feels more powerful. The new path should prove parity where parity matters and improvement where improvement is claimed.
+
+If the SDK path improves traceability but loses non-engineer inspection, that is a governance tradeoff. If it improves routing but makes rollback unclear, that is not a graduation. If it improves latency and preserves approval behavior, that evidence belongs in the contract.
+
+Golden tasks keep those claims from becoming taste.
+
+## The Runbook: How Humans Stay In Control
+
+The \`runbook.md\` is the operating boundary.
+
+It explains how humans run the workflow when everything is normal and what they do when the system stops.
+
+A useful runbook includes:
+
+- setup steps
+- required secrets and where they live
+- smoke commands
+- approval workflow
+- incident response
+- rollback steps
+- owner contacts
+- review cadence
+- known failure modes
+- evidence locations
+
+This matters because governed AI is not just a system behavior. It is an operating cadence.
+
+Someone has to review blocked actions. Someone has to tune policy. Someone has to notice golden-task drift. Someone has to decide when a workflow deserves more autonomy or less.
+
+The runbook keeps that human control explicit.
+
+## Portability Is The Point
+
+The contract bundle is portable by design.
+
+The same workflow may need to run through different surfaces:
+
+| Surface | Role |
+| --- | --- |
+| Codex | Primary setup, repository work, task execution, policy-aware implementation. |
+| Pi | Installable skills, prompts, extensions, and quality gates for coding agents. |
+| Claude Code or Cursor | Repo-local harnesses that can consume the same MCP and policy artifacts. |
+| Dify | Client-facing visual workflow UX, publishing, MCP server cards, and operator inspection. |
+| Cloudflare or repo-owned services | Durable state, queues, auth, tenant boundaries, recovery paths, and validation. |
+| OpenAI Agents SDK | Code-owned orchestration when approval pauses, traces, evals, and CI-backed golden tasks are worth the burden. |
+
+Portability does not mean every runtime is equivalent.
+
+It means the workflow's governing artifacts should survive movement across runtimes.
+
+The MCP contract keeps capability portable. The agent contract keeps behavior portable. The outcome contract keeps success portable. The golden tasks keep proof portable. The runbook keeps operations portable.
+
+Without those artifacts, changing surfaces becomes a rebuild. With them, changing surfaces becomes a governed migration.
+
+## What Proof Looks Like
+
+The contract bundle should not remain a theory.
+
+A serious implementation leaves behind proof in several forms:
+
+- template workflows that declare which tools are enabled and which writes require confirmation
+- inventory records that name the live agent surface, smoke cases, and MCP server cards
+- contract bundles for concrete scenarios such as deduplication, inbox triage, or fleet reliability
+- smoke runners that can execute those scenarios or at least verify connectivity
+- installable agent packages that carry skills, prompts, and quality gates into developer workspaces
+- policy evaluators that compile and test the same constraints outside a prompt
+
+Those artifacts do not all need to be public. But they need to exist.
+
+Without them, the team is trusting a claim. With them, the team can inspect the operating boundary:
+
+- this is the workflow
+- this is the tool surface
+- this is the approval rule
+- this is the test case
+- this is the runtime owner
+- this is the rollback path
+
+The important shift is from "the agent is configured correctly" to "the workflow has inspectable evidence."
+
+## Dify-First Does Not Mean Dify-Only
+
+For many client workflows, Dify is the right front door.
+
+It gives teams visual editing, app publishing, Service API access, MCP server cards, and a surface non-engineers can inspect. Those are not minor conveniences. They are operator affordances.
+
+Policy OS treats those affordances as part of the contract.
+
+A workflow should graduate from a Dify-first path only when repo-owned runtime control is more valuable than platform-managed editing speed. That usually means the workflow needs one or more of these:
+
+- code-owned orchestration
+- explicit tool routing
+- approval pauses
+- durable state
+- traces
+- evals
+- CI-backed golden tasks
+- repeatable cost controls
+- custom recovery paths
+
+Even then, the recommended pattern is usually not "replace Dify."
+
+The better pattern is:
+
+1. Keep Dify as the client-facing entry point.
+2. Move only the expensive, risky, or orchestration-heavy step behind a service.
+3. Run the same golden tasks against both paths.
+4. Promote only when behavior, cost, latency, reliability, or operator visibility improves.
+
+That is runtime graduation under policy, not platform switching by preference.
+
+## The Three-Tier View
+
+The Policy OS contract bundle maps directly to the Three-Tier Framework.
+
+### Database: what exists
+
+The Database layer contains the state the workflow depends on:
+
+- business records
+- tool inventories
+- resource URIs
+- auth scopes
+- entitlement state
+- policy versions
+- contract versions
+- trace and evidence logs
+
+The MCP contract lives closest to this layer because it defines available substrate.
+
+### Automation: what happens
+
+The Automation layer contains execution:
+
+- MCP tool calls
+- Dify workflow steps
+- Cloudflare endpoints
+- queues
+- webhooks
+- SDK agent routing
+- smoke scripts
+- eval runs
+
+The agent contract and golden tasks live close to this layer because they define and test allowed behavior.
+
+### Judgment: what should happen
+
+The Judgment layer contains policy:
+
+- approval mode
+- escalation policy
+- blocked-state behavior
+- review cadence
+- operator decision rights
+- rollback criteria
+- graduation criteria
+
+The outcome contract and runbook live close to this layer because they define why the workflow exists and how humans stay in control.
+
+The bundle matters because it keeps those tiers from blending into one prompt.
+
+## A Practical Adoption Path
+
+The first contract bundle should be narrow.
+
+Do not start with an enterprise-wide agent governance program. Start with one workflow where the handoff is painful and the approval boundary is visible.
+
+A good first candidate has:
+
+- a real operator
+- a repeatable input
+- a known manual fallback
+- a measurable output
+- at least one approval boundary
+- at least one safe read-only path
+- clear evidence of whether the workflow succeeded
+
+Then write the bundle in this order:
+
+1. **Outcome contract:** name the job, owner, success metric, and fallback.
+2. **MCP contract:** define the tools, resources, prompts, auth scopes, and errors.
+3. **Agent contract:** define allowed actions, blocked actions, approvals, guardrails, runtime surface, and graduation status.
+4. **Golden tasks:** capture happy, approval, blocked, and failure examples.
+5. **Runbook:** document operation, review, incident response, rollback, and evidence.
+
+This sequence keeps the work grounded. The business outcome comes before tool exposure. Tool exposure comes before agent behavior. Agent behavior comes before regression testing. Regression testing comes before recurring operation.
+
+## A Starter Bundle Example
+
+Imagine a customer inbox triage workflow.
+
+The weak version says: "Use AI to help with support."
+
+The contract-bundle version says:
+
+| Artifact | Example content |
+| --- | --- |
+| \`outcome_contract.md\` | The workflow classifies inbound customer messages, drafts responses, and routes refund, deletion, legal, and security cases to named humans. It never sends customer-facing mail without approval. |
+| \`mcp_contract.yaml\` | The workflow can read authorized inbox threads, read customer account status, search approved help content, draft a reply, and create an internal handoff note. It cannot issue refunds, delete accounts, or send email directly. |
+| \`agent_contract.yaml\` | Low-risk classification is auto-allowed. Drafting is auto-allowed. Sending, refunding, deleting, exporting, and policy exceptions are approval-needed or blocked. Missing account context stops the workflow with a reason. |
+| \`golden_tasks.yaml\` | Examples cover normal support, refund request, account deletion, missing customer record, suspicious attachment, angry but non-policy-breaking message, and secret exposure attempt. |
+| \`runbook.md\` | The support owner reviews blocked cases daily, checks golden-task drift after prompt or tool changes, and falls back to manual triage if the inbox connector, account lookup, or approval queue fails. |
+
+That small bundle communicates more than a demo because it makes the operating boundary visible.
+
+It tells an operator what will happen. It tells an engineer what to expose. It tells a reviewer what to test. It tells a buyer what evidence to request.
+
+## What To Ask Vendors
+
+If you are evaluating an AI workflow vendor, ask for the contract bundle.
+
+Ask:
+
+- Show me the MCP contract or equivalent capability inventory.
+- Show me which tools are allowed, blocked, and approval-gated.
+- Show me the outcome contract for the first workflow.
+- Show me the golden tasks that prove behavior after a prompt, model, tool, or runtime change.
+- Show me the runbook for incidents and rollback.
+- Show me the current runtime surface and graduation status.
+- Show me the evidence that justifies any move from visual workflow tooling into custom runtime code.
+
+These questions are concrete enough to separate productized governance from a demo.
+
+A good answer may still be lightweight. The first bundle does not need to be large. It needs to be explicit.
+
+A weak answer usually sounds like confidence without artifacts:
+
+- "The agent knows not to do that."
+- "We can add approvals later."
+- "The prompt handles it."
+- "The workflow can be moved to code when needed."
+- "The logs are somewhere in the platform."
+
+Those answers may be true in a narrow demo. They are not enough for governed work.
+
+## Conclusion
+
+The useful unit of governed AI work is not the model, the prompt, the connector, or the workflow canvas.
+
+It is the contract bundle.
+
+The bundle makes capability explicit, behavior inspectable, outcomes measurable, regressions repeatable, operations recoverable, and runtime migration governable.
+
+That is why Policy OS starts with MCP but does not stop at MCP. Connectivity establishes trust boundaries. Skills and agents provide behavior. Contracts, golden tasks, runbooks, and review cadence turn that behavior into an operating system.
+
+Before expanding autonomy, write the bundle.
+
+Before graduating runtime, test the bundle.
+
+Before trusting the agent, inspect the bundle.`
+  },
+  {
+    slug: "policy-os-development-infrastructure",
+    title: "Policy OS Applied to Development Infrastructure",
+    subtitle: "Governed Agent Execution via the Pi Coding Agent Harness",
+    description: "Policy OS, CREATE SOMETHING's governed execution platform, was designed for client MCP deployments. This paper documents applying the same product to our own development workflow via the Pi coding agent harness, demonstrating that agent governance is not an add-on but a structural property that emerges from the Three-Tier Framework at every scale.",
+    category: "Case Study",
+    date: "2026-05-11",
+    readingTime: 10,
+    difficulty: "intermediate",
+    keywords: ["Policy OS","Three-Tier Framework","Pi","Agent Governance","Quality Gates","MCP","Development Infrastructure"],
+    content: `## Abstract
+
+Policy OS, CREATE SOMETHING's governed execution platform, was designed for client MCP deployments. This paper documents applying the same product to our own development workflow via the Pi coding agent harness, demonstrating that agent governance is not an add-on but a structural property that emerges from the Three-Tier Framework at every scale.
+
+## 1. Introduction
+
+Agent coding harnesses, including Pi, Claude Code, Codex, and Cursor, share a fundamental problem: they are general-purpose tools operating in domain-specific environments. An agent writing SvelteKit components needs to know about Canon design tokens. An agent deploying MCP servers needs to know about the fleet registry. An agent closing a Linear issue needs to know about the evidence contract.
+
+This knowledge traditionally lives in documentation that agents may or may not read. The Policy OS approach makes it structural: quality gates enforce compliance automatically, custom tools make verification easy, and domain skills make knowledge loadable on demand.
+
+## 2. The Three-Tier Mapping
+
+The development harness maps cleanly to the Three-Tier Framework:
+
+| Tier | Framework Role | Development Implementation |
+| --- | --- | --- |
+| Database | What exists | Git state, package exports, fleet registry, Canon tokens |
+| Automation | What happens | Quality gates, custom tools, interactive commands |
+| Judgment | What should happen | Bash guard, pre-completion checks, evidence requirements |
+
+### Control Models Verified
+
+- **Application-controlled (Database)**: Session context injected via \`before_agent_start\`. The extension decides what state the agent sees.
+- **Model-controlled (Automation)**: Custom tools like \`context7_query\` are available, but the agent decides when to call them.
+- **User-controlled (Judgment)**: Skills loaded via \`/skill:name\`, making guidance an explicit selection.
+
+## 3. Implementation
+
+### Scale
+
+| Component | Count | Role |
+| --- | --- | --- |
+| Event handlers | 8 | Quality gates, context injection, bash guard, lifecycle |
+| Custom tools | 3 | Context7 bridge x2, package export verifier |
+| Commands | 8 | Linear workflow, testing, fleet ops, Canon audit, pre-commit |
+| Prompt templates | 8 | Deploy, audit, review, research, experiment, paper, MCP scaffold |
+| Skills | 21 | 3 native + 18 cross-loaded, domain knowledge on demand |
+| Theme | 51 colors | Glass Design System alignment |
+| Total extension | 1,181 lines | Single coherent extension file |
+
+### Quality Gate Architecture
+
+\`\`\`text
+Write/Edit
+    |
+    |-- tool_result handler
+    |     |-- Canon token compliance (6 pattern checks)
+    |     |-- Import verification (@create-something/* packages)
+    |     |-- Paper structure (SEO, container, classes)
+    |     \`-- Experiment structure (SEO, Canon tokens, hex colors)
+    |
+    \`-- Violations? -> Append to tool result -> Agent self-corrects
+
+Bash execution
+    |
+    \`-- tool_call handler
+          |-- Block legacy loom commands -> redirect to Linear
+          \`-- Enforce [CRE-NNN] in commit messages
+
+Agent completion
+    |
+    \`-- agent_end handler
+          |-- TypeScript type check (modified packages)
+          |-- ESLint lint check (modified packages)
+          |-- Uncommitted changes reminder
+          \`-- Issues? -> sendUserMessage(followUp) -> Agent fixes
+\`\`\`
+
+## 4. The Recursive Property in Practice
+
+The extension exhibits the Three-Tier Framework's recursive property:
+
+1. \`tool_result\` (Automation) checks Canon compliance (Judgment) and feeds violations back.
+2. The agent (Automation) reads the violations and self-corrects (more Automation).
+3. \`agent_end\` (Automation) runs typecheck (Database verification) and reports.
+4. If issues exist, \`sendUserMessage\` re-enters the agent loop: Automation invoking more Automation with embedded Judgment.
+
+This is the sampling feedback loop described in the framework paper, realized in a development harness.
+
+## 5. The Product Insight
+
+What we built for the development workflow is structurally identical to what we sell as Policy OS:
+
+| Policy OS Deliverable | Development Implementation |
+| --- | --- |
+| \`mcp_contract.yaml\` | \`.pi/settings.json\` + cross-loaded skills |
+| \`agent_contract.yaml\` | Bash guard rules + quality gate event handlers |
+| \`outcome_contract.md\` | \`APPEND_SYSTEM.md\` + prompt templates |
+| \`golden_tasks.yaml\` | Pre-commit checks + typecheck/lint on completion |
+| \`runbook.md\` | Interactive commands (\`/linear\`, \`/fleet\`, \`/deploy\`) |
+
+The harness is the policy. The configuration is the contract. The development workflow is the first client.
+
+## 6. Distribution as Discovery
+
+The Pi package ecosystem enables a new funnel:
+
+\`\`\`text
+pi install npm:@create-something/pi-three-tier-framework
+    -> Developer learns Database/Automation/Judgment
+    -> Classifies their own systems
+
+pi install npm:@create-something/pi-policy-os
+    -> Developer runs /policy-check
+    -> Sees governance score and gaps
+    -> Contacts createsomething.agency
+\`\`\`
+
+This mirrors the MCP-First Thesis: the entry point is connectivity, installable agent configuration, not intelligence through a full consulting engagement.
+
+## 7. Conclusion
+
+Policy OS is not a product category. It is a consequence of the Three-Tier Framework applied to any agent-governed workflow. When you configure quality gates, you are building Database checks. When you register custom tools, you are building Automation. When you write domain skills and prompt templates, you are building Judgment artifacts.
+
+The creation moat, understanding what to build and not just how to install it, applies to agent harness configuration just as it applies to MCP server creation. Both require domain expertise combined with protocol knowledge. Both are hard to commoditize.
+
+CREATE SOMETHING builds the connectivity and control layer between tools and AI.`
+  },
+  {
+    slug: "proof-surface",
+    title: "The Proof Surface",
+    subtitle: "Why agent work needs public receipts, private evidence, and owner authority once it leaves chat",
+    description: "Agent work becomes operational only when a buyer, operator, or reviewer can inspect what ran, what waited, what stopped, and what proves the decision. This paper defines the Proof Surface as the business-readable layer that sits above private logs, traces, deploy output, and workflow contracts. It turns evidence into receipts, separates public status from sensitive proof, keeps ownership visible after the agent has acted, and gives teams a practical template for one workflow.",
+    category: "Research",
+    date: "2026-06-22",
+    readingTime: 18,
+    difficulty: "intermediate",
+    keywords: ["Proof Surface","Receipts","Workflow Trust Layer","Policy OS","Agent Governance","Delivery Records","Operator Surface","Three-Tier Framework"],
+    content: `## Executive Thesis
+
+Proof is the product once work leaves chat.
+
+A model response can sound right. A tool call can succeed. A trace can show every step. A deploy can pass. A Linear issue can close. None of those facts, alone, gives a buyer or operator a usable answer to the practical question:
+
+What happened, what changed, who owns the next decision, and what evidence should we trust?
+
+The missing layer is the **Proof Surface**: the business-readable layer that turns agent work into inspectable operating receipts.
+
+The Proof Surface answers four questions:
+
+1. What can run?
+2. What must wait?
+3. What must stop?
+4. What proves the decision?
+
+This is not a replacement for traces, evals, runbooks, or contracts. It is the layer that makes those artifacts legible to the people who have to inherit the workflow.
+
+The practical recommendation is simple: before expanding agent authority, define the proof surface the operator will inspect after the work runs.
+
+## What This Paper Gives You
+
+Use this paper when an AI workflow is already capable enough to act, but not yet legible enough to inherit.
+
+It gives you three practical outputs:
+
+1. A distinction between raw evidence and proof receipts.
+2. A public/private evidence boundary for workflow status surfaces.
+3. A starter proof template that can be applied to one workflow before autonomy expands.
+
+The target reader is the operator, founder, product lead, client sponsor, or builder who needs to know whether agent work can leave chat without losing accountability.
+
+## Why Proof Needs A Surface
+
+Most AI workflow demos end at the moment the agent responds.
+
+Real operations begin after that moment.
+
+The operator needs to know whether a customer-facing reply was only drafted or actually sent. The founder needs to know whether a production deploy touched the canonical domain or only a preview alias. The client sponsor needs to know which evidence is safe to share and which logs must stay private. The next teammate needs to know why an action stopped instead of pretending to finish.
+
+Without a proof surface, the system creates a familiar failure mode: execution exists, but accountability is scattered.
+
+- The chat transcript has the explanation.
+- The CI run has the command output.
+- The trace has the runtime steps.
+- The issue tracker has the assignment.
+- The deploy system has the URL.
+- The client page has only a vague status.
+
+Nobody is lying, but nobody can read the work as one operating path.
+
+The Proof Surface brings those fragments into one inspectable object. It does not expose every private detail. It shows enough for a buyer, operator, or reviewer to understand the state of the work without receiving credentials, raw logs, private client data, or implementation noise.
+
+## Proof Is Not The Same As Evidence
+
+Evidence is the underlying material.
+
+Proof is the interpreted receipt.
+
+For agent workflows, evidence can include:
+
+- command output
+- test results
+- trace IDs
+- eval scores
+- screenshots
+- deploy IDs
+- source URLs
+- database snapshots
+- policy decisions
+- approval notes
+- blocked-state records
+
+Those artifacts matter, but most of them are not buyer-readable. A trace can prove runtime behavior to an engineer while still failing to explain the workflow to an operator. A deploy ID can prove promotion to a release owner while saying nothing about whether the customer-facing action was allowed. A screenshot can show a page rendered while hiding whether the data behind it was stale.
+
+Proof is the layer that says what the evidence means.
+
+| Evidence | Proof receipt |
+| --- | --- |
+| A passing validation command | The workflow met its release gate. |
+| A trace ID | The run followed the expected path. |
+| A blocked-state JSON file | The action stopped for a named reason. |
+| A deploy URL | The change is visible on a specific surface. |
+| An approval comment | A named owner accepted a risky action. |
+| A rollback note | The team knows how to recover if the change fails. |
+
+This distinction keeps teams from oversharing private evidence while still giving stakeholders a trustworthy view of the work.
+
+## The Four Visible States
+
+The Proof Surface makes agent work readable through four states.
+
+| State | Meaning | Receipt |
+| --- | --- | --- |
+| Run | Bounded work was allowed to proceed. | What action ran, against which object, under which rule. |
+| Wait | A named owner must approve before impact. | The approval note, decision owner, and pending action. |
+| Stop | The workflow exceeded scope, lacked data, or hit policy. | The reason code and recovery path. |
+| Receipt | The result is preserved for review and handoff. | The link, command, trace, note, or delivery record that proves the state. |
+
+These states are intentionally small.
+
+Operators do not need to read an entire policy bundle to understand whether the system acted correctly. They need the operating state first. From there, the deeper evidence can remain attached for reviewers who need it.
+
+The state language also prevents fake autonomy. An agent that stops with a reason is more trustworthy than an agent that guesses to preserve the appearance of completion.
+
+## Public Status, Private Evidence
+
+The proof surface has to separate what is visible from what is sensitive.
+
+This is where many agent systems fail. They either expose too little and become opaque, or expose too much and leak credentials, raw client data, private logs, or internal reasoning that should never become a customer artifact.
+
+A useful proof surface has two layers:
+
+| Layer | Audience | Contents |
+| --- | --- | --- |
+| Public or client-safe status | Buyer, operator, client sponsor, next teammate | Workflow state, owner decision, safe summary, next action, non-sensitive links. |
+| Private evidence packet | Builder, reviewer, release owner, security owner | Commands, trace IDs, raw validation output, secrets-adjacent context, rollback notes, detailed logs. |
+
+The separation is not cosmetic. It preserves ownership.
+
+The buyer should see enough to trust the system. The operator should see enough to act. The builder should preserve enough to debug. Sensitive proof should stay behind the right boundary.
+
+That is the difference between transparency and leakage.
+
+## How This Fits The Existing Stack
+
+The Proof Surface follows the sequence already established by the CREATE SOMETHING research trail.
+
+The **Workflow Trust Layer** names what can run, what waits, and what stops.
+
+The **Policy OS Contract Bundle** defines the portable artifacts that govern capability, behavior, outcomes, regressions, and operations.
+
+The **Eval Evidence Layer** makes traces, evals, approval receipts, and blocked states measurable enough to change release decisions.
+
+The **Proof Surface** makes the result readable to the people who inherit the work.
+
+Those layers should not collapse into one document.
+
+| Layer | Primary question |
+| --- | --- |
+| Workflow Trust Layer | What is the workflow allowed to do? |
+| Policy OS Contract Bundle | Which artifacts govern the workflow? |
+| Eval Evidence Layer | Which measurements change release decisions? |
+| Proof Surface | What can a human inspect after work runs? |
+
+The proof surface is the user-facing edge of governance. It is where policy, evidence, and handoff become understandable.
+
+## The Proof Path: Connect, Verify, Coordinate, Control
+
+A practical proof surface follows the same path as governed delivery.
+
+### 1. Connect
+
+Name the system, account owner, and authority boundary.
+
+This is where the workflow states what it can read, what it can write, and which system owns the source of truth. A connection without ownership is just latent risk.
+
+The proof receipt should answer:
+
+- Which account or system is involved?
+- Who owns access?
+- Which authority was granted?
+- Which authority was not granted?
+
+### 2. Verify
+
+Check the claim before repeating it.
+
+Verification can be a command, route response, screenshot, trace, eval, or direct source read. The important point is that the agent does not merely narrate confidence. It attaches evidence.
+
+The proof receipt should answer:
+
+- What was checked?
+- When was it checked?
+- What passed or failed?
+- What is still unverified?
+
+### 3. Coordinate
+
+Keep ownership, status, and evidence with the work.
+
+Agent work often spans multiple tools and sessions. Without coordination, the next operator inherits a scattered story. A useful proof surface preserves the handoff as an artifact, not as oral tradition.
+
+The proof receipt should answer:
+
+- Who owns the next decision?
+- Which issue, delivery record, or runbook carries the state?
+- What is blocked?
+- What can continue safely?
+
+### 4. Control
+
+Ship the run, wait, stop, and rollback paths.
+
+Control means the workflow can act inside bounds and stop outside them. It also means a future operator can recover. A proof surface without rollback context is incomplete whenever production, revenue, customer trust, or account authority is involved.
+
+The proof receipt should answer:
+
+- What can run automatically?
+- What requires approval?
+- What stops with a reason?
+- How does the team recover?
+
+## Delivery Records As Proof Surfaces
+
+A delivery record is one of the most useful proof surfaces because it is naturally business-readable.
+
+It can show:
+
+- the workflow model
+- the current status
+- the owner boundary
+- the visible decisions
+- the private evidence boundary
+- the next action
+
+For a recruiter-gated workflow pilot, the delivery record can show the business model, agent boundary, remaining owner decisions, and client-safe proof without exposing private sourcing data or account credentials.
+
+For a backend handoff, the delivery record can separate account ownership, credentials, app administration, database state, acceptance checks, and transfer options.
+
+The pattern is the same in both cases:
+
+1. Visible status for the client or operator.
+2. Private evidence for the builder or release owner.
+3. Named authority for the next decision.
+4. A receipt trail that survives the handoff.
+
+This is why proof surfaces are not marketing pages. They are operating artifacts with a public-safe face.
+
+## A Worked Example: Support Recovery
+
+Consider an ecommerce support workflow.
+
+A customer writes in because an order has the wrong shipping address. The order is paid, the shipment is not yet fulfilled, and the warehouse cutoff has not passed.
+
+The agent has access to four systems:
+
+- the support case
+- the customer record
+- the order record
+- the warehouse cutoff state
+
+The raw capability looks simple: read the case, inspect the order, draft a reply, write an internal order note, and notify the warehouse.
+
+The proof surface is what makes the workflow safe to inspect.
+
+| Proof field | Support recovery example |
+| --- | --- |
+| Workflow | Address correction before fulfillment cutoff. |
+| Current state | Run. |
+| Named owner | Support lead owns exceptions; warehouse owns cutoff. |
+| Allowed action | Add an internal order note and draft the customer reply. |
+| Approval-needed action | Credit, refund, cancellation, or shipment reroute after cutoff. |
+| Blocked action | Any payment change or address rewrite after warehouse cutoff. |
+| Evidence summary | Order is paid, unfulfilled, and inside cutoff; address format validated. |
+| Private evidence pointer | Case URL, order lookup, warehouse cutoff check, command output, trace ID. |
+| Public receipt | "Address correction drafted; warehouse note prepared; no payment action taken." |
+| Next action | Support lead reviews the drafted reply or lets the bounded note proceed. |
+
+This example matters because the same agent capability can produce three different proof states.
+
+If the order is unfulfilled and inside cutoff, the workflow can run. If the request includes a goodwill credit, it must wait for a named owner. If the customer asks for a refund above the support lane, it must stop with a reason.
+
+The model may be the same in all three cases. The tools may be the same. The proof surface is what changes the operating state.
+
+## Database, Automation, Judgment
+
+The Proof Surface maps cleanly to the Three-Tier Framework.
+
+### Database: what exists
+
+The Database layer stores the proof material:
+
+- workflow records
+- delivery records
+- source objects
+- account ownership
+- trace links
+- eval results
+- command output
+- approval decisions
+- blocked-state records
+- rollback notes
+
+The proof surface should not pretend to be the source of truth for everything. It should point to the source of truth and summarize the current state safely.
+
+### Automation: what happened
+
+The Automation layer produces the receipts:
+
+- route checks
+- validation commands
+- deploys
+- agent runs
+- MCP tool calls
+- CI checks
+- evidence packaging
+- handoff updates
+
+Automation makes work fast. The proof surface makes automation inspectable.
+
+### Judgment: what should happen
+
+The Judgment layer interprets the receipt:
+
+- Is this safe to publish?
+- Does this need owner approval?
+- Should this stop?
+- Is the evidence sufficient?
+- Does the workflow graduate, narrow scope, or roll back?
+
+The proof surface carries this judgment back to the user in a form they can act on.
+
+## What A Good Proof Surface Includes
+
+A useful proof surface is compact, but it is not vague.
+
+It should include:
+
+- **Workflow name**: the business path, not the tool name.
+- **Current state**: run, wait, stop, or receipt.
+- **Named owner**: the person or role that owns approval.
+- **Allowed action**: what the system may do without review.
+- **Blocked action**: what the system refused or deferred.
+- **Evidence summary**: what was checked and what passed.
+- **Private evidence pointer**: where detailed proof lives.
+- **Next action**: what should happen now.
+- **Rollback or recovery note**: what to do if the path fails.
+
+It should avoid:
+
+- raw secrets
+- full logs with private data
+- unsupported status claims
+- vague "completed" labels
+- hidden approval assumptions
+- unlinked evidence
+- screenshots that are treated as the only proof
+
+The test is simple: a new operator should be able to inspect the surface and understand what can happen next without asking the original agent to reconstruct the story.
+
+## A Starter Proof Surface Template
+
+A first proof surface can be written as a small operating record.
+
+\`\`\`yaml
+workflow: support-recovery.address-correction
+owner:
+  approval: support_lead
+  source_account: ecommerce_ops
+state: run
+boundary:
+  can_run:
+    - read_support_case
+    - read_order
+    - read_warehouse_cutoff
+    - write_internal_order_note
+    - draft_customer_reply
+  must_wait:
+    - issue_credit
+    - post_customer_reply_without_template_match
+    - reroute_after_cutoff
+  must_stop:
+    - refund_above_support_lane
+    - missing_order_record
+    - payment_state_unclear
+evidence:
+  public_summary: "Order is paid, unfulfilled, and inside warehouse cutoff."
+  private_packet:
+    - case_url
+    - order_lookup_result
+    - warehouse_cutoff_check
+    - trace_id
+receipt:
+  public: "Address correction prepared; no payment action taken."
+  private: "validation-output-2026-06-22.md"
+next_decision:
+  owner: support_lead
+  action: review_customer_reply
+rollback:
+  note: "Remove internal note and escalate to warehouse owner if cutoff state changes."
+\`\`\`
+
+This record is deliberately small. It is not trying to replace the contract bundle, runbook, trace, or eval ledger. It is the visible operating object that tells the next human how to read the work.
+
+## Common Failure Modes
+
+### Status Without Receipts
+
+The page says "done," but no evidence is attached.
+
+This is the most common failure. It creates confidence without transferability. A proof surface should avoid status claims that cannot be followed to evidence.
+
+### Evidence Without Interpretation
+
+The team has logs, traces, screenshots, and deploy IDs, but no one has translated them into an operating conclusion.
+
+This creates the opposite problem: too much evidence, not enough proof. The proof surface must say what the evidence means.
+
+### Public Proof With Private Leakage
+
+The system exposes raw logs, secret-adjacent output, private customer data, or credential context because it treats transparency as unrestricted visibility.
+
+The fix is to split public-safe status from private evidence packets.
+
+### Approval Without An Owner
+
+The workflow says an action needs approval, but it does not name who can approve it.
+
+That is not a wait state. It is an abandoned state. A useful proof surface names the owner or stops with a reason.
+
+### Agent Continuity Without Handoff
+
+The agent can continue in its own context, but the human team cannot inherit the work.
+
+Long-running agent systems need ownership, checkpoints, and evidence that survive tool boundaries. Otherwise continuity exists only inside the model session.
+
+## A One-Workflow Starting Point
+
+Teams do not need to build a full proof platform before using agents.
+
+Start with one workflow your team already protects by hand.
+
+Choose a workflow with:
+
+- a visible owner
+- repeated handoffs
+- real risk when it fails
+- at least one system connection
+- at least one approval boundary
+- evidence that can be checked
+
+Then create a first proof surface with five sections:
+
+1. **Workflow**: name the path and owner.
+2. **Boundary**: list what can run, wait, and stop.
+3. **Evidence**: summarize what was checked.
+4. **Receipt**: link the delivery record, issue, trace, or validation output.
+5. **Next decision**: name the owner and action.
+
+If this feels too heavy, the workflow probably is not ready for more autonomy. If it feels clarifying, the proof surface is doing its job.
+
+## Conclusion
+
+Agent systems need more than capability, contracts, and metrics.
+
+They need a surface where humans can inspect the work.
+
+The Proof Surface is that layer. It turns private evidence into public-safe receipts. It keeps owners visible. It explains why work ran, waited, or stopped. It lets delivery records, runbooks, evals, traces, and release evidence become one operating story.
+
+The result is not just a better report.
+
+It is a safer delegation path: work can leave chat without leaving accountability behind.`
   },
   {
     slug: "recursive-language-models",
@@ -5166,58 +7269,6 @@ But the statement is not the position. The position is the practice that makes t
 - In the assessment protocol that filters engagements before proposals begin`
   },
   {
-    slug: "test-markdown-paper",
-    title: "Test Markdown Paper",
-    subtitle: "Validating the markdown infrastructure",
-    description: "This is a test paper to validate the markdown + MDsveX infrastructure works correctly with PageActions.",
-    category: "Infrastructure",
-    date: "2026-01-07",
-    readingTime: 2,
-    difficulty: "beginner",
-    keywords: ["infrastructure","markdown","mdsvex"],
-    content: `## Introduction
-
-This is a test paper written in **markdown** with full support for:
-
-- Svelte component embedding (MDsveX)
-- PageActions integration
-- Canon-compliant styling
-- Type-safe frontmatter
-
-## Features
-
-The infrastructure provides:
-
-1. **Version-controlled content** - Markdown files in git
-2. **Full Svelte capabilities** - Can embed components via MDsveX
-3. **Automatic PageActions** - Every paper gets export functionality
-4. **Type safety** - Frontmatter validated at build time
-
-## Code Example
-
-\`\`\`typescript
-import { loadContentBySlug } from '@create-something/canon/utils';
-
-const paper = await loadContentBySlug<PaperFrontmatter>(
-  '../content/papers/*.md',
-  'test-markdown-paper'
-);
-\`\`\`
-
-## Table Example
-
-| Feature | Status |
-|---------|--------|
-| Markdown | ✅ |
-| MDsveX | ✅ |
-| PageActions | ✅ |
-| TypeScript | ✅ |
-
-## Conclusion
-
-The markdown infrastructure preserves all richness while eliminating duplication.`
-  },
-  {
     slug: "understanding-graphs",
     title: "Understanding Graphs: \"Less, But Better\" Codebase Navigation",
     subtitle: "Applying Heidegger's hermeneutic circle to develop minimal dependency documentation that captures only understanding-critical relationships—replacing exhaustive tooling with human-readable insight.\"",
@@ -5683,5 +7734,397 @@ The interesting part wasn't the technology swap itself. It was discovering that 
 ---
 
 **Full Paper**: \${fullUrl}`
+  },
+  {
+    slug: "workflow-trust-layer",
+    title: "The Workflow Trust Layer",
+    subtitle: "Why agents need handoffs, approval states, and evidence before they need more tools",
+    description: "AI teams usually reach for more tools when a workflow fails. The recent CREATE SOMETHING implementation trail points to a different conclusion: the missing layer is often not another connector, model, or agent runtime. It is a workflow trust layer that names the handoff, owner, data boundary, action rule, approval state, blocked state, and receipt before autonomy expands. This paper turns that lesson into a practical operating model for users evaluating agentic workflows. MCP exposes capability, Dify or another app surface makes the workflow usable, Cloudflare or repo-owned services provide durable runtime boundaries, and an SDK-backed service can graduate risky orchestration into code when the evidence justifies it. The trust layer is the artifact family that keeps those surfaces coherent.",
+    category: "Research",
+    date: "2026-06-20",
+    readingTime: 18,
+    difficulty: "intermediate",
+    keywords: ["Workflow Trust Layer","Policy OS","MCP","Dify","OpenAI Agents SDK","Approval States","Agent Governance","Three-Tier Framework"],
+    content: `## Executive Thesis
+
+Connection does not create trust.
+
+An MCP server can expose a useful capability. A Dify app can make an agent workflow easy to inspect. A coding agent can operate across a repo. An SDK-backed service can route tools, pause for approval, store state, and emit traces.
+
+None of those surfaces, by itself, tells a team what the workflow is allowed to do.
+
+The missing layer is the **Workflow Trust Layer**: the operating boundary that turns a possible agent action into a controlled workflow step.
+
+It answers seven questions before the agent does more work:
+
+1. What handoff is this workflow trying to improve?
+2. Who owns the approval?
+3. Which data is the system allowed to read?
+4. Which actions can run automatically?
+5. Which actions must pause for review?
+6. Which actions should stop with a reason?
+7. What receipt proves what happened?
+
+This paper is written for users who already feel the pressure to "add AI" to a real workflow. The practical recommendation is simple: do not start by asking which model, app, or connector should run the work. Start by building the trust layer underneath the work.
+
+## The Failure Mode: More Capability, Less Confidence
+
+Most agent failures do not begin with a missing model feature.
+
+They begin with a workflow that was never named precisely enough:
+
+- a support thread needs follow-up, but nobody knows when a reply can be posted automatically
+- a sales handoff crosses CRM, email, notes, and Slack, but nobody owns the approval boundary
+- a review process has a checklist, but the checklist does not say which findings are evidence and which are judgment
+- an operator wants autonomy, but the system cannot explain why it stopped
+- a team connects tools, but cannot reconstruct what changed
+
+In that state, adding more tools makes the system more capable and less legible at the same time.
+
+The user sees a chat box. The agent sees tools. The runtime sees API calls. The business still lacks an operating answer.
+
+What should happen next?
+
+That is a policy question, not a connector question.
+
+## The Three Decision States
+
+A workflow trust layer reduces agent behavior to three visible states.
+
+| State | Meaning | User experience |
+| --- | --- | --- |
+| Auto-allow | The action is low-risk, scoped, and covered by an accepted rule. | The system acts and keeps a receipt. |
+| Approval-needed | The action may be valuable, but a named human must decide. | The system pauses with context, options, and evidence. |
+| Blocked | The action is outside scope, missing data, too risky, or not authorized. | The system stops with a reason and a recovery path. |
+
+This is deliberately smaller than a full governance framework.
+
+Users do not need a fifty-page policy manual before the first useful workflow. They need the first durable boundary:
+
+- what can run
+- what waits
+- what stops
+
+The first version can be written as a table. The important move is making the decision state explicit before the agent gets access to more capability.
+
+## Why MCP Is Necessary But Not Sufficient
+
+MCP is the right substrate for agent work because it makes capability explicit.
+
+It can define:
+
+- tools the model may call
+- resources the application may provide
+- prompts or policy artifacts a user may select
+- input and output schemas
+- auth and permission boundaries
+
+That is a major improvement over hidden integration logic inside a general-purpose agent prompt.
+
+But MCP answers **what can be called**. It does not automatically answer **what should be done**.
+
+Consider a customer-support workflow with tools for reading tickets, summarizing account history, drafting replies, posting replies, issuing refunds, and updating CRM fields.
+
+The tool inventory alone is not enough. The trust layer has to say:
+
+- reading tickets is auto-allowed
+- summarizing account history is auto-allowed if PII stays inside the authorized workspace
+- drafting a reply is auto-allowed
+- posting a reply needs approval unless the reply matches a low-risk template
+- issuing a refund is blocked unless a separate finance policy is attached
+- updating CRM status is approval-needed when it affects pipeline reporting
+
+MCP gives the agent a controlled interface. The workflow trust layer gives the organization a controlled operating path.
+
+## The Runtime Question Comes Later
+
+Teams often collapse three decisions into one:
+
+1. Where should the user interact with the workflow?
+2. Where should durable runtime logic live?
+3. When should orchestration graduate into code?
+
+Those are different decisions.
+
+A practical stack can use multiple surfaces without contradiction.
+
+| Surface | Best role | Trust-layer question |
+| --- | --- | --- |
+| Dify or another visual app surface | Client-facing workflow UX, visual inspection, app publishing, service API access, non-engineer review | Can the operator inspect and change the workflow without a code deployment? |
+| Cloudflare or repo-owned services | Auth, queues, D1 state, tenant boundaries, custom endpoints, recovery paths, package-local validation | Does this workflow need durable infrastructure and explicit runtime ownership? |
+| MCP server | Tool/resource/prompt boundary across agent clients | Which capabilities are exposed, scoped, and observable? |
+| SDK-backed workflow service | Code-owned orchestration, approval pauses, traces, evals, CI-backed golden tasks | Has this workflow earned the platform burden of custom runtime ownership? |
+
+The runtime question should not be treated as a brand preference.
+
+Dify is useful when the workflow needs visual editing, app publishing, and non-engineer inspection. Cloudflare is useful when the workflow needs custom runtime state and recovery paths. MCP is useful when capability boundaries must be explicit and portable. An SDK-backed service is useful when the workflow has outgrown visual orchestration and now needs code-owned routing, approval pauses, traces, evals, and repeatable golden tasks.
+
+The trust layer is what lets those surfaces cooperate instead of competing.
+
+## A Practical Model: Map, Pilot, Operate
+
+The workflow trust layer becomes useful when it is tied to a delivery path.
+
+### 1. Trust Map
+
+The first artifact is a map of one workflow.
+
+It should name:
+
+- the workflow owner
+- the human task
+- the AI task
+- the system task
+- the source systems
+- the data objects
+- the action boundary
+- the approval owner
+- the failure modes
+- the evidence receipt
+
+The output is not "an automation idea." The output is a bounded workflow map.
+
+The best first map is usually one painful handoff, not a broad automation wishlist. A good candidate crosses systems, teams, permissions, or customer expectations. A weak candidate has no approval owner, no visible failure mode, or only a vague wish for unattended action.
+
+### 2. Workflow Pilot
+
+The second artifact is one controlled workflow in production or preview.
+
+It should include:
+
+- the MCP capability boundary
+- the user-facing app surface
+- the runtime state boundary
+- the three decision states
+- the first runbook
+- the release evidence
+- the fallback path
+
+The pilot should prove the handoff, not the platform.
+
+The question is not "Can an agent do something impressive?" The question is "Can this workflow move from manual rescue to controlled operation?"
+
+### 3. Trust Layer
+
+The third artifact is recurring control around live work.
+
+It should include:
+
+- incident notes
+- blocked-state reviews
+- golden-task regressions
+- approval queue review
+- tool-scope review
+- policy tuning
+- runtime graduation or rollback review
+
+This is where the system becomes operational instead of merely implemented.
+
+The trust layer is not a project kickoff document. It is a standing control loop.
+
+## The Artifact Family
+
+The Workflow Trust Layer is easier to understand when treated as a concrete artifact bundle.
+
+| Artifact | Purpose |
+| --- | --- |
+| \`workflow_map.md\` | Names the handoff, owner, tasks, systems, and failure points. |
+| \`mcp_contract.yaml\` | Defines tools, resources, prompts, auth scopes, and error model. |
+| \`agent_contract.yaml\` | Defines allowed tools, approval mode, escalation triggers, runtime surface, and graduation status. |
+| \`decision_states.yaml\` | Lists auto-allowed, approval-needed, and blocked actions. |
+| \`golden_tasks.yaml\` | Provides regression examples for the workflow's most important behavior. |
+| \`runbook.md\` | Defines setup, operation, incident response, and rollback. |
+| \`evidence_log.md\` | Records validation commands, trace IDs, deploy IDs, review notes, and handoff receipts. |
+
+This bundle gives users something agents alone do not provide: a way to inspect and transfer responsibility.
+
+## Database, Automation, Judgment
+
+The Workflow Trust Layer follows the Three-Tier Framework.
+
+### Database: what exists
+
+The Database layer contains the workflow state:
+
+- source records
+- account and entitlement state
+- policy versions
+- approved workflow definitions
+- previous decisions
+- evidence logs
+- trace IDs
+- runbook versions
+
+If the data is stale or missing, the agent should not compensate by guessing. It should stop, ask for the missing substrate, or route to a manual fallback.
+
+### Automation: what happens
+
+The Automation layer contains the tool calls and deterministic execution paths:
+
+- MCP tool invocation
+- Dify workflow steps
+- Cloudflare Worker endpoints
+- queues
+- webhooks
+- SDK agent routing
+- eval runs
+- golden-task checks
+
+This layer should make the action path repeatable. It should not hide policy inside improvised reasoning.
+
+### Judgment: what should happen
+
+The Judgment layer contains the selected policy:
+
+- approval rules
+- escalation criteria
+- blocked actions
+- human ownership
+- cost and latency guardrails
+- rollback criteria
+- operator cadence
+
+When this layer is missing, agents either ask constantly or guess silently. The trust layer makes judgment explicit enough to operate.
+
+## What Users Actually Need
+
+Most users do not need to learn the internals of agent runtimes before they can make progress.
+
+They need a short diagnostic that forces the right operating questions:
+
+1. Name the workflow in one sentence.
+2. Name the person who currently rescues it.
+3. Name the systems involved.
+4. Name the action that would create risk if done wrong.
+5. Name the action that is safe enough to automate.
+6. Name the first approval-needed state.
+7. Name the first blocked state.
+8. Name the receipt the operator should keep.
+
+If a team cannot answer those questions, it is too early to add more autonomy.
+
+If a team can answer them, the first build path becomes much clearer.
+
+## When to Graduate Runtime
+
+A workflow does not graduate to a heavier runtime because an SDK exists.
+
+It graduates when the operating evidence says the current surface is no longer enough.
+
+Good graduation reasons include:
+
+- visual workflow editing no longer captures the needed orchestration
+- side-effecting tools need explicit approval pauses in code
+- state must survive retries and recovery flows
+- cost, latency, or reliability must be measured in CI-backed tasks
+- traces and evals need to become part of release evidence
+- tool routing has become too important to leave implicit
+
+Bad graduation reasons include:
+
+- "the new SDK is more powerful"
+- "we want everything in code"
+- "the visual tool feels less serious"
+- "we can replace the operator once it is rebuilt"
+
+The point of graduation is more governed control, not more engineering theater.
+
+## The Main Design Rule
+
+Do not connect a tool unless the workflow can explain the decision state attached to that tool.
+
+For each capability, ask:
+
+- What is the safest useful read?
+- What is the first useful draft?
+- What is the first side effect?
+- Who approves that side effect?
+- What would make the action blocked?
+- What receipt proves the system behaved?
+
+This rule is intentionally strict. It prevents the common failure where a team adds tool access first and tries to discover governance later.
+
+Governance discovered after tool access is usually cleanup.
+
+Governance defined before tool access is a trust layer.
+
+## Example: Support Reply Drafting
+
+A support reply workflow might start like this:
+
+| Capability | Decision state | Receipt |
+| --- | --- | --- |
+| Read ticket text | Auto-allow | Ticket ID and timestamp |
+| Summarize customer history | Auto-allow if scoped to the account | Source IDs used |
+| Draft reply | Auto-allow | Draft text and policy note |
+| Post reply | Approval-needed | Approver, final text, send timestamp |
+| Offer refund | Approval-needed or blocked by finance policy | Approval ID or blocked reason |
+| Delete account data | Blocked unless legal/privacy policy is attached | Escalation record |
+
+The agent can still be helpful immediately. It can read, summarize, and draft. But the trust layer prevents helpfulness from becoming unauthorized action.
+
+## Example: Marketplace Review
+
+A review workflow might start like this:
+
+| Capability | Decision state | Receipt |
+| --- | --- | --- |
+| Fetch published page evidence | Auto-allow | URL list and fetch timestamp |
+| Extract Designer metadata | Auto-allow when authenticated to the review workspace | Workspace and page inventory |
+| Normalize checklist findings | Auto-allow | Finding IDs and policy version |
+| Recommend request-changes language | Auto-allow | Draft feedback and supporting evidence |
+| Approve or reject submission | Blocked for automation | Human reviewer decision |
+| Update source-of-truth status | Approval-needed | Approver and status change |
+
+This distinction matters. The review system can become much more useful without pretending it owns final judgment.
+
+## What the Paper Adds for Users
+
+The user-facing value of this model is not theory.
+
+It gives teams a way to slow down the right part of the conversation.
+
+Instead of asking:
+
+**"Which AI agent should we use?"**
+
+Ask:
+
+**"Which workflow handoff is ready for a trust layer?"**
+
+Instead of asking:
+
+**"Can the agent call this tool?"**
+
+Ask:
+
+**"Which decision state governs this tool?"**
+
+Instead of asking:
+
+**"Should we move this to a custom SDK runtime?"**
+
+Ask:
+
+**"What evidence shows the current runtime cannot govern this workflow well enough?"**
+
+Those questions are less exciting than demos. They are more useful.
+
+## Conclusion
+
+The next useful layer in agent adoption is not another generic automation surface.
+
+It is the workflow trust layer underneath agent work:
+
+- one named handoff
+- one owner
+- one capability boundary
+- three decision states
+- one receipt trail
+- one review cadence
+
+MCP exposes capability. App surfaces make workflows usable. Runtime services make state durable. SDKs can graduate orchestration into code. But users still need the layer that tells the system what should happen, when to pause, and how to prove what occurred.
+
+That layer is the product.`
   }
 ];

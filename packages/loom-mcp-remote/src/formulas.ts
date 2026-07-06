@@ -621,7 +621,7 @@ const FORMULAS: LoomFormula[] = [
     variables: [
       {
         name: 'emit_eval',
-        description: 'Run Braintrust eval checks (true or false)',
+        description: 'Run Langfuse eval checks (true or false)',
         required: false,
         default: 'true',
       },
@@ -645,7 +645,7 @@ const FORMULAS: LoomFormula[] = [
         agent: null,
         labels: ['eval'],
         prompt: 'If emit_eval={{emit_eval}} is true, run contract/error-path eval scripts and summarize failures.',
-        verify: 'pnpm braintrust:eval:mcp:contract && pnpm braintrust:eval:mcp:error-path',
+        verify: 'pnpm langfuse:eval:mcp:contract && pnpm langfuse:eval:mcp:error-path',
         checkpoint: false,
         parallel: false,
       },

@@ -17,9 +17,9 @@ import {
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   TELEMETRY_DB?: D1Database;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
-  BRAINTRUST_PROJECT_ID?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
   MCP_API_KEY?: string;
   HYDRA_DB_RECALL_MCP_API_KEY?: string;
   MCP_ACCOUNT_ID?: string;
@@ -33,7 +33,7 @@ interface Env {
   HYDRA_DB_DEFAULT_RECALL_SCOPE?: string;
 }
 
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 const DEFAULT_ACCOUNT_ID = 'hydra-db-recall-agent';
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -41,9 +41,9 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-function resolveBraintrustProjectName(env: Env): string {
-  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
-  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+function resolveLangfuseProjectName(env: Env): string {
+  const configured = env.LANGFUSE_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_LANGFUSE_PROJECT_NAME;
 }
 
 function parsePositiveInt(value: string | undefined): number | undefined {
@@ -154,9 +154,9 @@ export class HydraDbRecallMcp extends McpAgent<Env> {
 
   async init() {
     enableTelemetry(this.server, this.env.TELEMETRY_DB, SERVER_NAME, () => this.currentAccountId, {
-      apiKey: this.env.BRAINTRUST_API_KEY,
-      projectName: resolveBraintrustProjectName(this.env),
-      projectId: this.env.BRAINTRUST_PROJECT_ID,
+      publicKey: this.env.LANGFUSE_PUBLIC_KEY,
+      secretKey: this.env.LANGFUSE_SECRET_KEY,
+      projectName: resolveLangfuseProjectName(this.env),
     });
 
     registerHydraDbRecallTools(this.server, {
@@ -202,9 +202,9 @@ export default {
         provider: getHydraDbProviderStatus(provider),
         telemetry: {
           d1_configured: Boolean(env.TELEMETRY_DB),
-          braintrust_configured: Boolean(env.BRAINTRUST_API_KEY),
-          braintrust_project_name: resolveBraintrustProjectName(env),
-          braintrust_project_id_configured: Boolean(env.BRAINTRUST_PROJECT_ID),
+          langfuse_configured: Boolean(env.LANGFUSE_PUBLIC_KEY && env.LANGFUSE_SECRET_KEY),
+          langfuse_project_name: resolveLangfuseProjectName(env),
+          langfuse_keys_configured: Boolean(env.LANGFUSE_PUBLIC_KEY && env.LANGFUSE_SECRET_KEY),
         },
         policy: getHydraDbRecallPolicy(provider),
         tools: listHydraDbRecallToolNames(),

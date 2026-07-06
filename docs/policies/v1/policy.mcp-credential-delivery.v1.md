@@ -22,7 +22,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 1. `managed_bearer_bundle` is the default customer-facing MCP credential delivery mode.
 2. Named teammate lanes MUST deliver one transparent house URL per lane, and that URL MUST be reflected in the delivery artifact, audit metadata, and `.agency` access view.
 3. Credentials issued for a named lane MUST be host-bound so they are rejected on a different named-lane URL unless explicitly approved.
-4. Telemetry and Braintrust tracing are mandatory baseline observability controls for dedicated named-lane delivery.
+4. Telemetry and Langfuse tracing are mandatory baseline observability controls for dedicated named-lane delivery.
 5. Delivery, issuance, and resolve traces for named lanes MUST carry explicit account attribution, including at minimum `account_id`, `tenant_id`, and the active lane or host binding, so operator observability can distinguish one client lane from another.
 6. Operator-assisted white-glove onboarding is an approved first-class pathway for initial customer credential delivery when a partner or operator is actively setting up host access for the customer.
 7. White-glove onboarding MAY deliver a managed bearer token or an approved legacy credential before the customer has ever logged into `.agency`, provided all policy prerequisites for that credential type are satisfied and the handoff is fully audited.
@@ -130,7 +130,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - Sync/rotation command logs showing provider selection and non-secret execution context
 - evidence that runtime bootstrap secrets were stored only in Infisical/Worker secret state and never emitted as customer delivery artifacts
 - portal or operator evidence showing lane infrastructure ready while customer credential delivery remained blocked pending identity mapping or consent
-- Braintrust and telemetry traces showing explicit `account_id`, `tenant_id`, and lane host attribution for named-lane issuance and resolution events
+- Langfuse and telemetry traces showing explicit `account_id`, `tenant_id`, and lane host attribution for named-lane issuance and resolution events
 - lane onboarding evidence showing the promised search provider set and successful auth-config/connect-link validation for each promised provider
 
 ## Source Anchors

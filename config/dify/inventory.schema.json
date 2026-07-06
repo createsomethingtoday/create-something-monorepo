@@ -4,7 +4,13 @@
   "title": "Dify Workspace Inventory",
   "description": "Repo-side inventory for Dify MCP server cards and Dify agents.",
   "type": "object",
-  "required": ["version", "workspace", "status", "mcp_servers", "agents"],
+  "required": [
+    "version",
+    "workspace",
+    "status",
+    "mcp_servers",
+    "agents"
+  ],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -13,7 +19,11 @@
     },
     "workspace": {
       "type": "object",
-      "required": ["name", "provider", "base_url"],
+      "required": [
+        "name",
+        "provider",
+        "base_url"
+      ],
       "additionalProperties": false,
       "properties": {
         "name": {
@@ -22,7 +32,10 @@
         },
         "provider": {
           "type": "string",
-          "enum": ["dify_cloud", "self_hosted"]
+          "enum": [
+            "dify_cloud",
+            "self_hosted"
+          ]
         },
         "base_url": {
           "type": "string",
@@ -32,7 +45,10 @@
     },
     "status": {
       "type": "string",
-      "enum": ["partial", "complete"]
+      "enum": [
+        "partial",
+        "complete"
+      ]
     },
     "snapshot": {
       "type": "object",
@@ -67,7 +83,11 @@
   "$defs": {
     "secretRef": {
       "type": "object",
-      "required": ["environment", "path", "secret_key"],
+      "required": [
+        "environment",
+        "path",
+        "secret_key"
+      ],
       "additionalProperties": false,
       "properties": {
         "environment": {
@@ -86,12 +106,19 @@
     },
     "auth": {
       "type": "object",
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["none", "bearer", "oauth", "custom"]
+          "enum": [
+            "none",
+            "bearer",
+            "oauth",
+            "custom"
+          ]
         },
         "infisical": {
           "$ref": "#/$defs/secretRef"
@@ -100,7 +127,11 @@
     },
     "tool": {
       "type": "object",
-      "required": ["name", "enabled", "risk"],
+      "required": [
+        "name",
+        "enabled",
+        "risk"
+      ],
       "additionalProperties": false,
       "properties": {
         "name": {
@@ -112,7 +143,13 @@
         },
         "risk": {
           "type": "string",
-          "enum": ["read", "write", "external_side_effect", "secret_sensitive", "unknown"]
+          "enum": [
+            "read",
+            "write",
+            "external_side_effect",
+            "secret_sensitive",
+            "unknown"
+          ]
         },
         "required_parameters": {
           "type": "array",
@@ -131,7 +168,13 @@
     },
     "mcpServer": {
       "type": "object",
-      "required": ["display_name", "transport", "url", "auth", "tools"],
+      "required": [
+        "display_name",
+        "transport",
+        "url",
+        "auth",
+        "tools"
+      ],
       "additionalProperties": false,
       "properties": {
         "display_name": {
@@ -144,7 +187,9 @@
         },
         "transport": {
           "type": "string",
-          "enum": ["http"]
+          "enum": [
+            "http"
+          ]
         },
         "url": {
           "type": "string",
@@ -164,7 +209,10 @@
     },
     "serviceApi": {
       "type": "object",
-      "required": ["base_url", "api_key_secret"],
+      "required": [
+        "base_url",
+        "api_key_secret"
+      ],
       "additionalProperties": false,
       "properties": {
         "base_url": {
@@ -193,12 +241,17 @@
     },
     "agentEvals": {
       "type": "object",
-      "required": ["owner_system", "required_checks"],
+      "required": [
+        "owner_system",
+        "required_checks"
+      ],
       "additionalProperties": false,
       "properties": {
         "owner_system": {
           "type": "string",
-          "enum": ["braintrust"]
+          "enum": [
+            "langfuse"
+          ]
         },
         "project": {
           "type": "string",
@@ -234,7 +287,13 @@
     },
     "publicTrustCard": {
       "type": "object",
-      "required": ["summary", "limitations", "policy_pack", "eval_suite", "evidence_ref"],
+      "required": [
+        "summary",
+        "limitations",
+        "policy_pack",
+        "eval_suite",
+        "evidence_ref"
+      ],
       "additionalProperties": false,
       "properties": {
         "summary": {
@@ -273,18 +332,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "braintrust": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "project": {
-              "type": "string"
-            },
-            "experiment": {
-              "type": "string"
-            }
-          }
-        },
         "langfuse": {
           "type": "object",
           "additionalProperties": false,
@@ -322,16 +369,31 @@
     },
     "publicAccess": {
       "type": "object",
-      "required": ["status", "access_model", "trust_card"],
+      "required": [
+        "status",
+        "access_model",
+        "trust_card"
+      ],
       "additionalProperties": false,
       "properties": {
         "status": {
           "type": "string",
-          "enum": ["public", "sandbox", "byo_auth", "waitlist", "private"]
+          "enum": [
+            "public",
+            "sandbox",
+            "byo_auth",
+            "waitlist",
+            "private"
+          ]
         },
         "access_model": {
           "type": "string",
-          "enum": ["read_only", "simulated_write", "approval_required", "live_write"]
+          "enum": [
+            "read_only",
+            "simulated_write",
+            "approval_required",
+            "live_write"
+          ]
         },
         "url": {
           "type": "string",
@@ -347,7 +409,10 @@
     },
     "smokeCase": {
       "type": "object",
-      "required": ["id", "query"],
+      "required": [
+        "id",
+        "query"
+      ],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -428,15 +493,27 @@
         },
         "runtime": {
           "type": "string",
-          "enum": ["dify"]
+          "enum": [
+            "dify"
+          ]
         },
         "status": {
           "type": "string",
-          "enum": ["planned", "draft", "imported", "published", "retired"]
+          "enum": [
+            "planned",
+            "draft",
+            "imported",
+            "published",
+            "retired"
+          ]
         },
         "audience": {
           "type": "string",
-          "enum": ["internal", "client", "public"]
+          "enum": [
+            "internal",
+            "client",
+            "public"
+          ]
         },
         "dify_app_id": {
           "type": "string"
@@ -505,7 +582,11 @@
         },
         "write_policy": {
           "type": "string",
-          "enum": ["none", "requires_explicit_confirmation", "disabled"]
+          "enum": [
+            "none",
+            "requires_explicit_confirmation",
+            "disabled"
+          ]
         },
         "public_access": {
           "$ref": "#/$defs/publicAccess"

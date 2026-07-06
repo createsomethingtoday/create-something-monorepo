@@ -15,7 +15,7 @@
     "@create-something/mcp-authz": "workspace:*",
     "@create-something/mcp-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
-    "braintrust": "^2.2.2"
+    "langfuse": "^3.38.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",

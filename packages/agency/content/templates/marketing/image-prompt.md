@@ -79,4 +79,4 @@ prompts, watermarks, vendor endorsement, and decorative AI atmosphere.
 - [ ] No fake UI is presented as a screenshot.
 - [ ] No secrets, private data, private prompts, client records, or tokens appear.
 - [ ] The source prompt, model, date, owner, target surface, and refresh date are stored.
-- [ ] Braintrust is not required unless a separate scored image-quality rubric exists.
+- [ ] Langfuse is not required unless a separate scored image-quality rubric exists.
