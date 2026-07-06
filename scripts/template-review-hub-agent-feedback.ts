@@ -520,6 +520,65 @@ function parseHubExecuteObservation(observation: string): Record<string, unknown
     : null;
 }
 
+function parseHubExecuteToolInput(toolInput: string): ReturnedSaveAgentFeedbackRequest | null {
+  const outer = parseJsonRecord(toolInput);
+  const payload = outer?.hub_execute_proxy_tool ?? outer;
+  return payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? (payload as ReturnedSaveAgentFeedbackRequest)
+    : null;
+}
+
+function observationConfirmsSave(
+  payload: Record<string, unknown>,
+  expectedVersionId: string
+): boolean {
+  if (payload.ok !== true) return false;
+
+  const data = payload.data;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return true;
+
+  const updatedVersion = (data as Record<string, unknown>).updated_version;
+  if (!updatedVersion || typeof updatedVersion !== 'object' || Array.isArray(updatedVersion)) {
+    return true;
+  }
+
+  const versionId = (updatedVersion as Record<string, unknown>).versionId;
+  return typeof versionId !== 'string' || versionId === expectedVersionId;
+}
+
+export function extractSavedAgentFeedbackFromToolCalls(
+  toolCalls: DifyChatOutput['toolCalls'],
+  expectedVersionId: string
+): string | null {
+  for (const call of [...toolCalls].reverse()) {
+    if (!call.tool.includes('hub_execute_proxy_tool')) continue;
+    if (!call.toolInput.includes('template_review_save_agent_feedback')) continue;
+
+    const input = parseHubExecuteToolInput(call.toolInput);
+    if (
+      input?.proxyToolName !== 'webflow-template-review-mcp__template_review_save_agent_feedback'
+    ) {
+      continue;
+    }
+    if (!input.args || input.args.version_id !== expectedVersionId) continue;
+    if (typeof input.args.agent_review_feedback !== 'string') continue;
+
+    const observation = parseHubExecuteObservation(call.observation);
+    if (!observation || !observationConfirmsSave(observation, expectedVersionId)) continue;
+
+    const feedback = input.args.agent_review_feedback.trim();
+    if (
+      feedback &&
+      looksLikeFormattedAgentReviewFeedback(feedback) &&
+      feedbackMentionsVersion(feedback, expectedVersionId)
+    ) {
+      return feedback;
+    }
+  }
+
+  return null;
+}
+
 export function extractFormattedAgentFeedbackFromToolCalls(
   toolCalls: DifyChatOutput['toolCalls'],
   expectedVersionId: string
@@ -689,6 +748,7 @@ async function processCandidate(
   if (!feedback) {
     const returnedFeedback =
       extractReturnedSaveAgentFeedback(output.answer, candidate.version.versionId) ??
+      extractSavedAgentFeedbackFromToolCalls(output.toolCalls, candidate.version.versionId) ??
       extractFormattedAgentFeedbackFromToolCalls(output.toolCalls, candidate.version.versionId);
     if (returnedFeedback) {
       await airtableClient.updateVersionReview(candidate.version.versionId, {
