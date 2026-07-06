@@ -4106,6 +4106,98 @@ describe('webflow-template-search worker', () => {
     }
   }, 10_000);
 
+  it('sweeps recent publishes when stale catch-up hits the bulk-edit fetch cap', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-23T14:30:00.000Z'));
+    const changedAssets = Array.from({ length: 130 }, (_, index) => {
+      const timestamp =
+        index < 78
+          ? `2026-03-17T05:01:${String(index % 60).padStart(2, '0')}.${String(Math.floor(index / 60)).padStart(3, '0')}Z`
+          : index < 82
+            ? '2026-03-17T05:10:00.000Z'
+            : '2026-03-17T05:11:00.000Z';
+      return {
+        ...PUBLISHED_ASSETS[0],
+        id: `recBulkCatchup${String(index).padStart(3, '0')}`,
+        fields: {
+          ...PUBLISHED_ASSETS[0].fields,
+          Name: `Bulk Catchup Template ${index}`,
+          '📅LMT': timestamp,
+          '🥞CMS Slug (formula)': `bulk-catchup-template-${index}`,
+          '🔗Listing URL': `https://webflow.com/templates/html/bulk-catchup-template-${index}`,
+          '🔗Preview Site URL': `https://bulk-catchup-template-${index}.example.com`,
+          '🔗Website URL': `https://webflow.com/templates/html/bulk-catchup-template-${index}`,
+        },
+      };
+    });
+    const recentPublishedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recRecentBulkCatchup',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Recent Bulk Catchup',
+        '🚀📅Published Date': '2026-06-22',
+        '🥞CMS Slug': 'recent-bulk-catchup-website-template',
+        '🥞CMS Slug (formula)': 'recent-bulk-catchup-website-template',
+        '🔗Listing URL': 'https://webflow.com/templates/html/recent-bulk-catchup-website-template',
+        '🔗Website URL': 'https://webflow.com/templates/html/recent-bulk-catchup-website-template',
+        '📅LMT': '2026-06-23T14:04:12.000Z',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [recentPublishedAsset],
+      incrementalAssets: changedAssets,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-03-17T05:00:00.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        cursor: string;
+        fetched_records: number;
+        indexed_records: number;
+        recent_published_records?: number;
+      };
+      expect(syncPayload).toMatchObject({
+        cursor: '2026-03-17T05:10:00.000Z',
+        fetched_records: 83,
+        indexed_records: 83,
+        recent_published_records: 1,
+      });
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=Recent%20Bulk%20Catchup'), env);
+      const payload = (await search.json()) as { items: Array<{ id: string; template_slug: string }> };
+      expect(payload.items).toEqual([
+        expect.objectContaining({
+          id: 'recRecentBulkCatchup',
+          template_slug: 'recent-bulk-catchup-website-template',
+        }),
+      ]);
+      expect(
+        fetchMock.mock.calls.some(([input]) => {
+          const url = new URL(typeof input === 'string' ? input : input.url);
+          return url.hostname.includes('airtable.com') && url.searchParams.get('maxRecords') === '100';
+        }),
+      ).toBe(true);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  }, 10_000);
+
   it('bounds empty incremental catch-up windows so stale cursors advance in slices', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: [],
