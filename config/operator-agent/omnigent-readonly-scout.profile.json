@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "create-something-readonly-scout",
+  "status": "candidate-dry-run",
+  "issue": "CRE-1062",
+  "adapter": "create-something-omnigent-a4-adapter",
+  "intendedHarness": "omnigent",
+  "description": "Read-only CREATE SOMETHING scout profile for the first Omnigent trial. The live trial may inspect repo policy and emit receipts only.",
+  "authority": {
+    "level": "A0",
+    "writes": false,
+    "production": false,
+    "requiresApprovalPacket": false,
+    "forbiddenEscalation": [
+      "A4",
+      "production-write",
+      "credential-write",
+      "billing-change",
+      "client-production",
+      "destructive-write",
+      "irreversible-data-operation"
+    ]
+  },
+  "contextFiles": [
+    "AGENTS.md",
+    "docs/guides/OPERATOR_AGENT_A4_HARNESS.md",
+    "config/operator-agent/omnigent-a4-adapter.json",
+    "packages/landing-page-filter/public/a3-autonomy-proof.json"
+  ],
+  "allowedCommands": [
+    "node scripts/operator-agent-a3-ownership-proof.mjs check --json",
+    "node scripts/operator-agent-omnigent-adapter.mjs check --json",
+    "node scripts/operator-agent-omnigent-adapter.mjs trial-check --json"
+  ],
+  "receiptContract": {
+    "requiredFields": [
+      "signal",
+      "context",
+      "policy",
+      "action",
+      "validation",
+      "rollback",
+      "nextDecision",
+      "evidenceTarget"
+    ],
+    "writesPerformed": 0,
+    "linearMirrorIssue": "CRE-1062"
+  },
+  "liveTrialStopConditions": [
+    "Omnigent is not installed on the target host",
+    "profile attempts any command outside allowedCommands",
+    "receipt omits local harness parity fields",
+    "receipt is not mirrored to Linear",
+    "action proposes production, credential, billing, client, destructive, or irreversible data authority"
+  ]
+}

@@ -5,15 +5,36 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { validateApprovalPacket, validateManifest } from '../operator-agent-omnigent-adapter.mjs';
+import {
+  validateApprovalPacket,
+  validateManifest,
+  validateScoutProfile,
+  validateTrialReceipt,
+} from '../operator-agent-omnigent-adapter.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const SCRIPT = path.join(REPO_ROOT, 'scripts', 'operator-agent-omnigent-adapter.mjs');
 const MANIFEST_PATH = path.join(REPO_ROOT, 'config', 'operator-agent', 'omnigent-a4-adapter.json');
+const PROFILE_PATH = path.join(REPO_ROOT, 'config', 'operator-agent', 'omnigent-readonly-scout.profile.json');
+const TRIAL_RECEIPT_PATH = path.join(
+  REPO_ROOT,
+  'config',
+  'operator-agent',
+  'fixtures',
+  'omnigent-readonly-scout.receipt.json',
+);
 
 function readManifest() {
   return JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'));
+}
+
+function readProfile() {
+  return JSON.parse(readFileSync(PROFILE_PATH, 'utf8'));
+}
+
+function readTrialReceipt() {
+  return JSON.parse(readFileSync(TRIAL_RECEIPT_PATH, 'utf8'));
 }
 
 function makeWorkspace(t) {
@@ -114,4 +135,45 @@ test('valid A4 approval packet fixture passes deterministic packet validation', 
   const payload = JSON.parse(result.stdout);
   assert.equal(payload.ok, true, payload.errors.join('\n'));
   assert.match(payload.receiptPath, /approval-check\.json$/);
+});
+
+test('read-only scout profile and receipt match the local harness parity contract', () => {
+  const manifest = readManifest();
+  const profile = readProfile();
+  const receipt = readTrialReceipt();
+
+  assert.deepEqual(validateScoutProfile(profile, manifest), []);
+  assert.deepEqual(validateTrialReceipt(receipt, profile, manifest), []);
+  assert.equal(receipt.authorityLevel, 'A0');
+  assert.equal(receipt.writesPerformed, 0);
+  assert.equal(receipt.linearMirror.issue, 'CRE-1062');
+});
+
+test('trial check writes a local receipt and keeps Omnigent read-only', (t) => {
+  const root = makeWorkspace(t);
+  const result = spawnSync(
+    process.execPath,
+    [SCRIPT, 'trial-check', '--receipt-dir', root, '--json'],
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.authorityLevel, 'A0');
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.linearMirrorIssue, 'CRE-1062');
+  assert.match(payload.receiptPath, /trial-check\.json$/);
+});
+
+test('trial receipt fails closed when action writes or omits Linear mirror', () => {
+  const manifest = readManifest();
+  const profile = readProfile();
+  const receipt = readTrialReceipt();
+  receipt.action.writes = true;
+  delete receipt.linearMirror;
+
+  const errors = validateTrialReceipt(receipt, profile, manifest);
+  assert.match(errors.join('\n'), /action\.writes must be false/);
+  assert.match(errors.join('\n'), /Linear mirror/);
 });
