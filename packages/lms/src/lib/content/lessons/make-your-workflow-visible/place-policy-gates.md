@@ -15,7 +15,7 @@ Canon uses simple states because operators need to decide quickly:
 - **Complete**: record the receipt and next action.
 
 <figure class="learning-figure">
-  <img src="/learning/canon/policy-gates.svg" alt="Policy gate chart with run, review, stop, escalate, and complete states." />
+  <img src="/learning/canon/policy-gates.png" alt="Policy gate chart with run, review, stop, escalate, and complete states." />
   <figcaption>Policy gates make the limits of automation visible.</figcaption>
 </figure>
 

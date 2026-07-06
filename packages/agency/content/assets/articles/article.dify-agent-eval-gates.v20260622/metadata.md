@@ -6,7 +6,7 @@ Updated: 2026-06-22
 
 ## Original Visuals
 
-- Uses existing Dify lane OG asset at `/og/dify-lane.svg`.
+- Uses existing Dify lane OG asset at `/og/dify-lane.png`.
 - No new third-party screenshots were introduced.
 
 ## Usage

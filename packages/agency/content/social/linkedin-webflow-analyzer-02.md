@@ -4,7 +4,7 @@
 **Target:** LinkedIn (Personal - Micah)
 **Type:** Longform post + simple graphic
 **Asset:** `packages/agency/static/social/linkedin-webflow-analyzer-manual-state.png`
-**Source Asset:** `packages/agency/static/social/linkedin-webflow-analyzer-manual-state.svg`
+**Source Asset:** `packages/agency/static/social/linkedin-webflow-analyzer-manual-state.png`
 **Graphic Brief:** `packages/agency/static/social/linkedin-webflow-analyzer-manual-state-brief.md`
 **CTA:** createsomething.io/papers/analyzer-mcp-review-architecture
 

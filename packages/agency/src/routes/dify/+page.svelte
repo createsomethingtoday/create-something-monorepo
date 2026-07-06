@@ -130,14 +130,6 @@
       href: '/dify/ship-dify-app-with-mcp-tools'
     },
     {
-      eyebrow: 'Publish',
-      icon: 'document',
-      title: 'Template marketplace proof',
-      detail:
-        'Package the first reusable Dify template with English setup steps, smoke checks, and no private examples.',
-      href: '/dify/template-marketplace-proof'
-    },
-    {
       eyebrow: 'Compare',
       icon: 'document',
       title: 'Dify vs n8n',
@@ -172,7 +164,7 @@
   title="Dify Workflow Systems | CREATE SOMETHING .agency"
   description="CREATE SOMETHING maps Dify workflows with MCP tool boundaries, Policy OS controls, eval gates, and readable evidence."
   keywords="Dify workflow systems, Dify MCP, Policy OS, Dify eval gates, AI workflow evidence"
-  ogImage="/og/dify-lane.svg"
+  ogImage="/og/dify-lane.png"
   propertyName="agency"
   {faqItems}
 />

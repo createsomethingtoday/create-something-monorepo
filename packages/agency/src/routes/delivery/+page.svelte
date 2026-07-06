@@ -81,7 +81,7 @@
   description="Client-safe CREATE SOMETHING delivery records for active workflow pilots, handoffs, proof pages, and owner decisions."
   keywords="CREATE SOMETHING delivery records, workflow proof, client-safe delivery pages"
   canonical="https://createsomething.agency/delivery"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   noindex={true}
 />

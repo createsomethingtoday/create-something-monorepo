@@ -4,7 +4,7 @@
 **Target:** LinkedIn (Personal - Micah)
 **Type:** Longform post + provenance diagram
 **Asset:** `packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.png`
-**Source Asset:** `packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.svg`
+**Source Asset:** `packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.png`
 **Graphic Brief:** `packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance-brief.md`
 **CTA:** createsomething.io/papers/analyzer-mcp-review-architecture
 

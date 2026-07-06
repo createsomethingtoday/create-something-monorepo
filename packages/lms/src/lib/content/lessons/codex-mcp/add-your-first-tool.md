@@ -23,7 +23,7 @@ For the first pass, keep contact extraction off. Use the tool to search, normali
 OpenAI's Codex best-practices guidance recommends giving Codex a clear goal, context, constraints, and done criteria. In this lesson, those become the tool name, input schema, output schema, safety annotations, and checkpoint prompt.
 
 <figure class="learning-figure">
-  <img src="/learning/codex-mcp/rapidapi-tool-contract.svg" alt="RapidAPI MCP tool contract showing input schema, read-only MCP tool, RapidAPI Local Business Data, normalized output, and operator review boundary." />
+  <img src="/learning/codex-mcp/rapidapi-tool-contract.png" alt="RapidAPI MCP tool contract showing input schema, read-only MCP tool, RapidAPI Local Business Data, normalized output, and operator review boundary." />
   <figcaption>The tool contract keeps the first workflow read-only: search, normalize, and review before any business action.</figcaption>
 </figure>
 

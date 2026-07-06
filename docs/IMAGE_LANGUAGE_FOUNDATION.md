@@ -8,26 +8,29 @@ work visible: maps, gates, owners, receipts, validation, and handoff state.
 
 ## Decision
 
-Use TASTE as the judgment layer for image generation.
+Use TASTE as the judgment layer for image generation, and use approved OpenAI
+generated exports as the first-class publishable visual layer when a visual will
+be used externally.
 
 TASTE supplies the reference corpus, comparison standard, and rejection filter.
-Image generation supplies controlled variants and production assets. Atlas and
-Canon supply the owned visual language.
+Image generation supplies controlled variants and production assets. Atlas,
+SVGs, and Canon graph artifacts supply briefs, structure, and evidence state;
+they are not automatically the public-quality visual.
 
 The foundation is:
 
 > Calm proof surfaces that show how AI work becomes mapped, governed,
 > validated, and handed off.
 
-Generated images are acceptable when they clarify the system. They are not
-acceptable when they only create AI atmosphere.
+Generated images are preferred when they clarify the system and meet the review
+gate. They are not acceptable when they only create AI atmosphere.
 
 ## Tier Mapping
 
 | Tier | Role in Image Language | Repo Surface |
 | --- | --- | --- |
 | Database | TASTE references, Are.na channels, Atlas graph artifacts, prompts, metadata, screenshots, source files | `/taste`, `/llm.txt`, `packages/agency/content/assets/**`, article metadata |
-| Automation | GPT Image generation or editing, Atlas story-canvas renders, screenshot annotation, asset checks | Image API, Responses API image tool, Atlas renderers, `scripts/marketing-image-assets-check.mjs` |
+| Automation | GPT Image generation or editing, Atlas story-canvas briefs, screenshot annotation, asset checks | Image API, Responses API image tool, Atlas renderers, `scripts/marketing-image-assets-check.mjs` |
 | Judgment | Human curation, TASTE scoring, brand fit review, evidence review, publish approval | TASTE approvals, Canon image guideline, article review gate |
 
 ## What Images Must Prove
@@ -103,9 +106,10 @@ Use repeatable families so generated assets become a recognizable system.
 | Screenshot annotation | A real product/tool claim needs evidence | Real screenshot, date checked, numbered callouts, redactions |
 | CTA visual | The image supports conversion | Specific next action and what artifact the user receives |
 
-Default to an Atlas story canvas when the image explains behavior. Use a more
-illustrative generated image only when the point is conceptual, editorial, or
-surface-level and no workflow map would clarify it.
+Default to a graph or Atlas-style brief when the image explains behavior, then
+use an approved generated export for the public visual when the brief would look
+too crude or low quality. Publish raw SVG or Atlas renders only when they meet
+the same quality bar as the generated export.
 
 ## Generation Route
 
@@ -113,16 +117,19 @@ Use the route that matches the work:
 
 | Need | Route |
 | --- | --- |
-| One production image from a completed prompt | Image API generation with `gpt-image-2` when access is available |
-| Editing a specific source image or export | Image API edit, preserving source and prompt beside the export |
+| One production image from a completed prompt | OpenAI Image API generation with `gpt-image-2` when access is available |
+| Editing a specific source image or export | OpenAI Image API edit, preserving source and prompt beside the export |
 | Conversational image iteration or multi-turn refinement | Responses API with the image generation tool |
-| Image based on an existing Atlas graph | Render the graph first, then generate or edit only for presentation polish |
+| Image based on an existing Atlas graph or SVG brief | Preserve the graph/brief as source context, then generate or edit the publishable export |
 | Screenshot evidence | Capture the real surface, redact, annotate, and label as screenshot evidence |
 
 Keep model, quality, size, prompt, source inputs, owner, and review status beside
 the generated export. GPT image access may require OpenAI organization
 verification; treat that as an environment prerequisite, not a reason to change
-the language foundation.
+the language foundation. Google Gemini, Omni, and Vertex are not first-class
+providers for this Canon pipeline because CREATE SOMETHING is intentionally
+limiting the visual-generation stack around OpenAI plus repo-owned source
+briefs.
 
 ## Prompt Stack
 
@@ -153,14 +160,20 @@ TASTE packet: <3 to 7 approved references by title/source and the specific
 communication pattern to borrow>. Use the references for judgment only. Do not
 copy source assets, brand marks, fonts, layouts, campaign language, or images.
 
-Style: Calm proof surface. Porcelain or quiet near-black canvas. Compact proof
-panels. Crisp labels. Restrained cobalt, moss, and stop accents. Isometric cube
-signature only when useful. The image should show mapped, governed, validated,
-handed-off work.
+Style: Canon Clear image language. Ona is the communication reference; CREATE
+SOMETHING owns the artifact language. Use a calm proof surface with a plain
+claim, compact evidence, governed action states, and a visible handoff. Prefer
+porcelain `#f9f9f9`, white panels, onyx `#0a0e19`, quiet grey `#636363`, thin
+`#e1e1e1` borders, 4-8px radii, and restrained semantic accents: ocean
+`#0048ff`, moss `#1e3c2c`, and stop `#c41e3a`. Build the composition from
+Clear-style receipts, state rows, decision panels, artifact cards, policy gates,
+owners, and proof rails. Use the isometric cube as a small system signature only
+when useful. The image should feel mapped, governed, validated, and handed off.
 
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains, stock
-photography, fake dashboard evidence, unreadable labels, client secrets, private
-prompts, PHI, vendor endorsement, and watermarks.
+photography, generic premium desk scenes, random decorative objects, fake
+dashboard evidence, unreadable labels, client secrets, private prompts, PHI,
+vendor endorsement, and watermarks.
 ```
 
 ## Review Gate
@@ -170,20 +183,24 @@ Before publishing:
 - The image answers a specific operational question.
 - TASTE references were used as judgment input, not copied source material.
 - The visual family is named in the metadata.
-- Workflow and governance visuals attempted an Atlas story canvas first.
+- Workflow and governance visuals preserve a graph, SVG, Atlas, or written brief
+  as source context before generating the public export.
 - Text is legible at 50% size.
 - Generated UI is not presented as real screenshot evidence.
 - Screenshots are real, dated, redacted, and claim-specific.
 - The proof requirement is visible or explicitly labeled as conceptual.
-- Source prompt, model, size, owner, target surface, and refresh date are stored.
+- Source prompt, model, size, source brief, output hash, owner, target surface,
+  and refresh date are stored.
 - The result feels like CREATE SOMETHING: mapped, governed, validated, handed off.
 
 ## Boundary
 
 TASTE can improve the standard, but it does not replace human approval.
 
-OpenAI image generation can produce variants, but it does not create evidence.
+OpenAI image generation can produce the publishable visual layer, but it does
+not create evidence.
 
-Atlas can render the graph, but it should not become the source of truth. The
-source of truth remains the workflow artifact, graph, policy, screenshot,
-receipt, or metadata record.
+Atlas, SVGs, and deterministic diagrams can brief the image, but they should not
+be published merely because they are deterministic. The source of truth remains
+the workflow artifact, graph, policy, screenshot, receipt, metadata record, and
+approved generated export.

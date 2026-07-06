@@ -199,7 +199,7 @@
   title="Policy OS for Enterprise Workflow Reliability | CREATE SOMETHING .agency"
   description="Policy OS for teams already running automation. Add controlled execution states, approval rules, monitoring, and operating receipts once the first workflow pilot is live."
   keywords="enterprise automation reliability, workflow controls, policy operations, ai control layer, workflow reliability"
-  ogImage="/og/policy-os.svg"
+  ogImage="/og/policy-os.png"
   propertyName="agency"
   {faqItems}
 />

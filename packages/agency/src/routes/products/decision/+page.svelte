@@ -151,7 +151,7 @@
   title="Decision Queue for App Governance | CREATE SOMETHING .agency"
   description="Decision is the human-in-the-loop queue for app governance: route Signals into review, approval, policy action, stop states, and Proof."
   keywords="human in the loop decision queue, app governance approvals, policy review queue, workflow decision, Atlas governance"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
 />

@@ -56,6 +56,7 @@ test('delivery Image 2 prompts include Canon/Ona standard and audit metadata', (
   assert.match(prompt, /Use Ona\.com as the design and communication foundation/);
   assert.match(prompt, /Translate that foundation into CREATE SOMETHING artifact language/);
   assert.match(prompt, /system maps, MCP boundaries, policy gates, receipts, validation proof, owners, and handoff state/);
+  assert.match(prompt, /approved OpenAI generated export/i);
   assert.match(prompt, /Avoid glowing robots, circuit faces, blue AI gradients, generic brains/);
   assert.match(prompt, /Project prompt:/);
   assert.doesNotMatch(prompt, /Braintrust/i);

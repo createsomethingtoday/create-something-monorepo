@@ -3,7 +3,8 @@
 ## Deliverables
 
 - PNG: `packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.png`
-- Source SVG: `packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.svg`
+- Source brief: `packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.svg`
+- Publishable image: `packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.png`
 
 ## Use
 

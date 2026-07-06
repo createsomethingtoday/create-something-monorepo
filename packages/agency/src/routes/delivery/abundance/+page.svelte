@@ -224,7 +224,7 @@
   description="Client delivery page for The NP Group's Abundance nurse staffing workflow: intake, public job discovery, recruiter-gated agent work, walkthroughs, and private source materials."
   keywords="Abundance, The NP Group, nurse staffing, workflow delivery, recruiter agent workflow, CREATE SOMETHING"
   canonical="https://createsomething.agency/delivery/abundance"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   noindex={true}
 />
