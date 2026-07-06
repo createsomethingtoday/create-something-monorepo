@@ -5,6 +5,7 @@ import {
   buildDifyQuery,
   extractFormattedAgentFeedbackFromToolCalls,
   extractReturnedSaveAgentFeedback,
+  extractSavedAgentFeedbackFromToolCalls,
   REQUIRED_MANUAL_CHECK_TOPICS,
   retryTransientOperation,
   waitForAgentReviewFeedback
@@ -112,6 +113,81 @@ test('extractFormattedAgentFeedbackFromToolCalls accepts formatter observations 
 
   assert.equal(extractFormattedAgentFeedbackFromToolCalls(toolCalls, 'recVersion'), feedback);
   assert.equal(extractFormattedAgentFeedbackFromToolCalls(toolCalls, 'recOther'), null);
+});
+
+test('extractSavedAgentFeedbackFromToolCalls accepts confirmed save observations for the expected version', () => {
+  const feedback = [
+    'Supplemental agent initial review evidence for Sample Template (version recVersion).',
+    'Manual checks remaining',
+    '- components and variables remain manual.',
+    'Decision boundary',
+    'This is not an official review decision.'
+  ].join('\n');
+
+  const toolCalls = [
+    {
+      tool: 'hub_execute_proxy_tool',
+      toolInput: JSON.stringify({
+        hub_execute_proxy_tool: {
+          proxyToolName: 'webflow-template-review-mcp__template_review_save_agent_feedback',
+          args: {
+            version_id: 'recVersion',
+            agent_review_feedback: feedback
+          }
+        }
+      }),
+      observation: JSON.stringify({
+        hub_execute_proxy_tool: JSON.stringify({
+          ok: true,
+          data: {
+            updated_version: {
+              versionId: 'recVersion',
+              agentReviewFeedback: feedback
+            }
+          }
+        })
+      })
+    }
+  ];
+
+  assert.equal(extractSavedAgentFeedbackFromToolCalls(toolCalls, 'recVersion'), feedback);
+  assert.equal(extractSavedAgentFeedbackFromToolCalls(toolCalls, 'recOther'), null);
+});
+
+test('extractSavedAgentFeedbackFromToolCalls rejects failed save observations', () => {
+  const feedback = [
+    'Supplemental agent initial review evidence for Sample Template (version recVersion).',
+    'Manual checks remaining',
+    '- components and variables remain manual.',
+    'Decision boundary',
+    'This is not an official review decision.'
+  ].join('\n');
+
+  const toolCalls = [
+    {
+      tool: 'hub_execute_proxy_tool',
+      toolInput: JSON.stringify({
+        hub_execute_proxy_tool: {
+          proxyToolName: 'webflow-template-review-mcp__template_review_save_agent_feedback',
+          args: {
+            version_id: 'recVersion',
+            agent_review_feedback: feedback
+          }
+        }
+      }),
+      observation: JSON.stringify({
+        hub_execute_proxy_tool: JSON.stringify({
+          ok: false,
+          error: {
+            code: 'AIRTABLE_WRITE_FAILED',
+            message: 'write failed'
+          }
+        })
+      })
+    }
+  ];
+
+  assert.equal(extractSavedAgentFeedbackFromToolCalls(toolCalls, 'recVersion'), null);
 });
 
 test('retryTransientOperation retries failed reads with bounded backoff', async () => {
