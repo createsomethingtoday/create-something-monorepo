@@ -2,6 +2,8 @@
 
 The database layer for **App Review · Governance & Transparency**. A Cloudflare D1 canonical store with an MCP boundary, replacing Airtable-as-source-of-truth for governance findings. Airtable (`app1Q0o9xw2Zny7gw`) remains a human workspace / projection target, not the durable record.
 
+Docs by audience: `OPERATORS.md` (the core team running the system) · `TRIAGE_RUNBOOK.md` (agents) · this README (developers).
+
 Narrative context lives in the Slack canvas [App Review · Governance & Transparency Tracker](https://webflow.enterprise.slack.com/docs/T02874CDH/F0BB96552KG) (`F0BB96552KG`).
 
 ## Architecture
