@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "id": "create-something-omnigent-a4-adapter",
+  "status": "candidate-read-only",
+  "createdAt": "2026-07-06",
+  "issue": "CRE-1061",
+  "purpose": "Evaluate Omnigent as the shared API and meta-harness layer for CREATE SOMETHING agents without granting it authority over A4 execution.",
+  "sources": [
+    {
+      "label": "Databricks Omnigent announcement",
+      "url": "https://www.databricks.com/blog/introducing-omnigent-meta-harness-combine-control-and-share-your-agents",
+      "claimsUsed": [
+        "meta-harness above Codex, Claude Code, Pi, and custom agents",
+        "server-level contextual policies",
+        "collaboration and shared live sessions",
+        "cloud execution and sandboxing"
+      ]
+    },
+    {
+      "label": "omnigent-ai/omnigent README",
+      "url": "https://github.com/omnigent-ai/omnigent",
+      "claimsUsed": [
+        "common orchestration layer over Codex, Claude Code, Cursor, OpenCode, Hermes, Pi, and custom agents",
+        "policy and sandbox controls",
+        "OpenAI-compatible gateway support including Ollama",
+        "alpha project status"
+      ]
+    }
+  ],
+  "authority": {
+    "currentLevel": "A0",
+    "maximumLevelWithoutApprovalPacket": "A1",
+    "a4Execution": "blocked",
+    "authoritySource": "CREATE SOMETHING repo policy plus Linear approval packet",
+    "omnigentRole": "transport-policy-host",
+    "linearEvidenceRequired": true,
+    "approvalPacketRequiredFor": [
+      "A4",
+      "production-write",
+      "credential-write",
+      "billing-change",
+      "client-production",
+      "destructive-write",
+      "irreversible-data-operation"
+    ]
+  },
+  "allowedCommands": [
+    {
+      "id": "readiness",
+      "autonomyLevel": "A0",
+      "command": "node scripts/operator-agent-a3-ownership-proof.mjs check --json",
+      "writes": false,
+      "requiresApprovalPacket": false,
+      "receiptTarget": "Linear comment or local .cache/operator-agent-a3 receipt"
+    },
+    {
+      "id": "a3-regression-tests",
+      "autonomyLevel": "A0",
+      "command": "node --test scripts/test/operator-agent-a3-ownership-proof.test.mjs",
+      "writes": false,
+      "requiresApprovalPacket": false,
+      "receiptTarget": "test output"
+    },
+    {
+      "id": "bounded-local-heal",
+      "autonomyLevel": "A1",
+      "command": "node scripts/operator-agent-a3-ownership-proof.mjs heal --file <local-proof-copy> --json",
+      "writes": true,
+      "writeScope": "local proof copy only",
+      "requiresApprovalPacket": false,
+      "receiptTarget": "local .cache/operator-agent-a3 receipt"
+    }
+  ],
+  "forbiddenCommands": [
+    "wrangler pages deploy",
+    "wrangler deploy",
+    "wrangler secret",
+    "infisical secrets set",
+    "git push",
+    "gh pr merge",
+    "pnpm linear:done",
+    "billing",
+    "delete",
+    "destroy",
+    "client production"
+  ],
+  "a4ApprovalPacket": {
+    "requiredFields": [
+      "authorityLevel",
+      "approver",
+      "approvalSurface",
+      "target",
+      "action",
+      "riskClass",
+      "forbiddenSideEffects",
+      "validation",
+      "rollback",
+      "postActionSmoke",
+      "stopConditions",
+      "evidenceTarget"
+    ],
+    "authorityLevel": "A4",
+    "allowedApprovalSurfaces": [
+      "Linear",
+      "signed-release-record"
+    ],
+    "mustNameExactRisks": [
+      "credential-write",
+      "billing-change",
+      "client-production",
+      "destructive-write",
+      "irreversible-data-operation"
+    ],
+    "mustStopOn": [
+      "missing approval packet",
+      "stale approval packet",
+      "target mismatch",
+      "action mismatch",
+      "missing rollback",
+      "missing post-action smoke",
+      "unrecorded credential risk",
+      "unrecorded billing risk",
+      "unrecorded client-production risk",
+      "unrecorded destructive risk",
+      "unrecorded irreversible-data risk"
+    ]
+  },
+  "receiptMirrors": {
+    "local": ".cache/operator-agent-omnigent/",
+    "linearIssue": "CRE-1061",
+    "requiredBeforePromotion": [
+      "manifest check receipt",
+      "read-only Omnigent session transcript or equivalent local dry-run receipt",
+      "local harness receipt parity note",
+      "operator approval packet fixture validation"
+    ]
+  },
+  "promotionGates": [
+    {
+      "id": "gate-0-manifest",
+      "required": "manifest passes deterministic validator",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs check --json"
+    },
+    {
+      "id": "gate-1-read-only-session",
+      "required": "one Omnigent-wrapped read-only scout session produces a receipt mirrored to Linear",
+      "command": "manual until Omnigent is installed in the target host"
+    },
+    {
+      "id": "gate-2-receipt-parity",
+      "required": "Omnigent session receipt fields match local harness receipt fields for signal, context, policy, action, validation, rollback, and next decision",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs check --json"
+    },
+    {
+      "id": "gate-3-a4-packet",
+      "required": "A4 approval packet validates before any high-risk action is exposed",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs approval-check --packet <packet.json> --json"
+    }
+  ]
+}
