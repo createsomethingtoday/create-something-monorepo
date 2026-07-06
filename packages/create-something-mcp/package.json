@@ -19,8 +19,9 @@
     "create-something-mcp": "dist/index.js"
   },
   "scripts": {
+    "build:deps": "pnpm --filter @create-something/playbook-mcp build",
     "build:content": "tsx scripts/build-content.ts",
-    "build": "npm run build:content && tsc",
+    "build": "pnpm run build:deps && npm run build:content && tsc",
     "dev": "tsc --watch",
     "lint": "pnpm run typecheck",
     "start": "node dist/index.js",
@@ -46,7 +47,7 @@
     "test:canon-registry-tool-renderers": "pnpm --filter @create-something/canon package && tsx scripts/check-canon-registry-tool-renderers.ts",
     "test:canon-design-audit-tool": "pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/canon package && tsx scripts/check-canon-design-audit-tool.ts",
     "test:smoke": "pnpm run test:overlay-preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "pnpm run build:deps && tsc --noEmit"
   },
   "dependencies": {
     "@create-something/canon": "workspace:*",
