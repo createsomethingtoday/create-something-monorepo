@@ -10,9 +10,16 @@ published: true
 
 ## What Ships Today
 
-- media and carousel candidate components
+- `TestimonialCarousel` for verified quotes or client/customer proof that benefits from rotation
+- `VideoLightbox` for video evidence that should open without sending the user away from context
 - editorial content utilities that can graduate through repeated use
 - registry policy that separates reusable content patterns from property-specific content
+
+## Property Usage Notes
+
+Use `TestimonialCarousel` when a property has multiple verified quotes with attribution and the
+surrounding page still names the underlying proof. Use `VideoLightbox` when the video supports a
+claim, demo, or receipt and the user should return to the same workflow after watching.
 
 ## Selection Rules
 

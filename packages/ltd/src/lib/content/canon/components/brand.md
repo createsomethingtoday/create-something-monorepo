@@ -10,9 +10,16 @@ published: true
 
 ## What Ships Today
 
-- 3D brand mark candidates for high-fidelity product surfaces
+- `CubeMark3D` for high-fidelity product surfaces where the CREATE SOMETHING mark is the subject
+- `GlassCubeScene` for immersive brand scenes that need explicit review before production use
 - CSS support for brand icon assets
 - shared brand utilities and mark primitives
+
+## Property Usage Notes
+
+Use `CubeMark3D` and `GlassCubeScene` only on property pages where brand identity is the primary
+object being inspected or introduced. Keep these out of dense operational surfaces, admin tools,
+and proof panels unless a brand review explicitly approves the scene.
 
 ## Selection Rules
 

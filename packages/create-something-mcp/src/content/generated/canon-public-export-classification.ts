@@ -583,6 +583,12 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Library health aggregates registry, export policy, overlays, modalities, and codification; add a dedicated registry item before calling it stable."
   },
   {
+    "exportPath": "./stable-component-depth",
+    "classification": "registry-artifact",
+    "registryPolicy": "candidate-review",
+    "rationale": "Stable component depth inventories docs, examples, prop contracts, accessibility, visual regression, modality behavior, and property usage before the report becomes a hard health blocker."
+  },
+  {
     "exportPath": "./overlays/project-template",
     "classification": "registry-artifact",
     "registryPolicy": "registry-covered",

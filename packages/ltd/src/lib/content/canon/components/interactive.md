@@ -10,10 +10,16 @@ published: true
 
 ## What Ships Today
 
-- contextual disclosure candidates
-- integration flow candidates
+- `HoverCard` contextual disclosure candidates for optional detail with a persistent equivalent
+- `IntegrationFlow` candidates for tool, system, or MCP connection sequences
 - authoring and timeline candidates
 - decorative effects that remain classified out
+
+## Property Usage Notes
+
+Use `HoverCard` only when hover/focus reveals supporting detail and the page still works without
+that disclosure. Use `IntegrationFlow` when a property needs to show how tools, MCP servers,
+policies, approvals, and receipts connect across a workflow.
 
 ## Selection Rules
 
