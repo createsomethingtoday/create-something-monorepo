@@ -932,13 +932,11 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     if (boundedCursor) windowEnd = new Date(boundedCursor);
   }
 
-  if (!hitStaleFetchLimit) {
-    const recentPublishedAssets = await fetchChangedRecentPublishedAssets(env, now, assets);
-    await heartbeat();
-    if (recentPublishedAssets.length > 0) {
-      assets.push(...recentPublishedAssets);
-      recentPublishedRecords = recentPublishedAssets.length;
-    }
+  const recentPublishedAssets = await fetchChangedRecentPublishedAssets(env, now, assets);
+  await heartbeat();
+  if (recentPublishedAssets.length > 0) {
+    assets.push(...recentPublishedAssets);
+    recentPublishedRecords = recentPublishedAssets.length;
   }
 
   const toUpsert: TemplateDocumentInput[] = [];
