@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "issue": "CRE-1060",
+  "autonomyLevel": "A3",
+  "preparedAt": "2026-07-06",
+  "surface": {
+    "package": "@create-something/landing-page-filter",
+    "project": "landing-page-filter",
+    "kind": "cloudflare-pages-static",
+    "path": "/a3-autonomy-proof.json",
+    "productionUrl": "https://landing-page-filter.pages.dev/a3-autonomy-proof.json"
+  },
+  "risk": "low",
+  "boundedChange": "Publish a static proof receipt only; do not change category-filter runtime code, API behavior, secrets, billing, data, or client production.",
+  "policy": {
+    "target": "create-something-internal-production",
+    "allowed": [
+      "bounded static proof artifact",
+      "Cloudflare Pages deployment for the named CREATE SOMETHING-owned project",
+      "post-deploy smoke of the proof JSON"
+    ],
+    "forbidden": [
+      "client production mutation",
+      "secrets or credential changes",
+      "billing or account-access changes",
+      "destructive writes",
+      "irreversible data changes"
+    ]
+  },
+  "validation": {
+    "commands": [
+      "node scripts/operator-agent-a3-ownership-proof.mjs check --json",
+      "node --test scripts/test/operator-agent-a3-ownership-proof.test.mjs",
+      "pnpm --dir packages/landing-page-filter typecheck"
+    ]
+  },
+  "deployment": {
+    "command": "pnpm --dir packages/landing-page-filter deploy",
+    "smokeCommand": "node scripts/operator-agent-a3-ownership-proof.mjs smoke --url https://landing-page-filter.pages.dev/a3-autonomy-proof.json --json",
+    "preReceipt": "Cloudflare Pages deployment list for landing-page-filter",
+    "postReceipt": "Cloudflare Pages deployment URL plus smoke receipt"
+  },
+  "rollback": {
+    "command": "git worktree add /tmp/landing-page-filter-rollback-17a98c58 17a98c58a07b7fa37eb07ef4815fe81cf1ca6367 && cd /tmp/landing-page-filter-rollback-17a98c58/packages/landing-page-filter && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy public --project-name=landing-page-filter --branch=main",
+    "evidence": "deployment list shows source 17a98c58 back on Production and the A3 proof smoke no longer validates as the active production proof",
+    "stopIf": [
+      "previous production source commit is unknown",
+      "rollback command fails",
+      "post-rollback smoke cannot be checked"
+    ]
+  },
+  "a4PromotionGate": {
+    "name": "operator-authorized autonomous execution",
+    "requires": [
+      "signed or Linear-recorded operator approval packet",
+      "exact target and action scope",
+      "precomputed validation and rollback plan",
+      "credential, billing, data, and client-production risk classification",
+      "post-action verification receipt",
+      "automatic stop on authority or verification mismatch"
+    ],
+    "notAllowedWithoutPacket": [
+      "credential writes",
+      "billing changes",
+      "client production mutation",
+      "destructive or irreversible data operations"
+    ]
+  }
+}
