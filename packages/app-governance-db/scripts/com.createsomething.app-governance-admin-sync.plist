@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Daily Webflow Apps Admin sync (device-bound: needs Tailscale + browser session).
+  Install:
+    cp packages/app-governance-db/scripts/com.createsomething.app-governance-admin-sync.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.createsomething.app-governance-admin-sync.plist
+  The MCP key is resolved via infisical at run time (interactive login session must be valid);
+  alternatively export APP_GOVERNANCE_MCP_KEY in EnvironmentVariables below.
+  Logs: ~/.config/webflow-admin-sync/sync.log
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.createsomething.app-governance-admin-sync</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd /Users/micahjohnson/Code/create-something-monorepo &amp;&amp; node packages/app-governance-db/scripts/sync-admin-apps.playwright.mjs</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>9</integer>
+    <key>Minute</key>
+    <integer>17</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/Users/micahjohnson/.config/webflow-admin-sync/sync.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/micahjohnson/.config/webflow-admin-sync/sync.log</string>
+</dict>
+</plist>

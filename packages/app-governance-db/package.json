@@ -1,0 +1,35 @@
+{
+  "name": "@create-something/app-governance-db",
+  "version": "1.0.0",
+  "description": "App Governance & Transparency database layer — Cloudflare D1 canonical store with MCP boundary for agent-mediated Slack sync, categorization, and notifications",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "pnpm run typecheck"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "agents": "^0.3.10",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260621.1",
+    "playwright": "^1.61.1",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "webflow",
+    "governance",
+    "d1",
+    "cloudflare",
+    "app-review"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/app-governance-db"
+  }
+}
