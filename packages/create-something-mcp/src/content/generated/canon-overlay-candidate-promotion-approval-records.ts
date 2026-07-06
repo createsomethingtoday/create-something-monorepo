@@ -101,10 +101,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -115,10 +115,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -250,6 +250,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./mcp-snapshot",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -280,18 +291,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
@@ -435,10 +434,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -449,10 +448,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -580,6 +579,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 15,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./mcp-snapshot",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -610,18 +620,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 14,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
@@ -764,10 +762,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -778,10 +776,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -913,6 +911,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./mcp-snapshot",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -943,18 +952,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
@@ -1098,10 +1095,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -1112,10 +1109,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -1247,6 +1244,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./mcp-snapshot",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -1277,18 +1285,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
@@ -1420,8 +1416,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "template.atlas-development-handoff: Atlas Development Handoff Template",
             "template.canon-project-overlay-manifest: Canon Project Overlay Manifest",
             "template.canon-project-overlay-template-pack: Canon Project Overlay Template Pack",
-            "component.atlas-atlas-story-canvas: AtlasStoryCanvas",
-            "template.canon-extension-intake: Canon Extension Intake Template"
+            "template.canon-extension-intake: Canon Extension Intake Template",
+            "component.atlas-atlas-story-canvas: AtlasStoryCanvas"
           ],
           "instructions": "Record the selected Canon registry item id or the new id to create."
         },
@@ -1536,22 +1532,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "reason": "Matches requested kind and overlaps 5 requested modalities."
           },
           {
-            "id": "component.atlas-atlas-story-canvas",
-            "name": "AtlasStoryCanvas",
-            "kind": "component",
-            "maturity": "candidate",
-            "modalities": [
-              "web",
-              "app",
-              "chat",
-              "voice",
-              "glasses"
-            ],
-            "docsPath": "/canon/components/atlas",
-            "score": 25,
-            "reason": "Overlaps 5 requested modalities."
-          },
-          {
             "id": "template.canon-extension-intake",
             "name": "Canon Extension Intake Template",
             "kind": "template",
@@ -1566,6 +1546,22 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "docsPath": "/canon/resources/registry",
             "score": 25,
             "reason": "Matches requested kind and overlaps 5 requested modalities."
+          },
+          {
+            "id": "component.atlas-atlas-story-canvas",
+            "name": "AtlasStoryCanvas",
+            "kind": "component",
+            "maturity": "stable",
+            "modalities": [
+              "web",
+              "app",
+              "chat",
+              "voice",
+              "glasses"
+            ],
+            "docsPath": "/canon/components/atlas",
+            "score": 24,
+            "reason": "Overlaps 5 requested modalities."
           }
         ],
         "exportPolicies": [
@@ -1756,10 +1752,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -1770,10 +1766,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -1879,7 +1875,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.triad-health",
             "name": "TriadHealth",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -1899,6 +1895,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryPolicy": "registry-covered",
             "score": 15,
             "rationale": "Modality readiness report audits web, chat, app, voice, and glasses implementation evidence from registry and overlay inventory.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
             "registryItemIds": [
               "template.canon-project-overlay-manifest",
               "template.canon-extension-intake"
@@ -1935,18 +1942,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
@@ -2090,10 +2085,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -2104,10 +2099,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -2239,6 +2234,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./mcp-snapshot",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -2269,18 +2275,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
@@ -2424,10 +2418,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -2438,10 +2432,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -2573,6 +2567,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./mcp-snapshot",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -2603,18 +2608,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
@@ -2881,7 +2874,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.conversion-metric-counters",
             "name": "MetricCounters",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -2890,7 +2883,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "glasses"
             ],
             "docsPath": "/canon/components/conversion",
-            "score": 19,
+            "score": 18,
             "reason": "Overlaps 5 requested modalities."
           }
         ],
@@ -3082,8 +3075,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact"
+            "./codification: registry-covered / registry-artifact",
+            "./overlays: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -3096,8 +3089,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact"
+            "./codification: registry-covered / registry-artifact",
+            "./overlays: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -3203,7 +3196,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.catalog-card",
             "name": "CatalogCard",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -3212,7 +3205,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "glasses"
             ],
             "docsPath": "/canon/components",
-            "score": 24,
+            "score": 23,
             "reason": "Overlaps 5 requested modalities."
           }
         ],
@@ -3251,6 +3244,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 7,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./overlays",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -3260,17 +3264,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "template.canon-project-overlay-template-pack",
               "template.canon-project-overlay-manifest",
               "template.canon-extension-intake"
-            ]
-          },
-          {
-            "exportPath": "./registry",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 7,
-            "rationale": "Registry API is the Canon source of truth for discoverable artifacts and lifecycle rules.",
-            "registryItemIds": [
-              "template.canon-extension-intake",
-              "template.canon-project-overlay-manifest"
             ]
           }
         ],
@@ -3537,7 +3530,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.catalog-card",
             "name": "CatalogCard",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -3546,7 +3539,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "glasses"
             ],
             "docsPath": "/canon/components",
-            "score": 23,
+            "score": 22,
             "reason": "Overlaps 5 requested modalities."
           }
         ],
@@ -4065,8 +4058,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact",
-            "./overlays/project-template: registry-covered / registry-artifact"
+            "./codification: registry-covered / registry-artifact",
+            "./overlays: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -4079,8 +4072,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact",
-            "./overlays/project-template: registry-covered / registry-artifact"
+            "./codification: registry-covered / registry-artifact",
+            "./overlays: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -4186,7 +4179,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.catalog-card",
             "name": "CatalogCard",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -4195,7 +4188,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "glasses"
             ],
             "docsPath": "/canon/components",
-            "score": 25,
+            "score": 24,
             "reason": "Overlaps 5 requested modalities."
           }
         ],
@@ -4234,6 +4227,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 11,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./overlays",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -4243,16 +4247,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "template.canon-project-overlay-template-pack",
               "template.canon-project-overlay-manifest",
               "template.canon-extension-intake"
-            ]
-          },
-          {
-            "exportPath": "./overlays/project-template",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Project overlay template pack is covered by template.canon-project-overlay-template-pack.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack"
             ]
           }
         ],
@@ -4396,10 +4390,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -4410,10 +4404,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -4545,6 +4539,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./mcp-snapshot",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -4575,18 +4580,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
@@ -4853,7 +4846,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.conversion-metric-counters",
             "name": "MetricCounters",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -4862,7 +4855,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "glasses"
             ],
             "docsPath": "/canon/components/conversion",
-            "score": 18,
+            "score": 17,
             "reason": "Overlaps 5 requested modalities."
           }
         ],
@@ -5179,7 +5172,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.filtering-agent-panel",
             "name": "AgentPanel",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -5188,7 +5181,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "glasses"
             ],
             "docsPath": "/canon/components/filtering",
-            "score": 21,
+            "score": 20,
             "reason": "Overlaps 5 requested modalities."
           }
         ],
@@ -5385,10 +5378,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -5399,10 +5392,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -5534,6 +5527,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./mcp-snapshot",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -5564,18 +5568,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
@@ -5719,10 +5711,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -5733,10 +5725,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -5868,6 +5860,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./mcp-snapshot",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -5898,18 +5901,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
@@ -6176,7 +6167,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.triad-health",
             "name": "TriadHealth",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -6185,7 +6176,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "glasses"
             ],
             "docsPath": "/canon/components",
-            "score": 21,
+            "score": 20,
             "reason": "Overlaps 5 requested modalities."
           }
         ],
@@ -6498,7 +6489,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.insights-statement-text",
             "name": "StatementText",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -6821,7 +6812,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.triad-health",
             "name": "TriadHealth",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -6830,7 +6821,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "glasses"
             ],
             "docsPath": "/canon/components",
-            "score": 22,
+            "score": 21,
             "reason": "Overlaps 5 requested modalities."
           }
         ],
@@ -7028,10 +7019,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./components#TriadHealth: candidate-review / domain-specific",
-            "./design-audit: registry-covered / registry-artifact",
-            "./filtering: candidate-review / composition-pattern"
+            "./design-audit: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -7042,10 +7033,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./components#TriadHealth: candidate-review / domain-specific",
-            "./design-audit: registry-covered / registry-artifact",
-            "./filtering: candidate-review / composition-pattern"
+            "./design-audit: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -7151,7 +7142,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.triad-health",
             "name": "TriadHealth",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -7160,7 +7151,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "glasses"
             ],
             "docsPath": "/canon/components",
-            "score": 21,
+            "score": 20,
             "reason": "Overlaps 5 requested modalities."
           }
         ],
@@ -7171,6 +7162,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryPolicy": "registry-covered",
             "score": 15,
             "rationale": "Modality readiness report audits web, chat, app, voice, and glasses implementation evidence from registry and overlay inventory.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
             "registryItemIds": [
               "template.canon-project-overlay-manifest",
               "template.canon-extension-intake"
@@ -7203,13 +7205,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "policy.signal-decision-proof"
             ]
-          },
-          {
-            "exportPath": "./filtering",
-            "classification": "composition-pattern",
-            "registryPolicy": "candidate-review",
-            "score": 8,
-            "rationale": "Filtering surfaces may become templates/patterns after repeated product evidence."
           }
         ],
         "docsPaths": [
@@ -7355,7 +7350,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "./overlays/intake: registry-covered / registry-artifact",
             "./components#TriadHealth: candidate-review / domain-specific",
             "./mcp-snapshot: registry-covered / registry-artifact",
-            "./components#ShareButtons: candidate-review / platform-surface"
+            "./codification: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -7369,7 +7364,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "./overlays/intake: registry-covered / registry-artifact",
             "./components#TriadHealth: candidate-review / domain-specific",
             "./mcp-snapshot: registry-covered / registry-artifact",
-            "./components#ShareButtons: candidate-review / platform-surface"
+            "./codification: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -7475,7 +7470,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "id": "component.triad-health",
             "name": "TriadHealth",
             "kind": "component",
-            "maturity": "candidate",
+            "maturity": "stable",
             "modalities": [
               "web",
               "app",
@@ -7484,7 +7479,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
               "glasses"
             ],
             "docsPath": "/canon/components",
-            "score": 20,
+            "score": 19,
             "reason": "Overlaps 5 requested modalities."
           }
         ],
@@ -7531,12 +7526,15 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
-            "exportPath": "./components",
-            "classification": "platform-surface",
-            "registryPolicy": "candidate-review",
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
             "score": 6,
-            "rationale": "Platform integration control that needs channel policy before registry promotion.",
-            "exportName": "ShareButtons"
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
           }
         ],
         "docsPaths": [
@@ -7679,10 +7677,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -7693,10 +7691,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./registry: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -7824,6 +7822,17 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 15,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
             "exportPath": "./mcp-snapshot",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -7854,18 +7863,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "registryItemIds": [
               "template.canon-extension-intake",
               "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 14,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
             ]
           }
         ],
