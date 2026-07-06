@@ -123,8 +123,8 @@
   <meta property="og:url" content={config.domain} />
   <meta property="og:title" content={config.name} />
   <meta property="og:description" content={config.description} />
-  <meta property="og:image" content={`${config.domain}/og-image.svg`} />
-  <meta property="og:image:type" content="image/svg+xml" />
+  <meta property="og:image" content={`${config.domain}/og-image.png`} />
+  <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:site_name" content={config.name} />
@@ -135,7 +135,7 @@
   <meta name="twitter:url" content={config.domain} />
   <meta name="twitter:title" content={config.name} />
   <meta name="twitter:description" content={config.description} />
-  <meta name="twitter:image" content={`${config.domain}/og-image.svg`} />
+  <meta name="twitter:image" content={`${config.domain}/og-image.png`} />
   <meta name="twitter:creator" content="@micahryanjohnson" />
 
   <!-- Schema.org JSON-LD -->
