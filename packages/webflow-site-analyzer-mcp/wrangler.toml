@@ -35,4 +35,4 @@ ENVIRONMENT = "production"
 # - WEBFLOW_SITE_ANALYZER_MCP_API_KEY
 # - WEBFLOW_GROQ_API_KEY (preferred for URL classifier — fast + cheap)
 # - WEBFLOW_OPENAI_API_KEY (fallback for URL classifier)
-# - BRAINTRUST_API_KEY (optional, for observability)
+# - LANGFUSE_SECRET_KEY (optional, for observability)

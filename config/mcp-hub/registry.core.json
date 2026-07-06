@@ -6,7 +6,13 @@
       "url": "https://bettermode-creator.mcp.createsomething.agency/mcp",
       "description": "Bettermode Marketplace Creator drafting MCP — read-only Bettermode + Airtable + community queue helpers consumed by the Dify drafter agent.",
       "bearer_token_env_var": "WEBFLOW_BETTERMODE_CREATOR_MCP_BEARER",
-      "tags": ["agency", "webflow", "bettermode", "marketplace", "cs"],
+      "tags": [
+        "agency",
+        "webflow",
+        "bettermode",
+        "marketplace",
+        "cs"
+      ],
       "package_path": "packages/bettermode-creator-mcp",
       "catalog": {
         "include": true,
@@ -15,7 +21,10 @@
         "category": "create-something",
         "requiresAuth": true,
         "authType": "bearer",
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 4
@@ -23,9 +32,15 @@
     "community-mcp": {
       "transport": "stdio",
       "command": "node",
-      "args": ["./packages/community-mcp/dist/index.js"],
+      "args": [
+        "./packages/community-mcp/dist/index.js"
+      ],
       "description": "Local community presence MCP",
-      "tags": ["local", "community", "cs"],
+      "tags": [
+        "local",
+        "community",
+        "cs"
+      ],
       "lifecycle": "local",
       "package_path": "packages/community-mcp",
       "catalog_exposure_mode": "direct",
@@ -36,7 +51,13 @@
       "url": "https://abundance-staff-mcp.createsomething.workers.dev/mcp",
       "description": "Abundance Staff MCP for NPG staff/operator headcount and private staffing context. Token-bearing access stays in Infisical and is excluded from public delivery artifacts.",
       "bearer_token_env_var": "ABUNDANCE_STAFF_MCP_API_KEY",
-      "tags": ["client", "abundance", "npg", "staffing", "healthcare"],
+      "tags": [
+        "client",
+        "abundance",
+        "npg",
+        "staffing",
+        "healthcare"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 1,
       "setupNotes": "Production smoke passed on 2026-05-13 via abundance_staff_summarize_headcount; total active headcount returned without publishing employee-level rows."
@@ -46,7 +67,13 @@
       "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
       "description": "Abundance Jobs MCP for public healthcare and nursing job discovery, including list/search/read tools and a confirmation-gated funnel write action.",
       "bearer_token_env_var": "ABUNDANCE_MCP_BEARER_TOKEN",
-      "tags": ["client", "abundance", "npg", "jobs", "healthcare"],
+      "tags": [
+        "client",
+        "abundance",
+        "npg",
+        "jobs",
+        "healthcare"
+      ],
       "package_path": "packages/abundance-jobs-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 4,
@@ -57,7 +84,13 @@
       "url": "https://abundance-thenpgroup.mcp.createsomething.agency/mcp",
       "description": "NPG-scoped MCP hub for Abundance review across Jotform, Mailchimp, WhatsApp, Staff MCP, and Jobs MCP boundaries.",
       "bearer_token_env_var": "CS_HUB_ABUNDANCE_THENPGROUP_API_TOKEN",
-      "tags": ["client", "abundance", "npg", "policy-os", "hub"],
+      "tags": [
+        "client",
+        "abundance",
+        "npg",
+        "policy-os",
+        "hub"
+      ],
       "catalog_exposure_mode": "brokered",
       "estimated_tool_count": 319,
       "setupNotes": "Production smoke passed on 2026-05-13 for /health, hub_list_services, and brokered Jotform/Mailchimp/WhatsApp connection_status. The service set is reachable, but Jotform, Mailchimp, and WhatsApp report connected=false with active=0/pending=0, so NPG account-owner authorization is required before write-capable automation. Cold management calls remain slow at roughly 79-86s and should be optimized before high-frequency operator use."
@@ -66,14 +99,22 @@
       "transport": "http",
       "url": "https://mcp.createsomething.ltd/mcp",
       "description": "CREATE SOMETHING content MCP",
-      "tags": ["core", "content", "cs", "policy_os_only"],
+      "tags": [
+        "core",
+        "content",
+        "cs",
+        "policy_os_only"
+      ],
       "catalog": {
         "include": true,
         "name": "CREATE SOMETHING Content",
         "slug": "create-something",
         "category": "create-something",
         "requiresAuth": false,
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 5,
@@ -88,16 +129,12 @@
             "Runtime behavior must remain inside public CREATE SOMETHING source material."
           ],
           "policy_pack": "public-readonly-mcp.v1",
-          "eval_suite": "braintrust:eval:mcp:public-trust",
+          "eval_suite": "langfuse:eval:mcp:public-trust",
           "last_verified_date": "2026-05-10",
           "evidence_ref": "mcp/create-something",
           "escalation": "security@createsomething.io"
         },
         "observability": {
-          "braintrust": {
-            "project": "create-something-mcp",
-            "experiment": "create_something_public_trust"
-          },
           "langfuse": {
             "project": "create-something-mcp",
             "environment": "production"
@@ -117,7 +154,12 @@
       "url": "https://cs-telemetry-mcp.createsomething.workers.dev/mcp",
       "description": "Fleet telemetry MCP for CREATE SOMETHING account",
       "bearer_token_env_var": "CS_TELEMETRY_OPERATOR_API_TOKEN",
-      "tags": ["observability", "telemetry", "cs", "policy_os_only"],
+      "tags": [
+        "observability",
+        "telemetry",
+        "cs",
+        "policy_os_only"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 10
     },
@@ -125,16 +167,28 @@
       "transport": "http",
       "url": "https://gmail-notion-mcp.createsomething.workers.dev/mcp",
       "description": "Dormant Gmail to Notion MCP prototype",
-      "tags": ["dormant", "prototype", "cs"],
+      "tags": [
+        "dormant",
+        "prototype",
+        "cs"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
     "ground-mcp": {
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@createsomething/ground-mcp"],
+      "args": [
+        "-y",
+        "@createsomething/ground-mcp"
+      ],
       "description": "Local Ground verification MCP",
-      "tags": ["local", "verification", "code-quality", "cs"],
+      "tags": [
+        "local",
+        "verification",
+        "code-quality",
+        "cs"
+      ],
       "lifecycle": "local",
       "package_path": "packages/ground/npm",
       "catalog_exposure_mode": "direct",
@@ -144,14 +198,21 @@
       "transport": "http",
       "url": "https://youtube.mcp.workway.co/mcp",
       "description": "Half Dozen YouTube sync MCP",
-      "tags": ["halfdozen", "youtube", "workway"],
+      "tags": [
+        "halfdozen",
+        "youtube",
+        "workway"
+      ],
       "catalog": {
         "include": true,
         "name": "YouTube Sync",
         "slug": "youtube-sync",
         "category": "workway",
         "requiresAuth": true,
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -161,7 +222,14 @@
       "url": "https://dm.mcp.workway.co/mcp",
       "bearer_token_env_var": "HALFDOZEN_DM_MCP_API_KEY",
       "description": "Half Dozen DM MCP (Notion CRUD + DM-scoped Google Drive sync)",
-      "tags": ["halfdozen", "dm", "notion", "drive", "composio", "workway"],
+      "tags": [
+        "halfdozen",
+        "dm",
+        "notion",
+        "drive",
+        "composio",
+        "workway"
+      ],
       "catalog_exposure_mode": "brokered",
       "estimated_tool_count": 100
     },
@@ -170,11 +238,17 @@
       "url": "https://halfdozen-blondish-sync-mcp.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "HALFDOZEN_BLONDISH_SYNC_MCP_API_KEY",
       "description": "Operator-invoked BLOND:ISH Support Tickets to Half Dozen Tickets reconciliation MCP.",
-      "tags": ["halfdozen", "blondish", "notion", "tickets", "sync"],
+      "tags": [
+        "halfdozen",
+        "blondish",
+        "notion",
+        "tickets",
+        "sync"
+      ],
       "package_path": "packages/halfdozen-blondish-sync-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 8,
-      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY with sanitized tool counts and drift summaries; validate with pnpm langfuse:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
     },
     "halfdozen-c3-management-sync-mcp": {
       "transport": "http",
@@ -191,7 +265,7 @@
       "package_path": "packages/halfdozen-blondish-sync-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 8,
-      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY with sanitized tool counts and drift summaries; validate with pnpm langfuse:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
     },
     "halfdozen-cracked-sync-mcp": {
       "transport": "http",
@@ -208,7 +282,7 @@
       "package_path": "packages/halfdozen-blondish-sync-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 8,
-      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY with sanitized tool counts and drift summaries; validate with pnpm langfuse:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
     },
     "halfdozen-lightswitch-sync-mcp": {
       "transport": "http",
@@ -225,20 +299,27 @@
       "package_path": "packages/halfdozen-blondish-sync-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 8,
-      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY with sanitized tool counts and drift summaries; validate with pnpm langfuse:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
     },
     "halfdozen-gmail-sync-danny": {
       "transport": "http",
       "url": "https://gmail.mcp.workway.co/mcp",
       "description": "Half Dozen Gmail sync MCP (Danny)",
-      "tags": ["halfdozen", "gmail", "workway"],
+      "tags": [
+        "halfdozen",
+        "gmail",
+        "workway"
+      ],
       "catalog": {
         "include": true,
         "name": "Gmail Sync",
         "slug": "gmail-sync",
         "category": "workway",
         "requiresAuth": true,
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -247,7 +328,11 @@
       "transport": "http",
       "url": "https://fillip-gmail.mcp.workway.co/mcp",
       "description": "Half Dozen Gmail sync MCP (Fillip)",
-      "tags": ["halfdozen", "gmail", "workway"],
+      "tags": [
+        "halfdozen",
+        "gmail",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -255,7 +340,11 @@
       "transport": "http",
       "url": "https://leah-gmail.mcp.workway.co/mcp",
       "description": "Half Dozen Gmail sync MCP (Leah)",
-      "tags": ["halfdozen", "gmail", "workway"],
+      "tags": [
+        "halfdozen",
+        "gmail",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -264,7 +353,13 @@
       "url": "https://halfdozen-operator-notion-mcp.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY",
       "description": "Half Dozen operator-managed Notion MCP (Composio-backed pinned tools + account sync)",
-      "tags": ["halfdozen", "notion", "composio", "operator", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "composio",
+        "operator",
+        "workway"
+      ],
       "catalog_exposure_mode": "brokered",
       "estimated_tool_count": 100
     },
@@ -273,17 +368,27 @@
       "url": "https://halfdozen-agent-analyzer-telemetry-mcp.half-dozen.workers.dev/mcp",
       "bearer_token_env_var": "HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY",
       "description": "Append-only telemetry MCP for Half Dozen native Notion AGENT ANALYZER eval runs.",
-      "tags": ["halfdozen", "agent-analyzer", "notion", "observability", "workway"],
+      "tags": [
+        "halfdozen",
+        "agent-analyzer",
+        "notion",
+        "observability",
+        "workway"
+      ],
       "package_path": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 11,
-      "setupNotes": "Hosted on the Half Dozen Cloudflare account. Cloudflare Worker secret is MCP_API_KEY; operator/client retrieval secret is prod:/:HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY plus BRAINTRUST_PROJECT_ID and mirrors append-only events as native-notion-agent tool spans. The D1 schema is additive and append-only in halfdozen-feedback.agent_analyzer_telemetry_events."
+      "setupNotes": "Hosted on the Half Dozen Cloudflare account. Cloudflare Worker secret is MCP_API_KEY; operator/client retrieval secret is prod:/:HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY plus LANGFUSE_PUBLIC_KEY and mirrors append-only events as native-notion-agent tool spans. The D1 schema is additive and append-only in halfdozen-feedback.agent_analyzer_telemetry_events."
     },
     "halfdozen-telemetry": {
       "transport": "http",
       "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp",
       "description": "Fleet telemetry MCP for WORKWAY account",
-      "tags": ["observability", "telemetry", "workway"],
+      "tags": [
+        "observability",
+        "telemetry",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -291,14 +396,21 @@
       "transport": "http",
       "url": "https://zoom.mcp.workway.co/mcp",
       "description": "Half Dozen Zoom sync MCP",
-      "tags": ["halfdozen", "zoom", "workway"],
+      "tags": [
+        "halfdozen",
+        "zoom",
+        "workway"
+      ],
       "catalog": {
         "include": true,
         "name": "Zoom Sync",
         "slug": "zoom-sync",
         "category": "workway",
         "requiresAuth": true,
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -306,9 +418,16 @@
     "harness-mcp": {
       "transport": "stdio",
       "command": "node",
-      "args": ["./packages/harness-mcp/dist/index.js"],
+      "args": [
+        "./packages/harness-mcp/dist/index.js"
+      ],
       "description": "Local harness operations MCP",
-      "tags": ["local", "harness", "ops", "cs"],
+      "tags": [
+        "local",
+        "harness",
+        "ops",
+        "cs"
+      ],
       "lifecycle": "local",
       "package_path": "packages/harness-mcp",
       "catalog_exposure_mode": "direct",
@@ -318,7 +437,13 @@
       "transport": "http",
       "url": "https://interaction-atlas-mcp.createsomething.workers.dev/mcp",
       "description": "Interaction Atlas MCP for policy, workflow, and agent/MCP capability mapping",
-      "tags": ["policy-os", "interaction-atlas", "workflow", "judgment", "cs"],
+      "tags": [
+        "policy-os",
+        "interaction-atlas",
+        "workflow",
+        "judgment",
+        "cs"
+      ],
       "package_path": "packages/interaction-atlas-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -328,7 +453,13 @@
       "url": "https://loom.mcp.createsomething.agency/mcp",
       "description": "Legacy Loom coordination MCP retained for historical evidence and migration verification after the Linear cutover",
       "bearer_token_env_var": "LOOM_MCP_API_TOKEN",
-      "tags": ["coordination", "loom", "legacy", "dormant", "cs"],
+      "tags": [
+        "coordination",
+        "loom",
+        "legacy",
+        "dormant",
+        "cs"
+      ],
       "lifecycle": "dormant",
       "package_path": "packages/loom-mcp-remote",
       "catalog": {
@@ -338,7 +469,9 @@
         "category": "create-something",
         "requiresAuth": true,
         "authType": "bearer",
-        "transports": ["http"]
+        "transports": [
+          "http"
+        ]
       },
       "catalog_exposure_mode": "dormant",
       "estimated_tool_count": 0
@@ -346,9 +479,17 @@
     "lsmcp": {
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@mizchi/lsmcp", "mcp"],
+      "args": [
+        "-y",
+        "@mizchi/lsmcp",
+        "mcp"
+      ],
       "description": "Local file-system MCP utility",
-      "tags": ["local", "dev", "filesystem"],
+      "tags": [
+        "local",
+        "dev",
+        "filesystem"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -356,7 +497,10 @@
       "transport": "http",
       "url": "https://meetings-mcp.createsomething.workers.dev/mcp",
       "description": "Meetings MCP (requires API key via bearer_token_env_var or header auth)",
-      "tags": ["meetings", "cs"],
+      "tags": [
+        "meetings",
+        "cs"
+      ],
       "bearer_token_env_var": "MEETINGS_MCP_API_KEY",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -364,9 +508,17 @@
     "hydra-db-recall-mcp": {
       "transport": "http",
       "url": "https://hydra-db-recall-mcp.createsomething.workers.dev/mcp",
-      "description": "CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Braintrust telemetry",
+      "description": "CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Langfuse telemetry",
       "bearer_token_env_var": "HYDRA_DB_RECALL_MCP_API_KEY",
-      "tags": ["hydradb", "recall", "memory", "internal", "observability", "cs", "policy_os_only"],
+      "tags": [
+        "hydradb",
+        "recall",
+        "memory",
+        "internal",
+        "observability",
+        "cs",
+        "policy_os_only"
+      ],
       "catalog": {
         "include": true,
         "name": "Hydra DB Recall",
@@ -374,7 +526,10 @@
         "category": "create-something",
         "requiresAuth": true,
         "authType": "bearer",
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 4,
@@ -386,7 +541,12 @@
       "transport": "http",
       "url": "https://blondish-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for BLOND:ISH",
-      "tags": ["halfdozen", "notion", "blondish", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "blondish",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -394,7 +554,12 @@
       "transport": "http",
       "url": "https://c3-management-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for C3 Management",
-      "tags": ["halfdozen", "notion", "c3-management", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "c3-management",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -402,7 +567,12 @@
       "transport": "http",
       "url": "https://cracked-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for Cracked",
-      "tags": ["halfdozen", "notion", "cracked", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "cracked",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -410,7 +580,11 @@
       "transport": "http",
       "url": "https://createsomething-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for CREATE SOMETHING",
-      "tags": ["halfdozen", "notion", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -418,7 +592,12 @@
       "transport": "http",
       "url": "https://fanpad-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for Fanpad",
-      "tags": ["halfdozen", "notion", "fanpad", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "fanpad",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -426,7 +605,12 @@
       "transport": "http",
       "url": "https://juice-labs-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for Juice Labs",
-      "tags": ["halfdozen", "notion", "juice-labs", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "juice-labs",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -434,7 +618,12 @@
       "transport": "http",
       "url": "https://kk-management-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for KK Management",
-      "tags": ["halfdozen", "notion", "kk-management", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "kk-management",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -442,7 +631,12 @@
       "transport": "http",
       "url": "https://lightswitch-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for Lightswitch",
-      "tags": ["halfdozen", "notion", "lightswitch", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "lightswitch",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -450,7 +644,12 @@
       "transport": "http",
       "url": "https://phase-3-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for Phase 3",
-      "tags": ["halfdozen", "notion", "phase-3", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "phase-3",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -458,7 +657,12 @@
       "transport": "http",
       "url": "https://system-studio-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for System Studio",
-      "tags": ["halfdozen", "notion", "system-studio", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "system-studio",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -466,7 +670,12 @@
       "transport": "http",
       "url": "https://three-six-zero-notion.mcp.workway.co/mcp",
       "description": "Half Dozen Notion MCP for Three Six Zero",
-      "tags": ["halfdozen", "notion", "three-six-zero", "workway"],
+      "tags": [
+        "halfdozen",
+        "notion",
+        "three-six-zero",
+        "workway"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -474,7 +683,11 @@
       "transport": "http",
       "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp",
       "description": "Dormant Notion sync MCP prototype",
-      "tags": ["dormant", "prototype", "cs"],
+      "tags": [
+        "dormant",
+        "prototype",
+        "cs"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -482,14 +695,21 @@
       "transport": "http",
       "url": "https://outerfields.mcp.createsomething.agency/mcp",
       "description": "OUTERFIELDS remote MCP",
-      "tags": ["agency", "outerfields", "cs"],
+      "tags": [
+        "agency",
+        "outerfields",
+        "cs"
+      ],
       "catalog": {
         "include": true,
         "name": "Outerfields PCN",
         "slug": "outerfields",
         "category": "create-something",
         "requiresAuth": false,
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -500,14 +720,22 @@
       "connect_timeout_ms": 10000,
       "list_tools_timeout_ms": 15000,
       "description": "Workflow playbooks MCP",
-      "tags": ["core", "workflow", "cs", "policy_os_only"],
+      "tags": [
+        "core",
+        "workflow",
+        "cs",
+        "policy_os_only"
+      ],
       "catalog": {
         "include": true,
         "name": "Playbook",
         "slug": "playbook",
         "category": "create-something",
         "requiresAuth": false,
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 14,
@@ -522,16 +750,12 @@
             "Public evidence links to redacted samples only; raw traces remain private."
           ],
           "policy_pack": "public-playbook-mcp.v1",
-          "eval_suite": "braintrust:eval:mcp:public-trust",
+          "eval_suite": "langfuse:eval:mcp:public-trust",
           "last_verified_date": "2026-05-10",
           "evidence_ref": "mcp/playbook",
           "escalation": "security@createsomething.io"
         },
         "observability": {
-          "braintrust": {
-            "project": "playbook-mcp",
-            "experiment": "playbook_public_trust"
-          },
           "langfuse": {
             "project": "playbook-mcp",
             "environment": "production"
@@ -550,7 +774,12 @@
       "transport": "http",
       "url": "https://quickbooks.mcp.workway.co/mcp",
       "description": "QuickBooks to Notion MCP server",
-      "tags": ["finance", "quickbooks", "notion", "workway"],
+      "tags": [
+        "finance",
+        "quickbooks",
+        "notion",
+        "workway"
+      ],
       "catalog": {
         "include": true,
         "name": "QuickBooks Notion Sync",
@@ -558,7 +787,10 @@
         "category": "workway",
         "requiresAuth": true,
         "authType": "oauth",
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -566,9 +798,17 @@
     "spotify-mcp": {
       "transport": "http",
       "url": "https://spotify-mcp.createsomething.workers.dev/mcp",
-      "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+      "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Langfuse telemetry",
       "bearer_token_env_var": "SPOTIFY_MCP_API_KEY",
-      "tags": ["spotify", "rapidapi", "music", "dify", "observability", "cs", "policy_os_only"],
+      "tags": [
+        "spotify",
+        "rapidapi",
+        "music",
+        "dify",
+        "observability",
+        "cs",
+        "policy_os_only"
+      ],
       "catalog": {
         "include": true,
         "name": "Spotify",
@@ -576,7 +816,10 @@
         "category": "create-something",
         "requiresAuth": true,
         "authType": "bearer",
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 29,
@@ -588,14 +831,22 @@
       "transport": "http",
       "url": "https://schedule.mcp.createsomething.agency/mcp",
       "description": "Scheduling MCP",
-      "tags": ["ops", "scheduling", "cs", "policy_os_only"],
+      "tags": [
+        "ops",
+        "scheduling",
+        "cs",
+        "policy_os_only"
+      ],
       "catalog": {
         "include": true,
         "name": "Schedule",
         "slug": "schedule",
         "category": "create-something",
         "requiresAuth": false,
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -605,7 +856,11 @@
       "url": "https://mcp.slack.com/mcp",
       "description": "Slack MCP for CREATE SOMETHING workspace",
       "bearer_token_env_var": "SLACK_CREATE_SOMETHING_MCP_TOKEN",
-      "tags": ["slack", "communication", "cs"],
+      "tags": [
+        "slack",
+        "communication",
+        "cs"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
@@ -615,16 +870,26 @@
       "description": "Slack MCP for Webflow workspace",
       "lifecycle": "dormant",
       "bearer_token_env_var": "SLACK_WEBFLOW_MCP_TOKEN",
-      "tags": ["slack", "communication", "webflow"],
+      "tags": [
+        "slack",
+        "communication",
+        "webflow"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
     "social-mcp": {
       "transport": "stdio",
       "command": "node",
-      "args": ["./packages/social-mcp/dist/index.js"],
+      "args": [
+        "./packages/social-mcp/dist/index.js"
+      ],
       "description": "Local social calendar MCP",
-      "tags": ["local", "social", "cs"],
+      "tags": [
+        "local",
+        "social",
+        "cs"
+      ],
       "lifecycle": "local",
       "package_path": "packages/social-mcp",
       "catalog_exposure_mode": "direct",
@@ -635,7 +900,12 @@
       "url": "https://substrate.mcp.createsomething.agency/mcp",
       "description": "Substrate execution/storage MCP",
       "bearer_token_env_var": "SUBSTRATE_ADMIN_TOKEN",
-      "tags": ["ops", "automation", "cs", "policy_os_only"],
+      "tags": [
+        "ops",
+        "automation",
+        "cs",
+        "policy_os_only"
+      ],
       "catalog": {
         "include": true,
         "name": "Substrate",
@@ -643,7 +913,10 @@
         "category": "create-something",
         "requiresAuth": true,
         "authType": "bearer",
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -652,14 +925,22 @@
       "transport": "http",
       "url": "https://framework.mcp.createsomething.agency/mcp",
       "description": "Three-Tier Framework MCP",
-      "tags": ["core", "framework", "cs", "policy_os_only"],
+      "tags": [
+        "core",
+        "framework",
+        "cs",
+        "policy_os_only"
+      ],
       "catalog": {
         "include": true,
         "name": "Three-Tier Framework",
         "slug": "three-tier-framework",
         "category": "create-something",
         "requiresAuth": false,
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 6,
@@ -674,16 +955,12 @@
             "The server does not grant access to private client policies or tenant data."
           ],
           "policy_pack": "public-three-tier-framework.v1",
-          "eval_suite": "braintrust:eval:mcp:public-trust",
+          "eval_suite": "langfuse:eval:mcp:public-trust",
           "last_verified_date": "2026-05-10",
           "evidence_ref": "mcp/three-tier-framework",
           "escalation": "security@createsomething.io"
         },
         "observability": {
-          "braintrust": {
-            "project": "three-tier-framework-mcp",
-            "experiment": "three_tier_framework_public_trust"
-          },
           "langfuse": {
             "project": "three-tier-framework-mcp",
             "environment": "production"
@@ -701,9 +978,16 @@
     "ui-preview-mcp": {
       "transport": "stdio",
       "command": "node",
-      "args": ["./packages/ui-preview-mcp/dist/index.js"],
+      "args": [
+        "./packages/ui-preview-mcp/dist/index.js"
+      ],
       "description": "Local UI preview MCP for dev server management",
-      "tags": ["local", "ui", "preview", "cs"],
+      "tags": [
+        "local",
+        "ui",
+        "preview",
+        "cs"
+      ],
       "lifecycle": "local",
       "package_path": "packages/ui-preview-mcp",
       "catalog_exposure_mode": "direct",
@@ -714,7 +998,13 @@
       "url": "https://webflow-app-review-mcp.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "WEBFLOW_APP_REVIEW_MCP_API_KEY",
       "description": "Webflow App Review MCP for app asset, version, and governance database workflows",
-      "tags": ["webflow", "review", "airtable", "apps", "cs"],
+      "tags": [
+        "webflow",
+        "review",
+        "airtable",
+        "apps",
+        "cs"
+      ],
       "catalog": {
         "include": true,
         "name": "Webflow App Review",
@@ -722,7 +1012,10 @@
         "category": "create-something",
         "requiresAuth": true,
         "authType": "bearer",
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 24
@@ -732,7 +1025,13 @@
       "url": "https://zendesk-mcp.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "ZENDESK_MCP_API_KEY",
       "description": "Zendesk MCP for Webflow asset reviewer ticket search, comments, and status workflows",
-      "tags": ["webflow", "review", "zendesk", "support", "cs"],
+      "tags": [
+        "webflow",
+        "review",
+        "zendesk",
+        "support",
+        "cs"
+      ],
       "package_path": "packages/zendesk-mcp",
       "catalog": {
         "include": true,
@@ -741,7 +1040,9 @@
         "category": "create-something",
         "requiresAuth": true,
         "authType": "bearer",
-        "transports": ["http"]
+        "transports": [
+          "http"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 10,
@@ -752,7 +1053,13 @@
       "url": "https://webflow-mcp.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "WEBFLOW_SITE_ANALYZER_MCP_API_KEY",
       "description": "Remote Webflow Marketplace MCP for plagiarism and framework analysis; kept as webflow-local for existing Hub bundle compatibility",
-      "tags": ["webflow", "review", "plagiarism", "frameworks", "cs"],
+      "tags": [
+        "webflow",
+        "review",
+        "plagiarism",
+        "frameworks",
+        "cs"
+      ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 10
     },
@@ -761,7 +1068,13 @@
       "url": "https://webflow-template-review-mcp.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY",
       "description": "Webflow Template Review MCP for template asset and version workflows",
-      "tags": ["webflow", "review", "airtable", "templates", "cs"],
+      "tags": [
+        "webflow",
+        "review",
+        "airtable",
+        "templates",
+        "cs"
+      ],
       "catalog": {
         "include": true,
         "name": "Webflow Template Review",
@@ -769,7 +1082,10 @@
         "category": "create-something",
         "requiresAuth": true,
         "authType": "bearer",
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -779,7 +1095,14 @@
       "url": "https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "WEBFLOW_REVIEWER_EXCEPTIONS_MCP_API_KEY",
       "description": "Standalone read/write reviewer exception memory MCP for template-review agents and Dify external knowledge retrieval",
-      "tags": ["webflow", "review", "airtable", "templates", "knowledge", "cs"],
+      "tags": [
+        "webflow",
+        "review",
+        "airtable",
+        "templates",
+        "knowledge",
+        "cs"
+      ],
       "package_path": "packages/webflow-reviewer-exceptions-mcp",
       "catalog": {
         "include": true,
@@ -788,7 +1111,10 @@
         "category": "create-something",
         "requiresAuth": true,
         "authType": "bearer",
-        "transports": ["http", "sse"]
+        "transports": [
+          "http",
+          "sse"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 7,
@@ -799,7 +1125,13 @@
       "url": "https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "YOUTUBE_TRANSCRIPT_NOTION_MCP_API_KEY",
       "description": "YouTube transcript extraction and Notion transcript enrichment MCP used by Dify client agents",
-      "tags": ["youtube", "transcript", "notion", "dify", "cs"],
+      "tags": [
+        "youtube",
+        "transcript",
+        "notion",
+        "dify",
+        "cs"
+      ],
       "catalog": {
         "include": true,
         "name": "YouTube Transcript Notion",
@@ -807,18 +1139,36 @@
         "category": "create-something",
         "requiresAuth": true,
         "authType": "bearer",
-        "transports": ["http"]
+        "transports": [
+          "http"
+        ]
       },
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 6
     }
   },
   "bundles": {
-    "agency": ["outerfields-pcn"],
-    "core": ["create-something", "three-tier-framework", "playbook"],
-    "abundance": ["abundance-staff-mcp", "abundance-jobs-mcp", "abundance-thenpgroup-hub"],
-    "dormant": ["gmail-notion-mcp", "notion-sync-mcp", "loom-mcp"],
-    "finance": ["quickbooks-notion-mcp-server"],
+    "agency": [
+      "outerfields-pcn"
+    ],
+    "core": [
+      "create-something",
+      "three-tier-framework",
+      "playbook"
+    ],
+    "abundance": [
+      "abundance-staff-mcp",
+      "abundance-jobs-mcp",
+      "abundance-thenpgroup-hub"
+    ],
+    "dormant": [
+      "gmail-notion-mcp",
+      "notion-sync-mcp",
+      "loom-mcp"
+    ],
+    "finance": [
+      "quickbooks-notion-mcp-server"
+    ],
     "halfdozen": [
       "notion-halfdozen-create-something",
       "notion-halfdozen-system-studio",
@@ -839,7 +1189,10 @@
       "halfdozen-lightswitch-sync-mcp",
       "half-dozen-youtube-sync"
     ],
-    "halfdozen-observability": ["halfdozen-agent-analyzer-telemetry", "halfdozen-telemetry"],
+    "halfdozen-observability": [
+      "halfdozen-agent-analyzer-telemetry",
+      "halfdozen-telemetry"
+    ],
     "halfdozen-sync": [
       "halfdozen-gmail-sync-danny",
       "halfdozen-gmail-sync-fillip",
@@ -859,18 +1212,46 @@
       "webflow-local",
       "lsmcp"
     ],
-    "meetings": ["meetings"],
-    "observability": ["cs-telemetry"],
-    "ops": ["schedule-mcp", "substrate-mcp"],
-    "policy-os": ["interaction-atlas-mcp"],
-    "slack": ["slack-create-something", "slack-webflow"],
-    "webflow-marketplace-app-review-phase-a": ["webflow-app-review-mcp", "zendesk-mcp"],
-    "webflow-marketplace-app-review-phase-b": ["webflow-app-review-mcp", "zendesk-mcp"],
-    "webflow-marketplace-review-phase-a": ["webflow-template-review-mcp", "webflow-reviewer-exceptions-mcp"],
-    "webflow-marketplace-review-phase-b": ["webflow-template-review-mcp", "webflow-reviewer-exceptions-mcp", "webflow-local"]
+    "meetings": [
+      "meetings"
+    ],
+    "observability": [
+      "cs-telemetry"
+    ],
+    "ops": [
+      "schedule-mcp",
+      "substrate-mcp"
+    ],
+    "policy-os": [
+      "interaction-atlas-mcp"
+    ],
+    "slack": [
+      "slack-create-something",
+      "slack-webflow"
+    ],
+    "webflow-marketplace-app-review-phase-a": [
+      "webflow-app-review-mcp",
+      "zendesk-mcp"
+    ],
+    "webflow-marketplace-app-review-phase-b": [
+      "webflow-app-review-mcp",
+      "zendesk-mcp"
+    ],
+    "webflow-marketplace-review-phase-a": [
+      "webflow-template-review-mcp",
+      "webflow-reviewer-exceptions-mcp"
+    ],
+    "webflow-marketplace-review-phase-b": [
+      "webflow-template-review-mcp",
+      "webflow-reviewer-exceptions-mcp",
+      "webflow-local"
+    ]
   },
   "defaults": {
-    "enabledBundles": ["core", "observability"],
+    "enabledBundles": [
+      "core",
+      "observability"
+    ],
     "enabledServers": [],
     "disabledServers": [],
     "codexConfigPath": ".codex/config.toml"

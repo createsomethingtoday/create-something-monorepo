@@ -15,8 +15,8 @@ Centralized job application assets organized by company.
 |---|---|
 | _shared | resume.pdf |
 | akkio | cover-letter.html, cover-letter.pdf, interview-prep.md, resume.html |
-| braintrust | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | centaur | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
+| langfuse | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | hightouch | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | hnb-api-governance-lead | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | includedhealth | application.pdf, combined.html |

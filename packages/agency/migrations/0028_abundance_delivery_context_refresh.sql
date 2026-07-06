@@ -71,7 +71,7 @@ INSERT INTO canon_workflow_contexts (
         "Staff MCP",
         "Jobs MCP",
         "NPG scoped hub",
-        "Braintrust eval suite"
+        "Langfuse eval suite"
       ],
       "tone": "success"
     },
@@ -103,7 +103,7 @@ INSERT INTO canon_workflow_contexts (
       ],
       "evidence": [
         "Agent boundary",
-        "Braintrust eval suite"
+        "Langfuse eval suite"
       ],
       "allowedNextActions": [
         "Draft shortlist",
@@ -180,8 +180,8 @@ INSERT INTO canon_workflow_contexts (
       "tone": "info"
     },
     {
-      "id": "braintrust-evals",
-      "label": "Braintrust eval coverage",
+      "id": "langfuse-evals",
+      "label": "Langfuse eval coverage",
       "detail": "Published under create-something-dify-agents / abundance_hub: verifies Dify API health, Jobs MCP tool routing, forbidden writes, secret refusal, latency, and trace IDs for Langfuse inspection.",
       "source": "create-something-dify-agents / abundance_hub",
       "visibility": "private",
@@ -367,7 +367,7 @@ INSERT INTO canon_workflow_contexts (
     {
       "label": "Eval coverage",
       "value": "Published",
-      "detail": "Braintrust suite with Langfuse trace keys",
+      "detail": "Langfuse suite with trace join keys",
       "tone": "success"
     }
   ],

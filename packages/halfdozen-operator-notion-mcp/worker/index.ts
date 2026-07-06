@@ -11,9 +11,9 @@ interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   FEEDBACK_DB: D1Database;
   CONFIG_DB: D1Database;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
-  BRAINTRUST_PROJECT_ID?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
   COMPOSIO_API_KEY?: string;
   COMPOSIO_BASE_URL?: string;
   COMPOSIO_NOTION_AUTH_CONFIG_ID?: string;
@@ -31,11 +31,11 @@ interface Env {
 }
 
 const SERVER_NAME = 'halfdozen-operator-notion-mcp';
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 
-function resolveBraintrustProjectName(env: Env): string {
-  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
-  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+function resolveLangfuseProjectName(env: Env): string {
+  const configured = env.LANGFUSE_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_LANGFUSE_PROJECT_NAME;
 }
 
 function parsePositiveInt(value: string | undefined): number | undefined {
@@ -76,9 +76,9 @@ export class OperatorNotionMcp extends McpAgent<Env> {
 
     if (this.env.FEEDBACK_DB) {
       enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME, () => this.currentAccountId, {
-        apiKey: this.env.BRAINTRUST_API_KEY,
-        projectName: resolveBraintrustProjectName(this.env),
-        projectId: this.env.BRAINTRUST_PROJECT_ID,
+        publicKey: this.env.LANGFUSE_PUBLIC_KEY,
+      secretKey: this.env.LANGFUSE_SECRET_KEY,
+        projectName: resolveLangfuseProjectName(this.env),
       });
       registerFeedbackTool(this.server, new D1FeedbackStore(this.env.FEEDBACK_DB), SERVER_NAME);
     }

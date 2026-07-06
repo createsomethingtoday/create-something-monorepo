@@ -43,7 +43,7 @@
   - no end-user management of Zoom Clips session/profile auth
   - no destructive actions outside explicit workflow scope
   - no copying live bearer tokens or bridge passwords into repo or shared docs
-- show where telemetry/Braintrust evidence lives
+- show where telemetry/Langfuse evidence lives
 
 ---
 

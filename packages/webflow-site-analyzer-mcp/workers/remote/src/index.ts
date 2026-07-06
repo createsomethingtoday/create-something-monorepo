@@ -18,10 +18,12 @@ interface Env {
   WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE?: string;
   MCP_TELEMETRY_ENABLED?: string;
   MCP_TELEMETRY_PATH?: string;
-  BRAINTRUST_ENABLED?: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_ID?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
+  LANGFUSE_ENABLED?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_HOST?: string;
+  LANGFUSE_BASE_URL?: string;
+  LANGFUSE_PROJECT_NAME?: string;
 }
 
 type AnalyzerContainerStub = DurableObjectStub<AnalyzerContainer>;
@@ -62,10 +64,12 @@ function buildAnalyzerEnv(env: Env): Record<string, string> {
   setIfPresent(result, 'WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE', env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE);
   setIfPresent(result, 'MCP_TELEMETRY_ENABLED', env.MCP_TELEMETRY_ENABLED);
   setIfPresent(result, 'MCP_TELEMETRY_PATH', env.MCP_TELEMETRY_PATH);
-  setIfPresent(result, 'BRAINTRUST_ENABLED', env.BRAINTRUST_ENABLED);
-  setIfPresent(result, 'BRAINTRUST_API_KEY', env.BRAINTRUST_API_KEY);
-  setIfPresent(result, 'BRAINTRUST_PROJECT_ID', env.BRAINTRUST_PROJECT_ID);
-  setIfPresent(result, 'BRAINTRUST_PROJECT_NAME', env.BRAINTRUST_PROJECT_NAME);
+  setIfPresent(result, 'LANGFUSE_ENABLED', env.LANGFUSE_ENABLED);
+  setIfPresent(result, 'LANGFUSE_PUBLIC_KEY', env.LANGFUSE_PUBLIC_KEY);
+  setIfPresent(result, 'LANGFUSE_SECRET_KEY', env.LANGFUSE_SECRET_KEY);
+  setIfPresent(result, 'LANGFUSE_HOST', env.LANGFUSE_HOST);
+  setIfPresent(result, 'LANGFUSE_BASE_URL', env.LANGFUSE_BASE_URL);
+  setIfPresent(result, 'LANGFUSE_PROJECT_NAME', env.LANGFUSE_PROJECT_NAME);
 
   return result;
 }

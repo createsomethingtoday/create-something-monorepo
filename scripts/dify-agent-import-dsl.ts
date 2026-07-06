@@ -66,7 +66,7 @@ type DifyAgent = {
   instructions_source?: string;
   eval_suite: string;
   evals: {
-    owner_system: 'braintrust';
+    owner_system: 'langfuse';
     project?: string;
     experiment?: string;
     required_checks: EvalCheck[];
@@ -156,7 +156,7 @@ const INVENTORY_PATH = resolve(ROOT, 'config/dify/inventory.json');
 const FLEET_PATH = resolve(ROOT, 'config/mcp-hub/fleet.json');
 const AGENTS_DIR = resolve(ROOT, 'config/dify-agents');
 const DEFAULT_DIFY_API_BASE_URL = 'https://api.dify.ai/v1';
-const DEFAULT_BRAINTRUST_PROJECT = 'create-something-dify-agents';
+const DEFAULT_LANGFUSE_PROJECT = 'create-something-dify-agents';
 
 const args = parseArgs(process.argv.slice(2));
 
@@ -386,10 +386,10 @@ function buildInventoryAgent(
     enabled_tools: selectedTools.map((tool) => `${options.serverId}.${tool}`),
     policy_pack: options.policyPack,
     instructions_source: `${manifestPath}#agent_prompt`,
-    eval_suite: `braintrust:eval:dify:${options.agentId}`,
+    eval_suite: `langfuse:eval:dify:${options.agentId}`,
     evals: {
-      owner_system: 'braintrust',
-      project: DEFAULT_BRAINTRUST_PROJECT,
+      owner_system: 'langfuse',
+      project: DEFAULT_LANGFUSE_PROJECT,
       experiment: toSnakeCase(options.agentId),
       required_checks: buildEvalChecks(options.audience, writeCapable),
       notes:
@@ -398,7 +398,7 @@ function buildInventoryAgent(
     owner: options.owner,
     write_policy: writeCapable ? 'requires_explicit_confirmation' : 'none',
     notes:
-      'Imported from exported Dify DSL. Confirm Service API key and add Braintrust eval evidence before marking published.'
+      'Imported from exported Dify DSL. Confirm Service API key and add Langfuse eval evidence before marking published.'
   };
 }
 

@@ -32,8 +32,9 @@ import { WORKWAY_FLEET_SERVERS } from '../../../config/mcp-hub/telemetry-fleet.t
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   DB: D1Database;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
 }
 
 interface D1Database {
@@ -49,11 +50,11 @@ interface D1PreparedStatement {
 
 const SERVER_NAME = 'halfdozen-telemetry';
 const SERVER_VERSION = '1.0.0';
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 
-function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
-  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
-  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+function resolveLangfuseProjectName(env: { LANGFUSE_PROJECT_NAME?: string }): string {
+  const configured = env.LANGFUSE_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_LANGFUSE_PROJECT_NAME;
 }
 
 // Known servers in the fleet
@@ -98,9 +99,9 @@ export class TelemetryMCP extends McpAgent<Env> {
   async init() {
     const db = this.env.DB;
     enableTelemetry(this.server, db, SERVER_NAME, undefined, {
-      apiKey: (this.env as any).BRAINTRUST_API_KEY,
-      projectName: resolveBraintrustProjectName(this.env),
-      projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
+      publicKey: (this.env as any).LANGFUSE_PUBLIC_KEY,
+        secretKey: (this.env as any).LANGFUSE_SECRET_KEY,
+      projectName: resolveLangfuseProjectName(this.env),
     });
 
     // ─── Resources (Database tier) ──────────────────────────────────────

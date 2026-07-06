@@ -16,7 +16,7 @@ import {
   getPattern,
   searchPatterns,
 } from '@quietloudlab/ai-interaction-atlas';
-import { initBraintrust, getBraintrustLogger, flush as flushBraintrust } from '@create-something/observability/braintrust';
+import { createLangfuseTrace, flush as flushLangfuse, initLangfuse } from '@create-something/observability/langfuse';
 
 import {
   getBuiltWorkflowTemplate,
@@ -291,7 +291,7 @@ type VersionedToolInput = {
   commitSha?: string;
 };
 
-let judgmentBraintrustLoggerKey: string | null = null;
+let judgmentLangfuseClientKey: string | null = null;
 
 function fallbackCorrelationId(): string {
   const ts = Date.now().toString(36);
@@ -311,39 +311,41 @@ function boolString(value: string | undefined, defaultValue: boolean): boolean {
   return defaultValue;
 }
 
-function getJudgmentBraintrustLogger(ctx: { metadata: Record<string, unknown> }) {
+function ensureJudgmentLangfuse(ctx: { metadata: Record<string, unknown> }): boolean {
   const enabledRaw =
-    getStringMetadata(ctx, 'BRAINTRUST_ENABLED') ??
-    process.env.BRAINTRUST_ENABLED;
-  if (!boolString(enabledRaw, true)) return null;
+    getStringMetadata(ctx, 'LANGFUSE_ENABLED') ??
+    process.env.LANGFUSE_ENABLED;
+  if (!boolString(enabledRaw, true)) return false;
 
-  const contextApiKey = getStringMetadata(ctx, '__braintrustApiKey');
-  const apiKey = contextApiKey ?? process.env.BRAINTRUST_API_KEY;
-  if (!apiKey) return null;
+  const contextPublicKey = getStringMetadata(ctx, '__langfusePublicKey');
+  const contextSecretKey = getStringMetadata(ctx, '__langfuseSecretKey');
+  const publicKey = contextPublicKey ?? process.env.LANGFUSE_PUBLIC_KEY;
+  const secretKey = contextSecretKey ?? process.env.LANGFUSE_SECRET_KEY;
+  if (!publicKey || !secretKey) return false;
 
   const projectName =
-    getStringMetadata(ctx, 'BRAINTRUST_PROJECT_NAME') ??
-    process.env.BRAINTRUST_PROJECT_NAME ??
-    process.env.BRAINTRUST_PROJECT ??
+    getStringMetadata(ctx, 'LANGFUSE_PROJECT_NAME') ??
+    process.env.LANGFUSE_PROJECT_NAME ??
+    process.env.LANGFUSE_PROJECT ??
     'CREATE SOMETHING';
-  const projectId =
-    getStringMetadata(ctx, 'BRAINTRUST_PROJECT_ID') ??
-    process.env.BRAINTRUST_PROJECT_ID ??
-    null;
+  const host =
+    getStringMetadata(ctx, '__langfuseHost') ??
+    process.env.LANGFUSE_BASE_URL ??
+    process.env.LANGFUSE_HOST;
 
-  const nextKey = `${apiKey}::${projectName}::${projectId ?? ''}`;
-  if (judgmentBraintrustLoggerKey !== nextKey) {
-    initBraintrust({
-      apiKey,
+  const nextKey = `${publicKey}::${secretKey}::${projectName}::${host ?? ''}`;
+  if (judgmentLangfuseClientKey !== nextKey) {
+    initLangfuse({
+      publicKey,
+      secretKey,
       projectName,
-      projectId: projectId ?? undefined,
+      host,
       enabled: true,
-      asyncFlush: true,
     });
-    judgmentBraintrustLoggerKey = nextKey;
+    judgmentLangfuseClientKey = nextKey;
   }
 
-  return getBraintrustLogger();
+  return true;
 }
 
 async function emitJudgmentDecisionTrace(
@@ -371,64 +373,68 @@ async function emitJudgmentDecisionTrace(
     latencyMs: number;
   },
 ): Promise<void> {
-  const logger = getJudgmentBraintrustLogger(ctx);
-  if (!logger) return;
+  if (!ensureJudgmentLangfuse(ctx)) return;
 
   try {
-    await logger.traced(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (span: any) => {
-        span.log({
-          input: {
-            toolName: event.toolName,
-            accountId: event.accountId,
-            entityType: event.entityType,
-            entityId: event.entityId,
-            rolloutMode: event.rolloutMode,
-            canaryPercent: event.canaryPercent,
-          },
-          output: {
-            legacyDecision: event.legacyDecision,
-            polarDecision: event.polarDecision,
-            finalDecision: event.finalDecision,
-            evaluationPath: event.evaluationPath,
-          },
-          tags: ['judgment', 'mcp', 'interaction-atlas-mcp', event.toolName, event.finalDecision],
-          metadata: {
-            server: 'interaction-atlas-mcp',
-            source: 'mcp_tool_invocation',
-            correlationId: event.correlationId,
-            accountId: event.accountId,
-            entityType: event.entityType,
-            entityId: event.entityId,
-            toolName: event.toolName,
-            rolloutMode: event.rolloutMode,
-            canaryPercent: event.canaryPercent,
-            sampledPolar: event.sampledPolar,
-            mismatch: event.mismatch,
-            legacyDecision: event.legacyDecision,
-            polarDecision: event.polarDecision,
-            finalDecision: event.finalDecision,
-            evaluationPath: event.evaluationPath,
-            fallbackReason: event.fallbackReason,
-            policyHash: event.policyHash,
-            compilerVersion: event.compilerVersion,
-            securityActionMode: event.securityActionMode,
-            securityIncidentId: event.securityIncidentId,
-            securityActionReason: event.securityActionReason,
-            latencyMs: event.latencyMs,
-          },
-        });
-      },
-      {
-        name: `judgment:interaction-atlas-mcp:${event.toolName}`,
-        type: 'eval',
-      },
-    );
-    await flushBraintrust();
+    const input = {
+      toolName: event.toolName,
+      accountId: event.accountId,
+      entityType: event.entityType,
+      entityId: event.entityId,
+      rolloutMode: event.rolloutMode,
+      canaryPercent: event.canaryPercent,
+    };
+    const output = {
+      legacyDecision: event.legacyDecision,
+      polarDecision: event.polarDecision,
+      finalDecision: event.finalDecision,
+      evaluationPath: event.evaluationPath,
+    };
+    const metadata = {
+      server: 'interaction-atlas-mcp',
+      source: 'mcp_tool_invocation',
+      correlationId: event.correlationId,
+      accountId: event.accountId,
+      entityType: event.entityType,
+      entityId: event.entityId,
+      toolName: event.toolName,
+      rolloutMode: event.rolloutMode,
+      canaryPercent: event.canaryPercent,
+      sampledPolar: event.sampledPolar,
+      mismatch: event.mismatch,
+      legacyDecision: event.legacyDecision,
+      polarDecision: event.polarDecision,
+      finalDecision: event.finalDecision,
+      evaluationPath: event.evaluationPath,
+      fallbackReason: event.fallbackReason,
+      policyHash: event.policyHash,
+      compilerVersion: event.compilerVersion,
+      securityActionMode: event.securityActionMode,
+      securityIncidentId: event.securityIncidentId,
+      securityActionReason: event.securityActionReason,
+      latencyMs: event.latencyMs,
+    };
+    const trace = createLangfuseTrace({
+      name: `judgment:interaction-atlas-mcp:${event.toolName}`,
+      input,
+      output,
+      metadata,
+      tags: ['judgment', 'mcp', 'interaction-atlas-mcp', event.toolName, event.finalDecision],
+      userId: event.accountId,
+    });
+    trace
+      ?.span({
+        name: `evaluate:${event.toolName}`,
+        input,
+        output,
+        metadata,
+        level: event.mismatch ? 'WARNING' : 'DEFAULT',
+      })
+      .end();
+    await flushLangfuse();
   } catch (error) {
     console.warn(
-      `[judgment] braintrust emit failed for ${event.toolName}:`,
+      `[judgment] langfuse emit failed for ${event.toolName}:`,
       error instanceof Error ? error.message : String(error),
     );
   }

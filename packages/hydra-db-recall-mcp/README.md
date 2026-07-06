@@ -39,9 +39,9 @@ Optional configuration:
 - `HYDRA_DB_MAX_RESPONSE_BYTES`, default `524288`
 - `HYDRA_DB_RETENTION_DAYS`, default `180`
 - `HYDRA_DB_DEFAULT_RECALL_SCOPE`, one of `knowledge`, `memory`, or `boolean`
-- `BRAINTRUST_API_KEY`
-- `BRAINTRUST_PROJECT_NAME`
-- `BRAINTRUST_PROJECT_ID`
+- `LANGFUSE_SECRET_KEY`
+- `LANGFUSE_PROJECT_NAME`
+- `LANGFUSE_PUBLIC_KEY`
 
 ## Validation
 

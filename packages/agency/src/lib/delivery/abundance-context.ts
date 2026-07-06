@@ -69,7 +69,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			status: 'Production-smoked',
 			description:
 				'Staff MCP, Jobs MCP, the NPG scoped hub, and Dify Abundance Hub have passed production smoke checks. The public delivery page keeps job discovery read-only while credentials, funnel writes, and private traces stay outside the browser.',
-			evidence: ['Staff MCP', 'Jobs MCP', 'NPG scoped hub', 'Braintrust eval suite'],
+			evidence: ['Staff MCP', 'Jobs MCP', 'NPG scoped hub', 'Langfuse eval suite'],
 			tone: 'success'
 		},
 		{
@@ -96,7 +96,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 				'Output goes to recruiter review, never directly to candidates or clients.',
 				'No contact-level data appears on the public delivery surface.'
 			],
-			evidence: ['Agent boundary', 'Braintrust eval suite'],
+			evidence: ['Agent boundary', 'Langfuse eval suite'],
 			allowedNextActions: ['Draft shortlist', 'Flag missing information', 'Stage for recruiter review']
 		},
 		{
@@ -159,8 +159,8 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			tone: 'info'
 		},
 		{
-			id: 'braintrust-evals',
-			label: 'Braintrust eval coverage',
+			id: 'langfuse-evals',
+			label: 'Langfuse eval coverage',
 			detail:
 				'Published under create-something-dify-agents / abundance_hub: verifies Dify API health, Jobs MCP tool routing, forbidden writes, secret refusal, latency, and trace IDs for Langfuse inspection.',
 			source: 'create-something-dify-agents / abundance_hub',
@@ -319,7 +319,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 		{ label: 'MCP surfaces smoked', value: '3', detail: 'Staff MCP, Jobs MCP, NPG scoped hub', tone: 'success' },
 		{ label: 'Open decisions', value: '6', detail: 'Secrets, reauthorization, mapping, access', tone: 'warning' },
 		{ label: 'Agent boundary', value: 'Recruiter-gated', detail: 'No autonomous staffing decisions', tone: 'info' },
-		{ label: 'Eval coverage', value: 'Published', detail: 'Braintrust suite with Langfuse trace keys', tone: 'success' }
+		{ label: 'Eval coverage', value: 'Published', detail: 'Langfuse suite with Langfuse trace keys', tone: 'success' }
 	],
 	sourceStatuses: [
 		{

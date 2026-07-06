@@ -277,7 +277,7 @@ function nextActionForStatus(status: CoverageStatus, registryServerId: string): 
     case 'ready':
       return 'Keep smoke/eval evidence current.';
     case 'agent-needs-gates':
-      return 'Add inventory smoke cases and Braintrust eval commands.';
+      return 'Add inventory smoke cases and Langfuse eval commands.';
     case 'agent-draft':
       return 'Import/publish the Dify app and wire Service API secrets.';
     case 'intake-ready':

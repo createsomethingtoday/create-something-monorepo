@@ -45,7 +45,7 @@ Exit rule:
 - Use [discovery-note-example.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/discovery-note-example.md) if specificity is weak
 - Confirm fit level: `high`, `medium`, or `low`
 - Confirm recommended package tier
-- Confirm whether Braintrust is relevant only as observability/evals
+- Confirm whether Langfuse is relevant only as observability/evals
 
 ---
 
@@ -112,7 +112,7 @@ Reference example set:
   - blocked action
   - mismatch/ambiguity path
   - manual fallback path
-- Confirm Braintrust, if used, is only described as observability/evals
+- Confirm Langfuse, if used, is only described as observability/evals
 
 ---
 

@@ -25,10 +25,10 @@ Worker secrets / vars:
 - `ROUTER_OPENAI_MODEL` (optional, default `gpt-4.1-mini`)
 - `ROUTER_OPENAI_TIMEOUT_MS` (optional, default `3000`)
 - `ROUTER_OPENAI_CACHE_TTL_MS` (optional, default `120000`)
-- `BRAINTRUST_API_KEY` (optional, enables Braintrust export for MCP telemetry and router-agent traces)
-- `BRAINTRUST_PROJECT_ID` (optional, recommended for explicit project routing)
-- `BRAINTRUST_PROJECT_NAME` (optional var, defaults to `CREATE SOMETHING`)
-- `BRAINTRUST_ENABLED` (optional var reserved for future route-tracing controls)
+- `LANGFUSE_SECRET_KEY` (optional, enables Langfuse export for MCP telemetry and router-agent traces)
+- `LANGFUSE_PUBLIC_KEY` (optional, recommended for explicit project routing)
+- `LANGFUSE_PROJECT_NAME` (optional var, defaults to `CREATE SOMETHING`)
+- `LANGFUSE_ENABLED` (optional var reserved for future route-tracing controls)
 
 Default Notion auth config ID in `worker/wrangler.toml`:
 
@@ -52,7 +52,7 @@ Default Notion auth config ID in `worker/wrangler.toml`:
 - `operator_notion_router` uses deterministic routing first, then optional OpenAI-agent fallback (timeout + in-memory cache) for ambiguous requests.
 - Account status refreshes are TTL-gated on hot paths to reduce Composio API load under frequent MCP traffic.
 - Partner client and pinned-tool bindings are short-TTL cached in-process to reduce repeated D1 reads on high-frequency pinned tool calls.
-- MCP tool telemetry and feedback are exported to Braintrust when `BRAINTRUST_API_KEY` is configured.
+- MCP tool telemetry and feedback are exported to Langfuse when `LANGFUSE_SECRET_KEY` is configured.
 
 ## Contract Shape
 

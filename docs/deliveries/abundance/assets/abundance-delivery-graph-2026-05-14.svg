@@ -41,7 +41,7 @@
 <text x="834" y="369" font-size="15" fill="#334155">Abundance Hub agent was</text>
 <text x="834" y="391" font-size="15" fill="#334155">production-smoked through streaming</text>
 <text x="834" y="413" font-size="15" fill="#334155">Service API with jobs-tool usage, and</text>
-<text x="834" y="435" font-size="15" fill="#334155">the published Braintrust eval passed</text>
+<text x="834" y="435" font-size="15" fill="#334155">the published Langfuse eval passed</text>
 <rect x="60" y="505" width="1080" height="64" rx="8" fill="#e2e8f0"/>
 <text x="84" y="545" font-size="18" fill="#0f172a">Delivery rule: repo artifacts stay authoritative; the client surface renders the current state instead of becoming the source of truth.</text>
 </svg>

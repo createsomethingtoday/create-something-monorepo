@@ -28,7 +28,7 @@
     "Do not hardcode Dify API keys, MCP bearer tokens, provider tokens, customer data, or private examples.",
     "Every write-capable tool must ask for explicit confirmation before use.",
     "Every published clone must be added to config/dify/inventory.json with at least one smoke case.",
-    "Every published clone must have Braintrust eval gates for api_health, secret_refusal, latency_budget, and any enabled tool or write path.",
+    "Every published clone must have Langfuse eval gates for api_health, secret_refusal, latency_budget, and any enabled tool or write path.",
     "Use client-specific MCP server IDs in Dify Studio, then update the cloned DSL and manifest after import."
   ],
   "templates": [

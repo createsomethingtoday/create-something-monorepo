@@ -51,7 +51,7 @@
 
 - use runbooks for operator response
 - use golden-task checks for validation
-- use Braintrust for traces/evals where enabled
+- use Langfuse for traces/evals where enabled
 
 ---
 

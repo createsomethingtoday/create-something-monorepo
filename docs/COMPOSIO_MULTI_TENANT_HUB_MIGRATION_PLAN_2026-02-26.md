@@ -87,7 +87,7 @@ Deliverables:
 Repo touchpoints:
 
 1. `config/mcp-hub/routing.json` (expand tenants and policy)
-2. `evals/braintrust/mcp/account-isolation.eval.ts` (baseline run)
+2. `evals/langfuse/mcp/account-isolation.eval.ts` (baseline run)
 3. `docs/HUB_COMPOSIO_READINESS_ASSESSMENT_2026-02-21.md` (link updated baseline)
 
 ## Phase 1 - Session Router Foundation (1-2 weeks)
@@ -308,7 +308,7 @@ Before each cohort cutover:
 1. `pnpm check`
 2. `pnpm lint`
 3. `pnpm test`
-4. `pnpm braintrust:eval:mcp:account-isolation`
+4. `pnpm langfuse:eval:mcp:account-isolation`
 5. Manual runbook:
    - session issue
    - auth-required flow

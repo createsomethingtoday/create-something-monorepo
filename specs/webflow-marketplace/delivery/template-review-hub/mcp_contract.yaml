@@ -332,7 +332,7 @@ auth:
 policy_integration:
   control_surface: "agent_contract.yaml"
   observability_surface:
-    - "Braintrust"
+    - "Langfuse"
     - "cs-telemetry"
   release_gate_dependency: "Golden tasks must prove correct read behavior, approval-gated writes, blocked actions, and fallback handling."
 

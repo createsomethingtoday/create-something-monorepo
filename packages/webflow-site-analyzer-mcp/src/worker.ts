@@ -21,8 +21,11 @@ interface Env {
   WEBFLOW_SITE_ANALYZER_MCP_API_KEY?: string;
   WEBFLOW_GROQ_API_KEY?: string;
   WEBFLOW_OPENAI_API_KEY?: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_ID?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_HOST?: string;
+  LANGFUSE_BASE_URL?: string;
+  LANGFUSE_PROJECT_NAME?: string;
   ENVIRONMENT?: string;
 }
 
@@ -64,8 +67,11 @@ function injectEnvSecrets(env: Env): void {
     'WEBFLOW_SITE_ANALYZER_MCP_API_KEY',
     'WEBFLOW_GROQ_API_KEY',
     'WEBFLOW_OPENAI_API_KEY',
-    'BRAINTRUST_API_KEY',
-    'BRAINTRUST_PROJECT_ID',
+    'LANGFUSE_PUBLIC_KEY',
+    'LANGFUSE_SECRET_KEY',
+    'LANGFUSE_HOST',
+    'LANGFUSE_BASE_URL',
+    'LANGFUSE_PROJECT_NAME',
     'ENVIRONMENT',
   ];
   for (const key of keys) {

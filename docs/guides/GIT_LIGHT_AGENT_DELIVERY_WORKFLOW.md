@@ -73,6 +73,14 @@ Default production promotion remains:
 5. production deploy
 6. post-deploy verification
 
+For CREATE SOMETHING internal production-lab work, the agent may auto-rollback
+the deploy it just performed when post-deploy verification fails and the
+recorded rollback path is reversible, scoped to that deploy, and verified after
+rollback. This exception is governed by
+`docs/policies/v1/policy.operator-agent-production-lab.v1.md`; client
+production, credential, billing, destructive data, and irreversible third-party
+changes still require operator approval.
+
 An alternative production path is acceptable only when it uses an explicitly defined immutable release artifact with equivalent provenance and rollback properties.
 
 ## GitHub Actions Budget Posture
@@ -92,7 +100,7 @@ This repo keeps expensive scheduled automations behind repository variables. Kee
 | ----------------------------------------------- | ------------------------------------ |
 | `ENABLE_TEMPLATE_REVIEW_HUB_SCHEDULE=true`      | `Template Review Hub Agent Feedback` |
 | `ENABLE_TEMPLATE_DESCRIPTION_FIX_SCHEDULE=true` | `Fix Broken Template Descriptions`   |
-| `ENABLE_BRAINTRUST_MCP_EVALS_SCHEDULE=true`     | `Braintrust MCP Evals`               |
+| `ENABLE_LANGFUSE_MCP_EVALS_SCHEDULE=true`     | `Langfuse MCP Evals`               |
 
 To re-enable one scheduled automation after budget review:
 

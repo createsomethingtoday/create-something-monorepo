@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
-import { initLogger, type Logger, type Span } from 'braintrust';
+import { Langfuse } from 'langfuse';
 import { z } from 'zod';
 
 interface Env {
@@ -8,9 +8,11 @@ interface Env {
   DB: D1Database;
   MCP_API_KEY?: string;
   OPERATOR_API_TOKEN?: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
-  BRAINTRUST_PROJECT_ID?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_HOST?: string;
+  LANGFUSE_BASE_URL?: string;
+  LANGFUSE_PROJECT_NAME?: string;
 }
 
 interface D1Database {
@@ -42,7 +44,7 @@ interface TelemetryEventRow {
 
 const SERVER_NAME = 'halfdozen-agent-analyzer-telemetry';
 const SERVER_VERSION = '1.0.0';
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'Half Dozen Native Notion Agents';
+const DEFAULT_LANGFUSE_PROJECT_NAME = 'Half Dozen Native Notion Agents';
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -107,7 +109,7 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
 
   async init() {
     const db = this.env.DB;
-    const braintrust = createBraintrustEmitter(this.env);
+    const langfuse = createLangfuseEmitter(this.env);
 
     this.server.tool(
       'start_eval_run',
@@ -154,7 +156,7 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
             }),
             source: 'agent-analyzer'
           },
-          braintrust
+          langfuse
         );
 
         return jsonToolResponse({
@@ -180,7 +182,7 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
           .describe('Property, status option, relation, or view checked.')
       },
       async (input) =>
-        recordTypedEvent(db, braintrust, 'schema_check', input.status, input, {
+        recordTypedEvent(db, langfuse, 'schema_check', input.status, input, {
           database: input.database ?? null,
           property: input.property ?? null
         })
@@ -199,7 +201,7 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
           .describe('Read, write, comment, create, update, archive, or tool permission checked.')
       },
       async (input) =>
-        recordTypedEvent(db, braintrust, 'permission_check', input.status, input, {
+        recordTypedEvent(db, langfuse, 'permission_check', input.status, input, {
           resource: input.resource ?? null,
           permission: input.permission ?? null
         })
@@ -226,7 +228,7 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
         )
       },
       async (input) =>
-        recordTypedEvent(db, braintrust, 'write_test', input.status, input, {
+        recordTypedEvent(db, langfuse, 'write_test', input.status, input, {
           mutation_type: input.mutation_type,
           pre_state_captured: input.pre_state_captured,
           verified: input.verified,
@@ -255,7 +257,7 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
       async (input) =>
         recordTypedEvent(
           db,
-          braintrust,
+          langfuse,
           'cleanup_result',
           input.cleanup_status === 'success' || input.cleanup_status === 'not_required'
             ? 'success'
@@ -294,7 +296,7 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
           .describe('Whether model, tokens, cost, trace metadata, and attribution were complete.')
       },
       async (input) =>
-        recordTypedEvent(db, braintrust, 'langfuse_evidence', input.status, input, {
+        recordTypedEvent(db, langfuse, 'langfuse_evidence', input.status, input, {
           trace_ids: input.trace_ids ?? null,
           scores_found: input.scores_found ?? null,
           dataset_refs: input.dataset_refs ?? null,
@@ -304,40 +306,40 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
     );
 
     this.server.tool(
-      'record_braintrust_evidence',
-      'Append Braintrust runtime evidence reviewed for the eval run, including traces, experiments, datasets, scores, and permalinks.',
+      'record_langfuse_evidence',
+      'Append Langfuse runtime evidence reviewed for the eval run, including traces, experiments, datasets, scores, and permalinks.',
       {
         ...baseEventSchema,
-        status: statusSchema.describe('Result of Braintrust evidence review.'),
+        status: statusSchema.describe('Result of Langfuse evidence review.'),
         trace_ids: z
           .string()
           .optional()
-          .describe('Comma-separated Braintrust trace/span ids reviewed, or "none".'),
+          .describe('Comma-separated Langfuse trace/span ids reviewed, or "none".'),
         experiment_refs: z
           .string()
           .optional()
-          .describe('Braintrust experiment names, ids, or URLs used, or "Not used".'),
+          .describe('Langfuse experiment names, ids, or URLs used, or "Not used".'),
         dataset_refs: z
           .string()
           .optional()
           .describe(
-            'Braintrust dataset, dataset run, or dataset item identifiers used, or "Not used".'
+            'Langfuse dataset, dataset run, or dataset item identifiers used, or "Not used".'
           ),
         score_refs: z
           .string()
           .optional()
-          .describe('Braintrust score names and values found, or "No Braintrust scores found".'),
+          .describe('Langfuse score names and values found, or "No Langfuse scores found".'),
         log_refs: z
           .string()
           .optional()
           .describe(
-            'Braintrust project log identifiers or SQL/filter references used, or "Not used".'
+            'Langfuse project log identifiers or SQL/filter references used, or "Not used".'
           ),
         permalink: z
           .string()
           .optional()
           .describe(
-            'Braintrust permalink for the most relevant trace, log, experiment, or dataset.'
+            'Langfuse permalink for the most relevant trace, log, experiment, or dataset.'
           ),
         telemetry_completeness: z
           .string()
@@ -345,7 +347,7 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
           .describe('Whether model, tokens, cost, trace metadata, and attribution were complete.')
       },
       async (input) =>
-        recordTypedEvent(db, braintrust, 'braintrust_evidence', input.status, input, {
+        recordTypedEvent(db, langfuse, 'langfuse_evidence', input.status, input, {
           trace_ids: input.trace_ids ?? null,
           experiment_refs: input.experiment_refs ?? null,
           dataset_refs: input.dataset_refs ?? null,
@@ -366,7 +368,7 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
         rationale: z.string().max(2000).optional().describe('Brief score rationale.')
       },
       async (input) =>
-        recordTypedEvent(db, braintrust, 'score_recorded', 'success', input, {
+        recordTypedEvent(db, langfuse, 'score_recorded', 'success', input, {
           category: input.category,
           score: input.score,
           rationale: input.rationale ?? null
@@ -396,7 +398,7 @@ export class AgentAnalyzerTelemetryMCP extends McpAgent<Env> {
         cleanup_status: cleanupStatusSchema.describe('Final cleanup/reversion status.')
       },
       async (input) =>
-        recordTypedEvent(db, braintrust, 'run_finished', input.outcome, input, {
+        recordTypedEvent(db, langfuse, 'run_finished', input.outcome, input, {
           outcome: input.outcome,
           overall_score: input.overall_score ?? null,
           final_agent_status: input.final_agent_status ?? null,
@@ -528,10 +530,10 @@ export default {
           mcp_api_key_configured: Boolean(env.MCP_API_KEY?.trim()),
           operator_api_token_configured: Boolean(env.OPERATOR_API_TOKEN?.trim())
         },
-        braintrust: {
-          enabled: Boolean(env.BRAINTRUST_API_KEY?.trim()),
-          project_name: resolveBraintrustProjectName(env),
-          project_id_configured: Boolean(env.BRAINTRUST_PROJECT_ID?.trim())
+        langfuse: {
+          enabled: Boolean(env.LANGFUSE_PUBLIC_KEY?.trim() && env.LANGFUSE_SECRET_KEY?.trim()),
+          project_name: resolveLangfuseProjectName(env),
+          host_configured: Boolean(env.LANGFUSE_HOST?.trim() || env.LANGFUSE_BASE_URL?.trim())
         },
         d1: {
           binding: 'DB',
@@ -544,7 +546,7 @@ export default {
           'record_write_test',
           'record_cleanup_result',
           'record_langfuse_evidence',
-          'record_braintrust_evidence',
+          'record_langfuse_evidence',
           'record_score',
           'finish_eval_run',
           'get_eval_run',
@@ -573,9 +575,9 @@ function createRunId(): string {
   return `agent-analyzer-${crypto.randomUUID()}`;
 }
 
-type BraintrustEmitter = (event: BraintrustTelemetryEvent) => Promise<void>;
+type LangfuseEmitter = (event: LangfuseTelemetryEvent) => Promise<void>;
 
-interface BraintrustTelemetryEvent {
+interface LangfuseTelemetryEvent {
   eventId: string;
   runId: string;
   eventType: string;
@@ -591,107 +593,102 @@ interface BraintrustTelemetryEvent {
   createdAt: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let braintrustLogger: Logger<any> | null = null;
+let langfuseClient: Langfuse | null = null;
 
-function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
-  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
-  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+function resolveLangfuseProjectName(env: { LANGFUSE_PROJECT_NAME?: string }): string {
+  const configured = env.LANGFUSE_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_LANGFUSE_PROJECT_NAME;
 }
 
-function createBraintrustEmitter(env: Env): BraintrustEmitter | undefined {
-  const apiKey = env.BRAINTRUST_API_KEY?.trim();
-  if (!apiKey) return undefined;
+function createLangfuseEmitter(env: Env): LangfuseEmitter | undefined {
+  const publicKey = env.LANGFUSE_PUBLIC_KEY?.trim();
+  const secretKey = env.LANGFUSE_SECRET_KEY?.trim();
+  if (!publicKey || !secretKey) return undefined;
 
   try {
-    if (!braintrustLogger) {
-      const loggerConfig: Parameters<typeof initLogger>[0] = {
-        apiKey,
-        projectName: resolveBraintrustProjectName(env),
-        asyncFlush: true,
-        setCurrent: false
-      };
-
-      const projectId = env.BRAINTRUST_PROJECT_ID?.trim();
-      if (projectId) {
-        (loggerConfig as Record<string, unknown>).projectId = projectId;
-      }
-
-      braintrustLogger = initLogger(loggerConfig);
+    if (!langfuseClient) {
+      langfuseClient = new Langfuse({
+        publicKey,
+        secretKey,
+        baseUrl: env.LANGFUSE_HOST?.trim() || env.LANGFUSE_BASE_URL?.trim() || 'https://us.cloud.langfuse.com',
+        flushAt: 1,
+        flushInterval: 250
+      });
     }
 
-    return async (event) => emitBraintrustEvent(braintrustLogger!, event);
+    return async (event) => emitLangfuseEvent(langfuseClient!, event);
   } catch (error) {
     console.warn(
-      '[agent-analyzer-telemetry] Braintrust initialization failed:',
+      '[agent-analyzer-telemetry] Langfuse initialization failed:',
       error instanceof Error ? error.message : String(error)
     );
     return undefined;
   }
 }
 
-async function emitBraintrustEvent(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  logger: Logger<any>,
-  event: BraintrustTelemetryEvent
+async function emitLangfuseEvent(
+  client: Langfuse,
+  event: LangfuseTelemetryEvent
 ): Promise<void> {
   try {
-    await logger.traced(
-      (span: Span) => {
-        span.log({
-          input: sanitizeForBraintrust({
-            event_type: event.eventType,
-            event_status: event.eventStatus,
-            summary: event.summary,
-            details: event.details
-          }),
-          output: {
-            event_id: event.eventId,
-            run_id: event.runId,
-            created_at: event.createdAt
-          },
-          tags: ['native-notion-agent', 'agent-analyzer', event.eventType, event.eventStatus],
-          metadata: {
-            server: SERVER_NAME,
-            eventId: event.eventId,
-            runId: event.runId,
-            eventType: event.eventType,
-            eventStatus: event.eventStatus,
-            agentPageUrl: event.agentPageUrl,
-            agentName: event.agentName,
-            evalCaseId: event.evalCaseId,
-            testReportUrl: event.testReportUrl,
-            targetUrl: event.targetUrl,
-            source: event.source
-          }
-        });
-      },
-      {
-        name: `native-notion-agent:${event.eventType}`,
-        type: 'tool'
-      }
-    );
-    await logger.flush();
+    const input = sanitizeForLangfuse({
+      event_type: event.eventType,
+      event_status: event.eventStatus,
+      summary: event.summary,
+      details: event.details
+    });
+    const output = {
+      event_id: event.eventId,
+      run_id: event.runId,
+      created_at: event.createdAt
+    };
+    const metadata = {
+      server: SERVER_NAME,
+      eventId: event.eventId,
+      runId: event.runId,
+      eventType: event.eventType,
+      eventStatus: event.eventStatus,
+      agentPageUrl: event.agentPageUrl,
+      agentName: event.agentName,
+      evalCaseId: event.evalCaseId,
+      testReportUrl: event.testReportUrl,
+      targetUrl: event.targetUrl,
+      source: event.source
+    };
+    const trace = client.trace({
+      name: `native-notion-agent:${event.eventType}`,
+      input,
+      output,
+      metadata,
+      tags: ['native-notion-agent', 'agent-analyzer', event.eventType, event.eventStatus],
+    });
+    trace.span({
+      name: `emit:${event.eventType}`,
+      input,
+      output,
+      metadata,
+    }).end();
+    await client.flushAsync();
   } catch (error) {
     console.warn(
-      '[agent-analyzer-telemetry] Braintrust event emit failed:',
+      '[agent-analyzer-telemetry] Langfuse event emit failed:',
       error instanceof Error ? error.message : String(error)
     );
   }
 }
 
-function sanitizeForBraintrust(value: unknown, depth = 0): unknown {
+function sanitizeForLangfuse(value: unknown, depth = 0): unknown {
   if (depth > 8) return '[MaxDepth]';
   if (typeof value === 'string') return redactSecrets(value);
   if (value === null || typeof value !== 'object') return value;
   if (Array.isArray(value)) {
-    return value.slice(0, 100).map((entry) => sanitizeForBraintrust(entry, depth + 1));
+    return value.slice(0, 100).map((entry) => sanitizeForLangfuse(entry, depth + 1));
   }
 
   return Object.fromEntries(
     Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
       key,
-      sanitizeForBraintrust(entry, depth + 1)
+      sanitizeForLangfuse(entry, depth + 1)
     ])
   );
 }
@@ -746,7 +743,7 @@ async function insertEvent(
     detailsJson?: string;
     source?: string;
   },
-  braintrust?: BraintrustEmitter
+  langfuse?: LangfuseEmitter
 ): Promise<Record<string, unknown>> {
   const eventId = crypto.randomUUID();
   const parsedDetails = parseDetailsJson(input.detailsJson);
@@ -776,8 +773,8 @@ async function insertEvent(
     )
     .run();
 
-  if (braintrust) {
-    await braintrust({
+  if (langfuse) {
+    await langfuse({
       eventId,
       runId: input.runId,
       eventType: input.eventType,
@@ -807,7 +804,7 @@ async function insertEvent(
 
 async function recordTypedEvent(
   db: D1Database,
-  braintrust: BraintrustEmitter | undefined,
+  langfuse: LangfuseEmitter | undefined,
   eventType: string,
   eventStatus: string,
   input: z.infer<z.ZodObject<typeof baseEventSchema>> & Record<string, unknown>,
@@ -828,7 +825,7 @@ async function recordTypedEvent(
       detailsJson: mergeDetails(input.details_json, detailAdditions),
       source: input.source
     },
-    braintrust
+    langfuse
   );
 
   return jsonToolResponse({

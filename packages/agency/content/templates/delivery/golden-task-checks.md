@@ -121,5 +121,5 @@ The workflow is considered ready for release only if:
 
 ## Notes
 
-- Braintrust may be used to capture traces and eval results for these checks.
-- Braintrust is evidence infrastructure, not the mechanism that enforces the policy decision.
+- Langfuse may be used to capture traces and eval results for these checks.
+- Langfuse is evidence infrastructure, not the mechanism that enforces the policy decision.

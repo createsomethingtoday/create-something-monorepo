@@ -104,11 +104,11 @@ BROWSERLESS_ENDPOINT=wss://chrome.browserless.io
 MCP_TELEMETRY_ENABLED=true
 # MCP_TELEMETRY_PATH=./webflow-site-analyzer.telemetry.jsonl
 
-# Optional: Braintrust tracing
-BRAINTRUST_ENABLED=true
-BRAINTRUST_API_KEY=your-braintrust-api-key
-# BRAINTRUST_PROJECT_NAME=webflow-site-analyzer-mcp
-# BRAINTRUST_PROJECT_ID=your-braintrust-project-id
+# Optional: Langfuse tracing
+LANGFUSE_ENABLED=true
+LANGFUSE_SECRET_KEY=your-langfuse-api-key
+# LANGFUSE_PROJECT_NAME=webflow-site-analyzer-mcp
+# LANGFUSE_PUBLIC_KEY=your-langfuse-project-id
 ```
 
 ### Provider Selection
@@ -910,11 +910,11 @@ The intelligence layer enables autonomous improvement:
 
 ## Observability
 
-This package uses telemetry + Braintrust for MCP tracing:
+This package uses telemetry + Langfuse for MCP tracing:
 
 - Telemetry events are emitted per tool invocation as structured JSON logs (prefixed with `[telemetry]`).
 - If `MCP_TELEMETRY_PATH` is set, the same events are appended as JSONL for downstream ingestion.
-- Braintrust traces are emitted per tool invocation when `BRAINTRUST_API_KEY` is configured.
+- Langfuse traces are emitted per tool invocation when `LANGFUSE_SECRET_KEY` is configured.
 
 Analysis-level quality metrics are still recorded through `@create-something/observability` helpers.
 

@@ -51,7 +51,7 @@
   - `Enterprise Extension`
 - rationale:
 - if MCP-only wedge recommended, list assurance trigger criteria:
-- if Braintrust or eval tooling is discussed, note it as observability only:
+- if Langfuse or eval tooling is discussed, note it as observability only:
 
 ---
 

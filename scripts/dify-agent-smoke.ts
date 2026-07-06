@@ -11,7 +11,7 @@ import {
   type DifyChatInput,
   type DifyChatOutput,
   type DifyClientConfig
-} from '../evals/braintrust/dify/shared.js';
+} from '../evals/langfuse/dify/shared.js';
 
 type ToolRisk = 'read' | 'write' | 'external_side_effect' | 'secret_sensitive' | 'unknown';
 

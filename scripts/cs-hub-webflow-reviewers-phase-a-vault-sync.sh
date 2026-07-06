@@ -147,8 +147,8 @@ missing=0
 require_secret "HUB_SESSION_RESOLVE_TOKEN" || missing=1
 require_secret "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" || missing=1
 require_secret "WEBFLOW_REVIEWER_EXCEPTIONS_MCP_API_KEY" || missing=1
-require_secret "BRAINTRUST_API_KEY" || missing=1
-require_secret "BRAINTRUST_PROJECT_ID" || missing=1
+require_secret "LANGFUSE_SECRET_KEY" || missing=1
+require_secret "LANGFUSE_PUBLIC_KEY" || missing=1
 
 for entry in "${TARGETS[@]}"; do
   IFS='|' read -r reviewer_key _worker <<<"$entry"
@@ -182,8 +182,8 @@ for entry in "${TARGETS[@]}"; do
   put_versioned_secret "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
   put_versioned_secret "$worker" "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY"
   put_versioned_secret "$worker" "WEBFLOW_REVIEWER_EXCEPTIONS_MCP_API_KEY" "$WEBFLOW_REVIEWER_EXCEPTIONS_MCP_API_KEY"
-  put_versioned_secret "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
-  put_versioned_secret "$worker" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"
+  put_versioned_secret "$worker" "LANGFUSE_SECRET_KEY" "$LANGFUSE_SECRET_KEY"
+  put_versioned_secret "$worker" "LANGFUSE_PUBLIC_KEY" "$LANGFUSE_PUBLIC_KEY"
 done
 
 echo "webflow reviewer hub vault sync complete."

@@ -151,18 +151,9 @@
 		<div>
 			<h2>Observability</h2>
 			<ul>
-				{#if card.observability.braintrust}
-					<li>
-						Braintrust:
-						{card.observability.braintrust.project ?? 'declared'}
-						{#if card.observability.braintrust.experiment}
-							/ {card.observability.braintrust.experiment}
-						{/if}
-					</li>
-				{/if}
-				{#if card.observability.langfuse}
-					<li>
-						Langfuse:
+					{#if card.observability.langfuse}
+						<li>
+							Langfuse:
 						{card.observability.langfuse.project ?? 'declared'}
 						{#if card.observability.langfuse.environment}
 							/ {card.observability.langfuse.environment}

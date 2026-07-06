@@ -28,7 +28,7 @@ database_name = "halfdozen-feedback"
 database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
 
 [vars]
-BRAINTRUST_PROJECT_NAME = "HALF DOZEN"
+LANGFUSE_PROJECT_NAME = "HALF DOZEN"
 
 # Secrets (set via wrangler secret put)
 # NOTION_API_KEY       — Half Dozen internal workspace (Meeting Capture, transcripts)

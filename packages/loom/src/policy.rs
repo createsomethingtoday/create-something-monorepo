@@ -687,7 +687,7 @@ pub fn cs_fleet_verify_formula() -> Formula {
         variables: vec![
             Variable {
                 name: "emit_eval".to_string(),
-                description: "Run Braintrust eval checks (true or false)".to_string(),
+                description: "Run Langfuse eval checks (true or false)".to_string(),
                 required: false,
                 default: Some("true".to_string()),
             },
@@ -711,7 +711,7 @@ pub fn cs_fleet_verify_formula() -> Formula {
                 agent: None,
                 labels: vec!["eval".to_string()],
                 prompt: Some("If emit_eval={{emit_eval}} is true, run contract/error-path eval scripts and summarize failures.".to_string()),
-                verify: Some("pnpm braintrust:eval:mcp:contract && pnpm braintrust:eval:mcp:error-path".to_string()),
+                verify: Some("pnpm langfuse:eval:mcp:contract && pnpm langfuse:eval:mcp:error-path".to_string()),
                 checkpoint: false,
                 parallel: false,
             },

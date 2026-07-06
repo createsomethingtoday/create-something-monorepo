@@ -49,8 +49,9 @@ interface Env {
 
   // Shared feedback database (all Half Dozen MCPs)
   FEEDBACK_DB: any;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
 
   // KV namespace for session context
   ZOOM_SESSION_CONTEXT: KVNamespace;
@@ -70,11 +71,11 @@ interface Env {
 const SESSION_CONTEXT_KEY = 'zoom-session-context';
 // Steel Profile ID (preferred over session context when set — one-time login, reuse until 30-day expiry)
 const CLIPS_PROFILE_ID_KEY = 'zoom-clips-profile-id';
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 
-function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
-  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
-  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+function resolveLangfuseProjectName(env: { LANGFUSE_PROJECT_NAME?: string }): string {
+  const configured = env.LANGFUSE_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_LANGFUSE_PROJECT_NAME;
 }
 
 // =============================================================================
@@ -117,9 +118,9 @@ export class ZoomClipsMCP extends McpAgent<Env> {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.FEEDBACK_DB) {
       enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-zoom-sync', () => this.currentAccountId, {
-        apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: resolveBraintrustProjectName(this.env),
-        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
+        publicKey: (this.env as any).LANGFUSE_PUBLIC_KEY,
+        secretKey: (this.env as any).LANGFUSE_SECRET_KEY,
+        projectName: resolveLangfuseProjectName(this.env),
       });
     }
 

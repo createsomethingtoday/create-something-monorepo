@@ -217,14 +217,13 @@ watermarks, extra logos, random text, illegible labels, fake brand names, colorf
 		id: 'paper-eval-evidence-layer',
 		slug: 'eval-evidence-layer',
 		title: 'The Eval Evidence Layer',
-		description: 'How Langfuse traces and Braintrust gates make agent workflows measurable. A quantitative model for turning Dify runtime traces, MCP eval gates, approval receipts, and blocked-state evidence into publish, hold, rollback, or graduation decisions.',
+		description: 'How Langfuse traces and eval gates make agent workflows measurable. A quantitative model for turning Dify runtime traces, MCP eval gates, approval receipts, and blocked-state evidence into publish, hold, rollback, or graduation decisions.',
 		excerpt_short: 'Traces and evals matter when they change a release decision',
-		excerpt_long: 'This paper extends the Policy OS contract bundle with a quantitative evidence layer. Dify carries the app, Langfuse explains the app runtime, Braintrust gates the CREATE SOMETHING-owned MCP contracts, and release decisions depend on thresholds that operators can inspect.',
+		excerpt_long: 'This paper extends the Policy OS contract bundle with a quantitative evidence layer. Dify carries the app, Langfuse explains the app runtime and scores the CREATE SOMETHING-owned MCP contracts, and release decisions depend on thresholds that operators can inspect.',
 		category: 'Research',
 		tags: [
 			'Eval Evidence Layer',
 			'Langfuse',
-			'Braintrust',
 			'Dify',
 			'MCP',
 			'Policy OS',
@@ -248,7 +247,7 @@ watermarks, extra logos, random text, illegible labels, fake brand names, colorf
 		ascii_art: `
 ╭──────────────────────────────────────────────────────────────╮
 │ DIFY APP TRACE  →  LANGFUSE  →  RUNTIME EVIDENCE            │
-│ MCP CONTRACT    →  BRAINTRUST →  GATE EVIDENCE              │
+│ MCP CONTRACT    →  LANGFUSE  →  GATE EVIDENCE               │
 │                                                              │
 │ Measure only what can change publish, hold, rollback,        │
 │ or graduation decisions.                                    │
@@ -580,42 +579,6 @@ watermarks, extra logos, random text, illegible labels, fake brand names, colorf
 │ The harness is policy. The configuration is the contract.    │
 ╰──────────────────────────────────────────────────────────────╯
 `
-	},
-	{
-		id: 'paper-braintrust-trace-unsurfacing',
-		slug: 'braintrust-trace-unsurfacing',
-		title: 'Braintrust Trace Unsurfacing: Finding What Normal Aggregates Hide',
-		description: 'How a 1,000-row trace snapshot exposed clustered permission failures, routing misses, and latent control-plane stalls.',
-		excerpt_short: 'Trace-level evidence exposes the operational structure aggregate metrics hide',
-		excerpt_long: 'This paper documents a CREATE SOMETHING Braintrust trace audit and explains why aggregate uptime metrics were insufficient to diagnose practical reliability risk. A mostly successful 1,000-row sample still surfaced concentrated failure clusters: LinkedIn permission denials, intent route misses, repeated 429 throttles, and extreme control-plane latency outliers.',
-		category: 'Research',
-		tags: [
-			'Braintrust',
-			'Observability',
-			'MCP',
-			'Reliability',
-			'Experiment Design',
-			'Dashboarding'
-		],
-		created_at: '2026-03-04T00:00:00Z',
-		updated_at: '2026-03-04T00:00:00Z',
-		reading_time_minutes: 15,
-		difficulty: 'intermediate',
-		is_file_based: true,
-		tests_principles: [
-			'verification-first',
-			'three-tier-framework',
-			'policy-as-artifact'
-		],
-		route: '/papers/braintrust-trace-unsurfacing',
-		ascii_art: `
-        ╭───────────────────────────────────────╮
-       ╱   Mostly green aggregate metrics        ╲
-      │   Trace clusters → permission, routing    │
-      │   and tail-latency reliability work       │
-      ╰───────────────────────────────────────────╯
-           Observability as decision infrastructure.
-`
 	}
 ];
 
@@ -728,10 +691,10 @@ const fileBasedPaperVisuals = {
 		kind: 'layer-stack',
 		title: 'Measurements matter when they change a release decision.',
 		caption:
-			'Dify, Langfuse, Braintrust, and approval receipts become one evidence layer only when they gate publish, hold, rollback, or graduation.',
+			'Dify, Langfuse, and approval receipts become one evidence layer only when they gate publish, hold, rollback, or graduation.',
 		nodes: [
 			{ label: 'Runtime trace', detail: 'Dify and Langfuse explain what happened.', icon: 'refresh', tone: 'neutral' },
-			{ label: 'Contract gate', detail: 'Braintrust checks the owned MCP behavior.', icon: 'check', tone: 'run' },
+			{ label: 'Contract gate', detail: 'Langfuse checks the owned MCP behavior.', icon: 'check', tone: 'run' },
 			{ label: 'Decision', detail: 'Thresholds choose publish, hold, rollback, or graduate.', icon: 'warning', tone: 'wait' },
 			{ label: 'Receipt', detail: 'Evidence is attached where operators can inspect it.', icon: 'document', tone: 'receipt' }
 		],
@@ -739,7 +702,7 @@ const fileBasedPaperVisuals = {
 			'An eval evidence layer where app traces and contract gates converge into release decisions for AI workflows.',
 		motifs: [
 			'Dify app trace feeding a runtime evidence lane',
-			'Braintrust contract gate with pass and hold thresholds',
+			'Langfuse contract gate with pass and hold thresholds',
 			'four release decisions: publish, hold, rollback, graduate',
 			'operator-facing evidence receipt'
 		],
@@ -933,27 +896,6 @@ const fileBasedPaperVisuals = {
 			'handoff packet for the next operator'
 		],
 		alt: 'Abstract Policy OS development infrastructure with Pi harness quality gates.'
-	}),
-	'paper-braintrust-trace-unsurfacing': defineArtifactVisuals({
-		kind: 'proof-card',
-		title: 'Trace clusters expose what aggregate health hides.',
-		caption:
-			'A mostly green sample can still contain permission, routing, throttling, and latency structures that need operational decisions.',
-		nodes: [
-			{ label: 'Aggregate', detail: 'The top-line metric looks healthy.', icon: 'success', tone: 'run' },
-			{ label: 'Trace sample', detail: 'Rows preserve runtime detail.', icon: 'document', tone: 'neutral' },
-			{ label: 'Cluster', detail: 'Failures group by cause.', icon: 'search', tone: 'wait' },
-			{ label: 'Decision', detail: 'Reliability work becomes targeted.', icon: 'check', tone: 'receipt' }
-		],
-		subject:
-			'A Braintrust trace audit where clustered failures emerge from a mostly green aggregate metric.',
-		motifs: [
-			'green aggregate panel with hidden lower trace rows',
-			'clusters for permission, routing, throttling, latency',
-			'trace cards grouped into decision lanes',
-			'operator receipt for targeted reliability work'
-		],
-		alt: 'Abstract Braintrust trace unsurfacing visual showing hidden failure clusters under green aggregates.'
 	})
 };
 

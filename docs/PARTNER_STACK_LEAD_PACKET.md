@@ -87,14 +87,14 @@ Use sanitized evidence from:
 - `docs/guides/NOTION_WORKERS_AND_CLI_2026.md`
 - `docs/guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md`
 - `docs/OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md`
-- `docs/BRAINTRUST_TRACING_QUICKSTART.md`
+- `docs/LANGFUSE_TRACING_QUICKSTART.md`
 - `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`
 - `docs/MCP_HUB_REMOTE_DEPLOY.md`
 - `docs/REMOTE_MCP_IDENTITY_STANDARD.md`
 
 Exclude:
 
-- raw Braintrust traces
+- raw Langfuse traces
 - raw Langfuse traces
 - private hub URLs
 - client-private Notion records
