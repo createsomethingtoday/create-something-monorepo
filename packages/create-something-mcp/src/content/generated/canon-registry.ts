@@ -408,8 +408,8 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "id": "component.footer",
       "name": "Footer",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Shared site footer candidate for property navigation, legal routes, contact links, and cross-property identity.",
+      "maturity": "stable",
+      "description": "Shared site footer primitive for property navigation, legal routes, contact links, and cross-property identity.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/Footer.svelte",
       "importPath": "@create-something/canon/components",
@@ -418,8 +418,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "footer",
         "navigation",
-        "site-chrome",
-        "candidate"
+        "site-chrome"
       ],
       "modalities": [
         "web",
@@ -435,15 +434,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Footer content must preserve landmark semantics, link labels, property identity, and legal route names.",
         "evidence": "Footer data must preserve property links, legal links, contact routes, copyright text, and source property.",
-        "extension": "Promote to stable only after property topology, legal-route policy, compact summaries, and cross-property behavior are documented."
+        "extension": "Keep stable while property topology, legal-route policy, compact summaries, and cross-property behavior stay documented."
       }
     },
     {
       "id": "component.catalog-card",
       "name": "CatalogCard",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Catalog listing card candidate for reusable offers, templates, papers, packages, or property entries.",
+      "maturity": "stable",
+      "description": "Catalog listing card primitive for reusable offers, templates, papers, packages, or property entries.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/CatalogCard.svelte",
       "importPath": "@create-something/canon/components",
@@ -452,8 +451,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "catalog",
         "card",
-        "listing",
-        "candidate"
+        "listing"
       ],
       "modalities": [
         "web",
@@ -470,15 +468,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Catalog cards must expose title, description, category, link/action label, and any status text without relying on hover.",
         "evidence": "Catalog item data must preserve slug or href, taxonomy, summary, image or icon fallback, and source collection.",
-        "extension": "Promote to stable only after catalog item schema, media fallback, taxonomy, and repeated-list behavior are documented."
+        "extension": "Keep stable while catalog item schema, media fallback, taxonomy, and repeated-list behavior stay documented."
       }
     },
     {
       "id": "component.paper-card",
       "name": "PaperCard",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Research paper card candidate for title, summary, category, publication metadata, and reading route.",
+      "maturity": "stable",
+      "description": "Research paper card primitive for title, summary, category, publication metadata, and reading route.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/PaperCard.svelte",
       "importPath": "@create-something/canon/components",
@@ -487,8 +485,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "paper",
         "research",
-        "card",
-        "candidate"
+        "card"
       ],
       "modalities": [
         "web",
@@ -505,15 +502,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Paper cards must expose title, summary, category, date or status, and read action as text.",
         "evidence": "Paper card data must preserve slug, title, excerpt, category, date, author/source, and relationship to the source paper.",
-        "extension": "Promote to stable only after research metadata, excerpt policy, related-content behavior, and nonvisual summaries are documented."
+        "extension": "Keep stable while research metadata, excerpt policy, related-content behavior, and nonvisual summaries stay documented."
       }
     },
     {
       "id": "component.papers-grid",
       "name": "PapersGrid",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Research paper collection grid candidate for filtered or grouped paper lists with empty and loading states.",
+      "maturity": "stable",
+      "description": "Research paper collection grid primitive for filtered or grouped paper lists with empty and loading states.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/PapersGrid.svelte",
       "importPath": "@create-something/canon/components",
@@ -522,8 +519,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "papers",
         "grid",
-        "collection",
-        "candidate"
+        "collection"
       ],
       "modalities": [
         "web",
@@ -540,15 +536,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Paper grids must preserve collection heading, item count, filter context, empty state, and card order.",
         "evidence": "Grid state must preserve paper ids, order, active category or query, loading state, and empty-state reason.",
-        "extension": "Promote to stable only after collection schema, filtering policy, empty-state copy, and pagination behavior are documented."
+        "extension": "Keep stable while collection schema, filtering policy, empty-state copy, and pagination behavior stay documented."
       }
     },
     {
       "id": "component.category-section",
       "name": "CategorySection",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Content taxonomy section candidate for grouping entries under a category heading with summary and calls to action.",
+      "maturity": "stable",
+      "description": "Content taxonomy section primitive for grouping entries under a category heading with summary and calls to action.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/CategorySection.svelte",
       "importPath": "@create-something/canon/components",
@@ -557,8 +553,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "category",
         "taxonomy",
-        "section",
-        "candidate"
+        "section"
       ],
       "modalities": [
         "web",
@@ -575,15 +570,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Category sections must expose category name, summary, item list, and route labels in a logical heading hierarchy.",
         "evidence": "Category state must preserve taxonomy key, display label, description, item count, and route or source collection.",
-        "extension": "Promote to stable only after taxonomy schema, item relationship policy, empty behavior, and cross-surface summary rules are documented."
+        "extension": "Keep stable while taxonomy schema, item relationship policy, empty behavior, and cross-surface summary rules stay documented."
       }
     },
     {
       "id": "component.share-buttons",
       "name": "ShareButtons",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Share control candidate for platform-specific sharing routes with explicit channel policy and copy fallback.",
+      "maturity": "stable",
+      "description": "Share control primitive for platform-specific sharing routes with explicit channel policy and copy fallback.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/ShareButtons.svelte",
       "importPath": "@create-something/canon/components",
@@ -592,8 +587,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "share",
         "platform",
-        "actions",
-        "candidate"
+        "actions"
       ],
       "modalities": [
         "web",
@@ -609,15 +603,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Share controls must expose destination platform, target URL, copy action, success or failure state, and focusable labels.",
         "evidence": "Share data must preserve canonical URL, title, platform list, generated share URL, and copy-to-clipboard outcome.",
-        "extension": "Promote to stable only after channel allowlist, tracking policy, clipboard fallback, and privacy behavior are documented."
+        "extension": "Keep stable while channel allowlist, tracking policy, clipboard fallback, and privacy behavior stay documented."
       }
     },
     {
       "id": "component.quote-block",
       "name": "QuoteBlock",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Editorial quote block candidate for quoted text, attribution, source context, and optional proof relationship.",
+      "maturity": "stable",
+      "description": "Editorial quote block primitive for quoted text, attribution, source context, and optional proof relationship.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/QuoteBlock.svelte",
       "importPath": "@create-something/canon/components",
@@ -626,8 +620,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "quote",
         "editorial",
-        "proof",
-        "candidate"
+        "proof"
       ],
       "modalities": [
         "web",
@@ -643,15 +636,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Quotes must expose quote text, attribution, source label, and context without decorative punctuation as the only cue.",
         "evidence": "Quote data must preserve exact quote, attribution, source URL or artifact, relationship to nearby proof, and editing status.",
-        "extension": "Promote to stable only after quote provenance, truncation policy, citation behavior, and thin-display summaries are documented."
+        "extension": "Keep stable while quote provenance, truncation policy, citation behavior, and thin-display summaries stay documented."
       }
     },
     {
       "id": "component.related-articles",
       "name": "RelatedArticles",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Related content section candidate for recommendation lists tied to taxonomy, topic, or authored relationship.",
+      "maturity": "stable",
+      "description": "Related content section primitive for recommendation lists tied to taxonomy, topic, or authored relationship.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/RelatedArticles.svelte",
       "importPath": "@create-something/canon/components",
@@ -660,8 +653,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "related-content",
         "recommendation",
-        "section",
-        "candidate"
+        "section"
       ],
       "modalities": [
         "web",
@@ -678,15 +670,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Related content must expose section heading, article titles, relationship reason when available, and route labels.",
         "evidence": "Recommendation data must preserve related item ids, titles, hrefs, relationship source, order, and exclusion rules.",
-        "extension": "Promote to stable only after recommendation provenance, ordering policy, fallback state, and cross-property routing are documented."
+        "extension": "Keep stable while recommendation provenance, ordering policy, fallback state, and cross-property routing stay documented."
       }
     },
     {
       "id": "component.triad-health",
       "name": "TriadHealth",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Three-Tier Framework health display candidate for Database, Automation, and Judgment readiness.",
+      "maturity": "stable",
+      "description": "Three-Tier Framework health display primitive for Database, Automation, and Judgment readiness.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/TriadHealth.svelte",
       "importPath": "@create-something/canon/components",
@@ -695,8 +687,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "three-tier",
         "health",
-        "governance",
-        "candidate"
+        "governance"
       ],
       "modalities": [
         "web",
@@ -713,15 +704,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Triad health must expose each tier label, state, blocker, evidence, owner, and next action in text.",
         "evidence": "Health data must preserve tier states, checks, receipts, owners, timestamps, and escalation route.",
-        "extension": "Promote to stable only after tier schema, status semantics, evidence requirements, and client overlay policy are documented."
+        "extension": "Keep stable while tier schema, status semantics, evidence requirements, and client overlay policy stay documented."
       }
     },
     {
       "id": "component.hermeneutic-circle",
       "name": "HermeneuticCircle",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Conceptual framework display candidate for showing iterative interpretation loops and their current state.",
+      "maturity": "stable",
+      "description": "Conceptual framework display primitive for showing iterative interpretation loops and their current state.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/HermeneuticCircle.svelte",
       "importPath": "@create-something/canon/components",
@@ -730,8 +721,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "framework",
         "loop",
-        "governance",
-        "candidate"
+        "governance"
       ],
       "modalities": [
         "web",
@@ -747,15 +737,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Loop displays must expose cycle labels, current phase, interpretation state, and route to detail without relying on circular layout.",
         "evidence": "Loop state must preserve phase order, active phase, interpretation notes, owner, and source artifact.",
-        "extension": "Promote to stable only after framework schema, phase semantics, nonvisual sequence summary, and motion policy are documented."
+        "extension": "Keep stable while framework schema, phase semantics, nonvisual sequence summary, and motion policy stay documented."
       }
     },
     {
       "id": "component.mode-indicator",
       "name": "ModeIndicator",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Mode and state indicator candidate for showing current operating mode, environment, or workflow posture.",
+      "maturity": "stable",
+      "description": "Mode and state indicator primitive for showing current operating mode, environment, or workflow posture.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/ModeIndicator.svelte",
       "importPath": "@create-something/canon/components",
@@ -764,8 +754,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "mode",
         "status",
-        "indicator",
-        "candidate"
+        "indicator"
       ],
       "modalities": [
         "web",
@@ -781,15 +770,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Mode indicators must expose label, current mode, state meaning, and change context without color-only encoding.",
         "evidence": "Mode data must preserve mode id, label, severity or tone, source of truth, timestamp, and optional owner.",
-        "extension": "Promote to stable only after mode taxonomy, tone semantics, compact rendering, and source-of-truth policy are documented."
+        "extension": "Keep stable while mode taxonomy, tone semantics, compact rendering, and source-of-truth policy stay documented."
       }
     },
     {
       "id": "component.cross-property-link",
       "name": "CrossPropertyLink",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Cross-property routing candidate for linking between CREATE SOMETHING properties with clear destination context.",
+      "maturity": "stable",
+      "description": "Cross-property routing primitive for linking between CREATE SOMETHING properties with clear destination context.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/CrossPropertyLink.svelte",
       "importPath": "@create-something/canon/components",
@@ -798,8 +787,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "property",
         "routing",
-        "link",
-        "candidate"
+        "link"
       ],
       "modalities": [
         "web",
@@ -816,15 +804,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Cross-property links must name the destination property, action, external context, and current-route relationship.",
         "evidence": "Route data must preserve source property, destination property, href, reason, tracking label, and fallback text.",
-        "extension": "Promote to stable only after property topology, route ownership, tracking policy, and external-link behavior are documented."
+        "extension": "Keep stable while property topology, route ownership, tracking policy, and external-link behavior stay documented."
       }
     },
     {
       "id": "component.property-funnel",
       "name": "PropertyFunnel",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Property conversion funnel candidate for routing visitors from property context to the next owned action.",
+      "maturity": "stable",
+      "description": "Property conversion funnel primitive for routing visitors from property context to the next owned action.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/PropertyFunnel.svelte",
       "importPath": "@create-something/canon/components",
@@ -833,8 +821,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "property",
         "funnel",
-        "conversion",
-        "candidate"
+        "conversion"
       ],
       "modalities": [
         "web",
@@ -851,15 +838,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Funnels must expose current property, offer, qualifying context, primary action, secondary action, and dismissal state.",
         "evidence": "Funnel data must preserve property, audience segment, offer, destination, stage, proof reference, and conversion event.",
-        "extension": "Promote to stable only after funnel stage policy, offer schema, analytics boundaries, and cross-property handoff are documented."
+        "extension": "Keep stable while funnel stage policy, offer schema, analytics boundaries, and cross-property handoff stay documented."
       }
     },
     {
       "id": "component.cookie-consent",
       "name": "CookieConsent",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Consent surface candidate for privacy notice, preference state, regional behavior, and analytics gating.",
+      "maturity": "stable",
+      "description": "Consent surface primitive for privacy notice, preference state, regional behavior, and analytics gating.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/CookieConsent.svelte",
       "importPath": "@create-something/canon/components",
@@ -868,8 +855,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "consent",
         "privacy",
-        "policy",
-        "candidate"
+        "policy"
       ],
       "modalities": [
         "web",
@@ -886,15 +872,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Consent prompts must expose notice text, accept action, reject or manage action, preference state, and policy link.",
         "evidence": "Consent state must preserve region, categories, selected preferences, storage key, timestamp, and analytics gating status.",
-        "extension": "Promote to stable only after privacy policy mapping, regional defaults, storage behavior, and revocation flow are documented."
+        "extension": "Keep stable while privacy policy mapping, regional defaults, storage behavior, and revocation flow stay documented."
       }
     },
     {
       "id": "component.page-actions",
       "name": "PageActions",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Page-level action group candidate for edit, preview, share, copy, publish, or workflow commands.",
+      "maturity": "stable",
+      "description": "Page-level action group primitive for edit, preview, share, copy, publish, or workflow commands.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/PageActions.svelte",
       "importPath": "@create-something/canon/components",
@@ -903,8 +889,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "components",
         "page-actions",
         "commands",
-        "authoring",
-        "candidate"
+        "authoring"
       ],
       "modalities": [
         "web",
@@ -921,15 +906,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Page actions must expose command labels, disabled state, destructive state, shortcut or status text, and result feedback.",
         "evidence": "Action data must preserve command id, label, permission, target artifact, pending state, and last result.",
-        "extension": "Promote to stable only after command schema, permission policy, destructive-action behavior, and result feedback are documented."
+        "extension": "Keep stable while command schema, permission policy, destructive-action behavior, and result feedback stay documented."
       }
     },
     {
       "id": "component.markdown-preview-modal",
       "name": "MarkdownPreviewModal",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Markdown preview modal candidate for authoring workflows that need rendered preview, source context, and close controls.",
+      "maturity": "stable",
+      "description": "Markdown preview modal primitive for authoring workflows that need rendered preview, source context, and close controls.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/MarkdownPreviewModal.svelte",
       "importPath": "@create-something/canon/components",
@@ -939,8 +924,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "markdown",
         "preview",
         "authoring",
-        "modal",
-        "candidate"
+        "modal"
       ],
       "modalities": [
         "web",
@@ -957,15 +941,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "contract": {
         "accessibility": "Preview modals must expose title, close action, rendered heading structure, source state, and focus management.",
         "evidence": "Preview data must preserve source markdown, rendered output status, target artifact, validation errors, and last update.",
-        "extension": "Promote to stable only after rendering policy, sanitization, focus behavior, and authoring workflow ownership are documented."
+        "extension": "Keep stable while rendering policy, sanitization, focus behavior, and authoring workflow ownership stay documented."
       }
     },
     {
       "id": "component.interactive-hover-card",
       "name": "HoverCard",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Contextual disclosure candidate for previewing links, profiles, or supporting context on hover and focus.",
+      "maturity": "stable",
+      "description": "Contextual disclosure primitive for previewing links, profiles, or supporting context on hover and focus.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/interactive/HoverCard.svelte",
       "importPath": "@create-something/canon/interactive",
@@ -973,8 +957,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "interactive",
         "hover-card",
-        "disclosure",
-        "candidate"
+        "disclosure"
       ],
       "modalities": [
         "web",
@@ -992,15 +975,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Hover disclosures must expose trigger label, preview content, focus behavior, Escape close, and non-hover fallback.",
         "evidence": "Disclosure state must preserve trigger relationship, side, alignment, open/close delays, disabled state, and viewport collision behavior.",
         "motion": "Scale, opacity, delay, and directional transitions must collapse for reduced-motion users and cannot hide required context.",
-        "extension": "Promote to stable only after keyboard semantics, touch fallback, collision policy, and aria relationship contracts are documented."
+        "extension": "Keep stable while keyboard semantics, touch fallback, collision policy, and aria relationship contracts stay documented."
       }
     },
     {
       "id": "component.interactive-integration-flow",
       "name": "IntegrationFlow",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Integration flow candidate for showing connected services, connector order, and workflow description.",
+      "maturity": "stable",
+      "description": "Integration flow primitive for showing connected services, connector order, and workflow description.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/interactive/IntegrationFlow.svelte",
       "importPath": "@create-something/canon/interactive",
@@ -1008,8 +991,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "interactive",
         "integration-flow",
-        "workflow",
-        "candidate"
+        "workflow"
       ],
       "modalities": [
         "web",
@@ -1027,15 +1009,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Integration flows must expose service names, connector order, description, and a text summary that does not depend on arrows or animated particles.",
         "evidence": "Flow data must preserve integration labels, service names, ordering, connector visibility, description, and source workflow.",
         "motion": "Connector particles, grid animation, and glass treatments must be optional and reduced-motion safe.",
-        "extension": "Promote to stable only after integration schema, connector semantics, service icon fallback, and nonvisual workflow summaries are documented."
+        "extension": "Keep stable while integration schema, connector semantics, service icon fallback, and nonvisual workflow summaries stay documented."
       }
     },
     {
       "id": "component.interactive-timeline-editor",
       "name": "TimelineEditor",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Canvas timeline editor candidate for keyframe tracks, scrubber state, zoom, and motion-authoring callbacks.",
+      "maturity": "stable",
+      "description": "Canvas timeline editor primitive for keyframe tracks, scrubber state, zoom, and motion-authoring callbacks.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/interactive/TimelineEditor.svelte",
       "importPath": "@create-something/canon/interactive",
@@ -1043,8 +1025,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "interactive",
         "timeline",
-        "editor",
-        "candidate"
+        "editor"
       ],
       "modalities": [
         "web",
@@ -1062,15 +1043,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Timeline editors must expose current frame, total frames, track names, selected keyframe, keyboard navigation, and canvas fallback state.",
         "evidence": "Editor data must preserve tracks, keyframes, easing, current frame, fps, zoom, scroll offset, and callback semantics.",
         "motion": "Motion previews, scrubber movement, and keyframe curves must not be the only representation of the timeline data.",
-        "extension": "Promote to stable only after canvas accessibility, keyboard editing, data-model versioning, and motion-studio ownership are documented."
+        "extension": "Keep stable while canvas accessibility, keyboard editing, data-model versioning, and motion-studio ownership stay documented."
       }
     },
     {
       "id": "component.brand-cube-mark3-d",
       "name": "CubeMark3D",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "3D CREATE SOMETHING cube mark candidate with Threlte canvas rendering, glass materials, and reduced-motion rotation handling.",
+      "maturity": "stable",
+      "description": "3D CREATE SOMETHING cube mark primitive with Threlte canvas rendering, glass materials, and reduced-motion rotation handling.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/brand/3d/CubeMark3D.svelte",
       "importPath": "@create-something/canon/brand/3d",
@@ -1078,8 +1059,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "brand",
         "3d",
-        "cube-mark",
-        "candidate"
+        "cube-mark"
       ],
       "modalities": [
         "web",
@@ -1096,15 +1076,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "3D brand marks must expose a text label, stable dimensions, reduced-motion rotation behavior, and a non-canvas fallback path.",
         "evidence": "Brand mark data must preserve size, material variant, interaction flag, shadow setting, rotation speed, and environment intent.",
         "motion": "Auto-rotation and orbit controls must disable or simplify for reduced-motion and thin-display contexts.",
-        "extension": "Promote to stable only after brand usage rules, canvas fallback, material tokens, and cross-property placement contracts are documented."
+        "extension": "Keep stable while brand usage rules, canvas fallback, material tokens, and cross-property placement contracts stay documented."
       }
     },
     {
       "id": "component.brand-glass-cube-scene",
       "name": "GlassCubeScene",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Lower-level Threlte glass cube scene candidate for physically based materials, lighting, and cube-face semantics.",
+      "maturity": "stable",
+      "description": "Lower-level Threlte glass cube scene primitive for physically based materials, lighting, and cube-face semantics.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/brand/3d/GlassCubeScene.svelte",
       "importPath": "@create-something/canon/brand/3d",
@@ -1112,8 +1092,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "brand",
         "3d",
-        "glass-scene",
-        "candidate"
+        "glass-scene"
       ],
       "modalities": [
         "web",
@@ -1130,15 +1109,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Scene consumers must provide the accessible brand label and nonvisual description outside the canvas wrapper.",
         "evidence": "Scene data must preserve cube face material semantics, material preset, overrides, rotation state, and lighting assumptions.",
         "motion": "Scene rotation must be externally controllable and safe to stop for reduced-motion contexts.",
-        "extension": "Promote to stable only after material presets, cube-face semantics, lighting defaults, and Canvas ownership boundaries are documented."
+        "extension": "Keep stable while material presets, cube-face semantics, lighting defaults, and Canvas ownership boundaries stay documented."
       }
     },
     {
       "id": "component.layout-project-grid-interactive",
       "name": "ProjectGridInteractive",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Interactive project grid candidate for portfolio-style cards with hover focus and responsive image metadata.",
+      "maturity": "stable",
+      "description": "Interactive project grid primitive for portfolio-style cards with hover focus and responsive image metadata.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/layout/ProjectGridInteractive.svelte",
       "importPath": "@create-something/canon/layout",
@@ -1146,8 +1125,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "layout",
         "project-grid",
-        "interactive",
-        "candidate"
+        "interactive"
       ],
       "modalities": [
         "web",
@@ -1166,15 +1144,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Project cards must preserve title, location, outcome, image alt text, and route order without depending on hover.",
         "evidence": "Project data must preserve slug, title, hero image, location, optional outcome, display order, and focus variant.",
         "motion": "Sibling dimming, image scaling, and metadata reveal must be optional and reduced-motion safe.",
-        "extension": "Promote to stable only after project schema, hover/focus parity, image fallback, and nonvisual summary contracts are documented."
+        "extension": "Keep stable while project schema, hover/focus parity, image fallback, and nonvisual summary contracts stay documented."
       }
     },
     {
       "id": "component.diagrams-flow-diagram",
       "name": "FlowDiagram",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Node-and-edge process diagram candidate for workflows, systems, and decision paths.",
+      "maturity": "stable",
+      "description": "Node-and-edge process diagram primitive for workflows, systems, and decision paths.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/diagrams/FlowDiagram.svelte",
       "importPath": "@create-something/canon/diagrams",
@@ -1182,8 +1160,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "diagrams",
         "flow",
-        "graph",
-        "candidate"
+        "graph"
       ],
       "modalities": [
         "web",
@@ -1199,15 +1176,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Every node and edge must be recoverable as ordered text for screen readers and nonvisual modalities.",
         "evidence": "Data must preserve stable node ids, labels, edge direction, and optional edge labels.",
         "motion": "Flow motion must be optional and disabled for reduced-motion contexts.",
-        "extension": "Promote to stable only after layout rules, overflow behavior, and text summary format are documented."
+        "extension": "Keep stable while layout rules, overflow behavior, and text summary format stay documented."
       }
     },
     {
       "id": "component.diagrams-bar-chart",
       "name": "BarChart",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Categorical comparison chart candidate for compact quantitative evidence.",
+      "maturity": "stable",
+      "description": "Categorical comparison chart primitive for compact quantitative evidence.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/diagrams/BarChart.svelte",
       "importPath": "@create-something/canon/diagrams",
@@ -1215,8 +1192,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "diagrams",
         "chart",
-        "bar",
-        "candidate"
+        "bar"
       ],
       "modalities": [
         "web",
@@ -1232,15 +1208,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Bars must have text labels and values that do not depend on color or visual height alone.",
         "evidence": "Data must include labeled numeric values and the source or owner of the measurement.",
         "motion": "Animated bar transitions must not hide final values or block reduced-motion users.",
-        "extension": "Promote to stable only after scale, empty-state, and long-label behavior are documented."
+        "extension": "Keep stable while scale, empty-state, and long-label behavior stay documented."
       }
     },
     {
       "id": "component.diagrams-line-chart",
       "name": "LineChart",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Time-series or ordered-series chart candidate for trends and deltas.",
+      "maturity": "stable",
+      "description": "Time-series or ordered-series chart primitive for trends and deltas.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/diagrams/LineChart.svelte",
       "importPath": "@create-something/canon/diagrams",
@@ -1248,8 +1224,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "diagrams",
         "chart",
-        "line",
-        "candidate"
+        "line"
       ],
       "modalities": [
         "web",
@@ -1265,15 +1240,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Series names, axis labels, and point values must be available as structured text.",
         "evidence": "Data must name each series and preserve x/y values without relying on sampled pixels.",
         "motion": "Line drawing and point reveal effects must respect reduced-motion preferences.",
-        "extension": "Promote to stable only after multi-series labeling, axis scaling, and summary rules are documented."
+        "extension": "Keep stable while multi-series labeling, axis scaling, and summary rules stay documented."
       }
     },
     {
       "id": "component.diagrams-pie-chart",
       "name": "PieChart",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Part-to-whole chart candidate for small proportional datasets.",
+      "maturity": "stable",
+      "description": "Part-to-whole chart primitive for small proportional datasets.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/diagrams/PieChart.svelte",
       "importPath": "@create-something/canon/diagrams",
@@ -1281,8 +1256,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "diagrams",
         "chart",
-        "pie",
-        "candidate"
+        "pie"
       ],
       "modalities": [
         "web",
@@ -1298,15 +1272,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Slices must expose labels, values, and percentages in text; color must not be the only differentiator.",
         "evidence": "Data must include labeled numeric values and clarify whether totals are complete or sampled.",
         "motion": "Slice reveal motion must be optional and never delay text value availability.",
-        "extension": "Promote to stable only after limits for slice count, legends, and donut variants are documented."
+        "extension": "Keep stable while limits for slice count, legends, and donut variants stay documented."
       }
     },
     {
       "id": "component.diagrams-timeline",
       "name": "Timeline",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Chronological event diagram candidate for process, history, and roadmap surfaces.",
+      "maturity": "stable",
+      "description": "Chronological event diagram primitive for process, history, and roadmap surfaces.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/diagrams/Timeline.svelte",
       "importPath": "@create-something/canon/diagrams",
@@ -1314,8 +1288,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "diagrams",
         "timeline",
-        "events",
-        "candidate"
+        "events"
       ],
       "modalities": [
         "web",
@@ -1331,15 +1304,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Events must retain readable date, label, description, and highlight state in source order.",
         "evidence": "Data must preserve dates as text and identify which events are emphasized.",
         "motion": "Scroll or reveal effects must not be required to understand event order.",
-        "extension": "Promote to stable only after date parsing, wrapping, and horizontal/vertical behavior are documented."
+        "extension": "Keep stable while date parsing, wrapping, and horizontal/vertical behavior stay documented."
       }
     },
     {
       "id": "component.diagrams-matrix",
       "name": "Matrix",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Row-and-column comparison matrix candidate for decisions and capability maps.",
+      "maturity": "stable",
+      "description": "Row-and-column comparison matrix primitive for decisions and capability maps.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/diagrams/Matrix.svelte",
       "importPath": "@create-something/canon/diagrams",
@@ -1347,8 +1320,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "diagrams",
         "matrix",
-        "comparison",
-        "candidate"
+        "comparison"
       ],
       "modalities": [
         "web",
@@ -1364,15 +1336,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Cells must preserve row and column headers so values remain understandable outside the visual table.",
         "evidence": "Data must include row headers, column headers, cell values, and any highlight semantics.",
         "motion": "Highlight transitions must not be required to identify selected or emphasized cells.",
-        "extension": "Promote to stable only after responsive overflow, caption, and boolean/value formatting are documented."
+        "extension": "Keep stable while responsive overflow, caption, and boolean/value formatting stay documented."
       }
     },
     {
       "id": "component.diagrams-knowledge-graph-canvas",
       "name": "KnowledgeGraphCanvas",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Canvas graph candidate for concept, entity, relation, and document networks.",
+      "maturity": "stable",
+      "description": "Canvas graph primitive for concept, entity, relation, and document networks.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/diagrams/KnowledgeGraphCanvas.svelte",
       "importPath": "@create-something/canon/diagrams",
@@ -1380,8 +1352,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "diagrams",
         "knowledge-graph",
-        "canvas",
-        "candidate"
+        "canvas"
       ],
       "modalities": [
         "web",
@@ -1397,15 +1368,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Canvas graph nodes and edges must have an equivalent textual graph summary and keyboard-safe inspection route.",
         "evidence": "Data must preserve node ids, labels, types, edge endpoints, weights, and relation types.",
         "motion": "Force or pan animations must be optional and disabled for reduced-motion contexts.",
-        "extension": "Promote to stable only after canvas fallback, graph summary, and interaction contracts are documented."
+        "extension": "Keep stable while canvas fallback, graph summary, and interaction contracts stay documented."
       }
     },
     {
       "id": "component.diagrams-canvas-diagram",
       "name": "CanvasDiagram",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "General canvas drawing candidate for exportable annotated diagram shapes.",
+      "maturity": "stable",
+      "description": "General canvas drawing primitive for exportable annotated diagram shapes.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/diagrams/CanvasDiagram.svelte",
       "importPath": "@create-something/canon/diagrams",
@@ -1413,8 +1384,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "diagrams",
         "canvas",
-        "export",
-        "candidate"
+        "export"
       ],
       "modalities": [
         "web",
@@ -1430,15 +1400,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Canvas shapes must have a durable text alternative or serialized shape list for nonvisual modalities.",
         "evidence": "Data must preserve shape ids, geometry, labels, image sources, and export intent.",
         "motion": "Drag, selection, and animation behavior must be optional and keyboard-safe before stable use.",
-        "extension": "Promote to stable only after export, selection, keyboard, and text-fallback contracts are documented."
+        "extension": "Keep stable while export, selection, keyboard, and text-fallback contracts stay documented."
       }
     },
     {
       "id": "component.typography-typography-hero",
       "name": "TypographyHero",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Typography-led hero candidate for monochrome pages where hierarchy comes from type scale and weight.",
+      "maturity": "stable",
+      "description": "Typography-led hero primitive for monochrome pages where hierarchy comes from type scale and weight.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/typography/TypographyHero.svelte",
       "importPath": "@create-something/canon/typography",
@@ -1446,8 +1416,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "typography",
         "hero",
-        "weight-contrast",
-        "candidate"
+        "weight-contrast"
       ],
       "modalities": [
         "web",
@@ -1464,15 +1433,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Hero hierarchy must preserve semantic heading structure and readable copy in every modality.",
         "evidence": "Headline, eyebrow, subhead, and CTA text must remain inspectable as text and tied to the page claim.",
         "motion": "Fade-up entrance motion must respect reduced-motion preferences and never hide core copy.",
-        "extension": "Promote to stable only after heading-level control, CTA composition, and responsive type rules are documented."
+        "extension": "Keep stable while heading-level control, CTA composition, and responsive type rules stay documented."
       }
     },
     {
       "id": "component.atlas-atlas-flow",
       "name": "AtlasFlow",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Interactive Atlas workflow-map renderer candidate for node and edge inspection against the Canon graph artifact.",
+      "maturity": "stable",
+      "description": "Interactive Atlas workflow-map renderer primitive for node and edge inspection against the Canon graph artifact.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/atlas/AtlasFlow.svelte",
       "importPath": "@create-something/canon/atlas",
@@ -1480,8 +1449,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "atlas",
         "renderer",
-        "workflow-map",
-        "candidate"
+        "workflow-map"
       ],
       "modalities": [
         "web",
@@ -1498,15 +1466,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Rendered nodes and edges must retain aria labels plus a text summary path for chat, voice, and glasses surfaces.",
         "evidence": "Canvas data must preserve node ids, edge ids, owner, status, products, and graph source-of-truth fields from the headless artifact.",
         "motion": "Panning, dragging, focus dimming, and animated viewport changes must stay optional and reduced-motion safe.",
-        "extension": "Promote to stable only after keyboard inspection, nonvisual fallback, and renderer compatibility rules are documented."
+        "extension": "Keep stable while keyboard inspection, nonvisual fallback, and renderer compatibility rules stay documented."
       }
     },
     {
       "id": "component.atlas-atlas-story-canvas",
       "name": "AtlasStoryCanvas",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Story-led Atlas renderer candidate that pairs workflow graph focus with chapters, readiness, and receipt copy.",
+      "maturity": "stable",
+      "description": "Story-led Atlas renderer primitive that pairs workflow graph focus with chapters, readiness, and receipt copy.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/atlas/AtlasStoryCanvas.svelte",
       "importPath": "@create-something/canon/atlas",
@@ -1514,8 +1482,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "atlas",
         "renderer",
-        "story",
-        "candidate"
+        "story"
       ],
       "modalities": [
         "web",
@@ -1532,15 +1499,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Story chapters must preserve the generated accessibility summary and readable chapter text outside the visual map.",
         "evidence": "Chapter focus, readiness score, proof labels, and receipt ledger copy must derive from the graph/story artifacts.",
         "motion": "Chapter focus and trace-handoff cues must be optional and must not hide map state or proof text.",
-        "extension": "Promote to stable only after chapter schema, compact layout, and fallback story contracts are documented."
+        "extension": "Keep stable while chapter schema, compact layout, and fallback story contracts stay documented."
       }
     },
     {
       "id": "component.forms-form-field",
       "name": "FormField",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Advanced form field wrapper candidate for labels, help text, validation, and control composition.",
+      "maturity": "stable",
+      "description": "Advanced form field wrapper primitive for labels, help text, validation, and control composition.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/forms/FormField.svelte",
       "importPath": "@create-something/canon/forms",
@@ -1548,8 +1515,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "forms",
         "field",
-        "validation",
-        "candidate"
+        "validation"
       ],
       "modalities": [
         "web",
@@ -1566,15 +1532,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Labels, descriptions, errors, and required state must stay programmatically tied to the composed control.",
         "evidence": "Field state should preserve value, validation message, required status, and owner-provided help copy.",
         "motion": "Error and focus transitions must be optional and must not delay validation feedback.",
-        "extension": "Promote to stable only after composition, described-by, and validation contracts are documented."
+        "extension": "Keep stable while composition, described-by, and validation contracts stay documented."
       }
     },
     {
       "id": "component.forms-combobox",
       "name": "Combobox",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Advanced searchable option control candidate for mixed text entry and bounded selection workflows.",
+      "maturity": "stable",
+      "description": "Advanced searchable option control primitive for mixed text entry and bounded selection workflows.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/forms/Combobox.svelte",
       "importPath": "@create-something/canon/forms",
@@ -1582,8 +1548,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "forms",
         "combobox",
-        "selection",
-        "candidate"
+        "selection"
       ],
       "modalities": [
         "web",
@@ -1601,15 +1566,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Input, popup, active option, selected value, and empty state must be exposed for keyboard and screen-reader users.",
         "evidence": "Options must preserve stable ids, labels, disabled state, search query, and selected value for adapters.",
         "motion": "Popup, filtering, and active-option movement must remain usable without animation.",
-        "extension": "Promote to stable only after keyboard navigation, option schema, and nonvisual fallback contracts are documented."
+        "extension": "Keep stable while keyboard navigation, option schema, and nonvisual fallback contracts stay documented."
       }
     },
     {
       "id": "component.forms-date-picker",
       "name": "DatePicker",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Advanced date selection candidate for calendar input with typed fallback and validation state.",
+      "maturity": "stable",
+      "description": "Advanced date selection primitive for calendar input with typed fallback and validation state.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/forms/DatePicker.svelte",
       "importPath": "@create-something/canon/forms",
@@ -1617,8 +1582,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "forms",
         "date-picker",
-        "calendar",
-        "candidate"
+        "calendar"
       ],
       "modalities": [
         "web",
@@ -1635,15 +1599,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Dates must be reachable through typed input, keyboard calendar navigation, and readable selected-state text.",
         "evidence": "Date values must preserve locale display, canonical value, min/max constraints, and validation copy.",
         "motion": "Calendar opening, month changes, and selection feedback must respect reduced-motion preferences.",
-        "extension": "Promote to stable only after date value, locale, keyboard, and typed-input fallback contracts are documented."
+        "extension": "Keep stable while date value, locale, keyboard, and typed-input fallback contracts stay documented."
       }
     },
     {
       "id": "component.forms-file-upload",
       "name": "FileUpload",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Advanced file upload candidate for selected-file state, acceptance constraints, progress, and errors.",
+      "maturity": "stable",
+      "description": "Advanced file upload primitive for selected-file state, acceptance constraints, progress, and errors.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/forms/FileUpload.svelte",
       "importPath": "@create-something/canon/forms",
@@ -1651,8 +1615,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "forms",
         "file-upload",
-        "attachment",
-        "candidate"
+        "attachment"
       ],
       "modalities": [
         "web",
@@ -1669,15 +1632,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Upload control, accepted types, selected files, progress, and errors must be available as text and status.",
         "evidence": "File state must preserve name, size, type, acceptance result, progress, and retry or removal action.",
         "motion": "Progress and dropzone feedback must not rely on motion or color alone.",
-        "extension": "Promote to stable only after file-state, progress, acceptance, and retry contracts are documented."
+        "extension": "Keep stable while file-state, progress, acceptance, and retry contracts stay documented."
       }
     },
     {
       "id": "component.forms-otpinput",
       "name": "OTPInput",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Advanced one-time-code input candidate for segmented verification flows with pasted-code handling.",
+      "maturity": "stable",
+      "description": "Advanced one-time-code input primitive for segmented verification flows with pasted-code handling.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/forms/OTPInput.svelte",
       "importPath": "@create-something/canon/forms",
@@ -1685,8 +1648,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "forms",
         "otp",
-        "verification",
-        "candidate"
+        "verification"
       ],
       "modalities": [
         "web",
@@ -1703,15 +1665,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Segmented inputs must expose one clear verification-code field purpose, order, errors, and completion state.",
         "evidence": "Code state must preserve length, filled count, validation result, paste handling, and resend or recovery route.",
         "motion": "Focus movement, invalid-state cues, and completion feedback must remain understandable without animation.",
-        "extension": "Promote to stable only after segmented-input, paste, autofill, and recovery contracts are documented."
+        "extension": "Keep stable while segmented-input, paste, autofill, and recovery contracts stay documented."
       }
     },
     {
       "id": "component.patterns-form-layout",
       "name": "FormLayout",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Form composition pattern candidate for grouped fields, headings, descriptions, and action placement.",
+      "maturity": "stable",
+      "description": "Form composition pattern primitive for grouped fields, headings, descriptions, and action placement.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/patterns/FormLayout.svelte",
       "importPath": "@create-something/canon/patterns",
@@ -1719,8 +1681,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "patterns",
         "form",
-        "layout",
-        "candidate"
+        "layout"
       ],
       "modalities": [
         "web",
@@ -1738,15 +1699,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Form sections must preserve heading order, labels, descriptions, and final action order across modalities.",
         "evidence": "Pattern state should name section titles, required fields, validation scope, and submission action.",
         "motion": "Section transitions and action feedback must be optional and cannot hide form state.",
-        "extension": "Promote to stable only after section schema, action placement, and nonvisual form summary contracts are documented."
+        "extension": "Keep stable while section schema, action placement, and nonvisual form summary contracts stay documented."
       }
     },
     {
       "id": "component.patterns-form-validation",
       "name": "FormValidation",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Validation pattern candidate for error summaries, field-level messages, and validation timing.",
+      "maturity": "stable",
+      "description": "Validation pattern primitive for error summaries, field-level messages, and validation timing.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/patterns/FormValidation.svelte",
       "importPath": "@create-something/canon/patterns",
@@ -1754,8 +1715,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "patterns",
         "form",
-        "validation",
-        "candidate"
+        "validation"
       ],
       "modalities": [
         "web",
@@ -1773,15 +1733,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Validation summaries and field messages must be announced, linked to fields, and readable without color.",
         "evidence": "Validation data must preserve field ids, messages, timing, severity, and recovery action.",
         "motion": "Validation reveal motion must be optional and must not delay error availability.",
-        "extension": "Promote to stable only after validation timing, summary linking, and field-error contracts are documented."
+        "extension": "Keep stable while validation timing, summary linking, and field-error contracts stay documented."
       }
     },
     {
       "id": "component.patterns-multi-step-form",
       "name": "MultiStepForm",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Multi-step form pattern candidate for progress, step navigation, persisted data, and completion actions.",
+      "maturity": "stable",
+      "description": "Multi-step form pattern primitive for progress, step navigation, persisted data, and completion actions.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/patterns/MultiStepForm.svelte",
       "importPath": "@create-something/canon/patterns",
@@ -1789,8 +1749,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "patterns",
         "form",
-        "multi-step",
-        "candidate"
+        "multi-step"
       ],
       "modalities": [
         "web",
@@ -1808,15 +1767,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Step order, current step, completed steps, and progress must be available as structured text.",
         "evidence": "Step state must preserve ids, titles, descriptions, completion state, current index, and submit action.",
         "motion": "Step changes and progress animation must be optional and must not mask data persistence or validation.",
-        "extension": "Promote to stable only after step schema, persistence, navigation, and completion contracts are documented."
+        "extension": "Keep stable while step schema, persistence, navigation, and completion contracts stay documented."
       }
     },
     {
       "id": "component.patterns-empty-state",
       "name": "EmptyState",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Empty state pattern candidate for no-data surfaces with plain-language explanation and next action.",
+      "maturity": "stable",
+      "description": "Empty state pattern primitive for no-data surfaces with plain-language explanation and next action.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/patterns/EmptyState.svelte",
       "importPath": "@create-something/canon/patterns",
@@ -1824,8 +1783,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "patterns",
         "empty-state",
-        "recovery",
-        "candidate"
+        "recovery"
       ],
       "modalities": [
         "web",
@@ -1842,15 +1800,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Empty states must expose the title, explanation, and available next action as text.",
         "evidence": "State copy should distinguish no data, filtered data, unavailable data, and first-use context.",
         "motion": "Illustration or entrance motion must be optional and cannot replace the state message.",
-        "extension": "Promote to stable only after empty reason, action, and modality fallback contracts are documented."
+        "extension": "Keep stable while empty reason, action, and modality fallback contracts stay documented."
       }
     },
     {
       "id": "component.patterns-first-time-user",
       "name": "FirstTimeUser",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Onboarding pattern candidate for first-use progress, steps, completion, and dismiss behavior.",
+      "maturity": "stable",
+      "description": "Onboarding pattern primitive for first-use progress, steps, completion, and dismiss behavior.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/patterns/FirstTimeUser.svelte",
       "importPath": "@create-something/canon/patterns",
@@ -1858,8 +1816,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "patterns",
         "onboarding",
-        "progress",
-        "candidate"
+        "progress"
       ],
       "modalities": [
         "web",
@@ -1877,15 +1834,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Onboarding progress, step titles, descriptions, action labels, and dismiss controls must be readable and keyboard reachable.",
         "evidence": "Onboarding state must preserve step ids, completed ids, progress percentage, action labels, and dismiss status.",
         "motion": "Progress and completion motion must be optional and cannot hide skipped or incomplete steps.",
-        "extension": "Promote to stable only after onboarding step schema, progress, dismiss, and recovery contracts are documented."
+        "extension": "Keep stable while onboarding step schema, progress, dismiss, and recovery contracts stay documented."
       }
     },
     {
       "id": "component.patterns-loading-skeleton",
       "name": "LoadingSkeleton",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Loading skeleton pattern candidate for placeholder content that communicates pending state without fake data.",
+      "maturity": "stable",
+      "description": "Loading skeleton pattern primitive for placeholder content that communicates pending state without fake data.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/patterns/LoadingSkeleton.svelte",
       "importPath": "@create-something/canon/patterns",
@@ -1893,8 +1850,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "patterns",
         "loading",
-        "skeleton",
-        "candidate"
+        "skeleton"
       ],
       "modalities": [
         "web",
@@ -1910,15 +1866,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Loading placeholders must expose busy state and a readable loading label without pretending content exists.",
         "evidence": "Loading state should preserve expected content type, count, label, and timeout or fallback route when available.",
         "motion": "Shimmer or pulse treatment must respect reduced-motion preferences.",
-        "extension": "Promote to stable only after placeholder semantics, reduced-motion, and timeout fallback contracts are documented."
+        "extension": "Keep stable while placeholder semantics, reduced-motion, and timeout fallback contracts stay documented."
       }
     },
     {
       "id": "component.patterns-loading-overlay",
       "name": "LoadingOverlay",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Loading overlay pattern candidate for scoped blocking progress with message and busy state.",
+      "maturity": "stable",
+      "description": "Loading overlay pattern primitive for scoped blocking progress with message and busy state.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/patterns/LoadingOverlay.svelte",
       "importPath": "@create-something/canon/patterns",
@@ -1926,8 +1882,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "patterns",
         "loading",
-        "overlay",
-        "candidate"
+        "overlay"
       ],
       "modalities": [
         "web",
@@ -1944,15 +1899,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Blocking loading state must expose scope, message, and busy state without trapping users unexpectedly.",
         "evidence": "Loading state should preserve operation label, scope, blocking reason, and recovery or timeout route.",
         "motion": "Spinner and blur treatment must be optional and reduced-motion safe.",
-        "extension": "Promote to stable only after blocking scope, busy-state, timeout, and fallback contracts are documented."
+        "extension": "Keep stable while blocking scope, busy-state, timeout, and fallback contracts stay documented."
       }
     },
     {
       "id": "component.patterns-inline-error",
       "name": "InlineError",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Inline error pattern candidate for contextual error, warning, or info messages near affected content.",
+      "maturity": "stable",
+      "description": "Inline error pattern primitive for contextual error, warning, or info messages near affected content.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/patterns/InlineError.svelte",
       "importPath": "@create-something/canon/patterns",
@@ -1960,8 +1915,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "patterns",
         "error",
-        "inline",
-        "candidate"
+        "inline"
       ],
       "modalities": [
         "web",
@@ -1979,15 +1933,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Inline messages must expose severity, message, related field or object, and dismiss action when present.",
         "evidence": "Error state must preserve message, code, severity, affected id, recovery action, and dismissal status.",
         "motion": "Error reveal and dismiss motion must be optional and must not remove critical recovery copy.",
-        "extension": "Promote to stable only after severity, field-linking, dismissal, and recovery contracts are documented."
+        "extension": "Keep stable while severity, field-linking, dismissal, and recovery contracts stay documented."
       }
     },
     {
       "id": "component.patterns-error-boundary",
       "name": "ErrorBoundary",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Error boundary pattern candidate for contained failure state, reset action, and diagnostic disclosure.",
+      "maturity": "stable",
+      "description": "Error boundary pattern primitive for contained failure state, reset action, and diagnostic disclosure.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/patterns/ErrorBoundary.svelte",
       "importPath": "@create-something/canon/patterns",
@@ -1995,8 +1949,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "patterns",
         "error",
-        "boundary",
-        "candidate"
+        "boundary"
       ],
       "modalities": [
         "web",
@@ -2014,15 +1967,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Boundary fallback must announce failure, preserve the reset route, and keep diagnostic details optional.",
         "evidence": "Failure state must preserve title, message, error code or stack policy, reset action, and report route.",
         "motion": "Fallback entry and reset feedback must be optional and must not obscure the failure message.",
-        "extension": "Promote to stable only after failure disclosure, reset, reporting, and diagnostic redaction contracts are documented."
+        "extension": "Keep stable while failure disclosure, reset, reporting, and diagnostic redaction contracts stay documented."
       }
     },
     {
       "id": "component.navigation-sticky-header",
       "name": "StickyHeader",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Sticky header candidate for persistent site wayfinding with scroll-aware treatment and slots.",
+      "maturity": "stable",
+      "description": "Sticky header primitive for persistent site wayfinding with scroll-aware treatment and slots.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/navigation/StickyHeader.svelte",
       "importPath": "@create-something/canon/navigation",
@@ -2030,8 +1983,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "navigation",
         "header",
-        "sticky",
-        "candidate"
+        "sticky"
       ],
       "modalities": [
         "web",
@@ -2048,15 +2000,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Persistent headers must expose primary wayfinding, current context, and skip/focus behavior without relying on scroll position.",
         "evidence": "Header state should preserve logo route, primary links, scroll state, active location, and mobile fallback.",
         "motion": "Scroll treatment and sticky transitions must be optional and reduced-motion safe.",
-        "extension": "Promote to stable only after sticky behavior, active-route, slot, and mobile fallback contracts are documented."
+        "extension": "Keep stable while sticky behavior, active-route, slot, and mobile fallback contracts stay documented."
       }
     },
     {
       "id": "component.navigation-mobile-drawer",
       "name": "MobileDrawer",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Mobile drawer candidate for responsive navigation panels, sheets, and secondary route groups.",
+      "maturity": "stable",
+      "description": "Mobile drawer primitive for responsive navigation panels, sheets, and secondary route groups.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/navigation/MobileDrawer.svelte",
       "importPath": "@create-something/canon/navigation",
@@ -2064,8 +2016,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "navigation",
         "drawer",
-        "mobile",
-        "candidate"
+        "mobile"
       ],
       "modalities": [
         "web",
@@ -2083,15 +2034,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Drawers must preserve close controls, modal context, focus management, and menu labels for nonvisual paths.",
         "evidence": "Drawer state should preserve open state, position, trigger label, contained links, and close reason.",
         "motion": "Slide and overlay transitions must respect reduced-motion preferences and never block the close route.",
-        "extension": "Promote to stable only after focus trap, close behavior, position, and responsive fallback contracts are documented."
+        "extension": "Keep stable while focus trap, close behavior, position, and responsive fallback contracts stay documented."
       }
     },
     {
       "id": "component.navigation-command-palette",
       "name": "CommandPalette",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Command palette candidate for keyboard-first command and route search over provided items.",
+      "maturity": "stable",
+      "description": "Command palette primitive for keyboard-first command and route search over provided items.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/navigation/CommandPalette.svelte",
       "importPath": "@create-something/canon/navigation",
@@ -2099,8 +2050,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "navigation",
         "command-palette",
-        "keyboard",
-        "candidate"
+        "keyboard"
       ],
       "modalities": [
         "web",
@@ -2119,15 +2069,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Command palettes must expose dialog state, search label, selected result, keyboard navigation, and close behavior.",
         "evidence": "Command data must preserve item ids, labels, descriptions, shortcuts, hrefs, selection index, and query.",
         "motion": "Palette entry, result highlighting, and close transitions must be optional and reduced-motion safe.",
-        "extension": "Promote to stable only after command schema, keyboard model, shortcut, and nonvisual fallback contracts are documented."
+        "extension": "Keep stable while command schema, keyboard model, shortcut, and nonvisual fallback contracts stay documented."
       }
     },
     {
       "id": "component.navigation-unified-search",
       "name": "UnifiedSearch",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Unified search candidate for cross-property query, grouped results, local fallback, and analytics events.",
+      "maturity": "stable",
+      "description": "Unified search primitive for cross-property query, grouped results, local fallback, and analytics events.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/navigation/UnifiedSearch.svelte",
       "importPath": "@create-something/canon/navigation",
@@ -2135,8 +2085,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "navigation",
         "search",
-        "cross-property",
-        "candidate"
+        "cross-property"
       ],
       "modalities": [
         "web",
@@ -2155,15 +2104,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Search must expose query, grouped results, empty/loading/error states, selected result, and close behavior.",
         "evidence": "Search state must preserve query, source API, result ids, property groups, selected result, and emitted event names.",
         "motion": "Palette, mobile button, result focus, and loading treatment must respect reduced-motion preferences.",
-        "extension": "Promote to stable only after result schema, API boundaries, analytics, grouping, and fallback contracts are documented."
+        "extension": "Keep stable while result schema, API boundaries, analytics, grouping, and fallback contracts stay documented."
       }
     },
     {
       "id": "component.navigation-related-content",
       "name": "RelatedContent",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Related content candidate for cross-property recommendations grouped by source and relationship.",
+      "maturity": "stable",
+      "description": "Related content primitive for cross-property recommendations grouped by source and relationship.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/navigation/RelatedContent.svelte",
       "importPath": "@create-something/canon/navigation",
@@ -2171,8 +2120,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "navigation",
         "related-content",
-        "recommendation",
-        "candidate"
+        "recommendation"
       ],
       "modalities": [
         "web",
@@ -2191,15 +2139,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Related content must expose section title, grouped links, relationship labels, and loading/error states as text.",
         "evidence": "Related state must preserve content id, property, relationship, item ids, URLs, grouping, and fetch status.",
         "motion": "Loading and grouping transitions must be optional and cannot hide link text or relationship labels.",
-        "extension": "Promote to stable only after related-item schema, grouping, fetch status, and source boundary contracts are documented."
+        "extension": "Keep stable while related-item schema, grouping, fetch status, and source boundary contracts stay documented."
       }
     },
     {
       "id": "component.navigation-concept-journey",
       "name": "ConceptJourney",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Concept journey candidate for tracing a topic across property stages, related artifacts, and source links.",
+      "maturity": "stable",
+      "description": "Concept journey primitive for tracing a topic across property stages, related artifacts, and source links.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/navigation/ConceptJourney.svelte",
       "importPath": "@create-something/canon/navigation",
@@ -2207,8 +2155,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "navigation",
         "journey",
-        "cross-property",
-        "candidate"
+        "cross-property"
       ],
       "modalities": [
         "web",
@@ -2227,15 +2174,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Journey stages must expose concept, stage order, item links, empty stages, loading, and error states structurally.",
         "evidence": "Journey data must preserve concept, stage keys, item ids, titles, URLs, property source, and active stage count.",
         "motion": "Timeline and stage transitions must be optional and cannot replace the ordered text path.",
-        "extension": "Promote to stable only after journey schema, stage ordering, empty-state, and API boundary contracts are documented."
+        "extension": "Keep stable while journey schema, stage ordering, empty-state, and API boundary contracts stay documented."
       }
     },
     {
       "id": "component.navigation-menu-button",
       "name": "MenuButton",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Menu button candidate for accessible responsive navigation toggles with open and close state.",
+      "maturity": "stable",
+      "description": "Menu button primitive for accessible responsive navigation toggles with open and close state.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/navigation/MenuButton.svelte",
       "importPath": "@create-something/canon/navigation",
@@ -2243,8 +2190,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "navigation",
         "menu-button",
-        "toggle",
-        "candidate"
+        "toggle"
       ],
       "modalities": [
         "web",
@@ -2262,15 +2208,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Menu toggles must expose open/closed state, target label, focus treatment, and an equivalent text command.",
         "evidence": "Toggle state must preserve label, expanded state, target drawer/menu id, and activation source.",
         "motion": "Hamburger-to-close animation must be optional and must not be the only state indicator.",
-        "extension": "Promote to stable only after target relationship, expanded-state, and reduced-motion contracts are documented."
+        "extension": "Keep stable while target relationship, expanded-state, and reduced-motion contracts stay documented."
       }
     },
     {
       "id": "component.navigation-mega-menu",
       "name": "MegaMenu",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Mega menu candidate for grouped route panels, featured links, and keyboard navigable menu structures.",
+      "maturity": "stable",
+      "description": "Mega menu primitive for grouped route panels, featured links, and keyboard navigable menu structures.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/navigation/MegaMenu.svelte",
       "importPath": "@create-something/canon/navigation",
@@ -2278,8 +2224,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "navigation",
         "mega-menu",
-        "menu",
-        "candidate"
+        "menu"
       ],
       "modalities": [
         "web",
@@ -2298,15 +2243,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Mega menus must preserve trigger labels, expanded state, menu roles, link groups, and keyboard navigation.",
         "evidence": "Menu data must preserve item ids, labels, hrefs, sections, featured links, active panel, and close reason.",
         "motion": "Panel reveal, hover delay, and chevron motion must be optional and reduced-motion safe.",
-        "extension": "Promote to stable only after menu schema, keyboard model, responsive drawer, and active-panel contracts are documented."
+        "extension": "Keep stable while menu schema, keyboard model, responsive drawer, and active-panel contracts stay documented."
       }
     },
     {
       "id": "component.filtering-filter-toggle-panel",
       "name": "FilterTogglePanel",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Filter control panel candidate for material, category, status, and price-range facets.",
+      "maturity": "stable",
+      "description": "Filter control panel primitive for material, category, status, and price-range facets.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/filtering/FilterTogglePanel.svelte",
       "importPath": "@create-something/canon/filtering",
@@ -2314,8 +2259,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "filtering",
         "facets",
-        "toggle-panel",
-        "candidate"
+        "toggle-panel"
       ],
       "modalities": [
         "web",
@@ -2333,15 +2277,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Facet groups must expose labels, selected state, range values, clear action, and expanded state without visual-only toggles.",
         "evidence": "Filter state must preserve materials, categories, statuses, price min/max, and the configuration that produced each option.",
         "motion": "Panel collapse, toggle feedback, and range updates must remain usable without animation.",
-        "extension": "Promote to stable only after facet schema, grouped option labels, range behavior, and clear/reset contracts are documented."
+        "extension": "Keep stable while facet schema, grouped option labels, range behavior, and clear/reset contracts stay documented."
       }
     },
     {
       "id": "component.filtering-product-grid",
       "name": "ProductGrid",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Filtered product grid candidate for responsive catalog cards, empty state, and product metadata.",
+      "maturity": "stable",
+      "description": "Filtered product grid primitive for responsive catalog cards, empty state, and product metadata.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/filtering/ProductGrid.svelte",
       "importPath": "@create-something/canon/filtering",
@@ -2349,8 +2293,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "filtering",
         "product-grid",
-        "catalog",
-        "candidate"
+        "catalog"
       ],
       "modalities": [
         "web",
@@ -2368,15 +2311,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Product cards must preserve product name, image alt text, status, material, dimensions, price, and empty state text.",
         "evidence": "Product data must preserve stable ids, category, materials, dimensions, price in cents, status, and image source.",
         "motion": "Card hover elevation and grid transitions must be optional and reduced-motion safe.",
-        "extension": "Promote to stable only after product schema, empty-action slot, image fallback, and formatting contracts are documented."
+        "extension": "Keep stable while product schema, empty-action slot, image fallback, and formatting contracts stay documented."
       }
     },
     {
       "id": "component.filtering-agent-panel",
       "name": "AgentPanel",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Agent-assisted filtering panel candidate for natural-language queries, reasoning trace, and applied filter summary.",
+      "maturity": "stable",
+      "description": "Agent-assisted filtering panel primitive for natural-language queries, reasoning trace, and applied filter summary.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/filtering/AgentPanel.svelte",
       "importPath": "@create-something/canon/filtering",
@@ -2384,8 +2327,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "filtering",
         "agent-panel",
-        "reasoning",
-        "candidate"
+        "reasoning"
       ],
       "modalities": [
         "web",
@@ -2404,15 +2346,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Agent panels must expose query input, loading state, example queries, reasoning visibility, and applied filters as readable text.",
         "evidence": "Agent steps must preserve type, content, optional tool metadata, timestamp, explanation, and resulting filter state.",
         "motion": "Reasoning reveal, example-chip feedback, and loading treatment must not delay query submission or applied-filter summary.",
-        "extension": "Promote to stable only after query schema, tool-trace disclosure, loading behavior, and filter summary contracts are documented."
+        "extension": "Keep stable while query schema, tool-trace disclosure, loading behavior, and filter summary contracts stay documented."
       }
     },
     {
       "id": "component.insights-key-insight",
       "name": "KeyInsight",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Shareable key insight visual candidate for full-screen, inline, card, and exportable proof statements.",
+      "maturity": "stable",
+      "description": "Shareable key insight visual primitive for full-screen, inline, card, and exportable proof statements.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/insights/KeyInsight.svelte",
       "importPath": "@create-something/canon/insights",
@@ -2420,8 +2362,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "insights",
         "proof",
-        "shareable",
-        "candidate"
+        "shareable"
       ],
       "modalities": [
         "web",
@@ -2439,15 +2380,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Insight visuals must expose the principle, source, comparison rows, interaction trigger, and final revealed text outside animation.",
         "evidence": "Insight data must preserve id, principle, optional statement words, comparison rows, source URL, property, paper id, and category.",
         "motion": "Click, scroll, and auto revelation must be optional and must respect reduced-motion and static export contexts.",
-        "extension": "Promote to stable only after export formats, source attribution, statement fallback, and interaction-trigger contracts are documented."
+        "extension": "Keep stable while export formats, source attribution, statement fallback, and interaction-trigger contracts stay documented."
       }
     },
     {
       "id": "component.insights-key-insight-card",
       "name": "KeyInsightCard",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Compact insight card candidate for embedding proof statements and before/after comparisons in papers and articles.",
+      "maturity": "stable",
+      "description": "Compact insight card primitive for embedding proof statements and before/after comparisons in papers and articles.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/insights/KeyInsightCard.svelte",
       "importPath": "@create-something/canon/insights",
@@ -2455,8 +2396,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "insights",
         "card",
-        "comparison",
-        "candidate"
+        "comparison"
       ],
       "modalities": [
         "web",
@@ -2474,15 +2414,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Insight cards must keep the key insight label, category, principle, comparison rows, link target, and source readable.",
         "evidence": "Card data must preserve the same insight config as the full view plus optional href for full-screen inspection.",
         "motion": "Card hover lift and focus treatment must be optional and cannot replace the link or source text.",
-        "extension": "Promote to stable only after inline density, comparison wrapping, source behavior, and full-view linking contracts are documented."
+        "extension": "Keep stable while inline density, comparison wrapping, source behavior, and full-view linking contracts stay documented."
       }
     },
     {
       "id": "component.insights-statement-text",
       "name": "StatementText",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Word-level statement revelation candidate for subtractive typography, essence extraction, and reverse reading.",
+      "maturity": "stable",
+      "description": "Word-level statement revelation primitive for subtractive typography, essence extraction, and reverse reading.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/insights/StatementText.svelte",
       "importPath": "@create-something/canon/insights",
@@ -2490,8 +2430,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "insights",
         "statement",
-        "typography",
-        "candidate"
+        "typography"
       ],
       "modalities": [
         "web",
@@ -2509,15 +2448,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Statement text must preserve full words, kept words, emphasis, phase, direction, and readable essence without animation.",
         "evidence": "Statement data must preserve ordered words, keep/remove metadata, optional emphasis, and derived essence text.",
         "motion": "Striking, fading, coalescing, and reverse expansion must be reduced-motion safe and must not be the only path to the insight.",
-        "extension": "Promote to stable only after word schema, phase semantics, essence fallback, and export-safe typography contracts are documented."
+        "extension": "Keep stable while word schema, phase semantics, essence fallback, and export-safe typography contracts stay documented."
       }
     },
     {
       "id": "component.content-video-lightbox",
       "name": "VideoLightbox",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Video lightbox candidate for thumbnail-triggered YouTube, Vimeo, or direct-video playback.",
+      "maturity": "stable",
+      "description": "Video lightbox primitive for thumbnail-triggered YouTube, Vimeo, or direct-video playback.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/content/VideoLightbox.svelte",
       "importPath": "@create-something/canon/content",
@@ -2525,8 +2464,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "content",
         "video",
-        "lightbox",
-        "candidate"
+        "lightbox"
       ],
       "modalities": [
         "web",
@@ -2543,15 +2481,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Video triggers must expose title, play action, close action, modal state, captions path, and provider fallback.",
         "evidence": "Video data must preserve provider URL, embed URL, thumbnail URL, title, aspect ratio, and playback state.",
         "motion": "Lightbox fade, scale, and play-button hover treatment must be optional and cannot block Escape or close controls.",
-        "extension": "Promote to stable only after provider parsing, captions, focus management, thumbnail fallback, and close behavior contracts are documented."
+        "extension": "Keep stable while provider parsing, captions, focus management, thumbnail fallback, and close behavior contracts stay documented."
       }
     },
     {
       "id": "component.content-carousel",
       "name": "Carousel",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Generic content carousel candidate for indexed slide collections with arrows, dots, looping, and autoplay.",
+      "maturity": "stable",
+      "description": "Generic content carousel primitive for indexed slide collections with arrows, dots, looping, and autoplay.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/content/Carousel.svelte",
       "importPath": "@create-something/canon/content",
@@ -2559,8 +2497,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "content",
         "carousel",
-        "slides",
-        "candidate"
+        "slides"
       ],
       "modalities": [
         "web",
@@ -2577,15 +2514,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Carousel slides must expose region label, current index, slide count, previous/next actions, dot labels, and hidden state.",
         "evidence": "Carousel state must preserve slide order, current index, loop setting, autoplay interval, pause state, and rendering slot semantics.",
         "motion": "Slide translation and autoplay must be pausable, reduced-motion safe, and never the only way to discover slide content.",
-        "extension": "Promote to stable only after keyboard behavior, autoplay policy, slide schema, and nonvisual summary contracts are documented."
+        "extension": "Keep stable while keyboard behavior, autoplay policy, slide schema, and nonvisual summary contracts stay documented."
       }
     },
     {
       "id": "component.content-testimonial-carousel",
       "name": "TestimonialCarousel",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Social proof carousel candidate for testimonials with quote, author, role, avatar, rating, and navigation state.",
+      "maturity": "stable",
+      "description": "Social proof carousel primitive for testimonials with quote, author, role, avatar, rating, and navigation state.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/content/TestimonialCarousel.svelte",
       "importPath": "@create-something/canon/content",
@@ -2593,8 +2530,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "content",
         "testimonial",
-        "social-proof",
-        "candidate"
+        "social-proof"
       ],
       "modalities": [
         "web",
@@ -2612,15 +2548,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Testimonials must expose quote text, author, role, avatar alt text, rating text, current index, and navigation actions.",
         "evidence": "Testimonial data must preserve quote, author, role, avatar URL, rating, headline, subheadline, and proof ordering.",
         "motion": "Auto-rotation, card fade, and horizontal movement must pause on interaction and remain reduced-motion safe.",
-        "extension": "Promote to stable only after quote provenance, rating semantics, autoplay policy, and proof/source attribution contracts are documented."
+        "extension": "Keep stable while quote provenance, rating semantics, autoplay policy, and proof/source attribution contracts stay documented."
       }
     },
     {
       "id": "component.conversion-trust-signals",
       "name": "TrustSignals",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Trust signal strip candidate for client, certification, association, or press credibility marks.",
+      "maturity": "stable",
+      "description": "Trust signal strip primitive for client, certification, association, or press credibility marks.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/conversion/TrustSignals.svelte",
       "importPath": "@create-something/canon/conversion",
@@ -2628,8 +2564,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "conversion",
         "trust",
-        "proof",
-        "candidate"
+        "proof"
       ],
       "modalities": [
         "web",
@@ -2646,15 +2581,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Trust marks must expose headline, item names, logo alt text, fallback logo text, variant, and compact state.",
         "evidence": "Trust data must preserve item name, logo URL or logo text, trust category, and ordering source.",
         "motion": "Logo hover opacity and filter changes must be optional and cannot be the only credibility cue.",
-        "extension": "Promote to stable only after logo fallback, source attribution, variant naming, and proof-ordering contracts are documented."
+        "extension": "Keep stable while logo fallback, source attribution, variant naming, and proof-ordering contracts stay documented."
       }
     },
     {
       "id": "component.conversion-sticky-cta",
       "name": "StickyCTA",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Journey-aware sticky call-to-action candidate that changes message by scroll depth.",
+      "maturity": "stable",
+      "description": "Journey-aware sticky call-to-action primitive that changes message by scroll depth.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/conversion/StickyCTA.svelte",
       "importPath": "@create-something/canon/conversion",
@@ -2662,8 +2597,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "conversion",
         "cta",
-        "journey-depth",
-        "candidate"
+        "journey-depth"
       ],
       "modalities": [
         "web",
@@ -2681,15 +2615,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Sticky actions must expose href, current message, journey depth, visible state, and text alternative to the arrow.",
         "evidence": "CTA state must preserve scroll threshold, early/mid/late messages, selected journey depth, and destination.",
         "motion": "Slide-up, hover lift, arrow movement, and late-state emphasis must be optional and reduced-motion safe.",
-        "extension": "Promote to stable only after scroll-depth policy, message schema, mobile placement, and dismissal/overlap contracts are documented."
+        "extension": "Keep stable while scroll-depth policy, message schema, mobile placement, and dismissal/overlap contracts stay documented."
       }
     },
     {
       "id": "component.conversion-process-steps",
       "name": "ProcessSteps",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Process disclosure candidate for numbered engagement steps with optional connectors and section copy.",
+      "maturity": "stable",
+      "description": "Process disclosure primitive for numbered engagement steps with optional connectors and section copy.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/conversion/ProcessSteps.svelte",
       "importPath": "@create-something/canon/conversion",
@@ -2697,8 +2631,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "conversion",
         "process",
-        "steps",
-        "candidate"
+        "steps"
       ],
       "modalities": [
         "web",
@@ -2716,15 +2649,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Process steps must preserve headline, subheadline, ordered number, title, description, and connector semantics as readable text.",
         "evidence": "Process data must preserve step number, title, description, order, and whether connectors are presentation-only.",
         "motion": "Connector and layout treatments must not be required to understand step order or completion state.",
-        "extension": "Promote to stable only after step schema, connector policy, responsive order, and nonvisual summary contracts are documented."
+        "extension": "Keep stable while step schema, connector policy, responsive order, and nonvisual summary contracts stay documented."
       }
     },
     {
       "id": "component.conversion-metric-counters",
       "name": "MetricCounters",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Metric counter candidate for proof statistics with prefix, suffix, label, and scroll-triggered count-up.",
+      "maturity": "stable",
+      "description": "Metric counter primitive for proof statistics with prefix, suffix, label, and scroll-triggered count-up.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/conversion/MetricCounters.svelte",
       "importPath": "@create-something/canon/conversion",
@@ -2732,8 +2665,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "conversion",
         "metrics",
-        "proof",
-        "candidate"
+        "proof"
       ],
       "modalities": [
         "web",
@@ -2750,15 +2682,15 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Metric counters must expose final numeric value, prefix, suffix, label, and source context without relying on count-up animation.",
         "evidence": "Metric data must preserve value, label, prefix, suffix, display order, and measurement source when available.",
         "motion": "Count-up and entrance staggering must resolve immediately for reduced-motion users and never hide final values.",
-        "extension": "Promote to stable only after metric provenance, formatting, reduced-motion final-state, and responsive divider contracts are documented."
+        "extension": "Keep stable while metric provenance, formatting, reduced-motion final-state, and responsive divider contracts stay documented."
       }
     },
     {
       "id": "component.conversion-exit-intent",
       "name": "ExitIntent",
       "kind": "component",
-      "maturity": "candidate",
-      "description": "Exit-intent modal candidate for value-preserving retention prompts with storage, delay, and conversion callbacks.",
+      "maturity": "stable",
+      "description": "Exit-intent modal primitive for value-preserving retention prompts with storage, delay, and conversion callbacks.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/conversion/ExitIntent.svelte",
       "importPath": "@create-something/canon/conversion",
@@ -2766,8 +2698,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "tags": [
         "conversion",
         "modal",
-        "retention",
-        "candidate"
+        "retention"
       ],
       "modalities": [
         "web",
@@ -2785,7 +2716,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "accessibility": "Exit intent prompts must expose dialog title, description, close action, CTA, dismissal, storage policy, and Escape behavior.",
         "evidence": "Prompt state must preserve activation delay, scroll depth threshold, storage key, session policy, sensitivity, disabled state, and callback events.",
         "motion": "Backdrop fade and dialog slide-up must be optional and must not trap users or delay close behavior.",
-        "extension": "Promote to stable only after storage consent, trigger policy, focus management, callback semantics, and value-offer contracts are documented."
+        "extension": "Keep stable while storage consent, trigger policy, focus management, callback semantics, and value-offer contracts stay documented."
       }
     },
     {

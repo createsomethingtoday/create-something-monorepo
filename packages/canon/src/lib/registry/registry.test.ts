@@ -271,20 +271,32 @@ describe('Canon registry manifest', () => {
     expect(missingPathPolicies).toEqual([]);
   });
 
-  it('keeps item modalities inside the required modality set', () => {
-    const requiredModalities = new Set(CANON_REGISTRY_MANIFEST.requiredModalities);
+	it('keeps item modalities inside the required modality set', () => {
+		const requiredModalities = new Set(CANON_REGISTRY_MANIFEST.requiredModalities);
 
-    for (const item of CANON_REGISTRY_MANIFEST.items) {
-      expect(item.modalities.length, item.id).toBeGreaterThan(0);
+		for (const item of CANON_REGISTRY_MANIFEST.items) {
+			expect(item.modalities.length, item.id).toBeGreaterThan(0);
       for (const modality of item.modalities) {
         expect(requiredModalities.has(modality), `${item.id} -> ${modality}`).toBe(true);
       }
-    }
-  });
+		}
+	});
 
-  it('keeps the MCP Canon registry snapshot synchronized', () => {
-    expect(readMcpCanonRegistrySnapshot()).toEqual(CANON_REGISTRY_MANIFEST);
-  });
+	it('keeps every Canon component registry item stable', () => {
+		const componentItems = CANON_REGISTRY_MANIFEST.items.filter((item) => item.kind === 'component');
+		const unstableComponents = componentItems.filter((item) => item.maturity !== 'stable');
+		const componentCandidateTags = componentItems
+			.filter((item) => item.tags.includes('candidate'))
+			.map((item) => item.id);
+
+		expect(componentItems.length).toBeGreaterThan(0);
+		expect(unstableComponents).toEqual([]);
+		expect(componentCandidateTags).toEqual([]);
+	});
+
+	it('keeps the MCP Canon registry snapshot synchronized', () => {
+		expect(readMcpCanonRegistrySnapshot()).toEqual(CANON_REGISTRY_MANIFEST);
+	});
 
   it('covers every public Clear primitive in the registry', () => {
     const clearIndexSource = readFileSync(
@@ -434,7 +446,7 @@ describe('Canon registry manifest', () => {
     });
   });
 
-  it('adds ProjectGridInteractive as a layout candidate tied to stable grid primitives', () => {
+	it('keeps ProjectGridInteractive stable and tied to stable grid primitives', () => {
     const item = getCanonRegistryItem('component.layout-project-grid-interactive');
     const classification = getCanonPublicExportClassification('./layout', 'ProjectGridInteractive');
 
@@ -442,7 +454,7 @@ describe('Canon registry manifest', () => {
       'component.layout-project-grid-interactive'
     );
     expect(item?.kind).toBe('component');
-    expect(item?.maturity).toBe('candidate');
+    expect(item?.maturity).toBe('stable');
     expect(item?.sourcePath).toBe('packages/canon/src/lib/layout/ProjectGridInteractive.svelte');
     expect(item?.importPath).toBe('@create-something/canon/layout');
     expect(item?.docsPath).toBe('/canon/components/layout');
@@ -458,7 +470,7 @@ describe('Canon registry manifest', () => {
     expect(item?.contract.accessibility).toContain('without depending on hover');
     expect(item?.contract.evidence).toContain('Project data');
     expect(item?.contract.motion).toContain('reduced-motion');
-    expect(item?.contract.extension).toContain('Promote to stable only after');
+    expect(item?.contract.extension).toContain('Keep stable while');
     expect(classification?.registryPolicy).toBe('candidate-review');
   });
 
@@ -479,7 +491,7 @@ describe('Canon registry manifest', () => {
     expect(helperClassification?.registryPolicy).toBe('candidate-review');
   });
 
-  it('adds diagram candidates with explicit contracts without stable promotion', () => {
+	it('keeps diagram components stable with explicit contracts', () => {
     const diagramCandidates = [
       ['component.diagrams-flow-diagram', 'FlowDiagram', 'flow'],
       ['component.diagrams-bar-chart', 'BarChart', 'bar'],
@@ -496,7 +508,7 @@ describe('Canon registry manifest', () => {
       const classification = getCanonPublicExportClassification('./diagrams', exportName);
 
       expect(item?.kind, id).toBe('component');
-      expect(item?.maturity, id).toBe('candidate');
+      expect(item?.maturity, id).toBe('stable');
       expect(item?.sourcePath, id).toBe(`packages/canon/src/lib/diagrams/${exportName}.svelte`);
       expect(item?.importPath, id).toBe('@create-something/canon/diagrams');
       expect(item?.docsPath, id).toBe('/canon/components/diagrams');
@@ -507,21 +519,21 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, id).toBeTruthy();
       expect(item?.contract.evidence, id).toBeTruthy();
       expect(item?.contract.motion, id).toBeTruthy();
-      expect(item?.contract.extension, id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, id).toContain('Keep stable while');
       expect(classification?.registryPolicy, exportName).toBe('candidate-review');
     }
 
     expect(
-      searchCanonRegistry('diagram', { maturity: 'candidate' }).map((item) => item.id)
+      searchCanonRegistry('diagram', { maturity: 'stable', limit: 100 }).map((item) => item.id)
     ).toEqual(expect.arrayContaining(diagramCandidates.map(([id]) => id)));
   });
 
-  it('adds TypographyHero as a candidate tied to heading and token contracts', () => {
+	it('keeps TypographyHero stable and tied to heading and token contracts', () => {
     const item = getCanonRegistryItem('component.typography-typography-hero');
     const classification = getCanonPublicExportClassification('./typography', 'TypographyHero');
 
     expect(item?.kind).toBe('component');
-    expect(item?.maturity).toBe('candidate');
+    expect(item?.maturity).toBe('stable');
     expect(item?.sourcePath).toBe('packages/canon/src/lib/typography/TypographyHero.svelte');
     expect(item?.importPath).toBe('@create-something/canon/typography');
     expect(item?.docsPath).toBe('/canon/components/typography');
@@ -532,11 +544,11 @@ describe('Canon registry manifest', () => {
     expect(item?.contract.accessibility).toContain('semantic heading structure');
     expect(item?.contract.evidence).toContain('page claim');
     expect(item?.contract.motion).toContain('reduced-motion');
-    expect(item?.contract.extension).toContain('Promote to stable only after');
+    expect(item?.contract.extension).toContain('Keep stable while');
     expect(classification?.registryPolicy).toBe('candidate-review');
   });
 
-  it('adds Atlas renderers as candidates aligned to the headless graph artifact', () => {
+	it('keeps Atlas renderers stable and aligned to the headless graph artifact', () => {
     const atlasCandidates = [
       {
         id: 'component.atlas-atlas-flow',
@@ -557,7 +569,7 @@ describe('Canon registry manifest', () => {
       const classification = getCanonPublicExportClassification('./atlas', candidate.exportName);
 
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/atlas/${candidate.exportName}.svelte`
       );
@@ -572,16 +584,16 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toContain('artifact');
       expect(item?.contract.motion, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
     }
 
     expect(
-      searchCanonRegistry('atlas renderer', { maturity: 'candidate' }).map((item) => item.id)
+      searchCanonRegistry('atlas renderer', { maturity: 'stable', limit: 100 }).map((item) => item.id)
     ).toEqual(expect.arrayContaining(atlasCandidates.map(({ id }) => id)));
   });
 
-  it('adds advanced form controls as candidates aligned to foundation form primitives', () => {
+	it('keeps advanced form controls stable and aligned to foundation form primitives', () => {
     const formCandidates = [
       {
         id: 'component.forms-form-field',
@@ -624,7 +636,7 @@ describe('Canon registry manifest', () => {
         candidate.exportName
       ).toContain(candidate.id);
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/forms/${candidate.exportName}.svelte`
       );
@@ -640,16 +652,16 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toBeTruthy();
       expect(item?.contract.motion, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
     }
 
     expect(
-      searchCanonRegistry('form candidate', { maturity: 'candidate' }).map((item) => item.id)
+      searchCanonRegistry('form validation', { maturity: 'stable', limit: 100 }).map((item) => item.id)
     ).toEqual(expect.arrayContaining(formCandidates.map(({ id }) => id)));
   });
 
-  it('adds composition patterns as candidates aligned to stable primitives', () => {
+	it('keeps composition patterns stable and aligned to stable primitives', () => {
     const patternCandidates = [
       {
         id: 'component.patterns-form-layout',
@@ -716,7 +728,7 @@ describe('Canon registry manifest', () => {
         candidate.exportName
       ).toContain(candidate.id);
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/patterns/${candidate.exportName}.svelte`
       );
@@ -732,16 +744,16 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toBeTruthy();
       expect(item?.contract.motion, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
     }
 
     expect(
-      searchCanonRegistry('pattern candidate', { maturity: 'candidate' }).map((item) => item.id)
+      searchCanonRegistry('pattern validation', { maturity: 'stable', limit: 100 }).map((item) => item.id)
     ).toEqual(expect.arrayContaining(patternCandidates.map(({ id }) => id)));
   });
 
-  it('adds advanced navigation surfaces as candidates while keeping Tabs stable', () => {
+	it('keeps advanced navigation surfaces stable while keeping Tabs stable', () => {
     const navigationCandidates = [
       {
         id: 'component.navigation-sticky-header',
@@ -817,7 +829,7 @@ describe('Canon registry manifest', () => {
         candidate.exportName
       ).toContain(candidate.id);
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/navigation/${candidate.exportName}.svelte`
       );
@@ -833,7 +845,7 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toBeTruthy();
       expect(item?.contract.motion, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
     }
 
@@ -842,11 +854,11 @@ describe('Canon registry manifest', () => {
       'registry-covered'
     );
     expect(
-      searchCanonRegistry('navigation candidate', { maturity: 'candidate' }).map((item) => item.id)
+      searchCanonRegistry('navigation menu', { maturity: 'stable', limit: 100 }).map((item) => item.id)
     ).toEqual(expect.arrayContaining(navigationCandidates.map(({ id }) => id)));
   });
 
-  it('adds filtering surfaces as candidates for product and agent-assisted filtering', () => {
+	it('keeps filtering surfaces stable for product and agent-assisted filtering', () => {
     const filteringCandidates = [
       {
         id: 'component.filtering-filter-toggle-panel',
@@ -884,7 +896,7 @@ describe('Canon registry manifest', () => {
         candidate.exportName
       ).toContain(candidate.id);
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/filtering/${candidate.exportName}.svelte`
       );
@@ -900,16 +912,16 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toBeTruthy();
       expect(item?.contract.motion, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
     }
 
     expect(
-      searchCanonRegistry('filtering candidate', { maturity: 'candidate' }).map((item) => item.id)
+      searchCanonRegistry('filtering product', { maturity: 'stable', limit: 100 }).map((item) => item.id)
     ).toEqual(expect.arrayContaining(filteringCandidates.map(({ id }) => id)));
   });
 
-  it('adds insight visuals as candidates for proof and statement export surfaces', () => {
+	it('keeps insight visuals stable for proof and statement export surfaces', () => {
     const insightCandidates = [
       {
         id: 'component.insights-key-insight',
@@ -940,7 +952,7 @@ describe('Canon registry manifest', () => {
         candidate.exportName
       ).toContain(candidate.id);
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/insights/${candidate.exportName}.svelte`
       );
@@ -956,18 +968,18 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toBeTruthy();
       expect(item?.contract.motion, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
     }
 
     expect(
-      searchCanonRegistry('insight proof candidate', { maturity: 'candidate' }).map(
+      searchCanonRegistry('insight proof', { maturity: 'stable', limit: 100 }).map(
         (item) => item.id
       )
     ).toEqual(expect.arrayContaining(insightCandidates.map(({ id }) => id)));
   });
 
-  it('adds content media and carousel surfaces as candidates', () => {
+	it('keeps content media and carousel surfaces stable', () => {
     const contentCandidates = [
       {
         id: 'component.content-video-lightbox',
@@ -998,7 +1010,7 @@ describe('Canon registry manifest', () => {
         candidate.exportName
       ).toContain(candidate.id);
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/content/${candidate.exportName}.svelte`
       );
@@ -1014,18 +1026,18 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toBeTruthy();
       expect(item?.contract.motion, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
     }
 
     expect(
-      searchCanonRegistry('content carousel candidate', { maturity: 'candidate' }).map(
+      searchCanonRegistry('content carousel', { maturity: 'stable', limit: 100 }).map(
         (item) => item.id
       )
     ).toEqual(expect.arrayContaining(contentCandidates.map(({ id }) => id)));
   });
 
-  it('adds root component barrel candidate-review exports as candidates', () => {
+	it('keeps root component barrel candidate-review exports backed by stable components', () => {
     const rootComponentCandidates = [
       {
         id: 'component.footer',
@@ -1137,7 +1149,7 @@ describe('Canon registry manifest', () => {
         candidate.exportName
       ).toContain(candidate.id);
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/components/${candidate.exportName}.svelte`
       );
@@ -1152,7 +1164,7 @@ describe('Canon registry manifest', () => {
       expect(item?.modalities, candidate.id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
     }
 
@@ -1176,7 +1188,7 @@ describe('Canon registry manifest', () => {
 
     for (const candidate of rootComponentCandidates) {
       expect(
-        searchCanonRegistry(candidate.id, { maturity: 'candidate', limit: 1 }).map(
+        searchCanonRegistry(candidate.id, { maturity: 'stable', limit: 1 }).map(
           (item) => item.id
         ),
         candidate.id
@@ -1257,7 +1269,7 @@ describe('Canon registry manifest', () => {
         candidate.exportName
       ).toContain(candidate.id);
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/interactive/${candidate.exportName}.svelte`
       );
@@ -1273,11 +1285,11 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toBeTruthy();
       expect(item?.contract.motion, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.classification, candidate.exportName).toBe(candidate.classification);
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
       expect(
-        searchCanonRegistry(candidate.id, { maturity: 'candidate', limit: 1 }).map(
+        searchCanonRegistry(candidate.id, { maturity: 'stable', limit: 1 }).map(
           (result) => result.id
         ),
         candidate.id
@@ -1300,7 +1312,7 @@ describe('Canon registry manifest', () => {
     }
   });
 
-  it('adds 3D brand marks as brand-surface candidates', () => {
+	it('keeps 3D brand marks stable while brand-surface exports remain reviewable', () => {
     const brand3dCandidates = [
       {
         id: 'component.brand-cube-mark3-d',
@@ -1330,7 +1342,7 @@ describe('Canon registry manifest', () => {
         candidate.exportName
       ).toContain(candidate.id);
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/brand/3d/${candidate.exportName}.svelte`
       );
@@ -1347,11 +1359,11 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toBeTruthy();
       expect(item?.contract.motion, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.classification, candidate.exportName).toBe('brand-surface');
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
       expect(
-        searchCanonRegistry(candidate.id, { maturity: 'candidate', limit: 1 }).map(
+        searchCanonRegistry(candidate.id, { maturity: 'stable', limit: 1 }).map(
           (result) => result.id
         ),
         candidate.id
@@ -1359,7 +1371,7 @@ describe('Canon registry manifest', () => {
     }
   });
 
-  it('adds conversion proof and action surfaces as candidates', () => {
+	it('keeps conversion proof and action surfaces stable', () => {
     const conversionCandidates = [
       {
         id: 'component.conversion-trust-signals',
@@ -1405,7 +1417,7 @@ describe('Canon registry manifest', () => {
         candidate.exportName
       ).toContain(candidate.id);
       expect(item?.kind, candidate.id).toBe('component');
-      expect(item?.maturity, candidate.id).toBe('candidate');
+      expect(item?.maturity, candidate.id).toBe('stable');
       expect(item?.sourcePath, candidate.id).toBe(
         `packages/canon/src/lib/conversion/${candidate.exportName}.svelte`
       );
@@ -1421,12 +1433,12 @@ describe('Canon registry manifest', () => {
       expect(item?.contract.accessibility, candidate.id).toBeTruthy();
       expect(item?.contract.evidence, candidate.id).toBeTruthy();
       expect(item?.contract.motion, candidate.id).toBeTruthy();
-      expect(item?.contract.extension, candidate.id).toContain('Promote to stable only after');
+      expect(item?.contract.extension, candidate.id).toContain('Keep stable while');
       expect(classification?.registryPolicy, candidate.exportName).toBe('candidate-review');
     }
 
     expect(
-      searchCanonRegistry('conversion proof candidate', { maturity: 'candidate' }).map(
+      searchCanonRegistry('conversion proof', { maturity: 'stable', limit: 100 }).map(
         (item) => item.id
       )
     ).toEqual(expect.arrayContaining(conversionCandidates.map(({ id }) => id)));
