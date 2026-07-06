@@ -424,6 +424,7 @@ function renderImage2Prompt(project, imageGeneration, output, date) {
     'Canon image standard:',
     'Use Ona.com as the design and communication foundation: calm hierarchy, plain claims, compact proof, governed execution, visible evidence, and restrained action states.',
     'Translate that foundation into CREATE SOMETHING artifact language: system maps, MCP boundaries, policy gates, receipts, validation proof, owners, and handoff state.',
+    'Treat the approved OpenAI generated export as the publishable visual layer; keep source briefs, manifests, screenshots, and receipts as the evidence/control layer.',
     'Prefer porcelain or quiet near-black surfaces, crisp labels, restrained cobalt/moss/stop accents, compact proof panels, and the isometric cube as a persistent system signature.',
     'Avoid glowing robots, circuit faces, blue AI gradients, generic brains, stock photography, fake dashboards, unreadable file paths, client secrets, PHI, private prompts, watermarks, and vendor endorsement.',
     '',

@@ -156,7 +156,7 @@
   title="Notion Review Workspace | CREATE SOMETHING .agency"
   description="CREATE SOMETHING maps Notion as the operator review workspace around AI-enabled work, with PM views, Worker automation, tool boundaries, and Policy OS control."
   keywords="Notion review workspace, Notion operating systems, Notion Workers, Notion MCP, Policy OS"
-  ogImage="/og/notion-lane.svg"
+  ogImage="/og/notion-lane.png"
   propertyName="agency"
   {faqItems}
 />
@@ -190,9 +190,9 @@
   {#snippet after()}
     <ClearCardGrid items={proofCards} columns={4} ariaLabel="Notion proof cards" />
     <ArticleVisualFigure
-      src="/images/articles/notion-ops-workspace/notion-operator-workspace.svg"
+      src="/images/articles/notion-ops-workspace/notion-operator-workspace.png"
       alt="Diagram showing Notion as the operator workspace, with Linear, production systems, and policy evidence kept in their own source-of-truth boundaries."
-      eyebrow="Original visual"
+      eyebrow="Generated visual"
       title="Notion is the reviewable workspace, not the whole system."
       caption="This owned diagram makes the workspace role concrete: Notion helps humans inspect timelines, risks, decisions, and evidence while source-of-truth systems keep their own ownership."
       sourceLabel="Created by CREATE SOMETHING for this workflow tool stack."

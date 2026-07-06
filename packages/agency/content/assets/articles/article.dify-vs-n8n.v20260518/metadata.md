@@ -6,12 +6,16 @@ Updated: 2026-06-22
 
 ## Original Visuals
 
-### dify-n8n-layer-map.svg
+### dify-n8n-layer-map.png
 
-- Path: `/images/articles/dify-vs-n8n/dify-n8n-layer-map.svg`
+- Path: `/images/articles/dify-vs-n8n/dify-n8n-layer-map.png`
 - Owner: CREATE SOMETHING
 - Usage: Article layer map comparing n8n, Cloudflare, Dify, and Policy OS.
 - Refresh cadence: Review with article updates.
+- Source brief: `packages/agency/static/images/articles/dify-vs-n8n/dify-n8n-layer-map.svg`
+- Model: OpenAI `gpt-image-2`
+- Generated: 2026-07-06
+- SHA-256: `965997b76ed5ba9d6f1b066379848eb0fb09eb17bd500b1c8efc31e4c289e172`
 
 ## Collected Screenshots
 

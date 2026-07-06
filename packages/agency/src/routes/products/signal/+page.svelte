@@ -151,7 +151,7 @@
   title="Signal Inbox for App Governance | CREATE SOMETHING .agency"
   description="Signal is the inbox for app governance: API updates, Slack posts, PRs, exceptions, and reviewer context routed into Atlas, Decision, and Proof."
   keywords="app governance signal inbox, API update review, reviewer notifications, workflow signal, Atlas governance map"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
 />

@@ -181,7 +181,7 @@
   title="Workflow Pilots for Small Teams | CREATE SOMETHING .agency"
   description="Turn one painful workflow into a reliable system. CREATE SOMETHING maps the manual bridge, builds the first controlled pilot, and leaves the operator with code, policy, and runbook evidence."
   keywords="small business automation, workflow integration, custom MCP, HubSpot automation, Notion integration, ops automation, SMB AI"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
 />

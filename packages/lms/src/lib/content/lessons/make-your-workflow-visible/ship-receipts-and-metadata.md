@@ -15,13 +15,13 @@ Canon images should ship with enough context to be reused without guessing:
 - What the next action is.
 
 <figure class="learning-figure">
-  <img src="/learning/canon/handoff-receipt.svg" alt="Receipt-style artifact listing claim, validation, owner, and next action." />
+  <img src="/learning/canon/handoff-receipt.png" alt="Receipt-style artifact listing claim, validation, owner, and next action." />
   <figcaption>A receipt makes the image reusable as an operating artifact.</figcaption>
 </figure>
 
 ## What to store
 
-For deterministic SVG learning assets, keep the source SVG in the repo and make the lesson cite the exact workflow claim. For generated images, store the prompt and metadata beside the export.
+For generated learning images, keep the source brief in the repo and make the lesson cite the exact workflow claim. Store the prompt and metadata beside the export.
 
 Use this minimum metadata:
 

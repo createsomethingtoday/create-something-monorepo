@@ -187,7 +187,7 @@
   keywords="Dify Template Marketplace, Dify Creator Center, Dify template, Policy OS, MCP audit, Dify marketplace proof"
   canonical="https://createsomething.agency/dify/template-marketplace-proof"
   ogType="article"
-  ogImage="/og/dify-lane.svg"
+  ogImage="/og/dify-lane.png"
   publishedTime="2026-07-04"
   modifiedTime="2026-07-04"
   articleSection="Dify Implementation"
@@ -231,7 +231,7 @@
   {#snippet after()}
     <ClearCardGrid items={submissionPath} columns={4} ariaLabel="Dify marketplace submission path" />
     <ArticleVisualFigure
-      src="/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path.svg"
+      src="/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path.png"
       alt="Diagram showing Dify as the app surface, MCP as the tool boundary, Policy OS as the control layer, and proof as the release surface."
       eyebrow="Submission visual"
       title="Marketplace proof still follows surface, boundary, control, proof."

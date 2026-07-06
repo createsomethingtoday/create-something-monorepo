@@ -168,7 +168,7 @@
   title="Cloudflare Workflow Runtime | CREATE SOMETHING .agency"
   description="CREATE SOMETHING builds Cloudflare-native workflow systems with Workers, Pages, D1, scoped tool surfaces, and runtime control paths."
   keywords="Cloudflare workflow runtime, Cloudflare Workers, scoped tools, D1, workflow control, AI workflow infrastructure"
-  ogImage="/og/cloudflare-lane.svg"
+  ogImage="/og/cloudflare-lane.png"
   propertyName="agency"
   {faqItems}
 />

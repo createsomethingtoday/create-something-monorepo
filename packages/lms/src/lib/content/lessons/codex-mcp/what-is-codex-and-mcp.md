@@ -30,7 +30,7 @@ OpenAI's Codex app documentation is the source for this course's working surface
 5. Codex calls the MCP, reads the response as evidence, and helps you decide the next operator action.
 
 <figure class="learning-figure">
-  <img src="/learning/codex-mcp/codex-mcp-loop.svg" alt="Codex app MCP learning loop showing operator question, Codex app skill, local MCP package, and evidence returned to Codex." />
+  <img src="/learning/codex-mcp/codex-mcp-loop.png" alt="Codex app MCP learning loop showing operator question, Codex app skill, local MCP package, and evidence returned to Codex." />
   <figcaption>The first lesson is the loop: use Codex to create one inspectable capability, then let Codex call it as evidence.</figcaption>
 </figure>
 
