@@ -176,7 +176,7 @@
   keywords="Dify vs n8n, n8n vs Dify, workflow automation vs agent apps, Dify MCP, n8n MCP, AI workflow automation"
   canonical="https://createsomething.agency/dify/n8n-vs-dify"
   ogType="article"
-  ogImage="/og/dify-vs-n8n.svg"
+  ogImage="/og/dify-vs-n8n.png"
   publishedTime="2026-05-18"
   modifiedTime="2026-06-22"
   articleSection="Dify Implementation"
@@ -219,9 +219,9 @@
   {#snippet after()}
     <ClearCardGrid items={layerFit} columns={3} ariaLabel="Dify n8n layer fit" />
     <ArticleVisualFigure
-      src="/images/articles/dify-vs-n8n/dify-n8n-layer-map.svg"
+      src="/images/articles/dify-vs-n8n/dify-n8n-layer-map.png"
       alt="Layer map comparing n8n for internal automation, Cloudflare for runtime ownership, Dify for client-facing agent surfaces, and Policy OS for governance."
-      eyebrow="Original visual"
+      eyebrow="Generated visual"
       title="Choose the tool by the operating layer."
       caption="This owned layer map keeps the comparison from becoming a winner-take-all ranking: n8n, Cloudflare, Dify, MCP, and Policy OS each have a different job."
       sourceLabel="Created by CREATE SOMETHING for this article."

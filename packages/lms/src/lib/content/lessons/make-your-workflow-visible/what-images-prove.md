@@ -11,7 +11,7 @@ The rule is simple:
 > If the image cannot answer an operational question, do not use it.
 
 <figure class="learning-figure">
-  <img src="/learning/canon/workflow-proof-map.svg" alt="Workflow proof map showing object, state, proof, owner, and next action." />
+  <img src="/learning/canon/workflow-proof-map.png" alt="Workflow proof map showing object, state, proof, owner, and next action." />
   <figcaption>A Canon learning image should prove the workflow, not merely illustrate it.</figcaption>
 </figure>
 

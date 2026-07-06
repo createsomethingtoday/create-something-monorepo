@@ -120,7 +120,7 @@
   title="Workflow Tool Stack | CREATE SOMETHING .agency"
   description="CREATE SOMETHING maps one controlled workflow across the visible app surface, runtime, workspace, reasoning layer, approval path, and evidence trail."
   keywords="workflow tool stack, AI workflow systems, Dify workflow systems, Cloudflare workflow runtime, Notion operating system, MCP tool boundary"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
 />

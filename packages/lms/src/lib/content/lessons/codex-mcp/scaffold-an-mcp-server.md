@@ -10,8 +10,8 @@ OpenAI's Codex MCP documentation supports both local stdio MCP servers and strea
 
 <figure class="learning-figure">
   <picture>
-    <source media="(max-width: 640px)" srcset="/learning/codex-mcp/mcp-server-skeleton-mobile.svg" />
-    <img src="/learning/codex-mcp/mcp-server-skeleton.svg" alt="Minimal local MCP server skeleton showing package files, McpServer, stdio transport, and Codex discovery." />
+    <source media="(max-width: 640px)" srcset="/learning/codex-mcp/mcp-server-skeleton-mobile.png" />
+    <img src="/learning/codex-mcp/mcp-server-skeleton.png" alt="Minimal local MCP server skeleton showing package files, McpServer, stdio transport, and Codex discovery." />
   </picture>
   <figcaption>The scaffold proves the server can start cleanly before any business workflow is added.</figcaption>
 </figure>

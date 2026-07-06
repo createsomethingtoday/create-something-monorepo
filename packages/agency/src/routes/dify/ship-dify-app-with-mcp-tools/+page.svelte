@@ -270,7 +270,7 @@
   keywords="ship Dify app with MCP tools, Dify MCP implementation, Dify app governance, Dify Policy OS, Dify agent approval gates"
   canonical="https://createsomething.agency/dify/ship-dify-app-with-mcp-tools"
   ogType="article"
-  ogImage="/og/dify-lane.svg"
+  ogImage="/og/dify-lane.png"
   publishedTime="2026-06-23"
   modifiedTime="2026-06-23"
   articleSection="Dify Implementation"
@@ -307,9 +307,9 @@
   {#snippet after()}
     <ClearCardGrid items={buildPath} columns={4} ariaLabel="Dify MCP shipping path" />
     <ArticleVisualFigure
-      src="/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path.svg"
+      src="/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path.png"
       alt="Diagram showing Dify as the app surface, MCP as the tool boundary, Policy OS as the control layer, and proof as the release surface."
-      eyebrow="Original visual"
+      eyebrow="Generated visual"
       title="The shipping path is surface, boundary, control, proof."
       caption="This owned diagram keeps the implementation legible: Dify carries the app, MCP scopes capability, Policy OS governs behavior, and proof explains what changed."
       sourceLabel="Created by CREATE SOMETHING for this field guide."

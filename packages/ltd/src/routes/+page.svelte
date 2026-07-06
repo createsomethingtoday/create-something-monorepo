@@ -234,7 +234,7 @@
   title="The Philosophy of Automation Infrastructure"
   description="CREATE SOMETHING .ltd explains the creation moat: why governed connectivity, policy, trust boundaries, and proof matter more than simply consuming AI tools."
   keywords="automation infrastructure, delegated work control, MCP creation, policy artifacts, proof, AI governance, design canon"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="ltd"
 />
 

@@ -234,7 +234,7 @@
   title={selectedContent.seoTitle}
   description={selectedContent.seoDescription}
   keywords="workflow mapping, production automation, reliability controls, enterprise workflows, custom mcp, automation risk"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
 />
 

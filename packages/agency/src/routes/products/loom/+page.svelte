@@ -21,7 +21,7 @@
 	title="Loom MCP Archive | Agent Coordination Lessons"
 	description="Historical CREATE SOMETHING proof for agent continuity, checkpoints, routing, and recovery. Current tracked work in this repo now lives in Linear."
 	keywords="MCP, Model Context Protocol, multi-agent coordination archive, Linear coordination, task management, Claude, Cursor, Codex, crash recovery"
-	ogImage="/og-image.svg"
+	ogImage="/og-image.png"
 	propertyName="agency"
 	noindex={true}
 />

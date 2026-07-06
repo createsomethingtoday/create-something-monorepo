@@ -157,7 +157,7 @@
   description="How CREATE SOMETHING packages Dify, MCP server cards, and Policy OS contract bundles into a governed control plane for agent workflows."
   keywords="Dify MCP control plane, Dify agent governance, MCP server cards, Policy OS, contract bundle, Dify app templates"
   ogType="article"
-  ogImage="/og/dify-mcp-control-plane.svg"
+  ogImage="/og/dify-mcp-control-plane.png"
   publishedTime="2026-05-18"
   modifiedTime="2026-06-22"
   articleSection="Dify Implementation"

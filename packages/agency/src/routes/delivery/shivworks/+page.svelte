@@ -53,7 +53,7 @@
   description="Client-safe delivery runbook for ShivWorks Network developer access, Infisical secrets, Cloudflare D1, app admin boundaries, and backend validation commands."
   keywords="ShivWorks, Cloudflare D1, Infisical, developer runbook, CREATE SOMETHING"
   canonical="https://createsomething.agency/delivery/shivworks"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   noindex={true}
 />
@@ -242,4 +242,3 @@
     </div>
   </div>
 </section>
-

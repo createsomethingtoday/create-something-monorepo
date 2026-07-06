@@ -169,7 +169,7 @@
   title="AI Workflow Product System | CREATE SOMETHING .agency"
   description="The CREATE SOMETHING product system for controlled AI workflows: Atlas maps the work, Signal watches changes, Decision routes judgment, and Proof preserves the record."
   keywords="AI workflow product system, workflow control layer, Signal Decision Proof, Atlas workflow map, operator surfaces, workflow audit trail"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
 />

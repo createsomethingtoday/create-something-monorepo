@@ -233,7 +233,7 @@
   keywords="Dify agent eval gates, Dify Langfuse, Dify evals, Langfuse MCP evals, Dify MCP testing, AI agent governance, Policy OS, Dify approval gates"
   canonical="https://createsomething.agency/dify/agent-eval-gates"
   ogType="article"
-  ogImage="/og/dify-lane.svg"
+  ogImage="/og/dify-lane.png"
   publishedTime="2026-06-22"
   modifiedTime="2026-06-22"
   articleSection="Dify Implementation"

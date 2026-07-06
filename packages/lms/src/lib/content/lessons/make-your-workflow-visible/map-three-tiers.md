@@ -13,7 +13,7 @@ CREATE SOMETHING uses three lanes to make an AI-native workflow legible:
 Most workflow confusion comes from mixing these lanes together. An operator asks Codex for "a workflow", but the actual problem may be bad data, failed execution, or missing judgment.
 
 <figure class="learning-figure">
-  <img src="/learning/canon/three-tier-lanes.svg" alt="Database, Automation, and Judgment lanes with example workflow artifacts." />
+  <img src="/learning/canon/three-tier-lanes.png" alt="Database, Automation, and Judgment lanes with example workflow artifacts." />
   <figcaption>Separate the lane before improving the system.</figcaption>
 </figure>
 
@@ -43,9 +43,3 @@ Owner:
 ```
 
 Then inspect the result. If Codex cannot place an item in a lane, the workflow needs more definition before it needs more automation.
-
-## Source note
-
-This exercise pairs the CREATE SOMETHING Database / Automation / Judgment lanes with OpenAI's Codex best-practices guidance: give Codex a clear goal, context, constraints, and done criteria before asking it to build or change a workflow.
-
-Reference: [OpenAI Codex best practices](https://developers.openai.com/codex/learn/best-practices).
