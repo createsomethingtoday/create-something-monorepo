@@ -411,6 +411,29 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
       'Feedback barrel exposes stable foundation controls already covered by registry item tests.'
   },
   {
+    exportPath: './components/data',
+    classification: 'stable-foundation-candidate',
+    registryPolicy: 'candidate-review',
+    rationale:
+      'Database-layer primitives barrel (docs/CANON_DATABASE_LAYER_DESIGN.md); components stay in candidate review until a second consuming surface exists.'
+  },
+  {
+    exportPath: './components/data',
+    exportName: 'DataTable',
+    classification: 'stable-foundation-candidate',
+    registryPolicy: 'candidate-review',
+    rationale:
+      'Dense database-layer table primitive (design doc §2); candidate review until the deployed app-governance dashboard plus a second operator surface validate the contract.'
+  },
+  {
+    exportPath: './components/data',
+    exportName: 'StatusBadge',
+    classification: 'stable-foundation-candidate',
+    registryPolicy: 'candidate-review',
+    rationale:
+      'Semantic state badge for database-layer lifecycles (design doc §4); candidate review until the tone vocabulary is validated by a second consuming surface.'
+  },
+  {
     exportPath: './experiments',
     classification: 'experiment',
     registryPolicy: 'classified-out',

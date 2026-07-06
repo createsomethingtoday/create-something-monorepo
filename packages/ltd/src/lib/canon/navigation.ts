@@ -82,6 +82,7 @@ export const canonNavigation: NavSection[] = [
 					{ label: 'Clear Components', href: '/canon/components/clear' },
 					{ label: 'Content', href: '/canon/components/content' },
 					{ label: 'Conversion', href: '/canon/components/conversion' },
+					{ label: 'Data', href: '/canon/components/data' },
 					{ label: 'Feedback', href: '/canon/components/feedback' },
 					{ label: 'Filtering', href: '/canon/components/filtering' },
 					{ label: 'Form Controls', href: '/canon/components/form' },

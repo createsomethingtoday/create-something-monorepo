@@ -7,7 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { inflateSync } from 'node:zlib';
 
-type ScreenshotGroup = 'form' | 'feedback' | 'clear' | 'navigation';
+type ScreenshotGroup = 'form' | 'feedback' | 'clear' | 'navigation' | 'data';
 type ScreenshotViewport = {
 	id: 'desktop' | 'mobile';
 	width: number;
@@ -16,7 +16,7 @@ type ScreenshotViewport = {
 };
 type ScreenshotResult = ReturnType<typeof buildScreenshotResult>;
 
-const groups: ScreenshotGroup[] = ['form', 'feedback', 'clear', 'navigation'];
+const groups: ScreenshotGroup[] = ['form', 'feedback', 'clear', 'navigation', 'data'];
 const viewports: ScreenshotViewport[] = [
 	{ id: 'desktop', width: 1280, height: 900, minHeight: 600 },
 	{ id: 'mobile', width: 390, height: 844, minHeight: 500 }
