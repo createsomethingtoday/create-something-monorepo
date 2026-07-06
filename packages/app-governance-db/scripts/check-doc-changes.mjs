@@ -51,13 +51,25 @@ async function call(name, args, id) {
 await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'check-doc-changes', version: '1.0' } }, 1);
 await rpc('notifications/initialized', {});
 
+// Detection tracks the PUBLISHED default branch, never the local working branch
+// (the checkout often sits on an in-flight docs PR branch).
+let REF = 'origin/main';
 if (process.argv.includes('--pull')) {
   try {
-    execFileSync('git', ['pull', '--ff-only'], { cwd: REPO, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] });
-    console.log('repo pulled (ff-only)');
+    // The checkout needs the micahwithwf account; the ambient credential helper
+    // serves the active gh account, so fetch with an explicit account token.
+    const token = execFileSync('gh', ['auth', 'token', '--user', 'micahwithwf'], { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    execFileSync('git', ['fetch', `https://micahwithwf:${token}@github.com/webflow/openapi-internal.git`, '+refs/heads/main:refs/remotes/origin/main'], { cwd: REPO, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] });
+    console.log('origin/main fetched');
   } catch {
-    console.log('repo pull skipped (offline or non-ff) — checking against local state');
+    console.log('fetch failed (offline or token unavailable) — checking against last-known origin/main');
   }
+}
+try {
+  execFileSync('git', ['rev-parse', '--verify', REF], { cwd: REPO, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
+} catch {
+  REF = 'HEAD';
+  console.log('origin/main ref missing — falling back to local HEAD');
 }
 
 const locations = await call('governance_list_doc_locations', {}, 2);
@@ -67,8 +79,8 @@ const counts = { baseline: 0, unchanged: 0, changed: 0, missing: 0 };
 for (const [i, loc] of locations.entries()) {
   let commitIso, subject;
   try {
-    commitIso = execFileSync('git', ['log', '-1', '--format=%cI', '--', loc.path], { cwd: REPO, encoding: 'utf-8' }).trim();
-    subject = execFileSync('git', ['log', '-1', '--format=%s', '--', loc.path], { cwd: REPO, encoding: 'utf-8' }).trim();
+    commitIso = execFileSync('git', ['log', REF, '-1', '--format=%cI', '--', loc.path], { cwd: REPO, encoding: 'utf-8' }).trim();
+    subject = execFileSync('git', ['log', REF, '-1', '--format=%s', '--', loc.path], { cwd: REPO, encoding: 'utf-8' }).trim();
   } catch {
     commitIso = '';
   }
@@ -90,8 +102,8 @@ for (const [i, loc] of locations.entries()) {
 }
 // Record the sync itself: cursor = repo HEAD, so the docs source reads as
 // synced alongside every other source.
-const headIso = execFileSync('git', ['log', '-1', '--format=%cI'], { cwd: REPO, encoding: 'utf-8' }).trim();
-const headSha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: REPO, encoding: 'utf-8' }).trim();
+const headIso = execFileSync('git', ['log', REF, '-1', '--format=%cI'], { cwd: REPO, encoding: 'utf-8' }).trim();
+const headSha = execFileSync('git', ['rev-parse', '--short', REF], { cwd: REPO, encoding: 'utf-8' }).trim();
 await call('governance_set_cursor', {
   source_type: 'docs_repo',
   source_external_id: 'webflow/openapi-internal',
