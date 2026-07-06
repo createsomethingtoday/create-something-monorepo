@@ -50,6 +50,7 @@ Read in this order when you need broad repo context:
 - [SERVICE_TIER_ENTITLEMENT_OSO_MAPPING_2026-03-09.md](./SERVICE_TIER_ENTITLEMENT_OSO_MAPPING_2026-03-09.md)
 - [OPENAI_NEWS_STRATEGY_MEMO_2026-03-04.md](./OPENAI_NEWS_STRATEGY_MEMO_2026-03-04.md)
 - [papers/ENDPOINT_CONSTRUCTION_IS_PRODUCT_CONSTRUCTION.md](./papers/ENDPOINT_CONSTRUCTION_IS_PRODUCT_CONSTRUCTION.md)
+- [../packages/io/content/papers/governed-loop-reliability-system.md](../packages/io/content/papers/governed-loop-reliability-system.md)
 
 ### Architecture and control planes
 

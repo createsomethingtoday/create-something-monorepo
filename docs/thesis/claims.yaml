@@ -67,6 +67,76 @@ claims:
     open_questions:
       - Which flagship case should become the first fully evidenced public defense?
 
+  - id: thesis.governed-loop-reliability-system
+    title: The governed loop is the unit of production reliability.
+    status: partial
+    tier:
+      - database
+      - automation
+      - judgment
+    claim: >
+      Agent-assisted production work becomes dependable when the worker operates
+      inside a loop with durable state, explicit policy, isolated execution,
+      focused validation, eval evidence, proof receipts, and a visible next
+      decision.
+    burden_of_proof:
+      - The loop model is documented as a repo operating model.
+      - The repo contains executable checks for loop readiness, skill behavior,
+        policy artifacts, and executor eval cases.
+      - A paper or experiment plan states how to compare loop-backed execution
+        against prompt-only execution.
+    evidence:
+      - id: loops-above-agents-guide
+        type: file
+        relation: supports
+        path: docs/guides/LOOPS_ABOVE_AGENTS.md
+        anchors:
+          - A CREATE SOMETHING loop is a repeatable operating circuit with seven parts
+          - Every loop run should leave a compact receipt
+        note: Canonical loop operating model and evidence contract.
+      - id: coding-agent-harness-guide
+        type: file
+        relation: supports
+        path: docs/guides/CODING_AGENT_HARNESS_PATTERN.md
+        anchors:
+          - Turn a coding agent from a one-shot assistant into a repeatable worker
+          - In this repo, harness engineering is the combination of
+        note: Repo-local harness engineering pattern.
+      - id: governed-loop-paper
+        type: file
+        relation: supports
+        path: packages/io/content/papers/governed-loop-reliability-system.md
+        anchors:
+          - The reliable unit is not the agent.
+          - Does a CREATE SOMETHING loop-backed agent process improve verified completion
+        note: Public-facing codification and first experiment design.
+      - id: solo-loop-check-command
+        type: command
+        relation: tests
+        command: pnpm agent:solo-loop:check
+        note: Verifies the solo-loop control files, legibility, policy, and unit-test gates.
+      - id: skill-behavior-command
+        type: command
+        relation: tests
+        command: pnpm agent:skills:test
+        note: Verifies repo-owned skills retain behavioral contracts.
+      - id: braintrust-mcp-list-command
+        type: command
+        relation: tests
+        command: pnpm braintrust:eval:mcp:list
+        note: Verifies MCP eval cases are discoverable without sending logs.
+    falsification:
+      - Prompt-only agent execution produces equal or better verified completion,
+        evidence completeness, scope control, and safety behavior on the same
+        bounded task set.
+      - Loop receipts do not improve review, handoff, resume, rollback, or next
+        decision quality.
+      - Policy artifacts, eval outputs, and proof receipts exist but do not
+        change publish, hold, rollback, split, or stop decisions.
+    open_questions:
+      - Which 6-10 bounded task corpus should become the first comparative loop benchmark?
+      - What minimum improvement justifies the overhead of the loop-backed condition?
+
   - id: thesis.mcp-creation-is-the-moat
     title: MCP creation is the durable capability boundary.
     status: supported

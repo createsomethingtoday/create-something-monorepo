@@ -55,11 +55,11 @@ The practical form of the question:
 
 AI work becomes operational only when three things are designed together:
 
-| System concern | CREATE SOMETHING term | MCP primitive | Operating question |
-| --- | --- | --- | --- |
-| What exists | Database | Resources | Is the right state available, fresh, scoped, and inspectable? |
-| What happens | Automation | Tools | Did the execution path run inside its boundary? |
-| What should happen | Judgment | Prompts | Was the right policy, approval, or escalation rule applied? |
+| System concern     | CREATE SOMETHING term | MCP primitive | Operating question                                            |
+| ------------------ | --------------------- | ------------- | ------------------------------------------------------------- |
+| What exists        | Database              | Resources     | Is the right state available, fresh, scoped, and inspectable? |
+| What happens       | Automation            | Tools         | Did the execution path run inside its boundary?               |
+| What should happen | Judgment              | Prompts       | Was the right policy, approval, or escalation rule applied?   |
 
 The thesis is not "add an agent." The thesis is:
 
@@ -68,20 +68,20 @@ The thesis is not "add an agent." The thesis is:
 
 The category hierarchy is:
 
-| Layer | Role |
-| --- | --- |
-| **Delegated Work Control** | Long-term company category and durable buyer problem. |
-| **Workflow Trust Layer** | Current service language for making one workflow safe to delegate. |
-| **Policy OS** | Canonical paid package for governed execution. |
-| **MCP-only** | Constrained discovery or compliance wedge, not the default paid offer. |
+| Layer                      | Role                                                                   |
+| -------------------------- | ---------------------------------------------------------------------- |
+| **Delegated Work Control** | Long-term company category and durable buyer problem.                  |
+| **Workflow Trust Layer**   | Current service language for making one workflow safe to delegate.     |
+| **Policy OS**              | Canonical paid package for governed execution.                         |
+| **MCP-only**               | Constrained discovery or compliance wedge, not the default paid offer. |
 
 The operator language is:
 
-| Surface | Role |
-| --- | --- |
-| **Inbox** | Decisions waiting for action. |
-| **Map** | Workflow context, system boundaries, owners, and downstream impact. |
-| **Proof** | Evidence, policy, decision, outcome, receipt, and recovery path. |
+| Surface   | Role                                                                |
+| --------- | ------------------------------------------------------------------- |
+| **Inbox** | Decisions waiting for action.                                       |
+| **Map**   | Workflow context, system boundaries, owners, and downstream impact. |
+| **Proof** | Evidence, policy, decision, outcome, receipt, and recovery path.    |
 
 The data layer behind those surfaces is the **Proof Graph**: a connected record
 of signals, policies, agents, humans, systems, decisions, and outcomes. The
@@ -99,6 +99,8 @@ CREATE SOMETHING contributes a practical method for governed delegated work:
 5. Treat maps, contracts, golden tasks, runbooks, traces, and receipts as one
    operating system.
 6. Treat every governed workflow as Signal → Decision → Proof.
+7. Treat the governed loop, not the agent, as the unit of production
+   reliability.
 
 The eventual Delegated Work Control protocol should stay portable across models,
 agent surfaces, business systems, and human operators. Its minimum shape is:
@@ -145,15 +147,15 @@ operations.
 
 Key repo-owned influences:
 
-| Influence | Repo surface | Role in thesis |
-| --- | --- | --- |
-| MCP-first thesis | `docs/MCP_FIRST_THESIS.md` | Connectivity precedes intelligence. |
-| Three-Tier Framework | `docs/THREE_TIER_FRAMEWORK.md` | Structural model for agent systems. |
-| Policy OS | `docs/POLICY_OS_PRODUCT_DEFINITION.md` | Governed package for AI execution. |
-| Agent legibility | `docs/guides/AGENT_LEGIBILITY_CONTRACT.md` | Packages must be bootable, testable, observable, and escapable. |
-| Atlas vocabulary | `packages/interaction-atlas-mcp` and `packages/agency/src/lib/atlas/public.ts` | Workflow maps make ownership, constraints, and proof visible. |
-| Proof Surface | `packages/io/content/papers/proof-surface.md` | Evidence must become readable operating receipts. |
-| Eval Evidence Layer | `packages/io/content/papers/eval-evidence-layer.md` | Metrics matter only when they change decisions. |
+| Influence            | Repo surface                                                                   | Role in thesis                                                  |
+| -------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| MCP-first thesis     | `docs/MCP_FIRST_THESIS.md`                                                     | Connectivity precedes intelligence.                             |
+| Three-Tier Framework | `docs/THREE_TIER_FRAMEWORK.md`                                                 | Structural model for agent systems.                             |
+| Policy OS            | `docs/POLICY_OS_PRODUCT_DEFINITION.md`                                         | Governed package for AI execution.                              |
+| Agent legibility     | `docs/guides/AGENT_LEGIBILITY_CONTRACT.md`                                     | Packages must be bootable, testable, observable, and escapable. |
+| Atlas vocabulary     | `packages/interaction-atlas-mcp` and `packages/agency/src/lib/atlas/public.ts` | Workflow maps make ownership, constraints, and proof visible.   |
+| Proof Surface        | `packages/io/content/papers/proof-surface.md`                                  | Evidence must become readable operating receipts.               |
+| Eval Evidence Layer  | `packages/io/content/papers/eval-evidence-layer.md`                            | Metrics matter only when they change decisions.                 |
 
 External references should be handled carefully. The repo already frames
 quietloudlab's AI Interaction Atlas as complementary vocabulary and CREATE
@@ -192,6 +194,11 @@ The CREATE SOMETHING method is:
    Recurring review, golden-task regression, incident review, and rollout notes
    are part of the system, not aftercare.
 
+8. **Measure the loop, not only the worker.**
+   Agent performance is useful only when the surrounding loop preserves state,
+   applies policy, isolates execution, runs focused validation, records proof,
+   and makes the next decision visible.
+
 ## 20-Year Shape
 
 Delegated Work Control can mature through four stages without pretending to be a
@@ -227,17 +234,18 @@ with calm controlled delegation rather than speed or magic.
 
 The thesis becomes real only through artifacts. Each artifact has a job.
 
-| Artifact | Source of truth | Job |
-| --- | --- | --- |
-| Thesis | this document plus `MCP_FIRST_THESIS.md` | State the argument. |
-| Framework | `THREE_TIER_FRAMEWORK.md` | Explain the system ontology. |
-| Product definition | `POLICY_OS_PRODUCT_DEFINITION.md` | Define the commercial governed package. |
-| Contract bundle | `templates/` | Define what the workflow may access, do, prove, and recover from. |
-| Atlas map | `packages/interaction-atlas-mcp`, `packages/agency/src/lib/atlas/public.ts` | Make the workflow legible before and during execution. |
-| Policy artifacts | `docs/policies/v1` | Version approval, entitlement, auth, and operation rules. |
-| Golden tasks | `templates/golden_tasks.yaml`, scenario-specific bundles, evals | Prove behavior survives change. |
-| Proof surface | `docs/deliveries`, `.agency` surfaces, release notes | Translate evidence into receipts. |
-| Learning path | `packages/lms`, Pi packages | Teach the method through practice. |
+| Artifact           | Source of truth                                                                                         | Job                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Thesis             | this document plus `MCP_FIRST_THESIS.md`                                                                | State the argument.                                               |
+| Framework          | `THREE_TIER_FRAMEWORK.md`                                                                               | Explain the system ontology.                                      |
+| Product definition | `POLICY_OS_PRODUCT_DEFINITION.md`                                                                       | Define the commercial governed package.                           |
+| Contract bundle    | `templates/`                                                                                            | Define what the workflow may access, do, prove, and recover from. |
+| Atlas map          | `packages/interaction-atlas-mcp`, `packages/agency/src/lib/atlas/public.ts`                             | Make the workflow legible before and during execution.            |
+| Policy artifacts   | `docs/policies/v1`                                                                                      | Version approval, entitlement, auth, and operation rules.         |
+| Golden tasks       | `templates/golden_tasks.yaml`, scenario-specific bundles, evals                                         | Prove behavior survives change.                                   |
+| Reliability loop   | `docs/guides/LOOPS_ABOVE_AGENTS.md`, `docs/guides/CODING_AGENT_HARNESS_PATTERN.md`, agent checks, evals | Make delegated work repeatable, bounded, testable, and resumable. |
+| Proof surface      | `docs/deliveries`, `.agency` surfaces, release notes                                                    | Translate evidence into receipts.                                 |
+| Learning path      | `packages/lms`, Pi packages                                                                             | Teach the method through practice.                                |
 
 ## Current Evidence
 
@@ -318,7 +326,36 @@ Database, Automation, and Judgment surfaces.
 Status: strong for opted-in packages, incomplete for the whole monorepo. This
 is enough to prove the convention, but not enough to claim uniform coverage.
 
-### 6. Policy artifacts are versioned and checkable
+### 6. Governed loops are codified and testable
+
+Evidence:
+
+- `docs/guides/LOOPS_ABOVE_AGENTS.md`
+- `docs/guides/CODING_AGENT_HARNESS_PATTERN.md`
+- `scripts/agent-solo-loop.mjs`
+- `scripts/agent-loop-pilot.mjs`
+- `scripts/test/agent-solo-loop.test.mjs`
+- `scripts/test/agent-loop-pilot.test.mjs`
+- `scripts/test/agent-skills-effectiveness.test.mjs`
+- `evals/braintrust/mcp`
+- `evals/braintrust/dify`
+- `evals/promptfoo/hub`
+- `packages/io/content/papers/governed-loop-reliability-system.md`
+
+Current read-only verification:
+
+```bash
+pnpm agent:solo-loop:check
+pnpm agent:skills:test
+pnpm braintrust:eval:mcp:list
+```
+
+Status: strong as a codified operating model and initial evaluation lane. The
+open question is comparative performance: whether loop-backed execution
+outperforms prompt-only execution on verified completion, evidence completeness,
+scope control, and safety behavior.
+
+### 7. Policy artifacts are versioned and checkable
 
 Evidence:
 
@@ -337,7 +374,7 @@ artifacts.
 
 Status: strong.
 
-### 7. Delivery records already act as proof surfaces
+### 8. Delivery records already act as proof surfaces
 
 Evidence:
 
