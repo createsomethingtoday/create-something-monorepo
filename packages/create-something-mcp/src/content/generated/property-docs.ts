@@ -996,104 +996,186 @@ Less, but better. The discipline of removal produced a functional tool in ~600 L
   {
     id: "io:content/experiments/README",
     property: "io",
-    title: "Experiments Content - Hybrid Architecture",
-    description: "Experiments Content - Hybrid Architecture",
+    title: "Experiments Content",
+    description: "Experiments Content",
     section: "content",
     path: "content/experiments/README.md",
     slug: "content/experiments/README",
     uri: "docs://io/content/experiments/README",
-    content: `# Experiments Content - Hybrid Architecture
+    content: `# Experiments Content
 
-## Pattern: Markdown Documentation + Interactive Components
+Experiments on \`.io\` are a public research surface. The current implementation is route/catalog based, not MDsveX component-import based.
 
-Experiments use a **hybrid approach** that separates documentation from interactivity:
+## Runtime Model
 
-\`\`\`
-content/experiments/{slug}.md           ← Documentation, frontmatter, context
-src/lib/experiments/{slug}.svelte       ← Interactive demo component
-src/routes/experiments/[slug]/          ← Dynamic route (loads markdown)
-\`\`\`
+The archive at \`/experiments\` merges:
 
-## Why Hybrid?
+- file-based experiment metadata from \`src/lib/config/fileBasedExperiments.ts\`
+- database-backed experiment rows from D1 \`papers\`, when available
 
-Unlike papers (pure documentation), experiments include:
-- Interactive visualizations
-- Live data manipulation
-- SVG/Canvas operations
-- Scroll-driven animations
+The detail route at \`/experiments/[slug]\` resolves in this order:
 
-Markdown handles context; Svelte handles interaction.
+1. cross-property redirects for experiments whose canonical home is another CREATE SOMETHING property
+2. file-based experiments in \`fileBasedExperiments.ts\`
+3. D1 \`papers\` rows by \`slug\`, with an \`id\` fallback for legacy/admin-created rows without \`slug\`
 
-## Frontmatter Schema
+Local preview can run without a populated D1 \`papers\` table. In that case, \`/experiments\` and \`sitemap.xml\` fall back to file-based experiments.
 
-\`\`\`yaml
----
-title: "Experiment Title"
-category: "research" | "tutorial"
-abstract: "One-sentence description"
-keywords: ["tag1", "tag2"]
-publishedAt: "2025-01-08T00:00:00Z"
-readingTime: 10
-difficulty: "beginner" | "intermediate" | "advanced"
-published: true
-componentPath: "\$lib/experiments/{slug}.svelte"  # Path to interactive component
----
+## File-Based Experiments
+
+File-based experiment metadata lives in:
+
+\`\`\`text
+src/lib/config/fileBasedExperiments.ts
 \`\`\`
 
-## Component Import Pattern
+Required fields follow \`FileBasedExperiment\` from \`@create-something/canon\`:
 
-In the markdown file:
-
-\`\`\`markdown
-## Interactive Demo
-
-<script>
-  import DemoComponent from '\$lib/experiments/component-name.svelte';
-</script>
-
-<DemoComponent />
-
-## Analysis
-
-...documentation continues...
+\`\`\`ts
+{
+  id: 'file-example',
+  slug: 'example',
+  title: 'Example Experiment',
+  description: 'One-sentence public description.',
+  excerpt_short: 'Short card copy',
+  excerpt_long: 'Longer article/header copy',
+  category: 'research',
+  tags: ['MCP', 'Policy', 'Workflow'],
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
+  reading_time_minutes: 8,
+  difficulty: 'intermediate',
+  is_file_based: true,
+  tests_principles: ['three-tier-framework'],
+  ascii_art: '...'
+}
 \`\`\`
 
-MDsveX renders the imported component inline.
+Add the matching ID to \`fileBasedExperimentVisuals\` with \`defineArtifactVisuals\`.
+\`pnpm check:visuals\` fails if the experiment metadata and visual definition maps
+drift.
 
-## Migration Status
+The shared transformer maps these records into the \`Paper\` shape used by archive cards, article headers, SEO, and sitemap generation.
 
-- ✅ **text-revelation** - Proof of concept (hybrid pattern established)
-- 🔄 **Remaining 14 experiments** - To be migrated iteratively
+For visual rules, use \`packages/io/docs/ai-native-visual-communication.md\`. Keep precise framework labels in \`visual_summary\`; use generated images for editorial tone and recognition.
 
-## When to Use Full Markdown
+## Markdown Bodies
 
-If an experiment becomes primarily documentation (interactivity removed or simplified), migrate to pure markdown like papers. The hybrid pattern allows gradual evolution.
+Markdown bodies live in:
 
-## Directory Structure
-
-\`\`\`
-content/experiments/
-├── README.md                      ← This file
-├── text-revelation.md             ← Hybrid (docs + component import)
-└── [future experiments].md
-
-src/lib/experiments/
-├── text-revelation.svelte         ← Interactive component
-└── [future components].svelte
-
-src/routes/experiments/
-├── [slug]/
-│   ├── +page.server.ts           ← Loads from markdown OR database
-│   └── +page.svelte              ← Renders markdown with components
-└── {legacy-routes}/              ← To be migrated
+\`\`\`text
+content/experiments/{slug}.md
 \`\`\`
 
-## Next Steps
+Markdown is loaded as raw text by \`src/routes/experiments/[slug]/+page.server.ts\`, frontmatter is stripped, and the body is rendered by the shared \`.io\` \`ArticleContent\` component with \`marked\`.
 
-1. Move \`text-revelation/+page.svelte\` → \`lib/experiments/text-revelation.svelte\`
-2. Update \`[slug]\` route to load from markdown content
-3. Test MDsveX component import
-4. Migrate remaining experiments iteratively as patterns emerge
+Current markdown files should contain normal Markdown only. Do not import Svelte components from experiment markdown; this route does not compile MDsveX component imports.
+
+Use markdown bodies for documentation-first experiments that do not need a custom interactive route.
+
+## Living Experiment Evidence
+
+Experiments are allowed to be provisional, but their evidence status should be
+inspectable when the experiment is used to support a product, paper, template,
+or delivery claim.
+
+Use the shared transparency template for new experiments and material updates:
+
+\`\`\`text
+docs/examples/living-research-transparency.template.yaml
+\`\`\`
+
+For the shared paper and experiment standard, see:
+
+\`\`\`text
+packages/io/docs/research-content-transparency.md
+\`\`\`
+
+At minimum, document:
+
+- claim status: hypothesis, supported, validated, contested, or superseded
+- confidence: low, medium, or high
+- evidence grade: implementation evidence, benchmark, market signal, community sentiment, field signal, official docs, or anecdotal
+- last reviewed date and next review date
+- supporting evidence
+- counter-signals
+- open questions
+- update log
+
+This can live as a YAML block in Markdown content, as a visible section in a
+dedicated Svelte route, or as route-local data rendered into the page. Do not
+hide material uncertainty in comments or metadata that readers cannot inspect.
+
+Existing experiments do not need bulk retrofits before small edits. Add the
+living evidence block when an experiment is promoted, republished, compared
+against newer research, or used as a reference for implementation decisions.
+
+## Dedicated Interactive Routes
+
+Interactive or highly custom experiments use dedicated Svelte routes:
+
+\`\`\`text
+src/routes/experiments/{slug}/+page.svelte
+src/routes/experiments/{slug}/+page.server.ts  # when route metadata/data is needed
+\`\`\`
+
+If a file-based experiment has a dedicated route, add its slug to \`FILE_BASED_WITH_ROUTES\` in \`src/routes/experiments/[slug]/+page.server.ts\`. That prevents the dynamic markdown route from also trying to serve it.
+
+Dedicated routes are appropriate for:
+
+- canvas, WebGPU, SVG, or scroll-driven interactions
+- demos that import experiment components from \`@create-something/canon\`
+- pages that need custom controls, upload flows, or runtime state
+- experiments whose article layout differs materially from the default article shell
+
+## D1/Admin-Backed Experiments
+
+Admin-created experiments are stored in D1 \`papers\`. Public routing requires a stable \`slug\`.
+
+The admin API now writes \`slug\` on create and can update it on patch. Legacy rows without \`slug\` can still resolve by \`id\`, but new rows should treat \`slug\` as the public URL contract.
+
+Minimum public fields:
+
+- \`id\`
+- \`slug\`
+- \`title\`
+- \`description\` or \`excerpt_long\`
+- \`content\` or \`html_content\`
+- \`category\`
+- \`published = 1\`
+- \`is_hidden = 0\`
+- \`archived = 0\`
+
+## Archive And Sitemap Rules
+
+The archive and sitemap intentionally include file-based experiments even when D1 is unavailable.
+
+They also exclude known paper slugs so \`/experiments\` does not become a duplicate papers archive. Known paper slugs come from:
+
+- \`src/lib/config/fileBasedPapers.ts\`
+- static paper route \`meta.ts\` files
+
+## Adding A New Experiment
+
+1. Add metadata to \`src/lib/config/fileBasedExperiments.ts\`.
+2. Add \`content/experiments/{slug}.md\` if the default article shell is enough.
+3. Create \`src/routes/experiments/{slug}/\` if the experiment needs a custom interactive page.
+4. If using a dedicated route, add the slug to \`FILE_BASED_WITH_ROUTES\`.
+5. Add a living evidence section when the experiment supports a claim that can drift.
+6. Run:
+
+\`\`\`bash
+pnpm --filter @create-something/io check
+pnpm --filter @create-something/io build
+\`\`\`
+
+For user-visible route changes, also run a local preview and smoke:
+
+\`\`\`bash
+pnpm --filter @create-something/io preview --host 127.0.0.1 --port 4173
+\`\`\`
+
+Verify \`/experiments\`, the new detail route, and \`/sitemap.xml\`.
 `
   },
   {
@@ -1840,14 +1922,14 @@ from detection, to governed review, to submission copilot.`
 
 
 Agent-native design—exposing classic algorithms as MCP tools—enables team AI agents
-to perform sophisticated template analysis without custom integrations. The algorithms 
+to perform sophisticated template analysis without custom integrations. The algorithms
 do the heavy lifting; AI handles edge cases requiring judgment.
 
 
 ## The Problem
 
 
-Webflow Marketplace receives plagiarism reports comparing two templates. Manual review 
+Webflow Marketplace receives plagiarism reports comparing two templates. Manual review
 is expensive (\$625/month for 50 cases). We needed a system that could:
 
 - Fingerprint 9,500+ templates efficiently
@@ -2010,19 +2092,19 @@ The discrepancy is **expected and informative**:
 ## What This Proves
 
 
-✓ MinHash + Vector embeddings provide complementary signals  
-✓ LSH enables O(1) candidate lookup at scale  
-✓ PageRank identifies originals vs derivatives  
-✓ MCP enables any team member's AI to invoke analysis  
-✓ Three-tier AI optimizes cost/accuracy tradeoff  
+✓ MinHash + Vector embeddings provide complementary signals
+✓ LSH enables O(1) candidate lookup at scale
+✓ PageRank identifies originals vs derivatives
+✓ MCP enables any team member's AI to invoke analysis
+✓ Three-tier AI optimizes cost/accuracy tradeoff
 
 
 ## What This Doesn't Prove
 
 
-○ Visual similarity (screenshot comparison not yet implemented)  
-○ Optimal Bayesian weights (weight tuning script created, not validated)  
-○ Real-time ingestion (webhook integration pending)  
+○ Visual similarity (screenshot comparison not yet implemented)
+○ Optimal Bayesian weights (weight tuning script created, not validated)
+○ Real-time ingestion (webhook integration pending)
 
 
 ## Reproducibility
@@ -2045,8 +2127,8 @@ wrangler deploy
 ## Canon Reflection
 
 
-> **Zuhandenheit (ready-to-hand):** When the system works correctly, the infrastructure 
-> disappears. Marketplace administrators see decisions in Airtable—not queues, tiers, 
+> **Zuhandenheit (ready-to-hand):** When the system works correctly, the infrastructure
+> disappears. Marketplace administrators see decisions in Airtable—not queues, tiers,
 > or AI models.
 
 > **Subtractive Architecture:** The three-tier system removes work at each stage:
@@ -2061,7 +2143,7 @@ wrangler deploy
 
 
 The hypothesis is **validated**. Classic CS algorithms (MinHash, LSH, PageRank, Bayesian)
-combined with AI tiers create an effective plagiarism detection system at 99.6% cost 
+combined with AI tiers create an effective plagiarism detection system at 99.6% cost
 reduction. Exposing these tools via MCP enables any team member's AI agent to perform
 sophisticated template analysis.
 
@@ -2076,6 +2158,196 @@ designed for AI consumption while keeping humans in control of judgment calls.
 
 MCP gathers human intent, algorithmic capability, and AI judgment into a unified workflow.
 The protocol recedes; the analysis emerges.`
+  },
+  {
+    id: "io:docs/ai-native-visual-communication",
+    property: "io",
+    title: "AI-Native Visual Communication For Research Artifacts",
+    description: "AI-Native Visual Communication For Research Artifacts",
+    section: "docs",
+    path: "docs/ai-native-visual-communication.md",
+    slug: "docs/ai-native-visual-communication",
+    uri: "docs://io/docs/ai-native-visual-communication",
+    content: `# AI-Native Visual Communication For Research Artifacts
+
+This guide defines the repeatable visual system for \`.io\` papers and experiments.
+
+The goal is not to decorate research. The goal is to make technical ideas easier
+to inspect, remember, and reuse without losing precision.
+
+## Decision
+
+Every file-based research artifact carries three visual layers:
+
+1. \`ascii_art\`: terminal-native conceptual hero.
+2. \`visual_summary\`: Canon-rendered structured explanation.
+3. \`generated_brand_image\`: prompt-governed editorial image spec.
+
+The first layer lives directly on the artifact metadata. The second and third
+layers are attached through the ID-keyed visual definition maps in
+\`fileBasedPapers.ts\` and \`fileBasedExperiments.ts\`, using
+\`defineArtifactVisuals\` from \`visualCommunication.ts\`.
+
+Use the layers for different jobs. A generated image should set tone and
+recognition. A structured visual summary should carry the framework. Markdown
+tables and code blocks should carry exact details.
+
+## Ownership
+
+The repo owns the framework. The image model creates assets inside the repo's
+constraints.
+
+That means:
+
+- diagrams with exact states, labels, and relationships should be rendered by
+  Canon components
+- generated images should be prompt-versioned metadata before they become
+  published assets
+- generated images should never be the only source of framework meaning
+- prompt contracts should travel with the paper or experiment metadata
+
+## Metadata Fields
+
+File-based papers and experiments expose these fields after
+\`applyArtifactVisuals\` attaches the visual definition:
+
+\`\`\`ts
+ascii_art?: string;
+visual_summary?: {
+  kind: 'state-strip' | 'layer-stack' | 'boundary-matrix' | 'flow' | 'proof-card';
+  title: string;
+  caption?: string;
+  nodes: Array<{
+    label: string;
+    detail?: string;
+    icon?: 'document' | 'folder' | 'user' | 'users' | 'settings' | 'mail' | 'calendar' | 'clock' | 'check' | 'warning' | 'info';
+    tone?: 'neutral' | 'run' | 'wait' | 'stop' | 'receipt';
+  }>;
+};
+generated_brand_image?: {
+  prompt_contract: 'create-something-research-visual.v1';
+  model: 'gpt-image-2';
+  status: 'prompt-only' | 'generated' | 'approved';
+  prompt: string;
+  intended_use?: 'article-hero' | 'social-card' | 'section-opener' | 'visual-abstract';
+  size?: string;
+  quality?: 'low' | 'medium' | 'high';
+  asset_path?: string | null;
+  alt?: string | null;
+};
+\`\`\`
+
+## Visual Summary Kinds
+
+Use the smallest kind that explains the idea.
+
+| Kind | Use when | Example |
+| --- | --- | --- |
+| \`state-strip\` | The artifact defines visible states. | Run, wait, stop, receipt. |
+| \`layer-stack\` | The artifact explains levels in a system. | Database, Automation, Judgment. |
+| \`boundary-matrix\` | The artifact separates audiences or permissions. | Public status vs private evidence. |
+| \`flow\` | The artifact explains sequence. | Connect, verify, coordinate, control. |
+| \`proof-card\` | The artifact includes a reusable operating record. | Workflow, owner, evidence, receipt. |
+
+## Generated Brand Image Contract
+
+Use this prompt contract for OpenAI \`gpt-image-2\` visual assets.
+
+\`\`\`text
+CREATE SOMETHING research visual system.
+
+Purpose:
+Create a publication-quality visual abstract for a research paper or experiment.
+
+Brand:
+Minimal, rigorous, systems-oriented, black and white foundation with one
+restrained amber accent. High contrast, quiet interface density, no decorative
+clutter.
+
+Visual language:
+Abstract operating-system diagram. Architectural systems thinking. Sparse
+geometry. Visible layers, boundaries, traces, receipts, handoff paths, and owner
+checkpoints. Subtle terminal or paper texture. No stock-photo people. No glossy
+SaaS gradients. No mascot. No cartoon. No fake UI chrome.
+
+Composition:
+16:9 editorial hero. Centered system object with generous negative space.
+Readable at article header size. Suitable above a title, but do not include
+title text in the image.
+
+Subject:
+[artifact-specific subject]
+
+Required motifs:
+- [3 to 5 motifs that match the artifact]
+
+Forbidden:
+watermarks, extra logos, random text, illegible labels, fake brand names,
+colorful dashboard clutter, decorative blobs.
+\`\`\`
+
+## Authoring Rules
+
+1. Start with the framework claim, not the image.
+2. Choose one \`visual_summary.kind\`.
+3. Write 3 to 5 nodes with short labels and useful details.
+4. Add a \`defineArtifactVisuals\` entry keyed by the artifact \`id\`.
+5. Only set \`status: 'approved'\` after a human checks the exported image.
+6. Add \`asset_path\` only after the image is committed or otherwise managed.
+7. Keep exact labels in Canon-rendered visuals, not inside generated images.
+
+## File Conventions
+
+Generated \`.io\` image assets should live near the \`.io\` property:
+
+\`\`\`text
+packages/io/static/generated/research/<slug>/<slug>--hero--vYYYYMMDD.webp
+packages/io/static/generated/research/<slug>/<slug>--social--vYYYYMMDD.webp
+\`\`\`
+
+Source prompt inputs remain in \`fileBasedPapers.ts\` or
+\`fileBasedExperiments.ts\`; the shared brand prompt is generated by
+\`visualCommunication.ts\`.
+If an image is used across multiple artifacts, promote the prompt and asset to
+a shared Canon or docs asset only after the reuse is real.
+
+## Coverage Guard
+
+\`pnpm check:visuals\` enforces the visual communication contract:
+
+- every \`fileBasedPaperMetadata\` entry has a matching \`fileBasedPaperVisuals\`
+  entry
+- every \`fileBasedExperimentMetadata\` entry has a matching
+  \`fileBasedExperimentVisuals\` entry
+- no visual definition points at an unknown artifact id
+- each definition includes kind, title, nodes, subject, motifs, and alt text
+- all generated image specs use
+  \`create-something-research-visual.v1\` with \`gpt-image-2\`
+
+## Review Checklist
+
+Before publishing an artifact with visuals:
+
+- [ ] \`ascii_art\` summarizes the concept in the \`.io\` Unicode visual dialect.
+- [ ] \`visual_summary\` explains a state, layer, boundary, flow, or proof card.
+- [ ] generated imagery is prompt-versioned as \`generated_brand_image\`.
+- [ ] generated imagery does not contain framework-critical text.
+- [ ] exact labels remain in HTML/SVG/Markdown, not only in the bitmap.
+- [ ] alt text exists for any committed generated image.
+- [ ] the artifact still reads correctly if generated images fail to load.
+
+## Reference Implementation
+
+\`The Proof Surface\` established the pattern:
+
+- \`ascii_art\` for the terminal-native hero
+- \`visual_summary.kind = 'state-strip'\` for Run, Wait, Stop, Receipt
+- \`generated_brand_image.prompt_contract = 'create-something-research-visual.v1'\`
+  for the future \`gpt-image-2\` editorial image
+
+The current catalog applies that pattern to every file-based \`.io\` paper and
+experiment.
+`
   },
   {
     id: "io:docs/newsletter-strategy",
@@ -2473,6 +2745,84 @@ If any answer is "no," revise or delay sending.
 `
   },
   {
+    id: "io:docs/research-content-transparency",
+    property: "io",
+    title: "Research Content Transparency",
+    description: "Research Content Transparency",
+    section: "docs",
+    path: "docs/research-content-transparency.md",
+    slug: "docs/research-content-transparency",
+    uri: "docs://io/docs/research-content-transparency",
+    content: `# Research Content Transparency
+
+Papers and experiments on \`.io\` are public research artifacts. They can be
+markdown-backed files under \`content/\` or dedicated Svelte routes under
+\`src/routes/\`.
+
+## Living Document Standard
+
+New research artifacts and materially updated artifacts should include a short
+transparency section when they make claims that can drift:
+
+- platform behavior
+- standards or protocol interpretation
+- market sentiment
+- benchmarks or model capability
+- operational evidence
+- implementation claims
+- external product or vendor positioning
+
+Use the shared template:
+
+\`\`\`text
+docs/examples/living-research-transparency.template.yaml
+\`\`\`
+
+The public section can be prose, YAML, or a compact table, but it should answer:
+
+- claim status: hypothesis, supported, validated, contested, or superseded
+- confidence: low, medium, or high
+- evidence grade: official docs, implementation evidence, benchmark, market signal, community sentiment, field signal, or anecdotal
+- last reviewed date and next review date
+- current best read
+- supporting sources or evidence
+- counter-signals and open questions
+- update log
+
+This standard does not require retrofitting every historical artifact before
+small edits. It does apply when a paper or experiment is promoted, republished,
+used as sales or delivery evidence, compared against newer research, or updated
+because the ecosystem changed.
+
+## Sources And Citations
+
+Prefer source links close to the claim when the source is central to the paper
+or experiment. Use a \`## Sources\` or \`## References\` section for source sets at
+the end.
+
+For living research, sources should not only prove that a citation exists. They
+should describe what the source supports and whether it is still current.
+
+## Evidence Boundaries
+
+Separate public-safe proof from private evidence:
+
+- public-safe proof: docs, public URLs, published benchmark summaries, release IDs, PRs, issue IDs, redacted screenshots
+- private evidence: raw logs, credentials-adjacent output, client data, private traces, internal screenshots
+
+If private evidence is required to support a claim, cite the public-safe pointer
+and name the evidence class without exposing sensitive details.
+
+## Update Mechanics
+
+Use \`updated_at\`, route metadata dates, or frontmatter dates for catalog
+freshness. Use the transparency section for claim freshness.
+
+A date change alone is not enough. Record what changed and why in the update
+log when a claim status, confidence, source set, or counter-signal changes.
+`
+  },
+  {
     id: "io:docs/research-references",
     property: "io",
     title: "External Research References",
@@ -2537,7 +2887,7 @@ Demonstrates that poetic structures can bypass LLM safety constraints through li
 
 ---
 
-*This document tracks external research. For original CREATE SOMETHING papers, see \`/src/lib/config/fileBasedPapers.ts\`*
+*This document tracks external research. For original CREATE SOMETHING papers, see \`/src/lib/config/paperCatalog.ts\` and \`/src/lib/config/fileBasedPapers.ts\`.*
 `
   },
   {
@@ -3419,8 +3769,12 @@ This guide documents how to migrate papers from static Svelte routes to the mark
 ## Infrastructure (Completed)
 
 - \`src/routes/papers/[slug]/+page.server.ts\` - Dynamic route that serves file-based papers
-- \`src/routes/papers/[slug]/+page.svelte\` - Template for rendering file-based papers
+- \`src/routes/papers/[slug]/+page.svelte\` - Dynamic route wrapper for the shared research artifact shell
+- \`../canon/src/lib/domains/io/ResearchArtifactPage.svelte\` - Shared page shell for file-backed papers and experiments
 - \`src/lib/config/fileBasedPapers.ts\` - Configuration for file-based papers
+- \`src/lib/config/paperCatalog.ts\` - Shared archive, manifest, and sitemap catalog
+- \`scripts/check-paper-catalog.mjs\` - Drift guard for paper routes and sitemap ownership
+- \`scripts/check-research-artifact-templates.mjs\` - Template guard that blocks new bespoke static artifact routes
 
 ## Migration Steps
 
@@ -3447,6 +3801,10 @@ Edit \`src/lib/config/fileBasedPapers.ts\`:
   ascii_art: \`ASCII art here\`
 }
 \`\`\`
+
+Add the matching ID to \`fileBasedPaperVisuals\` with \`defineArtifactVisuals\`.
+\`pnpm check:visuals\` fails if the paper metadata and visual definition maps
+drift.
 
 ### 2. Create Markdown Content
 
@@ -3481,9 +3839,10 @@ rm -rf src/routes/papers/{slug}/
 
 ### 4. Verify
 
-1. Build: \`pnpm build\`
-2. Test: Visit \`/papers/{slug}\`
-3. Check: PageActions, ShareButtons, SEO work
+1. Check: \`pnpm --filter @create-something/io check\`
+2. Build: \`pnpm --filter @create-something/io build\`
+3. Test: Visit \`/papers/{slug}\`, \`/api/manifest\`, and \`/sitemap.xml\`
+4. Check: PageActions, ShareButtons, SEO, manifest output, and sitemap output
 
 ## Papers to Migrate
 
@@ -3542,8 +3901,10 @@ Content here...
 ## Notes
 
 - Static routes take precedence over dynamic routes
-- Papers with interactive components should stay as static routes
+- New papers should not add static routes. Use the markdown-backed dynamic route unless an interactive component requires an explicit reviewed exception.
+- Interactive experiments may keep bespoke body components, but the exception should be intentional and tracked by \`scripts/check-research-artifact-templates.mjs\`.
 - The ArticleContent component renders markdown via html_content field
+- Visual communication rules live in [docs/ai-native-visual-communication.md](./docs/ai-native-visual-communication.md). Every file-based paper needs a matching \`defineArtifactVisuals\` entry so \`visual_summary\` carries framework meaning and \`generated_brand_image\` carries prompt-governed editorial imagery.
 `
   },
   {
@@ -3631,6 +3992,43 @@ Templates and scaffolding tools have commoditized *starting* an MCP server. The 
 | Validation surfaces | Svelte check output, ESLint output, route preview, paper/plugin route responses |
 | UI validation path | \`/\`, \`/papers\`, \`/plugins\` |
 | Escalation rule | stop if research content, plugin catalog, or D1-backed experiment data cannot be reconciled with the checked-in source artifacts |
+
+### Paper Catalog Guard
+
+\`pnpm check\` runs \`scripts/check-paper-catalog.mjs\` before Svelte diagnostics. The guard fails when:
+
+- a static paper route under \`src/routes/papers/{slug}/\` lacks \`meta.ts\`
+- \`static/sitemap.xml\` is reintroduced and shadows the generated sitemap route
+- the old \`content/papers/test-markdown-paper.md\` fixture appears in production content
+- a markdown file under \`content/papers/\` lacks either a static route or \`fileBasedPapers\` entry
+
+### Research Artifact Template Guard
+
+Papers and experiments share the \`ResearchArtifactPage\` shell for file-backed artifacts. New papers should use:
+
+1. \`src/lib/config/fileBasedPapers.ts\`
+2. \`content/papers/{slug}.md\`
+3. the dynamic \`/papers/[slug]\` route
+
+New experiments should use:
+
+1. \`src/lib/config/fileBasedExperiments.ts\`
+2. \`content/experiments/{slug}.md\` when the detail page is text-backed
+3. the dynamic \`/experiments/[slug]\` route unless an interactive route needs explicit review
+
+\`pnpm check\` runs \`scripts/check-research-artifact-templates.mjs\` and fails when a new static paper route is added outside the shared artifact path, when a new static experiment route bypasses the reviewed exception list, when dynamic routes stop rendering through \`ResearchArtifactPage\`, or when paper markdown omits required publication frontmatter.
+
+### AI-Native Visual Communication
+
+File-based papers and experiments use a repeatable visual communication layer instead of one-off illustrations:
+
+1. \`ascii_art\` for terminal-native conceptual heroes
+2. \`visual_summary\` for Canon-rendered state, layer, boundary, flow, or proof-card diagrams
+3. \`generated_brand_image\` for prompt-governed \`gpt-image-2\` editorial image specs
+
+Use [docs/ai-native-visual-communication.md](./docs/ai-native-visual-communication.md) when adding or reviewing visuals for a research artifact. New file-based catalog entries must add an ID-keyed \`defineArtifactVisuals\` entry.
+
+\`pnpm check\` runs \`scripts/check-visual-communication.mjs\` and fails when a file-based paper or experiment lacks a visual definition, when a definition points at an unknown artifact, or when the shared prompt contract is missing the \`gpt-image-2\` model declaration and visual-summary basics.
 
 ---
 
@@ -6346,34 +6744,34 @@ This is different from \`.space\`, which uses D1 for experiment content.
 
 | Route | Source | Content Type |
 |-------|--------|--------------|
-| \`/papers/{slug}\` | Static \`.svelte\` routes | Rich interactive papers |
+| \`/papers/{slug}\` | Static \`.svelte\` routes or file-based markdown config | Rich interactive papers and migrated markdown papers |
 | \`/experiments/{slug}\` | D1 + Static routes | Both D1 and file-based |
-| \`/api/manifest\` | Manifest endpoint | Metadata for search indexing |
+| \`/api/manifest\` | Shared paper catalog + static experiment list | Metadata for search indexing |
 
 ### Adding a New Paper
 
 1. **Create static route**: \`src/routes/papers/new-paper/+page.svelte\`
-2. **Update manifest**: \`src/routes/api/manifest/+server.ts\` - add entry to \`PAPERS\` array
-3. **Search indexing**: Happens automatically via manifest every 6 hours
+2. **Add route metadata**: \`src/routes/papers/new-paper/meta.ts\`
+3. **Run validation**: \`pnpm --filter @create-something/io check\`
+4. **Search and sitemap indexing**: Happens automatically through the shared paper catalog
 
 ### The Manifest API
 
 The manifest at \`/api/manifest\` provides metadata for the unified search indexer:
 
 \`\`\`typescript
-// src/routes/api/manifest/+server.ts
-const PAPERS: ContentItem[] = [
-  {
-    slug: 'hermeneutic-spiral-ux',
-    title: 'The Hermeneutic Spiral in UX Design',
-    description: 'Applying Heidegger\\'s hermeneutic circle to UX design',
-    category: 'methodology'
-  },
-  // ... add new papers here
-];
+// src/lib/config/paperCatalog.ts
+export function getPaperManifestItems() {
+  return getPublishedPaperMetas().map((paper) => ({
+    slug: paper.slug,
+    title: paper.title,
+    description: paper.description,
+    category: paper.category
+  }));
+}
 \`\`\`
 
-The search indexer fetches this manifest instead of querying D1, ensuring only papers with actual routes are indexed.
+The search indexer fetches this manifest instead of querying D1, ensuring only papers with actual routes and catalog metadata are indexed. Do not maintain a manual paper list in \`/api/manifest\`; add \`meta.ts\` for static papers or \`fileBasedPapers.ts\` metadata for markdown-backed papers.
 
 ## Paper Structure
 
@@ -6466,6 +6864,59 @@ All plugin UI uses **Canon tokens** (no hardcoded colors):
 *Last validated: 2025-12-30*
 
 *This UNDERSTANDING.md follows the "Less, but better" principle—document what's critical to understand, not every detail. When you need deeper knowledge, follow the references to source files.*
+`
+  },
+  {
+    id: "io:workers/bundle-scanner-api/README",
+    property: "io",
+    title: "Bundle Scanner API",
+    description: "Bundle Scanner API",
+    section: "workers",
+    path: "workers/bundle-scanner-api/README.md",
+    slug: "workers/bundle-scanner-api/README",
+    uri: "docs://io/workers/bundle-scanner-api/README",
+    content: `# Bundle Scanner API
+
+Worker endpoint for pre-review Webflow App bundle scanning.
+
+## Scan Contract
+
+\`POST /scan\`
+
+\`\`\`json
+{
+  "submissionId": "airtable-or-form-submission-id",
+  "bundleUrl": "https://private.example.com/app-bundle.zip",
+  "sourceMapUrl": "https://private.example.com/source-maps.zip",
+  "callbackUrl": "https://optional-callback.example.com/scan-result"
+}
+\`\`\`
+
+- \`bundleUrl\` is the canonical app bundle artifact. In the final pipeline this should come
+  from Webflow Admin or from a hash-linked copy of that Admin bundle.
+- \`sourceMapUrl\` is optional during rollout, but should be supplied by the App Submission Form
+  when developers provide private source maps for review.
+- \`sourceMapUrl\` may point to a ZIP of \`.map\` files or a single \`.map\` file.
+- Source maps are review artifacts only. They should not be included in a public production bundle.
+
+The response includes \`artifacts.bundle.sha256\` and, when provided, \`artifacts.sourceMap.sha256\`.
+Those hashes are the handoff boundary between the form/Admin artifact and the automated review.
+
+## Source Map Status
+
+The scan report includes \`sourceMapSummary\`:
+
+- \`matched\`: private source maps matched generated bundle files.
+- \`partial\`: some generated files or source map references did not match.
+- \`missing\`: generated files need source maps, but no artifact was provided.
+- \`mismatch\`: a source map artifact was provided but did not match any generated bundle files.
+- \`invalid\`: source maps were provided but could not be parsed.
+- \`not_required\`: no generated bundle files needed maps.
+- \`not_provided\`: no source maps were provided and no generated files were detected.
+
+\`publicExposure: true\` means the production bundle contained \`.map\` files or \`sourceMappingURL\`
+references. The form can still collect source maps separately, but public exposure should be
+handled as a release-blocking cleanup item before publication.
 `
   },
   {
@@ -12522,7 +12973,7 @@ curl https://createsomething.space/experiments/notion-api-migration-2025
 ## Testing Checklist
 
 - [x] Lesson 1: Basic parameter migration
-- [x] Lesson 2: Batch updates  
+- [x] Lesson 2: Batch updates
 - [x] Lesson 3: Create page with data source
 - [x] Validation errors display correctly
 - [x] Success outputs match expected results
@@ -12532,8 +12983,8 @@ curl https://createsomething.space/experiments/notion-api-migration-2025
 
 ## Status
 
-✅ **BUG FIXED**  
-✅ **DEPLOYED TO PRODUCTION**  
+✅ **BUG FIXED**
+✅ **DEPLOYED TO PRODUCTION**
 ✅ **EXPERIMENT FULLY FUNCTIONAL**
 
 **Production URL**: https://createsomething.space/experiments/notion-api-migration-2025
@@ -18445,8 +18896,8 @@ Following DRY development principles:
 
 This document describes the database enhancements made to support advanced NBA Live Analytics features, including player baselines, historical data storage, and play-by-play archival.
 
-**Date Completed:** January 8, 2026  
-**Database:** \`create-something-db\` (Cloudflare D1)  
+**Date Completed:** January 8, 2026
+**Database:** \`create-something-db\` (Cloudflare D1)
 **Worker:** \`nba-proxy\`
 
 ---
@@ -18663,8 +19114,8 @@ pnpm tsx packages/space/scripts/backfill-nba-history.ts --days 7 --dry-run
 - \`archive_metadata\` - Archive status tracking ✅
 
 ### Total Database Size
-**Before:** ~5.25 MB  
-**After:** ~5.37 MB  
+**Before:** ~5.25 MB
+**After:** ~5.37 MB
 **Growth:** +120 KB (tables only, no data yet)
 
 ---
@@ -18708,8 +19159,8 @@ GET /game/:gameId/boxscore
 # Check all tables exist
 cd packages/space/workers/nba-proxy
 wrangler d1 execute create-something-db --remote --command \\
-  "SELECT name FROM sqlite_master WHERE type='table' AND name IN 
-   ('pbp_archive', 'boxscore_archive', 'archive_metadata', 
+  "SELECT name FROM sqlite_master WHERE type='table' AND name IN
+   ('pbp_archive', 'boxscore_archive', 'archive_metadata',
     'player_baselines', 'season_averages') ORDER BY name"
 \`\`\`
 
@@ -18724,12 +19175,12 @@ wrangler d1 execute create-something-db --remote --command \\
 
 # Check player baselines (after seeding)
 wrangler d1 execute create-something-db --remote --command \\
-  "SELECT player_name, offensive_rating, defensive_rating 
+  "SELECT player_name, offensive_rating, defensive_rating
    FROM player_baselines ORDER BY net_rating DESC LIMIT 5"
 
 # Check archive status
 wrangler d1 execute create-something-db --remote --command \\
-  "SELECT game_id, game_date, has_pbp, has_boxscore 
+  "SELECT game_id, game_date, has_pbp, has_boxscore
    FROM archive_metadata ORDER BY game_date DESC LIMIT 5"
 \`\`\`
 
@@ -18794,7 +19245,7 @@ wrangler d1 execute create-something-db --remote --command \\
 
 \`\`\`sql
 -- Archive coverage
-SELECT 
+SELECT
   COUNT(*) as total_games,
   SUM(has_pbp) as pbp_archived,
   SUM(has_boxscore) as boxscore_archived,
@@ -18809,7 +19260,7 @@ ORDER BY last_attempt_at DESC
 LIMIT 10;
 
 -- Database size by table
-SELECT 
+SELECT
   name,
   (SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=m.name) as row_count
 FROM sqlite_master m
@@ -18840,7 +19291,7 @@ If issues arise, rollback is straightforward:
 
 3. **Remove from d1_migrations:**
    \`\`\`sql
-   DELETE FROM d1_migrations 
+   DELETE FROM d1_migrations
    WHERE name IN ('0013_nba_baselines.sql', '0002_pbp_archive.sql');
    \`\`\`
 
@@ -18869,8 +19320,8 @@ The system is now ready for production deployment and can support sophisticated 
     uri: "docs://space/NOTION_API_DEPLOYMENT",
     content: `# ✅ Notion API Migration Experiment - DEPLOYED TO PRODUCTION
 
-**Deployment Date**: November 18, 2025  
-**Status**: ✅ Live and Accessible  
+**Deployment Date**: November 18, 2025
+**Status**: ✅ Live and Accessible
 **Production URL**: https://createsomething.space/experiments/notion-api-migration-2025
 
 ---
@@ -18885,7 +19336,7 @@ Interactive coding experiment teaching developers how to migrate from \`database
 
 **3 Progressive Lessons**:
 1. ✅ Basic parameter migration (single query)
-2. ✅ Batch updates (multiple queries)  
+2. ✅ Batch updates (multiple queries)
 3. ✅ Create pages with new parent format
 
 ---
@@ -18919,7 +19370,7 @@ wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-spa
 
 ### 4. ✅ Production Verification
 
-✅ Preview URL: https://65e0cafe.create-something-space.pages.dev/experiments/notion-api-migration-2025  
+✅ Preview URL: https://65e0cafe.create-something-space.pages.dev/experiments/notion-api-migration-2025
 ✅ Production URL: https://createsomething.space/experiments/notion-api-migration-2025
 
 ---
@@ -18954,8 +19405,8 @@ wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-spa
 
 ## Status
 
-✅ **DEPLOYMENT COMPLETE**  
-✅ **EXPERIMENT LIVE IN PRODUCTION**  
+✅ **DEPLOYMENT COMPLETE**
+✅ **EXPERIMENT LIVE IN PRODUCTION**
 ✅ **READY FOR STUDENTS**
 
 `
@@ -22847,6 +23298,400 @@ The .agency property has **excellent Canon compliance** for the critical path. R
 `
   },
   {
+    id: "agency:clients/cato-supply-insights-review/docs/cato-additional-page-updates-sop-proposal-2026-05-27",
+    property: "agency",
+    title: "Cato Supply - Additional Page Experience Updates SOP + Proposal",
+    description: "Cato Supply - Additional Page Experience Updates SOP + Proposal",
+    section: "clients",
+    path: "clients/cato-supply-insights-review/docs/cato-additional-page-updates-sop-proposal-2026-05-27.md",
+    slug: "clients/cato-supply-insights-review/docs/cato-additional-page-updates-sop-proposal-2026-05-27",
+    uri: "docs://agency/clients/cato-supply-insights-review/docs/cato-additional-page-updates-sop-proposal-2026-05-27",
+    content: `# Cato Supply - Additional Page Experience Updates SOP + Proposal
+
+**Prepared for:** Cato Supply Inc.
+**Prepared by:** CREATE SOMETHING
+**Date:** May 27, 2026
+**Related engagement:** Cato Supply - Webflow Insights CMS build
+**Related proposal:** Cato Supply Website Insights Proposal
+**Status:** Drafted for Notion and client review
+
+## Executive Summary
+
+The original Cato Webflow Insights proposal covered the Insights navigation, CMS structure, hub/archive pages, templates, QA, and handoff. During the Insights implementation, the review surface and Code Component approach also created a stronger delivery pattern for improving adjacent Cato pages without rebuilding every section natively in Webflow.
+
+This additional SOP/proposal extends that same pattern to the About and Case Studies experiences. The recommended path is to use self-contained Webflow Code Components for the major page bodies, preserve existing shared Nav/Footer and native forms where needed, bind CMS fields only after the visual/content model is stable, and publish only after client approval.
+
+## Why This Is Additional Scope
+
+The current contracted engagement is focused on the Webflow Insights CMS build and collection-page handoff. The About and Case Studies updates are connected to that work because they should match the new Insights polish, but they are distinct page-experience improvements.
+
+The work should be treated as an incremental enhancement package rather than a full rebrand or a replacement of the Cato site architecture.
+
+## Source Context Reviewed
+
+- Existing Notion proposal: \`Cato Supply Website Insights Proposal\`
+- Existing Notion engagement: \`Cato Supply - Webflow Insights CMS build\`
+- Existing Notion client record: \`Cato Supply Inc.\`
+- Existing Notion task: \`Share Cato page redesign SOP for About Contact and Case Studies\`
+- Existing Notion task: \`Finalize Cato Webflow Collection pages and CMS bindings\`
+- Export baseline: \`/Users/micahjohnson/Downloads/cato-supply.webflow\`
+- Repo package: \`packages/agency/clients/cato-supply-insights-review\`
+- Code Component package: \`packages/webflow-components\`
+- Review URL: \`https://cato-supply-insights-review.pages.dev/insights\`
+
+## Recommended Scope
+
+### 1. About Page Experience
+
+Replace the current long-form About page body with an improved \`Cato About Page\` Code Component between the existing shared Nav and Footer.
+
+The improved page should:
+
+- Lead with a clearer first viewport that connects Cato's company story to healthcare procurement intelligence.
+- Surface proof metrics and operational credibility earlier.
+- Preserve the existing values, mission, leadership, and board content, but organize it with tighter section rhythm.
+- Include self-contained component styles because Webflow Code Components render in Shadow DOM.
+- Use subtle motion polish, with \`prefers-reduced-motion\` support.
+
+Baseline grade: \`B-\`
+Target grade: \`A-\`
+
+### 2. Case Studies Landing Page
+
+Replace the current listing-style Case Studies page body with \`Cato Case Studies Landing\`.
+
+The improved page should:
+
+- Lead with a featured customer story rather than a generic listing.
+- Surface outcomes/results above the fold or immediately after the hero.
+- Present the story grid as proof, not just CMS inventory.
+- Add a clearer path from evidence to contact.
+- Keep the layout visually aligned with the Insights hub and archive pages.
+
+Baseline grade: \`C+\`
+Target grade: \`A-\`
+
+### 3. Case Study Detail Template
+
+Use \`Cato Case Study Detail\` on the Case Studies CMS template if native template binding remains slow or fragile.
+
+The improved template should:
+
+- Support customer profile, challenge, solution, results, related stories, and image fields.
+- Bind to CMS fields where convenient.
+- Provide safe defaults so the template is usable before every field is populated.
+- Avoid unnecessary carousel dependencies for the first improved delivery.
+
+Baseline grade: \`C+\`
+Target grade: \`B+\` to \`A-\`, depending on CMS field completeness.
+
+### 4. Contact Page Boundary
+
+The existing Notion SOP task references About, Contact, and Case Studies. For this delivery pass, Contact should remain a lighter polish lane unless Cato requests a full redesign.
+
+Recommended handling:
+
+- Keep the native Webflow contact form in place so form capture remains reliable.
+- Align CTA spacing, button style, section rhythm, and footer adjacency with the new Insights/About/Case Studies polish.
+- Only create a Contact Code Component if the client approves a separate Contact redesign pass.
+
+## SOP
+
+1. Confirm the page's job before changing layout.
+   - About: credibility and company trust.
+   - Case Studies landing: proof and story discovery.
+   - Case Study detail: persuasive customer narrative.
+   - Contact: conversion clarity and reliable form capture.
+
+2. Start from the exported Webflow baseline.
+   - Use \`/Users/micahjohnson/Downloads/cato-supply.webflow\` for typography, spacing, cards, backgrounds, image assets, and Cato's existing visual language.
+   - Compare against the repo static copy in \`packages/agency/clients/cato-supply-insights-review/site\`.
+
+3. Build the improved experience as a Code Component first.
+   - Embed component styles directly in the \`*.webflow.tsx\` declaration or imported component CSS.
+   - Use \`applyTagSelectors: true\` where appropriate.
+   - Use component-specific classes instead of relying on site classes that cannot cross the Shadow DOM boundary.
+
+4. Preserve native Webflow shell elements.
+   - Keep the shared Nav.
+   - Keep Footer / V2.
+   - Keep native forms unless a form replacement is explicitly approved.
+
+5. Bind CMS fields only where the content model is stable.
+   - Bind known fields on Case Studies detail pages.
+   - Use JSON props for arrays where Designer binding is faster than native Collection nesting.
+   - Use component defaults when binding delays delivery.
+
+6. Rebuild Collection pages with stable component insertion.
+   - Prefer installed site/library component instances over transient MCP-discovered component IDs.
+   - Verify the direct element ID after switching pages because Designer can cache or lose component metadata.
+   - Reinsert the component if old props remain cached after a library update.
+
+7. QA before publishing.
+   - Desktop, tablet, and mobile.
+   - Nav/dropdown behavior.
+   - Button styles.
+   - Text wrapping and section spacing.
+   - Form behavior where applicable.
+   - Reduced-motion behavior.
+   - No implementation-only language on client-facing pages.
+
+8. Publish only after approval.
+   - Use Cloudflare/static review or Webflow Designer preview for review.
+   - Do not publish production domains until Cato approves copy, layout, CMS binding, and page behavior.
+
+## Recommended Webflow Build Sequence
+
+1. Refresh or reimport the shared \`CREATE SOMETHING Canon Components\` library.
+2. Confirm the current page from Designer before inserting components.
+3. Rebuild the Insights Collection templates first if the backup reset removed them:
+   - \`Cato Insights Hub\` on \`/insights\`
+   - \`Cato Insights Archive\` on focused archive pages
+   - \`Cato Insight Category Archive\` on Insight Categories collection template
+   - \`Cato Insight Detail\` on Insight detail template when needed
+4. Replace \`/about-us\` body with \`Cato About Page\`, keeping team/profile sections off by default.
+5. Create \`/leadership\`, place \`Cato Leadership Page\`, and add \`Leadership\` under the native About Us dropdown.
+6. Create \`/board-of-directors\`, place \`Cato Board of Directors Page\`, and add \`Board of Directors\` under the native About Us dropdown.
+7. Replace \`/case-studies\` body with \`Cato Case Studies Landing\`.
+8. Replace the Case Studies collection template body with \`Cato Case Study Detail\` when a Code Component fallback is faster than native rebuilding.
+9. Polish Contact only at the native section level unless a separate Contact component is approved.
+10. QA all updated pages and collect approval before publish.
+
+## Acceptance Criteria
+
+- About page clearly explains Cato's credibility and procurement-intelligence relevance in the first viewport.
+- Leadership and Board of Directors are separate pages reachable from the About Us dropdown.
+- Case Studies landing highlights a featured proof story and visible outcomes before the full grid.
+- Case Study detail pages render complete customer narratives even when optional CMS fields are missing.
+- Collection templates survive page switching and Designer refresh without losing the component instance.
+- Buttons align visually with the updated Cato system.
+- Pages are responsive across desktop, tablet, and mobile.
+- Motion improves polish without blocking readability or accessibility.
+- Native forms remain reliable.
+- No production publish occurs without explicit approval.
+
+## Validation Commands
+
+Run from repo root:
+
+\`\`\`bash
+pnpm --filter @create-something/webflow-components verify
+pnpm --filter @create-something/cato-supply-insights-review check
+WEBFLOW_SKIP_UPDATE_CHECKS=true npx webflow library share --no-input
+\`\`\`
+
+Recommended Designer validation:
+
+- Confirm component metadata appears under the \`Cato Supply\` group.
+- Confirm page instances expose the latest props.
+- Confirm Collection templates resolve the correct current item or slug.
+- Confirm button hover/focus states and mobile wrapping.
+
+## Risks And Mitigations
+
+| Risk | Mitigation |
+| --- | --- |
+| Webflow Code Component Shadow DOM blocks site classes | Embed component styles and reference site variables with fallbacks. |
+| Designer caches old library metadata | Refresh the Designer/library import or reinsert affected components. |
+| MCP-discovered component IDs drift after backup restore | Prefer installed site/library component instances and verify direct element IDs. |
+| CMS binding slows delivery | Use safe component defaults first, then bind final fields after approval. |
+| Contact form capture breaks if replaced | Keep Contact form native unless a separate form replacement is approved. |
+| Visual polish drifts from Cato export | Continue using the exported Webflow CSS and assets as the baseline. |
+
+## Client-Facing Proposal Language
+
+We recommend a focused additional page-polish package for Cato's About and Case Studies experiences. This extends the same system we used for the Insights work: review locally or in Designer first, preserve the existing Webflow shell, use Code Components for speed and consistency, bind CMS fields where they are stable, and publish only after approval.
+
+The goal is not to redesign the whole site. The goal is to bring the company-story and proof pages up to the same quality bar as the new Insights experience, so visitors move from thought leadership to credibility, proof, and contact with a consistent visual rhythm.
+
+## Open Decisions
+
+- Should this be included as an addendum to the existing Insights proposal or quoted as a separate change order?
+- Should Contact remain native polish only, or should Cato approve a full Contact page redesign?
+- Should the Case Study detail template be delivered as a Code Component fallback first, or rebuilt natively after final CMS field mapping?
+- Should production publish wait until both Insights and the additional page polish are approved together?
+`
+  },
+  {
+    id: "agency:clients/cato-supply-insights-review/docs/cato-linkedin-content-capture-checklist-2026-05-27",
+    property: "agency",
+    title: "Cato LinkedIn Content Capture Checklist",
+    description: "Cato LinkedIn Content Capture Checklist",
+    section: "clients",
+    path: "clients/cato-supply-insights-review/docs/cato-linkedin-content-capture-checklist-2026-05-27.md",
+    slug: "clients/cato-supply-insights-review/docs/cato-linkedin-content-capture-checklist-2026-05-27",
+    uri: "docs://agency/clients/cato-supply-insights-review/docs/cato-linkedin-content-capture-checklist-2026-05-27",
+    content: `# Cato LinkedIn Content Capture Checklist
+
+Date: 2026-05-27
+
+Goal: keep the Insights content source of truth in the Webflow CMS. Code component fallback data should remain preview/demo support only, not production copy.
+
+## Current Status
+
+Full LinkedIn source body is now in CMS and published for:
+
+- \`gowns-drapes-disruption\`
+- \`bair-hugger-backorders\`
+- \`iv-sets-allocation\`
+- \`stryker-cyberattack\`
+- \`avagard-shortage\`
+- \`nbr-medical-supplies\`
+- \`capstone-partnership\`
+- \`neurosponges-disruption\`
+- \`nasal-oral-ett-backorders\`
+- \`vascular-angiographic-dialysis-kits-shortages\`
+
+Remaining LinkedIn captures needed:
+
+None. All 10 requested LinkedIn-backed Insights records have full source content in CMS and have been published.
+
+## Capture Format
+
+For each remaining post, capture:
+
+- \`slug\`
+- \`cms_item_id\`
+- \`source_url\`
+- \`source_body\`
+- \`source_comment_url\`, if the Risk Radar or reference link is in a LinkedIn comment
+- \`media_url\`, if an image or video should be represented in the CMS
+
+Plain text from the LinkedIn post is enough. HTML from the LinkedIn DOM is also acceptable because it can be cleaned before import.
+
+## CMS Mapping
+
+Use the existing Insights CMS items and update fields directly:
+
+| CMS field | Source |
+| --- | --- |
+| \`short-summary\` | One concise summary from the source post |
+| \`main-content\` | Clean rich text HTML derived from the LinkedIn source body |
+| \`key-takeaways\` | Three CMS-backed bullets derived from the source body |
+| \`external-url\` | Original LinkedIn post URL |
+| \`cta-label\` | Existing CTA copy unless the source post needs a more specific action |
+| \`featured-image\` | Optional, only if a usable source image is available |
+
+Recommended \`main-content\` structure:
+
+\`\`\`html
+<h3>Alert context</h3>
+<p>...</p>
+<h3>Supply Gap Analysis</h3>
+<p>...</p>
+<h3>What health systems can do now</h3>
+<ol>...</ol>
+\`\`\`
+
+Use \`<h3>\` for CMS body section headings unless the Webflow Rich Text Block has a scoped class with nested \`h2\` styles. This avoids the site-wide \`All H2 Headings\` selector from oversizing section titles inside Insight body content.
+
+Keep each idea in its own \`<p>\` and let the Rich Text class handle rhythm. Do not use empty paragraphs or repeated \`<br>\` tags for spacing; the intended body rhythm is roughly \`1.65\` line height with about \`1.1rem\` of paragraph bottom margin.
+
+Do not append a source-link or \`Original post\` section to \`main-content\`. Store the source URL in \`external-url\` so attribution can be handled by the template or CTA layer instead of the article body.
+
+For Newsroom items, replace the alert headings with editorial headings that match the post.
+
+## Production Rule
+
+The production Webflow pages should read content from CMS fields:
+
+- Hub/archive cards: CMS item data or a CMS-derived JSON prop.
+- Detail pages: bound CMS fields for title, summary, resource type, publish date, main content, key takeaways, audience, and archive.
+
+If a code component renders fallback content while a CMS field is empty, treat that as a staging signal to bind or import the missing CMS field before publish.
+`
+  },
+  {
+    id: "agency:clients/cato-supply-insights-review/docs/code-components-handoff-2026-05-24",
+    property: "agency",
+    title: "Cato Code Components Handoff",
+    description: "Cato Code Components Handoff",
+    section: "clients",
+    path: "clients/cato-supply-insights-review/docs/code-components-handoff-2026-05-24.md",
+    slug: "clients/cato-supply-insights-review/docs/code-components-handoff-2026-05-24",
+    uri: "docs://agency/clients/cato-supply-insights-review/docs/code-components-handoff-2026-05-24",
+    content: `# Cato Code Components Handoff
+
+Baseline reviewed: \`/Users/micahjohnson/Downloads/cato-supply.webflow\`.
+
+## Remaining Delivery Surface
+
+The current export is already close visually, but the parts that still depend on slow native Webflow/MCP work or custom-code embeds are:
+
+- Home Product Search form redirect and Risk Radar table.
+- Insights mega menu content.
+- Insights hub, focused archive pages, Resiliency Report Alerts subscribe block, and future CMS detail-page shell.
+- About page and Case Studies pages, now added as a follow-up client SOP request so they can match the improved Insights experience without rebuilding every section natively.
+
+## Baseline Experience Grade
+
+Reviewed against \`/Users/micahjohnson/Downloads/cato-supply.webflow\` and the local static copy in \`packages/agency/clients/cato-supply-insights-review/site\`.
+
+| Surface | Baseline Grade | Why | Improvement Path |
+|---|---:|---|---|
+| About page | B- | The export has strong raw content, useful proof metrics, values, mission, and team sections. The experience is long, section rhythm is uneven, the hero relies on animation that is harder to preserve in Code Components, and the page does not quickly connect the company story to the updated Insights-style procurement intelligence narrative. | Use \`Cato About Page\` to create a clearer first viewport, platform-focus panel, tighter proof stack, values, mission, and self-contained styling. Move people profiles to dedicated About dropdown pages. |
+| Leadership page | New | Cato requested a separate \`Leadership\` tab under About Us. | Create a new page and place \`Cato Leadership Page\`, which defaults to Ryan Zackon placeholder, Lainy Jahnke, and Ethan Weinberg. |
+| Board of Directors page | New | Cato requested a separate \`Board of Directors\` tab under About Us. | Create a new page and place \`Cato Board of Directors Page\`, which defaults to five board profiles. |
+| Case Studies landing | C+ | The export has the right collection structure but reads like a CMS listing scaffold. It does not strongly feature the best customer story, results are not surfaced early, and the page needs a more decisive path from proof to contact. | Use \`Cato Case Studies Landing\` to lead with a featured story, result proof, customer-story grid, and CTA rhythm aligned with Insights. |
+| Case Study detail template | C+ | The native template has useful sections for customer profile, challenge, solution, results, and related stories, but several fields render empty in the export baseline and the carousel dependency creates more moving parts than needed for first delivery. | Use \`Cato Case Study Detail\` as a CMS-bindable fallback with rich-text props, result cards, related-story cards, and no external carousel dependency. |
+
+## Code Components Added
+
+Package: \`packages/webflow-components\`
+
+Group in Webflow Designer: \`Cato Supply\`
+
+- \`Cato Supply Search Hero\` - replaces the homepage hero dynamic layer with search redirect plus Risk Radar.
+- \`Cato Product Search Form\` - standalone search redirect component.
+- \`Cato Risk Radar Catalog\` - replaces the \`risk-radar-table\` custom-code embed with a live fetch plus Designer-safe fallback rows.
+- \`Cato Insights Mega Menu\` - reusable Insights mega menu content from the export.
+- \`Cato Insights Hub\` - Insights landing surface with category cards and latest content.
+- \`Cato Insights Archive\` - focused archive surface for Resiliency, Research, Resources, or Newsroom.
+- \`Cato Insight Category Archive\` - CMS category template surface that resolves the active archive from the Insight Categories page slug.
+- \`Cato Insight Detail\` - CMS-bindable detail article shell for future live CMS item templates.
+- \`Cato About Page\` - improved About page with self-contained style, proof metrics, values, and mission sections.
+- \`Cato Leadership Page\` - dedicated About dropdown page for 3 leadership profiles.
+- \`Cato Board of Directors Page\` - dedicated About dropdown page for 5 board profiles.
+- \`Cato Case Studies Landing\` - improved Case Studies landing surface with featured story, result proof, and customer story grid.
+- \`Cato Case Study Detail\` - CMS-bindable case study detail template with customer profile, challenge, solution, results, and related stories.
+
+## Suggested Webflow Sequence
+
+1. Share the updated \`CREATE SOMETHING Canon Components\` library.
+2. Drop \`Cato Risk Radar Catalog\` into the existing homepage table slot, or replace the full first viewport with \`Cato Supply Search Hero\`.
+3. Use \`Cato Insights Mega Menu\` inside the current Insights dropdown content if native edits remain slow.
+4. Use \`Cato Insights Hub\` on \`/insights\`.
+5. Use \`Cato Insights Archive\` on the four focused pages, with \`categoryId\` set per page.
+6. Use \`Cato Insight Category Archive\` on the \`Insight Categories\` CMS template. Bind \`Archive Slug\` to the CMS slug field when Designer exposes the new prop, or leave it blank so the component infers \`resiliency-reports\`, \`resource-library\`, \`cato-research\`, or \`newsroom\` from the published URL.
+7. Use \`Cato Insight Detail\` only if the team wants a Code Component detail template before final native Collection List binding.
+8. Use \`Cato About Page\` as the body of \`/about-us\`, between the existing shared Nav and Footer/CTA. Keep \`Show Legacy Team Sections\` off unless Cato explicitly asks for the people sections to remain on About.
+9. Create a \`/leadership\` page, place \`Cato Leadership Page\`, and add \`Leadership\` as an item under the native About Us dropdown.
+10. Create a \`/board-of-directors\` page, place \`Cato Board of Directors Page\`, and add \`Board of Directors\` as an item under the native About Us dropdown.
+11. Use \`Cato Case Studies Landing\` on \`/case-studies\`. Keep \`Show Featured Case\` on so the strongest proof story appears before the full grid.
+12. Use \`Cato Case Study Detail\` on the Case Studies CMS template. Bind slug, title, client name, short summary, customer profile, challenge rich text, solution rich text, result JSON, and images where possible. The newest declaration includes native \`Challenge Image\` and \`Solution Image\` props in addition to URL fallbacks so CMS image fields can bind cleanly in Designer.
+
+## Style Notes
+
+- Cato component styles are embedded in the Code Components because Webflow renders them inside Shadow DOM.
+- The latest style pass uses \`/Users/micahjohnson/Downloads/cato-supply.webflow/css/cato-supply.webflow.css\` as the source of truth for typography, spacing, cards, panels, and form states.
+- Cato declarations enable \`applyTagSelectors: true\`, while component-specific classes and CSS variables keep the components self-contained.
+- About and Case Studies components now include self-contained motion polish: load fades, panel entrance motion, line sweeps, hover lift on cards, export-aligned cream/sky-blue/green panels, gradient buttons, and \`prefers-reduced-motion\` handling.
+- \`Cato Insights Hub\` defaults to the exported \`/insights\` style: Resource hub panel, category cards inside the hero section, Featured insights section, no filter rail, and no CMS notes. The filter rail and CMS notes remain available as optional props for the richer review layout.
+- Existing instances in Designer may retain old prop values after a library update. Reinsert the component or reset Panel Label/Title/Summary, Show Filter Rail, and Show CMS Model Notes to match the export.
+- Webflow Designer can cache shared Code Component metadata. The generated bundle includes \`Archive Slug\` and \`Cato Insight Category Archive\`; refresh the Designer/library import if those props are not immediately visible after sharing.
+
+## Validation
+
+Run from repo root:
+
+\`\`\`bash
+pnpm --filter @create-something/webflow-components typecheck
+pnpm --filter @create-something/webflow-components bundle
+pnpm --filter @create-something/cato-supply-insights-review check
+\`\`\`
+`
+  },
+  {
     id: "agency:clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-16",
     property: "agency",
     title: "Cato Supply Insights Progress Update",
@@ -22893,6 +23738,77 @@ Native Webflow changes are staged but not published. The current Webflow work sh
 - Decide whether the native Webflow menu should remain purely native Webflow dropdown behavior or receive a small custom controller matching the local build.
 - Connect the Webflow pages to live CMS Collection Lists and field bindings.
 - Publish Webflow only after client approval.
+`
+  },
+  {
+    id: "agency:clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-24",
+    property: "agency",
+    title: "Cato Supply Progress Update - 2026-05-24",
+    description: "Cato Supply Progress Update - 2026-05-24",
+    section: "clients",
+    path: "clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-24.md",
+    slug: "clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-24",
+    uri: "docs://agency/clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-24",
+    content: `# Cato Supply Progress Update - 2026-05-24
+
+## Summary
+
+The Cato Webflow Code Component delivery has been expanded beyond Insights to cover the additional client SOP request for the About and Case Studies pages. The goal is to bring those pages up to the same improved experience and polish standard established during the Insights build, while avoiding slow native Webflow/MCP rebuild work wherever possible.
+
+## Baseline Grades
+
+| Surface | Grade | Readout |
+|---|---:|---|
+| Insights hub and archive system | B+ | The Code Component path is now the strongest delivery surface. It includes the hub, archive pages, detail shell, category template archive, Resiliency Reports, Resource Library, Newsroom, Cato Research, and supporting mega-menu/product-search components. Remaining risk is mostly Designer metadata cache refresh after library updates. |
+| About page baseline | B- | The export has strong content and proof assets, but the narrative rhythm is long and the first viewport does not yet connect tightly to the updated procurement intelligence positioning. |
+| Case Studies landing baseline | C+ | The collection structure exists, but the landing page reads like a listing scaffold. It needs a stronger featured story, visible results, and clearer path to contact. |
+| Case Study detail baseline | C+ | The native template has the right sections, but several fields render empty in the export baseline and the carousel dependency is unnecessary for the first improved delivery. |
+
+## Code Components Added
+
+Shared library: \`CREATE SOMETHING Canon Components\`
+
+Webflow Designer group: \`Cato Supply\`
+
+- \`Cato About Page\`
+  - Improved About page body with self-contained Shadow DOM styles.
+  - Includes hero, platform focus panel, goal section, proof metrics, values, mission, leadership, and board sections.
+  - Supports CMS-friendly JSON props for values, leadership, board, and metrics.
+
+- \`Cato Case Studies Landing\`
+  - Improved Case Studies landing surface with hero, feature panel, featured case study, results proof, customer story grid, and contact CTA.
+  - Supports \`caseStudiesJson\`, \`showFeatured\`, \`linkMode\`, and \`pathPrefix\`.
+
+- \`Cato Case Study Detail\`
+  - CMS-bindable detail template for Case Studies collection pages.
+  - Supports slug, client name, summary, customer profile, challenge rich text, solution rich text, result JSON, native image props, image URL fallbacks, and related case studies.
+
+The latest style pass adds self-contained motion polish across the About and Case Studies components: load fades, panel entrance motion, line sweeps, card hover lift, export-aligned cream/sky-blue/green panels, gradient buttons, and \`prefers-reduced-motion\` handling.
+
+## Recommended Webflow Build Path
+
+1. Refresh/reimport the shared library in Designer if the newest component metadata is not visible immediately.
+2. Replace the body of \`/about-us\` with \`Cato About Page\`, keeping the existing shared Nav/Footer.
+3. Replace the body of \`/case-studies\` with \`Cato Case Studies Landing\`.
+4. Replace the Case Studies CMS template body with \`Cato Case Study Detail\`.
+5. Bind CMS fields where convenient, but use defaults as the first pass if binding slows delivery.
+6. Keep the existing native contact form/CTA section if form capture needs to remain fully native.
+
+## Validation
+
+- \`pnpm --filter @create-something/webflow-components verify\` passed.
+- \`pnpm --filter @create-something/cato-supply-insights-review check\` passed.
+- \`WEBFLOW_SKIP_UPDATE_CHECKS=true npx webflow library share --no-input\` passed.
+- Shared library URL: \`https://webflow.com/dashboard/workspace/cato-supply/shared-libraries-and-templates\`
+
+## Notion Sync Note
+
+Direct Notion update was attempted through the hub, but available Notion routes are not currently authenticated:
+
+- \`composio-toolkit-notion\`: invalid API key / unauthorized.
+- \`notion-sync-mcp\`: unauthorized, valid API key required.
+
+This document is the client-ready Notion update until the Notion connector credentials are restored.
 `
   },
   {
@@ -22970,6 +23886,63 @@ pnpm --filter @create-something/cato-supply-insights-review deploy:review
 - The dropdown system has one shared controller in the local build: About stays compact, Insights remains the featured mega menu, and both support hover/focus/Escape behavior.
 - The Webflow \`Nav\` component has been updated through MCP with an Insights native dropdown and aligned About styling, but the site has not been published.
 - The package is intentionally separate from native Webflow so the Cloudflare URL can be used for client review before publishing Webflow production domains.
+`
+  },
+  {
+    id: "agency:clients/jandjhomehealth/README",
+    property: "agency",
+    title: "J&J Home Health Contact Capture",
+    description: "J&J Home Health Contact Capture",
+    section: "clients",
+    path: "clients/jandjhomehealth/README.md",
+    slug: "clients/jandjhomehealth/README",
+    uri: "docs://agency/clients/jandjhomehealth/README",
+    content: `# J&J Home Health Contact Capture
+
+SvelteKit + Cloudflare Pages app for the J&J Home Health assistance request form and admin portal.
+
+## Runtime Surfaces
+
+- Public form: \`/\`
+- Admin login: \`/admin\`
+- Admin contacts: \`/admin/contacts\`
+- QR code: \`/admin/qr\`
+- Password management: \`/admin/settings\`
+- Password reset: \`/admin/reset?token=...\`
+
+## Data And Secrets
+
+Database: Cloudflare D1 binding \`DB\`, currently bound to \`create-something-db\` for the Pages project.
+
+Secrets and runtime vars:
+
+- \`ADMIN_EMAILS\`: comma-separated admin emails allowed to log in and reset passwords.
+- \`ADMIN_INITIAL_PASSWORD\`: one-time bootstrap password. Store in Infisical/Cloudflare, then remove after the client sets their own password.
+- \`ADMIN_PASSWORD\`: legacy fallback for the old one-password gate. Prefer \`ADMIN_INITIAL_PASSWORD\`.
+- \`RESEND_API_KEY\`: optional, required for email reset links.
+- \`RESEND_FROM_EMAIL\`: optional Resend sender, defaults to \`J&J Home Health <noreply@createsomething.io>\`.
+- \`PUBLIC_BASE_URL\`: public form origin for QR/reset links.
+
+Never store live secret values in this package.
+
+## Password Flow
+
+1. Admin emails are controlled by \`ADMIN_EMAILS\`.
+2. First login can use \`ADMIN_INITIAL_PASSWORD\` or \`ADMIN_PASSWORD\`; that password is immediately hashed into D1 for the admin email.
+3. The client can change the password from \`/admin/settings\`.
+4. If Resend is configured, the client can request a reset link from \`/admin\`.
+5. Password changes and resets invalidate existing admin sessions and create a fresh session.
+
+## Commands
+
+\`\`\`bash
+pnpm --filter @create-something/jandjhomehealth check
+pnpm --filter @create-something/jandjhomehealth build
+pnpm --filter @create-something/jandjhomehealth migrate
+pnpm --filter @create-something/jandjhomehealth deploy
+\`\`\`
+
+The package is configured against the Pages project's existing production \`create-something-db\` binding. The prior J&J contact records were copied from \`contact-capture-db\` during deployment so the admin portal sees the current records.
 `
   },
   {
@@ -25264,6 +26237,724 @@ In your Claude Desktop config (\`~/Library/Application Support/Claude/claude_des
 `
   },
   {
+    id: "agency:content/assets/articles/article.dify-agent-eval-gates.v20260622/metadata",
+    property: "agency",
+    title: "Article Metadata: Dify Agent Eval Gates",
+    description: "Article Metadata: Dify Agent Eval Gates",
+    section: "content",
+    path: "content/assets/articles/article.dify-agent-eval-gates.v20260622/metadata.md",
+    slug: "content/assets/articles/article.dify-agent-eval-gates.v20260622/metadata",
+    uri: "docs://agency/content/assets/articles/article.dify-agent-eval-gates.v20260622/metadata",
+    content: `# Article Metadata: Dify Agent Eval Gates
+
+Article URL: \`/dify/agent-eval-gates\`
+Article asset ID: \`article.dify-agent-eval-gates.v20260622\`
+Updated: 2026-06-22
+
+## Original Visuals
+
+- Uses existing Dify lane OG asset at \`/og/dify-lane.svg\`.
+- No new third-party screenshots were introduced.
+
+## Usage
+
+Canonical Dify content-cluster page for operators and implementation buyers who need Dify-native Langfuse traces plus Langfuse MCP gates before publishing a Dify app with MCP tools.
+`
+  },
+  {
+    id: "agency:content/assets/articles/article.dify-mcp-control-plane.v20260518/metadata",
+    property: "agency",
+    title: "Article Image Metadata: Dify MCP Control Plane",
+    description: "Article Image Metadata: Dify MCP Control Plane",
+    section: "content",
+    path: "content/assets/articles/article.dify-mcp-control-plane.v20260518/metadata.md",
+    slug: "content/assets/articles/article.dify-mcp-control-plane.v20260518/metadata",
+    uri: "docs://agency/content/assets/articles/article.dify-mcp-control-plane.v20260518/metadata",
+    content: `# Article Image Metadata: Dify MCP Control Plane
+
+Article URL: \`/dify/mcp-control-plane\`
+Article asset ID: \`article.dify-mcp-control-plane.v20260518\`
+Updated: 2026-06-22
+
+## Original Visuals
+
+### dify-mcp-control-plane.svg
+
+- Path: \`/images/articles/dify-mcp-control-plane/dify-mcp-control-plane.svg\`
+- Owner: CREATE SOMETHING
+- Usage: Article architecture diagram for the Dify, MCP, and Policy OS control plane.
+- Refresh cadence: Review with article updates.
+
+## Collected Screenshots
+
+### dify-mcp-tools-docs-20260525.png
+
+- Path: \`/images/articles/dify-mcp-control-plane/dify-mcp-tools-docs-20260525.png\`
+- Source: \`https://docs.dify.ai/en/use-dify/build/mcp\`
+- Captured: 2026-05-25
+- Refresh due: 2026-07-24
+- Usage: Evidence screenshot for Dify MCP tool setup and app-level access.
+- Rights note: Public official documentation screenshot for commentary and comparison. Do not imply Dify endorsement. Refresh or replace if the UI or docs materially change.
+`
+  },
+  {
+    id: "agency:content/assets/articles/article.dify-vs-n8n.v20260518/metadata",
+    property: "agency",
+    title: "Article Image Metadata: Dify vs n8n",
+    description: "Article Image Metadata: Dify vs n8n",
+    section: "content",
+    path: "content/assets/articles/article.dify-vs-n8n.v20260518/metadata.md",
+    slug: "content/assets/articles/article.dify-vs-n8n.v20260518/metadata",
+    uri: "docs://agency/content/assets/articles/article.dify-vs-n8n.v20260518/metadata",
+    content: `# Article Image Metadata: Dify vs n8n
+
+Article URL: \`/dify/n8n-vs-dify\`
+Article asset ID: \`article.dify-vs-n8n.v20260518\`
+Updated: 2026-06-22
+
+## Original Visuals
+
+### dify-n8n-layer-map.svg
+
+- Path: \`/images/articles/dify-vs-n8n/dify-n8n-layer-map.svg\`
+- Owner: CREATE SOMETHING
+- Usage: Article layer map comparing n8n, Cloudflare, Dify, and Policy OS.
+- Refresh cadence: Review with article updates.
+
+## Collected Screenshots
+
+### n8n-mcp-server-docs-20260525.png
+
+- Path: \`/images/articles/dify-vs-n8n/n8n-mcp-server-docs-20260525.png\`
+- Source: \`https://docs.n8n.io/advanced-ai/mcp/accessing-n8n-mcp-server/\`
+- Captured: 2026-05-25
+- Refresh due: 2026-07-24
+- Usage: Evidence screenshot for n8n MCP access documentation.
+- Rights note: Public official documentation screenshot for commentary and comparison. Do not imply n8n endorsement. Refresh or replace if the UI or docs materially change.
+`
+  },
+  {
+    id: "agency:content/assets/articles/partner.notion-ops-workspace.v20260518/metadata",
+    property: "agency",
+    title: "Article Image Metadata: Notion Ops Workspace",
+    description: "Article Image Metadata: Notion Ops Workspace",
+    section: "content",
+    path: "content/assets/articles/partner.notion-ops-workspace.v20260518/metadata.md",
+    slug: "content/assets/articles/partner.notion-ops-workspace.v20260518/metadata",
+    uri: "docs://agency/content/assets/articles/partner.notion-ops-workspace.v20260518/metadata",
+    content: `# Article Image Metadata: Notion Ops Workspace
+
+Article URL: \`/notion\`
+Article asset ID: \`partner.notion-ops-workspace.v20260518\`
+Updated: 2026-05-25
+
+## Original Visuals
+
+### notion-operator-workspace.svg
+
+- Path: \`/images/articles/notion-ops-workspace/notion-operator-workspace.svg\`
+- Owner: CREATE SOMETHING
+- Usage: Article architecture diagram for Notion as an operator workspace.
+- Refresh cadence: Review with article updates.
+
+## Collected Screenshots
+
+### notion-database-automations-docs-20260525.png
+
+- Path: \`/images/articles/notion-ops-workspace/notion-database-automations-docs-20260525.png\`
+- Source: \`https://www.notion.com/help/database-automations\`
+- Captured: 2026-05-25
+- Refresh due: 2026-07-24
+- Usage: Evidence screenshot for Notion database automations documentation.
+- Rights note: Public official documentation screenshot for commentary and comparison. Do not imply Notion endorsement. Refresh or replace if the UI or docs materially change.
+`
+  },
+  {
+    id: "agency:content/assets/brand/create-something-delegation-object.v20260630/metadata",
+    property: "agency",
+    title: "CREATE SOMETHING Delegation Object",
+    description: "CREATE SOMETHING Delegation Object",
+    section: "content",
+    path: "content/assets/brand/create-something-delegation-object.v20260630/metadata.md",
+    slug: "content/assets/brand/create-something-delegation-object.v20260630/metadata",
+    uri: "docs://agency/content/assets/brand/create-something-delegation-object.v20260630/metadata",
+    content: `# CREATE SOMETHING Delegation Object
+
+> Asset ID: \`brand.create-something-delegation-object.v20260630\`
+> Visual source folder: \`packages/agency/content/assets/brand/create-something-delegation-object.v20260630\`
+> Owner: CREATE SOMETHING
+> Updated: 2026-06-30
+> Refresh owner: CREATE SOMETHING
+
+## TASTE Packet
+
+| Reference | Source | Why it belongs | What must not be copied | Notes |
+| --------- | ------ | -------------- | ----------------------- | ----- |
+| Together.ai homepage screenshot | User-provided screenshot, 2026-06-30 | Confident first-viewport scale, pale field, abstract system object, thin annotation lines, small proof labels | Logo, exact layout, AI Native Cloud language, customer-logo strip, colored platform sculpture | Use as one reference, not the foundation |
+| Modal homepage | \`https://modal.com/\` | Direct technical confidence and category clarity | Infrastructure positioning, developer-only framing | Reference for confidence, not category |
+| LangChain homepage | \`https://www.langchain.com/\` | Reliable agent lifecycle language | Agent-platform taxonomy or product framing | Reference for lifecycle confidence |
+
+## Original Visuals
+
+| File | Source prompt | Source file | Model | Owner | Review status | Refresh due | Notes |
+| ---- | ------------- | ----------- | ----- | ----- | ------------- | ----------- | ----- |
+| \`exports/create-something-delegation-object--hero--v20260630.png\` | \`source/create-something-delegation-object--prompt-no-copy--v20260630.txt\` | Generated image output copied from Codex generated-images store | OpenAI image generation tool | CREATE SOMETHING | exploration only | 2026-09-30 | Do not use on the homepage; the Ona-aligned implementation uses real DOM/SVG proof artifacts instead |
+| \`exports/alternates/create-something-delegation-object--hero-with-copy--v20260630.png\` | \`source/create-something-delegation-object--prompt--v20260630.txt\` | Generated image output copied from Codex generated-images store | OpenAI image generation tool | CREATE SOMETHING | alternate draft | 2026-09-30 | Structurally useful, but not selected because it bakes in headline and CTA text |
+
+## Generated Exports
+
+| File | Target surface | Size | Source prompt | Approved by | Published at | Notes |
+| ---- | -------------- | ---- | ------------- | ----------- | ------------ | ----- |
+| \`exports/create-something-delegation-object--hero--v20260630.png\` | Exploration only | 1672x941 | \`source/create-something-delegation-object--prompt-no-copy--v20260630.txt\` | Rejected for homepage use by design review | Not published | Explanatory generated artifact; keep as TASTE exploration, not production UI |
+
+## Review Gate
+
+- [x] TASTE packet is attached.
+- [x] TASTE references were used as judgment inputs and were not copied.
+- [x] Signal, Decision, and Proof are visible.
+- [x] Run, wait, stop, owner, and receipt labels are visible.
+- [x] Text is legible at 50% size.
+- [x] No generated UI is presented as real screenshot evidence.
+- [x] No secrets, private data, private prompts, client records, or tokens appear.
+- [x] Result supports the homepage claim: make one workflow safe to delegate.
+`
+  },
+  {
+    id: "agency:content/campaigns/atlas-starter-map-launch",
+    property: "agency",
+    title: "Atlas Starter Map Launch Package",
+    description: "Atlas Starter Map Launch Package",
+    section: "content",
+    path: "content/campaigns/atlas-starter-map-launch.md",
+    slug: "content/campaigns/atlas-starter-map-launch",
+    uri: "docs://agency/content/campaigns/atlas-starter-map-launch",
+    content: `# Atlas Starter Map Launch Package
+
+**Campaign:** Public Atlas starter maps
+**Surface:** \`https://createsomething.agency/atlas\`
+**Primary channels:** LinkedIn, Substack, Instagram
+**Primary CTA:** Load an industry starter map, edit the trust boundary, then book a Workflow Mapping Session if the workflow is real.
+**Source issue:** CRE-782
+
+---
+
+## Campaign Position
+
+The public Atlas canvas is the give-first entry point for CREATE SOMETHING.
+
+It should not be positioned as an AI toy, generic automation audit, or agency
+lead magnet. It is a practical workflow mapping surface that helps an operator
+name the workflow, owner, systems, approval point, stop condition, and evidence
+receipt before they commit to a call.
+
+Core message:
+
+> Before you automate a workflow, map what must run, wait, and stop.
+
+Supporting language:
+
+- CREATE SOMETHING builds production-safe workflow infrastructure.
+- Industry starter maps make the first draft free and concrete.
+- The public canvas does not connect to private systems, run tools, or approve
+  production work.
+- The value is clarity: owner, artifact, system action, AI assist, human review,
+  constraint, and receipt.
+
+## Target Workflows
+
+Use the starter maps as industry-specific entry points, not broad industry
+claims.
+
+| Starter map | Best prospect | Pain signal | Value to give | CTA angle |
+| --- | --- | --- | --- | --- |
+| RevOps lead handoff | RevOps lead, sales ops, founder-led sales team | Leads move across forms, CRM, Slack, and reps with unclear ownership | Show the handoff record, routing action, approval exception, and receipt | \`Map your lead handoff before adding more automation.\` |
+| Healthcare prior authorization prep | Clinic ops, patient access, healthcare admin | Staff assemble packets manually and risk missing payer rules | Separate packet prep from clinical or payer judgment | \`Map what can be prepared, reviewed, and blocked.\` |
+| RFI/submittal control | Construction project controls, GC ops, owner rep | RFIs and submittals move through email, PM tools, and contracts with scope risk | Make the contract boundary explicit before automating routing | \`Map the review path before another deadline slips.\` |
+| Marketplace review queue | Marketplace ops, trust and safety, platform PM | Submissions need enrichment, policy checks, and escalation | Separate reviewer assistance from policy decision authority | \`Map review operations without pretending AI is the approver.\` |
+| Insurance claims intake | Claims ops, adjuster manager, intake team | Intake packets are incomplete and triage rules vary by claim type | Map intake completeness, triage assist, adjuster review, and fraud stop | \`Map the claim intake boundary before routing at scale.\` |
+
+## Channel Roles
+
+### LinkedIn
+
+Role: primary demand and conversation channel.
+
+Use LinkedIn for:
+
+- founder/operator point-of-view posts
+- specific workflow breakdowns
+- comments that ask operators where the boundary actually sits
+- follow-up messages after qualified engagement
+
+Avoid:
+
+- "we automate your business" framing
+- link-only posts
+- tool-name bait that does not teach the workflow
+
+### Substack
+
+Role: relationship and dispatch channel.
+
+Publish short weekly dispatches that point back to \`createsomething.agency\`.
+Do not make Substack the canonical source of the Atlas campaign. The custom
+domain owns the page, analytics, route metadata, booking path, and future
+workflow teardown assets.
+
+### Instagram
+
+Role: visual proof and brand signal.
+
+Use Instagram for carousels that show the workflow vocabulary:
+
+- Run
+- Wait
+- Stop
+- Owner
+- Receipt
+
+The best Instagram asset is not a screenshot of the full product. It is a
+simple visual breakdown of one industry workflow and the trust boundary.
+
+## UTM Convention
+
+Use one campaign string across channels:
+
+\`\`\`text
+utm_campaign=atlas-starter-maps-v20260623
+\`\`\`
+
+Channel links:
+
+\`\`\`text
+https://createsomething.agency/atlas?utm_source=linkedin&utm_medium=social&utm_campaign=atlas-starter-maps-v20260623&utm_content=launch-position
+https://createsomething.agency/atlas?utm_source=linkedin&utm_medium=social&utm_campaign=atlas-starter-maps-v20260623&utm_content=revops-lead-handoff
+https://createsomething.agency/atlas?utm_source=substack&utm_medium=email&utm_campaign=atlas-starter-maps-v20260623&utm_content=weekly-dispatch-01
+https://createsomething.agency/atlas?utm_source=instagram&utm_medium=social&utm_campaign=atlas-starter-maps-v20260623&utm_content=run-wait-stop-carousel
+\`\`\`
+
+## Two-Week Launch Rhythm
+
+| Day | Channel | Asset | Action |
+| --- | --- | --- | --- |
+| 1 | LinkedIn | Launch position post | Publish the core point of view and comment with \`/atlas\`. |
+| 2 | Instagram | Run / wait / stop carousel | Publish visual vocabulary, no sales pitch. |
+| 3 | LinkedIn | RevOps workflow post | Ask RevOps operators where lead ownership breaks. |
+| 4 | Substack | Weekly dispatch | Summarize the five starter maps and link to \`/atlas\`. |
+| 5 | LinkedIn | Marketplace review post | Show why reviewer assistance is not reviewer authority. |
+| 6 | Instagram | Industry selector carousel | Show the five starter workflows and one boundary per workflow. |
+| 7 | Review | Metrics and replies | Respond to comments, send follow-ups, update lead notes. |
+| 8 | LinkedIn | Construction workflow post | Focus on contract and scope boundary. |
+| 9 | Instagram | Receipt carousel | Show what evidence should exist after a workflow runs. |
+| 10 | LinkedIn | Insurance or healthcare post | Pick based on engagement from week one. |
+| 11 | Substack | Field note | Share one anonymized mapping lesson from replies. |
+| 12 | LinkedIn | Offer post | Invite five operators to send one workflow for teardown. |
+| 13 | Outreach | Warm follow-up | Use \`../templates/outreach/atlas-starter-map-follow-up.md\`. |
+| 14 | Review | Funnel check | Count replies, canvases discussed, mapping sessions booked. |
+
+## LinkedIn Drafts
+
+### Post 1: Launch Position
+
+**CTA:** \`/atlas\`
+**Best audience:** operators, RevOps, systems-minded founders
+**Asset:** simple diagram showing \`Run\`, \`Wait\`, and \`Stop\`
+
+Before you automate a workflow, map what must run, wait, and stop.
+
+That sounds simple. It is where most AI automation projects go wrong.
+
+Teams usually start with tools:
+
+- connect the CRM
+- add an agent
+- write the prompt
+- send a Slack message
+
+But the actual risk is one layer lower.
+
+Who owns the work?
+
+What record is the source of truth?
+
+Which action can run automatically?
+
+Where is human approval required?
+
+What should block the workflow entirely?
+
+What receipt proves the work happened?
+
+We added public Atlas starter maps for five real operational workflows:
+
+- RevOps lead handoff
+- healthcare prior authorization prep
+- construction RFI/submittal control
+- marketplace review queue
+- insurance claims intake
+
+The canvas is intentionally limited.
+
+It does not connect to private systems. It does not run tools. It does not
+approve production work.
+
+It just helps you make the workflow legible before you automate it.
+
+That is the first useful step.
+
+**Comment after publishing:**
+
+Load a starter map here:
+\`https://createsomething.agency/atlas?utm_source=linkedin&utm_medium=social&utm_campaign=atlas-starter-maps-v20260623&utm_content=launch-position\`
+
+If the map exposes a real approval boundary, that is usually the place to start.
+
+### Post 2: RevOps Lead Handoff
+
+**CTA:** \`/atlas\`
+**Best audience:** RevOps, sales ops, founder-led B2B teams
+**Asset:** lead handoff map with owner, CRM route, review, receipt
+
+Lead handoff is a good test of whether your automation system is actually ready.
+
+Not because the steps are complex.
+
+Because the ownership is.
+
+A qualified lead enters the system. The team needs to know:
+
+- where it came from
+- whether it is a duplicate
+- who owns the next action
+- whether it belongs to a territory, partner, or strategic-account exception
+- what should be drafted but not sent
+- what receipt proves the handoff happened
+
+Most teams automate the notification first.
+
+That helps for a week. Then the edge cases show up.
+
+The lead is enterprise but routed to the wrong rep.
+
+The source is unclear.
+
+The AI drafts a follow-up without consent context.
+
+The account owner changes in the CRM but not in Slack.
+
+The real design question is not "can AI respond faster?"
+
+It is "where does the workflow need an owner, an approval, and a stop condition?"
+
+That is why lead handoff is one of the public Atlas starter maps.
+
+The useful first draft is a map, not a message.
+
+**Comment after publishing:**
+
+RevOps starter map:
+\`https://createsomething.agency/atlas?utm_source=linkedin&utm_medium=social&utm_campaign=atlas-starter-maps-v20260623&utm_content=revops-lead-handoff\`
+
+### Post 3: Review Operations
+
+**CTA:** \`/atlas\`
+**Best audience:** marketplace ops, trust and safety, platform teams
+**Asset:** review queue map with submission, assist, reviewer, policy stop
+
+AI can help a reviewer.
+
+It should not quietly become the reviewer.
+
+That distinction matters in marketplace operations.
+
+A submission queue usually has multiple jobs happening at once:
+
+- collect the submitted artifact
+- enrich missing context
+- compare against policy
+- summarize the issue
+- identify likely duplicates
+- route edge cases
+- produce a decision receipt
+
+Some of that can run.
+
+Some of it should wait.
+
+Some of it should stop.
+
+If the workflow does not make those boundaries explicit, the system eventually
+starts making policy decisions without a named owner.
+
+That is not automation. That is hidden governance.
+
+The marketplace review starter map exists to make the boundary visible before
+any implementation happens.
+
+The best question is not "how much of review can AI do?"
+
+The better question is "which parts of review are assistance, and which parts
+are authority?"
+
+**Comment after publishing:**
+
+Marketplace review starter map:
+\`https://createsomething.agency/atlas?utm_source=linkedin&utm_medium=social&utm_campaign=atlas-starter-maps-v20260623&utm_content=marketplace-review-queue\`
+
+### Post 4: Construction Project Controls
+
+**CTA:** \`/atlas\`
+**Best audience:** project controls, GC ops, owner reps, construction tech
+**Asset:** RFI/submittal map with contract boundary
+
+RFI and submittal workflows are a useful reminder that not every bottleneck is
+a speed problem.
+
+Sometimes the bottleneck is the boundary.
+
+An RFI comes in. A submittal needs review. Someone wants faster routing,
+summaries, reminders, and receipts.
+
+All of that can help.
+
+But the workflow still needs to know:
+
+- who owns the review
+- which document is the source of truth
+- whether the question touches scope, cost, or schedule
+- when the contract boundary requires escalation
+- what evidence gets logged after the response
+
+If the system cannot name the stop condition, it should not be allowed to run
+the whole path.
+
+That is the difference between workflow infrastructure and a faster inbox.
+
+The RFI/submittal starter map is built around that boundary.
+
+Run the routine routing. Wait on review. Stop on contract risk.
+
+That is the map worth making before the tool decision.
+
+**Comment after publishing:**
+
+Construction starter map:
+\`https://createsomething.agency/atlas?utm_source=linkedin&utm_medium=social&utm_campaign=atlas-starter-maps-v20260623&utm_content=construction-rfi-submittal-control\`
+
+### Post 5: Give-First Offer
+
+**CTA:** \`/atlas\` and replies
+**Best audience:** warm ICPs who saw prior posts
+**Asset:** screenshot or diagram of the five starter maps
+
+I want to map five real workflows from operators this week.
+
+No pitch.
+
+Send one workflow that is currently messy, manual, or risky.
+
+I will reply with the first-pass boundary:
+
+- owner
+- source record
+- run action
+- wait action
+- stop condition
+- evidence receipt
+
+The best fits are workflows where speed alone is not enough:
+
+- lead handoff
+- support escalation
+- prior authorization prep
+- claim intake
+- RFI/submittal routing
+- marketplace review
+- client onboarding
+
+The pattern I am looking for is simple:
+
+The team knows the work is repeatable, but nobody fully trusts automation with
+the edge cases yet.
+
+That is where a workflow map helps.
+
+The first draft should make the boundary obvious.
+
+**Comment after publishing:**
+
+Start from a public starter map:
+\`https://createsomething.agency/atlas?utm_source=linkedin&utm_medium=social&utm_campaign=atlas-starter-maps-v20260623&utm_content=give-first-offer\`
+
+Or reply with the workflow and I will map the first boundary.
+
+## Substack Dispatch Draft
+
+**Subject options:**
+
+- Five workflows to map before you automate them
+- Run, wait, stop
+- The workflow map comes before the AI agent
+
+**Preview text:** A practical way to make automation boundaries visible before
+connecting private systems.
+
+**Body:**
+
+Most failed automation projects do not fail because the team picked the wrong
+tool.
+
+They fail because the workflow was never made legible.
+
+Before a team connects a CRM, queue, inbox, policy doc, or project-management
+system to an AI agent, the team should be able to answer six questions:
+
+1. Who owns the workflow?
+2. What record is the source of truth?
+3. Which action can run?
+4. Which action must wait for review?
+5. What condition should stop the workflow?
+6. What receipt proves the work happened?
+
+That is the reason we added public Atlas starter maps to CREATE SOMETHING.
+
+The current maps cover:
+
+- RevOps lead handoff
+- healthcare prior authorization prep
+- construction RFI/submittal control
+- marketplace review queue
+- insurance claims intake
+
+These are not templates for pretending every industry is the same.
+
+They are first drafts for naming the trust boundary.
+
+The public canvas is intentionally constrained. It does not connect to private
+systems, run tools, approve decisions, or read sensitive records. It helps you
+name the workflow shape before you book a deeper mapping session.
+
+That is the give-first version of our work:
+
+Make the work visible first. Only then decide what should be automated.
+
+Start here:
+\`https://createsomething.agency/atlas?utm_source=substack&utm_medium=email&utm_campaign=atlas-starter-maps-v20260623&utm_content=weekly-dispatch-01\`
+
+If you use it, try this:
+
+Load the closest starter map. Rename the owner. Replace the source record with
+your real artifact. Edit the stop condition until it makes a specific person
+uncomfortable in a useful way.
+
+That is usually where the real implementation begins.
+
+## Instagram Carousel Briefs
+
+### Carousel 1: Run / Wait / Stop
+
+**Slides:**
+
+1. Before you automate, map what must run, wait, and stop.
+2. Run: routine actions with clear rules.
+3. Wait: review, approval, or human judgment.
+4. Stop: privacy, authority, contract, safety, or consent boundary.
+5. Receipt: proof that the workflow did what it was allowed to do.
+6. Public Atlas starter maps make the first draft concrete.
+
+**Caption:**
+
+Most automation work starts too late in the process.
+
+The useful first question is not "what can AI do?"
+
+It is "what should run, wait, and stop?"
+
+We added public Atlas starter maps for five operational workflows so teams can
+make that boundary visible before connecting private systems.
+
+Start from \`/atlas\`.
+
+### Carousel 2: Five Workflow Maps
+
+**Slides:**
+
+1. Five workflows worth mapping before automating.
+2. RevOps lead handoff: stop on ownership or consent risk.
+3. Prior authorization prep: prepare the packet, do not replace clinical or payer judgment.
+4. RFI/submittal control: stop on contract or scope boundary.
+5. Marketplace review: assist the reviewer, do not become the reviewer.
+6. Claims intake: triage the packet, wait for adjuster review.
+7. The common pattern: owner, record, action, review, stop, receipt.
+
+**Caption:**
+
+Different industries. Same operating question.
+
+Where does the workflow need an owner, an approval, and a receipt?
+
+That is the question the Atlas starter maps are built to answer.
+
+### Carousel 3: Evidence Receipt
+
+**Slides:**
+
+1. If the workflow runs, what proof remains?
+2. A notification is not a receipt.
+3. A summary is not a decision.
+4. A draft is not approval.
+5. A routed item still needs ownership.
+6. Production-safe workflows leave evidence.
+
+**Caption:**
+
+Automation without receipts creates hidden work.
+
+The receipt is how the team knows what ran, what waited, what stopped, and who
+owned the next action.
+
+That is why every Atlas starter map includes a touchpoint for evidence.
+
+## Warm Outreach Use
+
+Use \`../templates/outreach/atlas-starter-map-follow-up.md\` only after a person:
+
+- comments thoughtfully on an Atlas or workflow-boundary post
+- asks about a specific workflow
+- matches one of the starter-map buyer profiles
+- has at least one visible operations, systems, revenue, review, healthcare,
+  construction, claims, marketplace, or support ownership signal
+
+Do not send the Atlas link as a cold pitch. Send it as a relevant artifact after
+the person has shown interest in a workflow boundary.
+
+## Measurement
+
+Track weekly:
+
+| Metric | Target signal |
+| --- | --- |
+| Qualified comments | Operators naming a real workflow, not generic praise |
+| Replies to follow-up | >40% on warm ICP messages |
+| Atlas visits by UTM | Channel and post-level signal |
+| Starter-map mentions | Which workflow people name in replies |
+| Mapping-session bookings | High-intent conversion |
+| Teardown requests | Medium-intent conversion |
+| Parked workflows | Future content and starter-map candidates |
+
+## Review Ritual
+
+Every Friday:
+
+1. Pull UTM visits and booking source notes where available.
+2. Count qualified comments and replies by starter map.
+3. Add one buyer-language quote to the active Linear issue.
+4. Pick the next post from the workflow with the strongest reply signal.
+5. If no workflow gets signal after two weeks, revise the offer before writing
+   more channel copy.
+`
+  },
+  {
     id: "agency:content/clay-playbook-adaptation",
     property: "agency",
     title: "Clay Playbook Adaptation for CREATE SOMETHING",
@@ -25692,6 +27383,31 @@ Establish cadence:
 - **Daily**: Record LinkedIn metrics (5 min)
 - **Weekly**: Review funnel, identify bottlenecks (30 min)
 - **Bi-weekly**: Content performance analysis (1 hr)
+
+#### 5.5 Atlas Starter Map Launch Package
+Use the public Atlas starter maps as the give-first outreach artifact:
+
+- Campaign plan: \`content/campaigns/atlas-starter-map-launch.md\`
+- Warm follow-up templates: \`content/templates/outreach/atlas-starter-map-follow-up.md\`
+- Public surface: \`/atlas\`
+
+**Operating rule:** lead with a useful workflow boundary, not a pitch. Ask the
+prospect to name the owner, source record, run action, approval point, stop
+condition, and evidence receipt before moving to a Workflow Mapping Session.
+
+**Channel split:**
+
+| Channel | Role | Cadence |
+|---------|------|---------|
+| LinkedIn | Primary conversation and ICP signal | 3 workflow posts per week |
+| Substack | Weekly relationship dispatch linking back to the custom domain | 1 dispatch per week |
+| Instagram | Visual proof of \`run / wait / stop\` workflow boundaries | 2-3 carousels per week |
+
+**Success criteria:**
+
+- [ ] 5 qualified workflow comments or replies in 2 weeks
+- [ ] 3 Atlas follow-up conversations started
+- [ ] 1 Workflow Mapping Session booked from campaign source
 
 ### Success Criteria
 - [ ] 5 connection requests sent per day
@@ -26419,9 +28135,9 @@ If the answer to 1 is yes, do not change it lightly.
     uri: "docs://agency/content/sales/discovery-call-script",
     content: `# Workflow Infrastructure Discovery Call Script (Ops/RevOps)
 
-**Audience:** Ops/RevOps leaders  
-**Duration:** 20–30 minutes  
-**Primary objective:** confirm fit and secure next step for a Workflow Mapping Session  
+**Audience:** Ops/RevOps leaders
+**Duration:** 20–30 minutes
+**Primary objective:** confirm fit and secure next step for a Workflow Mapping Session
 **Message taxonomy:** core phrase "Production-safe workflow infrastructure"; client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
 
 **Operator standard:** discovery is workflow diagnosis and policy-boundary mapping, not app-intake alone
@@ -26433,6 +28149,7 @@ If the answer to 1 is yes, do not change it lightly.
 Prepare:
 
 - company context (team size, motion, operating systems)
+- any public Atlas canvas summary from \`/atlas\` or \`/services#atlas-warmup\`
 - likely workflow pain candidates (handoffs, approvals, cross-system drift)
 - existing automation footprint (if known)
 - probable risk profile (low/medium/high)
@@ -26528,6 +28245,10 @@ Live mapping line:
 
 > "Based on your current risk and coupling, you likely start at [tier] with an assurance posture of [approval mode]."
 
+Atlas handoff line:
+
+> "If it would help your team warm up before the paid mapping session, use the public Atlas canvas to sketch the workflow. It will carry a summary, readiness signal, and session ID into the booking notes without touching production systems."
+
 Policy boundary check:
 
 > "Before we talk implementation, let’s sort actions into what can auto-run, what needs approval, and what should be blocked."
@@ -26563,10 +28284,10 @@ Pivot:
 
 > "Do you want connectivity only, or governed execution with measurable reliability?"
 
-### Objection: "Can Braintrust handle the policy?"
+### Objection: "Can Langfuse handle the policy?"
 Response:
 
-> "Braintrust helps us trace, evaluate, and tune runtime behavior. It is not the approval or policy enforcement layer. The policy boundary still has to be designed explicitly."
+> "Langfuse helps us trace, evaluate, and tune runtime behavior. It is not the approval or policy enforcement layer. The policy boundary still has to be designed explicitly."
 
 Pivot:
 
@@ -26596,6 +28317,7 @@ Commit:
 - owner
 - date
 - required stakeholders
+- public Atlas canvas link or summary if the buyer wants to prepare asynchronously
 
 ### Medium fit
 
@@ -26630,16 +28352,16 @@ Commit:
 
 ### 2-minute "how it works in practice"
 
-> "In practice, we map one high-cost workflow, define policy boundaries, and ship three operating artifacts: \`mcp_contract.yaml\`, \`agent_contract.yaml\`, and \`outcome_contract.md\`.  
+> "In practice, we map one high-cost workflow, define policy boundaries, and ship three operating artifacts: \`mcp_contract.yaml\`, \`agent_contract.yaml\`, and \`outcome_contract.md\`.
 > Runtime behavior is simple: safe actions auto-allow, risky actions route to approval inbox, disallowed actions block with reason. Then we review reliability KPIs and expand coverage based on evidence."
 
 ### Three case-pattern examples
 
-1. **Cross-system drift prevention**  
+1. **Cross-system drift prevention**
    CRM and support tooling diverge under volume; governed routing enforces sync paths and reduces reconciliation overhead.
-2. **Approval-gated write workflows**  
+2. **Approval-gated write workflows**
    Write/send actions require explicit gate while read paths stay fast; reduces unreviewed risky changes.
-3. **Incident-to-policy feedback loop**  
+3. **Incident-to-policy feedback loop**
    Repeated failure patterns are codified into policy updates, reducing recurrence over time.
 
 ### Closing language by fit
@@ -26724,7 +28446,7 @@ Pass when call closes with named owner, scoped next step, and date.
     uri: "docs://agency/content/sales/discovery-policy",
     content: `# Discovery Policy And Standards
 
-**Scope:** all CREATE SOMETHING \`.agency\` discovery, qualification, and workflow mapping work  
+**Scope:** all CREATE SOMETHING \`.agency\` discovery, qualification, and workflow mapping work
 **Applies to:** discovery calls, async qualification, MCP-only wedge scoping, and Workflow Mapping Sessions
 
 ---
@@ -26843,20 +28565,20 @@ If a workflow cannot be described in these terms, it is not ready for Policy OS.
 
 ---
 
-## Braintrust standard
+## Langfuse standard
 
-Braintrust is an observability and eval layer.
+Langfuse is an observability and eval layer.
 
 It is not the policy control plane.
 
-Use Braintrust for:
+Use Langfuse for:
 
 - decision traces
 - evals
 - runtime observation
 - regression visibility
 
-Do not describe Braintrust as the mechanism that enforces \`allow\`, \`approval-required\`, or \`block\`.
+Do not describe Langfuse as the mechanism that enforces \`allow\`, \`approval-required\`, or \`block\`.
 Those belong in policy artifacts, workflow controls, and runtime enforcement paths.
 
 ---
@@ -26901,7 +28623,7 @@ No discovery should end with vague intent and no owner.
     uri: "docs://agency/content/sales/discovery-runbook",
     content: `# Workflow Discovery Runbook
 
-**Audience:** CREATE SOMETHING \`.agency\` operators  
+**Audience:** CREATE SOMETHING \`.agency\` operators
 **Purpose:** run discovery as workflow diagnosis and trust-boundary mapping, not tool intake
 
 ---
@@ -27042,13 +28764,13 @@ If you cannot confidently state those three outputs, do not position the session
 
 ---
 
-## Braintrust usage standard
+## Langfuse usage standard
 
-When Braintrust appears in the conversation, frame it correctly:
+When Langfuse appears in the conversation, frame it correctly:
 
-- Braintrust provides traces, evals, and observability
-- Braintrust helps inspect policy outcomes and runtime behavior
-- Braintrust does not replace policy artifacts or approval logic
+- Langfuse provides traces, evals, and observability
+- Langfuse helps inspect policy outcomes and runtime behavior
+- Langfuse does not replace policy artifacts or approval logic
 
 Use it as evidence infrastructure, not as the governance mechanism itself.
 
@@ -27137,7 +28859,7 @@ Exit rule:
 - Use [discovery-note-example.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/discovery-note-example.md) if specificity is weak
 - Confirm fit level: \`high\`, \`medium\`, or \`low\`
 - Confirm recommended package tier
-- Confirm whether Braintrust is relevant only as observability/evals
+- Confirm whether Langfuse is relevant only as observability/evals
 
 ---
 
@@ -27204,7 +28926,7 @@ Reference example set:
   - blocked action
   - mismatch/ambiguity path
   - manual fallback path
-- Confirm Braintrust, if used, is only described as observability/evals
+- Confirm Langfuse, if used, is only described as observability/evals
 
 ---
 
@@ -27242,9 +28964,9 @@ If the audience is the internal Half Dozen team:
     uri: "docs://agency/content/sales/policy-os-buyer-brief-ops-revops",
     content: `# Workflow Infrastructure Buyer Brief (Ops/RevOps)
 
-**Audience:** Ops and RevOps leaders  
-**Read time:** ~3 minutes  
-**Core phrase:** Production-safe workflow infrastructure  
+**Audience:** Ops and RevOps leaders
+**Read time:** ~3 minutes
+**Core phrase:** Production-safe workflow infrastructure
 **Delivery vector language:** client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
 
 ---
@@ -27253,7 +28975,7 @@ If the audience is the internal Half Dozen team:
 
 Most teams can now connect tools to AI. Very few can run autonomous workflows safely in production.
 
-The bottleneck is no longer "Can we connect systems?"  
+The bottleneck is no longer "Can we connect systems?"
 The bottleneck is "Can we govern actions, approvals, and risk while keeping execution fast?"
 
 This operating model closes that gap.
@@ -27288,11 +29010,11 @@ Extend into high-stakes operations: cross-system orchestration, strict governanc
 
 ## What ships every engagement
 
-- \`mcp_contract.yaml\`  
+- \`mcp_contract.yaml\`
   Tool schemas, resources, auth scopes, error model.
-- \`agent_contract.yaml\`  
+- \`agent_contract.yaml\`
   Allowed actions, approval mode, escalation triggers, budget/latency guardrails.
-- \`outcome_contract.md\`  
+- \`outcome_contract.md\`
   Workflow targets, success criteria, fallback/manual path, ownership boundaries.
 - \`golden_tasks.yaml\` + runbook
   Regression gates, incident response, rollback path.
@@ -27358,8 +29080,8 @@ If the map is not convincing, do not proceed.
     uri: "docs://agency/content/sales/README",
     content: `# Workflow Infrastructure Sales Assets v1
 
-**Primary buyer:** Ops/RevOps  
-**Primary channel:** Live discovery and mapping calls  
+**Primary buyer:** Ops/RevOps
+**Primary channel:** Live discovery and mapping calls
 **Core phrase:** Production-safe workflow infrastructure
 
 ---
@@ -27370,35 +29092,40 @@ If the map is not convincing, do not proceed.
    - \`policy-os-buyer-brief-ops-revops.md\`
    - Purpose: frame problem, outcomes, offer ladder, and CTA in under 3 minutes.
 
-2. **Discovery script (run live for 20-30 minutes)**
+2. **Public Atlas canvas (send as a low-friction warmup)**
+   - \`/atlas\` or \`/services#atlas-warmup\`
+   - Purpose: let cold or medium-fit buyers start from an industry starter map, understand the trust boundary, and carry readiness metadata into booking without exposing secrets or running production tools.
+   - Starter maps: RevOps lead handoff, prior authorization prep, RFI/submittal control, marketplace review queue, and insurance claims intake.
+
+3. **Discovery script (run live for 20-30 minutes)**
    - \`discovery-call-script.md\`
    - Purpose: qualify fit, map tier, handle objections, and close to a concrete next step.
 
-3. **Discovery policy and standards**
+4. **Discovery policy and standards**
    - \`discovery-policy.md\`
    - Purpose: define what discovery must produce, what shortcuts are prohibited, and how to route into policy/control work.
 
-4. **Operator runbook**
+5. **Operator runbook**
    - \`discovery-runbook.md\`
    - Purpose: run workflow-first discovery consistently and convert calls into package-routing decisions.
 
-5. **Operator checklist**
+6. **Operator checklist**
    - \`operator-checklist.md\`
    - Purpose: single internal checklist covering the full path from first contact to release readiness.
 
-6. **Commercial interface spec (machine-readable source of truth)**
+7. **Commercial interface spec (machine-readable source of truth)**
    - \`policy-os-interface-spec.yaml\`
    - Purpose: standardize one-pager inputs/outputs, call script branch logic, and taxonomy.
 
-7. **Discovery note (required after every call)**
+8. **Discovery note (required after every call)**
    - \`../templates/sales/discovery-note-template.md\`
    - Purpose: standardize proposal inputs in one pass.
 
-8. **Client-facing Workflow Mapping Session agenda**
+9. **Client-facing Workflow Mapping Session agenda**
    - \`../templates/sales/workflow-mapping-session-agenda.md\`
    - Purpose: align stakeholders on session inputs, structure, and outputs before the paid mapping session.
 
-9. **Delivery artifact templates**
+10. **Delivery artifact templates**
    - \`../templates/delivery/README.md\`
    - \`../templates/delivery/mcp_contract.yaml\`
    - \`../templates/delivery/agent_contract.yaml\`
@@ -27409,11 +29136,11 @@ If the map is not convincing, do not proceed.
    - \`../templates/delivery/halfdozen-mcp-onboarding-checklist.md\`
    - Purpose: convert workflow mapping outputs into implementation-ready artifact drafts.
 
-10. **Proposal input template (delivery handoff)**
+11. **Proposal input template (delivery handoff)**
    - \`../templates/sales/policy-os-proposal-input-template.md\`
    - Purpose: convert discovery output into proposal scope and contract artifact implications.
 
-11. **Follow-up sequence (post-call execution)**
+12. **Follow-up sequence (post-call execution)**
    - \`../templates/sales/policy-os-follow-up-sequence.md\`
    - Purpose: move high and medium fit deals to decision with clear owner and date.
 
@@ -27430,18 +29157,20 @@ If the map is not convincing, do not proceed.
 ## Operating flow
 
 1. Send one-pager.
-2. Review \`discovery-policy.md\`, \`discovery-runbook.md\`, and \`operator-checklist.md\`.
-3. Run discovery script as a branching guide.
-4. Capture discovery note.
-5. Assign fit (\`high|medium|low\`) and select close path.
-6. For high-fit work, send \`workflow-mapping-session-agenda.md\`.
-7. Execute follow-up sequence and lock next action.
-8. Build proposal using:
+2. Offer the public Atlas canvas when the buyer needs a low-friction way to understand the mapping process.
+3. If the buyer fits a starter-map lane, ask them to load the closest industry workflow and edit the owner, systems, approval point, and stop condition.
+4. Review \`discovery-policy.md\`, \`discovery-runbook.md\`, and \`operator-checklist.md\`.
+5. Run discovery script as a branching guide.
+6. Capture discovery note, including Atlas readiness/session metadata when present.
+7. Assign fit (\`high|medium|low\`) and select close path.
+8. For high-fit work, send \`workflow-mapping-session-agenda.md\`.
+9. Execute follow-up sequence and lock next action.
+10. Build proposal using:
    - \`mcp_contract.yaml\`
    - \`agent_contract.yaml\`
    - \`outcome_contract.md\`
    - \`golden_tasks.yaml\`
-9. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
+11. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
 
 ---
 
@@ -27467,7 +29196,7 @@ If the map is not convincing, do not proceed.
 - Do not reduce discovery to "what do you want to connect?"
 - Do not skip risk-classification in the note template.
 - Do not produce proposals with missing approval boundaries.
-- Do not position Braintrust as the policy control plane; it is observability and eval infrastructure.
+- Do not position Langfuse as the policy control plane; it is observability and eval infrastructure.
 `
   },
   {
@@ -27633,75 +29362,6 @@ createsomething.agency/discover
 - Engage with comments in first 30 minutes
 - CTA link goes in first comment
 - Character count: ~1,800 (optimal range)
-`
-  },
-  {
-    id: "agency:content/social/linkedin-braintrust-trace-unsurfacing",
-    property: "agency",
-    title: "LinkedIn Post: Braintrust Trace Dashboard (CREATE SOMETHING)",
-    description: "LinkedIn Post: Braintrust Trace Dashboard (CREATE SOMETHING)",
-    section: "content",
-    path: "content/social/linkedin-braintrust-trace-unsurfacing.md",
-    slug: "content/social/linkedin-braintrust-trace-unsurfacing",
-    uri: "docs://agency/content/social/linkedin-braintrust-trace-unsurfacing",
-    content: `# LinkedIn Post: Braintrust Trace Dashboard (CREATE SOMETHING)
-
-**Campaign:** Reliability Observability - Braintrust
-**Target:** LinkedIn (CREATE SOMETHING company page)
-**Type:** Dashboard highlight + research teaser
-**Asset:** \`docs/BRAINTRUST_CREATE_SOMETHING_TRACE_DASHBOARD_2026-03-04.png\`
-**CTA:** createsomething.io/papers/braintrust-trace-unsurfacing
-
----
-
-## Post
-
-This dashboard is a good example of why raw percentages can fool us.
-
-At first look, things seemed fine: 929 of 1,000 rows had no errors.
-
-Then Braintrust helped us **unsurface** what was hiding underneath:
-- 71 rows were errors (7.1%)
-- permission + intent routing made up 76.1% of all failures
-- \`hub_route_intent\` failed on 22 of 36 calls (61.1%)
-- one control-plane event (\`hub_update_state\`) took 252,517 ms
-
-Simple takeaway: a high success rate can still hide repeated failure patterns.
-
-So we turned this into 5 ranked experiments with clear pass/fail rules:
-1. LinkedIn permission preflight
-2. Intent cleanup + semantic fallback
-3. Provider 429 circuit breaker
-4. Control-plane cache + latency stabilization
-5. Tool-argument auto-repair
-
-That is the point of observability:
-not just collecting logs, but making hidden system problems visible enough to fix.
-
-Paper + experiment specs are now published from this snapshot.
-
----
-
-## Comment (Post after publishing)
-
-Paper: createsomething.io/papers/braintrust-trace-unsurfacing
-
-Dashboard screenshot + experiment specs:
-- \`docs/BRAINTRUST_CREATE_SOMETHING_TRACE_DASHBOARD_2026-03-04.png\`
-- \`docs/internal/braintrust-experiments/README.md\`
-
-#Braintrust #MCP #ReliabilityEngineering #Observability #AgentEngineering #CreateSomething
-
----
-
-## Voice Compliance
-
-- [x] Plain-language (high-school senior readable)
-- [x] Includes concrete numbers from dashboard snapshot
-- [x] "Nicely Said" style: clear, direct, no jargon-heavy phrasing
-- [x] Emphasizes mechanism ("unsurfacing hidden structure"), not hype
-- [x] Links insight to clear execution path (ranked experiments + pass/fail criteria)
-- [x] Suitable for company page distribution
 `
   },
   {
@@ -30131,9 +31791,9 @@ Before sending SOW to client:
     uri: "docs://agency/content/templates/delivery/examples/exampleco-golden-task-checks",
     content: `# Golden-Task Checks
 
-**Status:** Example  
-**Client:** \`ExampleCo\`  
-**Workflow:** \`quote_to_confirmation\`  
+**Status:** Example
+**Client:** \`ExampleCo\`
+**Workflow:** \`quote_to_confirmation\`
 **Owner:** \`RevOps Director\`
 
 ---
@@ -30249,8 +31909,8 @@ The workflow is considered ready for release only if:
 
 ## Notes
 
-- Braintrust may capture traces and eval evidence for these checks.
-- Braintrust does not enforce approval or block decisions.
+- Langfuse may capture traces and eval evidence for these checks.
+- Langfuse does not enforce approval or block decisions.
 `
   },
   {
@@ -30264,9 +31924,9 @@ The workflow is considered ready for release only if:
     uri: "docs://agency/content/templates/delivery/examples/exampleco-outcome_contract",
     content: `# Outcome Contract
 
-**Status:** Example  
-**Client:** \`ExampleCo\`  
-**Workflow:** \`quote_to_confirmation\`  
+**Status:** Example
+**Client:** \`ExampleCo\`
+**Workflow:** \`quote_to_confirmation\`
 **Date:** \`2026-03-07\`
 
 ---
@@ -30372,7 +32032,7 @@ This pilot produces:
 - golden-task checks
 - runbook
 
-If observability is included, it may also include Braintrust tracing and eval coverage.
+If observability is included, it may also include Langfuse tracing and eval coverage.
 
 ---
 
@@ -30428,9 +32088,9 @@ The workflow does not move to production until:
     uri: "docs://agency/content/templates/delivery/examples/exampleco-runbook",
     content: `# Workflow Runbook
 
-**Status:** Example  
-**Client:** \`ExampleCo\`  
-**Workflow:** \`quote_to_confirmation\`  
+**Status:** Example
+**Client:** \`ExampleCo\`
+**Workflow:** \`quote_to_confirmation\`
 **Primary owner:** \`RevOps Director\`
 
 ---
@@ -30569,7 +32229,7 @@ Required evidence sources:
 
 - workflow logs
 - approval inbox records
-- Braintrust traces and evals if enabled
+- Langfuse traces and evals if enabled
 - incident notes
 
 Required review cadence:
@@ -30612,7 +32272,7 @@ No production change is complete until the documentation and gates are updated t
     uri: "docs://agency/content/templates/delivery/examples/halfdozen-current-mcp-onboarding-checklist",
     content: `# Half Dozen Current MCP Onboarding Checklist
 
-**Status:** Working draft  
+**Status:** Working draft
 **Audience:** session lead for current Half Dozen MCP onboarding
 
 ---
@@ -30655,7 +32315,7 @@ No production change is complete until the documentation and gates are updated t
   - no end-user management of Zoom Clips session/profile auth
   - no destructive actions outside explicit workflow scope
   - no copying live bearer tokens or bridge passwords into repo or shared docs
-- show where telemetry/Braintrust evidence lives
+- show where telemetry/Langfuse evidence lives
 
 ---
 
@@ -30701,8 +32361,8 @@ For each team member, confirm they can answer:
     uri: "docs://agency/content/templates/delivery/examples/halfdozen-current-mcp-onboarding-pack",
     content: `# Half Dozen Current MCP Onboarding Pack
 
-**Status:** Working draft  
-**Audience:** Half Dozen team  
+**Status:** Working draft
+**Audience:** Half Dozen team
 **Purpose:** operational onboarding pack for the MCPs currently in active team use
 
 ---
@@ -30859,9 +32519,9 @@ Credential handling rule:
 
 ---
 
-## 6. Braintrust positioning
+## 6. Langfuse positioning
 
-When Braintrust is part of the discussion:
+When Langfuse is part of the discussion:
 
 - use it for traces, evals, and observability
 - use it to inspect policy outcomes and runtime behavior
@@ -30892,7 +32552,7 @@ When Braintrust is part of the discussion:
 ### Part 4. Evidence
 
 - show where runbooks and golden-task checks live
-- show where Braintrust or logs are used for evidence
+- show where Langfuse or logs are used for evidence
 
 ---
 
@@ -30916,8 +32576,8 @@ When Braintrust is part of the discussion:
     uri: "docs://agency/content/templates/delivery/examples/halfdozen-mcp-onboarding-example",
     content: `# Half Dozen MCP Onboarding Example
 
-**Status:** Example  
-**Audience:** Half Dozen team  
+**Status:** Example
+**Audience:** Half Dozen team
 **Scope:** selected MCPs for internal adoption
 
 ---
@@ -30967,7 +32627,7 @@ When Braintrust is part of the discussion:
 
 - use runbooks for operator response
 - use golden-task checks for validation
-- use Braintrust for traces/evals where enabled
+- use Langfuse for traces/evals where enabled
 
 ---
 
@@ -31020,9 +32680,9 @@ Use these as reference implementations, not as universal defaults. Each client w
     uri: "docs://agency/content/templates/delivery/golden-task-checks",
     content: `# Golden-Task Checks
 
-**Status:** Draft  
-**Client:** \`CLIENT_NAME\`  
-**Workflow:** \`PRIMARY_WORKFLOW_NAME\`  
+**Status:** Draft
+**Client:** \`CLIENT_NAME\`
+**Workflow:** \`PRIMARY_WORKFLOW_NAME\`
 **Owner:** \`ROLE_OR_NAME\`
 
 ---
@@ -31141,8 +32801,8 @@ The workflow is considered ready for release only if:
 
 ## Notes
 
-- Braintrust may be used to capture traces and eval results for these checks.
-- Braintrust is evidence infrastructure, not the mechanism that enforces the policy decision.
+- Langfuse may be used to capture traces and eval results for these checks.
+- Langfuse is evidence infrastructure, not the mechanism that enforces the policy decision.
 `
   },
   {
@@ -31188,7 +32848,7 @@ The workflow is considered ready for release only if:
 - walk one approval-path example
 - walk one failure/fallback example
 - show where logs or traces live
-- explain Braintrust correctly as observability/evals only
+- explain Langfuse correctly as observability/evals only
 
 ---
 
@@ -31360,7 +33020,7 @@ Copy this section once per MCP.
 #### Evidence and observability
 
 - logs: \`WHERE\`
-- traces/evals: \`BRAINTRUST_OR_OTHER\`
+- traces/evals: \`LANGFUSE_OR_OTHER\`
 - approval record: \`WHERE\`
 
 ---
@@ -31391,7 +33051,7 @@ Use this sequence during the actual onboarding session.
 ### Part 4. Evidence and review
 
 - Show where traces are stored
-- Explain that Braintrust is for observability and evals, not policy enforcement
+- Explain that Langfuse is for observability and evals, not policy enforcement
 - Show the runbook and golden-task checks
 
 ---
@@ -31569,7 +33229,7 @@ Each artifact must carry the Policy OS metadata required by the canonical bundle
 - \`golden_tasks.yaml\` defines must-pass scenarios that prove the workflow behaves correctly before release.
 - \`runbook.md\` defines operating cadence, approvals, exceptions, containment, rollback, and recovery.
 
-Braintrust may be referenced only as observability and eval infrastructure, not as the policy control plane.
+Langfuse may be referenced only as observability and eval infrastructure, not as the policy control plane.
 `
   },
   {
@@ -31583,10 +33243,10 @@ Braintrust may be referenced only as observability and eval infrastructure, not 
     uri: "docs://agency/content/templates/delivery/runbook",
     content: `# Workflow Runbook
 
-**Status:** Draft  
-**Client:** \`CLIENT_NAME\`  
-**Workflow:** \`PRIMARY_WORKFLOW_NAME\`  
-**Primary owner:** \`ROLE_OR_NAME\`  
+**Status:** Draft
+**Client:** \`CLIENT_NAME\`
+**Workflow:** \`PRIMARY_WORKFLOW_NAME\`
+**Primary owner:** \`ROLE_OR_NAME\`
 **Package:** \`Policy OS\`
 
 ---
@@ -31732,7 +33392,7 @@ Required evidence sources:
 
 - workflow logs
 - approval inbox records
-- trace/eval tooling such as Braintrust
+- trace/eval tooling such as Langfuse
 - incident notes
 
 Required review cadence:
@@ -31759,6 +33419,481 @@ Any change to the workflow must update:
 - this runbook
 
 No production change is complete until the documentation and gates are updated together.
+`
+  },
+  {
+    id: "agency:content/templates/marketing/image-metadata",
+    property: "agency",
+    title: "Image Metadata",
+    description: "Image Metadata",
+    section: "content",
+    path: "content/templates/marketing/image-metadata.md",
+    slug: "content/templates/marketing/image-metadata",
+    uri: "docs://agency/content/templates/marketing/image-metadata",
+    content: `# Image Metadata
+
+> Content asset ID:
+> Visual source folder:
+> Owner:
+> Updated:
+> Refresh owner:
+
+## TASTE Packet
+
+| Reference | Source | Why it belongs | What must not be copied | Notes |
+| --------- | ------ | -------------- | ----------------------- | ----- |
+|           |        |                |                         |       |
+
+## Original Visuals
+
+| File | Source prompt | Source file | Model | Owner | Review status | Refresh due | Notes |
+| ---- | ------------- | ----------- | ----- | ----- | ------------- | ----------- | ----- |
+|      |               |             |       |       |               |             |       |
+
+## Canvas Artifacts
+
+Use this section when a visual explains workflow behavior, governance, an offer,
+a case study, a tool comparison, or agent behavior.
+
+| File | Graph source | Renderer | Nodes shown | Relationships shown | Motion plan | Accessibility summary | Notes |
+| ---- | ------------ | -------- | ----------- | ------------------- | ----------- | --------------------- | ----- |
+|      |              |          |             |                     |             |                       |       |
+
+## Generated Exports
+
+| File | Target surface | Size | Source prompt | Approved by | Published at | Notes |
+| ---- | -------------- | ---- | ------------- | ----------- | ------------ | ----- |
+|      |                |      |               |             |              |       |
+
+## Route Placement
+
+| Route | In-page visual | Component | Alt text status | Caption status | Guardrail |
+| ----- | -------------- | --------- | --------------- | -------------- | --------- |
+|       |                |           |                 |                |           |
+
+## Collected Screenshots
+
+| File | Tool | URL or source | Captured | Checked by | Refresh due | Rights note |
+| ---- | ---- | ------------- | -------- | ---------- | ----------- | ----------- |
+|      |      |               |          |            |             |             |
+
+## Review Gate
+
+- [ ] Original visuals use the Canon Images guideline.
+- [ ] TASTE packet is attached or explicitly marked not applicable.
+- [ ] TASTE references were used as judgment inputs and were not copied.
+- [ ] Workflow, governance, and agent-behavior visuals were attempted as Atlas canvas artifacts before one-off graphics.
+- [ ] Canvas artifacts preserve a graph source and do not move the source of truth into the renderer.
+- [ ] Canvas artifacts show owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
+- [ ] Screenshots prove a concrete claim and are not decorative.
+- [ ] Screenshots are redacted and do not expose secrets, private data, prompts, or customer records.
+- [ ] Primary owned visual is placed in the article body when it is part of the page argument.
+- [ ] Captions and alt text are written.
+- [ ] Refresh dates are assigned.
+- [ ] No generated image is treated as durable source-of-truth evidence.
+- [ ] Langfuse is excluded unless this asset is part of a separate scored rubric.
+`
+  },
+  {
+    id: "agency:content/templates/marketing/image-prompt",
+    property: "agency",
+    title: "CREATE SOMETHING Image Prompt",
+    description: "CREATE SOMETHING Image Prompt",
+    section: "content",
+    path: "content/templates/marketing/image-prompt.md",
+    slug: "content/templates/marketing/image-prompt",
+    uri: "docs://agency/content/templates/marketing/image-prompt",
+    content: `# CREATE SOMETHING Image Prompt
+
+> Content asset ID:
+> Image asset slug:
+> Surface: article | social | deck | delivery | sales | client-update
+> Image family: atlas-story-canvas | system-map-hero | db-automation-judgment | policy-gate-chart | evidence-map | handoff-receipt | screenshot-annotation | cta-visual
+> Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable
+> Atlas graph source: existing starter map | new graph artifact | not applicable
+> TASTE packet: approved references attached | not applicable
+> Owner:
+> Review status: draft | approved | published | retired
+> Target export:
+> Last updated:
+
+## Model
+
+\`\`\`text
+Model: gpt-image-2
+Quality: high
+Size:
+Source manifest or brief:
+TASTE packet:
+\`\`\`
+
+## Purpose
+
+State what the image must prove in one sentence.
+
+\`\`\`text
+Purpose:
+Audience:
+Primary claim:
+Proof object:
+Next action:
+Canvas source:
+Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt
+TASTE references:
+\`\`\`
+
+## Prompt
+
+\`\`\`text
+Create a CREATE SOMETHING <image family> for <surface>.
+
+Purpose: <what the image must prove>.
+Audience: <operator, decision owner, builder, reviewer, client>.
+Show: <workflow objects, states, proof artifacts, owners, gates>.
+
+TASTE packet: <3 to 7 approved references by title/source and the specific
+communication pattern to borrow>. Use references for judgment only. Do not copy
+source assets, brand marks, fonts, layouts, campaign language, or images.
+
+If the image explains workflow behavior, governance, an offer, a case study, a
+tool comparison, or agent behavior, use an Atlas-style canvas with nodes and
+mapped relationships before any decorative composition. Preserve the graph as the source of truth: owner, workflow or data artifact, automation route, AI-assisted task when present, human judgment point, stop condition, and receipt surface. Use static story canvas for marketing and article visuals, interactive Atlas canvas only when the surface needs editing or intake, and Sigma/Cosmograph only for large read-only network exploration.
+
+Style: Use Ona.com as the design and communication foundation: calm hierarchy,
+plain claims, compact proof, governed execution, visible evidence, and restrained
+action states. Translate that foundation into CREATE SOMETHING artifact language:
+system maps, MCP boundaries, policy gates, receipts, validation proof, owners,
+and handoff state. Prefer porcelain or quiet near-black surfaces, crisp labels,
+restrained cobalt/moss/stop accents, compact proof panels, and the isometric cube
+as a persistent system signature.
+
+Avoid: glowing robots, circuit faces, blue AI gradients, generic brains, stock
+photography, fake dashboards, unreadable file paths, client secrets, PHI, private
+prompts, watermarks, vendor endorsement, and decorative AI atmosphere.
+\`\`\`
+
+## Review Gate
+
+- [ ] Text is legible at 50% size.
+- [ ] The image answers a specific operational question.
+- [ ] TASTE references are attached or explicitly marked not applicable.
+- [ ] TASTE references were used as judgment inputs and were not copied.
+- [ ] Workflow, governance, or agent-behavior visuals use an Atlas canvas unless explicitly marked not applicable.
+- [ ] The canvas shows owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
+- [ ] The claim is supported by visible proof or a real screenshot.
+- [ ] No fake UI is presented as a screenshot.
+- [ ] No secrets, private data, private prompts, client records, or tokens appear.
+- [ ] The source prompt, model, date, owner, target surface, and refresh date are stored.
+- [ ] Langfuse is not required unless a separate scored image-quality rubric exists.
+`
+  },
+  {
+    id: "agency:content/templates/marketing/workflow-intent-article-brief",
+    property: "agency",
+    title: "Workflow-Intent Article Brief",
+    description: "Workflow-Intent Article Brief",
+    section: "content",
+    path: "content/templates/marketing/workflow-intent-article-brief.md",
+    slug: "content/templates/marketing/workflow-intent-article-brief",
+    uri: "docs://agency/content/templates/marketing/workflow-intent-article-brief",
+    content: `# Workflow-Intent Article Brief
+
+> Content asset ID:
+> Linear issue:
+> Owner:
+> Status: brief | drafting | review | published | updating
+> Canonical path:
+> Publish target:
+> Last updated:
+
+## Search Target
+
+- Primary keyword:
+- Secondary keywords:
+- Search intent: compare | versus | how-to | checklist | definition
+- Audience:
+- Funnel stage: awareness | consideration | decision
+- Competitors, tools, or alternatives included:
+
+## Point of View
+
+State the CREATE SOMETHING angle in one paragraph.
+
+Default spine:
+
+> Most AI automation fails because it lacks operating rules: approvals, blocked
+> actions, audit trails, owner responsibilities, and recovery paths.
+
+## Quick Answer
+
+Write the answer a reader should understand in the first 30 seconds.
+
+## Evaluation Criteria
+
+Use criteria that reflect operating design, not only features.
+
+| Criterion      | Why it matters                                                                 | How to evaluate |
+| -------------- | ------------------------------------------------------------------------------ | --------------- |
+| Governance     | Who can approve, block, reverse, or inspect actions?                           |                 |
+| Cross-tool fit | Does the workflow cross Notion, Slack, CRM, email, files, billing, or support? |                 |
+| Human approval | Where must the agent ask before acting?                                        |                 |
+| Audit trail    | Can the team reconstruct what happened?                                        |                 |
+| Recovery       | What happens when the workflow fails or produces a bad recommendation?         |                 |
+| Portability    | Can the workflow move if the vendor changes?                                   |                 |
+
+## Recommended Structure
+
+1. Quick answer or shortlist.
+2. Who this guide is for.
+3. Evaluation criteria.
+4. Comparison table or decision table.
+5. Individual breakdowns.
+6. Best fit by use case.
+7. Common mistakes.
+8. Recommended implementation path.
+9. CTA.
+10. Source notes and last-updated date.
+
+## Visual Plan
+
+Default rule: create strategic visuals, collect screenshots for evidence.
+For workflow, governance, offer, case-study, tool-comparison, or agent-behavior
+visuals, attempt an Atlas-style canvas before creating a one-off graphic.
+Use \`packages/agency/content/templates/marketing/image-prompt.md\` for generated
+or designed visuals, and copy
+\`packages/agency/content/templates/marketing/image-metadata.md\` into the article
+asset folder before publish.
+
+| Asset              | Create or collect | Canvas-first fit | Purpose                                       | Source / target | Status |
+| ------------------ | ----------------- | ---------------- | --------------------------------------------- | --------------- | ------ |
+| Hero visual        | create            | yes / no         | Make the article recognizable and ownable     |                 |        |
+| Story canvas       | create            | yes              | Map owner, workflow, run/wait/stop, receipt   |                 |        |
+| Comparison matrix  | create            | yes / no         | Help teams scan options                      |                 |        |
+| Tool screenshot 1  | collect           | no               | Prove a specific product claim                |                 |        |
+| Tool screenshot 2  | collect           | no               | Prove a specific product claim                |                 |        |
+| Framework diagram  | create            | yes              | Show the CREATE SOMETHING point of view       |                 |        |
+| CTA graphic        | create            | yes / no         | Convert readers without generic marketing art |                 |        |
+
+Screenshot targets should be workflow builders, approval settings, audit logs,
+observability dashboards, integration setup, or human-in-the-loop controls. Do
+not use vendor homepage screenshots as filler.
+
+### Image Metadata
+
+- Visual source folder:
+- Atlas canvas source: existing starter map | new graph artifact | not applicable
+- Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable
+- Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt
+- Hero visual:
+- Screenshot targets:
+- Screenshot capture date:
+- Screenshot refresh due:
+- Image rights status: pending | cleared | original-owned | replace-before-publish
+- In-page visual placement:
+- Route guardrail:
+- Alt text owner:
+- Annotation owner:
+- Redaction notes:
+
+## Comparison Table
+
+| Option | Best fit | Strength | Risk | Governance gap | CREATE SOMETHING take |
+| ------ | -------- | -------- | ---- | -------------- | --------------------- |
+|        |          |          |      |                |                       |
+
+## Common Mistakes
+
+- Mistake 1:
+- Mistake 2:
+- Mistake 3:
+
+## Recommended Implementation Path
+
+1. Map the workflow and owner.
+2. Classify allowed, approval-required, and blocked actions.
+3. Pick the tool surface.
+4. Add logging, approval, and recovery artifacts.
+5. Pilot with one workflow before broad rollout.
+
+## CTA
+
+Primary CTA:
+Secondary CTA:
+CTA route:
+
+## Analytics and Attribution
+
+- \`contentAssetId\`:
+- \`contentCluster\`:
+- \`contentIntent\`:
+- \`contentAudience\`:
+- \`contentFunnelStage\`:
+- \`contentPrimaryKeyword\`:
+- \`contentPrimaryCta\`:
+- \`utm_campaign\`:
+- Lead \`source_detail\`:
+
+Add the live route to \`packages/agency/src/lib/analytics/content-assets.ts\`.
+
+## Distribution Plan
+
+- Newsletter dispatch:
+- LinkedIn post 1:
+- LinkedIn post 2:
+- LinkedIn post 3:
+- LinkedIn post 4:
+- LinkedIn post 5:
+- Demo or walkthrough:
+
+## Source Notes
+
+Use primary source URLs and current docs. Add checked dates.
+
+- Source 1:
+- Source 2:
+- Source 3:
+`
+  },
+  {
+    id: "agency:content/templates/outreach/atlas-starter-map-follow-up",
+    property: "agency",
+    title: "Atlas Starter Map Follow-up Templates",
+    description: "Atlas Starter Map Follow-up Templates",
+    section: "content",
+    path: "content/templates/outreach/atlas-starter-map-follow-up.md",
+    slug: "content/templates/outreach/atlas-starter-map-follow-up",
+    uri: "docs://agency/content/templates/outreach/atlas-starter-map-follow-up",
+    content: `# Atlas Starter Map Follow-up Templates
+
+**Purpose:** Follow up after qualified engagement with Atlas starter-map content
+**When to use:** Within 24-48 hours of a relevant comment, reply, or repeat engagement
+**Primary CTA:** Load the relevant starter map or book a Workflow Mapping Session after 2-3 positive exchanges
+
+---
+
+## Template 1: Workflow-Specific Comment
+
+**Trigger:** They commented with a real workflow or approval-boundary detail.
+
+\`\`\`text
+Hi {{first_name}},
+
+Your point about {{workflow_detail}} is exactly the boundary I was trying to get at.
+
+The useful first pass is usually:
+
+- what can run
+- what must wait
+- what should stop
+- what receipt proves the handoff happened
+
+If useful, this starter map is the closest fit:
+{{atlas_link}}
+
+No need to enter anything private. I would just rename the owner, source record, and stop condition first.
+\`\`\`
+
+## Template 2: ICP Like or Repeat Engagement
+
+**Trigger:** They liked or reacted to two or more workflow-boundary posts and match a starter-map ICP.
+
+\`\`\`text
+Hi {{first_name}},
+
+Noticed you have been following the workflow-boundary posts.
+
+Curious if {{starter_workflow}} is something your team is actively dealing with at {{company}}?
+
+We made a public Atlas starter map for that pattern. It does not connect to private systems or run tools. It is just a first-pass map for owner, record, run action, approval, stop condition, and receipt.
+
+Happy to send it if useful.
+\`\`\`
+
+## Template 3: Send the Map After They Opt In
+
+**Trigger:** They ask for the map or respond positively to Template 2.
+
+\`\`\`text
+Here is the starter map:
+{{atlas_link}}
+
+The quickest useful edit:
+
+1. Rename the workflow owner.
+2. Replace the source record with the real artifact your team works from.
+3. Rewrite the stop condition so it names the actual risk.
+
+If you want, send back the stop condition you land on and I can sanity-check whether it is specific enough.
+\`\`\`
+
+## Template 4: Move to Mapping Session
+
+**Trigger:** They name a real workflow, have a business owner, and the boundary matters.
+
+\`\`\`text
+This sounds worth mapping live.
+
+Would you be open to a 20-minute Workflow Mapping Session?
+
+Not a sales pitch. We will use your workflow to identify the owner, source record, run/wait/stop boundary, evidence receipt, and the next safe implementation step.
+
+Calendar: {{calendar_link}}
+
+If timing is easier another way, send two windows that work.
+\`\`\`
+
+## Template 5: Low-Pressure Close
+
+**Trigger:** The exchange is useful, but timing is unclear.
+
+\`\`\`text
+Makes sense.
+
+I will keep sharing concrete workflow maps as we publish them.
+
+If {{workflow_name}} becomes active again, the place I would start is the stop condition. Once that is clear, the automation path gets much easier to judge.
+\`\`\`
+
+## Starter Map Link Defaults
+
+Use the canonical \`/atlas\` URL with channel attribution:
+
+\`\`\`text
+https://createsomething.agency/atlas?utm_source=linkedin&utm_medium=dm&utm_campaign=atlas-starter-maps-v20260623&utm_content={{starter_map_id}}
+\`\`\`
+
+Starter map IDs:
+
+- \`revops-lead-handoff\`
+- \`healthcare-prior-authorization-prep\`
+- \`construction-rfi-submittal-control\`
+- \`marketplace-review-queue\`
+- \`insurance-claims-intake\`
+
+## Qualification Rules
+
+Follow up only when at least two are true:
+
+- They named a real workflow.
+- Their role owns operations, revenue operations, review, support, healthcare admin, project controls, claims, marketplace quality, or systems delivery.
+- The workflow crosses more than one system or team.
+- There is a visible approval, authority, privacy, contract, or consent boundary.
+- Their company appears able to fund a mapping or implementation engagement.
+
+Do not follow up when:
+
+- The engagement is only a casual like from a non-ICP profile.
+- The message would require guessing their private operational context.
+- The only available pitch is "we help companies automate."
+
+## Tracking
+
+After sending:
+
+- Add \`source = linkedin\` or the relevant channel.
+- Add \`source_detail = atlas-starter-maps-v20260623/{{starter_map_id}}\`.
+- Note the workflow named by the buyer.
+- Record whether the conversation moved to teardown, mapping session, parked, or no response.
 `
   },
   {
@@ -32617,7 +34752,7 @@ After sending, update lead in funnel:
     uri: "docs://agency/content/templates/sales/discovery-note-example",
     content: `# Workflow Infrastructure Discovery Note Example
 
-**Purpose:** show the expected level of specificity for post-call discovery capture  
+**Purpose:** show the expected level of specificity for post-call discovery capture
 **Use with:** \`discovery-note-template.md\`
 
 ---
@@ -32666,7 +34801,7 @@ After sending, update lead in funnel:
   - \`Policy OS\`
 - rationale: client already has automation fragments, but failure cost is driven by missing approval boundaries and inconsistent cross-system writes
 - if MCP-only wedge recommended, list assurance trigger criteria:
-- if Braintrust or eval tooling is discussed, note it as observability only: Braintrust may be added after pilot scoping to trace approval routing and evaluate workflow regressions
+- if Langfuse or eval tooling is discussed, note it as observability only: Langfuse may be added after pilot scoping to trace approval routing and evaluate workflow regressions
 
 ---
 
@@ -32710,7 +34845,7 @@ After sending, update lead in funnel:
     uri: "docs://agency/content/templates/sales/discovery-note-template",
     content: `# Workflow Infrastructure Discovery Note Template
 
-**Purpose:** Standardize post-call capture so proposal drafting is consistent and fast.  
+**Purpose:** Standardize post-call capture so proposal drafting is consistent and fast.
 **Use with:** \`content/sales/discovery-call-script.md\`
 
 ---
@@ -32761,7 +34896,7 @@ After sending, update lead in funnel:
   - \`Enterprise Extension\`
 - rationale:
 - if MCP-only wedge recommended, list assurance trigger criteria:
-- if Braintrust or eval tooling is discussed, note it as observability only:
+- if Langfuse or eval tooling is discussed, note it as observability only:
 
 ---
 
@@ -33769,7 +35904,7 @@ Based on this, the next step is:
 
 If this summary is accurate, I will proceed with the above path.
 
-Best,  
+Best,
 {{sender}}
 
 ---
@@ -33789,7 +35924,7 @@ what is the current cost of a failure in this workflow (cleanup time, delay, or 
 
 This baseline is how we size the initial policy boundary and pilot target.
 
-Best,  
+Best,
 {{sender}}
 
 ---
@@ -33813,7 +35948,7 @@ Please also confirm the actions that currently fall into:
 - approval-required
 - block
 
-Best,  
+Best,
 {{sender}}
 
 ### Medium fit
@@ -33826,9 +35961,9 @@ For the MCP-only wedge, please confirm:
 - trigger criteria for entering Policy OS
 - checkpoint date for trigger review
 
-If runtime tracing is in scope, we can add Braintrust as observability support after the wedge is defined.
+If runtime tracing is in scope, we can add Langfuse as observability support after the wedge is defined.
 
-Best,  
+Best,
 {{sender}}
 
 ### Low fit
@@ -33841,7 +35976,7 @@ Agreed to pause for now. Please confirm the re-entry condition:
 
 When that condition is met, we can reopen with a scoped mapping call.
 
-Best,  
+Best,
 {{sender}}
 
 ---
@@ -33860,7 +35995,7 @@ Quick timeline check: should we keep the current next-step date, or reset it?
 
 If reset, please share the new owner and date so we can keep this moving cleanly.
 
-Best,  
+Best,
 {{sender}}
 
 ---
@@ -33876,13 +36011,13 @@ Subject: close loop on next step
 Hi {{Name}},
 
 I want to close this loop with one clear outcome:
-1. proceed now,  
-2. proceed later with a set date, or  
+1. proceed now,
+2. proceed later with a set date, or
 3. pause indefinitely.
 
 Reply with the option and I will update our plan accordingly.
 
-Best,  
+Best,
 {{sender}}
 
 ---
@@ -33905,7 +36040,7 @@ Best,
     uri: "docs://agency/content/templates/sales/policy-os-proposal-input-template",
     content: `# Workflow Infrastructure Proposal Input Template
 
-**Purpose:** Convert discovery outputs into proposal-ready scope in one pass.  
+**Purpose:** Convert discovery outputs into proposal-ready scope in one pass.
 **Use after:** \`content/templates/sales/discovery-note-template.md\`
 
 ---
@@ -34539,8 +36674,8 @@ I'd be happy to recommend some alternatives that might be better suited."
     uri: "docs://agency/content/templates/sales/workflow-mapping-session-agenda",
     content: `# Workflow Mapping Session Agenda
 
-**Audience:** client stakeholders  
-**Duration:** 60 minutes  
+**Audience:** client stakeholders
+**Duration:** 60 minutes
 **Purpose:** define one pilot workflow, its trust boundary, and the 30-day implementation path
 
 ---
@@ -34549,11 +36684,12 @@ I'd be happy to recommend some alternatives that might be better suited."
 
 During this session we will:
 
-1. Select the workflow to scope
-2. Map the systems, actions, and approvals involved
-3. Define the policy boundary for automation
-4. Confirm what should be automated, reviewed, or blocked
-5. Align on the implementation path for the next 30 days
+1. Review any public Atlas canvas the client created before booking
+2. Select the workflow to scope
+3. Map the systems, actions, and approvals involved in internal Atlas Studio
+4. Define the policy boundary for automation
+5. Confirm what should be automated, reviewed, or blocked
+6. Align on the implementation path for the next 30 days
 
 ---
 
@@ -34565,6 +36701,9 @@ Please bring:
 - one operational stakeholder closest to the work
 - one technical stakeholder if systems or auth complexity is expected
 - examples of current failure cases or manual workarounds
+- the public Atlas canvas summary if you used it before booking
+
+Do not put credentials, tokens, passwords, API keys, or private record exports in the public Atlas canvas or booking notes. The public mapping agent can only edit the prospect canvas; it cannot run production tools, read private systems, or approve implementation work.
 
 ---
 
@@ -34583,6 +36722,8 @@ Please bring:
 - Sequence of actions
 - Handoffs and failure points
 - Existing human review steps
+
+If a public Atlas canvas exists, use it as the first draft. The live session can then move into internal Atlas Studio for deeper mapping, operator judgment, and approval-gated handoff planning.
 
 ### 3. Trust and policy boundary
 
@@ -34616,6 +36757,7 @@ We will also define:
 ## What you receive after the session
 
 - Pilot workflow scope
+- Reviewed Atlas map or handoff summary
 - Policy boundary recommendation
 - 30-day implementation plan
 - Proposal-ready summary for implementation artifacts
@@ -34624,9 +36766,9 @@ We will also define:
 
 ## Notes on observability
 
-If tracing or evals are part of the plan, we may recommend Braintrust for runtime visibility.
+If tracing or evals are part of the plan, we may recommend Langfuse for runtime visibility.
 
-Braintrust is used for observability and tuning, not as the enforcement mechanism for workflow policy.
+Langfuse is used for observability and tuning, not as the enforcement mechanism for workflow policy.
 `
   },
   {
@@ -35307,11 +37449,251 @@ Status: **Partially pass with one notable layout defect.**
     uri: "docs://agency/README",
     content: `# CREATE SOMETHING Agency
 
-**createsomething.agency** — production-safe workflow infrastructure for technical operators
+**createsomething.agency** — AI workflow systems for business operations
 
-We build the connectivity layer between your tools and AI.
+We make one business workflow safe to delegate.
 
 ---
+
+## Positioning Hierarchy
+
+\`.agency\` is the public service surface for the larger CREATE SOMETHING thesis:
+
+| Name | Job |
+|------|-----|
+| **AI workflow systems** | Public category: business workflows with connected tools, scoped AI tasks, approvals, stop conditions, and audit trails. |
+| **Delegated Work Control** | Internal thesis layer: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
+| **Workflow Trust Layer** | Internal service-language layer for governed execution around a workflow. |
+| **Policy OS** | Canonical paid package for governed execution, approval rules, runbooks, golden tasks, and recurring tuning. |
+| **MCP-only** | Constrained discovery or compliance entry path, not the default paid offer. |
+
+The clearest public operating loop is:
+
+> Signals come from the tools. Decisions route to the right human or agent.
+> Proof records what happened.
+
+Use this as the first explanation when describing the system. \`Inbox\`, \`Map\`,
+and \`Proof\` are the operator surfaces: the Inbox shows work needing judgment,
+the Map shows workflow context, and Proof shows the evidence and outcome.
+
+Do not reposition \`.agency\` as a generic AI agency, prompt shop, model reseller,
+or Webflow implementation shop. The durable claim is:
+
+> CREATE SOMETHING makes delegated work trustworthy.
+
+## Ona Foundation
+
+Ona is the communication foundation for \`.agency\`, not the category to copy.
+Use the pattern underneath Ona's public surface: one clear category claim, one
+operator outcome, direct CTAs, and a concrete proof object. On \`.agency\`, that
+proof object is the delegated-work boundary: what can run, what waits, what
+stops, who owns the decision, and what evidence proves the work.
+
+Future edits should keep public language easy to inspect before it becomes
+technical. Explain the workflow first, then the stack. Do not add decorative
+iconography or unverified market claims to make the page feel bigger.
+
+### Public Copy Contract
+
+Public \`.agency\` copy should read like a clear business conversation before it
+reads like a strategy memo.
+
+Use this order:
+
+1. Name the category in plain language: \`AI workflow systems\`.
+2. Name the business situation: one messy handoff, repeated workflow, or live
+   operating risk.
+3. State the operating loop: Signals, Decisions, and Proof.
+4. Show the proof object: an Atlas map, decision inbox, delivery record, or
+   audit trail.
+5. Explain the stack only after the workflow boundary is visible.
+
+Prefer public words like:
+
+- signal
+- decision
+- proof
+- workflow
+- handoff
+- map
+- pilot
+- owner
+- approval
+- stop point
+- audit trail
+- evidence
+- runbook
+
+Avoid public words and frames like:
+
+- buyer
+- wedge
+- entry wedge
+- productized wedge
+- partner lane
+- partner claim
+- support lane
+- out-of-lane
+- GTM vector
+- lead magnet
+- MCP-first thesis
+- delegated work control as a headline
+- workflow trust layer as a first-viewport headline
+
+Those terms can remain in internal strategy docs when they are useful for
+planning, but they should not be the way a visitor learns the offer.
+
+Validation:
+
+- Run \`pnpm copy:check\` before shipping public copy. It discovers visitor-facing
+  routes, shared public components, shared data copy, and the agency SEO defaults.
+- Run \`pnpm copy:heal\` when the audit reports stale language. It applies the
+  approved plain-language replacements, then reruns the audit.
+- Add a rule to \`scripts/check-public-copy.mjs\` when a phrase becomes a private
+  planning term instead of public language.
+
+### Canon Debt Contract
+
+Use Canon tokens for owned UI color and motion values. Raw \`rgba()\`, hex colors,
+and ad hoc transition timing are allowed only when a surface has a documented
+exception or a token does not yet exist.
+
+The first managed surface is the operator security route family:
+\`src/routes/admin/security/**\`.
+
+Validation:
+
+- Run \`pnpm canon:check\` before changing managed operator UI.
+- Add a new managed scope to \`scripts/check-canon-debt.mjs\` when a route family
+  is tokenized and ready to stay guarded.
+
+### Marketing Page Portfolio
+
+Public SEO/AEO pages should operate as a funnel portfolio, not a pile of
+articles. Each page needs a job:
+
+1. A cluster: the route family the page belongs to.
+2. A role: pillar, support, comparison, implementation, or operations.
+3. A funnel stage: discover, understand, evaluate, implement, or book.
+4. A route decision: index, route, or archive.
+5. A strength score: whether the page is strong enough for its route decision.
+6. Self-healing levers: deterministic repairs the repo can apply without
+   inventing new editorial strategy.
+
+The reusable Rdoc for this system lives at
+\`docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md\`.
+
+The managed portfolio covers the high-intent public funnel:
+
+| Cluster | Pillar | Support pages |
+|---------|--------|---------------|
+| Core services | \`/services\` | - |
+| Stack boundary | \`/stack\` | - |
+| Workflow tool stack | \`/partners\` | \`/cloudflare\`, \`/notion\` |
+| Dify | \`/dify\` | \`/dify/mcp-control-plane\`, \`/dify/agent-eval-gates\`, \`/dify/ship-dify-app-with-mcp-tools\`, \`/dify/n8n-vs-dify\` |
+| Products | \`/products\` | - |
+| Business use case | \`/use-cases/business\` | - |
+| Enterprise use case | \`/use-cases/enterprise\` | - |
+
+The Dify cluster is the first multi-page content system:
+
+| Page | Role | Funnel job |
+|------|------|------------|
+| \`/dify\` | Pillar | Explain the Dify workflow path and route readers into the cluster. |
+| \`/dify/mcp-control-plane\` | Support | Teach the operating model: Dify surface, MCP boundary, Policy OS rule. |
+| \`/dify/agent-eval-gates\` | Operations | Show the gates that prove a Dify workflow can operate safely. |
+| \`/dify/ship-dify-app-with-mcp-tools\` | Implementation | Give a practical shipping checklist for Dify plus MCP systems. |
+| \`/dify/n8n-vs-dify\` | Comparison | Capture comparison intent and route it toward the governed Dify workflow path. |
+
+The durable SEO/AEO strategy is:
+
+- Keep canonical pages on \`createsomething.agency\`; use other channels for
+  distribution, not as the source of truth.
+- Let pillar pages define the route, support pages explain the operating model,
+  comparison pages capture demand, and implementation pages convert.
+- Keep pages indexable only when they have a clear route, visible proof,
+  structured metadata, direct CTA, and language that matches the public copy
+  contract.
+- Route or archive pages that are redundant, thin, stale, off-language, or no
+  longer connected to a commercial next step.
+- Treat AI-answer visibility as a byproduct of clear, expert, well-structured
+  pages rather than a separate content gimmick.
+
+Validation:
+
+- Run \`pnpm marketing:check\` to score the portfolio, verify cluster routing,
+  verify sitemap/indexing state, and apply the public copy guard to registered
+  marketing pages.
+- Run \`pnpm marketing:heal\` when route decisions change. It applies approved
+  copy replacements and syncs deterministic \`searchRoutes.json\` changes from
+  the portfolio registry.
+- Add or update entries in \`src/lib/data/marketingPages.ts\` before adding a new
+  SEO/AEO page to the funnel.
+- \`pnpm seo:check\` includes the marketing portfolio check so sitemap, schema,
+  copy, and route strength drift fail together.
+
+### Readable Control
+
+The public brand system is **Readable Control**.
+
+Use:
+
+- white or neutral document surfaces
+- near-black type
+- thin rules, tables, cards, receipts, and annotated maps
+- monospace labels for workflow state, files, policies, and receipts
+- sparse status color for run, wait, stop, and proof
+- artifact screenshots, Atlas story canvases, delivery pages, and receipt
+  breakdowns as proof objects
+
+Avoid:
+
+- dark cyber-security surfaces
+- cream or beige page washes
+- AI gradient/orb/mesh decoration
+- generic automation icons as the main hero proof
+- broad claims about autonomy before the workflow boundary is named
+- public marketing language that uses internal growth-strategy terms for offers
+- visual systems that make the stack feel mysterious or unbounded
+
+Default public-page hierarchy:
+
+1. Name the category: \`AI workflow systems\`.
+2. State the outcome: turn one messy business handoff into a reliable AI-assisted workflow.
+3. Show the Delegation Card or Atlas map before explaining the stack.
+4. Name what can run, what waits, what stops, who owns the decision, and what
+   receipt proves the work.
+5. Use one direct action: map one workflow.
+
+### Delegation Card
+
+Use the Delegation Card as the recurring brand object for home-page artifacts,
+Atlas Notes, social cards, sales slides, and article diagrams.
+
+\`\`\`text
+Workflow: Support recovery
+
+READS
+case · order · account · shipment
+
+RUN
+draft reply · add note · assign owner
+
+WAIT
+credit · refund · customer promise
+
+STOP
+policy conflict · missing data · threshold exceeded
+
+OWNER
+CX lead
+
+RECEIPT
+approval-note.md · blocked-state.json · customer-safe-draft.md
+\`\`\`
+
+This is the Descript-like simplification for CREATE SOMETHING: delegated work
+should feel like reading a clear operating record.
 
 ## The Creation Moat
 
@@ -35324,7 +37706,9 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Integration experience (data mapping, security boundaries)
 - Workflow control design (Skills + MCP with trust boundaries)
 
-This is what \`.agency\` delivers.
+This is the creation expertise \`.agency\` turns into public AI workflow systems:
+named objects, scoped actions, approval states, stop conditions, owners, and
+evidence.
 
 ---
 
@@ -35332,10 +37716,102 @@ This is what \`.agency\` delivers.
 
 | Offer | Description | Typical Output |
 |-------|-------------|----------------|
-| **Workflow Infrastructure** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
+| **Workflow Map / Pilot** | Map one business handoff, then build the first controlled AI-assisted path when the boundary is clear. | Workflow map, pilot implementation, runbook |
 | **Policy OS** | Add policy controls, release gates, approval rules, incident loops, and recurring governed-execution operations. | Governed runtime behavior + release evidence |
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
-| **Workflow Mapping Session** | Paid pre-implementation mapping to scope workflow and trust boundary. | Pilot scope, trust boundary, and 30-day plan |
+| **Workflow Mapping Session** | Paid pre-implementation mapping to scope the workflow and operating boundary. | Pilot scope, operating boundary, and 30-day plan |
+
+---
+
+## Public Atlas Starter Maps
+
+The public Atlas canvas is the give-first surface for prospects. It lets a visitor
+start from a concrete industry workflow, edit the owner/systems/approval boundary,
+and carry the summary into booking without exposing production systems.
+
+The broader visual standard lives in
+\`docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md\`: workflow, governance, and
+agent-behavior visuals should default to Atlas-style canvases before one-off
+graphics.
+
+Current starter maps:
+
+| Starter | Industry | Boundary to preserve |
+|---------|----------|----------------------|
+| RevOps lead handoff | RevOps / B2B SaaS | Stop on consent, duplicate, or territory uncertainty |
+| Prior authorization prep | Healthcare operations | Stop before medical-necessity or final submission decisions |
+| RFI/submittal control | Construction / project controls | Stop before scope, cost, schedule, or contract commitments |
+| Marketplace review queue | Marketplace operations | Stop before ungrounded approval, rejection, or security claims |
+| Insurance claims intake | Insurance operations | Stop before payout, denial, fraud escalation, or sensitive decisioning |
+
+Each starter map must include all public Atlas dimensions: \`Actor\`, \`Human task\`,
+\`AI task\`, \`System operation\`, \`Data artifact\`, \`Constraint\`, and \`Touchpoint\`.
+Each map must also expose at least one \`run\`, one \`wait\`, and one \`stop\` node so
+the prospect sees the action boundary before the sales conversation.
+
+Implementation surface:
+
+- \`@create-something/canon/atlas/headless\` owns the reusable Atlas node, edge,
+  canvas, readiness, graph-artifact, and story-artifact contract.
+- \`@create-something/canon/atlas\` owns the Svelte \`AtlasStoryCanvas\` and
+  \`AtlasFlow\` renderers that adapt the headless contract into read-only story
+  and editable map surfaces.
+- \`createPublicAtlasGraphArtifact(...)\` and
+  \`createPublicAtlasStoryArtifact(...)\` are imported from Canon when \`.agency\`
+  needs renderer-independent graph or story output.
+- \`src/lib/atlas/public.ts\` owns \`.agency\` starter-map content and the
+  intake-specific canvas creation path.
+- \`src/lib/atlas/intake-policy.ts\` owns \`.agency\` public-intake storage keys,
+  rate tiers, and map-size limits.
+- \`src/lib/atlas/surface-policy.ts\` owns \`.agency\` Atlas proof-route and compact
+  privacy-prompt route policy.
+- \`src/lib/components/PublicAtlasStoryCanvas.svelte\` wraps Canon's
+  \`AtlasStoryCanvas\` with \`.agency\` starter-map selection and renders the static
+  story artifact without invoking the mapping agent.
+- \`src/lib/components/PublicAtlasFlow.svelte\` wraps Canon's \`AtlasFlow\` so the
+  editable renderer stays reusable while \`.agency\` owns intake state.
+- \`src/lib/components/PublicAtlasCanvas.svelte\` renders the selector and persists
+  the chosen map into booking context; it is the \`.agency\` intake surface.
+- \`test/public-atlas-starter-maps.test.ts\` verifies coverage and policy-boundary
+  shape.
+- \`test/public-atlas-route.test.ts\` verifies that \`/\`, \`/atlas\`, and
+  \`/services\` present the story canvas before the editable public canvas where
+  applicable, and that \`/methodology\`, \`/stack\`, and \`/products\` can use the
+  same story surface without mounting the editable canvas.
+
+Story-canvas usage contract:
+
+- Pass an explicit \`storyId\` on route-level uses so SVG marker IDs and heading
+  references remain stable if multiple story canvases appear on the same page.
+- Pass an explicit \`flowId\` on route-level editable-canvas uses if more than one
+  editable Atlas flow can mount on a page.
+- Keep the story canvas before the editable canvas when both are present. The
+  story teaches the workflow language; the editable canvas collects booking
+  context.
+- Keep motion semantics in markup, not visible copy. Chapter motion cues belong
+  in \`data-motion-cue\` attributes so animations can target them without exposing
+  implementation labels to readers.
+
+Renderer rule:
+
+- The interactive Svelte Atlas flow is the primary renderer for workflow
+  education, intake, editing, accessibility, and agent-operable maps.
+- Static story canvases are the fallback for marketing, articles, social cards,
+  and non-JS presentation.
+- Sigma/Cosmograph are reserved for large read-only network exploration. Do not
+  move the canonical workflow contract into those renderers; adapt them from the
+  Atlas graph artifact when graph scale requires WebGL.
+- Story canvases should animate only chapter focus, handoff traces, stop
+  boundaries, and proof reveals. The \`accessibilitySummary\` must remain complete
+  when motion is disabled.
+- \`/atlas\` presents the read-only story canvas before the editable public Atlas
+  canvas so visitors can understand the workflow language before using the agent.
+- \`/methodology\` uses a read-only story canvas to explain the method without
+  collecting booking context.
+- \`/stack\` uses a read-only story canvas to explain the ownership and vendor
+  boundary without collecting booking context.
+- \`/products\` uses a read-only story canvas to explain how proof becomes a
+  governed workflow boundary without collecting booking context.
 
 ---
 
@@ -35353,17 +37829,19 @@ This is what \`.agency\` delivers.
 └─────────────────────────────────────────────────────────────┘
 \`\`\`
 
-**Entry point**: a scoped MCP wedge that connects one important workflow with trusted action paths  
-**Expansion**: Workflow Infrastructure first, Policy OS for governed execution, then Enterprise Extension based on risk and workflow complexity
+**Entry point**: Workflow Map, a scoped diagnostic for one workflow, its owners, and its first controlled point
+**Default build**: Workflow Pilot, one workflow rebuilt with clear rules, handoffs, runbooks, and release evidence
+**Expansion**: Ongoing Workflow Control for governed execution, then Enterprise Extension based on risk and workflow complexity
 
 ---
 
 ## Positioning
 
 **Before**: "We build websites/apps with modern templates"
-**After**: "We build the connectivity layer between your tools and AI"
+**After**: "We make delegated work trustworthy"
 
-Templates are table stakes. The moat is creation expertise applied to specific domains.
+Templates are table stakes. The moat is workflow-boundary design, creation
+expertise, proof patterns, and policy artifacts applied to specific domains.
 
 ---
 
@@ -35606,8 +38084,8 @@ This guide has been consolidated to eliminate duplication.
     uri: "docs://agency/static/akkio-interview-prep",
     content: `# Akkio Interview Prep: Algorithmic Problem Solving
 
-**Target Role:** Full Stack Web Engineer  
-**Company Focus:** AI workflows, marketing analytics, data visualization  
+**Target Role:** Full Stack Web Engineer
+**Company Focus:** AI workflows, marketing analytics, data visualization
 **Timeline:** 1-2 weeks recommended
 
 ---
@@ -35695,12 +38173,12 @@ String manipulation is everywhere in web dev.
 let left = 0;
 for (let right = 0; right < s.length; right++) {
   // Expand window: add s[right] to window state
-  
+
   while (/* window invalid */) {
     // Shrink window: remove s[left] from window state
     left++;
   }
-  
+
   // Update result if window is valid
 }
 \`\`\`
@@ -35738,11 +38216,11 @@ Nested data structures are common in UI (DOM, component trees, JSON).
 // Tree DFS template
 function dfs(node) {
   if (!node) return /* base case */;
-  
+
   // Process node.val
   const left = dfs(node.left);
   const right = dfs(node.right);
-  
+
   return /* combine results */;
 }
 
@@ -35751,11 +38229,11 @@ function bfs(root) {
   if (!root) return [];
   const queue = [root];
   const result = [];
-  
+
   while (queue.length) {
     const levelSize = queue.length;
     const level = [];
-    
+
     for (let i = 0; i < levelSize; i++) {
       const node = queue.shift();
       level.push(node.val);
@@ -35785,15 +38263,15 @@ Fundamentals that come up in optimization questions.
 // Binary search template
 function binarySearch(arr, target) {
   let left = 0, right = arr.length - 1;
-  
+
   while (left <= right) {
     const mid = Math.floor((left + right) / 2);
-    
+
     if (arr[mid] === target) return mid;
     if (arr[mid] < target) left = mid + 1;
     else right = mid - 1;
   }
-  
+
   return -1; // or left for insertion point
 }
 \`\`\`
@@ -35815,15 +38293,15 @@ You probably won't get hard DP, but know the basics.
 function dp(input) {
   const n = input.length;
   const dp = new Array(n + 1).fill(0);
-  
+
   // Base case
   dp[0] = /* base value */;
-  
+
   for (let i = 1; i <= n; i++) {
     // Recurrence relation
     dp[i] = /* some function of dp[i-1], dp[i-2], etc. */;
   }
-  
+
   return dp[n];
 }
 \`\`\`
@@ -36057,8 +38535,8 @@ Sources used:
     uri: "docs://agency/static/job-applications/akkio/interview-prep",
     content: `# Akkio Interview Prep: Algorithmic Problem Solving
 
-**Target Role:** Full Stack Web Engineer  
-**Company Focus:** AI workflows, marketing analytics, data visualization  
+**Target Role:** Full Stack Web Engineer
+**Company Focus:** AI workflows, marketing analytics, data visualization
 **Timeline:** 1-2 weeks recommended
 
 ---
@@ -36146,12 +38624,12 @@ String manipulation is everywhere in web dev.
 let left = 0;
 for (let right = 0; right < s.length; right++) {
   // Expand window: add s[right] to window state
-  
+
   while (/* window invalid */) {
     // Shrink window: remove s[left] from window state
     left++;
   }
-  
+
   // Update result if window is valid
 }
 \`\`\`
@@ -36189,11 +38667,11 @@ Nested data structures are common in UI (DOM, component trees, JSON).
 // Tree DFS template
 function dfs(node) {
   if (!node) return /* base case */;
-  
+
   // Process node.val
   const left = dfs(node.left);
   const right = dfs(node.right);
-  
+
   return /* combine results */;
 }
 
@@ -36202,11 +38680,11 @@ function bfs(root) {
   if (!root) return [];
   const queue = [root];
   const result = [];
-  
+
   while (queue.length) {
     const levelSize = queue.length;
     const level = [];
-    
+
     for (let i = 0; i < levelSize; i++) {
       const node = queue.shift();
       level.push(node.val);
@@ -36236,15 +38714,15 @@ Fundamentals that come up in optimization questions.
 // Binary search template
 function binarySearch(arr, target) {
   let left = 0, right = arr.length - 1;
-  
+
   while (left <= right) {
     const mid = Math.floor((left + right) / 2);
-    
+
     if (arr[mid] === target) return mid;
     if (arr[mid] < target) left = mid + 1;
     else right = mid - 1;
   }
-  
+
   return -1; // or left for insertion point
 }
 \`\`\`
@@ -36266,15 +38744,15 @@ You probably won't get hard DP, but know the basics.
 function dp(input) {
   const n = input.length;
   const dp = new Array(n + 1).fill(0);
-  
+
   // Base case
   dp[0] = /* base value */;
-  
+
   for (let i = 1; i <= n; i++) {
     // Recurrence relation
     dp[i] = /* some function of dp[i-1], dp[i-2], etc. */;
   }
-  
+
   return dp[n];
 }
 \`\`\`
@@ -36495,8 +38973,8 @@ Centralized job application assets organized by company.
 |---|---|
 | _shared | resume.pdf |
 | akkio | cover-letter.html, cover-letter.pdf, interview-prep.md, resume.html |
-| braintrust | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | centaur | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
+| langfuse | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | hightouch | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | hnb-api-governance-lead | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | includedhealth | application.pdf, combined.html |

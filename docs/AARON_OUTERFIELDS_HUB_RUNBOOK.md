@@ -38,7 +38,7 @@ pnpm exec wrangler deploy \
   --var HUB_DISCOVERY_MODE:compact \
   --var HUB_DISCOVERY_SHARED_PACK:outerfields-shared-auth-clickup \
   --var HUB_DISCOVERY_DEFAULT_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-clickup,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
-  --var BRAINTRUST_ENABLED:true \
+  --var LANGFUSE_ENABLED:true \
   --keep-vars
 ```
 
@@ -64,12 +64,12 @@ export HUB_API_TOKEN_VALUE="$(openssl rand -hex 32)"
 printf "%s" "$HUB_API_TOKEN_VALUE" | pnpm exec wrangler secret put HUB_API_TOKEN --name cs-hub-aaron-outerfields
 ```
 
-Set Braintrust secrets (`BRAINTRUST_API_KEY` is required for trace emission when `BRAINTRUST_ENABLED:true`; `BRAINTRUST_PROJECT_ID` is optional to pin a specific project):
+Set Langfuse secrets (`LANGFUSE_SECRET_KEY` is required for trace emission when `LANGFUSE_ENABLED:true`; `LANGFUSE_PUBLIC_KEY` is optional to pin a specific project):
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/cs-mcp-hub-remote"
-pnpm exec wrangler secret put BRAINTRUST_API_KEY --name cs-hub-aaron-outerfields
-pnpm exec wrangler secret put BRAINTRUST_PROJECT_ID --name cs-hub-aaron-outerfields
+pnpm exec wrangler secret put LANGFUSE_SECRET_KEY --name cs-hub-aaron-outerfields
+pnpm exec wrangler secret put LANGFUSE_PUBLIC_KEY --name cs-hub-aaron-outerfields
 ```
 
 ## 4) Normalize Runtime State (Required)

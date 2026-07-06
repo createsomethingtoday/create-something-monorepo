@@ -59,7 +59,7 @@
       "composio-toolkit-composio_search"
     ],
     "telemetry_required": true,
-    "braintrust_required": true,
+    "langfuse_required": true,
     "account_attribution_required": true,
     "required_trace_fields": [
       "account_id",
@@ -69,7 +69,7 @@
       "route_classification",
       "policy_or_review_outcome"
     ],
-    "braintrust_auto_instrumentation_requires_house_governance_metadata": true,
+    "langfuse_auto_instrumentation_requires_house_governance_metadata": true,
     "trace_tags_should_be_business_legible": true
   }
 }

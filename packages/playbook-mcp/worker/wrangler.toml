@@ -33,15 +33,14 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 # HALFDOZEN_GMAIL_MCP_URL = "https://gmail.mcp.workway.co/mcp"
 # HALFDOZEN_NOTION_MCP_URL = "https://createsomething-notion.mcp.workway.co/mcp"
 
-# Braintrust tracing defaults (override per environment in the Cloudflare dashboard).
-# Tracing is enabled automatically when `BRAINTRUST_API_KEY` is present; `BRAINTRUST_ENABLED`
+# Langfuse tracing defaults (override per environment in the Cloudflare dashboard).
+# Tracing is enabled automatically when `LANGFUSE_SECRET_KEY` is present; `LANGFUSE_ENABLED`
 # provides an explicit on/off switch.
-BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
-BRAINTRUST_ENABLED = "true"
+LANGFUSE_PROJECT_NAME = "CREATE SOMETHING"
+LANGFUSE_ENABLED = "true"
 INK_BRIDGE_ORIGIN = "https://ink.createsomething.agency"
 HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED = "true"
 HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS = "4,13,18,23"
-HALFDOZEN_FLEET_WATCHDOG_TIMEOUT_MS = "60000"
 HALFDOZEN_AGENT_NOTIFY_EMAIL_FROM = "CREATE SOMETHING Ops <notifications@createsomething.io>"
 HALFDOZEN_AGENT_NOTIFY_EMAIL_TO = "micah@createsomething.io"
 HALFDOZEN_AGENT_NOTIFY_EMAIL_MODE = "alerts"
@@ -56,11 +55,10 @@ MCP_REGISTRY_SWEEP_CRON_UTC_HOURS = "4,13,18,23"
 # wrangler secret put RESEND_API_KEY
 # wrangler secret put INK_BRIDGE_TOKEN
 
-# Optional Braintrust tracing:
-# wrangler secret put BRAINTRUST_API_KEY
-# (Optional) wrangler secret put BRAINTRUST_ORG_NAME
-# (Optional) wrangler secret put BRAINTRUST_PROJECT_ID
-# (Optional) set [vars] BRAINTRUST_PROJECT_NAME = "Playbook MCP"
+# Optional Langfuse tracing:
+# wrangler secret put LANGFUSE_SECRET_KEY
+# (Optional) wrangler secret put LANGFUSE_PUBLIC_KEY
+# (Optional) set [vars] LANGFUSE_PROJECT_NAME = "Playbook MCP"
 
 # Optional Ink bridge target:
 # wrangler secret put INK_SOURCE_TOKEN

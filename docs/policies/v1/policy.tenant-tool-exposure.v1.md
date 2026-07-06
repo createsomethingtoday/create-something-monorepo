@@ -33,9 +33,9 @@ Define tenant-scoped tool exposure, transparent named-lane allowlists, and provi
      - `composio-toolkit-composio_search`
 9. `composio-toolkit-composio_search` is a governed `NO_AUTH` search surface and MAY be exposed without a per-user auth-config prerequisite, but it must still remain explicitly allowlisted per tenant.
 10. Tenant exposure policy MUST block the other client’s Notion server, Composio Notion, Slack, Dropbox, and any other unapproved bundle or server for these named-lane pilots.
-11. Telemetry and Braintrust tracing are mandatory baseline observability controls for named lanes, but they remain operator-facing controls and MUST NOT appear in the client-visible tenant allowlist.
+11. Telemetry and Langfuse tracing are mandatory baseline observability controls for named lanes, but they remain operator-facing controls and MUST NOT appear in the client-visible tenant allowlist.
 12. Named-lane routed-call traces MUST include explicit account attribution, at minimum `account_id`, `tenant_id`, and lane slug or bound host, so operator observability can attribute downstream access to the correct client lane.
-13. Braintrust auto-instrumentation MAY amplify operator visibility for LLM or tool spans, but it MUST NOT be treated as sufficient policy evidence unless the trace also includes house governance metadata for the routed call.
+13. Langfuse auto-instrumentation MAY amplify operator visibility for LLM or tool spans, but it MUST NOT be treated as sufficient policy evidence unless the trace also includes house governance metadata for the routed call.
 14. For named-lane governed execution, the required governance trace fields SHOULD include `correlation_id`, route classification, and policy or review outcome in addition to `account_id`, `tenant_id`, and lane slug or bound host.
 15. Trace tags and summary fields SHOULD remain DRY and business-legible. Low-signal transport details SHOULD remain in metadata or raw logs instead of high-cardinality tags.
 16. Shared hubs and named lanes SHOULD express the default visible service set as a named discovery pack in addition to registry/routing policy. Ad hoc `activeServers` lists are an exception or debugging overlay, not the primary tenant-governance artifact.

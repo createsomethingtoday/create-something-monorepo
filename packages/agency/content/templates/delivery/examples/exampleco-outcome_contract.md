@@ -108,7 +108,7 @@ This pilot produces:
 - golden-task checks
 - runbook
 
-If observability is included, it may also include Braintrust tracing and eval coverage.
+If observability is included, it may also include Langfuse tracing and eval coverage.
 
 ---
 

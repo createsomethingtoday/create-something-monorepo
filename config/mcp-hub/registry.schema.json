@@ -4,7 +4,11 @@
   "title": "MCP Hub Registry",
   "description": "Schema for config/mcp-hub/registry.json",
   "type": "object",
-  "required": ["version", "servers", "bundles"],
+  "required": [
+    "version",
+    "servers",
+    "bundles"
+  ],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -69,7 +73,10 @@
     },
     "catalog": {
       "type": "object",
-      "required": ["include", "category"],
+      "required": [
+        "include",
+        "category"
+      ],
       "additionalProperties": false,
       "properties": {
         "include": {
@@ -83,7 +90,10 @@
         },
         "category": {
           "type": "string",
-          "enum": ["create-something", "workway"]
+          "enum": [
+            "create-something",
+            "workway"
+          ]
         },
         "description": {
           "type": "string"
@@ -92,7 +102,10 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["http", "sse"]
+            "enum": [
+              "http",
+              "sse"
+            ]
           }
         },
         "requiresAuth": {
@@ -100,7 +113,10 @@
         },
         "authType": {
           "type": "string",
-          "enum": ["bearer", "oauth"]
+          "enum": [
+            "bearer",
+            "oauth"
+          ]
         },
         "setupNotes": {
           "type": "string"
@@ -109,7 +125,13 @@
     },
     "publicTrustCard": {
       "type": "object",
-      "required": ["summary", "limitations", "policy_pack", "eval_suite", "evidence_ref"],
+      "required": [
+        "summary",
+        "limitations",
+        "policy_pack",
+        "eval_suite",
+        "evidence_ref"
+      ],
       "additionalProperties": false,
       "properties": {
         "summary": {
@@ -148,18 +170,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "braintrust": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "project": {
-              "type": "string"
-            },
-            "experiment": {
-              "type": "string"
-            }
-          }
-        },
         "langfuse": {
           "type": "object",
           "additionalProperties": false,
@@ -197,16 +207,31 @@
     },
     "publicAccess": {
       "type": "object",
-      "required": ["status", "access_model", "trust_card"],
+      "required": [
+        "status",
+        "access_model",
+        "trust_card"
+      ],
       "additionalProperties": false,
       "properties": {
         "status": {
           "type": "string",
-          "enum": ["public", "sandbox", "byo_auth", "waitlist", "private"]
+          "enum": [
+            "public",
+            "sandbox",
+            "byo_auth",
+            "waitlist",
+            "private"
+          ]
         },
         "access_model": {
           "type": "string",
-          "enum": ["read_only", "simulated_write", "approval_required", "live_write"]
+          "enum": [
+            "read_only",
+            "simulated_write",
+            "approval_required",
+            "live_write"
+          ]
         },
         "trust_card": {
           "$ref": "#/$defs/publicTrustCard"
@@ -233,14 +258,23 @@
         },
         "lifecycle": {
           "type": "string",
-          "enum": ["active", "dormant", "local"]
+          "enum": [
+            "active",
+            "dormant",
+            "local"
+          ]
         },
         "package_path": {
           "type": "string"
         },
         "catalog_exposure_mode": {
           "type": "string",
-          "enum": ["direct", "brokered", "exception_direct", "dormant"]
+          "enum": [
+            "direct",
+            "brokered",
+            "exception_direct",
+            "dormant"
+          ]
         },
         "estimated_tool_count": {
           "type": "integer",
@@ -265,7 +299,10 @@
     },
     "httpServer": {
       "type": "object",
-      "required": ["transport", "url"],
+      "required": [
+        "transport",
+        "url"
+      ],
       "additionalProperties": false,
       "properties": {
         "transport": {
@@ -315,14 +352,23 @@
         },
         "lifecycle": {
           "type": "string",
-          "enum": ["active", "dormant", "local"]
+          "enum": [
+            "active",
+            "dormant",
+            "local"
+          ]
         },
         "package_path": {
           "type": "string"
         },
         "catalog_exposure_mode": {
           "type": "string",
-          "enum": ["direct", "brokered", "exception_direct", "dormant"]
+          "enum": [
+            "direct",
+            "brokered",
+            "exception_direct",
+            "dormant"
+          ]
         },
         "estimated_tool_count": {
           "type": "integer",
@@ -347,7 +393,10 @@
     },
     "stdioServer": {
       "type": "object",
-      "required": ["transport", "command"],
+      "required": [
+        "transport",
+        "command"
+      ],
       "additionalProperties": false,
       "properties": {
         "transport": {
@@ -388,14 +437,23 @@
         },
         "lifecycle": {
           "type": "string",
-          "enum": ["active", "dormant", "local"]
+          "enum": [
+            "active",
+            "dormant",
+            "local"
+          ]
         },
         "package_path": {
           "type": "string"
         },
         "catalog_exposure_mode": {
           "type": "string",
-          "enum": ["direct", "brokered", "exception_direct", "dormant"]
+          "enum": [
+            "direct",
+            "brokered",
+            "exception_direct",
+            "dormant"
+          ]
         },
         "estimated_tool_count": {
           "type": "integer",

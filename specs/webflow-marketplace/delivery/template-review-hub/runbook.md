@@ -150,7 +150,7 @@ Required evidence sources:
 - `cs-telemetry`
 - Airtable update history
 - reviewer notes from pilot
-- Braintrust traces and evals if enabled
+- Langfuse traces and evals if enabled
 
 Required review cadence:
 

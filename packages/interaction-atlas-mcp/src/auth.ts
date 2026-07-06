@@ -38,10 +38,12 @@ export type InteractionAtlasEnv = {
   ABUSE_BLOCK_THRESHOLD?: string;
   ABUSE_DISTINCT_TOOLS_THRESHOLD?: string;
   ABUSE_RESPONSE_MODE?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
-  BRAINTRUST_PROJECT_ID?: string;
-  BRAINTRUST_ENABLED?: string;
-  BRAINTRUST_API_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
+  LANGFUSE_ENABLED?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_HOST?: string;
+  LANGFUSE_BASE_URL?: string;
   DB?: D1Database;
 };
 
@@ -182,11 +184,16 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
       env?.ABUSE_RESPONSE_MODE ?? process.env.ABUSE_RESPONSE_MODE,
     );
     const correlationId = extractCorrelationId(request);
-    const braintrustProjectName =
-      env?.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT ?? 'CREATE SOMETHING';
-    const braintrustProjectId = env?.BRAINTRUST_PROJECT_ID ?? process.env.BRAINTRUST_PROJECT_ID;
-    const braintrustEnabled = env?.BRAINTRUST_ENABLED ?? process.env.BRAINTRUST_ENABLED;
-    const braintrustApiKey = env?.BRAINTRUST_API_KEY ?? process.env.BRAINTRUST_API_KEY;
+    const langfuseProjectName =
+      env?.LANGFUSE_PROJECT_NAME ?? process.env.LANGFUSE_PROJECT_NAME ?? process.env.LANGFUSE_PROJECT ?? 'CREATE SOMETHING';
+    const langfuseEnabled = env?.LANGFUSE_ENABLED ?? process.env.LANGFUSE_ENABLED;
+    const langfusePublicKey = env?.LANGFUSE_PUBLIC_KEY ?? process.env.LANGFUSE_PUBLIC_KEY;
+    const langfuseSecretKey = env?.LANGFUSE_SECRET_KEY ?? process.env.LANGFUSE_SECRET_KEY;
+    const langfuseHost =
+      env?.LANGFUSE_BASE_URL ??
+      env?.LANGFUSE_HOST ??
+      process.env.LANGFUSE_BASE_URL ??
+      process.env.LANGFUSE_HOST;
 
     // Public, read-only access (used for the workflow viewer).
     if (!apiKey) {
@@ -214,10 +221,11 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
           ABUSE_BLOCK_THRESHOLD: abuseBlockThreshold,
           ABUSE_DISTINCT_TOOLS_THRESHOLD: abuseDistinctToolsThreshold,
           ABUSE_RESPONSE_MODE: abuseResponseMode,
-          BRAINTRUST_PROJECT_NAME: braintrustProjectName,
-          BRAINTRUST_PROJECT_ID: braintrustProjectId,
-          BRAINTRUST_ENABLED: braintrustEnabled,
-          __braintrustApiKey: braintrustApiKey,
+          LANGFUSE_PROJECT_NAME: langfuseProjectName,
+          LANGFUSE_ENABLED: langfuseEnabled,
+          __langfusePublicKey: langfusePublicKey,
+          __langfuseSecretKey: langfuseSecretKey,
+          __langfuseHost: langfuseHost,
           db: env?.DB,
         },
         policy: defaultPolicy({
@@ -269,10 +277,11 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
         ABUSE_BLOCK_THRESHOLD: abuseBlockThreshold,
         ABUSE_DISTINCT_TOOLS_THRESHOLD: abuseDistinctToolsThreshold,
         ABUSE_RESPONSE_MODE: abuseResponseMode,
-        BRAINTRUST_PROJECT_NAME: braintrustProjectName,
-        BRAINTRUST_PROJECT_ID: braintrustProjectId,
-        BRAINTRUST_ENABLED: braintrustEnabled,
-        __braintrustApiKey: braintrustApiKey,
+        LANGFUSE_PROJECT_NAME: langfuseProjectName,
+        LANGFUSE_ENABLED: langfuseEnabled,
+        __langfusePublicKey: langfusePublicKey,
+        __langfuseSecretKey: langfuseSecretKey,
+        __langfuseHost: langfuseHost,
         db: env?.DB,
       },
       policy: defaultPolicy({

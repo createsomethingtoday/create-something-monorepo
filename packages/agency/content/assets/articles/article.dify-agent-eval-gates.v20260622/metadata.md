@@ -11,4 +11,4 @@ Updated: 2026-06-22
 
 ## Usage
 
-Canonical Dify content-cluster page for operators and implementation buyers who need Dify-native Langfuse traces plus Braintrust MCP gates before publishing a Dify app with MCP tools.
+Canonical Dify content-cluster page for operators and implementation buyers who need Dify-native Langfuse traces plus Langfuse MCP gates before publishing a Dify app with MCP tools.

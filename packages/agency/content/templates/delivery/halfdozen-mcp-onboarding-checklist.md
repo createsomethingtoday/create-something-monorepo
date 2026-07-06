@@ -32,7 +32,7 @@
 - walk one approval-path example
 - walk one failure/fallback example
 - show where logs or traces live
-- explain Braintrust correctly as observability/evals only
+- explain Langfuse correctly as observability/evals only
 
 ---
 

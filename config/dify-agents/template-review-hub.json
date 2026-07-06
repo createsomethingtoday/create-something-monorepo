@@ -81,7 +81,7 @@
         "answer_summary": "Executed the read-only sandbox bundle prep tool through Dify/Hub and returned SANDBOX_BUNDLE_OK; E2B execution, file tools, refresh, state, and write tools were forbidden."
       }
     ],
-    "notes": "DIFY_TEMPLATE_REVIEW_HUB_API_KEY is stored at prod:/dify/template-review-hub and was updated from the newly imported Dify app key on 2026-06-03. The registered full Dify smoke passed all six cases on 2026-06-03, one read-only sandbox bundle execution smoke returned SANDBOX_BUNDLE_OK, and the published Braintrust eval template_review_hub-85e41ee9 passed 100%."
+    "notes": "DIFY_TEMPLATE_REVIEW_HUB_API_KEY is stored at prod:/dify/template-review-hub and was updated from the newly imported Dify app key on 2026-06-03. The registered full Dify smoke passed all six cases on 2026-06-03, one read-only sandbox bundle execution smoke returned SANDBOX_BUNDLE_OK, and the published Langfuse eval template_review_hub-85e41ee9 passed 100%."
   },
   "mcp_server": {
     "display_name": "TEMPLATE REVIEW",
@@ -102,20 +102,27 @@
       "name": "hub_describe_proxy_tool",
       "enabled": true,
       "write_capability": false,
-      "dsl_parameters": ["proxyToolName"]
+      "dsl_parameters": [
+        "proxyToolName"
+      ]
     },
     {
       "name": "hub_execute_proxy_tool",
       "enabled": true,
       "write_capability": true,
-      "dsl_parameters": ["args", "proxyToolName"],
+      "dsl_parameters": [
+        "args",
+        "proxyToolName"
+      ],
       "requires_user_confirmation": true
     },
     {
       "name": "hub_get_proxy_tool",
       "enabled": true,
       "write_capability": false,
-      "dsl_parameters": ["proxyToolName"]
+      "dsl_parameters": [
+        "proxyToolName"
+      ]
     },
     {
       "name": "hub_list_discovery_packs",
@@ -158,7 +165,13 @@
       "name": "hub_route_intent",
       "enabled": true,
       "write_capability": false,
-      "dsl_parameters": ["allowDiscoveryFallback", "intent", "limit", "query", "serverName"]
+      "dsl_parameters": [
+        "allowDiscoveryFallback",
+        "intent",
+        "limit",
+        "query",
+        "serverName"
+      ]
     },
     {
       "name": "hub_run_intent",
@@ -178,20 +191,34 @@
       "name": "hub_run_proxy_tool",
       "enabled": true,
       "write_capability": true,
-      "dsl_parameters": ["args", "proxyToolName"],
+      "dsl_parameters": [
+        "args",
+        "proxyToolName"
+      ],
       "requires_user_confirmation": true
     },
     {
       "name": "hub_search_proxy_tools",
       "enabled": true,
       "write_capability": false,
-      "dsl_parameters": ["cursor", "limit", "query", "serverName"]
+      "dsl_parameters": [
+        "cursor",
+        "limit",
+        "query",
+        "serverName"
+      ]
     },
     {
       "name": "hub_set_discovery",
       "enabled": true,
       "write_capability": true,
-      "dsl_parameters": ["activeServers", "maxProxyTools", "mode", "pack", "reset"],
+      "dsl_parameters": [
+        "activeServers",
+        "maxProxyTools",
+        "mode",
+        "pack",
+        "reset"
+      ],
       "requires_user_confirmation": true
     },
     {
@@ -204,7 +231,10 @@
       "name": "hub_trace_lookup",
       "enabled": true,
       "write_capability": false,
-      "dsl_parameters": ["correlationId", "limit"]
+      "dsl_parameters": [
+        "correlationId",
+        "limit"
+      ]
     },
     {
       "name": "hub_update_state",
@@ -236,7 +266,12 @@
       "label": "Run Code",
       "enabled": true,
       "write_capability": true,
-      "dsl_parameters": ["code", "language", "sandbox_id", "timeout"],
+      "dsl_parameters": [
+        "code",
+        "language",
+        "sandbox_id",
+        "timeout"
+      ],
       "requires_user_confirmation": true,
       "notes": "First-class comprehensive review evidence pass for bounded published-site verification."
     },
@@ -248,7 +283,11 @@
       "label": "Run Command",
       "enabled": true,
       "write_capability": true,
-      "dsl_parameters": ["command", "sandbox_id", "timeout"],
+      "dsl_parameters": [
+        "command",
+        "sandbox_id",
+        "timeout"
+      ],
       "requires_user_confirmation": true,
       "notes": "First-class comprehensive review evidence pass for bounded published-site verification."
     },
@@ -260,7 +299,11 @@
       "label": "Upload File",
       "enabled": true,
       "write_capability": true,
-      "dsl_parameters": ["file", "file_path", "sandbox_id"],
+      "dsl_parameters": [
+        "file",
+        "file_path",
+        "sandbox_id"
+      ],
       "requires_user_confirmation": true
     },
     {
@@ -271,7 +314,10 @@
       "label": "Download File",
       "enabled": true,
       "write_capability": true,
-      "dsl_parameters": ["file_path", "sandbox_id"],
+      "dsl_parameters": [
+        "file_path",
+        "sandbox_id"
+      ],
       "requires_user_confirmation": true
     }
   ]

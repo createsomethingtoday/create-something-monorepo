@@ -182,12 +182,12 @@ test('prioritizes synthesized operator priority over poor health', () => {
   assert.equal(firmwareBrief.detail_label, 'CRE-611');
 });
 
-test('maps Braintrust operator priority to quality drift firmware detail', () => {
+test('maps Langfuse operator priority to quality drift firmware detail', () => {
   const sourceLinks = [
     {
-      kind: 'braintrust',
+      kind: 'langfuse',
       label: 'template-review-hub',
-      url: 'https://www.braintrust.dev/app/exp/abc'
+      url: 'https://www.langfuse.dev/app/exp/abc'
     }
   ];
   const brief = buildOperatorBrief({
@@ -202,7 +202,7 @@ test('maps Braintrust operator priority to quality drift firmware detail', () =>
         action: 'Review failing eval examples',
         payload: {
           kind: 'operator_priority',
-          signal: 'braintrust',
+          signal: 'langfuse',
           source_links: sourceLinks
         }
       })
@@ -213,12 +213,12 @@ test('maps Braintrust operator priority to quality drift firmware detail', () =>
 
   assert.equal(brief.headline, 'QUALITY DRIFT');
   const firmwareBrief = toFirmwareBrief(brief);
-  assert.equal(firmwareBrief.signal, 'braintrust');
+  assert.equal(firmwareBrief.signal, 'langfuse');
   assert.equal(firmwareBrief.detail_label, 'template-review-hub');
   assert.deepEqual(firmwareBrief.source_links, sourceLinks);
 });
 
-test('keeps blocked alerts ahead of critical Braintrust priority alerts', () => {
+test('keeps blocked alerts ahead of critical Langfuse priority alerts', () => {
   const brief = buildOperatorBrief({
     alerts: [
       alert({
@@ -228,12 +228,12 @@ test('keeps blocked alerts ahead of critical Braintrust priority alerts', () => 
         severity: 99,
         urgent: true,
         subject: 'operator-quality',
-        reason: 'Critical Braintrust regression',
+        reason: 'Critical Langfuse regression',
         action: 'Review eval traces',
         payload: {
           kind: 'operator_priority',
-          signal: 'braintrust',
-          source_links: [{ kind: 'braintrust', label: 'operator-quality' }]
+          signal: 'langfuse',
+          source_links: [{ kind: 'langfuse', label: 'operator-quality' }]
         }
       }),
       alert({
@@ -255,7 +255,7 @@ test('keeps blocked alerts ahead of critical Braintrust priority alerts', () => 
   assert.equal(brief.line1, 'Client launch blocked');
 });
 
-test('lets critical Braintrust priority outrank health attention alerts', () => {
+test('lets critical Langfuse priority outrank health attention alerts', () => {
   const brief = buildOperatorBrief({
     alerts: [
       alert({
@@ -275,12 +275,12 @@ test('lets critical Braintrust priority outrank health attention alerts', () => 
         severity: 96,
         urgent: true,
         subject: 'operator-quality',
-        reason: 'Critical Braintrust regression',
+        reason: 'Critical Langfuse regression',
         action: 'Review eval traces',
         payload: {
           kind: 'operator_priority',
-          signal: 'braintrust',
-          source_links: [{ kind: 'braintrust', label: 'operator-quality' }]
+          signal: 'langfuse',
+          source_links: [{ kind: 'langfuse', label: 'operator-quality' }]
         }
       })
     ],

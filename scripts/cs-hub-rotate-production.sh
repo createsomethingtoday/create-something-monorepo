@@ -477,8 +477,8 @@ fi
 
 if [[ "$DRY_RUN" == "true" ]]; then
   export HUB_SESSION_RESOLVE_TOKEN="${HUB_SESSION_RESOLVE_TOKEN:-dry_run_placeholder}"
-  export BRAINTRUST_API_KEY="${BRAINTRUST_API_KEY:-dry_run_placeholder}"
-  export BRAINTRUST_PROJECT_ID="${BRAINTRUST_PROJECT_ID:-dry_run_placeholder}"
+  export LANGFUSE_SECRET_KEY="${LANGFUSE_SECRET_KEY:-dry_run_placeholder}"
+  export LANGFUSE_PUBLIC_KEY="${LANGFUSE_PUBLIC_KEY:-dry_run_placeholder}"
 fi
 
 echo "syncing vault values to Cloudflare Worker secrets..."

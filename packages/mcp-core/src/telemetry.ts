@@ -26,7 +26,7 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { initLogger, type Logger, type Span } from 'braintrust';
+import { Langfuse } from 'langfuse';
 import type { D1Database } from './stores/d1.js';
 
 // =============================================================================
@@ -86,41 +86,41 @@ export interface ActivityResult {
   }>;
 }
 
-export interface BraintrustTelemetryOptions {
-  apiKey?: string;
+export interface LangfuseTelemetryOptions {
+  publicKey?: string;
+  secretKey?: string;
+  host?: string;
   projectName?: string;
-  projectId?: string;
+  environment?: string;
   enabled?: boolean;
 }
 
 // =============================================================================
-// Braintrust (optional)
+// Langfuse (optional)
 // =============================================================================
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let braintrustLogger: Logger<any> | null = null;
+let langfuseClient: Langfuse | null = null;
 
-function initBraintrustTelemetry(options: BraintrustTelemetryOptions, serverName: string): boolean {
-  if (!options.apiKey || options.enabled === false) return false;
-  if (braintrustLogger) return true;
+function initLangfuseTelemetry(options: LangfuseTelemetryOptions, serverName: string): boolean {
+  if (options.enabled === false) return false;
+  if (langfuseClient) return true;
 
-  const projectId = options.projectId?.trim();
-  const loggerConfig: Parameters<typeof initLogger>[0] = {
-    apiKey: options.apiKey,
-    projectName: options.projectName || serverName,
-    asyncFlush: true,
-    setCurrent: true,
-  };
-  if (projectId) {
-    (loggerConfig as Record<string, unknown>).projectId = projectId;
-  }
+  const publicKey = options.publicKey?.trim();
+  const secretKey = options.secretKey?.trim();
+  if (!publicKey || !secretKey) return false;
 
-  braintrustLogger = initLogger(loggerConfig);
+  langfuseClient = new Langfuse({
+    publicKey,
+    secretKey,
+    baseUrl: options.host || 'https://us.cloud.langfuse.com',
+    flushAt: 1,
+    flushInterval: 250,
+  });
 
   return true;
 }
 
-async function emitBraintrustInvocation(args: {
+async function emitLangfuseInvocation(args: {
   serverName: string;
   toolName: string;
   accountId: string;
@@ -129,30 +129,43 @@ async function emitBraintrustInvocation(args: {
   durationMs: number;
   success: boolean;
   error?: string;
+  projectName?: string;
+  environment?: string;
 }): Promise<void> {
-  if (!braintrustLogger) return;
+  if (!langfuseClient) return;
 
-  await braintrustLogger.traced(
-    (span: Span) => {
-      span.log({
-        input: args.input,
-        output: args.output,
-        error: args.error,
-        tags: ['mcp', args.serverName, args.toolName, args.success ? 'success' : 'error'],
-        metadata: {
-          server: args.serverName,
-          tool: args.toolName,
-          accountId: args.accountId,
-          durationMs: args.durationMs,
-          success: args.success,
-        },
-      });
+  const trace = langfuseClient.trace({
+    name: `mcp:${args.serverName}:${args.toolName}`,
+    userId: args.accountId,
+    input: args.input,
+    output: args.output,
+    metadata: {
+      server: args.serverName,
+      tool: args.toolName,
+      accountId: args.accountId,
+      durationMs: args.durationMs,
+      success: args.success,
+      error: args.error,
+      projectName: args.projectName,
     },
-    {
-      name: `mcp:${args.serverName}:${args.toolName}`,
-      type: 'tool',
+    tags: ['mcp', args.serverName, args.toolName, args.success ? 'success' : 'error'],
+    environment: args.environment,
+  });
+
+  trace.span({
+    name: `execute:${args.toolName}`,
+    input: args.input,
+    output: args.output,
+    metadata: {
+      durationMs: args.durationMs,
+      success: args.success,
+      error: args.error,
     },
-  );
+    level: args.success ? 'DEFAULT' : 'ERROR',
+    statusMessage: args.error,
+  }).end();
+
+  await langfuseClient.flushAsync();
 }
 
 // =============================================================================
@@ -502,10 +515,18 @@ export function enableTelemetry(
   db: D1Database | undefined,
   serverName: string,
   getAccountId?: () => string,
-  braintrustOptions?: BraintrustTelemetryOptions,
+  langfuseOptions?: LangfuseTelemetryOptions,
 ): void {
   const resolveAccount = getAccountId || (() => 'operator');
-  const braintrustEnabled = initBraintrustTelemetry(braintrustOptions || {}, serverName);
+  const resolvedLangfuseOptions: LangfuseTelemetryOptions = {
+    publicKey: langfuseOptions?.publicKey,
+    secretKey: langfuseOptions?.secretKey,
+    host: langfuseOptions?.host,
+    projectName: langfuseOptions?.projectName || serverName,
+    environment: langfuseOptions?.environment,
+    enabled: langfuseOptions?.enabled,
+  };
+  const langfuseEnabled = initLangfuseTelemetry(resolvedLangfuseOptions, serverName);
 
   const resolveInvocationAccountId = (handlerArgs: unknown[]): string => {
     let configuredAccountId: string | null = null;
@@ -553,8 +574,8 @@ export function enableTelemetry(
           .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
       }
 
-      if (braintrustEnabled) {
-        emitBraintrustInvocation({
+      if (langfuseEnabled) {
+        emitLangfuseInvocation({
           serverName,
           toolName,
           accountId,
@@ -563,7 +584,9 @@ export function enableTelemetry(
           durationMs,
           success,
           error: toolError,
-        }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
+          projectName: resolvedLangfuseOptions.projectName,
+          environment: resolvedLangfuseOptions.environment,
+        }).catch((e: unknown) => console.warn(`[telemetry] langfuse emit failed for ${toolName}:`, e));
       }
 
       return result;
@@ -576,8 +599,8 @@ export function enableTelemetry(
           .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
       }
 
-      if (braintrustEnabled) {
-        emitBraintrustInvocation({
+      if (langfuseEnabled) {
+        emitLangfuseInvocation({
           serverName,
           toolName,
           accountId,
@@ -586,7 +609,9 @@ export function enableTelemetry(
           durationMs,
           success: false,
           error: errorMessage,
-        }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
+          projectName: resolvedLangfuseOptions.projectName,
+          environment: resolvedLangfuseOptions.environment,
+        }).catch((e: unknown) => console.warn(`[telemetry] langfuse emit failed for ${toolName}:`, e));
       }
 
       throw error;

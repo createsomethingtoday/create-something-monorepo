@@ -49,7 +49,7 @@ Why it fits:
 
 - Dify is already treated as the preferred client-facing agent runtime.
 - The repo contains Dify inventory, DSL snapshots, agent manifests, MCP server
-  cards, Infisical-backed secret references, and Braintrust eval coverage.
+  cards, Infisical-backed secret references, and Langfuse eval coverage.
 - The public trust catalog provides sanitized proof without exposing raw traces
   or private hubs.
 - The affiliate lane has a concrete conversion target after acceptance.
@@ -127,7 +127,7 @@ Current lane: `OpenAI ecosystem readiness`.
 Why it fits:
 
 - OpenAI is already represented in `/stack` as reasoning and agent host.
-- The repo contains OpenAI Agents SDK MCP scenario smoke tests, Braintrust
+- The repo contains OpenAI Agents SDK MCP scenario smoke tests, Langfuse
   tracing, and a ChatGPT MCP OAuth managed bearer contract.
 - Policy OS keeps the business value centered on scoped tools, approvals,
   evidence, and operator handoff rather than model access alone.
@@ -148,7 +148,7 @@ Primary proof:
 - `packages/agency/src/routes/stack/+page.svelte`
 - `docs/guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md`
 - `docs/OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md`
-- `docs/BRAINTRUST_TRACING_QUICKSTART.md`
+- `docs/LANGFUSE_TRACING_QUICKSTART.md`
 - `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`
 - `packages/observability/src/openai-agents.ts`
 
@@ -188,7 +188,7 @@ Use policy artifacts and evals as proof:
 - `docs/policies/v1/policy.hub-route-authorization.v1.md`
 - `docs/policies/v1/policy.tenant-tool-exposure.v1.md`
 - `docs/guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md`
-- Braintrust evals and trust catalog checks.
+- Langfuse evals and trust catalog checks.
 
 ## Lead Routing Rules
 

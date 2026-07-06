@@ -622,16 +622,16 @@ function summarizeRequiredToolCoverageLegacy(requiredToolNames: string[], toolCa
   };
 }
 
-async function registerOptionalBraintrustTracing(): Promise<boolean> {
-  const enabled = process.env.BRAINTRUST_ENABLED?.trim().toLowerCase();
+async function registerOptionalLangfuseTracing(): Promise<boolean> {
+  const enabled = process.env.LANGFUSE_ENABLED?.trim().toLowerCase();
   if (enabled === 'false' || enabled === '0' || enabled === 'off') return false;
-  if (!process.env.BRAINTRUST_API_KEY) return false;
+  if (!process.env.LANGFUSE_PUBLIC_KEY || !process.env.LANGFUSE_SECRET_KEY) return false;
 
-  const { registerOpenAIAgentsBraintrustTracing } = await import(
+  const { registerOpenAIAgentsLangfuseTracing } = await import(
     '@create-something/observability/openai-agents'
   );
-  return registerOpenAIAgentsBraintrustTracing({
-    projectName: process.env.BRAINTRUST_PROJECT_NAME ?? 'Create Something',
+  return registerOpenAIAgentsLangfuseTracing({
+    projectName: process.env.LANGFUSE_PROJECT_NAME ?? 'Create Something',
     tags: ['halfdozen', 'smoke'],
   });
 }
@@ -719,9 +719,9 @@ async function main(): Promise<void> {
       mcpServers: mcpServers.active,
     });
 
-    const braintrustTracingEnabled = await registerOptionalBraintrustTracing();
+    const langfuseTracingEnabled = await registerOptionalLangfuseTracing();
 
-    const runner = new Runner({ tracingDisabled: !braintrustTracingEnabled });
+    const runner = new Runner({ tracingDisabled: !langfuseTracingEnabled });
     const result = await runner.run(agent, options.query, {
       maxTurns: options.maxTurns,
     });

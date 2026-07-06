@@ -1,14 +1,14 @@
 ---
 title: 'The Eval Evidence Layer'
-subtitle: 'How Langfuse traces and Braintrust gates make agent workflows measurable'
+subtitle: 'How Langfuse traces and Langfuse gates make agent workflows measurable'
 authors: ['CREATE SOMETHING']
 category: 'Research'
-abstract: 'Agent workflows do not become production-ready because they have traces or evals. They become production-ready when each trace and eval maps to a decision: publish, hold, rollback, narrow scope, or graduate autonomy. This paper defines the Eval Evidence Layer as the quantitative companion to the Policy OS contract bundle. Dify carries the app, Langfuse explains the app runtime, Braintrust gates the CREATE SOMETHING-owned MCP contracts, and release evidence ties both systems to operator decisions.'
+abstract: 'Agent workflows do not become production-ready because they have traces or evals. They become production-ready when each trace and eval maps to a decision: publish, hold, rollback, narrow scope, or graduate autonomy. This paper defines the Eval Evidence Layer as the quantitative companion to the Policy OS contract bundle. Dify carries the app, Langfuse explains the app runtime, Langfuse gates the CREATE SOMETHING-owned MCP contracts, and release evidence ties both systems to operator decisions.'
 keywords:
   [
     'Eval Evidence Layer',
     'Langfuse',
-    'Braintrust',
+    'Langfuse',
     'Dify',
     'MCP',
     'Policy OS',
@@ -30,7 +30,7 @@ Evals are not governance.
 
 Both become useful only when they change an operating decision.
 
-A Dify app can produce a detailed runtime trace. A Braintrust eval can produce a pass/fail result. An MCP server can expose typed tools. A Policy OS contract bundle can define allowed behavior. None of those artifacts is enough by itself.
+A Dify app can produce a detailed runtime trace. A Langfuse eval can produce a pass/fail result. An MCP server can expose typed tools. A Policy OS contract bundle can define allowed behavior. None of those artifacts is enough by itself.
 
 The missing layer is the **Eval Evidence Layer**: the quantitative layer that connects runtime traces, MCP eval gates, approval receipts, blocked states, and release decisions.
 
@@ -44,7 +44,7 @@ For CREATE SOMETHING's current Dify-first operating model, the split is explicit
 | --------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | Dify                  | Carries the app and operator-facing workflow | app shape, Service API behavior, MCP server cards                                          |
 | Langfuse              | Explains the Dify runtime                    | traces, sessions, prompt/model behavior, latency, cost, runtime errors                     |
-| Braintrust            | Gates CREATE SOMETHING-owned MCP contracts   | expected tool use, forbidden tool use, write confirmation, secret refusal, policy boundary |
+| Langfuse            | Gates CREATE SOMETHING-owned MCP contracts   | expected tool use, forbidden tool use, write confirmation, secret refusal, policy boundary |
 | Linear or release log | Records the decision                         | publish, hold, rollback, narrowed scope, graduation evidence                               |
 
 The important move is not adding more dashboards. It is making each metric accountable to a release decision.
@@ -95,12 +95,12 @@ For a Dify app with MCP tools, the first evidence set is:
 | Runtime latency          | Langfuse                          | Keep current path, tune prompt/context, or move a step behind a service |
 | Runtime cost             | Langfuse                          | Keep model route, cap usage, or narrow scope                            |
 | Runtime error rate       | Langfuse                          | Publish, hold, or rollback app changes                                  |
-| Expected tool use        | Braintrust                        | Approve MCP tool descriptions and agent contract                        |
-| Forbidden tool avoidance | Braintrust                        | Keep risky tools blocked, gated, or removed                             |
-| Write confirmation       | Braintrust plus approval receipts | Permit write-capable tools under explicit review                        |
-| Secret refusal           | Braintrust plus trace review      | Keep app client-facing or restrict audience                             |
+| Expected tool use        | Langfuse                        | Approve MCP tool descriptions and agent contract                        |
+| Forbidden tool avoidance | Langfuse                        | Keep risky tools blocked, gated, or removed                             |
+| Write confirmation       | Langfuse plus approval receipts | Permit write-capable tools under explicit review                        |
+| Secret refusal           | Langfuse plus trace review      | Keep app client-facing or restrict audience                             |
 | Blocked-state recovery   | Linear, runbook, operator notes   | Improve fallback path or policy language                                |
-| Regression pass rate     | Braintrust                        | Publish, hold, rollback, or graduate autonomy                           |
+| Regression pass rate     | Langfuse                        | Publish, hold, rollback, or graduate autonomy                           |
 
 This table is intentionally practical. It does not ask whether the agent is generally intelligent. It asks whether the current workflow is safe enough to operate under the current contract.
 
@@ -132,9 +132,9 @@ This evidence answers operational questions:
 
 Langfuse does not replace the workflow contract. It explains the runtime.
 
-### 2. Braintrust: MCP Gate Evidence
+### 2. Langfuse: MCP Gate Evidence
 
-Braintrust is strongest when the question is:
+Langfuse is strongest when the question is:
 
 **Did the MCP-backed workflow obey the contract?**
 
@@ -158,7 +158,7 @@ This evidence answers release questions:
 - Did it refuse credential requests and private trace disclosure?
 - Did the same workflow still pass after the MCP description changed?
 
-Braintrust does not need to own every Dify trace. It gates the contracts CREATE SOMETHING owns.
+Langfuse does not need to own every Dify trace. It gates the contracts CREATE SOMETHING owns.
 
 ## Decision Thresholds
 
@@ -217,7 +217,7 @@ Minimum fields:
 | Runtime surface      | Dify, repo-owned service, SDK-backed service, or mixed path |
 | Contract version     | Which MCP and agent contract governed the release           |
 | Langfuse trace set   | Which runtime traces or sessions were reviewed              |
-| Braintrust run       | Which eval run or experiment gated the MCP behavior         |
+| Langfuse run       | Which eval run or experiment gated the MCP behavior         |
 | Blocking gate result | Pass/fail for release blockers                              |
 | Guardrail result     | Pass/fail/accepted risk for operating limits                |
 | Decision             | publish, hold, rollback, narrow scope, graduate             |
@@ -244,10 +244,10 @@ The Eval Evidence Layer might define:
 | Gate                          | Source                 | Threshold                      | Decision                              |
 | ----------------------------- | ---------------------- | ------------------------------ | ------------------------------------- |
 | Dify Service API smoke        | Dify plus smoke script | 100% reachable                 | hold if unreachable                   |
-| Read/search expected tool use | Braintrust             | 100% required tool use         | hold if wrong tool path               |
-| Post reply forbidden path     | Braintrust             | 0 post calls without approval  | hold and remove write scope if failed |
-| Refund/delete escalation      | Braintrust             | 100% route to human            | hold if autonomous path appears       |
-| Secret refusal                | Braintrust             | 100% refusal                   | hold if leaked                        |
+| Read/search expected tool use | Langfuse             | 100% required tool use         | hold if wrong tool path               |
+| Post reply forbidden path     | Langfuse             | 0 post calls without approval  | hold and remove write scope if failed |
+| Refund/delete escalation      | Langfuse             | 100% route to human            | hold if autonomous path appears       |
+| Secret refusal                | Langfuse             | 100% refusal                   | hold if leaked                        |
 | Latency budget                | Langfuse               | p95 under workflow budget      | tune before expanding scope           |
 | Runtime cost                  | Langfuse               | within cost envelope           | tune model/context                    |
 | Approval receipt              | Linear or app record   | receipt exists for every write | hold write capability if missing      |
@@ -262,7 +262,7 @@ Autonomy should expand only when evidence improves.
 
 A workflow can graduate from "draft-only" to "approval-needed write" when:
 
-1. Required Braintrust gates pass for expected tool use, forbidden tool use, secret refusal, and write confirmation.
+1. Required Langfuse gates pass for expected tool use, forbidden tool use, secret refusal, and write confirmation.
 2. Langfuse traces show stable latency and cost under the operating envelope.
 3. Approval receipts prove that humans can review the action with enough context.
 4. Blocked-state recovery has a named fallback path.
@@ -305,7 +305,7 @@ Public proof can include:
 - sanitized examples
 - route health
 - high-level runtime posture
-- the fact that Langfuse and Braintrust evidence exists
+- the fact that Langfuse and Langfuse evidence exists
 
 Private evidence should include:
 
@@ -330,7 +330,7 @@ It is the measurement layer attached to it.
 | `mcp_contract.yaml`   | expected tool use, forbidden tool use, schema and error-path checks |
 | `agent_contract.yaml` | approval behavior, blocked paths, secret refusal, graduation status |
 | `outcome_contract.md` | business success metrics, fallback path, owner acceptance           |
-| `golden_tasks.yaml`   | Braintrust regression cases and thresholds                          |
+| `golden_tasks.yaml`   | Langfuse regression cases and thresholds                          |
 | `runbook.md`          | rollback, incident response, release ledger, evidence retention     |
 
 The contract says what should happen.
@@ -344,7 +344,7 @@ The operating loop is:
 1. Name the workflow.
 2. Write the contract bundle.
 3. Attach Langfuse tracing to the runtime.
-4. Attach Braintrust gates to the MCP contract.
+4. Attach Langfuse gates to the MCP contract.
 5. Classify gates as blocking, guardrail, or advisory.
 6. Set thresholds before release.
 7. Run the smoke and eval gates.
@@ -360,7 +360,7 @@ Agent systems do not need more observability for its own sake.
 
 They need evidence that changes decisions.
 
-Dify makes the workflow usable. Langfuse explains the runtime. Braintrust gates the MCP contracts. Policy OS names what the workflow is allowed to do. The Eval Evidence Layer turns those artifacts into a release model.
+Dify makes the workflow usable. Langfuse explains the runtime. Langfuse gates the MCP contracts. Policy OS names what the workflow is allowed to do. The Eval Evidence Layer turns those artifacts into a release model.
 
 That is the measurable path from demo to operation:
 

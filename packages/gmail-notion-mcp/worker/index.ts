@@ -26,17 +26,18 @@ interface Env {
   COMPOSIO_API_KEY: string;
   COMPOSIO_GMAIL_AUTH_CONFIG_ID?: string;
   COMPOSIO_NOTION_AUTH_CONFIG_ID?: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
   /** D1 for run metering (100 free, then 1¢/run). Create with wrangler d1 create gmail-notion-mcp-runs */
   RUNS_DB?: D1Database;
 }
 
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 
-function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
-  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
-  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+function resolveLangfuseProjectName(env: { LANGFUSE_PROJECT_NAME?: string }): string {
+  const configured = env.LANGFUSE_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_LANGFUSE_PROJECT_NAME;
 }
 
 // =============================================================================
@@ -71,16 +72,16 @@ export class GmailNotionMCP extends McpAgent<Env> {
   }
 
   async init() {
-    if (this.env.BRAINTRUST_API_KEY) {
+    if (this.env.LANGFUSE_PUBLIC_KEY && this.env.LANGFUSE_SECRET_KEY) {
       enableTelemetry(
         this.server,
         undefined as unknown as D1Database,
         'gmail-notion-mcp',
         () => this.currentAccountId,
         {
-          apiKey: this.env.BRAINTRUST_API_KEY,
-          projectName: resolveBraintrustProjectName(this.env),
-          projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
+          publicKey: this.env.LANGFUSE_PUBLIC_KEY,
+          secretKey: this.env.LANGFUSE_SECRET_KEY,
+          projectName: resolveLangfuseProjectName(this.env),
         },
       );
     }

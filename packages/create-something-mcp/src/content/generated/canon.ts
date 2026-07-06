@@ -40,6 +40,7 @@ export const CANON_PAGES: CanonPage[] = [
 
 ## Related
 
+- [Clear Components](/canon/components/clear)
 - [Card](/canon/components/card)
 - [Navigation](/canon/components/navigation)
 - [Get Started](/canon/resources/get-started)`
@@ -80,9 +81,94 @@ export const CANON_PAGES: CanonPage[] = [
 
 ## Related
 
+- [Clear Components](/canon/components/clear)
 - [Button](/canon/components/button)
 - [Navigation](/canon/components/navigation)
 - [Layout](/canon/foundations/layout)`
+  },
+  {
+    slug: "components/clear",
+    section: "components",
+    title: "Clear Components",
+    description: "Ona-derived communication primitives for mapped, governed, proof-bearing work.",
+    content: `## What Ships Today
+
+- \`ClearPageSection\`: open page bands for claims, proof, actions, and asides
+- \`ClearPlatformHero\`: first-viewport product, system, or platform anchors
+- \`ClearProofStrip\`: compact evidence objects scanned together
+- \`ClearDecisionPanel\`: allow, review, block, or neutral decision states
+- \`ClearStateRows\`: explicit run, wait, stop, or handoff rows
+- \`ClearReceiptGrid\`: delivery evidence, artifacts, and validation receipts
+- \`ClearArtifactCard\`: one evidence object with status and link
+- \`ClearCtaBand\`: restrained next-action bands
+
+## When To Use Clear Components
+
+Use clear components when the page needs to show at least one operational answer:
+
+1. What workflow or system has been mapped?
+2. What can run, what needs review, and what is blocked?
+3. Which policy, contract, receipt, or validation gate proves the claim?
+4. What should the buyer, operator, reviewer, system, or agent do next?
+
+Do not use clear components as generic light-themed decoration. If the surface does not carry
+maps, trust boundaries, approval states, receipts, validation gates, or handoff evidence, use the
+standard Canon components instead.
+
+## Example
+
+\`\`\`svelte
+<script lang="ts">
+  import { ClearDecisionPanel, ClearPageSection, ClearReceiptGrid } from '@create-something/canon';
+</script>
+
+<ClearPageSection
+  variant="hero"
+  titleLevel="h1"
+  eyebrow="Governed workflow"
+  title="Map the action before the agent runs."
+  description="Name the object, approval rule, stop condition, and receipt before execution."
+/>
+
+<ClearDecisionPanel
+  title="Show whether to run, review, or stop."
+  items={[
+    {
+      label: 'Review',
+      summary: 'Approval needed',
+      title: 'The write path changes customer data.',
+      detail: 'The policy requires an operator review before the tool can run.',
+      tone: 'review',
+      evidence: ['Write target is named', 'Policy rule is attached'],
+      receipts: ['workflow-map', 'approval-log']
+    }
+  ]}
+/>
+
+<ClearReceiptGrid
+  receipts={[
+    {
+      title: 'Workflow map',
+      status: 'Ready',
+      description: 'Objects, tools, approval rules, and stop states are documented.'
+    }
+  ]}
+/>
+\`\`\`
+
+## Copy Rules
+
+- Use nouns from the workflow: object, tool, record, tenant, bundle, policy, receipt.
+- Use verbs from the work: map, review, approve, block, run, validate, hand off.
+- Put proof beside the claim.
+- Keep headings plain and short.
+- Use mono labels for short state, receipt, or identifier text.
+
+## Related
+
+- [Navigation](/canon/components/navigation)
+- [Colors](/canon/foundations/colors)
+- [Typography](/canon/foundations/typography)`
   },
   {
     slug: "components/index",
@@ -126,6 +212,27 @@ export const CANON_PAGES: CanonPage[] = [
 </svg>
 </div>
 </a>
+<a class="component-card" href="/canon/components/clear">
+<div class="card-icon">
+<svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="24">
+<path d="M4 6h16"></path>
+<path d="M4 12h10"></path>
+<path d="M4 18h7"></path>
+<path d="M17 11l2 2 4-4"></path>
+</svg>
+</div>
+<div class="card-content">
+<h2 class="card-title">Clear Components</h2>
+<p class="card-description">
+				Map workflows, proof, receipts, and governed states with Ona-derived clarity.
+			</p>
+</div>
+<div class="card-arrow">
+<svg fill="none" height="16" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="16">
+<path d="M5 12h14M12 5l7 7-7 7"></path>
+</svg>
+</div>
+</a>
 <a class="component-card" href="/canon/components/navigation">
 <div class="card-icon">
 <svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="24">
@@ -145,6 +252,7 @@ export const CANON_PAGES: CanonPage[] = [
 </svg>
 </div>
 </a>
+</section>
 
 
 <section class="principles">
@@ -166,6 +274,7 @@ export const CANON_PAGES: CanonPage[] = [
 <p>Good tools get out of the way. You should focus on your work, not ours.</p>
 </div>
 </div>
+</section>
 
 
 <section class="token-reference">
@@ -197,7 +306,8 @@ export const CANON_PAGES: CanonPage[] = [
 <code>--radius-md</code>
 <code>--radius-lg</code>
 </div>
-</div>`
+</div>
+</section>`
   },
   {
     slug: "components/navigation",
@@ -207,6 +317,7 @@ export const CANON_PAGES: CanonPage[] = [
     content: `## Available Surfaces
 
 - \`Navigation\`: primary site header with desktop and mobile states
+- \`Footer\`: property directory, grouped links, newsletter, legal, and cross-property links
 - \`Breadcrumbs\`: hierarchical wayfinding with optional home icon
 - \`Tabs\`: WAI-ARIA tab panels with keyboard navigation and bindable active state
 
@@ -231,6 +342,57 @@ export const CANON_PAGES: CanonPage[] = [
   ctaHref="/contact"
 />
 \`\`\`
+
+## Clear Communication Navigation
+
+\`Navigation\` and \`Footer\` both accept \`visualStyle?: 'classic' | 'clear'\`. The default is
+\`classic\` to preserve existing callers while the Ona-derived clear system rolls out.
+
+Use \`clear\` when the page must serve a buyer or operator who needs immediate orientation before
+brand atmosphere. The clear style follows the Ona-derived communication layer: frosted light shell,
+compact readable links, crisp dividers, restrained active states, direct dark CTA, and no decorative
+navigation complexity.
+
+Clear navigation should route people into proof-bearing work, not generic brand exploration. Prefer
+labels for maps, policies, systems, workflows, receipts, and contact paths. Keep the primary CTA
+bounded to a concrete next action such as mapping one workflow, reviewing a handoff, or opening a
+governed surface.
+
+\`\`\`svelte
+<Navigation
+  logo="CREATE SOMETHING"
+  logoSuffix=".agency"
+  links={links}
+  currentPath="/"
+  fixed={true}
+  ctaLabel="Map one workflow"
+  ctaHref="/book"
+  visualStyle="clear"
+/>
+
+<Footer
+  mode="agency"
+  aboutText="Governed workflows with clear trust boundaries and receipt-backed delivery."
+  quickLinkGroups={footerGroups}
+  footerCta={{
+    label: 'Map one workflow',
+    href: '/book',
+    description: 'Leave with the workflow, boundary, and proof path.'
+  }}
+  visualStyle="clear"
+/>
+\`\`\`
+
+## Clear Communication Primitives
+
+The clear navigation and footer are designed to pair with:
+
+- \`ClearPageSection\`: claim, proof, action, and split hero sections
+- \`ClearProofStrip\`: compact objects/actions/states/receipts proof
+- \`ClearStateRows\`: governed run/wait/stop rows
+- \`ClearDecisionPanel\`: selectable allow/review/block decision paths with evidence and receipts
+- \`ClearReceiptGrid\` and \`ClearArtifactCard\`: evidence and delivery receipts
+- \`ClearCtaBand\`: restrained final action band
 
 ## Breadcrumbs and Tabs
 
@@ -265,9 +427,12 @@ export const CANON_PAGES: CanonPage[] = [
 1. Keep the primary header focused on top-level choices.
 2. Use breadcrumbs when the user needs a clear sense of depth.
 3. Use tabs for peer content, not for hiding unrelated workflows.
+4. Use \`visualStyle="clear"\` for the new CREATE SOMETHING communication layer: plain-language
+   orientation, visible proof, and a direct next action.
 
 ## Related
 
+- [Clear Components](/canon/components/clear)
 - [Layout](/canon/foundations/layout)
 - [Content](/canon/guidelines/content)
 - [Responsive](/canon/guidelines/responsive)`
@@ -434,7 +599,8 @@ export const CANON_PAGES: CanonPage[] = [
 <li>
 <a href="/canon/foundations/philosophy">Canon Foundations: Philosophy</a>
 </li>
-</ul>`
+</ul>
+</section>`
   },
   {
     slug: "concepts/gelassenheit",
@@ -706,7 +872,8 @@ export const CANON_PAGES: CanonPage[] = [
 <li>
 <a href="/canon/foundations/philosophy">Canon Foundations: Philosophy</a>
 </li>
-</ul>`
+</ul>
+</section>`
   },
   {
     slug: "concepts/gestell",
@@ -905,7 +1072,8 @@ export const CANON_PAGES: CanonPage[] = [
 <li>
 <a href="/canon/foundations/philosophy">Canon Foundations: Philosophy</a>
 </li>
-</ul>`
+</ul>
+</section>`
   },
   {
     slug: "concepts/hermeneutic-circle",
@@ -1175,7 +1343,8 @@ export const CANON_PAGES: CanonPage[] = [
 <li>
 <a href="/canon/concepts/zuhandenheit">Canon Concept: Zuhandenheit</a>
 </li>
-</ul>`
+</ul>
+</section>`
   },
   {
     slug: "concepts/index",
@@ -1238,7 +1407,8 @@ export const CANON_PAGES: CanonPage[] = [
 			You understand sentences through words, and words through sentences. Each pass deepens meaning.
 		</p>
 <span class="concept-origin">Hermeneutic Tradition</span>
-</a>`
+</a>
+</section>`
   },
   {
     slug: "concepts/vorhandenheit",
@@ -1440,7 +1610,8 @@ export const CANON_PAGES: CanonPage[] = [
 <li>
 <a href="/patterns/breakdown-and-repair">Pattern: Breakdown and Repair</a>
 </li>
-</ul>`
+</ul>
+</section>`
   },
   {
     slug: "concepts/weniger-aber-besser",
@@ -1610,7 +1781,8 @@ export const CANON_PAGES: CanonPage[] = [
 <li>
 <a href="/patterns/subtractive-triad-audit">Pattern: Subtractive Triad Audit</a>
 </li>
-</ul>`
+</ul>
+</section>`
   },
   {
     slug: "concepts/zuhandenheit",
@@ -1762,7 +1934,8 @@ export const CANON_PAGES: CanonPage[] = [
 <li>
 <a href="/patterns/breakdown-and-repair">Pattern: Breakdown and Repair</a>
 </li>
-</ul>`
+</ul>
+</section>`
   },
   {
     slug: "foundations/colors",
@@ -1809,6 +1982,33 @@ Three border levels for separation and emphasis.
 | \`--color-border-default\` | \`rgba(255,255,255,0.1)\` | Subtle separation |
 | \`--color-border-emphasis\` | \`rgba(255,255,255,0.2)\` | Hover states |
 | \`--color-border-strong\` | \`rgba(255,255,255,0.3)\` | Active states |
+
+## Clear Communication Palette
+
+The Ona-derived CREATE SOMETHING communication layer uses a light operational palette. Use these
+tokens for buyer-facing and operator-facing surfaces that need immediate comprehension.
+
+This is now a stable Canon layer, not a one-off property treatment. Ona sets the clarity bar;
+CREATE SOMETHING owns the implementation language. Use the palette when the interface must show
+workflow maps, trust boundaries, approval states, receipts, validation gates, or handoff evidence.
+
+| Token | Value | Use |
+|-------|-------|-----|
+| \`--color-clear-porcelain\` | \`#f9f9f9\` | Page canvas |
+| \`--color-clear-porcelain-soft\` | \`#f2f2f2\` | Secondary bands and inactive states |
+| \`--color-clear-panel\` | \`#ffffff\` | Cards, panels, receipts |
+| \`--color-clear-onyx\` | \`#0a0e19\` | Primary text and dark CTAs |
+| \`--color-clear-grey\` | \`#636363\` | Secondary copy |
+| \`--color-clear-grey-quiet\` | \`#818181\` | Low-emphasis labels |
+| \`--color-clear-border\` | \`#e1e1e1\` | Hairline panel borders |
+| \`--color-clear-border-strong\` | \`#cecece\` | Focused panel borders |
+| \`--color-clear-ocean\` | \`#0048ff\` | System/action accent |
+| \`--color-clear-moss\` | \`#1e3c2c\` | Governed run/wait states |
+| \`--color-clear-stop\` | \`#c41e3a\` | Stop/block states |
+
+Do not use the clear palette as generic decoration. A clear surface should answer at least one
+operational question: what is mapped, what can run, what needs review, what is blocked, or what
+evidence proves the handoff.
 
 ## Semantic Colors
 
@@ -2088,6 +2288,19 @@ Every animation must answer: what does this communicate that stillness cannot? M
 <p>Always respect <code>prefers-reduced-motion</code>.</p>
 </div>
 </div>
+
+## Clear Communication Motion
+
+Ona-derived clear surfaces use motion only when it clarifies operational state. The acceptable uses
+are narrow:
+
+- state changed: allow, review, block, waiting, complete
+- selection changed: the active proof object, decision tab, or receipt changed
+- progression happened: a step moved from mapped to validated to handed off
+- attention is needed: an operator must review or stop before execution
+
+Do not animate decorative backgrounds, idle proof panels, or generic AI atmosphere. If the motion
+does not clarify state, selection, progression, or handoff, remove it.
 
 ## Duration Tokens
 
@@ -2611,9 +2824,18 @@ Built on the golden ratio (φ = 1.618). Each step multiplies by φ for natural v
 ## Font Stack
 
 \`\`\`css
---font-sans: 'Stack Sans Notch', system-ui, sans-serif;
---font-mono: 'JetBrains Mono', monospace;
+--font-sans: 'ABC Diatype', 'Stack Sans Notch', system-ui, sans-serif;
+--font-mono: 'ABC Diatype Mono', 'JetBrains Mono', monospace;
+--font-serif: 'Martina Plantijn', Georgia, serif;
 \`\`\`
+
+The Ona-derived clear communication layer uses ABC Diatype for interface and body text, ABC Diatype
+Mono for compact system labels, and Martina Plantijn only when an editorial serif voice is useful.
+CREATE SOMETHING keeps local fallbacks so surfaces remain stable if external font loading fails.
+
+The type rule is operational comprehension first. Headlines name the workflow or offer plainly;
+supporting copy explains the object, action, policy, owner, receipt, or next step. Use mono for
+short state labels and identifiers, not long explanatory paragraphs.
 
 ## Fluid Typography
 
@@ -2662,6 +2884,18 @@ All text in the Canon system meets WCAG AA contrast requirements. The minimum ra
 | Muted Text | 4.56:1 | \`--color-fg-muted\` |
 
 **Note:** \`--color-fg-subtle\` (0.2 opacity) does not meet AA contrast and should only be used for decorative elements, never for informational content.
+
+### Clear Proof and Status Surfaces
+
+Ona-derived clear surfaces often show workflow state, receipts, validation gates, and approval
+boundaries. Do not communicate those states with color alone.
+
+Every proof or status surface must include:
+
+- a visible text label such as \`Review\`, \`Blocked\`, \`Ready\`, or \`Validated\`
+- a semantic region or heading when the proof object is a major page section
+- keyboard-reachable actions for any approval, review, receipt, or handoff link
+- live-region behavior only for meaningful state changes, not decorative rotation
 
 ## Focus Management
 
@@ -2829,6 +3063,29 @@ Write like a colleague, not a robot.
 | "Please wait while processing" | "Working on it..." |
 | "Terminate session" | "Sign out" |
 
+## Clear Communication Copy
+
+For Ona-derived clear surfaces, write for operational comprehension before brand atmosphere. The
+copy should make the mapped workflow, governed action, proof object, and next step visible.
+
+Use the concrete noun before the abstract category:
+
+| Don't | Do |
+|-------|-----|
+| "AI-powered workflow automation" | "Map the approval before the agent writes." |
+| "Seamless governance layer" | "Attach the policy, receipt, and rollback path." |
+| "Unlock productivity" | "Route the intake, review the match, then hand off." |
+
+Clear copy should answer one of these questions:
+
+1. What object is being mapped?
+2. What action can run, needs review, or is blocked?
+3. What policy, contract, receipt, trace, or eval proves the claim?
+4. Who owns the next step?
+
+Avoid generic AI language when a workflow noun exists. Prefer \`map\`, \`review\`, \`approve\`, \`block\`,
+\`run\`, \`validate\`, and \`hand off\` over softer verbs like \`streamline\`, \`unlock\`, or \`empower\`.
+
 ## Capitalization
 
 ### Sentence case
@@ -2900,6 +3157,142 @@ Tell users what's happening.
 - Relative dates when recent: "2 hours ago"
 - Absolute dates when older: "Jan 15, 2026"
 - Abbreviate large numbers: "1.2K" not "1,234"`
+  },
+  {
+    slug: "guidelines/images",
+    section: "guidelines",
+    title: "Images",
+    description: "CREATE SOMETHING image guidelines for marketing, articles, social previews, decks, and client proof artifacts.",
+    content: `## Decision
+
+Use Ona.com as the design and communication foundation for CREATE SOMETHING images.
+The reference is communication quality, not identity: calm hierarchy, plain claims,
+compact proof, governed execution, visible customer evidence, and restrained action
+states.
+
+CREATE SOMETHING owns the implementation language. Our images should show how AI
+work gets mapped, integrated, governed, validated, shipped, and handed off.
+
+Use \`docs/IMAGE_LANGUAGE_FOUNDATION.md\` when a generated, designed, captured, or
+rendered image needs TASTE-backed judgment context. TASTE references are inputs
+for review and prompting; they are not source assets to copy.
+
+## What images should prove
+
+Every generated or designed image must answer at least one operational question:
+
+1. What object, workflow, or system is being mapped?
+2. What can run, needs review, or must stop?
+3. What policy, contract, receipt, trace, eval, or screenshot proves the claim?
+4. Who owns the next step?
+
+If the image cannot answer one of those questions, it is decoration. Do not use it.
+
+## Visual grammar
+
+Use this foundation for marketing materials, article visuals, social cards, pitch
+decks, and client updates:
+
+| Layer | Rule |
+|-------|------|
+| **Canvas** | Prefer porcelain, white, or quiet near-black surfaces. Avoid noisy gradients. |
+| **Hierarchy** | One plain claim, then proof beside or below it. |
+| **Structure** | Use maps, lanes, cards, state rows, gates, receipts, and arrows. |
+| **Brand mark** | Use the isometric cube as the persistent system signature. |
+| **Color** | Use Canon clear tokens first: onyx, porcelain, cobalt, moss, and stop red. |
+| **Type** | Use direct labels. Prefer workflow nouns over category language. |
+| **Motion** | For video or animated exports, move only state, selection, progression, or handoff. |
+| **Proof** | Make validation visible through receipts, tests, links, dates, owners, and status. |
+
+## Image families
+
+Create reusable image families instead of one-off illustrations:
+
+- **System map hero**: the full operating path from input to governed outcome.
+- **Database / Automation / Judgment diagram**: the three-tier framework as lanes or columns.
+- **Policy gate chart**: allowed, ask, blocked, escalated, complete.
+- **Evidence map**: artifact cards connected to the claim they prove.
+- **Handoff receipt**: owner, state, validation, rollback, and next action.
+- **Screenshot annotation**: real product evidence with restrained callouts.
+- **CTA visual**: the specific next action, not generic AI promise.
+
+## GPT Image 2 prompt contract
+
+Use \`gpt-image-2\` for production image generation when access is available. Keep
+prompts structured and repeatable:
+
+\`\`\`text
+Model: gpt-image-2
+Quality: high
+Size: <target size>
+
+Create a CREATE SOMETHING <image family> for <surface>.
+Purpose: <what the image must prove>.
+Audience: <operator, buyer, builder, reviewer, client>.
+Show: <workflow objects, states, proof artifacts, owners, gates>.
+Style: Ona.com communication foundation translated into CREATE SOMETHING artifacts:
+calm hierarchy, porcelain surfaces, compact proof panels, governed execution,
+crisp labels, restrained cobalt/moss/stop accents, isometric cube signature.
+Avoid: glowing robots, circuit faces, blue AI gradients, generic brains,
+fake dashboards, stock photography, unreadable file paths, private data,
+client secrets, vendor endorsement, watermarks.
+\`\`\`
+
+The prompt should name the artifact family and proof requirement before style. Style
+cannot rescue a vague visual brief.
+
+For article, social, deck, sales, or client-update images, start from
+\`packages/agency/content/templates/marketing/image-prompt.md\` and store the
+completed prompt beside the generated export.
+
+Use the Image API for a single completed generation or edit. Use the Responses
+API image generation tool for conversational, multi-turn image refinement.
+
+## Review gate
+
+Before publishing or reusing an image:
+
+- Text is legible at 50% size.
+- The image still works without animation.
+- The claim is supported by visible proof or a real screenshot.
+- No fake UI is presented as a screenshot.
+- No secrets, private data, private prompts, client records, or tokens appear.
+- The asset has source prompt, model, date, owner, target surface, and refresh date.
+- The result feels like governed operations, not generic AI atmosphere.
+
+Use deterministic repo checks as the required gate for this workflow. Langfuse
+is not required to generate, store, or approve image assets. Add Langfuse later
+only if CREATE SOMETHING needs a scored rubric across many generated images,
+prompt variants, or approval outcomes.
+
+## File metadata
+
+Every generated image should keep a source prompt beside the export:
+
+\`\`\`text
+<asset-slug>--prompt--vYYYYMMDD.txt
+<asset-slug>--source--vYYYYMMDD.svg
+<asset-slug>--export--1200x630--vYYYYMMDD.png
+\`\`\`
+
+Include the model, snapshot if known, quality, size, source inputs, and review status
+in the prompt file. This makes the visual system auditable and repeatable.
+For article image sets, copy
+\`packages/agency/content/templates/marketing/image-metadata.md\` into the asset
+folder and fill it before publish.
+
+Run the metadata/template check before publishing reusable article assets:
+
+\`\`\`bash
+node scripts/marketing-image-assets-check.mjs
+\`\`\`
+
+## Boundary
+
+Do not copy Ona identity, campaign language, page layouts, or category framing.
+Use Ona.com as the standard for how supervised autonomy should communicate. Use
+CREATE SOMETHING to show how that autonomy gets connected to real systems, policy,
+evidence, and delivery.`
   },
   {
     slug: "guidelines/responsive",
@@ -3202,6 +3595,7 @@ Respect user's system preference:
 <p>"Weniger, aber besser"</p>
 <cite>— Dieter Rams (Less, but better)</cite>
 </blockquote>
+</section>
 
 
 <section class="quick-access">
@@ -3256,6 +3650,7 @@ Respect user's system preference:
 <p>Why we made these choices. The principles that guide every design decision.</p>
 </a>
 </div>
+</section>
 
 
 <section class="principles">
@@ -3283,6 +3678,7 @@ Respect user's system preference:
 <p class="triad-action">→ Reconnect</p>
 </div>
 </div>
+</section>
 
 
 <section class="token-preview">
@@ -3311,7 +3707,8 @@ Respect user's system preference:
 <div class="color-swatch bg-subtle"></div>
 </div>
 </div>
-</div>`
+</div>
+</section>`
   },
   {
     slug: "patterns/forms",
@@ -3389,6 +3786,7 @@ Expanded usage examples are still being documented. For now, treat this page as 
 <p class="comparison-example">FormLayout, LoadingSkeleton, ErrorBoundary</p>
 </div>
 </div>
+</section>
 
 
 <section class="pattern-grid-section">
@@ -3474,6 +3872,7 @@ Expanded usage examples are still being documented. For now, treat this page as 
 <span class="badge">Planned</span>
 </div>
 </div>
+</section>
 
 
 <section class="structure-section">
@@ -3507,6 +3906,7 @@ Expanded usage examples are still being documented. For now, treat this page as 
 <p>Common mistakes to avoid and why they cause problems.</p>
 </div>
 </div>
+</section>
 
 
 <section class="triad-section">
@@ -3537,6 +3937,7 @@ Expanded usage examples are still being documented. For now, treat this page as 
 			</p>
 </div>
 </div>
+</section>
 
 
 <section class="canon-section">
@@ -3547,7 +3948,8 @@ Expanded usage examples are still being documented. For now, treat this page as 
 <p class="canon-explanation">
 		Patterns reduce cognitive load by providing proven solutions. A well-designed pattern is
 		one you never think about because it simply works.
-	</p>`
+	</p>
+</section>`
   },
   {
     slug: "patterns/loading",
@@ -3808,6 +4210,7 @@ Expanded examples for async tables, upload flows, and inline refresh states are 
 				Theming guide
 			</li>
 </ul>
+</section>
 
 
 <section class="versioning">
@@ -3837,6 +4240,7 @@ Expanded examples for async tables, upload flows, and inline refresh states are 
 </tr>
 </tbody>
 </table>
+</section>
 
 
 <section class="legend">
@@ -3866,7 +4270,8 @@ Expanded examples for async tables, upload flows, and inline refresh states are 
 <span class="change-type change-type--security">Security</span>
 <span>Vulnerability fixes</span>
 </div>
-</div>`
+</div>
+</section>`
   },
   {
     slug: "resources/contributing",

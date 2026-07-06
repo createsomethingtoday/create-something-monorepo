@@ -2,11 +2,8 @@
  * MCP Server Instrumentation
  *
  * Provides tracing utilities for MCP server tool handlers.
- * Integrates with Langfuse for LLM observability and Braintrust for
- * per-client MCP usage visibility.
- *
- * Dual-emit: when both LANGFUSE_* and BRAINTRUST_API_KEY are set, every tool
- * invocation is sent to both backends independently (best-effort).
+ * Integrates with Langfuse for LLM observability and per-client MCP usage
+ * visibility.
  */
 
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -21,12 +18,12 @@ import {
 } from './index.js';
 import { mcpToolMetadata, type AITaskType, type AtlasMetadata } from './atlas.js';
 import {
-  initBraintrust,
+  initLangfuse,
   emitToolInvocation,
-  shutdownBraintrust,
+  shutdownLangfuse,
   type GovernanceTraceContext,
-  type BraintrustConfig,
-} from './braintrust.js';
+  type LangfuseConfig,
+} from './langfuse.js';
 
 // =============================================================================
 // Types
@@ -35,11 +32,11 @@ import {
 export interface McpServerConfig extends ObservabilityConfig {
   serverName: string;
   serverVersion?: string;
-  /** Braintrust configuration. When provided (or BRAINTRUST_API_KEY env is set),
-   *  every tool invocation is also logged to Braintrust. */
-  braintrust?: BraintrustConfig;
+  /** Langfuse configuration. When provided (or LANGFUSE_PUBLIC_KEY/LANGFUSE_SECRET_KEY env is set),
+   *  every tool invocation is also logged to Langfuse. */
+  langfuse?: LangfuseConfig;
   /** Resolve the calling account ID from the tool arguments.
-   *  Used for per-client segmentation in both D1 telemetry and Braintrust. */
+   *  Used for per-client segmentation in both D1 telemetry and Langfuse. */
   getAccountId?: (args: Record<string, unknown>) => string | undefined;
   /** Resolve the policy and routing context that should be attached to traces. */
   getTraceContext?: (input: {
@@ -132,19 +129,20 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
     enabled: config.enabled
   });
 
-  // Initialize Braintrust when configured or env key present
-  const btApiKey = config.braintrust?.apiKey || process.env.BRAINTRUST_API_KEY;
-  if (btApiKey) {
-    initBraintrust({
-      apiKey: btApiKey,
+  // Initialize Langfuse when configured or env keys are present.
+  const publicKey = config.langfuse?.publicKey || process.env.LANGFUSE_PUBLIC_KEY;
+  const secretKey = config.langfuse?.secretKey || process.env.LANGFUSE_SECRET_KEY;
+  if (publicKey && secretKey) {
+    initLangfuse({
+      publicKey,
+      secretKey,
+      host: config.langfuse?.host || process.env.LANGFUSE_BASE_URL || process.env.LANGFUSE_HOST,
       projectName:
-        config.braintrust?.projectName ||
-        process.env.BRAINTRUST_PROJECT_NAME ||
-        process.env.BRAINTRUST_PROJECT ||
+        config.langfuse?.projectName ||
+        process.env.LANGFUSE_PROJECT_NAME ||
+        process.env.LANGFUSE_PROJECT ||
         config.serverName,
-      projectId: config.braintrust?.projectId || process.env.BRAINTRUST_PROJECT_ID,
-      enabled: config.braintrust?.enabled ?? true,
-      asyncFlush: config.braintrust?.asyncFlush ?? true,
+      enabled: config.langfuse?.enabled ?? true,
     });
   }
 
@@ -233,7 +231,7 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
         });
       }
 
-      // Braintrust — emit alongside Langfuse (best-effort, non-blocking)
+      // Langfuse — emit alongside Langfuse (best-effort, non-blocking)
       emitToolInvocation({
         serverName,
         toolName: name,
@@ -273,7 +271,7 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
         statusMessage: errorMessage
       });
 
-      // Braintrust — emit error (best-effort, non-blocking)
+      // Langfuse — emit error (best-effort, non-blocking)
       emitToolInvocation({
         serverName,
         toolName: name,
@@ -311,7 +309,7 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
   async function shutdown(): Promise<void> {
     const { shutdownObservability } = await import('./index.js');
     await shutdownObservability();
-    await shutdownBraintrust();
+    await shutdownLangfuse();
   }
 
   return {

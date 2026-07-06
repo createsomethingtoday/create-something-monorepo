@@ -18,12 +18,9 @@ type PublicTrustCardMetadata = {
 };
 
 type PublicObservability = {
-  braintrust?: {
-    project?: string;
-    experiment?: string;
-  };
   langfuse?: {
     project?: string;
+    experiment?: string;
     environment?: string;
   };
 };
@@ -99,7 +96,7 @@ type DifyAgent = {
   policy_pack: string;
   eval_suite: string;
   evals: {
-    owner_system: 'braintrust';
+    owner_system: 'langfuse';
     project?: string;
     experiment?: string;
     required_checks: string[];
@@ -724,7 +721,7 @@ function renderGeneratedDoc(cards: { mcp: PublicTrustCard[]; agents: PublicTrust
     `- Public MCP cards: ${cards.mcp.length}`,
     `- Public agent cards: ${cards.agents.length}`,
     '- Public access posture: read-only first',
-    '- Raw Braintrust traces, raw Langfuse traces, private client hubs, broad Composio surfaces, and credential references are excluded.',
+    '- Raw Langfuse traces, raw Langfuse traces, private client hubs, broad Composio surfaces, and credential references are excluded.',
     '',
     '## MCP Cards',
     '',

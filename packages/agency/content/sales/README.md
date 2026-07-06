@@ -116,4 +116,4 @@
 - Do not reduce discovery to "what do you want to connect?"
 - Do not skip risk-classification in the note template.
 - Do not produce proposals with missing approval boundaries.
-- Do not position Braintrust as the policy control plane; it is observability and eval infrastructure.
+- Do not position Langfuse as the policy control plane; it is observability and eval infrastructure.

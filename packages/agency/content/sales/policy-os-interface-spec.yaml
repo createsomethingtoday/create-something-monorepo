@@ -106,6 +106,6 @@ discovery_note_required_fields:
   - next_step_owner
   - next_step_date
 
-braintrust_positioning:
+langfuse_positioning:
   role: "observability_and_evals"
   not_role: "policy_control_plane"

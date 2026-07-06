@@ -49,7 +49,7 @@
   - `Policy OS`
 - rationale: client already has automation fragments, but failure cost is driven by missing approval boundaries and inconsistent cross-system writes
 - if MCP-only wedge recommended, list assurance trigger criteria:
-- if Braintrust or eval tooling is discussed, note it as observability only: Braintrust may be added after pilot scoping to trace approval routing and evaluate workflow regressions
+- if Langfuse or eval tooling is discussed, note it as observability only: Langfuse may be added after pilot scoping to trace approval routing and evaluate workflow regressions
 
 ---
 

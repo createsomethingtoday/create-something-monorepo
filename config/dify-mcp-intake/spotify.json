@@ -7,7 +7,7 @@
     "id": "spotify-mcp",
     "transport": "http",
     "url": "https://spotify-mcp.createsomething.workers.dev/mcp",
-    "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+    "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Langfuse telemetry",
     "tags": [
       "spotify",
       "rapidapi",

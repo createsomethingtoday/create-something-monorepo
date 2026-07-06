@@ -26,9 +26,10 @@ interface Env extends McpEnv {
   ENVIRONMENT?: string;
   TELEMETRY_DB?: D1Database;
   MCP_ACCOUNT_ID?: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_ID?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
+  LANGFUSE_HOST?: string;
 }
 
 const SERVER_NAME = 'bettermode-marketplace-creator';
@@ -55,9 +56,10 @@ export class BettermodeCreatorMcp extends McpAgent<Env> {
         SERVER_NAME,
         () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
         {
-          apiKey: this.env.BRAINTRUST_API_KEY,
-          projectName: this.env.BRAINTRUST_PROJECT_NAME?.trim() || SERVER_NAME,
-          projectId: this.env.BRAINTRUST_PROJECT_ID,
+          publicKey: this.env.LANGFUSE_PUBLIC_KEY,
+          secretKey: this.env.LANGFUSE_SECRET_KEY,
+          projectName: this.env.LANGFUSE_PROJECT_NAME?.trim() || SERVER_NAME,
+          host: this.env.LANGFUSE_HOST,
         },
       );
     }
@@ -124,7 +126,7 @@ export default {
             bearer_required: !!env.MCP_BEARER_TOKEN,
             telemetry: {
               d1: !!env.TELEMETRY_DB,
-              braintrust: !!env.BRAINTRUST_API_KEY,
+              langfuse: Boolean(env.LANGFUSE_PUBLIC_KEY && env.LANGFUSE_SECRET_KEY),
             },
           },
           null,

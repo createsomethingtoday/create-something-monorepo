@@ -135,13 +135,13 @@ test('synthesizes operator priority from health and work-source state', () => {
   ]);
 });
 
-test('preserves Braintrust source links in synthesized operator priority', () => {
+test('preserves Langfuse source links in synthesized operator priority', () => {
   const priority = synthesizeOperatorPriority({
-    braintrust: {
+    langfuse: {
       status: 'regression',
       eval_name: 'template-review-hub',
       regression_summary: 'Intent routing score dropped 12%',
-      permalink: 'https://www.braintrust.dev/app/exp/abc',
+      permalink: 'https://www.langfuse.dev/app/exp/abc',
       recommended_action: 'Review failing eval examples'
     }
   });
@@ -149,19 +149,19 @@ test('preserves Braintrust source links in synthesized operator priority', () =>
   assert.equal(priority.focus, 'template-review-hub');
   assert.equal(priority.risk, 'Intent routing score dropped 12%');
   assert.equal(priority.next_action, 'Review failing eval examples');
-  assert.equal(priority.signal, 'braintrust');
+  assert.equal(priority.signal, 'langfuse');
   assert.equal(priority.severity, 90);
   assert.equal(priority.urgent, true);
   assert.deepEqual(priority.source_links, [
     {
-      kind: 'braintrust',
+      kind: 'langfuse',
       label: 'template-review-hub',
-      url: 'https://www.braintrust.dev/app/exp/abc'
+      url: 'https://www.langfuse.dev/app/exp/abc'
     }
   ]);
 });
 
-test('keeps blocked Linear work ahead of critical Braintrust regressions', () => {
+test('keeps blocked Linear work ahead of critical Langfuse regressions', () => {
   const priority = synthesizeOperatorPriority({
     linear: {
       issues: [
@@ -174,7 +174,7 @@ test('keeps blocked Linear work ahead of critical Braintrust regressions', () =>
         }
       ]
     },
-    braintrust: {
+    langfuse: {
       status: 'critical regression',
       eval_name: 'operator-quality',
       regression_summary: 'Quality gate is failing',

@@ -141,7 +141,7 @@ Required evidence sources:
 
 - workflow logs
 - approval inbox records
-- Braintrust traces and evals if enabled
+- Langfuse traces and evals if enabled
 - incident notes
 
 Required review cadence:

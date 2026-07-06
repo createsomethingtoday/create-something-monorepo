@@ -103,12 +103,12 @@ This order should govern shared remote Hub execution even while rollout mode rem
 - Dashboard `engineHealth` reports p50/p95 latency, parity, fallback rate, decision mix, KPI projections.
 - Shared remote Hub telemetry should additionally capture route classification, quota/rate-limit outcome, retry behavior, and correlation across hub and downstream execution.
 
-### Braintrust
+### Langfuse
 
-- Decision traces are emitted when `BRAINTRUST_API_KEY` is present and tracing is enabled.
-- Treat Braintrust as observability amplification, not a control-plane dependency.
-- Braintrust auto-instrumentation MAY be used for LLM spans, agent traces, and operator debugging, but it MUST NOT replace house telemetry or explicit governance trace records for shared remote Hub execution.
-- Any Braintrust trace used for governed MCP review MUST carry explicit governance metadata when available, including `account_id`, `tenant_id`, `correlation_id`, route classification, and policy or review outcome.
+- Decision traces are emitted when `LANGFUSE_SECRET_KEY` is present and tracing is enabled.
+- Treat Langfuse as observability amplification, not a control-plane dependency.
+- Langfuse auto-instrumentation MAY be used for LLM spans, agent traces, and operator debugging, but it MUST NOT replace house telemetry or explicit governance trace records for shared remote Hub execution.
+- Any Langfuse trace used for governed MCP review MUST carry explicit governance metadata when available, including `account_id`, `tenant_id`, `correlation_id`, route classification, and policy or review outcome.
 - Trace fields and tags SHOULD stay DRY and business-legible. Prefer a small set of governance tags over transport-level tag noise.
 
 ## Operational Commands

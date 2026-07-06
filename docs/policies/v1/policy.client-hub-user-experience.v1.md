@@ -64,7 +64,7 @@ Define the canonical user-experience contract for client-facing MCP access, tran
 20. If schema-driven or generative UI is used, the generated artifact MUST be a bounded data or layout spec rendered by approved UI components, not arbitrary executable code.
 21. Dedicated client UX MUST disclose when access is blocked by legal, billing, contract, consent, or policy state, even if the credential itself still exists.
 22. Any client-facing DUI that supports write or destructive actions MUST include an explicit review or confirmation step when required by route classification or policy.
-23. Telemetry and Braintrust tracing are mandatory baseline observability controls for dedicated named lanes. They are operator-facing controls and MUST NOT expand the client-visible tool surface.
+23. Telemetry and Langfuse tracing are mandatory baseline observability controls for dedicated named lanes. They are operator-facing controls and MUST NOT expand the client-visible tool surface.
 24. When a hosted chat or concierge product is part of delivery, it MUST be implemented as a product surface separate from `.agency` control-plane routes and separate from MCP App DUI resources.
 25. Hosted chat or concierge products MUST follow [`policy.progressive-profile-governance.v1`](./policy.progressive-profile-governance.v1.md) for inferred-versus-confirmed field handling and dynamic widget selection.
 26. Client-facing Hub and MCP broker surfaces MUST use service-first discovery as the standard contract: list services first, then search tools within the chosen service, then describe and execute the selected proxy tool.

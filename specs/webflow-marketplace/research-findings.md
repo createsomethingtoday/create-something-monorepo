@@ -462,7 +462,7 @@ Based on Joey's Algorithms table pattern:
 - Architecture & Governance: When to Use Agentic AI
 - Perplexity Deep Research (January 2026):
   - pyAirtable documentation
-  - Braintrust, PromptLayer, LangFuse platforms
+  - Langfuse, PromptLayer, LangFuse platforms
   - Shopify AI customer service implementation
   - Etsy content moderation documentation
   - NAACL 2025: Confidence calibration in LLMs

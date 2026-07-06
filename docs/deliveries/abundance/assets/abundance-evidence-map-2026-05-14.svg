@@ -25,7 +25,7 @@
 <text x="96" y="475" font-size="19" fill="#0f172a">Matching agent: Agent boundary for intake,</text>
 <text x="96" y="499" font-size="19" fill="#0f172a">shortlist, and escalation</text>
 <text x="96" y="531" font-size="15" fill="#475569">ready-for-review - Judgment</text>
-<text x="660" y="475" font-size="14" fill="#334155">- evals/braintrust/dify/abundance-hub.eval.ts</text>
+<text x="660" y="475" font-size="14" fill="#334155">- evals/langfuse/dify/abundance-hub.eval.ts</text>
 <text x="660" y="497" font-size="14" fill="#334155">- config/dify-agents/abundance-hub.json</text>
 <text x="660" y="519" font-size="14" fill="#334155">- config/dify/inventory.json</text>
 </svg>

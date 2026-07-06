@@ -7,9 +7,9 @@ This package keeps the current Dify Spotify tool surface intact while moving the
 - Dify or another customer client calls `/mcp`.
 - The Worker validates the MCP API key and records the request account.
 - The MCP tool calls RapidAPI with `SPOTIFY_RAPIDAPI_KEY` or `RAPIDAPI_KEY`.
-- `@create-something/mcp-core` records D1 telemetry and optional Braintrust traces.
+- `@create-something/mcp-core` records D1 telemetry and optional Langfuse traces.
 
-Braintrust can execute evals and Braintrust-hosted functions, but in this integration it is the observability and evaluation layer, not the primary customer job runner. Customers should run production jobs through the Dify API or the MCP endpoint; Braintrust should run regression evals, experiments, review workflows, and trace analysis against those same surfaces unless we explicitly productize a Braintrust-backed job API.
+Langfuse can execute evals and Langfuse-hosted functions, but in this integration it is the observability and evaluation layer, not the primary customer job runner. Customers should run production jobs through the Dify API or the MCP endpoint; Langfuse should run regression evals, experiments, review workflows, and trace analysis against those same surfaces unless we explicitly productize a Langfuse-backed job API.
 
 ## Runtime
 
@@ -22,9 +22,9 @@ Required secrets:
 
 Optional telemetry secrets:
 
-- `BRAINTRUST_API_KEY`
-- `BRAINTRUST_PROJECT_ID`
-- `BRAINTRUST_PROJECT_NAME`
+- `LANGFUSE_SECRET_KEY`
+- `LANGFUSE_PUBLIC_KEY`
+- `LANGFUSE_PROJECT_NAME`
 
 Optional provider config:
 

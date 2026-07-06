@@ -15,7 +15,7 @@ import { McpAgent } from 'agents/mcp';
 import { enableTelemetry } from '@create-something/mcp-core';
 import { z } from 'zod';
 
-import { flush as flushBraintrust } from '@create-something/observability/braintrust';
+import { flush as flushLangfuse } from '@create-something/observability/langfuse';
 
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
@@ -41,12 +41,13 @@ interface Env {
   TELEMETRY_DB?: D1Database;
   MCP_ACCOUNT_ID?: string;
   OPENAI_API_KEY?: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
-  BRAINTRUST_ORG_NAME?: string;
-  BRAINTRUST_PROJECT_ID?: string;
-  BRAINTRUST_APP_URL?: string;
-  BRAINTRUST_ENABLED?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
+  LANGFUSE_ORG_NAME?: string;
+  LANGFUSE_APP_URL?: string;
+  LANGFUSE_HOST?: string;
+  LANGFUSE_ENABLED?: string;
   HALFDOZEN_AGENT_ROUTE_TOKEN?: string;
   HALFDOZEN_TELEMETRY_MCP_URL?: string;
   HALFDOZEN_GMAIL_MCP_URL?: string;
@@ -58,7 +59,6 @@ interface Env {
   INK_BRIDGE_TOKEN?: string;
   HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED?: string;
   HALFDOZEN_FLEET_WATCHDOG_CRON_UTC_HOURS?: string;
-  HALFDOZEN_FLEET_WATCHDOG_TIMEOUT_MS?: string;
   RESEND_API_KEY?: string;
   HALFDOZEN_AGENT_NOTIFY_EMAIL_FROM?: string;
   HALFDOZEN_AGENT_NOTIFY_EMAIL_TO?: string;
@@ -83,7 +83,7 @@ const HALFDOZEN_SLACK_COMMAND_ROUTE = '/clients/halfdozen/slack/commands';
 const HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE = 'cron:clients/halfdozen/agents/fleet-watchdog';
 const MCP_REGISTRY_SWEEP_ROUTE = '/create-something/agents/mcp-registry-sweep/run';
 const SLACK_TIMESTAMP_TOLERANCE_SECONDS = 300;
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails';
 const DEFAULT_NOTIFY_EMAIL_FROM = 'CREATE SOMETHING Ops <notifications@createsomething.io>';
 const DEFAULT_NOTIFY_EMAIL_TO = ['micah@createsomething.io'] as const;
@@ -103,7 +103,6 @@ const HALFDOZEN_TOKEN_PROTECTED_ROUTES = [
 ] as const;
 const DEFAULT_INK_BRIDGE_ORIGIN = 'https://ink.createsomething.agency';
 const DEFAULT_FLEET_WATCHDOG_CRON_UTC_HOURS = '4,13,18,23';
-const DEFAULT_FLEET_WATCHDOG_TIMEOUT_MS = 60_000;
 const DEFAULT_MCP_REGISTRY_SWEEP_CRON_UTC_HOURS = '4,13,18,23';
 const MCP_HUB_REGISTRY = registryJson as McpHubRegistry;
 const MCP_FLEET_REGISTRY = fleetJson as McpFleetRegistry;
@@ -468,14 +467,6 @@ function shouldRunFleetWatchdogCron(env: Env, scheduledTimeMs: number): boolean 
   return hours.has(new Date(scheduledTimeMs).getUTCHours());
 }
 
-function fleetWatchdogTimeoutMs(env: Env): number {
-  const parsed = Number(env.HALFDOZEN_FLEET_WATCHDOG_TIMEOUT_MS);
-  if (Number.isFinite(parsed) && parsed >= 10_000 && parsed <= 120_000) {
-    return Math.round(parsed);
-  }
-  return DEFAULT_FLEET_WATCHDOG_TIMEOUT_MS;
-}
-
 function shouldRunMcpRegistrySweepCron(env: Env, scheduledTimeMs: number): boolean {
   if (!isFlagEnabled(env.MCP_REGISTRY_SWEEP_CRON_ENABLED, true)) return false;
   const hours = parseCsvHourSet(
@@ -494,12 +485,12 @@ function inkBridgeToken(env: Env): string | undefined {
   return env.INK_SOURCE_TOKEN?.trim() || env.INK_BRIDGE_TOKEN?.trim() || undefined;
 }
 
-async function safeFlushBraintrust(context: string): Promise<void> {
+async function safeFlushLangfuse(context: string): Promise<void> {
   try {
-    await flushBraintrust();
+    await flushLangfuse();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.warn(`[observability] Braintrust flush failed during ${context}: ${message}`);
+    console.warn(`[observability] Langfuse flush failed during ${context}: ${message}`);
   }
 }
 
@@ -797,7 +788,6 @@ function buildNotificationEmail(event: NotificationEvent): {
   const scenario = isError ? event.scenario : event.result.scenario;
   const status = isError || shouldEscalate(event.result) ? 'ALERT' : 'OK';
   const title = `${status}: ${scenarioLabel(scenario)} ${event.runId}`;
-  const degradedReason = isError ? undefined : event.result.degraded_reason?.trim();
   const fields = isError
     ? [
         ['Status', status],
@@ -817,15 +807,12 @@ function buildNotificationEmail(event: NotificationEvent): {
           'Failed Servers',
           event.result.failed_servers.map((item) => item.server).join(', ') || 'none'
         ],
-        ...(degradedReason ? [['Degraded Reason', degradedReason]] : []),
         ['Duration', event.durationMs === undefined ? 'unknown' : `${event.durationMs}ms`]
       ];
 
   const summary = isError
     ? event.errorMessage
-    : [degradedReason, String(event.result.final_output ?? 'No final output.')]
-        .filter((item): item is string => Boolean(item && item.trim()))
-        .join('\n\n');
+    : String(event.result.final_output ?? 'No final output.');
   const text = `${title}\n\n${fields.map(([key, value]) => `${key}: ${value}`).join('\n')}\n\n${summary}`;
   const fieldRows = fields
     .map(([key, value]) => {
@@ -1579,7 +1566,7 @@ async function runScenarioByKey(
 
 function buildHalfDozenRunInput(
   env: Env,
-  body: AgentRouteBody | { query?: string; timeout_ms?: number }
+  body: AgentRouteBody | { query?: string }
 ): HalfDozenRouteRunInput {
   return {
     openaiApiKey: env.OPENAI_API_KEY as string,
@@ -1714,15 +1701,15 @@ async function recordNotificationTestEvidence(
   }
 }
 
-function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
-  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
-  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+function resolveLangfuseProjectName(env: { LANGFUSE_PROJECT_NAME?: string }): string {
+  const configured = env.LANGFUSE_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_LANGFUSE_PROJECT_NAME;
 }
 
-function isBraintrustRouteTracingEnabled(env: Env): boolean {
-  const enabled = env.BRAINTRUST_ENABLED?.trim().toLowerCase();
+function isLangfuseRouteTracingEnabled(env: Env): boolean {
+  const enabled = env.LANGFUSE_ENABLED?.trim().toLowerCase();
   if (enabled === 'false' || enabled === '0' || enabled === 'off') return false;
-  return Boolean(env.BRAINTRUST_API_KEY);
+  return Boolean(env.LANGFUSE_PUBLIC_KEY && env.LANGFUSE_SECRET_KEY);
 }
 
 function parseSlackCommandFields(rawBody: string): SlackCommandFields {
@@ -1785,12 +1772,12 @@ function queueSlackScenarioRun(
 
   ctx.waitUntil(
     (async () => {
-      const braintrustTracingEnabled = isBraintrustRouteTracingEnabled(env);
+      const langfuseTracingEnabled = isLangfuseRouteTracingEnabled(env);
 
       try {
         const result = await runScenarioByKey(scenario, {
           ...runInput,
-          tracingDisabled: !braintrustTracingEnabled
+          tracingDisabled: !langfuseTracingEnabled
         });
         const payload = buildSlackCompletedResponse(result, runId, route);
         try {
@@ -1799,8 +1786,8 @@ function queueSlackScenarioRun(
           console.error('Half Dozen Ink snapshot failed', error);
         }
         await postSlackResponse(responseUrl, payload);
-        if (braintrustTracingEnabled) {
-          await safeFlushBraintrust('slack scenario run');
+        if (langfuseTracingEnabled) {
+          await safeFlushLangfuse('slack scenario run');
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -1813,8 +1800,8 @@ function queueSlackScenarioRun(
           console.error('Half Dozen Ink error snapshot failed', inkError);
         }
         await postSlackResponse(responseUrl, buildSlackRunFailedResponse(scenario, runId, message));
-        if (braintrustTracingEnabled) {
-          await safeFlushBraintrust('slack scenario error');
+        if (langfuseTracingEnabled) {
+          await safeFlushLangfuse('slack scenario error');
         }
       }
     })()
@@ -1850,15 +1837,14 @@ async function runScheduledFleetWatchdog(
 
   const runInput = buildHalfDozenRunInput(env, {
     query:
-      'Scheduled fleet watchdog review. Use the standard 24-hour fleet watchdog contract and escalate degraded services or required-tool coverage failures.',
-    timeout_ms: fleetWatchdogTimeoutMs(env)
+      'Scheduled fleet watchdog review. Use the standard 24-hour fleet watchdog contract and escalate degraded services or required-tool coverage failures.'
   });
-  const braintrustTracingEnabled = isBraintrustRouteTracingEnabled(env);
+  const langfuseTracingEnabled = isLangfuseRouteTracingEnabled(env);
 
   try {
     const result = await runHalfDozenFleetWatchdog({
       ...runInput,
-      tracingDisabled: !braintrustTracingEnabled
+      tracingDisabled: !langfuseTracingEnabled
     });
     const durationMs = Date.now() - startedAt;
     await recordFleetWatchdogRunEvidence(env, {
@@ -1873,8 +1859,8 @@ async function runScheduledFleetWatchdog(
         : undefined
     });
     queueSuccessNotifications(ctx, env, result, route, runId, durationMs);
-    if (braintrustTracingEnabled) {
-      ctx.waitUntil(safeFlushBraintrust('scheduled fleet watchdog success'));
+    if (langfuseTracingEnabled) {
+      ctx.waitUntil(safeFlushLangfuse('scheduled fleet watchdog success'));
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -1888,8 +1874,8 @@ async function runScheduledFleetWatchdog(
       errorMessage: message
     });
     queueErrorNotification(ctx, env, scenario, route, runId, message, durationMs);
-    if (braintrustTracingEnabled) {
-      ctx.waitUntil(safeFlushBraintrust('scheduled fleet watchdog error'));
+    if (langfuseTracingEnabled) {
+      ctx.waitUntil(safeFlushLangfuse('scheduled fleet watchdog error'));
     }
   }
 }
@@ -1929,9 +1915,10 @@ export class PlaybookMCP extends McpAgent<Env> {
         'playbook',
         () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
         {
-          apiKey: (this.env as any).BRAINTRUST_API_KEY,
-          projectName: resolveBraintrustProjectName(this.env),
-          projectId: (this.env as any).BRAINTRUST_PROJECT_ID
+          publicKey: (this.env as any).LANGFUSE_PUBLIC_KEY,
+          secretKey: (this.env as any).LANGFUSE_SECRET_KEY,
+          projectName: resolveLangfuseProjectName(this.env),
+          host: (this.env as any).LANGFUSE_HOST
         }
       );
     }
@@ -2303,23 +2290,23 @@ export default {
 
       const baseInput = buildHalfDozenRunInput(env, body);
       const scenario = parseScenarioFromRoute(url.pathname);
-      const braintrustTracingEnabled = isBraintrustRouteTracingEnabled(env);
+      const langfuseTracingEnabled = isLangfuseRouteTracingEnabled(env);
 
       try {
         const result = await runScenarioByKey(scenario, {
           ...baseInput,
-          tracingDisabled: !braintrustTracingEnabled
+          tracingDisabled: !langfuseTracingEnabled
         });
         queueSuccessNotifications(ctx, env, result, url.pathname, runId);
-        if (braintrustTracingEnabled) {
-          ctx.waitUntil(safeFlushBraintrust('halfdozen HTTP route success'));
+        if (langfuseTracingEnabled) {
+          ctx.waitUntil(safeFlushLangfuse('halfdozen HTTP route success'));
         }
         return jsonResponse(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         queueErrorNotification(ctx, env, scenario, url.pathname, runId, message);
-        if (braintrustTracingEnabled) {
-          ctx.waitUntil(safeFlushBraintrust('halfdozen HTTP route error'));
+        if (langfuseTracingEnabled) {
+          ctx.waitUntil(safeFlushLangfuse('halfdozen HTTP route error'));
         }
         return jsonResponse(
           {

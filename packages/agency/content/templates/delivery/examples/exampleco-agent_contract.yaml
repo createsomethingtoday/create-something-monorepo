@@ -90,7 +90,7 @@ observability:
   traces_enabled: true
   evals_enabled: true
   providers:
-    - name: "Braintrust"
+    - name: "Langfuse"
       role: "observability_and_evals"
   required_audit_fields:
     - "decision"

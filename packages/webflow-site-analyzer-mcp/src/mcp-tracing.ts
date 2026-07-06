@@ -4,9 +4,9 @@ import { appendFile } from 'node:fs/promises';
 import { mcpToolMetadata, type AITaskType } from '@create-something/observability/atlas';
 import {
   emitToolInvocation,
-  initBraintrust,
-  shutdownBraintrust,
-} from '@create-something/observability/braintrust';
+  initLangfuse,
+  shutdownLangfuse,
+} from '@create-something/observability/langfuse';
 
 const SERVER_NAME = 'webflow-site-analyzer-mcp';
 const SERVER_VERSION = '1.0.0';
@@ -14,7 +14,7 @@ const SERVER_VERSION = '1.0.0';
 const TELEMETRY_ENABLED = parseBoolean(process.env.MCP_TELEMETRY_ENABLED, true);
 const TELEMETRY_PATH = normalizeString(process.env.MCP_TELEMETRY_PATH);
 
-let braintrustInitialized = false;
+let langfuseInitialized = false;
 
 export type ToolTraceContext = {
   traceId: string;
@@ -212,31 +212,35 @@ function inferAiTaskType(toolName: string): AITaskType {
 }
 
 export function initMcpTracing(): void {
-  const braintrustEnabled = parseBoolean(process.env.BRAINTRUST_ENABLED, true);
-  const braintrustApiKey = normalizeString(process.env.BRAINTRUST_API_KEY);
+  const langfuseEnabled = parseBoolean(process.env.LANGFUSE_ENABLED, true);
+  const publicKey = normalizeString(process.env.LANGFUSE_PUBLIC_KEY);
+  const secretKey = normalizeString(process.env.LANGFUSE_SECRET_KEY);
 
-  if (!braintrustEnabled || !braintrustApiKey) return;
+  if (!langfuseEnabled || !publicKey || !secretKey) return;
 
   const projectName =
-    normalizeString(process.env.BRAINTRUST_PROJECT_NAME) ??
-    normalizeString(process.env.BRAINTRUST_PROJECT) ??
+    normalizeString(process.env.LANGFUSE_PROJECT_NAME) ??
+    normalizeString(process.env.LANGFUSE_PROJECT) ??
     SERVER_NAME;
 
   try {
-    initBraintrust({
-      apiKey: braintrustApiKey,
+    initLangfuse({
+      publicKey,
+      secretKey,
       projectName,
-      projectId: normalizeString(process.env.BRAINTRUST_PROJECT_ID) ?? undefined,
+      host:
+        normalizeString(process.env.LANGFUSE_BASE_URL) ??
+        normalizeString(process.env.LANGFUSE_HOST) ??
+        undefined,
       enabled: true,
-      asyncFlush: true,
     });
-    braintrustInitialized = true;
+    langfuseInitialized = true;
   } catch (error) {
     console.warn(
-      '[telemetry] failed to initialize Braintrust tracing:',
+      '[telemetry] failed to initialize Langfuse tracing:',
       error instanceof Error ? error.message : String(error),
     );
-    braintrustInitialized = false;
+    langfuseInitialized = false;
   }
 }
 
@@ -277,7 +281,7 @@ export async function endToolTraceSuccess(
     output: outputSummary,
   });
 
-  if (!braintrustInitialized) return;
+  if (!langfuseInitialized) return;
 
   const aiTaskType = inferAiTaskType(context.toolName);
   try {
@@ -299,7 +303,7 @@ export async function endToolTraceSuccess(
     });
   } catch (error) {
     console.warn(
-      `[telemetry] braintrust emit failed for ${context.toolName}:`,
+      `[telemetry] langfuse emit failed for ${context.toolName}:`,
       error instanceof Error ? error.message : String(error),
     );
   }
@@ -319,7 +323,7 @@ export async function endToolTraceError(
     error: errorMessage,
   });
 
-  if (!braintrustInitialized) return;
+  if (!langfuseInitialized) return;
 
   const aiTaskType = inferAiTaskType(context.toolName);
   try {
@@ -342,19 +346,19 @@ export async function endToolTraceError(
     });
   } catch (error) {
     console.warn(
-      `[telemetry] braintrust emit failed for ${context.toolName}:`,
+      `[telemetry] langfuse emit failed for ${context.toolName}:`,
       error instanceof Error ? error.message : String(error),
     );
   }
 }
 
 export async function shutdownMcpTracing(): Promise<void> {
-  if (!braintrustInitialized) return;
+  if (!langfuseInitialized) return;
   try {
-    await shutdownBraintrust();
+    await shutdownLangfuse();
   } catch (error) {
     console.warn(
-      '[telemetry] braintrust shutdown failed:',
+      '[telemetry] langfuse shutdown failed:',
       error instanceof Error ? error.message : String(error),
     );
   }
