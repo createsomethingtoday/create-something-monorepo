@@ -180,6 +180,7 @@ function inspectCanonOverlayConsumerCompatibility(
 		for (const fixture of fixtures) {
 			const fixturePath = resolve(tempDir, fixture.fileName);
 			fixtureByPath.set(fixturePath, fixture);
+			fixtureByPath.set(relative(canonPackageRoot, fixturePath), fixture);
 			writeFileSync(fixturePath, fixture.source, 'utf-8');
 		}
 
@@ -231,7 +232,7 @@ function parseTypeScriptIssues(
 	for (const line of lines) {
 		const match = line.match(/^(.*?\.ts)\(\d+,\d+\):\s+error\s+TS\d+:\s+(.*)$/);
 		if (!match) continue;
-		const fixture = fixtureByPath.get(resolve(match[1]));
+		const fixture = fixtureByPath.get(resolve(match[1])) ?? fixtureByPath.get(match[1]);
 		if (!fixture) continue;
 		issues.push({
 			manifestPath: fixture.manifestPath,
