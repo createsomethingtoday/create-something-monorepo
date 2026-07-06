@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "profileId": "create-something-readonly-scout",
+  "adapter": "create-something-omnigent-a4-adapter",
+  "issue": "CRE-1062",
+  "authorityLevel": "A0",
+  "writesPerformed": 0,
+  "signal": {
+    "source": "dry-run",
+    "summary": "Prepare the first Omnigent scout trial without installing Omnigent or exposing write commands."
+  },
+  "context": {
+    "files": [
+      "AGENTS.md",
+      "docs/guides/OPERATOR_AGENT_A4_HARNESS.md",
+      "config/operator-agent/omnigent-a4-adapter.json",
+      "packages/landing-page-filter/public/a3-autonomy-proof.json"
+    ]
+  },
+  "policy": {
+    "authoritySource": "CREATE SOMETHING repo policy plus Linear approval packet",
+    "a4Execution": "blocked",
+    "omnigentRole": "transport-policy-host"
+  },
+  "action": {
+    "kind": "read-only-scout",
+    "command": "node scripts/operator-agent-omnigent-adapter.mjs check --json",
+    "writes": false
+  },
+  "validation": {
+    "commands": [
+      "node scripts/operator-agent-omnigent-adapter.mjs trial-check --json",
+      "node --test scripts/test/operator-agent-omnigent-adapter.test.mjs"
+    ]
+  },
+  "rollback": {
+    "required": false,
+    "reason": "No production, credential, billing, client, destructive, or irreversible writes are allowed in this trial."
+  },
+  "nextDecision": {
+    "recommendation": "Run one live Omnigent session with this profile only after the stacked PRs are accepted or rebased.",
+    "stopUnless": "The live session can mirror the same receipt fields to Linear."
+  },
+  "evidenceTarget": {
+    "kind": "Linear",
+    "issue": "CRE-1062"
+  },
+  "linearMirror": {
+    "issue": "CRE-1062",
+    "required": true,
+    "status": "fixture-ready"
+  }
+}

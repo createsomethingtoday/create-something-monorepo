@@ -74,12 +74,15 @@ The repo adapter manifest is:
 
 ```text
 config/operator-agent/omnigent-a4-adapter.json
+config/operator-agent/omnigent-readonly-scout.profile.json
+config/operator-agent/fixtures/omnigent-readonly-scout.receipt.json
 ```
 
 Validate it with:
 
 ```bash
 node scripts/operator-agent-omnigent-adapter.mjs check --json
+node scripts/operator-agent-omnigent-adapter.mjs trial-check --json
 node --test scripts/test/operator-agent-omnigent-adapter.test.mjs
 ```
 
@@ -87,6 +90,13 @@ The manifest deliberately exposes only A0/A1 commands until an A4 packet passes
 deterministic validation. It records Omnigent as a `transport-policy-host`:
 useful for common session APIs, policies, collaboration, and sandbox routing,
 but not a replacement for CREATE SOMETHING's authority model.
+
+The read-only scout profile is the first live-trial shape. The checked-in
+fixture proves the receipt contract before Omnigent is installed on a host:
+`signal`, `context`, `policy`, `action`, `validation`, `rollback`,
+`nextDecision`, and `evidenceTarget` must all be present, `writesPerformed`
+must stay `0`, and the receipt must mirror to Linear. A live Omnigent run that
+cannot produce the same fields stops before any write commands are exposed.
 
 Before any real high-risk action is exposed through Omnigent, validate the
 approval packet:
@@ -107,6 +117,7 @@ Run the A3 proof check and deterministic heal test before any A4 packet work:
 node scripts/operator-agent-a3-ownership-proof.mjs check --json
 node --test scripts/test/operator-agent-a3-ownership-proof.test.mjs
 node scripts/operator-agent-omnigent-adapter.mjs check --json
+node scripts/operator-agent-omnigent-adapter.mjs trial-check --json
 node --test scripts/test/operator-agent-omnigent-adapter.test.mjs
 ```
 

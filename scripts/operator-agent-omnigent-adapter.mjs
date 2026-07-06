@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_MANIFEST_PATH = 'config/operator-agent/omnigent-a4-adapter.json';
+const DEFAULT_PROFILE_PATH = 'config/operator-agent/omnigent-readonly-scout.profile.json';
+const DEFAULT_TRIAL_RECEIPT_PATH = 'config/operator-agent/fixtures/omnigent-readonly-scout.receipt.json';
 const DEFAULT_RECEIPT_DIR = '.cache/operator-agent-omnigent';
 
 const HIGH_RISK_PATTERNS = [
@@ -43,12 +45,25 @@ const REQUIRED_A4_RISKS = [
   'irreversible-data-operation',
 ];
 
+const REQUIRED_TRIAL_RECEIPT_FIELDS = [
+  'signal',
+  'context',
+  'policy',
+  'action',
+  'validation',
+  'rollback',
+  'nextDecision',
+  'evidenceTarget',
+];
+
 function parseArgs(argv) {
   const args = argv.slice(2);
   const options = {
     command: args[0] || 'check',
     manifest: DEFAULT_MANIFEST_PATH,
     packet: null,
+    profile: DEFAULT_PROFILE_PATH,
+    trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
     json: false,
     writeReceipt: true,
@@ -58,6 +73,8 @@ function parseArgs(argv) {
     const arg = args[index];
     if (arg === '--manifest' && args[index + 1]) options.manifest = args[++index];
     else if (arg === '--packet' && args[index + 1]) options.packet = args[++index];
+    else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
+    else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
     else if (arg === '--json') options.json = true;
     else if (arg === '--no-receipt') options.writeReceipt = false;
@@ -210,6 +227,92 @@ function validateApprovalPacket(packet, manifest) {
   };
 }
 
+function validateScoutProfile(profile, manifest) {
+  const errors = [];
+
+  if (profile.schemaVersion !== 1) errors.push('profile.schemaVersion must be 1');
+  if (profile.id !== 'create-something-readonly-scout') {
+    errors.push('profile.id must be create-something-readonly-scout');
+  }
+  if (profile.adapter !== manifest.id) {
+    errors.push(`profile.adapter must match manifest id ${manifest.id}`);
+  }
+  if (profile.authority?.level !== 'A0') errors.push('profile.authority.level must be A0');
+  if (profile.authority?.writes !== false) errors.push('profile.authority.writes must be false');
+  if (profile.authority?.production !== false) errors.push('profile.authority.production must be false');
+  if (profile.authority?.requiresApprovalPacket !== false) {
+    errors.push('profile.authority.requiresApprovalPacket must be false for the read-only scout');
+  }
+
+  const missingEscalations = includesAll(profile.authority?.forbiddenEscalation, [
+    'A4',
+    'production-write',
+    'credential-write',
+    'billing-change',
+    'client-production',
+    'destructive-write',
+    'irreversible-data-operation',
+  ]);
+  if (missingEscalations.length) {
+    errors.push(`profile.authority.forbiddenEscalation missing: ${missingEscalations.join(', ')}`);
+  }
+
+  const manifestCommands = new Set((manifest.allowedCommands || []).map((command) => command.command));
+  for (const command of profile.allowedCommands || []) {
+    if (commandLooksHighRisk(command)) errors.push(`profile command is high-risk: ${command}`);
+    if (!manifestCommands.has(command) && command !== 'node scripts/operator-agent-omnigent-adapter.mjs trial-check --json') {
+      errors.push(`profile command is not allowed by adapter manifest: ${command}`);
+    }
+  }
+
+  const missingReceiptFields = includesAll(profile.receiptContract?.requiredFields, REQUIRED_TRIAL_RECEIPT_FIELDS);
+  if (missingReceiptFields.length) {
+    errors.push(`profile.receiptContract.requiredFields missing: ${missingReceiptFields.join(', ')}`);
+  }
+  if (profile.receiptContract?.writesPerformed !== 0) {
+    errors.push('profile.receiptContract.writesPerformed must be 0');
+  }
+  if (profile.receiptContract?.linearMirrorIssue !== 'CRE-1062') {
+    errors.push('profile.receiptContract.linearMirrorIssue must be CRE-1062');
+  }
+
+  return errors;
+}
+
+function validateTrialReceipt(receipt, profile, manifest) {
+  const errors = [];
+
+  if (receipt.schemaVersion !== 1) errors.push('trial receipt schemaVersion must be 1');
+  if (receipt.profileId !== profile.id) errors.push(`trial receipt profileId must be ${profile.id}`);
+  if (receipt.adapter !== manifest.id) errors.push(`trial receipt adapter must be ${manifest.id}`);
+  if (receipt.authorityLevel !== 'A0') errors.push('trial receipt authorityLevel must be A0');
+  if (receipt.writesPerformed !== 0) errors.push('trial receipt writesPerformed must be 0');
+  if (receipt.issue !== 'CRE-1062') errors.push('trial receipt issue must be CRE-1062');
+
+  for (const field of REQUIRED_TRIAL_RECEIPT_FIELDS) {
+    if (!hasValue(receipt[field])) errors.push(`trial receipt missing ${field}`);
+  }
+
+  if (receipt.policy?.a4Execution !== 'blocked') {
+    errors.push('trial receipt policy.a4Execution must be blocked');
+  }
+  if (receipt.policy?.omnigentRole !== 'transport-policy-host') {
+    errors.push('trial receipt policy.omnigentRole must be transport-policy-host');
+  }
+  if (receipt.action?.writes !== false) errors.push('trial receipt action.writes must be false');
+  if (commandLooksHighRisk(receipt.action?.command)) {
+    errors.push(`trial receipt action command is high-risk: ${receipt.action.command}`);
+  }
+  if (receipt.evidenceTarget?.kind !== 'Linear' || receipt.evidenceTarget?.issue !== 'CRE-1062') {
+    errors.push('trial receipt evidenceTarget must point to Linear CRE-1062');
+  }
+  if (receipt.linearMirror?.required !== true || receipt.linearMirror?.issue !== 'CRE-1062') {
+    errors.push('trial receipt must require Linear mirror to CRE-1062');
+  }
+
+  return errors;
+}
+
 function writeReceipt(options, receipt) {
   const absoluteDir = resolveFromRoot(options.receiptDir);
   mkdirSync(absoluteDir, { recursive: true });
@@ -278,6 +381,35 @@ function commandApprovalCheck(options) {
   return result;
 }
 
+function commandTrialCheck(options) {
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const profilePath = resolveFromRoot(options.profile);
+  const receiptPath = resolveFromRoot(options.trialReceipt);
+  const profile = readJson(profilePath);
+  const trialReceipt = readJson(receiptPath);
+  const manifestValidation = validateManifest(manifest);
+  const errors = [
+    ...manifestValidation.errors,
+    ...validateScoutProfile(profile, manifest),
+    ...validateTrialReceipt(trialReceipt, profile, manifest),
+  ];
+  const result = {
+    ok: errors.length === 0,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifestPath: options.manifest,
+    profilePath: rel(profilePath),
+    trialReceiptPath: rel(receiptPath),
+    authorityLevel: trialReceipt.authorityLevel,
+    writesPerformed: trialReceipt.writesPerformed,
+    linearMirrorIssue: trialReceipt.linearMirror?.issue,
+  };
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, buildReceipt('trial-check', options, result));
+  }
+  return result;
+}
+
 function commandPrint(options) {
   return {
     ok: true,
@@ -289,6 +421,7 @@ function usage() {
   console.log(`Usage:
   node scripts/operator-agent-omnigent-adapter.mjs check [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs approval-check --packet <path> [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
 }
@@ -303,6 +436,7 @@ async function main() {
   let result;
   if (options.command === 'check') result = commandCheck(options);
   else if (options.command === 'approval-check') result = commandApprovalCheck(options);
+  else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
 
@@ -312,12 +446,17 @@ async function main() {
 
 export {
   DEFAULT_MANIFEST_PATH,
+  DEFAULT_PROFILE_PATH,
+  DEFAULT_TRIAL_RECEIPT_PATH,
   REQUIRED_A4_RISKS,
   REQUIRED_PACKET_FIELDS,
+  REQUIRED_TRIAL_RECEIPT_FIELDS,
   commandLooksHighRisk,
   parseArgs,
   validateApprovalPacket,
   validateManifest,
+  validateScoutProfile,
+  validateTrialReceipt,
 };
 
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {

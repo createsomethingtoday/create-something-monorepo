@@ -106,6 +106,7 @@
     "operator-agent:a3-proof": "node scripts/operator-agent-a3-ownership-proof.mjs",
     "operator-agent:a3-proof:test": "node --test scripts/test/operator-agent-a3-ownership-proof.test.mjs",
     "operator-agent:omnigent": "node scripts/operator-agent-omnigent-adapter.mjs",
+    "operator-agent:omnigent:trial": "node scripts/operator-agent-omnigent-adapter.mjs trial-check",
     "operator-agent:omnigent:test": "node --test scripts/test/operator-agent-omnigent-adapter.test.mjs",
     "operator-agent": "node scripts/operator-agent-system.mjs",
     "operator-agent:readiness": "node scripts/operator-agent-system.mjs readiness",
