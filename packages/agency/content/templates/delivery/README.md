@@ -37,4 +37,4 @@ Each artifact must carry the Policy OS metadata required by the canonical bundle
 - `golden_tasks.yaml` defines must-pass scenarios that prove the workflow behaves correctly before release.
 - `runbook.md` defines operating cadence, approvals, exceptions, containment, rollback, and recovery.
 
-Braintrust may be referenced only as observability and eval infrastructure, not as the policy control plane.
+Langfuse may be referenced only as observability and eval infrastructure, not as the policy control plane.

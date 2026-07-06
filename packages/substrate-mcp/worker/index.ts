@@ -231,9 +231,9 @@ export class SubstrateMCP extends McpAgent<Env> {
         'substrate-mcp',
         () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
         {
-        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        publicKey: (this.env as any).LANGFUSE_PUBLIC_KEY,
+        secretKey: (this.env as any).LANGFUSE_SECRET_KEY,
         projectName: 'substrate-mcp',
-        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
         },
       );
     }

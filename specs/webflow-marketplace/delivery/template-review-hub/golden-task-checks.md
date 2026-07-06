@@ -129,5 +129,5 @@ The workflow is considered ready for broader use only if:
 
 ## Notes
 
-- Braintrust may capture traces and eval evidence for these checks.
-- Braintrust does not enforce the approval or block decision.
+- Langfuse may capture traces and eval evidence for these checks.
+- Langfuse does not enforce the approval or block decision.

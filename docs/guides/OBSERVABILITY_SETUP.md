@@ -1,6 +1,6 @@
 # Agent Observability Setup
 
-This guide covers the observability stack for CREATE SOMETHING agents, combining Cloudflare Workers Automatic Tracing with Langfuse for governed MCP execution visibility and Braintrust for LLM and eval trace amplification.
+This guide covers the observability stack for CREATE SOMETHING agents, combining Cloudflare Workers Automatic Tracing with Langfuse for governed MCP execution visibility and Langfuse for LLM and eval trace amplification.
 
 ## Architecture
 
@@ -14,7 +14,7 @@ This guide covers the observability stack for CREATE SOMETHING agents, combining
 ┌─────────────────────────────────────────────────────────────────┐
 │                      Agent Layer                               │
 │    Langfuse + house telemetry (governed MCP execution)        │
-│    Braintrust (LLM spans, evals, operator trace amplification)│
+│    Langfuse (LLM spans, evals, operator trace amplification)│
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
@@ -312,18 +312,18 @@ For each MCP tool call, the instrumentation captures:
 
 View traces in Langfuse Dashboard -> Traces -> Filter by tag `mcp`.
 
-## Braintrust Usage Boundary
+## Langfuse Usage Boundary
 
-Braintrust is useful for:
+Langfuse is useful for:
 
 - OpenAI and Agents SDK auto-instrumentation
 - eval runs and smoke traces
 - operator-facing debugging across named lanes
 
-Braintrust is not the source of truth for policy enforcement. Shared telemetry plus explicit hub/runtime trace records remain the authoritative evidence surface for authorization, quotas, retries, and hub-to-downstream correlation.
+Langfuse is not the source of truth for policy enforcement. Shared telemetry plus explicit hub/runtime trace records remain the authoritative evidence surface for authorization, quotas, retries, and hub-to-downstream correlation.
 
 ## Related Documentation
 
 - [MCP First Thesis](../MCP_FIRST_THESIS.md) - Strategic context
-- [docs/BRAINTRUST_TRACING_QUICKSTART.md](../BRAINTRUST_TRACING_QUICKSTART.md) - Braintrust quickstart
+- [docs/LANGFUSE_TRACING_QUICKSTART.md](../LANGFUSE_TRACING_QUICKSTART.md) - Langfuse quickstart
 - [docs/HUB_EXECUTION_GOVERNANCE_PLAN.md](../HUB_EXECUTION_GOVERNANCE_PLAN.md) - Governance execution order

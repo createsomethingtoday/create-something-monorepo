@@ -107,7 +107,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `quickbooks-notion-mcp-server` | `config/dify-mcp-intake/quickbooks-notion.json` | `https://quickbooks.mcp.workway.co/mcp` | QuickBooks to Notion MCP server |
 | `schedule-mcp` | `config/dify-mcp-intake/schedule.json` | `https://schedule.mcp.createsomething.agency/mcp` | Scheduling MCP |
 | `slack-create-something` | `config/dify-mcp-intake/slack-create-something.json` | `https://mcp.slack.com/mcp` | Slack MCP for CREATE SOMETHING workspace |
-| `spotify-mcp` | `config/dify-mcp-intake/spotify.json` | `https://spotify-mcp.createsomething.workers.dev/mcp` | CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Braintrust telemetry |
+| `spotify-mcp` | `config/dify-mcp-intake/spotify.json` | `https://spotify-mcp.createsomething.workers.dev/mcp` | CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Langfuse telemetry |
 | `substrate-mcp` | `config/dify-mcp-intake/substrate.json` | `https://substrate.mcp.createsomething.agency/mcp` | Substrate execution/storage MCP |
 | `webflow-app-review-mcp` | `config/dify-mcp-intake/webflow-app-review.json` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | Webflow App Review MCP for app asset, version, and governance database workflows |
 | `webflow-local` | `config/dify-mcp-intake/webflow-local.json` | `https://webflow-mcp.createsomething.workers.dev/mcp` | Remote Webflow Marketplace MCP for plagiarism and framework analysis; kept as webflow-local for existing Hub bundle compatibility |
@@ -126,7 +126,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `halfdozen-c3-management-sync-mcp` | `https://halfdozen-c3-management-sync-mcp.createsomething.workers.dev/mcp` | Operator-invoked C3 Management Support Tickets to Half Dozen Tickets reconciliation MCP. |
 | `halfdozen-cracked-sync-mcp` | `https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp` | Operator-invoked Cracked Live Support Tickets to Half Dozen Tickets reconciliation MCP. |
 | `halfdozen-lightswitch-sync-mcp` | `https://halfdozen-lightswitch-sync-mcp.createsomething.workers.dev/mcp` | Operator-invoked Lightswitch Support Tickets to Half Dozen Tickets reconciliation MCP. |
-| `hydra-db-recall-mcp` | `https://hydra-db-recall-mcp.createsomething.workers.dev/mcp` | CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Braintrust telemetry |
+| `hydra-db-recall-mcp` | `https://hydra-db-recall-mcp.createsomething.workers.dev/mcp` | CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Langfuse telemetry |
 | `interaction-atlas-mcp` | `https://interaction-atlas-mcp.createsomething.workers.dev/mcp` | Interaction Atlas MCP for policy, workflow, and agent/MCP capability mapping |
 | `notion-halfdozen-cracked` | `https://cracked-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for Cracked |
 | `notion-halfdozen-fanpad` | `https://fanpad-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for Fanpad |

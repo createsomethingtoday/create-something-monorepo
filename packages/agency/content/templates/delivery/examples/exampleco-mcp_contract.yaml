@@ -156,7 +156,7 @@ auth:
 policy_integration:
   control_surface: "agent_contract.yaml"
   observability_surface:
-    - "Braintrust"
+    - "Langfuse"
   release_gate_dependency: "Golden tasks must prove correct mismatch handling, approval routing, and blocked destructive actions."
 
 error_model:

@@ -176,7 +176,7 @@
           "label": "Abundance Hub Dify agent",
           "status": "production-smoked",
           "source": "config/dify-agents/abundance-hub.json",
-          "role": "Dify-side job discovery agent connected to the Abundance Jobs MCP. It is now exposed on the Abundance delivery page through a server-side read-only chat panel. Production smoke and published Braintrust eval passed with streaming Service API events, jobs-tool usage, forbidden-write checks, secret refusal, and Dify/Langfuse trace IDs; credential values remain in secret storage."
+          "role": "Dify-side job discovery agent connected to the Abundance Jobs MCP. It is now exposed on the Abundance delivery page through a server-side read-only chat panel. Production smoke and published Langfuse eval passed with streaming Service API events, jobs-tool usage, forbidden-write checks, secret refusal, and Dify/Langfuse trace IDs; credential values remain in secret storage."
         }
       ],
       "coordination": {

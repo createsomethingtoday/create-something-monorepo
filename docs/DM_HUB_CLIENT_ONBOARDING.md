@@ -31,7 +31,7 @@ Before delivery:
    in docs, tickets, or chat logs.
 4. Confirm the lane can be revoked or regenerated through the canonical `.agency` or
    `identity-worker` path.
-5. Confirm telemetry and Braintrust attribution will include account, tenant, and lane
+5. Confirm telemetry and Langfuse attribution will include account, tenant, and lane
    context.
 
 ## Controlled Delivery Steps
@@ -75,7 +75,7 @@ Evidence must not include:
 - Bearer tokens.
 - Basic-auth passwords.
 - OAuth authorization codes or access tokens.
-- Raw Braintrust, Langfuse, or telemetry trace payloads containing private data.
+- Raw Langfuse, Langfuse, or telemetry trace payloads containing private data.
 - Vault paths with secret values.
 
 ## Revocation And Rotation

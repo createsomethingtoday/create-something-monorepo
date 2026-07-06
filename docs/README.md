@@ -71,6 +71,7 @@ Read in this order when you need broad repo context:
 - [MCP_CATALOG_EXPOSURE_POLICY.md](./MCP_CATALOG_EXPOSURE_POLICY.md)
 - [AGENCY_USER_PROVISIONING_POLICY.md](./AGENCY_USER_PROVISIONING_POLICY.md)
 - [policies/v1/policy.git-light-agent-delivery.v1.md](./policies/v1/policy.git-light-agent-delivery.v1.md)
+- [policies/v1/policy.operator-agent-production-lab.v1.md](./policies/v1/policy.operator-agent-production-lab.v1.md)
 
 ### Agent execution, observability, and UI legibility
 
@@ -78,15 +79,18 @@ Read in this order when you need broad repo context:
 - [guides/CODING_AGENT_HARNESS_PATTERN.md](./guides/CODING_AGENT_HARNESS_PATTERN.md)
 - [guides/SOLO_OPERATOR_AGENT_LOOP.md](./guides/SOLO_OPERATOR_AGENT_LOOP.md)
 - [guides/HERMES_AGENT_LOOP_EVALUATION.md](./guides/HERMES_AGENT_LOOP_EVALUATION.md)
+- [guides/OPERATOR_AGENT_SYSTEM.md](./guides/OPERATOR_AGENT_SYSTEM.md)
+- [guides/OPERATOR_AGENT_PUBLIC_ACCESS.md](./guides/OPERATOR_AGENT_PUBLIC_ACCESS.md)
 - [guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md](./guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md)
 - [guides/MONOREPO_DELIVERY_UPDATES.md](./guides/MONOREPO_DELIVERY_UPDATES.md)
 - [guides/G2_CLOUDFLARE_CODEX_ACCESS.md](./guides/G2_CLOUDFLARE_CODEX_ACCESS.md)
 - [guides/RECURRING_CLEANUP_LOOPS.md](./guides/RECURRING_CLEANUP_LOOPS.md)
 - [MCP_FLEET_HEALTH_AGENT.md](./MCP_FLEET_HEALTH_AGENT.md)
 - [OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md](./OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md)
+- [guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md](./guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md)
 - [guides/OBSERVABILITY_SETUP.md](./guides/OBSERVABILITY_SETUP.md)
 - [guides/UI_PREVIEW_SYSTEM.md](./guides/UI_PREVIEW_SYSTEM.md)
-- [BRAINTRUST_TRACING_QUICKSTART.md](./BRAINTRUST_TRACING_QUICKSTART.md)
+- [LANGFUSE_TRACING_QUICKSTART.md](./LANGFUSE_TRACING_QUICKSTART.md)
 
 ### MCP creation and integration patterns
 
@@ -181,7 +185,7 @@ docs/
   [OPENAI_PARTNER_READINESS_PACKET.md](./OPENAI_PARTNER_READINESS_PACKET.md),
   [guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md](./guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md),
   [OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md](./OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md),
-  [BRAINTRUST_TRACING_QUICKSTART.md](./BRAINTRUST_TRACING_QUICKSTART.md),
+  [LANGFUSE_TRACING_QUICKSTART.md](./LANGFUSE_TRACING_QUICKSTART.md),
   [guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md](./guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md)
 
 - **Working with Notion Workers or Notion API migrations**:

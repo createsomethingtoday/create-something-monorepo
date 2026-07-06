@@ -1,6 +1,6 @@
 # Dify YouTube Transcript Notion Agent
 
-Status: imported in Dify Studio, published, API smoke-tested, and covered by Braintrust evals.
+Status: imported in Dify Studio, published, API smoke-tested, and covered by Langfuse evals.
 
 ## Purpose
 
@@ -110,9 +110,9 @@ Operating rules:
 7. Treat playlist or bulk requests as batch operations: summarize the plan and ask for confirmation before performing writes.
 ```
 
-## Braintrust Eval Handoff
+## Langfuse Eval Handoff
 
-The repo includes a Braintrust eval target that calls `POST /chat-messages` with `response_mode: "streaming"` and records:
+The repo includes a Langfuse eval target that calls `POST /chat-messages` with `response_mode: "streaming"` and records:
 
 - final answer text
 - Dify `message_id`
@@ -124,18 +124,18 @@ The Dify API key should come from `DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT_API_KEY`
 
 Eval files:
 
-- `evals/braintrust/dify/shared.ts`
-- `evals/braintrust/dify/youtube-transcript-notion-agent.eval.ts`
+- `evals/langfuse/dify/shared.ts`
+- `evals/langfuse/dify/youtube-transcript-notion-agent.eval.ts`
 - `scripts/dify-youtube-transcript-agent-smoke.ts`
-- `scripts/braintrust-dify-evals.env.example`
+- `scripts/langfuse-dify-evals.env.example`
 
 Commands:
 
 ```bash
 pnpm dify:youtube-transcript:smoke
 pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent --case extract-known-video
-pnpm braintrust:eval:dify:local
-pnpm braintrust:eval:dify:youtube-transcript
+pnpm langfuse:eval:dify:local
+pnpm langfuse:eval:dify:youtube-transcript
 ```
 
 The eval resolves the Dify API key from either the local environment or Infisical:

@@ -34,10 +34,12 @@ export type InteractionAtlasEnv = {
     ABUSE_BLOCK_THRESHOLD?: string;
     ABUSE_DISTINCT_TOOLS_THRESHOLD?: string;
     ABUSE_RESPONSE_MODE?: string;
-    BRAINTRUST_PROJECT_NAME?: string;
-    BRAINTRUST_PROJECT_ID?: string;
-    BRAINTRUST_ENABLED?: string;
-    BRAINTRUST_API_KEY?: string;
+    LANGFUSE_PROJECT_NAME?: string;
+    LANGFUSE_ENABLED?: string;
+    LANGFUSE_PUBLIC_KEY?: string;
+    LANGFUSE_SECRET_KEY?: string;
+    LANGFUSE_HOST?: string;
+    LANGFUSE_BASE_URL?: string;
     DB?: D1Database;
 };
 export declare class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtlasEnv> {

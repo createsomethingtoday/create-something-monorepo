@@ -361,7 +361,7 @@ Primary evidence:
 - `docs/deliveries/abundance/2026-05-14-project-update.md`
 - `packages/agency/static/openapi-abundance.yaml`
 - `packages/agency/src/routes/api/abundance`
-- `evals/braintrust/dify/abundance-hub.eval.ts`
+- `evals/langfuse/dify/abundance-hub.eval.ts`
 - `config/dify-agents/abundance-hub.json`
 
 What it proves:

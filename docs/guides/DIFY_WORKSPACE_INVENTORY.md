@@ -158,7 +158,7 @@ For each Dify agent:
 9. Add at least one `smoke_cases` entry before setting `status: "published"`.
 10. Run the Dify inventory check and the agent's smoke/eval command.
 
-For prompt-only updates to an already published app, keep the existing Dify app in place. Do not import a replacement app or delete the existing app just to update instructions; that would rotate app identity and Service API wiring unnecessarily. If the live Instructions field contains an XML wrapper, Dify variables, output format, or examples, patch only the intended policy paragraphs and preserve the rest of the live field. If the live field is a plain compact prompt, paste the repo-owned prompt into the current app instructions. After saving the existing app, export its DSL and reconcile the snapshot back into `config/dify-agents/{agent}.dify.yml`, then run the inventory check plus that agent's smoke/eval command.
+For prompt-only updates to an already published app, keep the existing Dify app in place. Do not import a replacement app or delete the existing app just to update instructions; that would rotate app identity and Service API wiring unnecessarily. If the live Instructions field contains an XML wrapper, Dify variables, output format, or examples, patch only the intended policy paragraphs and preserve the rest of the live field. If the live field is a plain compact prompt, paste the repo-owned prompt into the current app instructions. After saving the existing app, export its DSL and reconcile the snapshot back into `config/dify-agents/{agent}.dify.yml`, then run the inventory check, that agent's smoke/eval command, and `pnpm dify:reviewer-hubs:identity-smoke` for reviewer-hub prompt changes.
 
 ## Rules
 
@@ -167,7 +167,7 @@ For prompt-only updates to an already published app, keep the existing Dify app 
 - Every enabled tool must exist in the referenced Dify MCP server entry.
 - Every write-capable tool must require explicit confirmation.
 - Every agent that enables write-capable tools must declare `write_policy: "requires_explicit_confirmation"`.
-- Every Dify agent must declare Braintrust-owned eval gates in `evals.required_checks`.
+- Every Dify agent must declare Langfuse-owned eval gates in `evals.required_checks`.
 - Every published Dify agent must declare both a local eval command and a published eval command.
 - Every Dify agent with enabled tools must cover expected tool use and forbidden tool avoidance.
 - Every Dify agent with write-capable tools must cover explicit write confirmation.
@@ -177,7 +177,7 @@ For prompt-only updates to an already published app, keep the existing Dify app 
 ## Eval And Trace Model
 
 Dify is the runtime and client-facing chat surface. Langfuse is the native trace
-surface for the Dify app runtime. Braintrust is the eval system for
+surface for the Dify app runtime. Langfuse is the eval system for
 CREATE SOMETHING-owned MCP gates. The inventory should make that split explicit
 for every agent.
 
@@ -202,8 +202,8 @@ Add stricter checks when they matter for a client or domain:
 - `tenant_isolation`
 - `error_recovery`
 
-The eval gates should be implemented by a Braintrust eval file under
-`evals/braintrust/dify/` and exposed through package scripts. Service API keys
+The eval gates should be implemented by a Langfuse eval file under
+`evals/langfuse/dify/` and exposed through package scripts. Service API keys
 must resolve from Infisical or the local process environment, never from checked-in
 files.
 
@@ -217,4 +217,4 @@ That relationship keeps the split clear:
 - `config/dify/inventory.json` says which MCP capabilities are exposed to Dify agents.
 - `config/dify-agents/*.dify.yml` carries the importable Dify app shape.
 - Langfuse traces explain what happened inside the Dify app.
-- Braintrust evals prove each CREATE SOMETHING-owned MCP boundary follows policy.
+- Langfuse evals prove each CREATE SOMETHING-owned MCP boundary follows policy.

@@ -84,6 +84,6 @@
   },
   "observability_baseline": {
     "telemetry_required_for_named_lanes": true,
-    "braintrust_required_for_named_lanes": true
+    "langfuse_required_for_named_lanes": true
   }
 }

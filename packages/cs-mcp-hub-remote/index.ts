@@ -1,4 +1,5 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { Langfuse } from 'langfuse';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
@@ -76,31 +77,6 @@ type HubState = {
   enabledBundles: string[];
   enabledServers: string[];
   disabledServers: string[];
-};
-
-type BraintrustSpan = {
-  log(payload: unknown): void;
-};
-
-type BraintrustLogger = {
-  flush(): Promise<void>;
-  traced(
-    callback: (span: BraintrustSpan) => void | Promise<void>,
-    options: { name: string; type: string },
-  ): Promise<void>;
-};
-
-type BraintrustLoggerConfig = {
-  apiKey: string;
-  projectName: string;
-  asyncFlush: boolean;
-  setCurrent: boolean;
-  projectId?: string;
-};
-
-type BraintrustModule = {
-  flush(): Promise<void>;
-  initLogger(config: BraintrustLoggerConfig): BraintrustLogger;
 };
 
 type StateResolution = {
@@ -370,10 +346,12 @@ interface Env {
   OSO_FETCH_TIMEOUT_MS?: string;
   OSO_BOOTSTRAP_POLICY?: string;
   ENGINE_FALLBACK_ENABLED?: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
-  BRAINTRUST_PROJECT_ID?: string;
-  BRAINTRUST_ENABLED?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
+  LANGFUSE_HOST?: string;
+  LANGFUSE_BASE_URL?: string;
+  LANGFUSE_ENABLED?: string;
   HUB_STATE_KV?: KVNamespace;
   TELEMETRY_DB?: D1Database;
   IDENTITY_WORKER?: Fetcher;
@@ -737,11 +715,10 @@ const discoveryPreferencesByAccount = new Map<string, DiscoveryPreferences>();
 const HUB_DISCOVERY_KV_PREFIX = 'hub_discovery_v1::';
 const DEFAULT_REQUIRED_GLOBAL_SERVERS: string[] = [];
 const DEFAULT_REQUIRED_DISCOVERY_SERVERS: string[] = [];
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 
-let braintrustUnavailableLogged = false;
-let braintrustLogger: BraintrustLogger | null = null;
-let braintrustLoggerKey: string | null = null;
+let langfuseClient: Langfuse | null = null;
+let langfuseClientKey: string | null = null;
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -5007,66 +4984,44 @@ function getCurrentPeriod(): string {
   return `${year}-${month}`;
 }
 
-async function loadBraintrustModule(): Promise<BraintrustModule | null> {
-  if (!braintrustUnavailableLogged) {
-    console.warn(`[${HUB_NAME}] braintrust disabled: package is not bundled in this worker build`);
-    braintrustUnavailableLogged = true;
-  }
-
-  return null;
-}
-
-async function getBraintrustLogger(env: Env): Promise<BraintrustLogger | null> {
-  const rawEnabled = readEnvString(env, 'BRAINTRUST_ENABLED');
+function getLangfuseClient(env: Env): Langfuse | null {
+  const rawEnabled = readEnvString(env, 'LANGFUSE_ENABLED');
   if (rawEnabled && rawEnabled.trim().toLowerCase() === 'false') {
     return null;
   }
 
-  const apiKey = readEnvString(env, 'BRAINTRUST_API_KEY')?.trim();
-  if (!apiKey) return null;
-  const braintrust = await loadBraintrustModule();
-  if (!braintrust) return null;
+  const publicKey = readEnvString(env, 'LANGFUSE_PUBLIC_KEY')?.trim();
+  const secretKey = readEnvString(env, 'LANGFUSE_SECRET_KEY')?.trim();
+  if (!publicKey || !secretKey) return null;
 
   const projectName =
-    readEnvString(env, 'BRAINTRUST_PROJECT_NAME')?.trim() || DEFAULT_BRAINTRUST_PROJECT_NAME;
-  const projectId = readEnvString(env, 'BRAINTRUST_PROJECT_ID')?.trim();
-  const nextKey = `${apiKey}::${projectId ?? ''}::${projectName}`;
+    readEnvString(env, 'LANGFUSE_PROJECT_NAME')?.trim() || DEFAULT_LANGFUSE_PROJECT_NAME;
+  const host =
+    readEnvString(env, 'LANGFUSE_BASE_URL')?.trim() ||
+    readEnvString(env, 'LANGFUSE_HOST')?.trim() ||
+    'https://us.cloud.langfuse.com';
+  const nextKey = `${publicKey}::${secretKey}::${host}::${projectName}`;
 
-  if (!braintrustLogger || braintrustLoggerKey !== nextKey) {
-    const loggerConfig: BraintrustLoggerConfig = {
-      apiKey,
-      projectName,
-      asyncFlush: true,
-      setCurrent: true,
-    };
-
-    if (projectId) {
-      (loggerConfig as Record<string, unknown>).projectId = projectId;
-    }
-
-    braintrustLogger = braintrust.initLogger(loggerConfig);
-    braintrustLoggerKey = nextKey;
+  if (!langfuseClient || langfuseClientKey !== nextKey) {
+    langfuseClient = new Langfuse({
+      publicKey,
+      secretKey,
+      baseUrl: host,
+      flushAt: 1,
+      flushInterval: 250,
+    });
+    langfuseClientKey = nextKey;
   }
 
-  return braintrustLogger;
+  return langfuseClient;
 }
 
-async function flushBraintrust(logger: BraintrustLogger): Promise<void> {
+async function flushLangfuse(client: Langfuse): Promise<void> {
   try {
-    await logger.flush();
+    await client.flushAsync();
   } catch (error) {
     console.warn(
-      `[${HUB_NAME}] braintrust logger flush failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
-
-  try {
-    const braintrust = await loadBraintrustModule();
-    if (!braintrust) return;
-    await braintrust.flush();
-  } catch (error) {
-    console.warn(
-      `[${HUB_NAME}] braintrust global flush failed: ${error instanceof Error ? error.message : String(error)}`,
+      `[${HUB_NAME}] langfuse flush failed: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
@@ -5079,104 +5034,110 @@ function enqueueWithWaitUntil(task: Promise<void>, executionCtx?: WaitUntilConte
   void task;
 }
 
-async function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): Promise<void> {
-  const logger = await getBraintrustLogger(env);
-  if (!logger) return;
+async function emitHubInvocationToLangfuse(env: Env, log: HubInvocationLog): Promise<void> {
+  const client = getLangfuseClient(env);
+  if (!client) return;
   const metadata = asRecord(log.metadata);
   try {
-    await logger.traced(
-      (span: BraintrustSpan) => {
-        span.log({
-          input: {
-            tool: log.toolName,
-            accountId: log.accountId,
-            correlationId: log.trace.correlationId,
-            requestId: log.trace.requestId,
-          },
-          output: {
-            success: log.success,
-            durationMs: Math.max(0, Math.floor(log.durationMs)),
-            error: log.errorMessage ?? null,
-          },
-          error: log.errorMessage ?? undefined,
-          tags: buildHubBraintrustTags(['mcp', HUB_NAME, log.toolName], metadata),
-          metadata: {
-            server: HUB_NAME,
-            tool: log.toolName,
-            accountId: log.accountId,
-            success: log.success,
-            durationMs: Math.max(0, Math.floor(log.durationMs)),
-            correlationId: log.trace.correlationId,
-            requestId: log.trace.requestId,
-            ...(metadata ?? {}),
-          },
-        });
+    const traceMetadata = {
+      server: HUB_NAME,
+      tool: log.toolName,
+      accountId: log.accountId,
+      success: log.success,
+      durationMs: Math.max(0, Math.floor(log.durationMs)),
+      correlationId: log.trace.correlationId,
+      requestId: log.trace.requestId,
+      ...(metadata ?? {}),
+    };
+    const trace = client.trace({
+      name: `mcp:${HUB_NAME}:${log.toolName}`,
+      userId: log.accountId,
+      input: {
+        tool: log.toolName,
+        accountId: log.accountId,
+        correlationId: log.trace.correlationId,
+        requestId: log.trace.requestId,
       },
-      {
-        name: `mcp:${HUB_NAME}:${log.toolName}`,
-        type: 'tool',
+      output: {
+        success: log.success,
+        durationMs: Math.max(0, Math.floor(log.durationMs)),
+        error: log.errorMessage ?? null,
       },
-    );
-    await flushBraintrust(logger);
+      metadata: traceMetadata,
+      tags: buildHubLangfuseTags(['mcp', HUB_NAME, log.toolName], metadata),
+    });
+    trace
+      .span({
+        name: `execute:${log.toolName}`,
+        output: traceMetadata,
+        metadata: traceMetadata,
+        level: log.success ? 'DEFAULT' : 'ERROR',
+        statusMessage: log.errorMessage ?? undefined,
+      })
+      .end();
+    await flushLangfuse(client);
   } catch (error) {
     console.warn(
-      `[${HUB_NAME}] braintrust hub emit failed: ${error instanceof Error ? error.message : String(error)}`,
+      `[${HUB_NAME}] langfuse hub emit failed: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
 
-async function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): Promise<void> {
-  const logger = await getBraintrustLogger(env);
-  if (!logger) return;
+async function emitHubRouteToLangfuse(env: Env, log: HubRouteLog): Promise<void> {
+  const client = getLangfuseClient(env);
+  if (!client) return;
   const metadata = asRecord(log.metadata);
   try {
-    await logger.traced(
-      (span: BraintrustSpan) => {
-        span.log({
-          input: {
-            downstreamServer: log.downstreamServer,
-            downstreamTool: log.downstreamTool,
-            accountId: log.accountId,
-            correlationId: log.trace.correlationId,
-            requestId: log.trace.requestId,
-          },
-          output: {
-            success: log.success,
-            durationMs: Math.max(0, Math.floor(log.durationMs)),
-            error: log.errorMessage ?? null,
-          },
-          error: log.errorMessage ?? undefined,
-          tags: buildHubBraintrustTags(
-            ['mcp', HUB_NAME, log.downstreamServer, log.downstreamTool],
-            metadata,
-          ),
-          metadata: {
-            server: HUB_NAME,
-            accountId: log.accountId,
-            downstreamServer: log.downstreamServer,
-            downstreamTool: log.downstreamTool,
-            success: log.success,
-            durationMs: Math.max(0, Math.floor(log.durationMs)),
-            correlationId: log.trace.correlationId,
-            requestId: log.trace.requestId,
-            ...(metadata ?? {}),
-          },
-        });
+    const traceMetadata = {
+      server: HUB_NAME,
+      accountId: log.accountId,
+      downstreamServer: log.downstreamServer,
+      downstreamTool: log.downstreamTool,
+      success: log.success,
+      durationMs: Math.max(0, Math.floor(log.durationMs)),
+      correlationId: log.trace.correlationId,
+      requestId: log.trace.requestId,
+      ...(metadata ?? {}),
+    };
+    const trace = client.trace({
+      name: `mcp:${log.downstreamServer}:${log.downstreamTool}`,
+      userId: log.accountId,
+      input: {
+        downstreamServer: log.downstreamServer,
+        downstreamTool: log.downstreamTool,
+        accountId: log.accountId,
+        correlationId: log.trace.correlationId,
+        requestId: log.trace.requestId,
       },
-      {
-        name: `mcp:${log.downstreamServer}:${log.downstreamTool}`,
-        type: 'tool',
+      output: {
+        success: log.success,
+        durationMs: Math.max(0, Math.floor(log.durationMs)),
+        error: log.errorMessage ?? null,
       },
-    );
-    await flushBraintrust(logger);
+      metadata: traceMetadata,
+      tags: buildHubLangfuseTags(
+        ['mcp', HUB_NAME, log.downstreamServer, log.downstreamTool],
+        metadata,
+      ),
+    });
+    trace
+      .span({
+        name: `execute:${log.downstreamServer}:${log.downstreamTool}`,
+        output: traceMetadata,
+        metadata: traceMetadata,
+        level: log.success ? 'DEFAULT' : 'ERROR',
+        statusMessage: log.errorMessage ?? undefined,
+      })
+      .end();
+    await flushLangfuse(client);
   } catch (error) {
     console.warn(
-      `[${HUB_NAME}] braintrust route emit failed: ${error instanceof Error ? error.message : String(error)}`,
+      `[${HUB_NAME}] langfuse route emit failed: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
 
-function buildHubBraintrustTags(
+function buildHubLangfuseTags(
   baseTags: string[],
   metadata: Record<string, unknown> | null,
 ): string[] {
@@ -5201,7 +5162,7 @@ async function recordHubInvocation(
   log: HubInvocationLog,
   executionCtx?: WaitUntilContext,
 ): Promise<void> {
-  enqueueWithWaitUntil(emitHubInvocationToBraintrust(env, log), executionCtx);
+  enqueueWithWaitUntil(emitHubInvocationToLangfuse(env, log), executionCtx);
 
   const db = env.TELEMETRY_DB;
   if (!db) return;
@@ -5355,7 +5316,7 @@ async function recordHubRouteInvocation(
   log: HubRouteLog,
   executionCtx?: WaitUntilContext,
 ): Promise<void> {
-  enqueueWithWaitUntil(emitHubRouteToBraintrust(env, log), executionCtx);
+  enqueueWithWaitUntil(emitHubRouteToLangfuse(env, log), executionCtx);
 
   const db = env.TELEMETRY_DB;
   if (!db) return;

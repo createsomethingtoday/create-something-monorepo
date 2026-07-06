@@ -214,7 +214,7 @@ export function getHydraDbRecallPolicy(config: HydraDbProviderConfig): HydraDbRe
     ],
     monitoring_rules: [
       'Use /health for deployment configuration status without secret values.',
-      'Use D1 and Braintrust telemetry from the wrapper for MCP invocation evidence.',
+      'Use D1 and Langfuse telemetry from the wrapper for MCP invocation evidence.',
       'Investigate upstream 401, 403, 429, and 5xx responses before widening catalog exposure.',
     ],
     retention_rules: {

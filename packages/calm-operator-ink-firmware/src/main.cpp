@@ -305,7 +305,7 @@ String normalizedBriefSignal() {
 
 String signalBadge() {
   const String signal = normalizedBriefSignal();
-  if (signal == "braintrust") return "BT";
+  if (signal == "langfuse") return "BT";
   if (signal == "linear") return "Linear";
   if (signal == "health") return "Health";
   if (signal == "codex") return "Codex";
@@ -316,7 +316,7 @@ String signalBadge() {
 
 String sourceKindLabel() {
   const String signal = normalizedBriefSignal();
-  if (signal == "braintrust") return "Braintrust";
+  if (signal == "langfuse") return "Langfuse";
   if (signal == "linear") return "Linear";
   if (signal == "health") return "Health";
   if (signal == "codex") return "Codex";

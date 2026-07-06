@@ -8,7 +8,7 @@ import {
   usedForbiddenTool,
   usedTool,
   type DifyChatInput
-} from '../evals/braintrust/dify/shared.js';
+} from '../evals/langfuse/dify/shared.js';
 
 const DEFAULT_VIDEO_URL = 'https://www.youtube.com/watch?v=sEQ1ecQq0HI';
 const DEFAULT_VIDEO_TITLE = 'What a Billion Database Rows Look Like in Real Life';

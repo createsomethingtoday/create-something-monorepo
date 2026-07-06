@@ -30,7 +30,7 @@
     "explicit_allowed_tool_prefixes_supported": true,
     "bound_host_required_for_named_lane_credentials": true,
     "telemetry_required": true,
-    "braintrust_required": true,
+    "langfuse_required": true,
     "account_attribution_required_for_observability": true,
     "white_glove_initial_delivery_allowed": true,
     "white_glove_follow_on_self_service_required": true,

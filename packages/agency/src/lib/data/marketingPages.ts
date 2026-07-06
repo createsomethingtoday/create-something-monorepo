@@ -370,7 +370,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'evaluate',
     intent: 'Show the gates that prove a Dify workflow can operate safely.',
     primaryAction: 'Request workflow teardown',
-    requiredTerms: ['Dify', 'Langfuse', 'Braintrust', 'forbidden tool', 'secret refusal'],
+    requiredTerms: ['Dify', 'Langfuse', 'eval trace', 'forbidden tool', 'secret refusal'],
     requiredLinks: ['/dify', '/dify/ship-dify-app-with-mcp-tools'],
     schema: 'article',
     search: {

@@ -1,6 +1,6 @@
 # @create-something/observability
 
-Agent observability utilities with Langfuse, Braintrust, MCP instrumentation, OpenAI Agents helpers, and AI Interaction Atlas metadata.
+Agent observability utilities with Langfuse, Langfuse, MCP instrumentation, OpenAI Agents helpers, and AI Interaction Atlas metadata.
 
 This package makes agent and MCP execution visible without making each caller hand-roll tracing vocabulary. Secrets stay in environment variables or Infisical-backed runtime injection, not in repo files.
 
@@ -9,7 +9,7 @@ This package makes agent and MCP execution visible without making each caller ha
 - `initObservability` configures Langfuse tracing when `LANGFUSE_*` keys are present.
 - `createTrace`, `createSpan`, and `createGeneration` provide direct tracing handles.
 - `createInstrumentedMcpServer` wraps MCP tool handlers and emits tool-call traces.
-- Braintrust helpers emit per-client MCP usage and governance metadata.
+- Langfuse helpers emit per-client MCP usage and governance metadata.
 - Atlas helpers standardize metadata for AI tasks, human oversight, system tasks, data artifacts, constraints, and touchpoints.
 
 ## Agent Legibility Contract
@@ -30,4 +30,4 @@ pnpm --filter @create-something/observability typecheck
 pnpm --filter @create-something/observability build
 ```
 
-Use Infisical for live Langfuse or Braintrust keys when needed.
+Use Infisical for live Langfuse or Langfuse keys when needed.

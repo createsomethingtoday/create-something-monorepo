@@ -297,8 +297,8 @@ fi
 echo "validating required secrets..."
 missing=0
 if ! require_secret HUB_SESSION_RESOLVE_TOKEN; then missing=1; fi
-if ! require_secret BRAINTRUST_API_KEY; then missing=1; fi
-if ! require_secret BRAINTRUST_PROJECT_ID; then missing=1; fi
+if ! require_secret LANGFUSE_SECRET_KEY; then missing=1; fi
+if ! require_secret LANGFUSE_PUBLIC_KEY; then missing=1; fi
 if ! require_secret HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY; then missing=1; fi
 for team_key in "${TEAM_KEYS[@]}"; do
   team_token_var="$(token_env_var_for_team "$team_key")"
@@ -327,8 +327,8 @@ for team_key in "${TEAM_KEYS[@]}"; do
   token_value="${!token_var}"
   put_secret "$HUB_TEAM_CONFIG" "$worker" "HUB_API_TOKEN" "$token_value"
   put_secret "$HUB_TEAM_CONFIG" "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
-  put_secret "$HUB_TEAM_CONFIG" "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
-  put_secret "$HUB_TEAM_CONFIG" "$worker" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"
+  put_secret "$HUB_TEAM_CONFIG" "$worker" "LANGFUSE_SECRET_KEY" "$LANGFUSE_SECRET_KEY"
+  put_secret "$HUB_TEAM_CONFIG" "$worker" "LANGFUSE_PUBLIC_KEY" "$LANGFUSE_PUBLIC_KEY"
   put_secret "$HUB_TEAM_CONFIG" "$worker" "HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY" "$HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY"
   if [[ "$team_key" == "MJ" && -n "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" ]]; then
     put_secret "$HUB_TEAM_CONFIG" "$worker" "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY"
@@ -342,8 +342,8 @@ for lane_key in "${NAMED_LANE_KEYS[@]}"; do
   token_value="${!token_var}"
   put_secret "$HUB_TEAM_CONFIG" "$worker" "HUB_API_TOKEN" "$token_value"
   put_secret "$HUB_TEAM_CONFIG" "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
-  put_secret "$HUB_TEAM_CONFIG" "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
-  put_secret "$HUB_TEAM_CONFIG" "$worker" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"
+  put_secret "$HUB_TEAM_CONFIG" "$worker" "LANGFUSE_SECRET_KEY" "$LANGFUSE_SECRET_KEY"
+  put_secret "$HUB_TEAM_CONFIG" "$worker" "LANGFUSE_PUBLIC_KEY" "$LANGFUSE_PUBLIC_KEY"
 done
 
 echo "syncing core hub worker secrets..."
@@ -354,8 +354,8 @@ if [[ -z "$core_token" ]]; then
 fi
 put_secret "$HUB_REMOTE_CONFIG" "cs-mcp-hub-remote" "HUB_API_TOKEN" "$core_token"
 put_secret "$HUB_REMOTE_CONFIG" "cs-mcp-hub-remote" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
-put_secret "$HUB_REMOTE_CONFIG" "cs-mcp-hub-remote" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
-put_secret "$HUB_REMOTE_CONFIG" "cs-mcp-hub-remote" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"
+put_secret "$HUB_REMOTE_CONFIG" "cs-mcp-hub-remote" "LANGFUSE_SECRET_KEY" "$LANGFUSE_SECRET_KEY"
+put_secret "$HUB_REMOTE_CONFIG" "cs-mcp-hub-remote" "LANGFUSE_PUBLIC_KEY" "$LANGFUSE_PUBLIC_KEY"
 put_secret "$HUB_REMOTE_CONFIG" "cs-mcp-hub-remote" "HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY" "$HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY"
 
 if [[ "$INCLUDE_BRIDGES" == "true" ]]; then

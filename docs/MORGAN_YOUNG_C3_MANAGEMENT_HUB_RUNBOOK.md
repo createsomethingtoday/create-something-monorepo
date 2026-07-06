@@ -8,7 +8,7 @@ Production runbook for the transparent named-lane Hub worker:
 - Fallback account ID: `acct_morgan_young_c3_management`
 - Lane slug / host key: `morgan-young-c3-management`
 - Allowed client surface: `notion-halfdozen-c3-management`, `composio-toolkit-gmail`, and approved search provider(s) `composio-toolkit-exa`, `composio-toolkit-perplexityai`, and/or `composio-toolkit-composio_search`
-- Observability baseline: Cloudflare telemetry + Braintrust tracing
+- Observability baseline: Cloudflare telemetry + Langfuse tracing
 - Host compatibility mode: `compat` for Notion-style bearer-auth MCP hosts
 
 References:
@@ -43,7 +43,7 @@ pnpm exec wrangler deploy \
 
 Notes:
 
-- `wrangler.team-hubs.toml` already enables telemetry D1 and `BRAINTRUST_ENABLED=true`.
+- `wrangler.team-hubs.toml` already enables telemetry D1 and `LANGFUSE_ENABLED=true`.
 - This lane intentionally overrides the template default `HUB_IDENTITY_MODE=session_required` with `compat` so Notion bearer-auth MCP connections behave like the older Half Dozen lanes.
 - Keep `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` configured in compat mode so managed bearers still resolve through `identity-worker` with bound-host and allowed-prefix enforcement.
 - `HUB_ENABLED_BUNDLES=[]` is required so the registry default `core` and `observability` bundles do not leak extra servers onto the lane.
@@ -60,8 +60,8 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 
 pnpm exec wrangler secret put HUB_API_TOKEN --name cs-hub-morgan-young-c3-management
 pnpm exec wrangler secret put HUB_SESSION_RESOLVE_TOKEN --name cs-hub-morgan-young-c3-management
-pnpm exec wrangler secret put BRAINTRUST_API_KEY --name cs-hub-morgan-young-c3-management
-pnpm exec wrangler secret put BRAINTRUST_PROJECT_ID --name cs-hub-morgan-young-c3-management
+pnpm exec wrangler secret put LANGFUSE_SECRET_KEY --name cs-hub-morgan-young-c3-management
+pnpm exec wrangler secret put LANGFUSE_PUBLIC_KEY --name cs-hub-morgan-young-c3-management
 ```
 
 ## 3) Normalize Runtime State
@@ -198,5 +198,5 @@ curl -sS -X POST https://morgan-young-c3-management.mcp.createsomething.agency/m
 Expected:
 
 - telemetry rows present for the lane worker
-- Braintrust traces emitted when `BRAINTRUST_API_KEY` is configured
+- Langfuse traces emitted when `LANGFUSE_SECRET_KEY` is configured
 - routed-call evidence includes `boundHost` or `resourceHost` equal to `morgan-young-c3-management`

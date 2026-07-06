@@ -123,7 +123,7 @@ Copy this section once per MCP.
 #### Evidence and observability
 
 - logs: `WHERE`
-- traces/evals: `BRAINTRUST_OR_OTHER`
+- traces/evals: `LANGFUSE_OR_OTHER`
 - approval record: `WHERE`
 
 ---
@@ -154,7 +154,7 @@ Use this sequence during the actual onboarding session.
 ### Part 4. Evidence and review
 
 - Show where traces are stored
-- Explain that Braintrust is for observability and evals, not policy enforcement
+- Explain that Langfuse is for observability and evals, not policy enforcement
 - Show the runbook and golden-task checks
 
 ---

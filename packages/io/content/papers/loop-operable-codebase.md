@@ -37,7 +37,7 @@ CREATE SOMETHING is already close to that shape. The monorepo has:
 - Symphony as a Linear-backed orchestration runtime for Codex workers
 - package legibility contracts for boot and smoke paths
 - policy artifacts as versioned judgment boundaries
-- Braintrust, Dify, MCP, and smoke checks as validation surfaces
+- Langfuse, Dify, MCP, and smoke checks as validation surfaces
 
 The recommendation is therefore conservative:
 

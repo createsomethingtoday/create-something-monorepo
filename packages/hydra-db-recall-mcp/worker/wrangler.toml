@@ -9,7 +9,7 @@ workers_dev = true
 enabled = true
 
 [vars]
-BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
+LANGFUSE_PROJECT_NAME = "CREATE SOMETHING"
 MCP_ACCOUNT_ID = "hydra-db-recall-agent"
 HYDRA_DB_BASE_URL = "https://api.hydradb.com"
 HYDRA_DB_SUB_TENANT_ID = "operator-recall"

@@ -34,7 +34,7 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "name": "Hydra DB Recall",
     "slug": "hydra-db-recall",
     "url": "https://hydra-db-recall-mcp.createsomething.workers.dev",
-    "description": "CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Braintrust telemetry",
+    "description": "CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Langfuse telemetry",
     "category": "create-something",
     "transports": [
       "http",
@@ -83,7 +83,7 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "name": "Spotify",
     "slug": "spotify",
     "url": "https://spotify-mcp.createsomething.workers.dev",
-    "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+    "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Langfuse telemetry",
     "category": "create-something",
     "transports": [
       "http",

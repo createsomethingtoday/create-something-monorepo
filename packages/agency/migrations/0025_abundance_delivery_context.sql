@@ -13,7 +13,7 @@ INSERT INTO canon_workflow_contexts (
 ) VALUES (
   'abundance-npg-delivery',
   'Abundance nurse staffing system',
-  'The NP Group now has a live concierge app, a repo-backed database, hardened Abundance API routes, production-smoked Staff and Jobs MCPs, an NPG scoped hub, Braintrust/Langfuse eval evidence for the Dify agent path, walkthrough artifacts, and a clear agent boundary for recruiter-led review.',
+  'The NP Group now has a live concierge app, a repo-backed database, hardened Abundance API routes, production-smoked Staff and Jobs MCPs, an NPG scoped hub, Langfuse eval evidence for the Dify agent path, walkthrough artifacts, and a clear agent boundary for recruiter-led review.',
   '{
   "engagement": {
     "client": "The NP Group / NPG",
@@ -66,12 +66,12 @@ INSERT INTO canon_workflow_contexts (
       "tier": "Automation",
       "title": "Staff, Jobs, and NPG Hub",
       "status": "Production-smoked",
-      "description": "Staff MCP, Jobs MCP, the NPG scoped hub, and Dify Abundance Hub have passed production smoke checks. The Abundance Dify agent also has a published Braintrust eval suite with Langfuse trace join keys. Credentials stay in secret storage and are not published in the delivery surface.",
+      "description": "Staff MCP, Jobs MCP, the NPG scoped hub, and Dify Abundance Hub have passed production smoke checks. The Abundance Dify agent also has a published Langfuse eval suite with Langfuse trace join keys. Credentials stay in secret storage and are not published in the delivery surface.",
       "evidence": [
         "Staff MCP",
         "Jobs MCP",
         "NPG scoped hub",
-        "Braintrust eval suite"
+        "Langfuse eval suite"
       ],
       "tone": "success"
     },
@@ -103,7 +103,7 @@ INSERT INTO canon_workflow_contexts (
       ],
       "evidence": [
         "Agent boundary",
-        "Braintrust eval suite"
+        "Langfuse eval suite"
       ],
       "allowedNextActions": [
         "Draft shortlist",
@@ -180,8 +180,8 @@ INSERT INTO canon_workflow_contexts (
       "tone": "info"
     },
     {
-      "id": "braintrust-evals",
-      "label": "Braintrust eval coverage",
+      "id": "langfuse-evals",
+      "label": "Langfuse eval coverage",
       "detail": "Published under create-something-dify-agents / abundance_hub: verifies Dify API health, Jobs MCP tool routing, forbidden writes, secret refusal, latency, and trace IDs for Langfuse inspection.",
       "source": "create-something-dify-agents / abundance_hub",
       "visibility": "private",
@@ -367,7 +367,7 @@ INSERT INTO canon_workflow_contexts (
     {
       "label": "Eval coverage",
       "value": "Published",
-      "detail": "Braintrust suite with Langfuse trace keys",
+      "detail": "Langfuse suite with trace join keys",
       "tone": "success"
     }
   ],

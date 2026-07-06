@@ -19,7 +19,7 @@ export interface PostOperatorEventOptions {
 export interface OperatorPrioritySourceLink {
   label: string;
   url?: string;
-  kind?: 'linear' | 'notion' | 'codex' | 'health' | 'braintrust' | string;
+  kind?: 'linear' | 'notion' | 'codex' | 'health' | 'langfuse' | string;
   id?: string;
 }
 
@@ -70,7 +70,7 @@ export interface OperatorPrioritySynthesisInput {
       poor?: boolean;
     }>;
   };
-  braintrust?: {
+  langfuse?: {
     status?: string;
     eval?: string;
     eval_name?: string;
@@ -93,7 +93,7 @@ export interface OperatorPrioritySynthesisInput {
 
 type OperatorPriorityHealthItem = NonNullable<NonNullable<OperatorPrioritySynthesisInput['health']>['items']>[number];
 type OperatorPriorityIssue = NonNullable<NonNullable<OperatorPrioritySynthesisInput['linear']>['issues']>[number];
-type OperatorPriorityBraintrust = NonNullable<OperatorPrioritySynthesisInput['braintrust']>;
+type OperatorPriorityLangfuse = NonNullable<OperatorPrioritySynthesisInput['langfuse']>;
 
 async function postJson<T>(url: string, token: string | undefined, body: unknown): Promise<T> {
   const headers = new Headers({ 'content-type': 'application/json' });
@@ -232,12 +232,12 @@ function sourceLinksFrom(input: OperatorPrioritySynthesisInput): OperatorPriorit
     });
   }
 
-  const braintrust = input.braintrust;
-  if (braintrust && Object.keys(braintrust).length > 0) {
+  const langfuse = input.langfuse;
+  if (langfuse && Object.keys(langfuse).length > 0) {
     links.push({
-      kind: 'braintrust',
-      label: braintrustLabel(braintrust),
-      ...(firstNonEmpty(braintrust.permalink, braintrust.url) ? { url: firstNonEmpty(braintrust.permalink, braintrust.url) } : {})
+      kind: 'langfuse',
+      label: langfuseLabel(langfuse),
+      ...(firstNonEmpty(langfuse.permalink, langfuse.url) ? { url: firstNonEmpty(langfuse.permalink, langfuse.url) } : {})
     });
   }
 
@@ -256,34 +256,34 @@ function normalizedStatus(value: string | undefined): string {
   return value?.trim().toLowerCase() ?? '';
 }
 
-function braintrustLabel(braintrust: OperatorPriorityBraintrust): string {
+function langfuseLabel(langfuse: OperatorPriorityLangfuse): string {
   return firstNonEmpty(
-    braintrust.eval_name,
-    braintrust.eval,
-    braintrust.experiment_name,
-    braintrust.experiment,
-    braintrust.name,
-    'Braintrust'
+    langfuse.eval_name,
+    langfuse.eval,
+    langfuse.experiment_name,
+    langfuse.experiment,
+    langfuse.name,
+    'Langfuse'
   );
 }
 
-function braintrustSummary(braintrust: OperatorPriorityBraintrust): string {
+function langfuseSummary(langfuse: OperatorPriorityLangfuse): string {
   return firstNonEmpty(
-    braintrust.regression_summary,
-    braintrust.failure_summary,
-    braintrust.summary,
-    braintrust.status,
+    langfuse.regression_summary,
+    langfuse.failure_summary,
+    langfuse.summary,
+    langfuse.status,
     'Quality signal needs review'
   );
 }
 
-function braintrustSeverity(braintrust: OperatorPriorityBraintrust | undefined): number {
-  if (!braintrust) return 0;
-  if (typeof braintrust.severity === 'number' && Number.isFinite(braintrust.severity)) return bounded(braintrust.severity);
+function langfuseSeverity(langfuse: OperatorPriorityLangfuse | undefined): number {
+  if (!langfuse) return 0;
+  if (typeof langfuse.severity === 'number' && Number.isFinite(langfuse.severity)) return bounded(langfuse.severity);
 
-  const status = normalizedStatus(braintrust.status);
-  const failures = countValue(braintrust.failures);
-  const regressions = countValue(braintrust.regressions);
+  const status = normalizedStatus(langfuse.status);
+  const failures = countValue(langfuse.failures);
+  const regressions = countValue(langfuse.regressions);
   if (status.includes('critical') || status.includes('block')) return 96;
   if (regressions > 0 || status.includes('regression')) return 90;
   if (failures > 0 || status.includes('fail') || status.includes('error')) return 86;
@@ -291,23 +291,23 @@ function braintrustSeverity(braintrust: OperatorPriorityBraintrust | undefined):
   return 40;
 }
 
-function hasBraintrustAttention(braintrust: OperatorPriorityBraintrust | undefined): braintrust is OperatorPriorityBraintrust {
-  if (!braintrust) return false;
-  const status = normalizedStatus(braintrust.status);
+function hasLangfuseAttention(langfuse: OperatorPriorityLangfuse | undefined): langfuse is OperatorPriorityLangfuse {
+  if (!langfuse) return false;
+  const status = normalizedStatus(langfuse.status);
   return (
-    braintrustSeverity(braintrust) >= 70 ||
-    countValue(braintrust.failures) > 0 ||
-    countValue(braintrust.regressions) > 0 ||
+    langfuseSeverity(langfuse) >= 70 ||
+    countValue(langfuse.failures) > 0 ||
+    countValue(langfuse.regressions) > 0 ||
     ['critical', 'blocked', 'regression', 'failed', 'failure', 'error', 'warning', 'degraded', 'drift'].some((part) =>
       status.includes(part)
     )
   );
 }
 
-function isCriticalBraintrust(braintrust: OperatorPriorityBraintrust | undefined): boolean {
-  if (!braintrust) return false;
-  const status = normalizedStatus(braintrust.status);
-  return braintrustSeverity(braintrust) >= 95 || status.includes('critical') || status.includes('block');
+function isCriticalLangfuse(langfuse: OperatorPriorityLangfuse | undefined): boolean {
+  if (!langfuse) return false;
+  const status = normalizedStatus(langfuse.status);
+  return langfuseSeverity(langfuse) >= 95 || status.includes('critical') || status.includes('block');
 }
 
 function urgentLinearIssue(input: OperatorPrioritySynthesisInput): OperatorPriorityIssue | undefined {
@@ -331,8 +331,8 @@ export function synthesizeOperatorPriority(input: OperatorPrioritySynthesisInput
   const sourceLinks = sourceLinksFrom(input);
   const healthItem = topHealthItem(input);
   const blockedIssue = urgentLinearIssue(input);
-  const braintrust = input.braintrust;
-  const braintrustQualityIssue = hasBraintrustAttention(braintrust) ? braintrust : undefined;
+  const langfuse = input.langfuse;
+  const langfuseQualityIssue = hasLangfuseAttention(langfuse) ? langfuse : undefined;
 
   if (blockedIssue) {
     return operatorPriorityBrief({
@@ -347,16 +347,16 @@ export function synthesizeOperatorPriority(input: OperatorPrioritySynthesisInput
     });
   }
 
-  if (braintrustQualityIssue && isCriticalBraintrust(braintrustQualityIssue)) {
+  if (langfuseQualityIssue && isCriticalLangfuse(langfuseQualityIssue)) {
     return operatorPriorityBrief({
-      focus: braintrustLabel(braintrustQualityIssue),
-      risk: braintrustSummary(braintrustQualityIssue),
-      nextAction: firstNonEmpty(braintrustQualityIssue.recommended_action, braintrustQualityIssue.action, 'Inspect the Braintrust regression'),
-      signal: 'braintrust',
-      summary: braintrustSummary(braintrustQualityIssue),
+      focus: langfuseLabel(langfuseQualityIssue),
+      risk: langfuseSummary(langfuseQualityIssue),
+      nextAction: firstNonEmpty(langfuseQualityIssue.recommended_action, langfuseQualityIssue.action, 'Inspect the Langfuse regression'),
+      signal: 'langfuse',
+      summary: langfuseSummary(langfuseQualityIssue),
       sourceLinks,
       sources: input,
-      severity: braintrustSeverity(braintrustQualityIssue),
+      severity: langfuseSeverity(langfuseQualityIssue),
       urgent: true
     });
   }
@@ -384,7 +384,7 @@ export function synthesizeOperatorPriority(input: OperatorPrioritySynthesisInput
       signal: 'linear',
       sourceLinks,
       sources: input,
-      severity: Math.max(82, braintrustQualityIssue ? Math.min(braintrustSeverity(braintrustQualityIssue), 88) : 0)
+      severity: Math.max(82, langfuseQualityIssue ? Math.min(langfuseSeverity(langfuseQualityIssue), 88) : 0)
     });
   }
 
@@ -397,7 +397,7 @@ export function synthesizeOperatorPriority(input: OperatorPrioritySynthesisInput
       signal: 'notion',
       sourceLinks,
       sources: input,
-      severity: Math.max(80, braintrustQualityIssue ? Math.min(braintrustSeverity(braintrustQualityIssue), 86) : 0)
+      severity: Math.max(80, langfuseQualityIssue ? Math.min(langfuseSeverity(langfuseQualityIssue), 86) : 0)
     });
   }
 
@@ -409,21 +409,21 @@ export function synthesizeOperatorPriority(input: OperatorPrioritySynthesisInput
       signal: 'codex',
       sourceLinks,
       sources: input,
-      severity: Math.max(78, braintrustQualityIssue ? Math.min(braintrustSeverity(braintrustQualityIssue), 84) : 0)
+      severity: Math.max(78, langfuseQualityIssue ? Math.min(langfuseSeverity(langfuseQualityIssue), 84) : 0)
     });
   }
 
-  if (braintrustQualityIssue) {
+  if (langfuseQualityIssue) {
     return operatorPriorityBrief({
-      focus: braintrustLabel(braintrustQualityIssue),
-      risk: braintrustSummary(braintrustQualityIssue),
-      nextAction: firstNonEmpty(braintrustQualityIssue.recommended_action, braintrustQualityIssue.action, 'Review Braintrust eval output'),
-      signal: 'braintrust',
-      summary: braintrustSummary(braintrustQualityIssue),
+      focus: langfuseLabel(langfuseQualityIssue),
+      risk: langfuseSummary(langfuseQualityIssue),
+      nextAction: firstNonEmpty(langfuseQualityIssue.recommended_action, langfuseQualityIssue.action, 'Review Langfuse eval output'),
+      signal: 'langfuse',
+      summary: langfuseSummary(langfuseQualityIssue),
       sourceLinks,
       sources: input,
-      severity: braintrustSeverity(braintrustQualityIssue),
-      urgent: braintrustSeverity(braintrustQualityIssue) >= 90
+      severity: langfuseSeverity(langfuseQualityIssue),
+      urgent: langfuseSeverity(langfuseQualityIssue) >= 90
     });
   }
 

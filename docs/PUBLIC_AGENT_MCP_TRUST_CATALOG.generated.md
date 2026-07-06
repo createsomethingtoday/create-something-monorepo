@@ -10,7 +10,7 @@ This catalog is the owned source of truth for public CREATE SOMETHING MCP and ag
 - Public MCP cards: 3
 - Public agent cards: 1
 - Public access posture: read-only first
-- Raw Braintrust traces, raw Langfuse traces, private client hubs, broad Composio surfaces, and credential references are excluded.
+- Raw Langfuse traces, raw Langfuse traces, private client hubs, broad Composio surfaces, and credential references are excluded.
 
 ## MCP Cards
 
@@ -33,7 +33,7 @@ This catalog is the owned source of truth for public CREATE SOMETHING MCP and ag
 - Kind: `mcp`
 - URL: `https://mcp.createsomething.ltd/mcp`
 - Policy pack: `public-readonly-mcp.v1`
-- Eval suite: `braintrust:eval:mcp:public-trust`
+- Eval suite: `langfuse:eval:mcp:public-trust`
 - Required checks: `auth_not_required`, `endpoint_reachable`, `expected_tools_present`, `grounded_content`, `latency_budget`, `no_credential_material`, `tool_call_ok`, `tools_listed`
 - Last catalog review: `2026-05-10`
 - Risk summary: Read-only public knowledge surface. No write tools, private client hubs, raw traces, or credential references are included in the public card.
@@ -51,7 +51,7 @@ This catalog is the owned source of truth for public CREATE SOMETHING MCP and ag
 - Kind: `mcp`
 - URL: `https://playbook.mcp.createsomething.ltd/mcp`
 - Policy pack: `public-playbook-mcp.v1`
-- Eval suite: `braintrust:eval:mcp:public-trust`
+- Eval suite: `langfuse:eval:mcp:public-trust`
 - Required checks: `auth_not_required`, `endpoint_reachable`, `expected_tools_present`, `grounded_content`, `latency_budget`, `no_credential_material`, `tool_call_ok`, `tools_listed`
 - Last catalog review: `2026-05-10`
 - Risk summary: Read-only workflow guidance surface. Secret-echoing config generation is excluded from the public guide agent and public snippets are generated without credential values.
@@ -69,7 +69,7 @@ This catalog is the owned source of truth for public CREATE SOMETHING MCP and ag
 - Kind: `mcp`
 - URL: `https://framework.mcp.createsomething.agency/mcp`
 - Policy pack: `public-three-tier-framework.v1`
-- Eval suite: `braintrust:eval:mcp:public-trust`
+- Eval suite: `langfuse:eval:mcp:public-trust`
 - Required checks: `auth_not_required`, `endpoint_reachable`, `expected_tools_present`, `grounded_content`, `latency_budget`, `no_credential_material`, `tool_call_ok`, `tools_listed`
 - Last catalog review: `2026-05-10`
 - Risk summary: Read-only advisory framework surface. It returns structured analysis and does not access private tenant state.
@@ -87,7 +87,7 @@ This catalog is the owned source of truth for public CREATE SOMETHING MCP and ag
 - Kind: `agent`
 - URL: `https://udify.app/chat/4uWXtN5tF5KsLg36`
 - Policy pack: `public-create-something-guide-agent.v1`
-- Eval suite: `braintrust:eval:dify:create-something-guide-agent`
+- Eval suite: `langfuse:eval:dify:create-something-guide-agent`
 - Required checks: `api_health`, `catalog_evidence_binding`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `latency_budget`, `prompt_secret_refusal`, `public_access_boundary`, `readonly_tool_surface`, `secret_refusal`, `smoke_cases_declared`
 - Last catalog review: `2026-05-10`
 - Risk summary: No write-capable tools, private client hubs, broad connector surfaces, or credential-backed MCP cards are enabled.

@@ -66,16 +66,16 @@
     {
       eyebrow: 'MCP',
       icon: 'check',
-      title: 'Braintrust gates the tool contract',
+      title: 'Langfuse scores the tool contract',
       detail:
-        'CREATE SOMETHING uses Braintrust for the MCPs we create, so expected tool use, forbidden tool use, write confirmation, and policy-boundary checks stay tied to the repo-owned contract.'
+        'CREATE SOMETHING uses Langfuse-backed evals for the MCPs we create, so expected tool use, forbidden tool use, write confirmation, and policy-boundary checks stay tied to the repo-owned contract.'
     },
     {
       eyebrow: 'Evidence',
       icon: 'folder',
-      title: 'The two traces answer different questions',
+      title: 'One evidence layer answers both questions',
       detail:
-        'Langfuse explains what happened inside the Dify app. Braintrust proves whether the MCP boundary behaved the way the workflow contract promised.'
+        'Langfuse explains what happened inside the Dify app and stores the eval evidence for whether the MCP boundary behaved the way the workflow contract promised.'
     }
   ];
 
@@ -103,11 +103,11 @@
       ]
     },
     {
-      eyebrow: 'Braintrust',
+      eyebrow: 'Langfuse',
       icon: 'document',
       title: 'MCP contract behavior',
       detail:
-        'Use Braintrust for the CREATE SOMETHING-owned MCP gates that prove the agent uses the right tools and avoids disallowed tools.',
+        'Use Langfuse-backed eval runs for the CREATE SOMETHING-owned MCP gates that prove the agent uses the right tools and avoids disallowed tools.',
       points: [
         'Evidence: eval run, expected and forbidden tool assertions',
         'Failure: revise tool contract, tool description, or policy pack'
@@ -146,7 +146,7 @@
       icon: 'check',
       title: 'Run gates before publishing',
       detail:
-        'A Dify workflow is not production-ready until Langfuse tracing is connected and the required Braintrust MCP gates pass against the current app and MCP cards.'
+        'A Dify workflow is not production-ready until Langfuse tracing is connected and the required Langfuse MCP eval gates pass against the current app and MCP cards.'
     },
     {
       eyebrow: '04',
@@ -170,7 +170,7 @@
       icon: 'folder',
       title: 'Operator evidence',
       detail:
-        'Keep Langfuse traces, Braintrust runs, account records, prompt variants, secrets, and approval receipts in the owning private system.'
+        'Keep Langfuse traces, eval runs, account records, prompt variants, secrets, and approval receipts in the owning private system.'
     },
     {
       eyebrow: 'Decision',
@@ -229,8 +229,8 @@
 
 <SEO
   title="Dify Agent Eval Gates | CREATE SOMETHING .agency"
-  description="The eval gates that make Dify safer to operate: Dify-native Langfuse traces, Braintrust MCP gates, API health, expected tool use, forbidden actions, write confirmation, secret refusal, latency, cost, and release evidence."
-  keywords="Dify agent eval gates, Dify Langfuse, Dify evals, Braintrust MCP evals, Dify MCP testing, AI agent governance, Policy OS, Dify approval gates"
+  description="The eval gates that make Dify safer to operate: Dify-native Langfuse traces, Langfuse MCP gates, API health, expected tool use, forbidden actions, write confirmation, secret refusal, latency, cost, and release evidence."
+  keywords="Dify agent eval gates, Dify Langfuse, Dify evals, Langfuse MCP evals, Dify MCP testing, AI agent governance, Policy OS, Dify approval gates"
   canonical="https://createsomething.agency/dify/agent-eval-gates"
   ogType="article"
   ogImage="/og/dify-lane.svg"
@@ -247,7 +247,7 @@
   titleLevel="h1"
   eyebrow="Dify Agent Eval Gates"
   title="The evals that make Dify safer to operate."
-  description="A Dify app becomes production-worthy when Langfuse can explain the runtime trace and Braintrust can prove the MCP contract before the workflow gets more autonomy."
+  description="A Dify app becomes production-worthy when Langfuse can explain the runtime trace and score the MCP contract before the workflow gets more autonomy."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -268,15 +268,15 @@
 
 <ClearPageSection
   variant="soft"
-  eyebrow="Trace split"
-  title="Use Langfuse for Dify traces, Braintrust for MCP gates."
-  description="Dify carries the app. Langfuse observes the Dify runtime. Braintrust evaluates the MCP contracts CREATE SOMETHING creates."
+  eyebrow="Trace and gate layer"
+  title="Use Langfuse for Dify traces and MCP gates."
+  description="Dify carries the app. Langfuse observes the Dify runtime and evaluates the MCP contracts CREATE SOMETHING creates."
 >
   {#snippet after()}
     <ClearCardGrid
       items={observabilityCards}
       columns={3}
-      ariaLabel="Dify Langfuse Braintrust observability split"
+      ariaLabel="Dify Langfuse observability and eval layer"
     />
   {/snippet}
 </ClearPageSection>
@@ -347,9 +347,7 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
     <Button href="/dify" variant="secondary">Back To Dify</Button>
-    <Button href="/dify/ship-dify-app-with-mcp-tools" variant="secondary"
-      >Read Shipping Guide</Button
-    >
+    <Button href="/dify/content-engine" variant="secondary">See Dify Page Portfolio</Button>
     <Button href="https://createsomething.io/papers/eval-evidence-layer" variant="secondary">
       Read Eval Evidence Paper
     </Button>

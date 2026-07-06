@@ -31,7 +31,7 @@ package is Dify plus the CREATE SOMETHING control layer:
 - MCP server cards and tool intake artifacts.
 - Dify DSL snapshots and compact agent manifests.
 - Infisical-backed secret references instead of prompt-buried credentials.
-- Braintrust eval suites for API health, expected tool use, forbidden tool use,
+- Langfuse eval suites for API health, expected tool use, forbidden tool use,
   secret refusal, latency budget, policy boundaries, and write confirmation.
 - Public trust evidence that shows what is safe to inspect without exposing raw
   traces, private hubs, broad connector surfaces, or credentials.
@@ -163,7 +163,7 @@ Before any proof point leaves the repo:
 2. Keep Infisical secret names only when they are already part of an approved
    public-facing evidence artifact.
 3. Use generated docs and sanitized public trust entries instead of raw
-   Braintrust, Langfuse, or Hub traces.
+   Langfuse, Langfuse, or Hub traces.
 4. Avoid naming private hubs unless the client and delivery surface are already
    approved for public use.
 5. Do not expose broad Composio or downstream tool surfaces in public copy.

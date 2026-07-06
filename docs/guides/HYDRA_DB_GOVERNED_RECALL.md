@@ -30,7 +30,7 @@ The wrapper does not expose upstream store, ingest, memory delete, knowledge del
 
 - `/health` reports auth, provider, telemetry, policy, and exposed tool status without secrets.
 - D1 telemetry records MCP invocations when `TELEMETRY_DB` is bound.
-- Braintrust telemetry is enabled when `BRAINTRUST_API_KEY` is present.
+- Langfuse telemetry is enabled when `LANGFUSE_SECRET_KEY` is present.
 - Treat upstream `401`, `403`, `429`, and `5xx` responses as production guardrail events before widening exposure.
 
 ## Retention And Delete

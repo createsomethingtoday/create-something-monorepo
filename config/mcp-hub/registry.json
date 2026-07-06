@@ -12675,16 +12675,12 @@
             "Runtime behavior must remain inside public CREATE SOMETHING source material."
           ],
           "policy_pack": "public-readonly-mcp.v1",
-          "eval_suite": "braintrust:eval:mcp:public-trust",
+          "eval_suite": "langfuse:eval:mcp:public-trust",
           "last_verified_date": "2026-05-10",
           "evidence_ref": "mcp/create-something",
           "escalation": "security@createsomething.io"
         },
         "observability": {
-          "braintrust": {
-            "project": "create-something-mcp",
-            "experiment": "create_something_public_trust"
-          },
           "langfuse": {
             "project": "create-something-mcp",
             "environment": "production"
@@ -12782,7 +12778,7 @@
       "package_path": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 11,
-      "setupNotes": "Hosted on the Half Dozen Cloudflare account. Cloudflare Worker secret is MCP_API_KEY; operator/client retrieval secret is prod:/:HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY plus BRAINTRUST_PROJECT_ID and mirrors append-only events as native-notion-agent tool spans. The D1 schema is additive and append-only in halfdozen-feedback.agent_analyzer_telemetry_events."
+      "setupNotes": "Hosted on the Half Dozen Cloudflare account. Cloudflare Worker secret is MCP_API_KEY; operator/client retrieval secret is prod:/:HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY plus LANGFUSE_PUBLIC_KEY and mirrors append-only events as native-notion-agent tool spans. The D1 schema is additive and append-only in halfdozen-feedback.agent_analyzer_telemetry_events."
     },
     "halfdozen-blondish-sync-mcp": {
       "transport": "http",
@@ -12799,7 +12795,7 @@
       "package_path": "packages/halfdozen-blondish-sync-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 8,
-      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY with sanitized tool counts and drift summaries; validate with pnpm langfuse:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
     },
     "halfdozen-c3-management-sync-mcp": {
       "transport": "http",
@@ -12816,7 +12812,7 @@
       "package_path": "packages/halfdozen-blondish-sync-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 8,
-      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY with sanitized tool counts and drift summaries; validate with pnpm langfuse:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
     },
     "halfdozen-cracked-sync-mcp": {
       "transport": "http",
@@ -12833,7 +12829,7 @@
       "package_path": "packages/halfdozen-blondish-sync-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 8,
-      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY with sanitized tool counts and drift summaries; validate with pnpm langfuse:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
     },
     "halfdozen-dm-mcp": {
       "transport": "http",
@@ -12913,7 +12909,7 @@
       "package_path": "packages/halfdozen-blondish-sync-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 8,
-      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY with sanitized tool counts and drift summaries; validate with pnpm langfuse:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
     },
     "halfdozen-operator-notion-mcp": {
       "transport": "http",
@@ -12986,7 +12982,7 @@
     "hydra-db-recall-mcp": {
       "transport": "http",
       "url": "https://hydra-db-recall-mcp.createsomething.workers.dev/mcp",
-      "description": "CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Braintrust telemetry",
+      "description": "CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Langfuse telemetry",
       "bearer_token_env_var": "HYDRA_DB_RECALL_MCP_API_KEY",
       "tags": [
         "hydradb",
@@ -13300,16 +13296,12 @@
             "Public evidence links to redacted samples only; raw traces remain private."
           ],
           "policy_pack": "public-playbook-mcp.v1",
-          "eval_suite": "braintrust:eval:mcp:public-trust",
+          "eval_suite": "langfuse:eval:mcp:public-trust",
           "last_verified_date": "2026-05-10",
           "evidence_ref": "mcp/playbook",
           "escalation": "security@createsomething.io"
         },
         "observability": {
-          "braintrust": {
-            "project": "playbook-mcp",
-            "experiment": "playbook_public_trust"
-          },
           "langfuse": {
             "project": "playbook-mcp",
             "environment": "production"
@@ -13420,7 +13412,7 @@
     "spotify-mcp": {
       "transport": "http",
       "url": "https://spotify-mcp.createsomething.workers.dev/mcp",
-      "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+      "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Langfuse telemetry",
       "bearer_token_env_var": "SPOTIFY_MCP_API_KEY",
       "tags": [
         "spotify",
@@ -13509,16 +13501,12 @@
             "The server does not grant access to private client policies or tenant data."
           ],
           "policy_pack": "public-three-tier-framework.v1",
-          "eval_suite": "braintrust:eval:mcp:public-trust",
+          "eval_suite": "langfuse:eval:mcp:public-trust",
           "last_verified_date": "2026-05-10",
           "evidence_ref": "mcp/three-tier-framework",
           "escalation": "security@createsomething.io"
         },
         "observability": {
-          "braintrust": {
-            "project": "three-tier-framework-mcp",
-            "experiment": "three_tier_framework_public_trust"
-          },
           "langfuse": {
             "project": "three-tier-framework-mcp",
             "environment": "production"

@@ -38,9 +38,16 @@ export const CANON_PAGES: CanonPage[] = [
     description: "Brand marks, 3D marks, and identity-adjacent surfaces owned by Canon.",
     content: `## What Ships Today
 
-- 3D brand mark candidates for high-fidelity product surfaces
+- \`CubeMark3D\` for high-fidelity product surfaces where the CREATE SOMETHING mark is the subject
+- \`GlassCubeScene\` for immersive brand scenes that need explicit review before production use
 - CSS support for brand icon assets
 - shared brand utilities and mark primitives
+
+## Property Usage Notes
+
+Use \`CubeMark3D\` and \`GlassCubeScene\` only on property pages where brand identity is the primary
+object being inspected or introduced. Keep these out of dense operational surfaces, admin tools,
+and proof panels unless a brand review explicitly approves the scene.
 
 ## Selection Rules
 
@@ -148,6 +155,17 @@ export const CANON_PAGES: CanonPage[] = [
 - \`ClearReceiptGrid\`: delivery evidence, artifacts, and validation receipts
 - \`ClearArtifactCard\`: one evidence object with status and link
 - \`ClearCtaBand\`: restrained next-action bands
+- \`ClearActionFooter\`: final page-level actions with proof and restraint
+- \`ClearCardGrid\`: repeated evidence cards without nested-card shells
+- \`ClearContentHighlights\`: compact highlights for claims, facts, and receipts
+- \`ClearErrorPage\`: plain-language failure state with recovery path
+- \`ClearLogoStrip\`: partner, proof, or trust marks with accessible labels
+- \`ClearMetadataRail\`: dense metadata, owners, receipts, and state facts
+- \`ClearPillarGrid\`: pillar summaries for proof-bearing systems
+- \`ClearQuoteMetricPanel\`: quote and metric pairings for validated claims
+- \`ClearSecurityPanel\`: trust, policy, and control evidence for sensitive surfaces
+- \`ClearUseCaseBand\`: use-case summaries tied to concrete next actions
+- \`ClearWorkflowMiniArtifact\`: compact artifact preview for workflow state
 
 ## When To Use Clear Components
 
@@ -203,6 +221,17 @@ standard Canon components instead.
 />
 \`\`\`
 
+## Property Usage Notes
+
+On CREATE SOMETHING properties, use \`ClearLogoStrip\` only when the relationship behind each
+logo is true and labelable. Use \`ClearContentHighlights\`, \`ClearPillarGrid\`, \`ClearUseCaseBand\`,
+and \`ClearQuoteMetricPanel\` when a claim needs nearby proof or a concrete buyer/operator use case.
+Use \`ClearSecurityPanel\` when the page needs to show policy, access, control, or compliance
+evidence. Use \`ClearMetadataRail\` and \`ClearWorkflowMiniArtifact\` for dense operational state,
+owners, receipts, and handoff metadata. Use \`ClearErrorPage\` when failure recovery must be plain
+language, visible, and actionable. Use \`ClearActionFooter\` when the final action should remain
+bounded to a named workflow, review, handoff, or governed surface.
+
 ## Copy Rules
 
 - Use nouns from the workflow: object, tool, record, tenant, bundle, policy, receipt.
@@ -224,9 +253,16 @@ standard Canon components instead.
     description: "Media, article, carousel, and editorial surfaces that can graduate into shared content patterns.",
     content: `## What Ships Today
 
-- media and carousel candidate components
+- \`TestimonialCarousel\` for verified quotes or client/customer proof that benefits from rotation
+- \`VideoLightbox\` for video evidence that should open without sending the user away from context
 - editorial content utilities that can graduate through repeated use
 - registry policy that separates reusable content patterns from property-specific content
+
+## Property Usage Notes
+
+Use \`TestimonialCarousel\` when a property has multiple verified quotes with attribution and the
+surrounding page still names the underlying proof. Use \`VideoLightbox\` when the video supports a
+claim, demo, or receipt and the user should return to the same workflow after watching.
 
 ## Selection Rules
 
@@ -526,6 +562,11 @@ standard Canon components instead.
 <p class="section-description">
 		We test each component against three questions before shipping it.
 	</p>
+<p>
+		Use <code>CatalogCard</code> for catalog entries with a clear destination and proof summary.
+		Use <code>CrossPropertyLink</code> when a route intentionally moves the user between CREATE
+		SOMETHING properties and the destination must remain explicit.
+	</p>
 <div class="principles-grid">
 <div class="principle-item">
 <h3>One Pattern, One Place</h3>
@@ -583,8 +624,14 @@ standard Canon components instead.
     content: `## What Ships Today
 
 - key insight candidates
-- statement text candidates
-- insight card candidates
+- \`StatementText\` candidates for extracted operating claims, judgment rules, or proof statements
+- \`KeyInsightCard\` candidates for source-backed findings that need to be scanned or shared
+
+## Property Usage Notes
+
+Use \`KeyInsightCard\` and \`StatementText\` on property pages where a claim is stronger when it is
+pulled out as a named proof object. They should point back to the source, metric, command output,
+receipt, or policy record that makes the statement true.
 
 ## Selection Rules
 
@@ -605,10 +652,16 @@ standard Canon components instead.
     description: "Interactive candidates and effects that require explicit review before stable promotion.",
     content: `## What Ships Today
 
-- contextual disclosure candidates
-- integration flow candidates
+- \`HoverCard\` contextual disclosure candidates for optional detail with a persistent equivalent
+- \`IntegrationFlow\` candidates for tool, system, or MCP connection sequences
 - authoring and timeline candidates
 - decorative effects that remain classified out
+
+## Property Usage Notes
+
+Use \`HoverCard\` only when hover/focus reveals supporting detail and the page still works without
+that disclosure. Use \`IntegrationFlow\` when a property needs to show how tools, MCP servers,
+policies, approvals, and receipts connect across a workflow.
 
 ## Selection Rules
 
@@ -659,6 +712,16 @@ standard Canon components instead.
 - \`Footer\`: property directory, grouped links, newsletter, legal, and cross-property links
 - \`Breadcrumbs\`: hierarchical wayfinding with optional home icon
 - \`Tabs\`: WAI-ARIA tab panels with keyboard navigation and bindable active state
+- \`Pagination\`: page-count navigation for result sets and archives
+- \`Tooltip\`: small accessible hints for icon or dense controls
+- \`Popover\`: contextual panels that stay attached to a trigger
+- \`DropdownMenu\`: compact grouped commands with keyboard behavior
+- \`Drawer\`: contained side-panel navigation for focused tasks
+- \`StickyHeader\`: route-aware header for long property pages
+- \`MobileDrawer\`: mobile navigation shell paired with \`MenuButton\`
+- \`MenuButton\`: explicit open/close trigger for navigation drawers
+- \`MegaMenu\`: broad grouped navigation for property and system maps
+- \`CommandPalette\`: keyboard-first navigation and command search
 
 ## Primary Navigation Example
 
@@ -760,6 +823,14 @@ The clear navigation and footer are designed to pair with:
   {/snippet}
 </Tabs>
 \`\`\`
+
+## Navigation Patterns
+
+Use \`DropdownMenu\`, \`Popover\`, and \`Tooltip\` only when the trigger remains visible and the
+relationship between trigger and panel is obvious. Use \`Drawer\`, \`MobileDrawer\`, \`MenuButton\`,
+and \`StickyHeader\` for property navigation that must remain scannable across mobile and desktop.
+Use \`MegaMenu\` and \`CommandPalette\` when a property has enough routes or commands that search,
+grouping, or keyboard-first navigation reduces friction.
 
 ## Design Guidance
 
@@ -3668,8 +3739,8 @@ Before publishing or reusing an image:
 - The asset has source prompt, model, date, owner, target surface, and refresh date.
 - The result feels like governed operations, not generic AI atmosphere.
 
-Use deterministic repo checks as the required gate for this workflow. Braintrust
-is not required to generate, store, or approve image assets. Add Braintrust later
+Use deterministic repo checks as the required gate for this workflow. Langfuse
+is not required to generate, store, or approve image assets. Add Langfuse later
 only if CREATE SOMETHING needs a scored rubric across many generated images,
 prompt variants, or approval outcomes.
 

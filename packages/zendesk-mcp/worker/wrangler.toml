@@ -5,7 +5,7 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
+LANGFUSE_PROJECT_NAME = "CREATE SOMETHING"
 WEBFLOW_ZENDESK_SUBDOMAIN = "webflow2579"
 
 # Required secrets, set via Infisical-backed env or wrangler secret put:
@@ -25,8 +25,8 @@ WEBFLOW_ZENDESK_SUBDOMAIN = "webflow2579"
 # - ZENDESK_TIMEOUT_MS=20000
 #
 # Optional telemetry:
-# - BRAINTRUST_API_KEY
-# - BRAINTRUST_PROJECT_ID
+# - LANGFUSE_SECRET_KEY
+# - LANGFUSE_PUBLIC_KEY
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"

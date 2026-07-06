@@ -62,9 +62,9 @@ export class CreateSomethingMCP extends McpAgent<Env> {
         'create-something',
         () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
         {
-        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        publicKey: (this.env as any).LANGFUSE_PUBLIC_KEY,
+        secretKey: (this.env as any).LANGFUSE_SECRET_KEY,
         projectName: 'create-something',
-        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
         },
       );
     }

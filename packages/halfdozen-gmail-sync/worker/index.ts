@@ -19,8 +19,9 @@ interface Env {
   NOTION_API_KEY: string;
   NOTION_INTERACTIONS_DB_ID: string;
   NOTION_CONTACTS_DB_ID: string;
-  BRAINTRUST_API_KEY?: string;
-  BRAINTRUST_PROJECT_NAME?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_PROJECT_NAME?: string;
   AUTHORIZED_EMAIL: string;        // The single user this instance serves
   TEAM_EMAILS?: string;            // Optional: full team list for direction detection
   ADMIN_SECRET?: string;
@@ -76,11 +77,11 @@ interface Automation {
 // Gmail API helpers
 // ═══════════════════════════════════════════════════════════════
 const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me';
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 
-function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
-  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
-  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+function resolveLangfuseProjectName(env: { LANGFUSE_PROJECT_NAME?: string }): string {
+  const configured = env.LANGFUSE_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_LANGFUSE_PROJECT_NAME;
 }
 
 const OAUTH_SCOPES = [
@@ -801,9 +802,9 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.FEEDBACK_DB) {
       enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-gmail-sync', undefined, {
-        apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: resolveBraintrustProjectName(this.env),
-        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
+        publicKey: (this.env as any).LANGFUSE_PUBLIC_KEY,
+        secretKey: (this.env as any).LANGFUSE_SECRET_KEY,
+        projectName: resolveLangfuseProjectName(this.env),
       });
     }
 

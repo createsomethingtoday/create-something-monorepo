@@ -47,10 +47,10 @@ function createServer(env: Env): McpServer {
 
   if (env.TELEMETRY_DB) {
     enableTelemetry(server, env.TELEMETRY_DB, SERVER_NAME, () => resolveTelemetryAccountId(env), {
-      apiKey: env.BRAINTRUST_API_KEY,
-      projectName: env.BRAINTRUST_PROJECT_NAME ?? SERVER_NAME,
-      projectId: env.BRAINTRUST_PROJECT_ID,
-      enabled: env.BRAINTRUST_ENABLED ? env.BRAINTRUST_ENABLED !== 'false' : true,
+      publicKey: env.LANGFUSE_PUBLIC_KEY,
+      secretKey: env.LANGFUSE_SECRET_KEY,
+      projectName: env.LANGFUSE_PROJECT_NAME ?? SERVER_NAME,
+      enabled: env.LANGFUSE_ENABLED ? env.LANGFUSE_ENABLED !== 'false' : true,
     });
   }
 

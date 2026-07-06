@@ -102,9 +102,9 @@ Check the delivery image prompt contract:
 node --test scripts/test/delivery-update.test.mjs
 ```
 
-Braintrust is intentionally not part of this Image 2 path. The required gate is
+Langfuse is intentionally not part of this Image 2 path. The required gate is
 deterministic: repo manifest validation, the prompt-contract test, generated
-prompt files, and the Canon guideline. Introduce Braintrust only if the image
+prompt files, and the Canon guideline. Introduce Langfuse only if the image
 program needs rubric scoring across batches of generated assets or prompt
 variants.
 
@@ -173,4 +173,4 @@ For generated images:
 - keep deterministic SVG/PNG evidence available as fallback
 - do not rely on generated text for exact file paths or operational facts
 - do not downgrade to another model if `gpt-image-2` access is blocked
-- do not require Braintrust unless there is a separate scored image-quality rubric
+- do not require Langfuse unless there is a separate scored image-quality rubric

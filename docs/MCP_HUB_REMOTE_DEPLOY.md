@@ -394,7 +394,7 @@ Named-lane delivery baseline:
 
 - public URL naming uses `<person-slug>-<client-slug>`
 - strict sessions and managed bearer tokens may carry `bound_host`
-- telemetry and Braintrust tracing are baseline operator observability for dedicated named lanes
+- telemetry and Langfuse tracing are baseline operator observability for dedicated named lanes
 
 Policy telemetry fields for admin actions:
 

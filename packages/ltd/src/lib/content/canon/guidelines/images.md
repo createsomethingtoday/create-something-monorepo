@@ -105,8 +105,8 @@ Before publishing or reusing an image:
 - The asset has source prompt, model, date, owner, target surface, and refresh date.
 - The result feels like governed operations, not generic AI atmosphere.
 
-Use deterministic repo checks as the required gate for this workflow. Braintrust
-is not required to generate, store, or approve image assets. Add Braintrust later
+Use deterministic repo checks as the required gate for this workflow. Langfuse
+is not required to generate, store, or approve image assets. Add Langfuse later
 only if CREATE SOMETHING needs a scored rubric across many generated images,
 prompt variants, or approval outcomes.
 

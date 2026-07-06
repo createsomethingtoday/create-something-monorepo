@@ -87,7 +87,7 @@ The home brief is intentionally one-glance:
 
 The source/detail screen shows the signal family, generated age, source/alert
 counts, and the strongest source label or link label that fits on the e-ink
-surface. Braintrust appears here as quality/eval evidence, not as the policy or
+surface. Langfuse appears here as quality/eval evidence, not as the policy or
 work source of truth.
 
 The menu shows the current bucket and position, for example `Operator 1/10`.

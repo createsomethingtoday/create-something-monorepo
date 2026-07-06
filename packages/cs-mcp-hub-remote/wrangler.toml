@@ -29,14 +29,15 @@ HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 # - "session_required" (default): requires X-MCP-Session-Token + resolver config
 # - "compat": keeps legacy header/bearer fallback identity behavior
 # HUB_IDENTITY_MODE = "session_required"
-# Optional Braintrust project name (falls back to "CREATE SOMETHING")
-# BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
-# Optional explicit Braintrust project id
-# BRAINTRUST_PROJECT_ID = ""
-# Optional explicit switch; set to "false" to disable Braintrust emission
-# BRAINTRUST_ENABLED = "true"
+# Optional Langfuse project name (falls back to "CREATE SOMETHING")
+# LANGFUSE_PROJECT_NAME = "CREATE SOMETHING"
+# Optional Langfuse public key; required with LANGFUSE_SECRET_KEY for trace export.
+# LANGFUSE_PUBLIC_KEY = ""
+# Optional explicit switch; set to "false" to disable Langfuse emission
+# LANGFUSE_ENABLED = "true"
 # Set secret at deploy-time:
-# wrangler secret put BRAINTRUST_API_KEY
+# wrangler secret put LANGFUSE_SECRET_KEY
+# wrangler secret put LANGFUSE_PUBLIC_KEY
 
 # Optional. If set, /mcp requires Authorization: Bearer <token>
 # HUB_API_TOKEN = ""
