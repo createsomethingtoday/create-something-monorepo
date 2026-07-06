@@ -19,9 +19,15 @@ describe('Canon library health', () => {
 		expect(() => assertCanonLibraryHealthReport(report)).not.toThrow();
 		expect(report.registry).toMatchObject({
 			totalItems: 130,
-			stableItems: 54,
-			candidateItems: 76,
+			stableItems: 123,
+			candidateItems: 7,
 			experimentalItems: 0
+		});
+		expect(report.components).toMatchObject({
+			total: 120,
+			stable: 120,
+			candidate: 0,
+			experimental: 0
 		});
 		expect(report.publicExports.registryCovered).toBeGreaterThan(0);
 		expect(report.publicExports.candidateReview).toBeGreaterThan(0);
@@ -54,6 +60,7 @@ describe('Canon library health', () => {
 		expect(rendered).toContain('## Candidate-review Backlog');
 		expect(rendered).toContain('stable-foundation-candidate');
 		expect(rendered).toContain('## Promotion Priorities');
+		expect(rendered).toContain('Component registry candidates: 0');
 		expect(rendered).toContain('UI files needing Canon decision: 0');
 		expect(rendered).toContain('Keep Node-backed health and codification APIs on explicit subpath exports only.');
 	});

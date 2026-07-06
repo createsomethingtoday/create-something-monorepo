@@ -567,6 +567,22 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Modality readiness report audits web, chat, app, voice, and glasses implementation evidence from registry and overlay inventory."
   },
   {
+    "exportPath": "./codification",
+    "classification": "registry-artifact",
+    "registryPolicy": "registry-covered",
+    "registryItemIds": [
+      "template.canon-project-overlay-manifest",
+      "template.canon-extension-intake"
+    ],
+    "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption."
+  },
+  {
+    "exportPath": "./library-health",
+    "classification": "registry-artifact",
+    "registryPolicy": "candidate-review",
+    "rationale": "Library health aggregates registry, export policy, overlays, modalities, and codification; add a dedicated registry item before calling it stable."
+  },
+  {
     "exportPath": "./overlays/project-template",
     "classification": "registry-artifact",
     "registryPolicy": "registry-covered",

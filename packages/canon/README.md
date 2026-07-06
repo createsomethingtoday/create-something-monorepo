@@ -398,10 +398,12 @@ inventory, modality readiness, and repo-wide codification audit. It is intention
 `@create-something/canon/library-health`, not the root browser-facing Canon barrel, because it
 depends on Node-backed repo scanners.
 
-Treat `candidate-review` output as the promotion backlog, not as a failing state. A candidate
-becomes stable only after Canon owns export path, docs, focused tests, compatibility notes, and
-registry routing. The health command fails only when the foundation has actual blockers such as
-not-ready overlays, modality gaps, or UI files with `needs-canon-decision`.
+Treat `candidate-review` output as the promotion backlog, not as a failing state. Public exports
+remain in that backlog until Canon owns export path, docs, focused tests, compatibility notes, and
+registry routing. Component registry items are a stricter foundation contract: every Canon
+component must be stable and must not carry the `candidate` tag. The health command fails when the
+foundation has actual blockers such as non-stable components, not-ready overlays, modality gaps, or
+UI files with `needs-canon-decision`.
 
 ## Atlas Graph And Story Primitives
 

@@ -17,6 +17,7 @@ import {
 	type CanonPublicExportRegistryPolicy
 } from '../registry/index.js';
 import type {
+	CanonRegistryManifest,
 	CanonProjectOverlayInventory,
 	CanonRegistryKind,
 	CanonRegistryMaturity
@@ -47,6 +48,12 @@ export type CanonLibraryHealthReport = {
 		stableItems: number;
 		candidateItems: number;
 		experimentalItems: number;
+	};
+	components: {
+		total: number;
+		stable: number;
+		candidate: number;
+		experimental: number;
 	};
 	publicExports: {
 		totalPolicies: number;
@@ -91,10 +98,17 @@ async function buildCanonLibraryHealthReportInternal(
 	});
 	const codification = await buildCanonCodificationAuditReport(root);
 	const publicExportRules = CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES;
+	const registryItems = CANON_REGISTRY_MANIFEST.items;
+	const componentItems = registryItems.filter((item) => item.kind === 'component');
 	const candidateRules = publicExportRules.filter(
 		(rule) => rule.registryPolicy === 'candidate-review'
 	);
-	const blockers = getHealthBlockers({ overlayInventory, modalityReadiness, codification });
+	const blockers = getHealthBlockers({
+		overlayInventory,
+		modalityReadiness,
+		codification,
+		componentItems
+	});
 
 	return {
 		schemaVersion: 1,
@@ -105,16 +119,18 @@ async function buildCanonLibraryHealthReportInternal(
 		description:
 			'Agent-readable Canon library health report combining registry maturity, public export policy, overlay readiness, modality readiness, and repo-wide UI codification.',
 		registry: {
-			totalItems: CANON_REGISTRY_MANIFEST.items.length,
-			byKind: countBy(CANON_REGISTRY_MANIFEST.items, (item) => item.kind, 'kind'),
-			byMaturity: countBy(CANON_REGISTRY_MANIFEST.items, (item) => item.maturity, 'maturity'),
-			stableItems: CANON_REGISTRY_MANIFEST.items.filter((item) => item.maturity === 'stable')
-				.length,
-			candidateItems: CANON_REGISTRY_MANIFEST.items.filter((item) => item.maturity === 'candidate')
-				.length,
-			experimentalItems: CANON_REGISTRY_MANIFEST.items.filter(
-				(item) => item.maturity === 'experimental'
-			).length
+			totalItems: registryItems.length,
+			byKind: countBy(registryItems, (item) => item.kind, 'kind'),
+			byMaturity: countBy(registryItems, (item) => item.maturity, 'maturity'),
+			stableItems: registryItems.filter((item) => item.maturity === 'stable').length,
+			candidateItems: registryItems.filter((item) => item.maturity === 'candidate').length,
+			experimentalItems: registryItems.filter((item) => item.maturity === 'experimental').length
+		},
+		components: {
+			total: componentItems.length,
+			stable: componentItems.filter((item) => item.maturity === 'stable').length,
+			candidate: componentItems.filter((item) => item.maturity === 'candidate').length,
+			experimental: componentItems.filter((item) => item.maturity === 'experimental').length
 		},
 		publicExports: {
 			totalPolicies: publicExportRules.length,
@@ -189,6 +205,8 @@ export function renderCanonLibraryHealthReport(
 		`- Registry items: ${report.registry.totalItems}`,
 		`- Stable registry items: ${report.registry.stableItems}`,
 		`- Candidate registry items: ${report.registry.candidateItems}`,
+		`- Component registry items: ${report.components.stable}/${report.components.total} stable`,
+		`- Component registry candidates: ${report.components.candidate}`,
 		`- Public export policies: ${report.publicExports.totalPolicies}`,
 		`- Registry-covered export policies: ${report.publicExports.registryCovered}`,
 		`- Candidate-review export policies: ${report.publicExports.candidateReview}`,
@@ -235,9 +253,19 @@ function getHealthBlockers(options: {
 	overlayInventory: CanonProjectOverlayInventory;
 	modalityReadiness: CanonModalityReadinessReport;
 	codification: CanonCodificationAuditReport;
+	componentItems: CanonRegistryManifest['items'];
 }) {
 	const blockers: string[] = [];
+	const unstableComponents = options.componentItems.filter((item) => item.maturity !== 'stable');
 
+	if (unstableComponents.length > 0) {
+		blockers.push(
+			`${unstableComponents.length} component registry items are not stable: ${unstableComponents
+				.map((item) => item.id)
+				.slice(0, 12)
+				.join(', ')}${unstableComponents.length > 12 ? ', ...' : ''}.`
+		);
+	}
 	if (options.overlayInventory.summary.ready !== options.overlayInventory.summary.total) {
 		blockers.push(
 			`${options.overlayInventory.summary.total - options.overlayInventory.summary.ready} overlay manifests are not ready.`
