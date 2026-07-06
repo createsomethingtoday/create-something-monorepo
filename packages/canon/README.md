@@ -270,6 +270,54 @@ deprecates.
 Do not mark an overlay `canon-stable` until Canon owns the export path, docs, tests, and
 compatibility notes.
 
+## Stable Component Depth
+
+Canon stable component maturity is now audited separately from broad library health.
+`@create-something/canon/stable-component-depth` builds a per-component evidence ledger for
+every stable registry component across seven dimensions:
+
+- docs
+- examples
+- prop contracts
+- accessibility evidence
+- visual regression coverage
+- modality-specific behavior
+- CREATE SOMETHING property usage
+
+Run the inventory without failing the package:
+
+```bash
+pnpm --filter @create-something/canon stable-component:depth
+pnpm --filter @create-something/canon stable-component:depth -- --verbose
+```
+
+The hard gate is part of `pnpm --filter @create-something/canon check` and should stay green
+before promoting stable component changes:
+
+```bash
+pnpm --filter @create-something/canon stable-component:depth:gate
+```
+
+When visual evidence changes, run the browser-rendered screenshot gate as the deeper proof layer:
+
+```bash
+pnpm --filter @create-something/canon visual:screenshot:check
+```
+
+The screenshot gate starts Canon locally, renders `/visual-evidence/form`,
+`/visual-evidence/feedback`, `/visual-evidence/clear`, and
+`/visual-evidence/navigation` at desktop and mobile viewports, then writes PNG evidence to
+`output/playwright/canon-visual-evidence`. It also checks image dimensions and sampled color
+variance so a blank route does not pass. Output files are named by group and viewport, for example
+`form-desktop.png` and `form-mobile.png`. The command also writes
+`output/playwright/canon-visual-evidence/manifest.json`, a machine-readable summary of each
+capture, dimensions, sampled color variance, and horizontal overflow checks.
+
+This report is intentionally Node-backed and exported on its own subpath. Do not add it to the
+root browser-facing Canon barrel. If the report stops returning `ready`, do not claim every stable
+component has equal depth across docs, examples, prop contracts, accessibility, visual regression,
+modality behavior, and property usage.
+
 ### Project Overlay Instantiation
 
 Use the Canon overlay template pack when a project or client needs local theme, token, template,

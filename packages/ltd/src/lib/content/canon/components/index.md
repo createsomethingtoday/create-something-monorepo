@@ -91,6 +91,11 @@ published: true
 <p class="section-description">
 		We test each component against three questions before shipping it.
 	</p>
+<p>
+		Use <code>CatalogCard</code> for catalog entries with a clear destination and proof summary.
+		Use <code>CrossPropertyLink</code> when a route intentionally moves the user between CREATE
+		SOMETHING properties and the destination must remain explicit.
+	</p>
 <div class="principles-grid">
 <div class="principle-item">
 <h3>One Pattern, One Place</h3>

@@ -14,6 +14,16 @@ published: true
 - `Footer`: property directory, grouped links, newsletter, legal, and cross-property links
 - `Breadcrumbs`: hierarchical wayfinding with optional home icon
 - `Tabs`: WAI-ARIA tab panels with keyboard navigation and bindable active state
+- `Pagination`: page-count navigation for result sets and archives
+- `Tooltip`: small accessible hints for icon or dense controls
+- `Popover`: contextual panels that stay attached to a trigger
+- `DropdownMenu`: compact grouped commands with keyboard behavior
+- `Drawer`: contained side-panel navigation for focused tasks
+- `StickyHeader`: route-aware header for long property pages
+- `MobileDrawer`: mobile navigation shell paired with `MenuButton`
+- `MenuButton`: explicit open/close trigger for navigation drawers
+- `MegaMenu`: broad grouped navigation for property and system maps
+- `CommandPalette`: keyboard-first navigation and command search
 
 ## Primary Navigation Example
 
@@ -115,6 +125,14 @@ The clear navigation and footer are designed to pair with:
   {/snippet}
 </Tabs>
 ```
+
+## Navigation Patterns
+
+Use `DropdownMenu`, `Popover`, and `Tooltip` only when the trigger remains visible and the
+relationship between trigger and panel is obvious. Use `Drawer`, `MobileDrawer`, `MenuButton`,
+and `StickyHeader` for property navigation that must remain scannable across mobile and desktop.
+Use `MegaMenu` and `CommandPalette` when a property has enough routes or commands that search,
+grouping, or keyboard-first navigation reduces friction.
 
 ## Design Guidance
 

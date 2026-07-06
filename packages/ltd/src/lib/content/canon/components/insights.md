@@ -11,8 +11,14 @@ published: true
 ## What Ships Today
 
 - key insight candidates
-- statement text candidates
-- insight card candidates
+- `StatementText` candidates for extracted operating claims, judgment rules, or proof statements
+- `KeyInsightCard` candidates for source-backed findings that need to be scanned or shared
+
+## Property Usage Notes
+
+Use `KeyInsightCard` and `StatementText` on property pages where a claim is stronger when it is
+pulled out as a named proof object. They should point back to the source, metric, command output,
+receipt, or policy record that makes the statement true.
 
 ## Selection Rules
 

@@ -18,6 +18,17 @@ published: true
 - `ClearReceiptGrid`: delivery evidence, artifacts, and validation receipts
 - `ClearArtifactCard`: one evidence object with status and link
 - `ClearCtaBand`: restrained next-action bands
+- `ClearActionFooter`: final page-level actions with proof and restraint
+- `ClearCardGrid`: repeated evidence cards without nested-card shells
+- `ClearContentHighlights`: compact highlights for claims, facts, and receipts
+- `ClearErrorPage`: plain-language failure state with recovery path
+- `ClearLogoStrip`: partner, proof, or trust marks with accessible labels
+- `ClearMetadataRail`: dense metadata, owners, receipts, and state facts
+- `ClearPillarGrid`: pillar summaries for proof-bearing systems
+- `ClearQuoteMetricPanel`: quote and metric pairings for validated claims
+- `ClearSecurityPanel`: trust, policy, and control evidence for sensitive surfaces
+- `ClearUseCaseBand`: use-case summaries tied to concrete next actions
+- `ClearWorkflowMiniArtifact`: compact artifact preview for workflow state
 
 ## When To Use Clear Components
 
@@ -72,6 +83,17 @@ standard Canon components instead.
   ]}
 />
 ```
+
+## Property Usage Notes
+
+On CREATE SOMETHING properties, use `ClearLogoStrip` only when the relationship behind each
+logo is true and labelable. Use `ClearContentHighlights`, `ClearPillarGrid`, `ClearUseCaseBand`,
+and `ClearQuoteMetricPanel` when a claim needs nearby proof or a concrete buyer/operator use case.
+Use `ClearSecurityPanel` when the page needs to show policy, access, control, or compliance
+evidence. Use `ClearMetadataRail` and `ClearWorkflowMiniArtifact` for dense operational state,
+owners, receipts, and handoff metadata. Use `ClearErrorPage` when failure recovery must be plain
+language, visible, and actionable. Use `ClearActionFooter` when the final action should remain
+bounded to a named workflow, review, handoff, or governed surface.
 
 ## Copy Rules
 

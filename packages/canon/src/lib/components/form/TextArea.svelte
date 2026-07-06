@@ -157,6 +157,7 @@
 
 	/* Input */
 	.textarea-input {
+		box-sizing: border-box;
 		width: 100%;
 		padding: var(--space-sm) var(--space-md);
 		border-radius: var(--radius-md);
