@@ -24,7 +24,7 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
-const EXPECTED_ISSUE = 'CRE-1084';
+const EXPECTED_ISSUE = 'CRE-1085';
 const EXPECTED_TARGET = 'create-something-internal-production';
 const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
 const FIXED_NOW = '2026-07-06T20:00:00.000Z';
@@ -385,6 +385,42 @@ function receiptPublicationCheckArgs(packetPath, preflightReceiptPath, execution
   );
   args[1] = 'receipt-publication-check';
   args.push('--receipt-bundle-receipt', receiptBundleReceiptPath, '--receipt-publication', receiptPublicationPath);
+  return args;
+}
+
+function receiptReviewDecisionCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath, receiptPublicationReceiptPath, receiptReviewDecisionPath, receiptDir) {
+  const args = receiptPublicationCheckArgs(
+    packetPath,
+    preflightReceiptPath,
+    executionReceiptPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+    runnerContractReceiptPath,
+    runnerPlanPath,
+    runnerPlanReceiptPath,
+    runnerDiffPath,
+    runnerDiffReceiptPath,
+    releaseAdmissionPath,
+    releaseAdmissionReceiptPath,
+    executionRunbookPath,
+    executionRunbookReceiptPath,
+    receiptBundlePath,
+    receiptBundleReceiptPath,
+    receiptPublicationPath,
+    receiptDir,
+  );
+  args[1] = 'receipt-review-decision-check';
+  args.push('--receipt-publication-receipt', receiptPublicationReceiptPath, '--receipt-review-decision', receiptReviewDecisionPath);
   return args;
 }
 
@@ -802,6 +838,51 @@ function writeValidReceiptBundleReceipt(t, packetPath, preflightPath, executionP
     root,
     receiptBundleReceiptPath: path.join(REPO_ROOT, bundlePayload.receiptPath),
     bundlePayload,
+  };
+}
+
+function writeValidReceiptPublicationReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath) {
+  const root = makeWorkspace(t);
+  const publicationResult = spawnSync(
+    process.execPath,
+    receiptPublicationCheckArgs(
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+      commandPath,
+      commandReceiptPath,
+      executorProofPath,
+      proposalPath,
+      proposalReceiptPath,
+      policyPatchPath,
+      policyPatchReceiptPath,
+      candidateManifestPath,
+      applicationDiffReceiptPath,
+      readinessReceiptPath,
+      runnerContractPath,
+      runnerContractReceiptPath,
+      runnerPlanPath,
+      runnerPlanReceiptPath,
+      runnerDiffPath,
+      runnerDiffReceiptPath,
+      releaseAdmissionPath,
+      releaseAdmissionReceiptPath,
+      executionRunbookPath,
+      executionRunbookReceiptPath,
+      receiptBundlePath,
+      receiptBundleReceiptPath,
+      receiptPublicationPath,
+      root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+  assert.equal(publicationResult.status, 0, publicationResult.stderr || publicationResult.stdout);
+  const publicationPayload = JSON.parse(publicationResult.stdout);
+  return {
+    root,
+    receiptPublicationReceiptPath: path.join(REPO_ROOT, publicationPayload.receiptPath),
+    publicationPayload,
   };
 }
 
@@ -1337,6 +1418,76 @@ function validReceiptPublication({ receiptBundlePath, receiptBundleReceiptPath }
       'writes-performed-zero',
       'publication-not-performed',
       'third-party-write-not-performed',
+    ],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
+function validReceiptReviewDecision({ receiptPublicationPath, receiptPublicationReceiptPath } = {}) {
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    receiptPublication: receiptPublicationPath ? path.relative(REPO_ROOT, receiptPublicationPath) : 'receipt-publication.json',
+    receiptPublicationReceipt: receiptPublicationReceiptPath
+      ? path.relative(REPO_ROOT, receiptPublicationReceiptPath)
+      : 'receipt-publication-check.json',
+    decisionPacketOnly: true,
+    reviewer: 'Micah Johnson',
+    reviewedAt: '2026-07-06T21:00:00.000Z',
+    decision: 'approved-for-manual-next-step',
+    reviewedSurfaces: [
+      'receipt-publication',
+      'receipt-bundle',
+      'execution-runbook',
+      'release-admission',
+    ],
+    requiredNextStep: 'manual operator creates a separate execution enablement issue if this review is accepted',
+    followUpRequired: null,
+    redactionPolicyApplied: true,
+    redactionPolicy: {
+      excludes: ['secrets', 'raw-logs', 'prompts', 'raw-transcripts'],
+      evidenceOnly: true,
+    },
+    containsSecrets: false,
+    containsRawLogs: false,
+    containsPrompts: false,
+    containsRawTranscripts: false,
+    rawLogsIncluded: false,
+    promptsIncluded: false,
+    rawTranscriptIncluded: false,
+    requiredEvidence: [
+      'receipt-publication-receipt',
+      'reviewer-decision',
+      'reviewed-surfaces',
+      'public-access-fail-closed-proof',
+      'redaction-policy',
+      'operator-summary',
+    ],
+    publicAccessFailClosedProof: 'operator-agent-public-smoke rawOriginExposed=false and redirectsToAccess=true',
+    operatorSummary: 'Operator reviewed the redacted receipt publication and approved only a manual next step; no execution approval or write occurred.',
+    noExecutionMarkers: [
+      'current-policy-blocked',
+      'process-not-spawned',
+      'executed-commands-empty',
+      'runner-disabled',
+      'execution-not-ready',
+      'execution-disabled',
+      'execution-not-approved',
+      'would-execute-false',
+      'writes-performed-zero',
+      'review-only',
     ],
     currentPolicyBlocked: true,
     processSpawned: false,
@@ -3619,6 +3770,54 @@ function writeReceiptBundleFixture(t) {
   };
 }
 
+function writeReceiptPublicationFixture(t) {
+  const fixture = writeReceiptBundleFixture(t);
+  const receiptPublicationPath = path.join(fixture.root, 'receipt-publication.json');
+  writeFileSync(
+    receiptPublicationPath,
+    `${JSON.stringify(validReceiptPublication({
+      receiptBundlePath: fixture.receiptBundlePath,
+      receiptBundleReceiptPath: fixture.receiptBundleReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const { receiptPublicationReceiptPath } = writeValidReceiptPublicationReceipt(
+    t,
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    fixture.runnerDiffPath,
+    fixture.runnerDiffReceiptPath,
+    fixture.releaseAdmissionPath,
+    fixture.releaseAdmissionReceiptPath,
+    fixture.executionRunbookPath,
+    fixture.executionRunbookReceiptPath,
+    fixture.receiptBundlePath,
+    fixture.receiptBundleReceiptPath,
+    receiptPublicationPath,
+  );
+
+  return {
+    ...fixture,
+    receiptPublicationPath,
+    receiptPublicationReceiptPath,
+  };
+}
+
 test('runner-implementation-diff-check validates candidate-only runner implementation diff', (t) => {
   const fixture = writeRunnerPlanFixture(t);
   const runnerDiffPath = path.join(fixture.root, 'runner-diff.json');
@@ -4839,6 +5038,273 @@ test('receipt-publication-check fails closed on drifted receipt bundle receipts'
   assert.equal(payload.writesPerformed, 0);
   assert.match(payload.errors.join('\n'), /receipt bundle receipt containsSecrets must be false/);
   assert.match(payload.errors.join('\n'), /receipt bundle receipt processSpawned must be false/);
+});
+
+test('receipt-review-decision-check validates review-only operator decision without execution', (t) => {
+  const fixture = writeReceiptPublicationFixture(t);
+  const receiptReviewDecisionPath = path.join(fixture.root, 'receipt-review-decision.json');
+  writeFileSync(
+    receiptReviewDecisionPath,
+    `${JSON.stringify(validReceiptReviewDecision({
+      receiptPublicationPath: fixture.receiptPublicationPath,
+      receiptPublicationReceiptPath: fixture.receiptPublicationReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    receiptReviewDecisionCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      fixture.releaseAdmissionPath,
+      fixture.releaseAdmissionReceiptPath,
+      fixture.executionRunbookPath,
+      fixture.executionRunbookReceiptPath,
+      fixture.receiptBundlePath,
+      fixture.receiptBundleReceiptPath,
+      fixture.receiptPublicationPath,
+      fixture.receiptPublicationReceiptPath,
+      receiptReviewDecisionPath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'receipt-review-decision-check');
+  assert.equal(payload.receiptReviewDecisionOk, true);
+  assert.equal(payload.decisionPacketOnly, true);
+  assert.equal(payload.reviewer, 'Micah Johnson');
+  assert.equal(payload.decision, 'approved-for-manual-next-step');
+  assert.ok(payload.reviewedSurfaces.includes('receipt-publication'));
+  assert.ok(payload.reviewedSurfaces.includes('release-admission'));
+  assert.match(payload.requiredNextStep, /separate execution enablement issue/);
+  assert.equal(payload.redactionPolicyApplied, true);
+  assert.equal(payload.containsSecrets, false);
+  assert.equal(payload.containsRawLogs, false);
+  assert.equal(payload.containsPrompts, false);
+  assert.equal(payload.containsRawTranscripts, false);
+  assert.ok(payload.requiredEvidence.includes('reviewer-decision'));
+  assert.match(payload.publicAccessFailClosedProof, /rawOriginExposed=false/);
+  assert.match(payload.operatorSummary, /approved only a manual next step/);
+  assert.ok(payload.noExecutionMarkers.includes('review-only'));
+  assert.equal(payload.currentPolicyBlocked, true);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.receiptReviewDecisionRequiresReceiptPublicationReceipt, true);
+  assert.equal(payload.policy.receiptReviewDecisionRequiresNoExecutionOnApproval, true);
+  assert.match(payload.nextGate, /separate manual next step/);
+  assert.match(payload.receiptPath, /receipt-review-decision-check\.json$/);
+});
+
+test('receipt-review-decision-check fails closed on unsafe or leaky decisions', (t) => {
+  const cases = [
+    {
+      name: 'unknown-decision',
+      mutate(decision) {
+        decision.decision = 'execute-now';
+      },
+      pattern: /decision must be allowed/,
+    },
+    {
+      name: 'missing-reviewer',
+      mutate(decision) {
+        decision.reviewer = '';
+      },
+      pattern: /reviewer is required/,
+    },
+    {
+      name: 'missing-reviewed-surface',
+      mutate(decision) {
+        decision.reviewedSurfaces = ['receipt-publication'];
+      },
+      pattern: /reviewedSurfaces must include release-admission/,
+    },
+    {
+      name: 'secret-leak',
+      mutate(decision) {
+        decision.containsSecrets = true;
+      },
+      pattern: /containsSecrets must be false/,
+    },
+    {
+      name: 'approved-without-next-step',
+      mutate(decision) {
+        decision.requiredNextStep = '';
+      },
+      pattern: /requiredNextStep is required for approved decisions/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(decision) {
+        decision.processSpawned = true;
+        decision.executedCommands = ['node scripts/operator-agent-omnigent-runner.mjs'];
+        decision.executionApproved = true;
+        decision.wouldExecute = true;
+        decision.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeReceiptPublicationFixture(t);
+    const decision = validReceiptReviewDecision({
+      receiptPublicationPath: fixture.receiptPublicationPath,
+      receiptPublicationReceiptPath: fixture.receiptPublicationReceiptPath,
+    });
+    entry.mutate(decision);
+    const receiptReviewDecisionPath = path.join(fixture.root, `${entry.name}-receipt-review-decision.json`);
+    writeFileSync(receiptReviewDecisionPath, `${JSON.stringify(decision, null, 2)}\n`);
+
+    const result = spawnSync(
+      process.execPath,
+      receiptReviewDecisionCheckArgs(
+        fixture.packetPath,
+        fixture.preflightPath,
+        fixture.executionPath,
+        fixture.authorizationPath,
+        fixture.commandPath,
+        fixture.commandReceiptPath,
+        fixture.executorProofPath,
+        fixture.proposalPath,
+        fixture.proposalReceiptPath,
+        fixture.policyPatchPath,
+        fixture.policyPatchReceiptPath,
+        fixture.candidateManifestPath,
+        fixture.applicationDiffReceiptPath,
+        fixture.readinessReceiptPath,
+        fixture.runnerContractPath,
+        fixture.runnerContractReceiptPath,
+        fixture.runnerPlanPath,
+        fixture.runnerPlanReceiptPath,
+        fixture.runnerDiffPath,
+        fixture.runnerDiffReceiptPath,
+        fixture.releaseAdmissionPath,
+        fixture.releaseAdmissionReceiptPath,
+        fixture.executionRunbookPath,
+        fixture.executionRunbookReceiptPath,
+        fixture.receiptBundlePath,
+        fixture.receiptBundleReceiptPath,
+        fixture.receiptPublicationPath,
+        fixture.receiptPublicationReceiptPath,
+        receiptReviewDecisionPath,
+        fixture.root,
+      ),
+      { cwd: REPO_ROOT, encoding: 'utf8' },
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.receiptReviewDecisionOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('receipt-review-decision-check fails closed on drifted receipt publication receipts', (t) => {
+  const fixture = writeReceiptPublicationFixture(t);
+  const driftedPublicationReceipt = JSON.parse(readFileSync(fixture.receiptPublicationReceiptPath, 'utf8'));
+  driftedPublicationReceipt.publicationPerformed = true;
+  driftedPublicationReceipt.thirdPartyWritePerformed = true;
+  driftedPublicationReceipt.processSpawned = true;
+  const driftedPublicationReceiptPath = path.join(fixture.root, 'drifted-receipt-publication-receipt.json');
+  writeFileSync(driftedPublicationReceiptPath, `${JSON.stringify(driftedPublicationReceipt, null, 2)}\n`);
+  const receiptReviewDecisionPath = path.join(fixture.root, 'receipt-review-decision.json');
+  writeFileSync(
+    receiptReviewDecisionPath,
+    `${JSON.stringify(validReceiptReviewDecision({
+      receiptPublicationPath: fixture.receiptPublicationPath,
+      receiptPublicationReceiptPath: driftedPublicationReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    receiptReviewDecisionCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      fixture.releaseAdmissionPath,
+      fixture.releaseAdmissionReceiptPath,
+      fixture.executionRunbookPath,
+      fixture.executionRunbookReceiptPath,
+      fixture.receiptBundlePath,
+      fixture.receiptBundleReceiptPath,
+      fixture.receiptPublicationPath,
+      driftedPublicationReceiptPath,
+      receiptReviewDecisionPath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.receiptReviewDecisionOk, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /receipt publication receipt publicationPerformed must be false/);
+  assert.match(payload.errors.join('\n'), /receipt publication receipt thirdPartyWritePerformed must be false/);
 });
 
 test('read-only scout profile and receipt match the local harness parity contract', () => {
