@@ -592,7 +592,11 @@ function liveDetails(input: ReviewerEvalInput, output: DifyChatOutput): Record<s
         answer.includes('request changes tool') ||
         answer.includes('request-changes tool'),
       doesNotStopAtAssignment:
-        answer.includes('request changes') &&
+        mentionsAny(answer, [
+          'template_review_request_changes',
+          'request changes',
+          'request-changes'
+        ]) &&
         !answer.includes('only assign') &&
         !answer.includes('stop after assign'),
       handlesPartialWriteFailure:
