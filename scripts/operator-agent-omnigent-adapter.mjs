@@ -118,6 +118,8 @@ function parseArgs(argv) {
     manualFollowUpIssueEvidence: null,
     manualFollowUpIssueEvidenceReceipt: null,
     followUpWorkIntake: null,
+    followUpWorkIntakeReceipt: null,
+    implementationWorkspaceEvidence: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -168,6 +170,8 @@ function parseArgs(argv) {
     else if (arg === '--manual-follow-up-issue-evidence' && args[index + 1]) options.manualFollowUpIssueEvidence = args[++index];
     else if (arg === '--manual-follow-up-issue-evidence-receipt' && args[index + 1]) options.manualFollowUpIssueEvidenceReceipt = args[++index];
     else if (arg === '--follow-up-work-intake' && args[index + 1]) options.followUpWorkIntake = args[++index];
+    else if (arg === '--follow-up-work-intake-receipt' && args[index + 1]) options.followUpWorkIntakeReceipt = args[++index];
+    else if (arg === '--implementation-workspace-evidence' && args[index + 1]) options.implementationWorkspaceEvidence = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -1184,6 +1188,126 @@ function validateManifest(manifest) {
   }
   if (followUpWorkIntake.writesPerformed !== 0) {
     errors.push('a4FollowUpWorkIntake.writesPerformed must be 0');
+  }
+
+  const implementationWorkspaceEvidence = manifest.a4ImplementationWorkspaceEvidence || {};
+  if (implementationWorkspaceEvidence.requiresFollowUpWorkIntakeReceipt !== true) {
+    errors.push('a4ImplementationWorkspaceEvidence.requiresFollowUpWorkIntakeReceipt must be true');
+  }
+  if (implementationWorkspaceEvidence.workspaceEvidencePacketOnly !== true) {
+    errors.push('a4ImplementationWorkspaceEvidence.workspaceEvidencePacketOnly must be true');
+  }
+  for (const field of [
+    'requiresIssueIdentifier',
+    'requiresIssueUrl',
+    'requiresOwner',
+    'requiresIntendedAssignee',
+    'requiresClaimedBy',
+    'requiresClaimedAt',
+    'requiresWorkspacePath',
+    'requiresBranchName',
+    'requiresBaseRef',
+    'requiresBaseSha',
+    'requiresImplementationSurface',
+    'requiresScopedFilesOrModules',
+    'requiresValidationPlan',
+    'requiresRollbackPlan',
+    'requiresPublicAccessFailClosedProof',
+  ]) {
+    if (implementationWorkspaceEvidence[field] !== true) {
+      errors.push(`a4ImplementationWorkspaceEvidence.${field} must be true`);
+    }
+  }
+  for (const field of [
+    'issueClaimedByVerifier',
+    'worktreeCreatedByVerifier',
+    'branchCreatedByVerifier',
+    'prCreatedByVerifier',
+  ]) {
+    if (implementationWorkspaceEvidence[field] !== false) {
+      errors.push(`a4ImplementationWorkspaceEvidence.${field} must be false`);
+    }
+  }
+  if (implementationWorkspaceEvidence.requiresNoThirdPartyWriteByVerifier !== true) {
+    errors.push('a4ImplementationWorkspaceEvidence.requiresNoThirdPartyWriteByVerifier must be true');
+  }
+  if (implementationWorkspaceEvidence.requiresRedactionPolicy !== true) {
+    errors.push('a4ImplementationWorkspaceEvidence.requiresRedactionPolicy must be true');
+  }
+  for (const field of ['forbidsSecrets', 'forbidsRawLogs', 'forbidsPrompts', 'forbidsRawTranscripts']) {
+    if (implementationWorkspaceEvidence[field] !== true) {
+      errors.push(`a4ImplementationWorkspaceEvidence.${field} must be true`);
+    }
+  }
+  if (implementationWorkspaceEvidence.requiresNoExecutionOnEvidence !== true) {
+    errors.push('a4ImplementationWorkspaceEvidence.requiresNoExecutionOnEvidence must be true');
+  }
+  for (const surface of ['repo-worktree', 'repo-pr']) {
+    if (!implementationWorkspaceEvidence.allowedImplementationSurfaces?.includes(surface)) {
+      errors.push(`a4ImplementationWorkspaceEvidence.allowedImplementationSurfaces must include ${surface}`);
+    }
+  }
+  for (const receiptReference of [
+    'follow-up-work-intake-check',
+    'manual-follow-up-issue-evidence-check',
+    'manual-next-step-handoff-check',
+    'receipt-review-decision-check',
+    'receipt-publication-check',
+    'receipt-bundle-check',
+    'execution-runbook-check',
+    'release-admission-check',
+  ]) {
+    if (!implementationWorkspaceEvidence.requiredReceiptReferences?.includes(receiptReference)) {
+      errors.push(`a4ImplementationWorkspaceEvidence.requiredReceiptReferences must include ${receiptReference}`);
+    }
+  }
+  for (const evidence of [
+    'follow-up-work-intake-receipt',
+    'issue-identifier',
+    'issue-url',
+    'owner',
+    'intended-assignee',
+    'claimed-by',
+    'claimed-at',
+    'workspace-path',
+    'branch-name',
+    'base-ref',
+    'base-sha',
+    'implementation-surface',
+    'scoped-files-or-modules',
+    'validation-plan',
+    'rollback-plan',
+    'public-access-fail-closed-proof',
+    'redaction-policy',
+    'operator-summary',
+  ]) {
+    if (!implementationWorkspaceEvidence.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ImplementationWorkspaceEvidence.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-policy-blocked',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+    'issue-not-claimed-by-verifier',
+    'worktree-not-created-by-verifier',
+    'branch-not-created-by-verifier',
+    'pr-not-created-by-verifier',
+    'third-party-write-not-performed-by-verifier',
+    'workspace-evidence-only',
+  ]) {
+    if (!implementationWorkspaceEvidence.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ImplementationWorkspaceEvidence.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (implementationWorkspaceEvidence.writesPerformed !== 0) {
+    errors.push('a4ImplementationWorkspaceEvidence.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -4770,6 +4894,217 @@ function validateFollowUpWorkIntake(intake, evidenceReceipt, manifest, paths, co
   return errors;
 }
 
+function validateFollowUpWorkIntakeReceipt(receipt, intake, intakeResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'follow-up-work-intake-check') {
+    errors.push('follow-up work intake receipt mode must be follow-up-work-intake-check');
+  }
+  if (receipt.ok !== true || receipt.followUpWorkIntakeOk !== true) {
+    errors.push('follow-up work intake receipt must be ok');
+  }
+  if (receipt.followUpWorkIntake !== rel(paths.followUpWorkIntakePath)) {
+    errors.push('follow-up work intake receipt followUpWorkIntake must match intake artifact path');
+  }
+  if (receipt.manualFollowUpIssueEvidenceReceipt !== rel(paths.manualFollowUpIssueEvidenceReceiptPath)) {
+    errors.push('follow-up work intake receipt manualFollowUpIssueEvidenceReceipt must match manual issue evidence receipt path');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`follow-up work intake receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`follow-up work intake receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`follow-up work intake receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.intakePacketOnly !== true) errors.push('follow-up work intake receipt intakePacketOnly must be true');
+  if (receipt.issueIdentifier !== intake.issueIdentifier) {
+    errors.push('follow-up work intake receipt issueIdentifier must match intake');
+  }
+  if (receipt.issueUrl !== intake.issueUrl) errors.push('follow-up work intake receipt issueUrl must match intake');
+  if (receipt.owner !== intake.owner) errors.push('follow-up work intake receipt owner must match intake');
+  if (receipt.intendedAssignee !== intake.intendedAssignee) {
+    errors.push('follow-up work intake receipt intendedAssignee must match intake');
+  }
+  if (receipt.implementationSurface !== intake.implementationSurface) {
+    errors.push('follow-up work intake receipt implementationSurface must match intake');
+  }
+  if (includesAll(receipt.scopedFilesOrModules || [], intake.scopedFilesOrModules || []).length > 0) {
+    errors.push('follow-up work intake receipt scopedFilesOrModules must include intake scope');
+  }
+  if (receipt.issueClaimedByVerifier !== false) {
+    errors.push('follow-up work intake receipt issueClaimedByVerifier must be false');
+  }
+  if (receipt.worktreeCreatedByVerifier !== false) {
+    errors.push('follow-up work intake receipt worktreeCreatedByVerifier must be false');
+  }
+  if (receipt.branchCreatedByVerifier !== false) {
+    errors.push('follow-up work intake receipt branchCreatedByVerifier must be false');
+  }
+  if (receipt.prCreatedByVerifier !== false) {
+    errors.push('follow-up work intake receipt prCreatedByVerifier must be false');
+  }
+  if (receipt.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('follow-up work intake receipt thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (receipt.redactionPolicyApplied !== true) {
+    errors.push('follow-up work intake receipt redactionPolicyApplied must be true');
+  }
+  if (receipt.containsSecrets !== false) errors.push('follow-up work intake receipt containsSecrets must be false');
+  if (receipt.containsRawLogs !== false) errors.push('follow-up work intake receipt containsRawLogs must be false');
+  if (receipt.containsPrompts !== false) errors.push('follow-up work intake receipt containsPrompts must be false');
+  if (receipt.containsRawTranscripts !== false) {
+    errors.push('follow-up work intake receipt containsRawTranscripts must be false');
+  }
+  if (receipt.currentPolicyBlocked !== true) errors.push('follow-up work intake receipt currentPolicyBlocked must be true');
+  if (receipt.processSpawned !== false) errors.push('follow-up work intake receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('follow-up work intake receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('follow-up work intake receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('follow-up work intake receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('follow-up work intake receipt executionEnabled must be false');
+  if (receipt.executionApproved !== false) errors.push('follow-up work intake receipt executionApproved must be false');
+  if (receipt.wouldExecute !== false) errors.push('follow-up work intake receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('follow-up work intake receipt writesPerformed must be 0');
+  if (intakeResult.followUpWorkIntakeOk !== true) {
+    errors.push('follow-up work intake receipt requires valid follow-up work intake result');
+  }
+
+  return errors;
+}
+
+function validateImplementationWorkspaceEvidence(evidence, intakeReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ImplementationWorkspaceEvidence || {};
+
+  if (evidence.authorityLevel !== 'A4') errors.push('implementation workspace evidence authorityLevel must be A4');
+  if (evidence.issue !== constraints.expectedIssue) {
+    errors.push(`implementation workspace evidence issue mismatch: expected ${constraints.expectedIssue}, got ${evidence.issue}`);
+  }
+  if (evidence.target !== constraints.expectedTarget) {
+    errors.push(`implementation workspace evidence target mismatch: expected ${constraints.expectedTarget}, got ${evidence.target}`);
+  }
+  if (evidence.action !== constraints.expectedAction) {
+    errors.push(`implementation workspace evidence action mismatch: expected ${constraints.expectedAction}, got ${evidence.action}`);
+  }
+  if (evidence.followUpWorkIntake !== rel(paths.followUpWorkIntakePath)) {
+    errors.push('implementation workspace evidence followUpWorkIntake must match follow-up work intake artifact path');
+  }
+  if (evidence.followUpWorkIntakeReceipt !== rel(paths.followUpWorkIntakeReceiptPath)) {
+    errors.push('implementation workspace evidence followUpWorkIntakeReceipt must match follow-up work intake receipt path');
+  }
+  if (evidence.workspaceEvidencePacketOnly !== true) {
+    errors.push('implementation workspace evidence workspaceEvidencePacketOnly must be true');
+  }
+  if (evidence.issueIdentifier !== intakeReceipt.issueIdentifier) {
+    errors.push('implementation workspace evidence issueIdentifier must match follow-up work intake receipt');
+  }
+  if (evidence.issueUrl !== intakeReceipt.issueUrl) {
+    errors.push('implementation workspace evidence issueUrl must match follow-up work intake receipt');
+  }
+  if (evidence.owner !== intakeReceipt.owner) {
+    errors.push('implementation workspace evidence owner must match follow-up work intake receipt');
+  }
+  if (evidence.intendedAssignee !== intakeReceipt.intendedAssignee) {
+    errors.push('implementation workspace evidence intendedAssignee must match follow-up work intake receipt');
+  }
+  if (!hasValue(evidence.claimedBy)) errors.push('implementation workspace evidence claimedBy is required');
+  if (!hasValue(evidence.claimedAt) || Number.isNaN(Date.parse(evidence.claimedAt))) {
+    errors.push('implementation workspace evidence claimedAt must be an ISO timestamp');
+  }
+  if (!hasValue(evidence.workspacePath)) errors.push('implementation workspace evidence workspacePath is required');
+  if (!hasValue(evidence.branchName)) errors.push('implementation workspace evidence branchName is required');
+  if (!hasValue(evidence.baseRef)) errors.push('implementation workspace evidence baseRef is required');
+  if (!/^[0-9a-f]{7,40}$/i.test(evidence.baseSha || '')) {
+    errors.push('implementation workspace evidence baseSha must be a 7-40 character git SHA');
+  }
+  if (!rules.allowedImplementationSurfaces?.includes(evidence.implementationSurface)) {
+    errors.push('implementation workspace evidence implementationSurface must be allowed');
+  }
+  if (evidence.implementationSurface !== intakeReceipt.implementationSurface) {
+    errors.push('implementation workspace evidence implementationSurface must match follow-up work intake receipt');
+  }
+  const missingScope = includesAll(evidence.scopedFilesOrModules || [], intakeReceipt.scopedFilesOrModules || []);
+  if (missingScope.length) {
+    errors.push(`implementation workspace evidence scopedFilesOrModules missing: ${missingScope.join(', ')}`);
+  }
+  if (!Array.isArray(evidence.validationPlan) || evidence.validationPlan.length === 0) {
+    errors.push('implementation workspace evidence validationPlan must not be empty');
+  }
+  if (!Array.isArray(evidence.rollbackPlan) || evidence.rollbackPlan.length === 0) {
+    errors.push('implementation workspace evidence rollbackPlan must not be empty');
+  }
+  if (evidence.issueClaimedByVerifier !== false) {
+    errors.push('implementation workspace evidence issueClaimedByVerifier must be false');
+  }
+  if (evidence.worktreeCreatedByVerifier !== false) {
+    errors.push('implementation workspace evidence worktreeCreatedByVerifier must be false');
+  }
+  if (evidence.branchCreatedByVerifier !== false) {
+    errors.push('implementation workspace evidence branchCreatedByVerifier must be false');
+  }
+  if (evidence.prCreatedByVerifier !== false) {
+    errors.push('implementation workspace evidence prCreatedByVerifier must be false');
+  }
+  if (evidence.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation workspace evidence thirdPartyWritePerformedByVerifier must be false');
+  }
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!evidence.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`implementation workspace evidence requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const requiredEvidence of rules.requiredEvidence || []) {
+    if (!evidence.requiredEvidence?.includes(requiredEvidence)) {
+      errors.push(`implementation workspace evidence requiredEvidence must include ${requiredEvidence}`);
+    }
+  }
+  if (evidence.redactionPolicyApplied !== true) {
+    errors.push('implementation workspace evidence redactionPolicyApplied must be true');
+  }
+  if (!hasValue(evidence.redactionPolicy)) errors.push('implementation workspace evidence redactionPolicy is required');
+  if (evidence.containsSecrets !== false) errors.push('implementation workspace evidence containsSecrets must be false');
+  if (evidence.containsRawLogs !== false) errors.push('implementation workspace evidence containsRawLogs must be false');
+  if (evidence.containsPrompts !== false) errors.push('implementation workspace evidence containsPrompts must be false');
+  if (evidence.containsRawTranscripts !== false) {
+    errors.push('implementation workspace evidence containsRawTranscripts must be false');
+  }
+  if (evidence.rawLogsIncluded === true) errors.push('implementation workspace evidence rawLogsIncluded must not be true');
+  if (evidence.promptsIncluded === true) errors.push('implementation workspace evidence promptsIncluded must not be true');
+  if (evidence.rawTranscriptIncluded === true) {
+    errors.push('implementation workspace evidence rawTranscriptIncluded must not be true');
+  }
+  if (!hasValue(evidence.publicAccessFailClosedProof)) {
+    errors.push('implementation workspace evidence publicAccessFailClosedProof is required');
+  }
+  if (!hasValue(evidence.operatorSummary)) errors.push('implementation workspace evidence operatorSummary is required');
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!evidence.noExecutionMarkers?.includes(marker)) {
+      errors.push(`implementation workspace evidence noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (evidence.currentPolicyBlocked !== true) {
+    errors.push('implementation workspace evidence currentPolicyBlocked must be true');
+  }
+  if (evidence.processSpawned === true) errors.push('implementation workspace evidence processSpawned must not be true');
+  if (Array.isArray(evidence.executedCommands) && evidence.executedCommands.length > 0) {
+    errors.push('implementation workspace evidence executedCommands must be empty');
+  }
+  if (evidence.runnerEnabled === true) errors.push('implementation workspace evidence runnerEnabled must not be true');
+  if (evidence.executionReady === true) errors.push('implementation workspace evidence executionReady must not be true');
+  if (evidence.executionEnabled === true) errors.push('implementation workspace evidence executionEnabled must not be true');
+  if (evidence.executionApproved === true) errors.push('implementation workspace evidence executionApproved must not be true');
+  if (evidence.wouldExecute === true) errors.push('implementation workspace evidence wouldExecute must not be true');
+  if (evidence.writesPerformed !== 0) errors.push('implementation workspace evidence writesPerformed must be 0');
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('implementation workspace evidence current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -6160,6 +6495,113 @@ function buildFollowUpWorkIntakeReceipt({
       followUpWorkIntakeIssueClaimedByVerifier: manifest.a4FollowUpWorkIntake?.issueClaimedByVerifier,
       followUpWorkIntakeWorktreeCreatedByVerifier: manifest.a4FollowUpWorkIntake?.worktreeCreatedByVerifier,
       followUpWorkIntakeRequiresNoExecutionOnIntake: manifest.a4FollowUpWorkIntake?.requiresNoExecutionOnIntake,
+    },
+  };
+}
+
+function buildImplementationWorkspaceEvidenceReceipt({
+  manifest,
+  manifestValidation,
+  intakeResult,
+  followUpWorkIntake,
+  followUpWorkIntakePath,
+  followUpWorkIntakeReceipt,
+  followUpWorkIntakeReceiptPath,
+  implementationWorkspaceEvidence,
+  implementationWorkspaceEvidencePath,
+  followUpWorkIntakeReceiptErrors,
+  implementationWorkspaceEvidenceErrors,
+  constraints,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(intakeResult.errors || []),
+    ...followUpWorkIntakeReceiptErrors,
+    ...implementationWorkspaceEvidenceErrors,
+  ];
+  const implementationWorkspaceEvidenceOk = errors.length === 0;
+
+  return {
+    mode: 'implementation-workspace-evidence-check',
+    ok: implementationWorkspaceEvidenceOk,
+    implementationWorkspaceEvidenceOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    implementationWorkspaceEvidence: rel(implementationWorkspaceEvidencePath),
+    followUpWorkIntake: rel(followUpWorkIntakePath),
+    followUpWorkIntakeReceipt: rel(followUpWorkIntakeReceiptPath),
+    manualFollowUpIssueEvidenceReceipt: intakeResult.manualFollowUpIssueEvidenceReceipt,
+    manualFollowUpIssueEvidence: intakeResult.manualFollowUpIssueEvidence,
+    manualNextStepHandoffReceipt: intakeResult.manualNextStepHandoffReceipt,
+    manualNextStepHandoff: intakeResult.manualNextStepHandoff,
+    packetPath: intakeResult.packetPath,
+    issue: intakeResult.issue || constraints.expectedIssue,
+    authorityLevel: intakeResult.authorityLevel,
+    target: intakeResult.target,
+    action: intakeResult.action,
+    targetScope: implementationWorkspaceEvidence.targetScope || followUpWorkIntakeReceipt.targetScope || intakeResult.targetScope,
+    workspaceEvidencePacketOnly: implementationWorkspaceEvidence.workspaceEvidencePacketOnly === true,
+    issueIdentifier: implementationWorkspaceEvidence.issueIdentifier || null,
+    issueUrl: implementationWorkspaceEvidence.issueUrl || null,
+    owner: implementationWorkspaceEvidence.owner || null,
+    intendedAssignee: implementationWorkspaceEvidence.intendedAssignee || null,
+    claimedBy: implementationWorkspaceEvidence.claimedBy || null,
+    claimedAt: implementationWorkspaceEvidence.claimedAt || null,
+    workspacePath: implementationWorkspaceEvidence.workspacePath || null,
+    branchName: implementationWorkspaceEvidence.branchName || null,
+    baseRef: implementationWorkspaceEvidence.baseRef || null,
+    baseSha: implementationWorkspaceEvidence.baseSha || null,
+    implementationSurface: implementationWorkspaceEvidence.implementationSurface || null,
+    scopedFilesOrModules: implementationWorkspaceEvidence.scopedFilesOrModules || [],
+    validationPlan: implementationWorkspaceEvidence.validationPlan || [],
+    rollbackPlan: implementationWorkspaceEvidence.rollbackPlan || [],
+    issueClaimedByVerifier: implementationWorkspaceEvidence.issueClaimedByVerifier === true,
+    worktreeCreatedByVerifier: implementationWorkspaceEvidence.worktreeCreatedByVerifier === true,
+    branchCreatedByVerifier: implementationWorkspaceEvidence.branchCreatedByVerifier === true,
+    prCreatedByVerifier: implementationWorkspaceEvidence.prCreatedByVerifier === true,
+    thirdPartyWritePerformedByVerifier: implementationWorkspaceEvidence.thirdPartyWritePerformedByVerifier === true,
+    requiredReceiptReferences: implementationWorkspaceEvidence.requiredReceiptReferences || [],
+    requiredEvidence: implementationWorkspaceEvidence.requiredEvidence || [],
+    redactionPolicyApplied: implementationWorkspaceEvidence.redactionPolicyApplied === true,
+    redactionPolicy: implementationWorkspaceEvidence.redactionPolicy || null,
+    containsSecrets: implementationWorkspaceEvidence.containsSecrets === true,
+    containsRawLogs: implementationWorkspaceEvidence.containsRawLogs === true,
+    containsPrompts: implementationWorkspaceEvidence.containsPrompts === true,
+    containsRawTranscripts: implementationWorkspaceEvidence.containsRawTranscripts === true,
+    rawLogsIncluded: implementationWorkspaceEvidence.rawLogsIncluded === true,
+    promptsIncluded: implementationWorkspaceEvidence.promptsIncluded === true,
+    rawTranscriptIncluded: implementationWorkspaceEvidence.rawTranscriptIncluded === true,
+    publicAccessFailClosedProof: implementationWorkspaceEvidence.publicAccessFailClosedProof || null,
+    operatorSummary: implementationWorkspaceEvidence.operatorSummary || null,
+    noExecutionMarkers: implementationWorkspaceEvidence.noExecutionMarkers || [],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: implementationWorkspaceEvidenceOk
+      ? 'implementation workspace evidence accepted as workspace-evidence-only proof; verifier did not claim an issue, create a worktree, create a branch, open a PR, spawn a runner process, or perform a production write'
+      : 'implementation workspace evidence rejected before issue claim, worktree creation, branch creation, PR creation, runner process, policy enablement, or write command',
+    evidenceTarget: implementationWorkspaceEvidence.evidenceTarget || followUpWorkIntakeReceipt.evidenceTarget || intakeResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may use this workspace evidence for a separate implementation PR; automated execution still requires explicit checked-in policy enablement and a separate runner path',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      implementationWorkspaceEvidenceRequiresFollowUpWorkIntakeReceipt: manifest.a4ImplementationWorkspaceEvidence?.requiresFollowUpWorkIntakeReceipt,
+      implementationWorkspaceEvidencePacketOnly: manifest.a4ImplementationWorkspaceEvidence?.workspaceEvidencePacketOnly,
+      implementationWorkspaceEvidenceIssueClaimedByVerifier: manifest.a4ImplementationWorkspaceEvidence?.issueClaimedByVerifier,
+      implementationWorkspaceEvidenceWorktreeCreatedByVerifier: manifest.a4ImplementationWorkspaceEvidence?.worktreeCreatedByVerifier,
+      implementationWorkspaceEvidenceRequiresNoExecutionOnEvidence: manifest.a4ImplementationWorkspaceEvidence?.requiresNoExecutionOnEvidence,
     },
   };
 }
@@ -8542,6 +8984,75 @@ function commandFollowUpWorkIntakeCheck(options) {
   return result;
 }
 
+function commandImplementationWorkspaceEvidenceCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for implementation-workspace-evidence-check'));
+  }
+  if (!options.followUpWorkIntakeReceipt) {
+    throw new Error('--follow-up-work-intake-receipt is required for implementation-workspace-evidence-check');
+  }
+  if (!options.implementationWorkspaceEvidence) {
+    throw new Error('--implementation-workspace-evidence is required for implementation-workspace-evidence-check');
+  }
+
+  const intakeResult = commandFollowUpWorkIntakeCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const manualFollowUpIssueEvidenceReceiptPath = resolveFromRoot(options.manualFollowUpIssueEvidenceReceipt);
+  const followUpWorkIntakePath = resolveFromRoot(options.followUpWorkIntake);
+  const followUpWorkIntakeReceiptPath = resolveFromRoot(options.followUpWorkIntakeReceipt);
+  const implementationWorkspaceEvidencePath = resolveFromRoot(options.implementationWorkspaceEvidence);
+  const followUpWorkIntake = readJson(followUpWorkIntakePath);
+  const followUpWorkIntakeReceipt = readJson(followUpWorkIntakeReceiptPath);
+  const implementationWorkspaceEvidence = readJson(implementationWorkspaceEvidencePath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const followUpWorkIntakeReceiptErrors = validateFollowUpWorkIntakeReceipt(
+    followUpWorkIntakeReceipt,
+    followUpWorkIntake,
+    intakeResult,
+    {
+      followUpWorkIntakePath,
+      manualFollowUpIssueEvidenceReceiptPath,
+    },
+    constraints,
+  );
+  const implementationWorkspaceEvidenceErrors = validateImplementationWorkspaceEvidence(
+    implementationWorkspaceEvidence,
+    followUpWorkIntakeReceipt,
+    manifest,
+    {
+      followUpWorkIntakePath,
+      followUpWorkIntakeReceiptPath,
+    },
+    constraints,
+  );
+  const result = buildImplementationWorkspaceEvidenceReceipt({
+    manifest,
+    manifestValidation,
+    intakeResult,
+    followUpWorkIntake,
+    followUpWorkIntakePath,
+    followUpWorkIntakeReceipt,
+    followUpWorkIntakeReceiptPath,
+    implementationWorkspaceEvidence,
+    implementationWorkspaceEvidencePath,
+    followUpWorkIntakeReceiptErrors,
+    implementationWorkspaceEvidenceErrors,
+    constraints,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -8602,6 +9113,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs manual-next-step-handoff-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs manual-follow-up-issue-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs follow-up-work-intake-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs implementation-workspace-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -8637,6 +9149,7 @@ async function main() {
   else if (options.command === 'manual-next-step-handoff-check') result = commandManualNextStepHandoffCheck(options);
   else if (options.command === 'manual-follow-up-issue-evidence-check') result = commandManualFollowUpIssueEvidenceCheck(options);
   else if (options.command === 'follow-up-work-intake-check') result = commandFollowUpWorkIntakeCheck(options);
+  else if (options.command === 'implementation-workspace-evidence-check') result = commandImplementationWorkspaceEvidenceCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -8668,6 +9181,7 @@ export {
   commandManualNextStepHandoffCheck,
   commandManualFollowUpIssueEvidenceCheck,
   commandFollowUpWorkIntakeCheck,
+  commandImplementationWorkspaceEvidenceCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
