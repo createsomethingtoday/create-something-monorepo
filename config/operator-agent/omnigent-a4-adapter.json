@@ -852,6 +852,90 @@
     "writesPerformed": 0,
     "blockedUntil": "implementation PR evidence packets may prove an operator opened a scoped draft PR with passing checks, but this verifier must not create PRs, mark ready for review, merge, enable execution, spawn a runner, expose raw artifacts, or mutate third-party systems"
   },
+  "a4ImplementationMergeDecision": {
+    "requiresImplementationPrEvidenceReceipt": true,
+    "decisionPacketOnly": true,
+    "requiresDecision": true,
+    "requiresReviewer": true,
+    "requiresReviewedAt": true,
+    "requiresIssueIdentifier": true,
+    "requiresIssueUrl": true,
+    "requiresPrUrl": true,
+    "requiresPrNumber": true,
+    "requiresHeadRef": true,
+    "requiresBaseRef": true,
+    "requiresCommitSha": true,
+    "requiresMergeState": true,
+    "requiresChecks": true,
+    "requiresValidationEvidence": true,
+    "requiresRollbackPlan": true,
+    "requiresPublicAccessFailClosedProof": true,
+    "readyForReviewByVerifier": false,
+    "mergedByVerifier": false,
+    "deployedByVerifier": false,
+    "requiresNoThirdPartyWriteByVerifier": true,
+    "requiresRedactionPolicy": true,
+    "forbidsSecrets": true,
+    "forbidsRawLogs": true,
+    "forbidsPrompts": true,
+    "forbidsRawTranscripts": true,
+    "requiresNoExecutionOnDecision": true,
+    "allowedDecisions": [
+      "approved-for-manual-merge",
+      "hold",
+      "request-changes"
+    ],
+    "requiredReceiptReferences": [
+      "implementation-pr-evidence-check",
+      "implementation-workspace-evidence-check",
+      "follow-up-work-intake-check",
+      "manual-follow-up-issue-evidence-check",
+      "manual-next-step-handoff-check",
+      "receipt-review-decision-check",
+      "receipt-publication-check",
+      "receipt-bundle-check",
+      "execution-runbook-check",
+      "release-admission-check"
+    ],
+    "requiredEvidence": [
+      "implementation-pr-evidence-receipt",
+      "decision",
+      "reviewer",
+      "reviewed-at",
+      "issue-identifier",
+      "issue-url",
+      "pr-url",
+      "pr-number",
+      "head-ref",
+      "base-ref",
+      "commit-sha",
+      "merge-state",
+      "checks",
+      "validation-evidence",
+      "rollback-plan",
+      "public-access-fail-closed-proof",
+      "redaction-policy",
+      "operator-summary"
+    ],
+    "requiredNoExecutionMarkers": [
+      "current-policy-blocked",
+      "process-not-spawned",
+      "executed-commands-empty",
+      "runner-disabled",
+      "execution-not-ready",
+      "execution-disabled",
+      "execution-not-approved",
+      "would-execute-false",
+      "writes-performed-zero",
+      "ready-for-review-not-performed-by-verifier",
+      "merge-not-performed-by-verifier",
+      "deploy-not-performed-by-verifier",
+      "third-party-write-not-performed-by-verifier",
+      "merge-decision-only"
+    ],
+    "writesPerformed": 0,
+    "blockedUntil": "implementation merge decision packets may approve, hold, or request changes for manual follow-up, but this verifier must not mark PRs ready, merge, deploy, enable execution, spawn a runner, expose raw artifacts, or mutate third-party systems"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -992,6 +1076,11 @@
       "id": "gate-25-a4-implementation-pr-evidence",
       "required": "A4 implementation PR evidence validates an operator-opened draft PR, head/base refs, commit SHA, changed scope, and passing checks without creating PRs, marking ready for review, merging, exposing raw artifacts, or executing",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-pr-evidence-check --packet <packet.json> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-26-a4-implementation-merge-decision",
+      "required": "A4 implementation merge decision validates an operator decision for the implementation PR without marking ready, merging, deploying, exposing raw artifacts, or executing",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-merge-decision-check --packet <packet.json> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

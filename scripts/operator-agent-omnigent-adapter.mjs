@@ -122,6 +122,8 @@ function parseArgs(argv) {
     implementationWorkspaceEvidence: null,
     implementationWorkspaceEvidenceReceipt: null,
     implementationPrEvidence: null,
+    implementationPrEvidenceReceipt: null,
+    implementationMergeDecision: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -176,6 +178,8 @@ function parseArgs(argv) {
     else if (arg === '--implementation-workspace-evidence' && args[index + 1]) options.implementationWorkspaceEvidence = args[++index];
     else if (arg === '--implementation-workspace-evidence-receipt' && args[index + 1]) options.implementationWorkspaceEvidenceReceipt = args[++index];
     else if (arg === '--implementation-pr-evidence' && args[index + 1]) options.implementationPrEvidence = args[++index];
+    else if (arg === '--implementation-pr-evidence-receipt' && args[index + 1]) options.implementationPrEvidenceReceipt = args[++index];
+    else if (arg === '--implementation-merge-decision' && args[index + 1]) options.implementationMergeDecision = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -1438,6 +1442,126 @@ function validateManifest(manifest) {
   }
   if (implementationPrEvidence.writesPerformed !== 0) {
     errors.push('a4ImplementationPrEvidence.writesPerformed must be 0');
+  }
+
+  const implementationMergeDecision = manifest.a4ImplementationMergeDecision || {};
+  if (implementationMergeDecision.requiresImplementationPrEvidenceReceipt !== true) {
+    errors.push('a4ImplementationMergeDecision.requiresImplementationPrEvidenceReceipt must be true');
+  }
+  if (implementationMergeDecision.decisionPacketOnly !== true) {
+    errors.push('a4ImplementationMergeDecision.decisionPacketOnly must be true');
+  }
+  for (const field of [
+    'requiresDecision',
+    'requiresReviewer',
+    'requiresReviewedAt',
+    'requiresIssueIdentifier',
+    'requiresIssueUrl',
+    'requiresPrUrl',
+    'requiresPrNumber',
+    'requiresHeadRef',
+    'requiresBaseRef',
+    'requiresCommitSha',
+    'requiresMergeState',
+    'requiresChecks',
+    'requiresValidationEvidence',
+    'requiresRollbackPlan',
+    'requiresPublicAccessFailClosedProof',
+  ]) {
+    if (implementationMergeDecision[field] !== true) {
+      errors.push(`a4ImplementationMergeDecision.${field} must be true`);
+    }
+  }
+  for (const field of [
+    'readyForReviewByVerifier',
+    'mergedByVerifier',
+    'deployedByVerifier',
+  ]) {
+    if (implementationMergeDecision[field] !== false) {
+      errors.push(`a4ImplementationMergeDecision.${field} must be false`);
+    }
+  }
+  if (implementationMergeDecision.requiresNoThirdPartyWriteByVerifier !== true) {
+    errors.push('a4ImplementationMergeDecision.requiresNoThirdPartyWriteByVerifier must be true');
+  }
+  if (implementationMergeDecision.requiresRedactionPolicy !== true) {
+    errors.push('a4ImplementationMergeDecision.requiresRedactionPolicy must be true');
+  }
+  for (const field of ['forbidsSecrets', 'forbidsRawLogs', 'forbidsPrompts', 'forbidsRawTranscripts']) {
+    if (implementationMergeDecision[field] !== true) {
+      errors.push(`a4ImplementationMergeDecision.${field} must be true`);
+    }
+  }
+  if (implementationMergeDecision.requiresNoExecutionOnDecision !== true) {
+    errors.push('a4ImplementationMergeDecision.requiresNoExecutionOnDecision must be true');
+  }
+  for (const decision of ['approved-for-manual-merge', 'hold', 'request-changes']) {
+    if (!implementationMergeDecision.allowedDecisions?.includes(decision)) {
+      errors.push(`a4ImplementationMergeDecision.allowedDecisions must include ${decision}`);
+    }
+  }
+  for (const receiptReference of [
+    'implementation-pr-evidence-check',
+    'implementation-workspace-evidence-check',
+    'follow-up-work-intake-check',
+    'manual-follow-up-issue-evidence-check',
+    'manual-next-step-handoff-check',
+    'receipt-review-decision-check',
+    'receipt-publication-check',
+    'receipt-bundle-check',
+    'execution-runbook-check',
+    'release-admission-check',
+  ]) {
+    if (!implementationMergeDecision.requiredReceiptReferences?.includes(receiptReference)) {
+      errors.push(`a4ImplementationMergeDecision.requiredReceiptReferences must include ${receiptReference}`);
+    }
+  }
+  for (const evidence of [
+    'implementation-pr-evidence-receipt',
+    'decision',
+    'reviewer',
+    'reviewed-at',
+    'issue-identifier',
+    'issue-url',
+    'pr-url',
+    'pr-number',
+    'head-ref',
+    'base-ref',
+    'commit-sha',
+    'merge-state',
+    'checks',
+    'validation-evidence',
+    'rollback-plan',
+    'public-access-fail-closed-proof',
+    'redaction-policy',
+    'operator-summary',
+  ]) {
+    if (!implementationMergeDecision.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ImplementationMergeDecision.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-policy-blocked',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+    'ready-for-review-not-performed-by-verifier',
+    'merge-not-performed-by-verifier',
+    'deploy-not-performed-by-verifier',
+    'third-party-write-not-performed-by-verifier',
+    'merge-decision-only',
+  ]) {
+    if (!implementationMergeDecision.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ImplementationMergeDecision.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (implementationMergeDecision.writesPerformed !== 0) {
+    errors.push('a4ImplementationMergeDecision.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -5480,6 +5604,212 @@ function validateImplementationPrEvidence(evidence, workspaceReceipt, manifest, 
   return errors;
 }
 
+function validateImplementationPrEvidenceReceipt(receipt, evidence, evidenceResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'implementation-pr-evidence-check') {
+    errors.push('implementation PR evidence receipt mode must be implementation-pr-evidence-check');
+  }
+  if (receipt.ok !== true || receipt.implementationPrEvidenceOk !== true) {
+    errors.push('implementation PR evidence receipt must be ok');
+  }
+  if (receipt.implementationPrEvidence !== rel(paths.implementationPrEvidencePath)) {
+    errors.push('implementation PR evidence receipt implementationPrEvidence must match implementation PR evidence artifact path');
+  }
+  if (receipt.implementationWorkspaceEvidenceReceipt !== rel(paths.implementationWorkspaceEvidenceReceiptPath)) {
+    errors.push('implementation PR evidence receipt implementationWorkspaceEvidenceReceipt must match implementation workspace evidence receipt path');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`implementation PR evidence receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`implementation PR evidence receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`implementation PR evidence receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.prEvidencePacketOnly !== true) {
+    errors.push('implementation PR evidence receipt prEvidencePacketOnly must be true');
+  }
+  for (const field of [
+    'issueIdentifier',
+    'issueUrl',
+    'owner',
+    'intendedAssignee',
+    'prUrl',
+    'prNumber',
+    'headRef',
+    'baseRef',
+    'commitSha',
+    'mergeStateStatus',
+  ]) {
+    if (receipt[field] !== evidence[field]) {
+      errors.push(`implementation PR evidence receipt ${field} must match evidence`);
+    }
+  }
+  if (receipt.isDraft !== true) errors.push('implementation PR evidence receipt isDraft must be true');
+  if (!Array.isArray(receipt.checks) || receipt.checks.length === 0) {
+    errors.push('implementation PR evidence receipt checks must not be empty');
+  } else if (receipt.checks.some((check) => check.conclusion !== 'SUCCESS')) {
+    errors.push('implementation PR evidence receipt checks must all conclude SUCCESS');
+  }
+  if (includesAll(receipt.changedFilesOrModules || [], evidence.changedFilesOrModules || []).length > 0) {
+    errors.push('implementation PR evidence receipt changedFilesOrModules must include evidence scope');
+  }
+  if (receipt.prCreatedByVerifier !== false) {
+    errors.push('implementation PR evidence receipt prCreatedByVerifier must be false');
+  }
+  if (receipt.readyForReviewByVerifier !== false) {
+    errors.push('implementation PR evidence receipt readyForReviewByVerifier must be false');
+  }
+  if (receipt.mergedByVerifier !== false) {
+    errors.push('implementation PR evidence receipt mergedByVerifier must be false');
+  }
+  if (receipt.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation PR evidence receipt thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (receipt.redactionPolicyApplied !== true) {
+    errors.push('implementation PR evidence receipt redactionPolicyApplied must be true');
+  }
+  if (receipt.containsSecrets !== false) errors.push('implementation PR evidence receipt containsSecrets must be false');
+  if (receipt.containsRawLogs !== false) errors.push('implementation PR evidence receipt containsRawLogs must be false');
+  if (receipt.containsPrompts !== false) errors.push('implementation PR evidence receipt containsPrompts must be false');
+  if (receipt.containsRawTranscripts !== false) {
+    errors.push('implementation PR evidence receipt containsRawTranscripts must be false');
+  }
+  if (receipt.currentPolicyBlocked !== true) errors.push('implementation PR evidence receipt currentPolicyBlocked must be true');
+  if (receipt.processSpawned !== false) errors.push('implementation PR evidence receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('implementation PR evidence receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('implementation PR evidence receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('implementation PR evidence receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('implementation PR evidence receipt executionEnabled must be false');
+  if (receipt.executionApproved !== false) errors.push('implementation PR evidence receipt executionApproved must be false');
+  if (receipt.wouldExecute !== false) errors.push('implementation PR evidence receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('implementation PR evidence receipt writesPerformed must be 0');
+  if (evidenceResult.implementationPrEvidenceOk !== true) {
+    errors.push('implementation PR evidence receipt requires valid implementation PR evidence result');
+  }
+
+  return errors;
+}
+
+function validateImplementationMergeDecision(decision, prReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ImplementationMergeDecision || {};
+
+  if (decision.authorityLevel !== 'A4') errors.push('implementation merge decision authorityLevel must be A4');
+  if (decision.issue !== constraints.expectedIssue) {
+    errors.push(`implementation merge decision issue mismatch: expected ${constraints.expectedIssue}, got ${decision.issue}`);
+  }
+  if (decision.target !== constraints.expectedTarget) {
+    errors.push(`implementation merge decision target mismatch: expected ${constraints.expectedTarget}, got ${decision.target}`);
+  }
+  if (decision.action !== constraints.expectedAction) {
+    errors.push(`implementation merge decision action mismatch: expected ${constraints.expectedAction}, got ${decision.action}`);
+  }
+  if (decision.implementationPrEvidence !== rel(paths.implementationPrEvidencePath)) {
+    errors.push('implementation merge decision implementationPrEvidence must match implementation PR evidence artifact path');
+  }
+  if (decision.implementationPrEvidenceReceipt !== rel(paths.implementationPrEvidenceReceiptPath)) {
+    errors.push('implementation merge decision implementationPrEvidenceReceipt must match implementation PR evidence receipt path');
+  }
+  if (decision.decisionPacketOnly !== true) {
+    errors.push('implementation merge decision decisionPacketOnly must be true');
+  }
+  if (!rules.allowedDecisions?.includes(decision.decision)) {
+    errors.push('implementation merge decision decision must be allowed');
+  }
+  if (!hasValue(decision.reviewer)) errors.push('implementation merge decision reviewer is required');
+  if (!hasValue(decision.reviewedAt) || Number.isNaN(Date.parse(decision.reviewedAt))) {
+    errors.push('implementation merge decision reviewedAt must be an ISO timestamp');
+  }
+  for (const field of [
+    'issueIdentifier',
+    'issueUrl',
+    'prUrl',
+    'prNumber',
+    'headRef',
+    'baseRef',
+    'commitSha',
+    'mergeStateStatus',
+  ]) {
+    if (decision[field] !== prReceipt[field]) {
+      errors.push(`implementation merge decision ${field} must match implementation PR evidence receipt`);
+    }
+  }
+  if (!Array.isArray(decision.checks) || decision.checks.length === 0) {
+    errors.push('implementation merge decision checks must not be empty');
+  } else if (decision.checks.some((check) => check.conclusion !== 'SUCCESS')) {
+    errors.push('implementation merge decision checks must all conclude SUCCESS');
+  }
+  if (!Array.isArray(decision.validationEvidence) || decision.validationEvidence.length === 0) {
+    errors.push('implementation merge decision validationEvidence must not be empty');
+  }
+  if (!Array.isArray(decision.rollbackPlan) || decision.rollbackPlan.length === 0) {
+    errors.push('implementation merge decision rollbackPlan must not be empty');
+  }
+  if (decision.readyForReviewByVerifier !== false) {
+    errors.push('implementation merge decision readyForReviewByVerifier must be false');
+  }
+  if (decision.mergedByVerifier !== false) errors.push('implementation merge decision mergedByVerifier must be false');
+  if (decision.deployedByVerifier !== false) errors.push('implementation merge decision deployedByVerifier must be false');
+  if (decision.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation merge decision thirdPartyWritePerformedByVerifier must be false');
+  }
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!decision.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`implementation merge decision requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const requiredEvidence of rules.requiredEvidence || []) {
+    if (!decision.requiredEvidence?.includes(requiredEvidence)) {
+      errors.push(`implementation merge decision requiredEvidence must include ${requiredEvidence}`);
+    }
+  }
+  if (decision.redactionPolicyApplied !== true) {
+    errors.push('implementation merge decision redactionPolicyApplied must be true');
+  }
+  if (!hasValue(decision.redactionPolicy)) errors.push('implementation merge decision redactionPolicy is required');
+  if (decision.containsSecrets !== false) errors.push('implementation merge decision containsSecrets must be false');
+  if (decision.containsRawLogs !== false) errors.push('implementation merge decision containsRawLogs must be false');
+  if (decision.containsPrompts !== false) errors.push('implementation merge decision containsPrompts must be false');
+  if (decision.containsRawTranscripts !== false) {
+    errors.push('implementation merge decision containsRawTranscripts must be false');
+  }
+  if (decision.rawLogsIncluded === true) errors.push('implementation merge decision rawLogsIncluded must not be true');
+  if (decision.promptsIncluded === true) errors.push('implementation merge decision promptsIncluded must not be true');
+  if (decision.rawTranscriptIncluded === true) {
+    errors.push('implementation merge decision rawTranscriptIncluded must not be true');
+  }
+  if (!hasValue(decision.publicAccessFailClosedProof)) {
+    errors.push('implementation merge decision publicAccessFailClosedProof is required');
+  }
+  if (!hasValue(decision.operatorSummary)) errors.push('implementation merge decision operatorSummary is required');
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!decision.noExecutionMarkers?.includes(marker)) {
+      errors.push(`implementation merge decision noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (decision.currentPolicyBlocked !== true) errors.push('implementation merge decision currentPolicyBlocked must be true');
+  if (decision.processSpawned === true) errors.push('implementation merge decision processSpawned must not be true');
+  if (Array.isArray(decision.executedCommands) && decision.executedCommands.length > 0) {
+    errors.push('implementation merge decision executedCommands must be empty');
+  }
+  if (decision.runnerEnabled === true) errors.push('implementation merge decision runnerEnabled must not be true');
+  if (decision.executionReady === true) errors.push('implementation merge decision executionReady must not be true');
+  if (decision.executionEnabled === true) errors.push('implementation merge decision executionEnabled must not be true');
+  if (decision.executionApproved === true) errors.push('implementation merge decision executionApproved must not be true');
+  if (decision.wouldExecute === true) errors.push('implementation merge decision wouldExecute must not be true');
+  if (decision.writesPerformed !== 0) errors.push('implementation merge decision writesPerformed must be 0');
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('implementation merge decision current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -7087,6 +7417,113 @@ function buildImplementationPrEvidenceReceipt({
       implementationPrEvidenceReadyForReviewByVerifier: manifest.a4ImplementationPrEvidence?.readyForReviewByVerifier,
       implementationPrEvidenceMergedByVerifier: manifest.a4ImplementationPrEvidence?.mergedByVerifier,
       implementationPrEvidenceRequiresNoExecutionOnEvidence: manifest.a4ImplementationPrEvidence?.requiresNoExecutionOnEvidence,
+    },
+  };
+}
+
+function buildImplementationMergeDecisionReceipt({
+  manifest,
+  manifestValidation,
+  prResult,
+  implementationPrEvidence,
+  implementationPrEvidencePath,
+  implementationPrEvidenceReceipt,
+  implementationPrEvidenceReceiptPath,
+  implementationMergeDecision,
+  implementationMergeDecisionPath,
+  implementationPrEvidenceReceiptErrors,
+  implementationMergeDecisionErrors,
+  constraints,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(prResult.errors || []),
+    ...implementationPrEvidenceReceiptErrors,
+    ...implementationMergeDecisionErrors,
+  ];
+  const implementationMergeDecisionOk = errors.length === 0;
+
+  return {
+    mode: 'implementation-merge-decision-check',
+    ok: implementationMergeDecisionOk,
+    implementationMergeDecisionOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    implementationMergeDecision: rel(implementationMergeDecisionPath),
+    implementationPrEvidence: rel(implementationPrEvidencePath),
+    implementationPrEvidenceReceipt: rel(implementationPrEvidenceReceiptPath),
+    implementationWorkspaceEvidenceReceipt: prResult.implementationWorkspaceEvidenceReceipt,
+    implementationWorkspaceEvidence: prResult.implementationWorkspaceEvidence,
+    followUpWorkIntakeReceipt: prResult.followUpWorkIntakeReceipt,
+    followUpWorkIntake: prResult.followUpWorkIntake,
+    packetPath: prResult.packetPath,
+    issue: prResult.issue || constraints.expectedIssue,
+    authorityLevel: prResult.authorityLevel,
+    target: prResult.target,
+    action: prResult.action,
+    targetScope: implementationMergeDecision.targetScope || implementationPrEvidenceReceipt.targetScope || prResult.targetScope,
+    decisionPacketOnly: implementationMergeDecision.decisionPacketOnly === true,
+    decision: implementationMergeDecision.decision || null,
+    reviewer: implementationMergeDecision.reviewer || null,
+    reviewedAt: implementationMergeDecision.reviewedAt || null,
+    issueIdentifier: implementationMergeDecision.issueIdentifier || null,
+    issueUrl: implementationMergeDecision.issueUrl || null,
+    prUrl: implementationMergeDecision.prUrl || null,
+    prNumber: implementationMergeDecision.prNumber || null,
+    headRef: implementationMergeDecision.headRef || null,
+    baseRef: implementationMergeDecision.baseRef || null,
+    commitSha: implementationMergeDecision.commitSha || null,
+    mergeStateStatus: implementationMergeDecision.mergeStateStatus || null,
+    checks: implementationMergeDecision.checks || [],
+    validationEvidence: implementationMergeDecision.validationEvidence || [],
+    rollbackPlan: implementationMergeDecision.rollbackPlan || [],
+    readyForReviewByVerifier: implementationMergeDecision.readyForReviewByVerifier === true,
+    mergedByVerifier: implementationMergeDecision.mergedByVerifier === true,
+    deployedByVerifier: implementationMergeDecision.deployedByVerifier === true,
+    thirdPartyWritePerformedByVerifier: implementationMergeDecision.thirdPartyWritePerformedByVerifier === true,
+    requiredReceiptReferences: implementationMergeDecision.requiredReceiptReferences || [],
+    requiredEvidence: implementationMergeDecision.requiredEvidence || [],
+    redactionPolicyApplied: implementationMergeDecision.redactionPolicyApplied === true,
+    redactionPolicy: implementationMergeDecision.redactionPolicy || null,
+    containsSecrets: implementationMergeDecision.containsSecrets === true,
+    containsRawLogs: implementationMergeDecision.containsRawLogs === true,
+    containsPrompts: implementationMergeDecision.containsPrompts === true,
+    containsRawTranscripts: implementationMergeDecision.containsRawTranscripts === true,
+    rawLogsIncluded: implementationMergeDecision.rawLogsIncluded === true,
+    promptsIncluded: implementationMergeDecision.promptsIncluded === true,
+    rawTranscriptIncluded: implementationMergeDecision.rawTranscriptIncluded === true,
+    publicAccessFailClosedProof: implementationMergeDecision.publicAccessFailClosedProof || null,
+    operatorSummary: implementationMergeDecision.operatorSummary || null,
+    noExecutionMarkers: implementationMergeDecision.noExecutionMarkers || [],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: implementationMergeDecisionOk
+      ? 'implementation merge decision accepted as decision-only proof; verifier did not mark the PR ready, merge, deploy, spawn a runner process, or perform a production write'
+      : 'implementation merge decision rejected before ready-for-review transition, merge, deploy, runner process, policy enablement, or write command',
+    evidenceTarget: implementationMergeDecision.evidenceTarget || implementationPrEvidenceReceipt.evidenceTarget || prResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may manually apply this decision outside the verifier; automated execution still requires explicit checked-in policy enablement and a separate runner path',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      implementationMergeDecisionRequiresImplementationPrEvidenceReceipt: manifest.a4ImplementationMergeDecision?.requiresImplementationPrEvidenceReceipt,
+      implementationMergeDecisionPacketOnly: manifest.a4ImplementationMergeDecision?.decisionPacketOnly,
+      implementationMergeDecisionReadyForReviewByVerifier: manifest.a4ImplementationMergeDecision?.readyForReviewByVerifier,
+      implementationMergeDecisionMergedByVerifier: manifest.a4ImplementationMergeDecision?.mergedByVerifier,
+      implementationMergeDecisionDeployedByVerifier: manifest.a4ImplementationMergeDecision?.deployedByVerifier,
+      implementationMergeDecisionRequiresNoExecutionOnDecision: manifest.a4ImplementationMergeDecision?.requiresNoExecutionOnDecision,
     },
   };
 }
@@ -9607,6 +10044,75 @@ function commandImplementationPrEvidenceCheck(options) {
   return result;
 }
 
+function commandImplementationMergeDecisionCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for implementation-merge-decision-check'));
+  }
+  if (!options.implementationPrEvidenceReceipt) {
+    throw new Error('--implementation-pr-evidence-receipt is required for implementation-merge-decision-check');
+  }
+  if (!options.implementationMergeDecision) {
+    throw new Error('--implementation-merge-decision is required for implementation-merge-decision-check');
+  }
+
+  const prResult = commandImplementationPrEvidenceCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const implementationWorkspaceEvidenceReceiptPath = resolveFromRoot(options.implementationWorkspaceEvidenceReceipt);
+  const implementationPrEvidencePath = resolveFromRoot(options.implementationPrEvidence);
+  const implementationPrEvidenceReceiptPath = resolveFromRoot(options.implementationPrEvidenceReceipt);
+  const implementationMergeDecisionPath = resolveFromRoot(options.implementationMergeDecision);
+  const implementationPrEvidence = readJson(implementationPrEvidencePath);
+  const implementationPrEvidenceReceipt = readJson(implementationPrEvidenceReceiptPath);
+  const implementationMergeDecision = readJson(implementationMergeDecisionPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const implementationPrEvidenceReceiptErrors = validateImplementationPrEvidenceReceipt(
+    implementationPrEvidenceReceipt,
+    implementationPrEvidence,
+    prResult,
+    {
+      implementationPrEvidencePath,
+      implementationWorkspaceEvidenceReceiptPath,
+    },
+    constraints,
+  );
+  const implementationMergeDecisionErrors = validateImplementationMergeDecision(
+    implementationMergeDecision,
+    implementationPrEvidenceReceipt,
+    manifest,
+    {
+      implementationPrEvidencePath,
+      implementationPrEvidenceReceiptPath,
+    },
+    constraints,
+  );
+  const result = buildImplementationMergeDecisionReceipt({
+    manifest,
+    manifestValidation,
+    prResult,
+    implementationPrEvidence,
+    implementationPrEvidencePath,
+    implementationPrEvidenceReceipt,
+    implementationPrEvidenceReceiptPath,
+    implementationMergeDecision,
+    implementationMergeDecisionPath,
+    implementationPrEvidenceReceiptErrors,
+    implementationMergeDecisionErrors,
+    constraints,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -9669,6 +10175,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs follow-up-work-intake-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-workspace-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-pr-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs implementation-merge-decision-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -9706,6 +10213,7 @@ async function main() {
   else if (options.command === 'follow-up-work-intake-check') result = commandFollowUpWorkIntakeCheck(options);
   else if (options.command === 'implementation-workspace-evidence-check') result = commandImplementationWorkspaceEvidenceCheck(options);
   else if (options.command === 'implementation-pr-evidence-check') result = commandImplementationPrEvidenceCheck(options);
+  else if (options.command === 'implementation-merge-decision-check') result = commandImplementationMergeDecisionCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -9739,6 +10247,7 @@ export {
   commandFollowUpWorkIntakeCheck,
   commandImplementationWorkspaceEvidenceCheck,
   commandImplementationPrEvidenceCheck,
+  commandImplementationMergeDecisionCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,

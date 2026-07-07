@@ -634,6 +634,54 @@ function implementationPrEvidenceCheckArgs(packetPath, preflightReceiptPath, exe
   return args;
 }
 
+function implementationMergeDecisionCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath, receiptPublicationReceiptPath, receiptReviewDecisionPath, receiptReviewDecisionReceiptPath, manualNextStepHandoffPath, manualNextStepHandoffReceiptPath, manualFollowUpIssueEvidencePath, manualFollowUpIssueEvidenceReceiptPath, followUpWorkIntakePath, followUpWorkIntakeReceiptPath, implementationWorkspaceEvidencePath, implementationWorkspaceEvidenceReceiptPath, implementationPrEvidencePath, implementationPrEvidenceReceiptPath, implementationMergeDecisionPath, receiptDir) {
+  const args = implementationPrEvidenceCheckArgs(
+    packetPath,
+    preflightReceiptPath,
+    executionReceiptPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+    runnerContractReceiptPath,
+    runnerPlanPath,
+    runnerPlanReceiptPath,
+    runnerDiffPath,
+    runnerDiffReceiptPath,
+    releaseAdmissionPath,
+    releaseAdmissionReceiptPath,
+    executionRunbookPath,
+    executionRunbookReceiptPath,
+    receiptBundlePath,
+    receiptBundleReceiptPath,
+    receiptPublicationPath,
+    receiptPublicationReceiptPath,
+    receiptReviewDecisionPath,
+    receiptReviewDecisionReceiptPath,
+    manualNextStepHandoffPath,
+    manualNextStepHandoffReceiptPath,
+    manualFollowUpIssueEvidencePath,
+    manualFollowUpIssueEvidenceReceiptPath,
+    followUpWorkIntakePath,
+    followUpWorkIntakeReceiptPath,
+    implementationWorkspaceEvidencePath,
+    implementationWorkspaceEvidenceReceiptPath,
+    implementationPrEvidencePath,
+    receiptDir,
+  );
+  args[1] = 'implementation-merge-decision-check';
+  args.push('--implementation-pr-evidence-receipt', implementationPrEvidenceReceiptPath, '--implementation-merge-decision', implementationMergeDecisionPath);
+  return args;
+}
+
 function mergePatch(base, patch) {
   const result = JSON.parse(JSON.stringify(base));
   for (const [key, value] of Object.entries(patch || {})) {
@@ -1348,6 +1396,63 @@ function writeValidImplementationWorkspaceEvidenceReceipt(t, packetPath, preflig
     root,
     implementationWorkspaceEvidenceReceiptPath: path.join(REPO_ROOT, workspacePayload.receiptPath),
     workspacePayload,
+  };
+}
+
+function writeValidImplementationPrEvidenceReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath, receiptPublicationReceiptPath, receiptReviewDecisionPath, receiptReviewDecisionReceiptPath, manualNextStepHandoffPath, manualNextStepHandoffReceiptPath, manualFollowUpIssueEvidencePath, manualFollowUpIssueEvidenceReceiptPath, followUpWorkIntakePath, followUpWorkIntakeReceiptPath, implementationWorkspaceEvidencePath, implementationWorkspaceEvidenceReceiptPath, implementationPrEvidencePath) {
+  const root = makeWorkspace(t);
+  const prResult = spawnSync(
+    process.execPath,
+    implementationPrEvidenceCheckArgs(
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+      commandPath,
+      commandReceiptPath,
+      executorProofPath,
+      proposalPath,
+      proposalReceiptPath,
+      policyPatchPath,
+      policyPatchReceiptPath,
+      candidateManifestPath,
+      applicationDiffReceiptPath,
+      readinessReceiptPath,
+      runnerContractPath,
+      runnerContractReceiptPath,
+      runnerPlanPath,
+      runnerPlanReceiptPath,
+      runnerDiffPath,
+      runnerDiffReceiptPath,
+      releaseAdmissionPath,
+      releaseAdmissionReceiptPath,
+      executionRunbookPath,
+      executionRunbookReceiptPath,
+      receiptBundlePath,
+      receiptBundleReceiptPath,
+      receiptPublicationPath,
+      receiptPublicationReceiptPath,
+      receiptReviewDecisionPath,
+      receiptReviewDecisionReceiptPath,
+      manualNextStepHandoffPath,
+      manualNextStepHandoffReceiptPath,
+      manualFollowUpIssueEvidencePath,
+      manualFollowUpIssueEvidenceReceiptPath,
+      followUpWorkIntakePath,
+      followUpWorkIntakeReceiptPath,
+      implementationWorkspaceEvidencePath,
+      implementationWorkspaceEvidenceReceiptPath,
+      implementationPrEvidencePath,
+      root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+  assert.equal(prResult.status, 0, prResult.stderr || prResult.stdout);
+  const prPayload = JSON.parse(prResult.stdout);
+  return {
+    root,
+    implementationPrEvidenceReceiptPath: path.join(REPO_ROOT, prPayload.receiptPath),
+    prPayload,
   };
 }
 
@@ -2491,6 +2596,127 @@ function validImplementationPrEvidence({ implementationWorkspaceEvidencePath, im
       'merge-not-performed-by-verifier',
       'third-party-write-not-performed-by-verifier',
       'pr-evidence-only',
+    ],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
+function validImplementationMergeDecision({ implementationPrEvidencePath, implementationPrEvidenceReceiptPath } = {}) {
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    implementationPrEvidence: implementationPrEvidencePath
+      ? path.relative(REPO_ROOT, implementationPrEvidencePath)
+      : 'implementation-pr-evidence.json',
+    implementationPrEvidenceReceipt: implementationPrEvidenceReceiptPath
+      ? path.relative(REPO_ROOT, implementationPrEvidenceReceiptPath)
+      : 'implementation-pr-evidence-check.json',
+    decisionPacketOnly: true,
+    decision: 'approved-for-manual-merge',
+    reviewer: 'Micah Johnson',
+    reviewedAt: '2026-07-07T00:00:00.000Z',
+    issueIdentifier: EXPECTED_ISSUE,
+    issueUrl: `https://linear.app/createsomething/issue/${EXPECTED_ISSUE.toLowerCase()}/manual-a4-execution-enablement-review-for-fixture`,
+    prUrl: 'https://github.com/createsomethingtoday/create-something-monorepo/pull/999',
+    prNumber: 999,
+    headRef: `codex/${EXPECTED_ISSUE}-implementation-worktree`,
+    baseRef: 'codex/CRE-1090-agent-worktree',
+    commitSha: 'abcdef0123456789abcdef0123456789abcdef01',
+    mergeStateStatus: 'CLEAN',
+    checks: [
+      { name: 'Philosophical Code Review', conclusion: 'SUCCESS' },
+      { name: 'Socket Security: Project Report', conclusion: 'SUCCESS' },
+      { name: 'Socket Security: Pull Request Alerts', conclusion: 'SUCCESS' },
+    ],
+    validationEvidence: [
+      'node --check scripts/operator-agent-omnigent-adapter.mjs',
+      'node scripts/operator-agent-omnigent-adapter.mjs check --json',
+      'node scripts/operator-agent-omnigent-adapter.mjs trial-check --json',
+      'node --test scripts/test/operator-agent-omnigent-adapter.test.mjs',
+      'gh pr checks <pr>',
+    ],
+    rollbackPlan: [
+      'keep the PR draft until manual merge',
+      'close or supersede the draft PR before merge',
+      'revert the verifier PR if it is merged and later invalidated',
+    ],
+    readyForReviewByVerifier: false,
+    mergedByVerifier: false,
+    deployedByVerifier: false,
+    thirdPartyWritePerformedByVerifier: false,
+    requiredReceiptReferences: [
+      'implementation-pr-evidence-check',
+      'implementation-workspace-evidence-check',
+      'follow-up-work-intake-check',
+      'manual-follow-up-issue-evidence-check',
+      'manual-next-step-handoff-check',
+      'receipt-review-decision-check',
+      'receipt-publication-check',
+      'receipt-bundle-check',
+      'execution-runbook-check',
+      'release-admission-check',
+    ],
+    requiredEvidence: [
+      'implementation-pr-evidence-receipt',
+      'decision',
+      'reviewer',
+      'reviewed-at',
+      'issue-identifier',
+      'issue-url',
+      'pr-url',
+      'pr-number',
+      'head-ref',
+      'base-ref',
+      'commit-sha',
+      'merge-state',
+      'checks',
+      'validation-evidence',
+      'rollback-plan',
+      'public-access-fail-closed-proof',
+      'redaction-policy',
+      'operator-summary',
+    ],
+    redactionPolicyApplied: true,
+    redactionPolicy: {
+      excludes: ['secrets', 'raw-logs', 'prompts', 'raw-transcripts'],
+      evidenceOnly: true,
+    },
+    containsSecrets: false,
+    containsRawLogs: false,
+    containsPrompts: false,
+    containsRawTranscripts: false,
+    rawLogsIncluded: false,
+    promptsIncluded: false,
+    rawTranscriptIncluded: false,
+    publicAccessFailClosedProof: 'operator-agent-public-smoke rawOriginExposed=false and redirectsToAccess=true',
+    operatorSummary: 'Merge decision evidence approves a manual merge path for the operator-opened draft PR; verifier did not mark ready, merge, deploy, execute, or write.',
+    noExecutionMarkers: [
+      'current-policy-blocked',
+      'process-not-spawned',
+      'executed-commands-empty',
+      'runner-disabled',
+      'execution-not-ready',
+      'execution-disabled',
+      'execution-not-approved',
+      'would-execute-false',
+      'writes-performed-zero',
+      'ready-for-review-not-performed-by-verifier',
+      'merge-not-performed-by-verifier',
+      'deploy-not-performed-by-verifier',
+      'third-party-write-not-performed-by-verifier',
+      'merge-decision-only',
     ],
     currentPolicyBlocked: true,
     processSpawned: false,
@@ -5091,6 +5317,66 @@ function writeImplementationWorkspaceEvidenceFixture(t) {
   };
 }
 
+function writeImplementationPrEvidenceFixture(t) {
+  const fixture = writeImplementationWorkspaceEvidenceFixture(t);
+  const implementationPrEvidencePath = path.join(fixture.root, 'implementation-pr-evidence.json');
+  writeFileSync(
+    implementationPrEvidencePath,
+    `${JSON.stringify(validImplementationPrEvidence({
+      implementationWorkspaceEvidencePath: fixture.implementationWorkspaceEvidencePath,
+      implementationWorkspaceEvidenceReceiptPath: fixture.implementationWorkspaceEvidenceReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const { implementationPrEvidenceReceiptPath } = writeValidImplementationPrEvidenceReceipt(
+    t,
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    fixture.runnerDiffPath,
+    fixture.runnerDiffReceiptPath,
+    fixture.releaseAdmissionPath,
+    fixture.releaseAdmissionReceiptPath,
+    fixture.executionRunbookPath,
+    fixture.executionRunbookReceiptPath,
+    fixture.receiptBundlePath,
+    fixture.receiptBundleReceiptPath,
+    fixture.receiptPublicationPath,
+    fixture.receiptPublicationReceiptPath,
+    fixture.receiptReviewDecisionPath,
+    fixture.receiptReviewDecisionReceiptPath,
+    fixture.manualNextStepHandoffPath,
+    fixture.manualNextStepHandoffReceiptPath,
+    fixture.manualFollowUpIssueEvidencePath,
+    fixture.manualFollowUpIssueEvidenceReceiptPath,
+    fixture.followUpWorkIntakePath,
+    fixture.followUpWorkIntakeReceiptPath,
+    fixture.implementationWorkspaceEvidencePath,
+    fixture.implementationWorkspaceEvidenceReceiptPath,
+    implementationPrEvidencePath,
+  );
+
+  return {
+    ...fixture,
+    implementationPrEvidencePath,
+    implementationPrEvidenceReceiptPath,
+  };
+}
+
 function runImplementationWorkspaceEvidenceCheck(fixture, implementationWorkspaceEvidencePath, receiptDir = fixture.root, followUpWorkIntakeReceiptPath = fixture.followUpWorkIntakeReceiptPath) {
   return spawnSync(
     process.execPath,
@@ -5181,6 +5467,57 @@ function runImplementationPrEvidenceCheck(fixture, implementationPrEvidencePath,
       fixture.implementationWorkspaceEvidencePath,
       implementationWorkspaceEvidenceReceiptPath,
       implementationPrEvidencePath,
+      receiptDir,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+}
+
+function runImplementationMergeDecisionCheck(fixture, implementationMergeDecisionPath, receiptDir = fixture.root, implementationPrEvidenceReceiptPath = fixture.implementationPrEvidenceReceiptPath) {
+  return spawnSync(
+    process.execPath,
+    implementationMergeDecisionCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      fixture.releaseAdmissionPath,
+      fixture.releaseAdmissionReceiptPath,
+      fixture.executionRunbookPath,
+      fixture.executionRunbookReceiptPath,
+      fixture.receiptBundlePath,
+      fixture.receiptBundleReceiptPath,
+      fixture.receiptPublicationPath,
+      fixture.receiptPublicationReceiptPath,
+      fixture.receiptReviewDecisionPath,
+      fixture.receiptReviewDecisionReceiptPath,
+      fixture.manualNextStepHandoffPath,
+      fixture.manualNextStepHandoffReceiptPath,
+      fixture.manualFollowUpIssueEvidencePath,
+      fixture.manualFollowUpIssueEvidenceReceiptPath,
+      fixture.followUpWorkIntakePath,
+      fixture.followUpWorkIntakeReceiptPath,
+      fixture.implementationWorkspaceEvidencePath,
+      fixture.implementationWorkspaceEvidenceReceiptPath,
+      fixture.implementationPrEvidencePath,
+      implementationPrEvidenceReceiptPath,
+      implementationMergeDecisionPath,
       receiptDir,
     ),
     { cwd: REPO_ROOT, encoding: 'utf8' },
@@ -7920,6 +8257,189 @@ test('implementation-pr-evidence-check fails closed on drifted implementation wo
   assert.equal(payload.writesPerformed, 0);
   assert.match(payload.errors.join('\n'), /branchName must match evidence/);
   assert.match(payload.errors.join('\n'), /prCreatedByVerifier must be false/);
+  assert.match(payload.errors.join('\n'), /processSpawned must be false/);
+});
+
+test('implementation-merge-decision-check validates operator decision without verifier merge writes', (t) => {
+  const fixture = writeImplementationPrEvidenceFixture(t);
+  const implementationMergeDecisionPath = path.join(fixture.root, 'implementation-merge-decision.json');
+  writeFileSync(
+    implementationMergeDecisionPath,
+    `${JSON.stringify(validImplementationMergeDecision({
+      implementationPrEvidencePath: fixture.implementationPrEvidencePath,
+      implementationPrEvidenceReceiptPath: fixture.implementationPrEvidenceReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationMergeDecisionCheck(fixture, implementationMergeDecisionPath);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'implementation-merge-decision-check');
+  assert.equal(payload.implementationMergeDecisionOk, true);
+  assert.equal(payload.decisionPacketOnly, true);
+  assert.equal(payload.decision, 'approved-for-manual-merge');
+  assert.equal(payload.reviewer, 'Micah Johnson');
+  assert.equal(payload.issueIdentifier, EXPECTED_ISSUE);
+  assert.equal(payload.prUrl, 'https://github.com/createsomethingtoday/create-something-monorepo/pull/999');
+  assert.equal(payload.prNumber, 999);
+  assert.equal(payload.headRef, `codex/${EXPECTED_ISSUE}-implementation-worktree`);
+  assert.equal(payload.baseRef, 'codex/CRE-1090-agent-worktree');
+  assert.equal(payload.commitSha, 'abcdef0123456789abcdef0123456789abcdef01');
+  assert.equal(payload.mergeStateStatus, 'CLEAN');
+  assert.ok(payload.checks.every((check) => check.conclusion === 'SUCCESS'));
+  assert.ok(payload.validationEvidence.includes('gh pr checks <pr>'));
+  assert.match(payload.rollbackPlan.join('\n'), /close or supersede/);
+  assert.equal(payload.readyForReviewByVerifier, false);
+  assert.equal(payload.mergedByVerifier, false);
+  assert.equal(payload.deployedByVerifier, false);
+  assert.equal(payload.thirdPartyWritePerformedByVerifier, false);
+  assert.ok(payload.requiredReceiptReferences.includes('implementation-pr-evidence-check'));
+  assert.ok(payload.requiredEvidence.includes('decision'));
+  assert.equal(payload.redactionPolicyApplied, true);
+  assert.equal(payload.containsSecrets, false);
+  assert.equal(payload.containsRawLogs, false);
+  assert.equal(payload.containsPrompts, false);
+  assert.equal(payload.containsRawTranscripts, false);
+  assert.match(payload.publicAccessFailClosedProof, /rawOriginExposed=false/);
+  assert.ok(payload.noExecutionMarkers.includes('merge-decision-only'));
+  assert.equal(payload.currentPolicyBlocked, true);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.implementationMergeDecisionRequiresImplementationPrEvidenceReceipt, true);
+  assert.equal(payload.policy.implementationMergeDecisionReadyForReviewByVerifier, false);
+  assert.equal(payload.policy.implementationMergeDecisionMergedByVerifier, false);
+  assert.equal(payload.policy.implementationMergeDecisionDeployedByVerifier, false);
+  assert.match(payload.nextGate, /manually apply this decision/);
+  assert.match(payload.receiptPath, /implementation-merge-decision-check\.json$/);
+});
+
+test('implementation-merge-decision-check fails closed on unsafe, mismatched, or leaky decisions', (t) => {
+  const cases = [
+    {
+      name: 'unsupported-decision',
+      mutate(decision) {
+        decision.decision = 'merge-now';
+      },
+      pattern: /decision must be allowed/,
+    },
+    {
+      name: 'pr-mismatch',
+      mutate(decision) {
+        decision.prNumber = 1000;
+      },
+      pattern: /prNumber must match implementation PR evidence receipt/,
+    },
+    {
+      name: 'failing-check',
+      mutate(decision) {
+        decision.checks[0].conclusion = 'FAILURE';
+      },
+      pattern: /checks must all conclude SUCCESS/,
+    },
+    {
+      name: 'verifier-merge-writes',
+      mutate(decision) {
+        decision.readyForReviewByVerifier = true;
+        decision.mergedByVerifier = true;
+        decision.deployedByVerifier = true;
+      },
+      pattern: /readyForReviewByVerifier must be false/,
+    },
+    {
+      name: 'secret-leak',
+      mutate(decision) {
+        decision.containsSecrets = true;
+      },
+      pattern: /containsSecrets must be false/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(decision) {
+        decision.processSpawned = true;
+        decision.executedCommands = ['gh pr merge 999'];
+        decision.executionApproved = true;
+        decision.wouldExecute = true;
+        decision.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationPrEvidenceFixture(t);
+    const decision = validImplementationMergeDecision({
+      implementationPrEvidencePath: fixture.implementationPrEvidencePath,
+      implementationPrEvidenceReceiptPath: fixture.implementationPrEvidenceReceiptPath,
+    });
+    entry.mutate(decision);
+    const implementationMergeDecisionPath = path.join(fixture.root, `${entry.name}-implementation-merge-decision.json`);
+    writeFileSync(implementationMergeDecisionPath, `${JSON.stringify(decision, null, 2)}\n`);
+
+    const result = runImplementationMergeDecisionCheck(fixture, implementationMergeDecisionPath);
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationMergeDecisionOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-merge-decision-check fails closed on drifted implementation PR evidence receipts', (t) => {
+  const fixture = writeImplementationPrEvidenceFixture(t);
+  const driftedPrReceipt = JSON.parse(readFileSync(fixture.implementationPrEvidenceReceiptPath, 'utf8'));
+  driftedPrReceipt.prNumber = 1000;
+  driftedPrReceipt.mergedByVerifier = true;
+  driftedPrReceipt.processSpawned = true;
+  const driftedPrReceiptPath = path.join(fixture.root, 'drifted-implementation-pr-evidence-receipt.json');
+  writeFileSync(driftedPrReceiptPath, `${JSON.stringify(driftedPrReceipt, null, 2)}\n`);
+  const implementationMergeDecisionPath = path.join(fixture.root, 'implementation-merge-decision.json');
+  writeFileSync(
+    implementationMergeDecisionPath,
+    `${JSON.stringify(validImplementationMergeDecision({
+      implementationPrEvidencePath: fixture.implementationPrEvidencePath,
+      implementationPrEvidenceReceiptPath: driftedPrReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationMergeDecisionCheck(
+    fixture,
+    implementationMergeDecisionPath,
+    fixture.root,
+    driftedPrReceiptPath,
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.implementationMergeDecisionOk, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /prNumber must match evidence/);
+  assert.match(payload.errors.join('\n'), /mergedByVerifier must be false/);
   assert.match(payload.errors.join('\n'), /processSpawned must be false/);
 });
 
