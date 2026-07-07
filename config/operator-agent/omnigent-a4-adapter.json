@@ -1640,6 +1640,96 @@
     "writesPerformed": 0,
     "blockedUntil": "implementation production ownership review may prove that an operator reviewed release receipts and chose the next ownership lane, but this verifier must not deploy, enable execution, spawn a runner, close issues, post updates, expose raw artifacts, or mutate third-party systems"
   },
+  "a4ImplementationProductionA4EnablementApproval": {
+    "requiresImplementationProductionOwnershipReviewReceipt": true,
+    "approvalPacketOnly": true,
+    "requiresValidOwnershipReview": true,
+    "requiresApprovedBy": true,
+    "requiresApprovedAt": true,
+    "requiresApprovalSurface": true,
+    "allowedApprovalSurfaces": [
+      "Linear",
+      "signed-release-record"
+    ],
+    "requiresApprovalDecision": true,
+    "allowedApprovalDecisions": [
+      "approve-a4-enablement-review",
+      "hold-at-evidence-only",
+      "request-changes"
+    ],
+    "requiresRiskAcceptance": true,
+    "requiresRollbackBoundary": true,
+    "requiresRollbackAuthorizationScope": true,
+    "requiresPostActionSmoke": true,
+    "requiresPublicAccessFailClosedProof": true,
+    "requiresPolicyPatchProposalReference": true,
+    "requiresCheckedInPolicyBlocked": true,
+    "policyEnabledByVerifier": false,
+    "runnerEnabledByVerifier": false,
+    "deployedByVerifier": false,
+    "requiresNoThirdPartyWriteByVerifier": true,
+    "requiresNoIssueMutationByVerifier": true,
+    "requiresRedactionPolicy": true,
+    "forbidsSecrets": true,
+    "forbidsRawLogs": true,
+    "forbidsPrompts": true,
+    "forbidsRawTranscripts": true,
+    "requiresNoExecutionOnApproval": true,
+    "requiredReceiptReferences": [
+      "implementation-production-ownership-review-check",
+      "implementation-production-release-closeout-check",
+      "implementation-production-post-deploy-validation-check",
+      "implementation-production-deploy-evidence-check",
+      "implementation-production-release-admission-check",
+      "implementation-production-release-decision-check",
+      "implementation-post-merge-validation-check",
+      "implementation-merge-evidence-check",
+      "implementation-merge-decision-check",
+      "implementation-pr-evidence-check",
+      "implementation-workspace-evidence-check",
+      "follow-up-work-intake-check",
+      "manual-follow-up-issue-evidence-check",
+      "manual-next-step-handoff-check",
+      "receipt-review-decision-check",
+      "receipt-publication-check",
+      "receipt-bundle-check",
+      "execution-runbook-check",
+      "release-admission-check"
+    ],
+    "requiredEvidence": [
+      "implementation-production-ownership-review-receipt",
+      "valid-ownership-review",
+      "approved-by",
+      "approved-at",
+      "approval-surface",
+      "approval-decision",
+      "risk-acceptance",
+      "rollback-boundary",
+      "rollback-authorization-scope",
+      "post-action-smoke",
+      "public-access-fail-closed-proof",
+      "redaction-policy",
+      "policy-patch-proposal-reference",
+      "operator-summary"
+    ],
+    "requiredNoExecutionMarkers": [
+      "current-policy-blocked",
+      "process-not-spawned",
+      "executed-commands-empty",
+      "runner-disabled",
+      "execution-not-ready",
+      "execution-disabled",
+      "execution-not-approved",
+      "would-execute-false",
+      "writes-performed-zero",
+      "deploy-not-performed-by-verifier",
+      "third-party-write-not-performed-by-verifier",
+      "issue-mutation-not-performed-by-verifier",
+      "production-a4-enablement-approval-only"
+    ],
+    "writesPerformed": 0,
+    "blockedUntil": "implementation production A4 enablement approval may prove that an operator approved the next policy-enablement review packet, but this verifier must not change checked-in policy, enable a runner, deploy, mutate issues, post updates, expose raw artifacts, or write third-party systems"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -1825,6 +1915,11 @@
       "id": "gate-34-a4-implementation-production-ownership-review",
       "required": "A4 implementation production ownership review validates an operator ownership decision after release closeout without enabling policy, mutating issues, posting updates, deploying, exposing raw artifacts, or executing",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-production-ownership-review-check --packet <packet.json> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --implementation-merge-decision-receipt <path> --implementation-merge-evidence <path> --implementation-merge-evidence-receipt <path> --implementation-post-merge-validation <path> --implementation-post-merge-validation-receipt <path> --implementation-production-release-decision <path> --implementation-production-release-decision-receipt <path> --implementation-production-release-admission <path> --implementation-production-release-admission-receipt <path> --implementation-production-deploy-evidence <path> --implementation-production-deploy-evidence-receipt <path> --implementation-production-post-deploy-validation <path> --implementation-production-post-deploy-validation-receipt <path> --implementation-production-release-closeout <path> --implementation-production-release-closeout-receipt <path> --implementation-production-ownership-review <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-35-a4-implementation-production-a4-enablement-approval",
+      "required": "A4 implementation production enablement approval validates an operator approval packet for a future policy-enablement review without changing policy, enabling a runner, mutating issues, posting updates, deploying, exposing raw artifacts, or executing",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-production-a4-enablement-approval-check --packet <packet.json> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --implementation-merge-decision-receipt <path> --implementation-merge-evidence <path> --implementation-merge-evidence-receipt <path> --implementation-post-merge-validation <path> --implementation-post-merge-validation-receipt <path> --implementation-production-release-decision <path> --implementation-production-release-decision-receipt <path> --implementation-production-release-admission <path> --implementation-production-release-admission-receipt <path> --implementation-production-deploy-evidence <path> --implementation-production-deploy-evidence-receipt <path> --implementation-production-post-deploy-validation <path> --implementation-production-post-deploy-validation-receipt <path> --implementation-production-release-closeout <path> --implementation-production-release-closeout-receipt <path> --implementation-production-ownership-review <path> --implementation-production-ownership-review-receipt <path> --implementation-production-a4-enablement-approval <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

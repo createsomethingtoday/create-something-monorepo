@@ -140,6 +140,8 @@ function parseArgs(argv) {
     implementationProductionReleaseCloseout: null,
     implementationProductionReleaseCloseoutReceipt: null,
     implementationProductionOwnershipReview: null,
+    implementationProductionOwnershipReviewReceipt: null,
+    implementationProductionA4EnablementApproval: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -212,6 +214,8 @@ function parseArgs(argv) {
     else if (arg === '--implementation-production-release-closeout' && args[index + 1]) options.implementationProductionReleaseCloseout = args[++index];
     else if (arg === '--implementation-production-release-closeout-receipt' && args[index + 1]) options.implementationProductionReleaseCloseoutReceipt = args[++index];
     else if (arg === '--implementation-production-ownership-review' && args[index + 1]) options.implementationProductionOwnershipReview = args[++index];
+    else if (arg === '--implementation-production-ownership-review-receipt' && args[index + 1]) options.implementationProductionOwnershipReviewReceipt = args[++index];
+    else if (arg === '--implementation-production-a4-enablement-approval' && args[index + 1]) options.implementationProductionA4EnablementApproval = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -2564,6 +2568,135 @@ function validateManifest(manifest) {
   }
   if (implementationProductionOwnershipReview.writesPerformed !== 0) {
     errors.push('a4ImplementationProductionOwnershipReview.writesPerformed must be 0');
+  }
+
+  const implementationProductionA4EnablementApproval = manifest.a4ImplementationProductionA4EnablementApproval || {};
+  if (implementationProductionA4EnablementApproval.requiresImplementationProductionOwnershipReviewReceipt !== true) {
+    errors.push('a4ImplementationProductionA4EnablementApproval.requiresImplementationProductionOwnershipReviewReceipt must be true');
+  }
+  if (implementationProductionA4EnablementApproval.approvalPacketOnly !== true) {
+    errors.push('a4ImplementationProductionA4EnablementApproval.approvalPacketOnly must be true');
+  }
+  for (const field of [
+    'requiresValidOwnershipReview',
+    'requiresApprovedBy',
+    'requiresApprovedAt',
+    'requiresApprovalSurface',
+    'requiresApprovalDecision',
+    'requiresRiskAcceptance',
+    'requiresRollbackBoundary',
+    'requiresPostActionSmoke',
+    'requiresPublicAccessFailClosedProof',
+    'requiresPolicyPatchProposalReference',
+    'requiresRollbackAuthorizationScope',
+    'requiresCheckedInPolicyBlocked',
+  ]) {
+    if (implementationProductionA4EnablementApproval[field] !== true) {
+      errors.push(`a4ImplementationProductionA4EnablementApproval.${field} must be true`);
+    }
+  }
+  for (const surface of ['Linear', 'signed-release-record']) {
+    if (!implementationProductionA4EnablementApproval.allowedApprovalSurfaces?.includes(surface)) {
+      errors.push(`a4ImplementationProductionA4EnablementApproval.allowedApprovalSurfaces must include ${surface}`);
+    }
+  }
+  for (const decision of ['approve-a4-enablement-review', 'hold-at-evidence-only', 'request-changes']) {
+    if (!implementationProductionA4EnablementApproval.allowedApprovalDecisions?.includes(decision)) {
+      errors.push(`a4ImplementationProductionA4EnablementApproval.allowedApprovalDecisions must include ${decision}`);
+    }
+  }
+  if (implementationProductionA4EnablementApproval.policyEnabledByVerifier !== false) {
+    errors.push('a4ImplementationProductionA4EnablementApproval.policyEnabledByVerifier must be false');
+  }
+  if (implementationProductionA4EnablementApproval.runnerEnabledByVerifier !== false) {
+    errors.push('a4ImplementationProductionA4EnablementApproval.runnerEnabledByVerifier must be false');
+  }
+  if (implementationProductionA4EnablementApproval.deployedByVerifier !== false) {
+    errors.push('a4ImplementationProductionA4EnablementApproval.deployedByVerifier must be false');
+  }
+  if (implementationProductionA4EnablementApproval.requiresNoThirdPartyWriteByVerifier !== true) {
+    errors.push('a4ImplementationProductionA4EnablementApproval.requiresNoThirdPartyWriteByVerifier must be true');
+  }
+  if (implementationProductionA4EnablementApproval.requiresNoIssueMutationByVerifier !== true) {
+    errors.push('a4ImplementationProductionA4EnablementApproval.requiresNoIssueMutationByVerifier must be true');
+  }
+  if (implementationProductionA4EnablementApproval.requiresRedactionPolicy !== true) {
+    errors.push('a4ImplementationProductionA4EnablementApproval.requiresRedactionPolicy must be true');
+  }
+  for (const field of ['forbidsSecrets', 'forbidsRawLogs', 'forbidsPrompts', 'forbidsRawTranscripts']) {
+    if (implementationProductionA4EnablementApproval[field] !== true) {
+      errors.push(`a4ImplementationProductionA4EnablementApproval.${field} must be true`);
+    }
+  }
+  if (implementationProductionA4EnablementApproval.requiresNoExecutionOnApproval !== true) {
+    errors.push('a4ImplementationProductionA4EnablementApproval.requiresNoExecutionOnApproval must be true');
+  }
+  for (const receiptReference of [
+    'implementation-production-ownership-review-check',
+    'implementation-production-release-closeout-check',
+    'implementation-production-post-deploy-validation-check',
+    'implementation-production-deploy-evidence-check',
+    'implementation-production-release-admission-check',
+    'implementation-production-release-decision-check',
+    'implementation-post-merge-validation-check',
+    'implementation-merge-evidence-check',
+    'implementation-merge-decision-check',
+    'implementation-pr-evidence-check',
+    'implementation-workspace-evidence-check',
+    'follow-up-work-intake-check',
+    'manual-follow-up-issue-evidence-check',
+    'manual-next-step-handoff-check',
+    'receipt-review-decision-check',
+    'receipt-publication-check',
+    'receipt-bundle-check',
+    'execution-runbook-check',
+    'release-admission-check',
+  ]) {
+    if (!implementationProductionA4EnablementApproval.requiredReceiptReferences?.includes(receiptReference)) {
+      errors.push(`a4ImplementationProductionA4EnablementApproval.requiredReceiptReferences must include ${receiptReference}`);
+    }
+  }
+  for (const evidence of [
+    'implementation-production-ownership-review-receipt',
+    'valid-ownership-review',
+    'approved-by',
+    'approved-at',
+    'approval-surface',
+    'approval-decision',
+    'risk-acceptance',
+    'rollback-boundary',
+    'rollback-authorization-scope',
+    'post-action-smoke',
+    'public-access-fail-closed-proof',
+    'redaction-policy',
+    'policy-patch-proposal-reference',
+    'operator-summary',
+  ]) {
+    if (!implementationProductionA4EnablementApproval.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ImplementationProductionA4EnablementApproval.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-policy-blocked',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+    'deploy-not-performed-by-verifier',
+    'third-party-write-not-performed-by-verifier',
+    'issue-mutation-not-performed-by-verifier',
+    'production-a4-enablement-approval-only',
+  ]) {
+    if (!implementationProductionA4EnablementApproval.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ImplementationProductionA4EnablementApproval.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (implementationProductionA4EnablementApproval.writesPerformed !== 0) {
+    errors.push('a4ImplementationProductionA4EnablementApproval.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -8597,6 +8730,213 @@ function validateImplementationProductionOwnershipReview(review, closeoutReceipt
   return errors;
 }
 
+function validateImplementationProductionOwnershipReviewReceipt(receipt, review, ownershipResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'implementation-production-ownership-review-check') {
+    errors.push('implementation production ownership review receipt mode must be implementation-production-ownership-review-check');
+  }
+  if (receipt.ok !== true || receipt.implementationProductionOwnershipReviewOk !== true) {
+    errors.push('implementation production ownership review receipt must be ok');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`implementation production ownership review receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`implementation production ownership review receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`implementation production ownership review receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.implementationProductionOwnershipReview !== rel(paths.implementationProductionOwnershipReviewPath)) {
+    errors.push('implementation production ownership review receipt implementationProductionOwnershipReview must match review artifact path');
+  }
+  if (receipt.implementationProductionReleaseCloseoutReceipt !== rel(paths.implementationProductionReleaseCloseoutReceiptPath)) {
+    errors.push('implementation production ownership review receipt implementationProductionReleaseCloseoutReceipt must match closeout receipt path');
+  }
+  for (const field of [
+    'ownershipReviewOnly',
+    'ownershipDecision',
+    'finalStatus',
+    'releaseDecision',
+    'reviewedBy',
+    'reviewedAt',
+    'releaseEnvironment',
+    'deploymentSurface',
+    'deploymentId',
+    'deploymentUrl',
+    'issueIdentifier',
+    'issueUrl',
+    'prUrl',
+    'prNumber',
+    'commitSha',
+    'mergeCommitSha',
+    'publicAccessFailClosedProof',
+  ]) {
+    if (receipt[field] !== review[field]) {
+      errors.push(`implementation production ownership review receipt ${field} must match ownership review`);
+    }
+  }
+  if (JSON.stringify(receipt.releaseWindow || null) !== JSON.stringify(review.releaseWindow || null)) {
+    errors.push('implementation production ownership review receipt releaseWindow must match ownership review');
+  }
+  for (const field of ['closeoutEvidence', 'receiptPublicationEvidence', 'decisionRationale', 'evidenceReview', 'readinessAssessment', 'residualRisks', 'requiredFollowUps', 'operatorHandoff']) {
+    if (JSON.stringify(receipt[field] || []) !== JSON.stringify(review[field] || [])) {
+      errors.push(`implementation production ownership review receipt ${field} must match ownership review`);
+    }
+  }
+  if (receipt.deployedByVerifier !== false) {
+    errors.push('implementation production ownership review receipt deployedByVerifier must be false');
+  }
+  if (receipt.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation production ownership review receipt thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (receipt.issueMutationPerformedByVerifier !== false) {
+    errors.push('implementation production ownership review receipt issueMutationPerformedByVerifier must be false');
+  }
+  if (receipt.policyEnabledByVerifier !== false) {
+    errors.push('implementation production ownership review receipt policyEnabledByVerifier must be false');
+  }
+  if (receipt.redactionPolicyApplied !== true) {
+    errors.push('implementation production ownership review receipt redactionPolicyApplied must be true');
+  }
+  if (receipt.containsSecrets !== false) errors.push('implementation production ownership review receipt containsSecrets must be false');
+  if (receipt.containsRawLogs !== false) errors.push('implementation production ownership review receipt containsRawLogs must be false');
+  if (receipt.containsPrompts !== false) errors.push('implementation production ownership review receipt containsPrompts must be false');
+  if (receipt.containsRawTranscripts !== false) {
+    errors.push('implementation production ownership review receipt containsRawTranscripts must be false');
+  }
+  if (receipt.currentPolicyBlocked !== true) errors.push('implementation production ownership review receipt currentPolicyBlocked must be true');
+  if (receipt.processSpawned !== false) errors.push('implementation production ownership review receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('implementation production ownership review receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('implementation production ownership review receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('implementation production ownership review receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('implementation production ownership review receipt executionEnabled must be false');
+  if (receipt.executionApproved !== false) errors.push('implementation production ownership review receipt executionApproved must be false');
+  if (receipt.wouldExecute !== false) errors.push('implementation production ownership review receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('implementation production ownership review receipt writesPerformed must be 0');
+  if (ownershipResult.implementationProductionOwnershipReviewOk !== true) {
+    errors.push('implementation production ownership review receipt requires valid implementation production ownership review result');
+  }
+
+  return errors;
+}
+
+function validateImplementationProductionA4EnablementApproval(approval, ownershipReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ImplementationProductionA4EnablementApproval || {};
+
+  if (approval.authorityLevel !== 'A4') errors.push('implementation production A4 enablement approval authorityLevel must be A4');
+  if (approval.issue !== constraints.expectedIssue) {
+    errors.push(`implementation production A4 enablement approval issue mismatch: expected ${constraints.expectedIssue}, got ${approval.issue}`);
+  }
+  if (approval.target !== constraints.expectedTarget) {
+    errors.push(`implementation production A4 enablement approval target mismatch: expected ${constraints.expectedTarget}, got ${approval.target}`);
+  }
+  if (approval.action !== constraints.expectedAction) {
+    errors.push(`implementation production A4 enablement approval action mismatch: expected ${constraints.expectedAction}, got ${approval.action}`);
+  }
+  if (approval.implementationProductionOwnershipReview !== rel(paths.implementationProductionOwnershipReviewPath)) {
+    errors.push('implementation production A4 enablement approval implementationProductionOwnershipReview must match ownership review artifact path');
+  }
+  if (approval.implementationProductionOwnershipReviewReceipt !== rel(paths.implementationProductionOwnershipReviewReceiptPath)) {
+    errors.push('implementation production A4 enablement approval implementationProductionOwnershipReviewReceipt must match ownership review receipt path');
+  }
+  if (approval.approvalPacketOnly !== true) {
+    errors.push('implementation production A4 enablement approval approvalPacketOnly must be true');
+  }
+  if (ownershipReceipt.ownershipReviewOnly !== true || ownershipReceipt.ownershipDecision !== 'advance-to-a4-enablement-review') {
+    errors.push('implementation production A4 enablement approval requires valid ownership review receipt advancing to A4 enablement review');
+  }
+  if (!hasValue(approval.approvedBy)) errors.push('implementation production A4 enablement approval approvedBy is required');
+  if (!hasValue(approval.approvedAt) || Number.isNaN(Date.parse(approval.approvedAt))) {
+    errors.push('implementation production A4 enablement approval approvedAt must be an ISO timestamp');
+  }
+  if (!rules.allowedApprovalSurfaces?.includes(approval.approvalSurface)) {
+    errors.push('implementation production A4 enablement approval approvalSurface must be one of allowedApprovalSurfaces');
+  }
+  if (!rules.allowedApprovalDecisions?.includes(approval.approvalDecision)) {
+    errors.push('implementation production A4 enablement approval approvalDecision must be one of allowedApprovalDecisions');
+  }
+  if (approval.rollbackAuthorizationScope !== 'reversible-internal-production-only') {
+    errors.push('implementation production A4 enablement approval rollbackAuthorizationScope must be reversible-internal-production-only');
+  }
+  for (const risk of REQUIRED_A4_RISKS) {
+    if (!approval.riskAcceptance?.includes(risk)) {
+      errors.push(`implementation production A4 enablement approval riskAcceptance must include ${risk}`);
+    }
+  }
+  for (const field of ['rollbackBoundary', 'postActionSmoke']) {
+    if (!Array.isArray(approval[field]) || approval[field].length === 0) {
+      errors.push(`implementation production A4 enablement approval ${field} must not be empty`);
+    }
+  }
+  if (approval.publicAccessFailClosedProof !== ownershipReceipt.publicAccessFailClosedProof) {
+    errors.push('implementation production A4 enablement approval publicAccessFailClosedProof must match ownership review receipt');
+  }
+  if (!hasValue(approval.policyPatchProposalReference)) {
+    errors.push('implementation production A4 enablement approval policyPatchProposalReference is required');
+  }
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!approval.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`implementation production A4 enablement approval requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const requiredEvidence of rules.requiredEvidence || []) {
+    if (!approval.requiredEvidence?.includes(requiredEvidence)) {
+      errors.push(`implementation production A4 enablement approval requiredEvidence must include ${requiredEvidence}`);
+    }
+  }
+  if (approval.redactionPolicyApplied !== true) {
+    errors.push('implementation production A4 enablement approval redactionPolicyApplied must be true');
+  }
+  if (!hasValue(approval.redactionPolicy)) errors.push('implementation production A4 enablement approval redactionPolicy is required');
+  if (approval.containsSecrets !== false) errors.push('implementation production A4 enablement approval containsSecrets must be false');
+  if (approval.containsRawLogs !== false) errors.push('implementation production A4 enablement approval containsRawLogs must be false');
+  if (approval.containsPrompts !== false) errors.push('implementation production A4 enablement approval containsPrompts must be false');
+  if (approval.containsRawTranscripts !== false) {
+    errors.push('implementation production A4 enablement approval containsRawTranscripts must be false');
+  }
+  if (approval.rawLogsIncluded === true) errors.push('implementation production A4 enablement approval rawLogsIncluded must not be true');
+  if (approval.promptsIncluded === true) errors.push('implementation production A4 enablement approval promptsIncluded must not be true');
+  if (approval.rawTranscriptIncluded === true) {
+    errors.push('implementation production A4 enablement approval rawTranscriptIncluded must not be true');
+  }
+  if (!hasValue(approval.operatorSummary)) errors.push('implementation production A4 enablement approval operatorSummary is required');
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!approval.noExecutionMarkers?.includes(marker)) {
+      errors.push(`implementation production A4 enablement approval noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (approval.currentPolicyBlocked !== true) errors.push('implementation production A4 enablement approval currentPolicyBlocked must be true');
+  if (approval.policyEnabledByVerifier === true) errors.push('implementation production A4 enablement approval policyEnabledByVerifier must not be true');
+  if (approval.runnerEnabledByVerifier === true) errors.push('implementation production A4 enablement approval runnerEnabledByVerifier must not be true');
+  if (approval.deployedByVerifier !== false) errors.push('implementation production A4 enablement approval deployedByVerifier must be false');
+  if (approval.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation production A4 enablement approval thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (approval.issueMutationPerformedByVerifier !== false) {
+    errors.push('implementation production A4 enablement approval issueMutationPerformedByVerifier must be false');
+  }
+  if (approval.processSpawned === true) errors.push('implementation production A4 enablement approval processSpawned must not be true');
+  if (Array.isArray(approval.executedCommands) && approval.executedCommands.length > 0) {
+    errors.push('implementation production A4 enablement approval executedCommands must be empty');
+  }
+  if (approval.runnerEnabled === true) errors.push('implementation production A4 enablement approval runnerEnabled must not be true');
+  if (approval.executionReady === true) errors.push('implementation production A4 enablement approval executionReady must not be true');
+  if (approval.executionEnabled === true) errors.push('implementation production A4 enablement approval executionEnabled must not be true');
+  if (approval.executionApproved === true) errors.push('implementation production A4 enablement approval executionApproved must not be true');
+  if (approval.wouldExecute === true) errors.push('implementation production A4 enablement approval wouldExecute must not be true');
+  if (approval.writesPerformed !== 0) errors.push('implementation production A4 enablement approval writesPerformed must be 0');
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('implementation production A4 enablement approval current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -11241,6 +11581,114 @@ function buildImplementationProductionOwnershipReviewReceipt({
       implementationProductionOwnershipReviewOnly: manifest.a4ImplementationProductionOwnershipReview?.ownershipReviewOnly,
       implementationProductionOwnershipReviewRequiresNoExecutionOnReview: manifest.a4ImplementationProductionOwnershipReview?.requiresNoExecutionOnReview,
       implementationProductionOwnershipReviewRequiresNoIssueMutationByVerifier: manifest.a4ImplementationProductionOwnershipReview?.requiresNoIssueMutationByVerifier,
+    },
+  };
+}
+
+function buildImplementationProductionA4EnablementApprovalReceipt({
+  manifest,
+  manifestValidation,
+  ownershipResult,
+  implementationProductionOwnershipReview,
+  implementationProductionOwnershipReviewPath,
+  implementationProductionOwnershipReviewReceipt,
+  implementationProductionOwnershipReviewReceiptPath,
+  implementationProductionA4EnablementApproval,
+  implementationProductionA4EnablementApprovalPath,
+  implementationProductionOwnershipReviewReceiptErrors,
+  implementationProductionA4EnablementApprovalErrors,
+  constraints,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(ownershipResult.errors || []),
+    ...implementationProductionOwnershipReviewReceiptErrors,
+    ...implementationProductionA4EnablementApprovalErrors,
+  ];
+  const implementationProductionA4EnablementApprovalOk = errors.length === 0;
+
+  return {
+    mode: 'implementation-production-a4-enablement-approval-check',
+    ok: implementationProductionA4EnablementApprovalOk,
+    implementationProductionA4EnablementApprovalOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    implementationProductionA4EnablementApproval: rel(implementationProductionA4EnablementApprovalPath),
+    implementationProductionOwnershipReview: rel(implementationProductionOwnershipReviewPath),
+    implementationProductionOwnershipReviewReceipt: rel(implementationProductionOwnershipReviewReceiptPath),
+    implementationProductionReleaseCloseoutReceipt: ownershipResult.implementationProductionReleaseCloseoutReceipt,
+    implementationProductionReleaseCloseout: ownershipResult.implementationProductionReleaseCloseout,
+    implementationProductionPostDeployValidationReceipt: ownershipResult.implementationProductionPostDeployValidationReceipt,
+    implementationProductionPostDeployValidation: ownershipResult.implementationProductionPostDeployValidation,
+    implementationProductionDeployEvidenceReceipt: ownershipResult.implementationProductionDeployEvidenceReceipt,
+    implementationProductionDeployEvidence: ownershipResult.implementationProductionDeployEvidence,
+    implementationProductionReleaseAdmissionReceipt: ownershipResult.implementationProductionReleaseAdmissionReceipt,
+    implementationProductionReleaseAdmission: ownershipResult.implementationProductionReleaseAdmission,
+    implementationProductionReleaseDecisionReceipt: ownershipResult.implementationProductionReleaseDecisionReceipt,
+    implementationProductionReleaseDecision: ownershipResult.implementationProductionReleaseDecision,
+    packetPath: ownershipResult.packetPath,
+    issue: ownershipResult.issue || constraints.expectedIssue,
+    authorityLevel: ownershipResult.authorityLevel,
+    target: ownershipResult.target,
+    action: ownershipResult.action,
+    targetScope: implementationProductionA4EnablementApproval.targetScope || implementationProductionOwnershipReviewReceipt.targetScope || ownershipResult.targetScope,
+    approvalPacketOnly: implementationProductionA4EnablementApproval.approvalPacketOnly === true,
+    approvalDecision: implementationProductionA4EnablementApproval.approvalDecision || null,
+    approvalSurface: implementationProductionA4EnablementApproval.approvalSurface || null,
+    approvedBy: implementationProductionA4EnablementApproval.approvedBy || null,
+    approvedAt: implementationProductionA4EnablementApproval.approvedAt || null,
+    ownershipDecision: implementationProductionOwnershipReviewReceipt.ownershipDecision || implementationProductionOwnershipReview.ownershipDecision || null,
+    riskAcceptance: implementationProductionA4EnablementApproval.riskAcceptance || [],
+    rollbackBoundary: implementationProductionA4EnablementApproval.rollbackBoundary || [],
+    rollbackAuthorizationScope: implementationProductionA4EnablementApproval.rollbackAuthorizationScope || null,
+    postActionSmoke: implementationProductionA4EnablementApproval.postActionSmoke || [],
+    publicAccessFailClosedProof: implementationProductionA4EnablementApproval.publicAccessFailClosedProof || null,
+    policyPatchProposalReference: implementationProductionA4EnablementApproval.policyPatchProposalReference || null,
+    requiredReceiptReferences: implementationProductionA4EnablementApproval.requiredReceiptReferences || [],
+    requiredEvidence: implementationProductionA4EnablementApproval.requiredEvidence || [],
+    redactionPolicyApplied: implementationProductionA4EnablementApproval.redactionPolicyApplied === true,
+    redactionPolicy: implementationProductionA4EnablementApproval.redactionPolicy || null,
+    containsSecrets: implementationProductionA4EnablementApproval.containsSecrets === true,
+    containsRawLogs: implementationProductionA4EnablementApproval.containsRawLogs === true,
+    containsPrompts: implementationProductionA4EnablementApproval.containsPrompts === true,
+    containsRawTranscripts: implementationProductionA4EnablementApproval.containsRawTranscripts === true,
+    rawLogsIncluded: implementationProductionA4EnablementApproval.rawLogsIncluded === true,
+    promptsIncluded: implementationProductionA4EnablementApproval.promptsIncluded === true,
+    rawTranscriptIncluded: implementationProductionA4EnablementApproval.rawTranscriptIncluded === true,
+    operatorSummary: implementationProductionA4EnablementApproval.operatorSummary || null,
+    noExecutionMarkers: implementationProductionA4EnablementApproval.noExecutionMarkers || [],
+    currentPolicyBlocked: true,
+    policyEnabledByVerifier: implementationProductionA4EnablementApproval.policyEnabledByVerifier === true,
+    runnerEnabledByVerifier: implementationProductionA4EnablementApproval.runnerEnabledByVerifier === true,
+    deployedByVerifier: implementationProductionA4EnablementApproval.deployedByVerifier === true,
+    thirdPartyWritePerformedByVerifier: implementationProductionA4EnablementApproval.thirdPartyWritePerformedByVerifier === true,
+    issueMutationPerformedByVerifier: implementationProductionA4EnablementApproval.issueMutationPerformedByVerifier === true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: implementationProductionA4EnablementApprovalOk
+      ? 'implementation production A4 enablement approval packet accepted as evidence only; verifier did not enable policy, spawn a runner process, mutate issues, deploy, or perform a third-party write'
+      : 'implementation production A4 enablement approval packet rejected before policy enablement, runner process, issue mutation, third-party mutation, deploy, or write command',
+    evidenceTarget: implementationProductionA4EnablementApproval.evidenceTarget || implementationProductionOwnershipReviewReceipt.evidenceTarget || ownershipResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'separate operator-reviewed policy enablement PR may use this approval packet; automated execution still requires checked-in policy enablement, runner implementation, and immediate full-chain revalidation',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      implementationProductionA4EnablementApprovalRequiresOwnershipReviewReceipt: manifest.a4ImplementationProductionA4EnablementApproval?.requiresImplementationProductionOwnershipReviewReceipt,
+      implementationProductionA4EnablementApprovalPacketOnly: manifest.a4ImplementationProductionA4EnablementApproval?.approvalPacketOnly,
+      implementationProductionA4EnablementApprovalRequiresCheckedInPolicyBlocked: manifest.a4ImplementationProductionA4EnablementApproval?.requiresCheckedInPolicyBlocked,
+      implementationProductionA4EnablementApprovalRequiresNoIssueMutationByVerifier: manifest.a4ImplementationProductionA4EnablementApproval?.requiresNoIssueMutationByVerifier,
     },
   };
 }
@@ -14382,6 +14830,75 @@ function commandImplementationProductionOwnershipReviewCheck(options) {
   return result;
 }
 
+function commandImplementationProductionA4EnablementApprovalCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for implementation-production-a4-enablement-approval-check'));
+  }
+  if (!options.implementationProductionOwnershipReviewReceipt) {
+    throw new Error('--implementation-production-ownership-review-receipt is required for implementation-production-a4-enablement-approval-check');
+  }
+  if (!options.implementationProductionA4EnablementApproval) {
+    throw new Error('--implementation-production-a4-enablement-approval is required for implementation-production-a4-enablement-approval-check');
+  }
+
+  const ownershipResult = commandImplementationProductionOwnershipReviewCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const implementationProductionReleaseCloseoutReceiptPath = resolveFromRoot(options.implementationProductionReleaseCloseoutReceipt);
+  const implementationProductionOwnershipReviewPath = resolveFromRoot(options.implementationProductionOwnershipReview);
+  const implementationProductionOwnershipReviewReceiptPath = resolveFromRoot(options.implementationProductionOwnershipReviewReceipt);
+  const implementationProductionA4EnablementApprovalPath = resolveFromRoot(options.implementationProductionA4EnablementApproval);
+  const implementationProductionOwnershipReview = readJson(implementationProductionOwnershipReviewPath);
+  const implementationProductionOwnershipReviewReceipt = readJson(implementationProductionOwnershipReviewReceiptPath);
+  const implementationProductionA4EnablementApproval = readJson(implementationProductionA4EnablementApprovalPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const implementationProductionOwnershipReviewReceiptErrors = validateImplementationProductionOwnershipReviewReceipt(
+    implementationProductionOwnershipReviewReceipt,
+    implementationProductionOwnershipReview,
+    ownershipResult,
+    {
+      implementationProductionOwnershipReviewPath,
+      implementationProductionReleaseCloseoutReceiptPath,
+    },
+    constraints,
+  );
+  const implementationProductionA4EnablementApprovalErrors = validateImplementationProductionA4EnablementApproval(
+    implementationProductionA4EnablementApproval,
+    implementationProductionOwnershipReviewReceipt,
+    manifest,
+    {
+      implementationProductionOwnershipReviewPath,
+      implementationProductionOwnershipReviewReceiptPath,
+    },
+    constraints,
+  );
+  const result = buildImplementationProductionA4EnablementApprovalReceipt({
+    manifest,
+    manifestValidation,
+    ownershipResult,
+    implementationProductionOwnershipReview,
+    implementationProductionOwnershipReviewPath,
+    implementationProductionOwnershipReviewReceipt,
+    implementationProductionOwnershipReviewReceiptPath,
+    implementationProductionA4EnablementApproval,
+    implementationProductionA4EnablementApprovalPath,
+    implementationProductionOwnershipReviewReceiptErrors,
+    implementationProductionA4EnablementApprovalErrors,
+    constraints,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -14499,6 +15016,7 @@ async function main() {
   else if (options.command === 'implementation-production-post-deploy-validation-check') result = commandImplementationProductionPostDeployValidationCheck(options);
   else if (options.command === 'implementation-production-release-closeout-check') result = commandImplementationProductionReleaseCloseoutCheck(options);
   else if (options.command === 'implementation-production-ownership-review-check') result = commandImplementationProductionOwnershipReviewCheck(options);
+  else if (options.command === 'implementation-production-a4-enablement-approval-check') result = commandImplementationProductionA4EnablementApprovalCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -14541,6 +15059,7 @@ export {
   commandImplementationProductionPostDeployValidationCheck,
   commandImplementationProductionReleaseCloseoutCheck,
   commandImplementationProductionOwnershipReviewCheck,
+  commandImplementationProductionA4EnablementApprovalCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
