@@ -1,0 +1,15 @@
+{
+  "name": "Half Dozen Landing Components",
+  "components": "./webflow/*.webflow.tsx",
+  "telemetry": {
+    "global": {
+      "allowTelemetry": true
+    }
+  },
+  "library": {
+    "name": "Half Dozen Landing",
+    "description": "Reusable Half Dozen landing page sections built from the approved Figma design. Components are structured for later Webflow CMS and content management wiring.",
+    "id": "halfdozen-landing",
+    "globals": "./webflow/globals.ts"
+  }
+}
