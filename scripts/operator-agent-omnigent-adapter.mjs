@@ -114,6 +114,8 @@ function parseArgs(argv) {
     receiptReviewDecision: null,
     receiptReviewDecisionReceipt: null,
     manualNextStepHandoff: null,
+    manualNextStepHandoffReceipt: null,
+    manualFollowUpIssueEvidence: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -160,6 +162,8 @@ function parseArgs(argv) {
     else if (arg === '--receipt-review-decision' && args[index + 1]) options.receiptReviewDecision = args[++index];
     else if (arg === '--receipt-review-decision-receipt' && args[index + 1]) options.receiptReviewDecisionReceipt = args[++index];
     else if (arg === '--manual-next-step-handoff' && args[index + 1]) options.manualNextStepHandoff = args[++index];
+    else if (arg === '--manual-next-step-handoff-receipt' && args[index + 1]) options.manualNextStepHandoffReceipt = args[++index];
+    else if (arg === '--manual-follow-up-issue-evidence' && args[index + 1]) options.manualFollowUpIssueEvidence = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -974,6 +978,107 @@ function validateManifest(manifest) {
   }
   if (manualNextStepHandoff.writesPerformed !== 0) {
     errors.push('a4ManualNextStepHandoff.writesPerformed must be 0');
+  }
+
+  const manualFollowUpIssueEvidence = manifest.a4ManualFollowUpIssueEvidence || {};
+  if (manualFollowUpIssueEvidence.requiresManualNextStepHandoffReceipt !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.requiresManualNextStepHandoffReceipt must be true');
+  }
+  if (manualFollowUpIssueEvidence.evidencePacketOnly !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.evidencePacketOnly must be true');
+  }
+  if (manualFollowUpIssueEvidence.requiresManualIssueCreationEvidence !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.requiresManualIssueCreationEvidence must be true');
+  }
+  if (manualFollowUpIssueEvidence.requiresIssueIdentifier !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.requiresIssueIdentifier must be true');
+  }
+  if (manualFollowUpIssueEvidence.requiresIssueUrl !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.requiresIssueUrl must be true');
+  }
+  if (manualFollowUpIssueEvidence.requiresCreatedBy !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.requiresCreatedBy must be true');
+  }
+  if (manualFollowUpIssueEvidence.requiresCreatedAt !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.requiresCreatedAt must be true');
+  }
+  if (manualFollowUpIssueEvidence.requiresOwner !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.requiresOwner must be true');
+  }
+  if (manualFollowUpIssueEvidence.issueCreationPerformedByVerifier !== false) {
+    errors.push('a4ManualFollowUpIssueEvidence.issueCreationPerformedByVerifier must be false');
+  }
+  if (manualFollowUpIssueEvidence.requiresNoThirdPartyWriteByVerifier !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.requiresNoThirdPartyWriteByVerifier must be true');
+  }
+  if (manualFollowUpIssueEvidence.requiresRedactionPolicy !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.requiresRedactionPolicy must be true');
+  }
+  if (manualFollowUpIssueEvidence.forbidsSecrets !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.forbidsSecrets must be true');
+  }
+  if (manualFollowUpIssueEvidence.forbidsRawLogs !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.forbidsRawLogs must be true');
+  }
+  if (manualFollowUpIssueEvidence.forbidsPrompts !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.forbidsPrompts must be true');
+  }
+  if (manualFollowUpIssueEvidence.forbidsRawTranscripts !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.forbidsRawTranscripts must be true');
+  }
+  if (manualFollowUpIssueEvidence.requiresNoExecutionOnEvidence !== true) {
+    errors.push('a4ManualFollowUpIssueEvidence.requiresNoExecutionOnEvidence must be true');
+  }
+  if (!manualFollowUpIssueEvidence.allowedIssueSurfaces?.includes('Linear')) {
+    errors.push('a4ManualFollowUpIssueEvidence.allowedIssueSurfaces must include Linear');
+  }
+  for (const receiptReference of [
+    'manual-next-step-handoff-check',
+    'receipt-review-decision-check',
+    'receipt-publication-check',
+    'receipt-bundle-check',
+    'execution-runbook-check',
+    'release-admission-check',
+  ]) {
+    if (!manualFollowUpIssueEvidence.requiredReceiptReferences?.includes(receiptReference)) {
+      errors.push(`a4ManualFollowUpIssueEvidence.requiredReceiptReferences must include ${receiptReference}`);
+    }
+  }
+  for (const evidence of [
+    'manual-next-step-handoff-receipt',
+    'manual-issue-identifier',
+    'manual-issue-url',
+    'created-by',
+    'created-at',
+    'owner',
+    'public-access-fail-closed-proof',
+    'redaction-policy',
+    'operator-summary',
+  ]) {
+    if (!manualFollowUpIssueEvidence.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ManualFollowUpIssueEvidence.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-policy-blocked',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+    'verifier-issue-creation-not-performed',
+    'third-party-write-not-performed-by-verifier',
+    'evidence-only',
+  ]) {
+    if (!manualFollowUpIssueEvidence.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ManualFollowUpIssueEvidence.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (manualFollowUpIssueEvidence.writesPerformed !== 0) {
+    errors.push('a4ManualFollowUpIssueEvidence.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -4184,6 +4289,208 @@ function validateManualNextStepHandoff(handoff, reviewDecisionReceipt, manifest,
   return errors;
 }
 
+function validateManualNextStepHandoffReceipt(receipt, handoff, handoffResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'manual-next-step-handoff-check') {
+    errors.push('manual next-step handoff receipt mode must be manual-next-step-handoff-check');
+  }
+  if (receipt.ok !== true || receipt.manualNextStepHandoffOk !== true) {
+    errors.push('manual next-step handoff receipt must be ok');
+  }
+  if (receipt.manualNextStepHandoff !== rel(paths.manualNextStepHandoffPath)) {
+    errors.push('manual next-step handoff receipt manualNextStepHandoff must match manual next-step handoff artifact path');
+  }
+  if (receipt.receiptReviewDecisionReceipt !== rel(paths.receiptReviewDecisionReceiptPath)) {
+    errors.push('manual next-step handoff receipt receiptReviewDecisionReceipt must match receipt review decision receipt path');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`manual next-step handoff receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`manual next-step handoff receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`manual next-step handoff receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.handoffPacketOnly !== true) {
+    errors.push('manual next-step handoff receipt handoffPacketOnly must be true');
+  }
+  if (receipt.reviewDecision !== 'approved-for-manual-next-step') {
+    errors.push('manual next-step handoff receipt reviewDecision must be approved-for-manual-next-step');
+  }
+  if (receipt.owner !== handoff.owner) {
+    errors.push('manual next-step handoff receipt owner must match manual next-step handoff');
+  }
+  if (!sameJson(receipt.proposedIssue, handoff.proposedIssue)) {
+    errors.push('manual next-step handoff receipt proposedIssue must match manual next-step handoff');
+  }
+  if (receipt.issueCreationPerformed !== false) {
+    errors.push('manual next-step handoff receipt issueCreationPerformed must be false');
+  }
+  if (receipt.issueCreated !== false) errors.push('manual next-step handoff receipt issueCreated must be false');
+  if (receipt.thirdPartyWritePerformed !== false) {
+    errors.push('manual next-step handoff receipt thirdPartyWritePerformed must be false');
+  }
+  if (receipt.linearIssueCreated !== false) {
+    errors.push('manual next-step handoff receipt linearIssueCreated must be false');
+  }
+  if (receipt.redactionPolicyApplied !== true) {
+    errors.push('manual next-step handoff receipt redactionPolicyApplied must be true');
+  }
+  if (receipt.containsSecrets !== false) errors.push('manual next-step handoff receipt containsSecrets must be false');
+  if (receipt.containsRawLogs !== false) errors.push('manual next-step handoff receipt containsRawLogs must be false');
+  if (receipt.containsPrompts !== false) errors.push('manual next-step handoff receipt containsPrompts must be false');
+  if (receipt.containsRawTranscripts !== false) {
+    errors.push('manual next-step handoff receipt containsRawTranscripts must be false');
+  }
+  if (receipt.currentPolicyBlocked !== true) errors.push('manual next-step handoff receipt currentPolicyBlocked must be true');
+  if (receipt.processSpawned !== false) errors.push('manual next-step handoff receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('manual next-step handoff receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('manual next-step handoff receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('manual next-step handoff receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('manual next-step handoff receipt executionEnabled must be false');
+  if (receipt.executionApproved !== false) errors.push('manual next-step handoff receipt executionApproved must be false');
+  if (receipt.wouldExecute !== false) errors.push('manual next-step handoff receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('manual next-step handoff receipt writesPerformed must be 0');
+  if (handoffResult.manualNextStepHandoffOk !== true) {
+    errors.push('manual next-step handoff receipt requires valid manual next-step handoff result');
+  }
+
+  return errors;
+}
+
+function validateManualFollowUpIssueEvidence(evidence, handoffReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ManualFollowUpIssueEvidence || {};
+  const proposedIssue = handoffReceipt.proposedIssue || {};
+
+  if (evidence.authorityLevel !== 'A4') errors.push('manual follow-up issue evidence authorityLevel must be A4');
+  if (evidence.issue !== constraints.expectedIssue) {
+    errors.push(`manual follow-up issue evidence issue mismatch: expected ${constraints.expectedIssue}, got ${evidence.issue}`);
+  }
+  if (evidence.target !== constraints.expectedTarget) {
+    errors.push(`manual follow-up issue evidence target mismatch: expected ${constraints.expectedTarget}, got ${evidence.target}`);
+  }
+  if (evidence.action !== constraints.expectedAction) {
+    errors.push(`manual follow-up issue evidence action mismatch: expected ${constraints.expectedAction}, got ${evidence.action}`);
+  }
+  if (evidence.manualNextStepHandoff !== rel(paths.manualNextStepHandoffPath)) {
+    errors.push('manual follow-up issue evidence manualNextStepHandoff must match manual next-step handoff artifact path');
+  }
+  if (evidence.manualNextStepHandoffReceipt !== rel(paths.manualNextStepHandoffReceiptPath)) {
+    errors.push('manual follow-up issue evidence manualNextStepHandoffReceipt must match manual next-step handoff receipt path');
+  }
+  if (evidence.evidencePacketOnly !== true) {
+    errors.push('manual follow-up issue evidence evidencePacketOnly must be true');
+  }
+  if (evidence.manualIssueCreated !== true) {
+    errors.push('manual follow-up issue evidence manualIssueCreated must be true');
+  }
+  if (!rules.allowedIssueSurfaces?.includes(evidence.issueSurface)) {
+    errors.push('manual follow-up issue evidence issueSurface must be allowed');
+  }
+  if (!hasValue(evidence.issueIdentifier)) {
+    errors.push('manual follow-up issue evidence issueIdentifier is required');
+  }
+  if (!hasValue(evidence.issueUrl)) {
+    errors.push('manual follow-up issue evidence issueUrl is required');
+  }
+  if (!hasValue(evidence.createdBy)) {
+    errors.push('manual follow-up issue evidence createdBy is required');
+  }
+  if (!Number.isFinite(Date.parse(evidence.createdAt || ''))) {
+    errors.push('manual follow-up issue evidence createdAt must be a valid timestamp');
+  }
+  if (!hasValue(evidence.owner)) errors.push('manual follow-up issue evidence owner is required');
+  if (evidence.owner !== handoffReceipt.owner) {
+    errors.push('manual follow-up issue evidence owner must match handoff owner');
+  }
+  if (!evidence.createdIssue || typeof evidence.createdIssue !== 'object') {
+    errors.push('manual follow-up issue evidence createdIssue is required');
+  } else {
+    if (evidence.createdIssue.identifier !== evidence.issueIdentifier) {
+      errors.push('manual follow-up issue evidence createdIssue.identifier must match issueIdentifier');
+    }
+    if (evidence.createdIssue.url !== evidence.issueUrl) {
+      errors.push('manual follow-up issue evidence createdIssue.url must match issueUrl');
+    }
+    if (evidence.createdIssue.title !== proposedIssue.title) {
+      errors.push('manual follow-up issue evidence createdIssue.title must match handoff proposedIssue.title');
+    }
+    if (!hasValue(evidence.createdIssue.bodySummary)) {
+      errors.push('manual follow-up issue evidence createdIssue.bodySummary is required');
+    }
+    if (Array.isArray(proposedIssue.labels)) {
+      const missingLabels = includesAll(evidence.createdIssue.labels || [], proposedIssue.labels);
+      if (missingLabels.length) {
+        errors.push(`manual follow-up issue evidence createdIssue.labels missing: ${missingLabels.join(', ')}`);
+      }
+    }
+  }
+  if (evidence.issueCreationPerformedByVerifier !== false) {
+    errors.push('manual follow-up issue evidence issueCreationPerformedByVerifier must be false');
+  }
+  if (evidence.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('manual follow-up issue evidence thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (evidence.postedByVerifier === true) {
+    errors.push('manual follow-up issue evidence postedByVerifier must not be true');
+  }
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!evidence.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`manual follow-up issue evidence requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const requiredEvidence of rules.requiredEvidence || []) {
+    if (!evidence.requiredEvidence?.includes(requiredEvidence)) {
+      errors.push(`manual follow-up issue evidence requiredEvidence must include ${requiredEvidence}`);
+    }
+  }
+  if (evidence.redactionPolicyApplied !== true) {
+    errors.push('manual follow-up issue evidence redactionPolicyApplied must be true');
+  }
+  if (!hasValue(evidence.redactionPolicy)) errors.push('manual follow-up issue evidence redactionPolicy is required');
+  if (evidence.containsSecrets !== false) errors.push('manual follow-up issue evidence containsSecrets must be false');
+  if (evidence.containsRawLogs !== false) errors.push('manual follow-up issue evidence containsRawLogs must be false');
+  if (evidence.containsPrompts !== false) errors.push('manual follow-up issue evidence containsPrompts must be false');
+  if (evidence.containsRawTranscripts !== false) {
+    errors.push('manual follow-up issue evidence containsRawTranscripts must be false');
+  }
+  if (evidence.rawLogsIncluded === true) errors.push('manual follow-up issue evidence rawLogsIncluded must not be true');
+  if (evidence.promptsIncluded === true) errors.push('manual follow-up issue evidence promptsIncluded must not be true');
+  if (evidence.rawTranscriptIncluded === true) {
+    errors.push('manual follow-up issue evidence rawTranscriptIncluded must not be true');
+  }
+  if (!hasValue(evidence.publicAccessFailClosedProof)) {
+    errors.push('manual follow-up issue evidence publicAccessFailClosedProof is required');
+  }
+  if (!hasValue(evidence.operatorSummary)) errors.push('manual follow-up issue evidence operatorSummary is required');
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!evidence.noExecutionMarkers?.includes(marker)) {
+      errors.push(`manual follow-up issue evidence noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (evidence.currentPolicyBlocked !== true) errors.push('manual follow-up issue evidence currentPolicyBlocked must be true');
+  if (evidence.processSpawned === true) errors.push('manual follow-up issue evidence processSpawned must not be true');
+  if (Array.isArray(evidence.executedCommands) && evidence.executedCommands.length > 0) {
+    errors.push('manual follow-up issue evidence executedCommands must be empty');
+  }
+  if (evidence.runnerEnabled === true) errors.push('manual follow-up issue evidence runnerEnabled must not be true');
+  if (evidence.executionReady === true) errors.push('manual follow-up issue evidence executionReady must not be true');
+  if (evidence.executionEnabled === true) errors.push('manual follow-up issue evidence executionEnabled must not be true');
+  if (evidence.executionApproved === true) errors.push('manual follow-up issue evidence executionApproved must not be true');
+  if (evidence.wouldExecute === true) errors.push('manual follow-up issue evidence wouldExecute must not be true');
+  if (evidence.writesPerformed !== 0) errors.push('manual follow-up issue evidence writesPerformed must be 0');
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('manual follow-up issue evidence current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -5372,6 +5679,107 @@ function buildManualNextStepHandoffReceipt({
       manualNextStepHandoffPacketOnly: manifest.a4ManualNextStepHandoff?.handoffPacketOnly,
       manualNextStepHandoffIssueCreationPerformed: manifest.a4ManualNextStepHandoff?.issueCreationPerformed,
       manualNextStepHandoffRequiresNoExecutionOnHandoff: manifest.a4ManualNextStepHandoff?.requiresNoExecutionOnHandoff,
+    },
+  };
+}
+
+function buildManualFollowUpIssueEvidenceReceipt({
+  manifest,
+  manifestValidation,
+  handoffResult,
+  manualNextStepHandoff,
+  manualNextStepHandoffPath,
+  manualNextStepHandoffReceipt,
+  manualNextStepHandoffReceiptPath,
+  manualFollowUpIssueEvidence,
+  manualFollowUpIssueEvidencePath,
+  manualNextStepHandoffReceiptErrors,
+  manualFollowUpIssueEvidenceErrors,
+  constraints,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(handoffResult.errors || []),
+    ...manualNextStepHandoffReceiptErrors,
+    ...manualFollowUpIssueEvidenceErrors,
+  ];
+  const manualFollowUpIssueEvidenceOk = errors.length === 0;
+
+  return {
+    mode: 'manual-follow-up-issue-evidence-check',
+    ok: manualFollowUpIssueEvidenceOk,
+    manualFollowUpIssueEvidenceOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    manualFollowUpIssueEvidence: rel(manualFollowUpIssueEvidencePath),
+    manualNextStepHandoff: rel(manualNextStepHandoffPath),
+    manualNextStepHandoffReceipt: rel(manualNextStepHandoffReceiptPath),
+    receiptReviewDecisionReceipt: handoffResult.receiptReviewDecisionReceipt,
+    receiptReviewDecision: handoffResult.receiptReviewDecision,
+    receiptPublicationReceipt: handoffResult.receiptPublicationReceipt,
+    receiptPublication: handoffResult.receiptPublication,
+    receiptBundleReceipt: handoffResult.receiptBundleReceipt,
+    receiptBundle: handoffResult.receiptBundle,
+    packetPath: handoffResult.packetPath,
+    issue: handoffResult.issue || constraints.expectedIssue,
+    authorityLevel: handoffResult.authorityLevel,
+    target: handoffResult.target,
+    action: handoffResult.action,
+    targetScope: manualFollowUpIssueEvidence.targetScope || manualNextStepHandoffReceipt.targetScope || handoffResult.targetScope,
+    evidencePacketOnly: manualFollowUpIssueEvidence.evidencePacketOnly === true,
+    issueSurface: manualFollowUpIssueEvidence.issueSurface || null,
+    manualIssueCreated: manualFollowUpIssueEvidence.manualIssueCreated === true,
+    issueIdentifier: manualFollowUpIssueEvidence.issueIdentifier || null,
+    issueUrl: manualFollowUpIssueEvidence.issueUrl || null,
+    createdBy: manualFollowUpIssueEvidence.createdBy || null,
+    createdAt: manualFollowUpIssueEvidence.createdAt || null,
+    owner: manualFollowUpIssueEvidence.owner || null,
+    createdIssue: manualFollowUpIssueEvidence.createdIssue || null,
+    handoffProposedIssue: manualNextStepHandoff.proposedIssue || manualNextStepHandoffReceipt.proposedIssue || null,
+    issueCreationPerformedByVerifier: manualFollowUpIssueEvidence.issueCreationPerformedByVerifier === true,
+    thirdPartyWritePerformedByVerifier: manualFollowUpIssueEvidence.thirdPartyWritePerformedByVerifier === true,
+    postedByVerifier: manualFollowUpIssueEvidence.postedByVerifier === true,
+    requiredReceiptReferences: manualFollowUpIssueEvidence.requiredReceiptReferences || [],
+    requiredEvidence: manualFollowUpIssueEvidence.requiredEvidence || [],
+    redactionPolicyApplied: manualFollowUpIssueEvidence.redactionPolicyApplied === true,
+    redactionPolicy: manualFollowUpIssueEvidence.redactionPolicy || null,
+    containsSecrets: manualFollowUpIssueEvidence.containsSecrets === true,
+    containsRawLogs: manualFollowUpIssueEvidence.containsRawLogs === true,
+    containsPrompts: manualFollowUpIssueEvidence.containsPrompts === true,
+    containsRawTranscripts: manualFollowUpIssueEvidence.containsRawTranscripts === true,
+    rawLogsIncluded: manualFollowUpIssueEvidence.rawLogsIncluded === true,
+    promptsIncluded: manualFollowUpIssueEvidence.promptsIncluded === true,
+    rawTranscriptIncluded: manualFollowUpIssueEvidence.rawTranscriptIncluded === true,
+    publicAccessFailClosedProof: manualFollowUpIssueEvidence.publicAccessFailClosedProof || null,
+    operatorSummary: manualFollowUpIssueEvidence.operatorSummary || null,
+    noExecutionMarkers: manualFollowUpIssueEvidence.noExecutionMarkers || [],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: manualFollowUpIssueEvidenceOk
+      ? 'manual follow-up issue evidence accepted as evidence-only proof; verifier did not create an issue, post updates, spawn a runner process, or perform a production write'
+      : 'manual follow-up issue evidence rejected before issue creation, posting, runner process, policy enablement, or write command',
+    evidenceTarget: manualFollowUpIssueEvidence.evidenceTarget || manualNextStepHandoffReceipt.evidenceTarget || handoffResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may use this manually created follow-up issue as the next reviewed work item; automated execution still requires explicit checked-in policy enablement and a separate runner path',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      manualFollowUpIssueEvidenceRequiresManualNextStepHandoffReceipt: manifest.a4ManualFollowUpIssueEvidence?.requiresManualNextStepHandoffReceipt,
+      manualFollowUpIssueEvidencePacketOnly: manifest.a4ManualFollowUpIssueEvidence?.evidencePacketOnly,
+      manualFollowUpIssueEvidenceCreationPerformedByVerifier: manifest.a4ManualFollowUpIssueEvidence?.issueCreationPerformedByVerifier,
+      manualFollowUpIssueEvidenceRequiresNoExecutionOnEvidence: manifest.a4ManualFollowUpIssueEvidence?.requiresNoExecutionOnEvidence,
     },
   };
 }
@@ -7616,6 +8024,75 @@ function commandManualNextStepHandoffCheck(options) {
   return result;
 }
 
+function commandManualFollowUpIssueEvidenceCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for manual-follow-up-issue-evidence-check'));
+  }
+  if (!options.manualNextStepHandoffReceipt) {
+    throw new Error('--manual-next-step-handoff-receipt is required for manual-follow-up-issue-evidence-check');
+  }
+  if (!options.manualFollowUpIssueEvidence) {
+    throw new Error('--manual-follow-up-issue-evidence is required for manual-follow-up-issue-evidence-check');
+  }
+
+  const handoffResult = commandManualNextStepHandoffCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const receiptReviewDecisionReceiptPath = resolveFromRoot(options.receiptReviewDecisionReceipt);
+  const manualNextStepHandoffPath = resolveFromRoot(options.manualNextStepHandoff);
+  const manualNextStepHandoffReceiptPath = resolveFromRoot(options.manualNextStepHandoffReceipt);
+  const manualFollowUpIssueEvidencePath = resolveFromRoot(options.manualFollowUpIssueEvidence);
+  const manualNextStepHandoff = readJson(manualNextStepHandoffPath);
+  const manualNextStepHandoffReceipt = readJson(manualNextStepHandoffReceiptPath);
+  const manualFollowUpIssueEvidence = readJson(manualFollowUpIssueEvidencePath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const manualNextStepHandoffReceiptErrors = validateManualNextStepHandoffReceipt(
+    manualNextStepHandoffReceipt,
+    manualNextStepHandoff,
+    handoffResult,
+    {
+      manualNextStepHandoffPath,
+      receiptReviewDecisionReceiptPath,
+    },
+    constraints,
+  );
+  const manualFollowUpIssueEvidenceErrors = validateManualFollowUpIssueEvidence(
+    manualFollowUpIssueEvidence,
+    manualNextStepHandoffReceipt,
+    manifest,
+    {
+      manualNextStepHandoffPath,
+      manualNextStepHandoffReceiptPath,
+    },
+    constraints,
+  );
+  const result = buildManualFollowUpIssueEvidenceReceipt({
+    manifest,
+    manifestValidation,
+    handoffResult,
+    manualNextStepHandoff,
+    manualNextStepHandoffPath,
+    manualNextStepHandoffReceipt,
+    manualNextStepHandoffReceiptPath,
+    manualFollowUpIssueEvidence,
+    manualFollowUpIssueEvidencePath,
+    manualNextStepHandoffReceiptErrors,
+    manualFollowUpIssueEvidenceErrors,
+    constraints,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -7674,6 +8151,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs receipt-publication-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs receipt-review-decision-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs manual-next-step-handoff-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs manual-follow-up-issue-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -7707,6 +8185,7 @@ async function main() {
   else if (options.command === 'receipt-publication-check') result = commandReceiptPublicationCheck(options);
   else if (options.command === 'receipt-review-decision-check') result = commandReceiptReviewDecisionCheck(options);
   else if (options.command === 'manual-next-step-handoff-check') result = commandManualNextStepHandoffCheck(options);
+  else if (options.command === 'manual-follow-up-issue-evidence-check') result = commandManualFollowUpIssueEvidenceCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -7736,6 +8215,7 @@ export {
   commandReceiptPublicationCheck,
   commandReceiptReviewDecisionCheck,
   commandManualNextStepHandoffCheck,
+  commandManualFollowUpIssueEvidenceCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
