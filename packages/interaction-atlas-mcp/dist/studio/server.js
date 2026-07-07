@@ -9,7 +9,8 @@ import { getAtlasStudioPalette } from './atlas.js';
 import { renderStudioHtml } from './html.js';
 import { healSessionProductionBindings } from './production-bindings.js';
 import { createWritebackProposal, exportWritebackProposalHandoffForSession, reviewWritebackProposalAction } from './writeback-proposals.js';
-import { acceptSuggestion, activateStoryStep, addEdge, addNode, addObservation, addStoryQuestion, advanceStoryStep, clearStoryFocus, createSession, exportSessionMarkdown, getSessionPath, listSessions, readSession, removeNode, setStoryFocus, updateNode, updateEdge, updateNodes } from './store.js';
+import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, getSessionPath, listSessions, readSession, removeNode, updateNode, updateEdge, updateNodes } from './store.js';
+import { activateStoryApiStep, addStoryApiQuestion, advanceStoryApiStep, clearStory, focusStory, getStory, storySessionPayload } from './story-api.js';
 import { tidyNodeUpdates } from './client/layout.js';
 const gzipAsync = promisify(gzip);
 async function readJson(request) {
@@ -27,6 +28,9 @@ function sendJson(response, status, payload) {
         'cache-control': 'no-store'
     });
     response.end(JSON.stringify(payload, null, 2));
+}
+function storyApiSource(request) {
+    return request.headers['x-atlas-story-source'] === 'tauri' ? 'tauri' : 'http';
 }
 function sendText(response, status, text, contentType = 'text/plain') {
     response.writeHead(status, {
@@ -333,29 +337,33 @@ export async function startStudioServer(options) {
                 return;
             }
             const storyMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/story$/);
+            if (method === 'GET' && storyMatch) {
+                sendJson(response, 200, storySessionPayload(await getStory(decodeURIComponent(storyMatch[1] ?? ''), storyApiSource(request), cwd)));
+                return;
+            }
             if (method === 'POST' && storyMatch) {
                 const body = await readJson(request);
-                sendJson(response, 200, await setStoryFocus(decodeURIComponent(storyMatch[1] ?? ''), body, cwd));
+                sendJson(response, 200, storySessionPayload(await focusStory(decodeURIComponent(storyMatch[1] ?? ''), body, storyApiSource(request), cwd)));
                 return;
             }
             if (method === 'DELETE' && storyMatch) {
-                sendJson(response, 200, await clearStoryFocus(decodeURIComponent(storyMatch[1] ?? ''), {}, cwd));
+                sendJson(response, 200, storySessionPayload(await clearStory(decodeURIComponent(storyMatch[1] ?? ''), storyApiSource(request), cwd)));
                 return;
             }
             const storyStepActivateMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/story\/steps\/([^/]+)\/activate$/);
             if (method === 'POST' && storyStepActivateMatch) {
-                sendJson(response, 200, await activateStoryStep(decodeURIComponent(storyStepActivateMatch[1] ?? ''), decodeURIComponent(storyStepActivateMatch[2] ?? ''), cwd));
+                sendJson(response, 200, storySessionPayload(await activateStoryApiStep(decodeURIComponent(storyStepActivateMatch[1] ?? ''), decodeURIComponent(storyStepActivateMatch[2] ?? ''), storyApiSource(request), cwd)));
                 return;
             }
             const storyDirectionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/story\/(next|previous)$/);
             if (method === 'POST' && storyDirectionMatch) {
-                sendJson(response, 200, await advanceStoryStep(decodeURIComponent(storyDirectionMatch[1] ?? ''), storyDirectionMatch[2] === 'previous' ? 'previous' : 'next', cwd));
+                sendJson(response, 200, storySessionPayload(await advanceStoryApiStep(decodeURIComponent(storyDirectionMatch[1] ?? ''), storyDirectionMatch[2] === 'previous' ? 'previous' : 'next', storyApiSource(request), cwd)));
                 return;
             }
             const storyQuestionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/story\/questions$/);
             if (method === 'POST' && storyQuestionMatch) {
                 const body = await readJson(request);
-                sendJson(response, 201, await addStoryQuestion(decodeURIComponent(storyQuestionMatch[1] ?? ''), body, cwd));
+                sendJson(response, 201, storySessionPayload(await addStoryApiQuestion(decodeURIComponent(storyQuestionMatch[1] ?? ''), body, storyApiSource(request), cwd)));
                 return;
             }
             const acceptMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/suggestions\/([^/]+)\/accept$/);

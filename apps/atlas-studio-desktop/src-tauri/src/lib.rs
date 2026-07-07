@@ -1,6 +1,7 @@
 use std::{
     env,
     fs::OpenOptions,
+    io::{Read, Write},
     net::{TcpListener, TcpStream, ToSocketAddrs},
     path::PathBuf,
     process::{Child, Command, Stdio},
@@ -9,6 +10,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use serde_json::Value;
 use tauri::{Manager, WebviewWindow};
 
 const HOST: &str = "127.0.0.1";
@@ -16,6 +18,10 @@ const DEFAULT_PORT: u16 = 5198;
 const READY_TIMEOUT: Duration = Duration::from_secs(90);
 
 type StudioChild = Arc<Mutex<Option<Child>>>;
+
+struct RuntimeState {
+    port: u16,
+}
 
 fn workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -214,6 +220,159 @@ fn stop_studio_server(child: &StudioChild) {
     let _ = process.wait();
 }
 
+fn encode_path_segment(value: &str) -> String {
+    let mut encoded = String::new();
+    for byte in value.bytes() {
+        let is_unreserved =
+            byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.' | b'_' | b'~');
+        if is_unreserved {
+            encoded.push(byte as char);
+        } else {
+            encoded.push_str(&format!("%{byte:02X}"));
+        }
+    }
+    encoded
+}
+
+fn studio_json_request(
+    port: u16,
+    method: &str,
+    path: &str,
+    body: Option<Value>,
+) -> Result<Value, String> {
+    let payload = body
+        .map(|value| serde_json::to_string(&value).map_err(|error| error.to_string()))
+        .transpose()?
+        .unwrap_or_default();
+    let request = format!(
+        "{method} {path} HTTP/1.1\r\nHost: {HOST}:{port}\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: {}\r\nX-Atlas-Story-Source: tauri\r\n\r\n{payload}",
+        payload.len()
+    );
+    let mut stream = TcpStream::connect((HOST, port)).map_err(|error| error.to_string())?;
+    stream
+        .set_read_timeout(Some(Duration::from_secs(30)))
+        .map_err(|error| error.to_string())?;
+    stream
+        .set_write_timeout(Some(Duration::from_secs(30)))
+        .map_err(|error| error.to_string())?;
+    stream
+        .write_all(request.as_bytes())
+        .map_err(|error| error.to_string())?;
+
+    let mut response = String::new();
+    stream
+        .read_to_string(&mut response)
+        .map_err(|error| error.to_string())?;
+    let (head, body) = response
+        .split_once("\r\n\r\n")
+        .ok_or_else(|| "Atlas Studio returned a malformed HTTP response.".to_string())?;
+    let status = head
+        .lines()
+        .next()
+        .and_then(|line| line.split_whitespace().nth(1))
+        .and_then(|value| value.parse::<u16>().ok())
+        .ok_or_else(|| "Atlas Studio returned a response without a status code.".to_string())?;
+    if status >= 400 {
+        return Err(format!("Atlas Studio request failed with {status}: {body}"));
+    }
+    if body.trim().is_empty() {
+        return Ok(Value::Null);
+    }
+    serde_json::from_str(body).map_err(|error| error.to_string())
+}
+
+fn story_path(session_id: &str, suffix: &str) -> String {
+    format!(
+        "/api/sessions/{}/story{suffix}",
+        encode_path_segment(session_id)
+    )
+}
+
+#[tauri::command]
+fn atlas_story_get(
+    state: tauri::State<'_, RuntimeState>,
+    session_id: String,
+) -> Result<Value, String> {
+    studio_json_request(state.port, "GET", &story_path(&session_id, ""), None)
+}
+
+#[tauri::command]
+fn atlas_story_focus(
+    state: tauri::State<'_, RuntimeState>,
+    session_id: String,
+    payload: Value,
+) -> Result<Value, String> {
+    studio_json_request(
+        state.port,
+        "POST",
+        &story_path(&session_id, ""),
+        Some(payload),
+    )
+}
+
+#[tauri::command]
+fn atlas_story_clear(
+    state: tauri::State<'_, RuntimeState>,
+    session_id: String,
+) -> Result<Value, String> {
+    studio_json_request(state.port, "DELETE", &story_path(&session_id, ""), None)
+}
+
+#[tauri::command]
+fn atlas_story_question_add(
+    state: tauri::State<'_, RuntimeState>,
+    session_id: String,
+    payload: Value,
+) -> Result<Value, String> {
+    studio_json_request(
+        state.port,
+        "POST",
+        &story_path(&session_id, "/questions"),
+        Some(payload),
+    )
+}
+
+#[tauri::command]
+fn atlas_story_step_activate(
+    state: tauri::State<'_, RuntimeState>,
+    session_id: String,
+    step_id: String,
+) -> Result<Value, String> {
+    studio_json_request(
+        state.port,
+        "POST",
+        &format!(
+            "{}/activate",
+            story_path(
+                &session_id,
+                &format!("/steps/{}", encode_path_segment(&step_id))
+            )
+        ),
+        None,
+    )
+}
+
+#[tauri::command]
+fn atlas_story_step_next(
+    state: tauri::State<'_, RuntimeState>,
+    session_id: String,
+) -> Result<Value, String> {
+    studio_json_request(state.port, "POST", &story_path(&session_id, "/next"), None)
+}
+
+#[tauri::command]
+fn atlas_story_step_previous(
+    state: tauri::State<'_, RuntimeState>,
+    session_id: String,
+) -> Result<Value, String> {
+    studio_json_request(
+        state.port,
+        "POST",
+        &story_path(&session_id, "/previous"),
+        None,
+    )
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let studio_child: StudioChild = Arc::new(Mutex::new(None));
@@ -223,6 +382,16 @@ pub fn run() {
     let port = choose_port();
 
     let app = tauri::Builder::default()
+        .manage(RuntimeState { port })
+        .invoke_handler(tauri::generate_handler![
+            atlas_story_get,
+            atlas_story_focus,
+            atlas_story_clear,
+            atlas_story_question_add,
+            atlas_story_step_activate,
+            atlas_story_step_next,
+            atlas_story_step_previous
+        ])
         .setup(move |app| {
             if let Ok(child) = start_studio_server(port) {
                 if let Ok(mut slot) = setup_child.lock() {

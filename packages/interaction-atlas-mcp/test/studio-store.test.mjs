@@ -28,6 +28,7 @@ import {
   updateEdge,
   writeSession
 } from '../dist/studio/store.js';
+import { focusStory, storySessionPayload } from '../dist/studio/story-api.js';
 
 test('local Atlas Studio sessions can be mutated by agent commands', async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-test-'));
@@ -218,6 +219,92 @@ test('Atlas Studio story focus is transient presentation state', async () => {
   assert.equal(cleared.story?.questions.length, 1);
   assert.equal(cleared.story?.steps.length, 0);
   assert.equal(cleared.canvas.nodes.length, session.canvas.nodes.length);
+});
+
+test('Atlas Story API v1 accepts snake_case payloads and reports invalid focus ids', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-story-api-test-'));
+  const session = await createSession(
+    { client: 'Acme', workflow: 'Support recovery', owner: 'Ops' },
+    cwd
+  );
+
+  const result = await focusStory(
+    session.id,
+    {
+      active_step_id: 'intro',
+      callout_node_id: 'data_workflow',
+      callout_severity: 'decision',
+      callout_text: 'Start from the source record.',
+      focus_node_ids: ['data_workflow', 'missing-node'],
+      next_action: 'Confirm the system of record.',
+      steps: [
+        {
+          id: 'intro',
+          title: 'Intro',
+          summary: 'Show the operator-owned source.',
+          focus_node_ids: ['data_workflow'],
+          proof: 'Source node exists.'
+        }
+      ]
+    },
+    'http',
+    cwd
+  );
+  const payload = storySessionPayload(result);
+
+  assert.equal(payload.meta.apiVersion, 1);
+  assert.equal(payload.meta.storyContract, 'atlas-story-v1');
+  assert.deepEqual(payload.meta.invalidFocusNodeIds, ['missing-node']);
+  assert.equal(payload.story?.activeStepId, 'intro');
+  assert.equal(payload.story?.nextAction, 'Confirm the system of record.');
+  assert.equal(payload.story?.callouts[0].severity, 'decision');
+  assert.deepEqual(payload.story?.steps[0].focusNodeIds, ['data_workflow']);
+});
+
+test('Atlas Story API v1 projects Canon story chapters into presenter steps', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-story-chapter-test-'));
+  const session = await createSession(
+    { client: 'Acme', workflow: 'Support recovery', owner: 'Ops' },
+    cwd
+  );
+
+  const result = await focusStory(
+    session.id,
+    {
+      story_artifact: {
+        headline: 'Atlas story for Support recovery',
+        chapters: [
+          {
+            id: 'claim',
+            eyebrow: 'Atlas graph',
+            title: 'Map Support recovery before execution.',
+            body: 'The workflow, handoffs, and next decision are visible.',
+            focus_node_ids: ['actor_agent', 'data_workflow'],
+            proof_label: 'owner and workflow named',
+            relationship_ids: ['missing-edge']
+          },
+          {
+            id: 'judgment',
+            eyebrow: 'What waits',
+            title: 'Human judgment stays explicit.',
+            body: 'Approval remains named.',
+            focus_node_ids: ['human_approval'],
+            proof_label: 'human review named'
+          }
+        ]
+      }
+    },
+    'tauri',
+    cwd
+  );
+
+  assert.equal(result.meta.source, 'tauri');
+  assert.deepEqual(result.meta.invalidFocusEdgeIds, ['missing-edge']);
+  assert.equal(result.story?.title, 'Atlas story for Support recovery');
+  assert.equal(result.story?.activeStepId, 'claim');
+  assert.equal(result.story?.steps.length, 2);
+  assert.equal(result.story?.steps[0].summary, 'The workflow, handoffs, and next decision are visible.');
+  assert.deepEqual(result.story?.focusNodeIds, ['actor_agent', 'data_workflow']);
 });
 
 test('Atlas Studio can self-heal Template System production primitive bindings', async () => {
