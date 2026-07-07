@@ -1,0 +1,22 @@
+{
+  "id": "overlay.app-governance-desktop",
+  "name": "App Governance Desktop Overlay",
+  "owner": "app-governance-team",
+  "sourcePackage": "app-governance-desktop",
+  "targetModalities": [
+    "web",
+    "chat",
+    "app",
+    "voice",
+    "glasses"
+  ],
+  "registryItemIds": [
+    "token.canon-core",
+    "component.clear-decision-panel",
+    "component.clear-proof-strip",
+    "template.canon-project-overlay-manifest",
+    "template.canon-extension-intake",
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "App Governance Desktop Overlay keeps native operator-shell behavior local while reusing Canon decision/proof structure. Promote only reusable operator-shell patterns to Canon. Keep deployed app-governance URLs, keychain accounts, repo-path policy, and local script names in this overlay."
+}
