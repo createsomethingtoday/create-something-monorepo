@@ -112,6 +112,35 @@ export const AtlasStudioSuggestionAcceptSchema = z.object({
   suggestion_id: z.string().min(1)
 });
 
+const AtlasStudioStoryArtifactChapterSchema = z
+  .object({
+    id: z.string().min(1).optional(),
+    sequence: z.number().optional(),
+    kind: z.string().min(1).optional(),
+    eyebrow: z.string().min(1).optional(),
+    title: z.string().min(1).optional(),
+    body: z.string().min(1).optional(),
+    focus_node_ids: z.array(z.string().min(1)).optional(),
+    focusNodeIds: z.array(z.string().min(1)).optional(),
+    relationship_ids: z.array(z.string().min(1)).optional(),
+    relationshipIds: z.array(z.string().min(1)).optional(),
+    proof_label: z.string().min(1).optional(),
+    proofLabel: z.string().min(1).optional(),
+    state: z.string().min(1).optional()
+  })
+  .passthrough();
+
+const AtlasStudioStoryArtifactSchema = z
+  .object({
+    version: z.number().optional(),
+    headline: z.string().min(1).optional(),
+    summary: z.string().min(1).optional(),
+    accessibility_summary: z.string().min(1).optional(),
+    accessibilitySummary: z.string().min(1).optional(),
+    chapters: z.array(AtlasStudioStoryArtifactChapterSchema).optional()
+  })
+  .passthrough();
+
 export const AtlasStudioStoryFocusSchema = z.object({
   session_id: z.string().min(1),
   title: z.string().min(1).optional().describe('Short label for the current walkthrough step.'),
@@ -139,6 +168,9 @@ export const AtlasStudioStoryFocusSchema = z.object({
   callout_node_id: z.string().min(1).optional().describe('Optional node id for a temporary callout.'),
   callout_text: z.string().min(1).optional().describe('Temporary callout text shown in the story rail.'),
   callout_severity: z.enum(['info', 'risk', 'decision']).optional().describe('Callout tone.'),
+  story_artifact: AtlasStudioStoryArtifactSchema.optional().describe(
+    'Optional Canon/PublicAtlasStoryArtifact-compatible chapter payload to project into presenter steps.'
+  ),
   operator: z.boolean().optional().describe('Mark the story step as operator-authored.')
 });
 

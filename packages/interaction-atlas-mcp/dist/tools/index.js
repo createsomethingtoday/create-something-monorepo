@@ -26,7 +26,8 @@ import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-ev
 import { claimNextSecurityIncidentForReview, evaluateAbusePatternAndMitigate, getSecurityIncidentById, getAccountAccess, listRecentSecurityIncidents, resolveSecurityIncident, setAccountAccess, } from '../storage/security.js';
 import { createAutomationRun, decideApproval, getActiveAutomationContract, listActiveAutomationContracts, listPendingApprovals, upsertAutomationContract, } from '../storage/control-plane.js';
 import { getJudgmentDashboardSummary } from '../storage/dashboard.js';
-import { acceptSuggestion, activateStoryStep, addEdge, addNode, addObservation, addStoryQuestion, advanceStoryStep, clearStoryFocus, createSession, exportSessionMarkdown, listSessions, readSession, setStoryFocus, updateEdge, updateNodes, } from '../studio/store.js';
+import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, listSessions, readSession, updateEdge, updateNodes, } from '../studio/store.js';
+import { activateStoryApiStep, addStoryApiQuestion, advanceStoryApiStep, clearStory, focusStory, storySessionPayload, } from '../studio/story-api.js';
 import { getAtlasStudioAppHome, getAtlasBrowserPortalStatus, startAtlasBrowserPortal, stopAtlasBrowserPortal, } from '../studio/portal.js';
 import { healSessionProductionBindings } from '../studio/production-bindings.js';
 import { createWritebackProposal, exportWritebackProposalHandoffForSession, reviewWritebackProposalAction, } from '../studio/writeback-proposals.js';
@@ -707,95 +708,62 @@ export function registerTools(server) {
     }, { readOnly: false });
     server.tool('atlas_studio_story_focus', 'Set transient Atlas Studio story focus for a live walkthrough. This highlights canvas context without changing durable nodes or edges.', AtlasStudioStoryFocusSchema.shape, async (params, ctx) => {
         const input = AtlasStudioStoryFocusSchema.parse(params);
-        const session = await setStoryFocus(input.session_id, {
-            activeStepId: input.active_step_id,
-            callouts: input.callout_text
-                ? [
-                    {
-                        nodeId: input.callout_node_id,
-                        severity: input.callout_severity ?? 'info',
-                        text: input.callout_text,
-                    },
-                ]
-                : undefined,
-            dimUnfocused: input.dim_unfocused,
-            focusEdgeIds: input.focus_edge_ids,
-            focusNodeIds: input.focus_node_ids,
-            narration: input.narration,
-            nextAction: input.next_action,
-            steps: input.steps?.map((step) => ({
-                id: step.id,
-                focusEdgeIds: step.focus_edge_ids,
-                focusNodeIds: step.focus_node_ids,
-                owner: step.owner,
-                proof: step.proof,
-                status: step.status,
-                summary: step.summary,
-                title: step.title,
-            })),
-            title: input.title,
-            updatedBy: input.operator ? 'operator' : 'agent',
-        }, atlasStudioCwd());
+        const result = await focusStory(input.session_id, input, 'mcp', atlasStudioCwd());
+        const payload = storySessionPayload(result);
         return jsonContent({
             accountId: ctx.accountId,
-            sessionId: session.id,
-            story: session.story,
-            session,
+            sessionId: payload.session.id,
+            ...payload,
         });
     }, { readOnly: false });
     server.tool('atlas_studio_story_question_add', 'Add a live validation question to the Atlas Studio story layer and optionally focus its canvas node.', AtlasStudioStoryQuestionAddSchema.shape, async (params, ctx) => {
         const input = AtlasStudioStoryQuestionAddSchema.parse(params);
-        const session = await addStoryQuestion(input.session_id, {
-            nodeId: input.node_id,
-            owner: input.owner,
-            question: input.question,
-            updatedBy: input.operator ? 'operator' : 'agent',
-        }, atlasStudioCwd());
+        const result = await addStoryApiQuestion(input.session_id, input, 'mcp', atlasStudioCwd());
+        const payload = storySessionPayload(result);
         return jsonContent({
             accountId: ctx.accountId,
-            sessionId: session.id,
-            story: session.story,
-            session,
+            sessionId: payload.session.id,
+            ...payload,
         });
     }, { readOnly: false });
     server.tool('atlas_studio_story_clear', 'Clear transient Atlas Studio story focus while preserving durable workflow mapping and unanswered questions.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {
         const input = AtlasStudioSessionIdSchema.parse(params);
-        const session = await clearStoryFocus(input.session_id, {}, atlasStudioCwd());
+        const result = await clearStory(input.session_id, 'mcp', atlasStudioCwd());
+        const payload = storySessionPayload(result);
         return jsonContent({
             accountId: ctx.accountId,
-            sessionId: session.id,
-            story: session.story,
-            session,
+            sessionId: payload.session.id,
+            ...payload,
         });
     }, { readOnly: false });
     server.tool('atlas_studio_story_step_activate', 'Activate one Atlas Studio presenter step and focus the canvas on its nodes and edges.', AtlasStudioStoryStepActivateSchema.shape, async (params, ctx) => {
         const input = AtlasStudioStoryStepActivateSchema.parse(params);
-        const session = await activateStoryStep(input.session_id, input.step_id, atlasStudioCwd());
+        const result = await activateStoryApiStep(input.session_id, input.step_id, 'mcp', atlasStudioCwd());
+        const payload = storySessionPayload(result);
         return jsonContent({
             accountId: ctx.accountId,
-            sessionId: session.id,
-            story: session.story,
-            session,
+            sessionId: payload.session.id,
+            ...payload,
         });
     }, { readOnly: false });
     server.tool('atlas_studio_story_step_next', 'Advance the Atlas Studio presenter to the next story step.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {
         const input = AtlasStudioSessionIdSchema.parse(params);
-        const session = await advanceStoryStep(input.session_id, 'next', atlasStudioCwd());
+        const result = await advanceStoryApiStep(input.session_id, 'next', 'mcp', atlasStudioCwd());
+        const payload = storySessionPayload(result);
         return jsonContent({
             accountId: ctx.accountId,
-            sessionId: session.id,
-            story: session.story,
-            session,
+            sessionId: payload.session.id,
+            ...payload,
         });
     }, { readOnly: false });
     server.tool('atlas_studio_story_step_previous', 'Move the Atlas Studio presenter to the previous story step.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {
         const input = AtlasStudioSessionIdSchema.parse(params);
-        const session = await advanceStoryStep(input.session_id, 'previous', atlasStudioCwd());
+        const result = await advanceStoryApiStep(input.session_id, 'previous', 'mcp', atlasStudioCwd());
+        const payload = storySessionPayload(result);
         return jsonContent({
             accountId: ctx.accountId,
-            sessionId: session.id,
-            story: session.story,
-            session,
+            sessionId: payload.session.id,
+            ...payload,
         });
     }, { readOnly: false });
     server.tool('atlas_studio_tidy', 'Apply the deterministic Atlas Studio lane layout to a local canvas session.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {

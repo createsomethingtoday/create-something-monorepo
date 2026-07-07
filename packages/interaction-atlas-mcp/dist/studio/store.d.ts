@@ -39,7 +39,7 @@ type AddObservationInput = {
     source?: AtlasSessionActor;
     suggest?: boolean;
 };
-type SetStoryInput = {
+export type SetStoryInput = {
     activeStepId?: string;
     callouts?: Array<Omit<AtlasStoryCallout, 'id'> & {
         id?: string;
@@ -59,10 +59,10 @@ type SetStoryInput = {
     title?: string;
     updatedBy?: AtlasSessionActor;
 };
-type AddStoryQuestionInput = Omit<AtlasStoryQuestion, 'id' | 'status'> & {
+export type AddStoryQuestionInput = Omit<AtlasStoryQuestion, 'id' | 'status'> & {
     updatedBy?: AtlasSessionActor;
 };
-type StoryStepDirection = 'next' | 'previous';
+export type StoryStepDirection = 'next' | 'previous';
 export declare function getStudioHome(cwd?: string): string;
 export declare function getSessionPath(sessionId: string, cwd?: string): string;
 export declare function createSession(input: CreateSessionInput, cwd?: string): Promise<AtlasSession>;

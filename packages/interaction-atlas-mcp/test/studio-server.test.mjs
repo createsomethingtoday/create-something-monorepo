@@ -257,3 +257,59 @@ test('Atlas Studio updates edge communication fields over HTTP', async () => {
     await closeServer(server);
   }
 });
+
+test('Atlas Studio Story API normalizes endpoint payloads over HTTP', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-story-api-http-test-'));
+  const session = await createSession(
+    { client: 'CREATE SOMETHING Test', workflow: 'Agent-assisted Atlas onboarding' },
+    cwd
+  );
+  const server = await startStudioServer({
+    host: '127.0.0.1',
+    port: 0,
+    sessionId: session.id,
+    cwd
+  });
+  const address = server.address();
+  assert.equal(typeof address, 'object');
+
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/story`,
+      {
+        body: JSON.stringify({
+          active_step_id: 'intro',
+          focus_node_ids: ['data_workflow', 'missing-node'],
+          next_action: 'Confirm the system of record.',
+          steps: [
+            {
+              id: 'intro',
+              title: 'Intro',
+              summary: 'Show the operator-owned source.',
+              focus_node_ids: ['data_workflow']
+            }
+          ]
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST'
+      }
+    );
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.meta.apiVersion, 1);
+    assert.equal(result.meta.storyContract, 'atlas-story-v1');
+    assert.deepEqual(result.meta.invalidFocusNodeIds, ['missing-node']);
+    assert.equal(result.story.activeStepId, 'intro');
+    assert.equal(result.session.story.nextAction, 'Confirm the system of record.');
+
+    const getResponse = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/story`
+    );
+    assert.equal(getResponse.status, 200);
+    const current = await getResponse.json();
+    assert.equal(current.story.activeStepId, 'intro');
+    assert.equal(current.meta.apiVersion, 1);
+  } finally {
+    await closeServer(server);
+  }
+});

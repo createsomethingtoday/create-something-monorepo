@@ -403,6 +403,8 @@ dependencies = [
 name = "create_something_atlas_studio_desktop"
 version = "0.1.0"
 dependencies = [
+ "serde",
+ "serde_json",
  "tauri",
  "tauri-build",
 ]

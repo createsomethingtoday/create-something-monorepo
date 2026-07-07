@@ -137,21 +137,24 @@ import { getJudgmentDashboardSummary } from '../storage/dashboard.js';
 import type { JudgmentEstimateScenario } from '../judgment/types.js';
 import {
   acceptSuggestion,
-  activateStoryStep,
   addEdge,
   addNode,
   addObservation,
-  addStoryQuestion,
-  advanceStoryStep,
-  clearStoryFocus,
   createSession,
   exportSessionMarkdown,
   listSessions,
   readSession,
-  setStoryFocus,
   updateEdge,
   updateNodes,
 } from '../studio/store.js';
+import {
+  activateStoryApiStep,
+  addStoryApiQuestion,
+  advanceStoryApiStep,
+  clearStory,
+  focusStory,
+  storySessionPayload,
+} from '../studio/story-api.js';
 import {
   getAtlasStudioAppHome,
   getAtlasBrowserPortalStatus,
@@ -1111,44 +1114,12 @@ export function registerTools(server: ScopedMcpServer): void {
     AtlasStudioStoryFocusSchema.shape,
     async (params, ctx) => {
       const input = AtlasStudioStoryFocusSchema.parse(params);
-      const session = await setStoryFocus(
-        input.session_id,
-        {
-          activeStepId: input.active_step_id,
-          callouts: input.callout_text
-            ? [
-                {
-                  nodeId: input.callout_node_id,
-                  severity: input.callout_severity ?? 'info',
-                  text: input.callout_text,
-                },
-              ]
-            : undefined,
-          dimUnfocused: input.dim_unfocused,
-          focusEdgeIds: input.focus_edge_ids,
-          focusNodeIds: input.focus_node_ids,
-          narration: input.narration,
-          nextAction: input.next_action,
-          steps: input.steps?.map((step) => ({
-            id: step.id,
-            focusEdgeIds: step.focus_edge_ids,
-            focusNodeIds: step.focus_node_ids,
-            owner: step.owner,
-            proof: step.proof,
-            status: step.status,
-            summary: step.summary,
-            title: step.title,
-          })),
-          title: input.title,
-          updatedBy: input.operator ? 'operator' : 'agent',
-        },
-        atlasStudioCwd(),
-      );
+      const result = await focusStory(input.session_id, input, 'mcp', atlasStudioCwd());
+      const payload = storySessionPayload(result);
       return jsonContent({
         accountId: ctx.accountId,
-        sessionId: session.id,
-        story: session.story,
-        session,
+        sessionId: payload.session.id,
+        ...payload,
       });
     },
     { readOnly: false },
@@ -1160,21 +1131,12 @@ export function registerTools(server: ScopedMcpServer): void {
     AtlasStudioStoryQuestionAddSchema.shape,
     async (params, ctx) => {
       const input = AtlasStudioStoryQuestionAddSchema.parse(params);
-      const session = await addStoryQuestion(
-        input.session_id,
-        {
-          nodeId: input.node_id,
-          owner: input.owner,
-          question: input.question,
-          updatedBy: input.operator ? 'operator' : 'agent',
-        },
-        atlasStudioCwd(),
-      );
+      const result = await addStoryApiQuestion(input.session_id, input, 'mcp', atlasStudioCwd());
+      const payload = storySessionPayload(result);
       return jsonContent({
         accountId: ctx.accountId,
-        sessionId: session.id,
-        story: session.story,
-        session,
+        sessionId: payload.session.id,
+        ...payload,
       });
     },
     { readOnly: false },
@@ -1186,12 +1148,12 @@ export function registerTools(server: ScopedMcpServer): void {
     AtlasStudioSessionIdSchema.shape,
     async (params, ctx) => {
       const input = AtlasStudioSessionIdSchema.parse(params);
-      const session = await clearStoryFocus(input.session_id, {}, atlasStudioCwd());
+      const result = await clearStory(input.session_id, 'mcp', atlasStudioCwd());
+      const payload = storySessionPayload(result);
       return jsonContent({
         accountId: ctx.accountId,
-        sessionId: session.id,
-        story: session.story,
-        session,
+        sessionId: payload.session.id,
+        ...payload,
       });
     },
     { readOnly: false },
@@ -1203,12 +1165,12 @@ export function registerTools(server: ScopedMcpServer): void {
     AtlasStudioStoryStepActivateSchema.shape,
     async (params, ctx) => {
       const input = AtlasStudioStoryStepActivateSchema.parse(params);
-      const session = await activateStoryStep(input.session_id, input.step_id, atlasStudioCwd());
+      const result = await activateStoryApiStep(input.session_id, input.step_id, 'mcp', atlasStudioCwd());
+      const payload = storySessionPayload(result);
       return jsonContent({
         accountId: ctx.accountId,
-        sessionId: session.id,
-        story: session.story,
-        session,
+        sessionId: payload.session.id,
+        ...payload,
       });
     },
     { readOnly: false },
@@ -1220,12 +1182,12 @@ export function registerTools(server: ScopedMcpServer): void {
     AtlasStudioSessionIdSchema.shape,
     async (params, ctx) => {
       const input = AtlasStudioSessionIdSchema.parse(params);
-      const session = await advanceStoryStep(input.session_id, 'next', atlasStudioCwd());
+      const result = await advanceStoryApiStep(input.session_id, 'next', 'mcp', atlasStudioCwd());
+      const payload = storySessionPayload(result);
       return jsonContent({
         accountId: ctx.accountId,
-        sessionId: session.id,
-        story: session.story,
-        session,
+        sessionId: payload.session.id,
+        ...payload,
       });
     },
     { readOnly: false },
@@ -1237,12 +1199,12 @@ export function registerTools(server: ScopedMcpServer): void {
     AtlasStudioSessionIdSchema.shape,
     async (params, ctx) => {
       const input = AtlasStudioSessionIdSchema.parse(params);
-      const session = await advanceStoryStep(input.session_id, 'previous', atlasStudioCwd());
+      const result = await advanceStoryApiStep(input.session_id, 'previous', 'mcp', atlasStudioCwd());
+      const payload = storySessionPayload(result);
       return jsonContent({
         accountId: ctx.accountId,
-        sessionId: session.id,
-        story: session.story,
-        session,
+        sessionId: payload.session.id,
+        ...payload,
       });
     },
     { readOnly: false },

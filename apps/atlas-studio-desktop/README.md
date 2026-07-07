@@ -57,6 +57,22 @@ pnpm atlas:desktop:session
 
 This opens the Tauri desktop app. No separate Atlas Studio server terminal is required.
 
+### Story API invoke bridge
+
+The desktop app exposes native Tauri commands over the same local Atlas Story API v1 endpoints used by HTTP, MCP, and CLI callers. The commands do not create a desktop-only story schema; they forward JSON to the local server and return the normalized Story API response:
+
+```ts
+invoke('atlas_story_get', { sessionId });
+invoke('atlas_story_focus', { sessionId, payload });
+invoke('atlas_story_clear', { sessionId });
+invoke('atlas_story_question_add', { sessionId, payload });
+invoke('atlas_story_step_activate', { sessionId, stepId });
+invoke('atlas_story_step_next', { sessionId });
+invoke('atlas_story_step_previous', { sessionId });
+```
+
+`atlas_story_focus` accepts camelCase, snake_case, or Canon `PublicAtlasStoryArtifact`-compatible chapter payloads. Responses include `meta.apiVersion`, `meta.storyContract`, invalid focus id arrays, `story`, and `session`.
+
 ## Install Launchers
 
 Install a clickable macOS app and short terminal command:

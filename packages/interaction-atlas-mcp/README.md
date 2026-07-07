@@ -141,6 +141,13 @@ New MCP tools for operator workflows:
 
 - `GET /workflows`, `GET /mcps` (viewer pages)
 - `GET /api/dashboard/summary` (Atlas Studio dashboard payload; optional `entity_type`, `entity_id`, `recent_limit`)
+- `GET /api/sessions/:sessionId/story` (Atlas Story API v1 payload)
+- `POST /api/sessions/:sessionId/story` (set Story API v1 focus; accepts camelCase, snake_case, or `story_artifact` / Canon `PublicAtlasStoryArtifact`-compatible chapters)
+- `DELETE /api/sessions/:sessionId/story` (clear transient story focus while preserving questions)
+- `POST /api/sessions/:sessionId/story/questions` (add a validation question)
+- `POST /api/sessions/:sessionId/story/steps/:stepId/activate`
+- `POST /api/sessions/:sessionId/story/next`
+- `POST /api/sessions/:sessionId/story/previous`
 - `GET /policies` and `GET /policies/editor` now return MCP-first deprecation payloads by default.
   - Use `legacy_ui=1` query param to temporarily access old pages.
 - `GET /reports/:reportId` (shareable estimate report page)
@@ -149,6 +156,14 @@ New MCP tools for operator workflows:
 - `GET /api/automations` (active automation contracts for account)
 - `GET /api/automations/:automationId` (active contract details)
 - `GET /api/inbox` (pending approval requests)
+
+Story API responses include:
+
+- `meta.apiVersion: 1`
+- `meta.storyContract: "atlas-story-v1"`
+- `meta.invalidFocusNodeIds` and `meta.invalidFocusEdgeIds`
+- `story`
+- `session`
 
 ## Auth Scope
 
