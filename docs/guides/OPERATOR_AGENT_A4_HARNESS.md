@@ -208,6 +208,32 @@ sets `commandOk` to `true`, but `executionReady`, `executionEnabled`,
 the manifest keeps `authority.a4Execution` as `blocked` and the command runner
 as disabled.
 
+After command admission, produce a disabled executor proof before any runner
+implementation can spawn a process:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs executor-proof-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The proof revalidates the whole chain and rejects any command receipt that
+claims a runner is enabled, execution is ready, a process was spawned, or
+commands were executed. A valid proof sets `executorProofOk` to `true`, but it
+also records `runnerBlocked`, `processSpawned`, `executedCommands`,
+`executionReady`, `executionEnabled`, `wouldExecute`, and `writesPerformed` as
+`true`, `false`, `[]`, `false`, `false`, `false`, and `0`. This is the final
+fail-closed receipt before any future operator-approved policy change can enable
+a narrowly scoped executor with rollback and smoke proof.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:

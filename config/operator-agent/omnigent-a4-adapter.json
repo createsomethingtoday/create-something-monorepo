@@ -167,6 +167,12 @@
     "runnerEnabled": false,
     "blockedUntil": "authority.a4Execution is changed by repo policy and an executor implementation revalidates the command receipt immediately before any write"
   },
+  "a4ExecutorProof": {
+    "runnerEnabled": false,
+    "processSpawnPolicy": "blocked",
+    "requiresCommandReceipt": true,
+    "blockedUntil": "operator-approved repo policy change enables a narrowly scoped executor implementation with rollback and smoke proof"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -217,6 +223,11 @@
       "id": "gate-7-a4-execution-command-admission",
       "required": "A4 execution command artifact validates the full authorization chain while keeping the runner disabled and execution blocked",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs execution-command-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-8-a4-disabled-executor-proof",
+      "required": "A4 disabled executor proof validates the full command receipt chain and proves the runner stops before process spawn",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs executor-proof-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

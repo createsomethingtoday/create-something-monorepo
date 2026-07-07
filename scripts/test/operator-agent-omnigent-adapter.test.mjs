@@ -24,7 +24,7 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
-const EXPECTED_ISSUE = 'CRE-1070';
+const EXPECTED_ISSUE = 'CRE-1072';
 const EXPECTED_TARGET = 'create-something-internal-production';
 const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
 const FIXED_NOW = '2026-07-06T20:00:00.000Z';
@@ -121,6 +121,13 @@ function executionCommandCheckArgs(packetPath, preflightReceiptPath, executionRe
   return args;
 }
 
+function executorProofCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, receiptDir) {
+  const args = executionCommandCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, receiptDir);
+  args[1] = 'executor-proof-check';
+  args.splice(12, 0, '--command-receipt', commandReceiptPath);
+  return args;
+}
+
 function writeValidPreflightReceipt(t, packetPath) {
   const root = makeWorkspace(t);
   const preflightResult = spawnSync(process.execPath, preflightCheckArgs(packetPath, root), {
@@ -151,6 +158,22 @@ function writeValidExecutionReceipt(t, packetPath, preflightPath) {
   };
 }
 
+function writeValidCommandReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath) {
+  const root = makeWorkspace(t);
+  const commandResult = spawnSync(
+    process.execPath,
+    executionCommandCheckArgs(packetPath, preflightPath, executionPath, authorizationPath, commandPath, root),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+  assert.equal(commandResult.status, 0, commandResult.stderr || commandResult.stdout);
+  const commandPayload = JSON.parse(commandResult.stdout);
+  return {
+    root,
+    commandReceiptPath: path.join(REPO_ROOT, commandPayload.receiptPath),
+    commandPayload,
+  };
+}
+
 function validAuthorization({ packetPath, preflightPath, executionPath } = {}) {
   return {
     authorityLevel: 'A4',
@@ -171,7 +194,7 @@ function validAuthorization({ packetPath, preflightPath, executionPath } = {}) {
     packet: packetPath ? path.relative(REPO_ROOT, packetPath) : 'packet.json',
     preflightReceipt: preflightPath ? path.relative(REPO_ROOT, preflightPath) : 'preflight.json',
     executionReceipt: executionPath ? path.relative(REPO_ROOT, executionPath) : 'execution.json',
-    evidenceTarget: 'Linear CRE-1070',
+    evidenceTarget: 'Linear CRE-1072',
   };
 }
 
@@ -191,7 +214,7 @@ function validExecutionCommand({ packetPath, preflightPath, executionPath, autho
     preflightReceipt: preflightPath ? path.relative(REPO_ROOT, preflightPath) : 'preflight.json',
     executionReceipt: executionPath ? path.relative(REPO_ROOT, executionPath) : 'execution.json',
     authorization: authorizationPath ? path.relative(REPO_ROOT, authorizationPath) : 'authorization.json',
-    evidenceTarget: 'Linear CRE-1070',
+    evidenceTarget: 'Linear CRE-1072',
   };
 }
 
@@ -743,6 +766,142 @@ test('execution-command-check fails closed on stale, unsupported, or mismatched 
     assert.equal(payload.commandOk, false, entry.name);
     assert.equal(payload.commandAdmitted, false, entry.name);
     assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.deepEqual(payload.executionPlan, [], entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('executor-proof-check validates command receipt chain and stops before process spawn', (t) => {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+  const { preflightPath } = writeValidPreflightReceipt(t, packetPath);
+  const { executionPath } = writeValidExecutionReceipt(t, packetPath, preflightPath);
+  const authorizationPath = path.join(root, 'authorization.json');
+  writeFileSync(
+    authorizationPath,
+    `${JSON.stringify(validAuthorization({ packetPath, preflightPath, executionPath }), null, 2)}\n`,
+  );
+  const commandPath = path.join(root, 'command.json');
+  writeFileSync(
+    commandPath,
+    `${JSON.stringify(validExecutionCommand({
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+    }), null, 2)}\n`,
+  );
+  const { commandReceiptPath } = writeValidCommandReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath);
+
+  const result = spawnSync(
+    process.execPath,
+    executorProofCheckArgs(packetPath, preflightPath, executionPath, authorizationPath, commandPath, commandReceiptPath, root),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'executor-proof-check');
+  assert.equal(payload.executorProofOk, true);
+  assert.equal(payload.runnerBlocked, true);
+  assert.equal(payload.processSpawnPolicy, 'blocked');
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.executorRunnerEnabled, false);
+  assert.equal(payload.policy.processSpawnPolicy, 'blocked');
+  assert.match(payload.blockedReason, /stopped before process spawn/);
+  assert.match(payload.nextGate, /operator-approved repo policy change/);
+  assert.deepEqual(payload.validationPlan, validPacket().validation);
+  assert.deepEqual(payload.rollbackPlan, validPacket().rollback);
+  assert.deepEqual(payload.postActionSmokePlan, validPacket().postActionSmoke);
+  assert.match(payload.receiptPath, /executor-proof-check\.json$/);
+});
+
+test('executor-proof-check fails closed on command receipt drift or process execution markers', (t) => {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+  const { preflightPath } = writeValidPreflightReceipt(t, packetPath);
+  const { executionPath } = writeValidExecutionReceipt(t, packetPath, preflightPath);
+  const authorizationPath = path.join(root, 'authorization.json');
+  writeFileSync(
+    authorizationPath,
+    `${JSON.stringify(validAuthorization({ packetPath, preflightPath, executionPath }), null, 2)}\n`,
+  );
+  const commandPath = path.join(root, 'command.json');
+  writeFileSync(
+    commandPath,
+    `${JSON.stringify(validExecutionCommand({
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+    }), null, 2)}\n`,
+  );
+  const { commandReceiptPath } = writeValidCommandReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath);
+  const baseReceipt = JSON.parse(readFileSync(commandReceiptPath, 'utf8'));
+
+  const cases = [
+    {
+      name: 'wrong-target',
+      patch: { target: 'different-production-surface' },
+      pattern: /execution command receipt target mismatch/,
+    },
+    {
+      name: 'runner-enabled',
+      patch: { runnerEnabled: true },
+      pattern: /execution command receipt runnerEnabled must be false/,
+    },
+    {
+      name: 'execution-ready',
+      patch: { executionReady: true },
+      pattern: /execution command receipt executionReady must be false/,
+    },
+    {
+      name: 'process-spawned',
+      patch: { processSpawned: true },
+      pattern: /must not report processSpawned/,
+    },
+    {
+      name: 'executed-commands',
+      patch: { executedCommands: ['wrangler deploy'] },
+      pattern: /executedCommands must be empty/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const driftedReceiptPath = path.join(root, `${entry.name}-command-receipt.json`);
+    writeFileSync(
+      driftedReceiptPath,
+      `${JSON.stringify({ ...baseReceipt, ...entry.patch }, null, 2)}\n`,
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      executorProofCheckArgs(packetPath, preflightPath, executionPath, authorizationPath, commandPath, driftedReceiptPath, root),
+      { cwd: REPO_ROOT, encoding: 'utf8' },
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.executorProofOk, false, entry.name);
+    assert.equal(payload.runnerBlocked, true, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
     assert.equal(payload.executionReady, false, entry.name);
     assert.equal(payload.executionEnabled, false, entry.name);
     assert.equal(payload.wouldExecute, false, entry.name);
