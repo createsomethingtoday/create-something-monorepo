@@ -656,6 +656,57 @@ missing audience, or any process/command/write marker. The verifier does not
 post to Linear, write a signed record, deploy, rotate secrets, or mutate any
 third-party system.
 
+After the receipt publication receipt exists, validate the operator review
+decision packet:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs receipt-review-decision-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --runner-contract-receipt <runner-contract-receipt.json> \
+  --runner-plan <runner-plan.json> \
+  --runner-plan-receipt <runner-plan-receipt.json> \
+  --runner-diff <runner-diff.json> \
+  --runner-diff-receipt <runner-diff-receipt.json> \
+  --release-admission <release-admission.json> \
+  --release-admission-receipt <release-admission-receipt.json> \
+  --execution-runbook <execution-runbook.json> \
+  --execution-runbook-receipt <execution-runbook-receipt.json> \
+  --receipt-bundle <receipt-bundle.json> \
+  --receipt-bundle-receipt <receipt-bundle-receipt.json> \
+  --receipt-publication <receipt-publication.json> \
+  --receipt-publication-receipt <receipt-publication-receipt.json> \
+  --receipt-review-decision <receipt-review-decision.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The review decision packet records the human judgment after the receipt bundle
+has been made available for review. Allowed decisions are
+`approved-for-manual-next-step`, `changes-requested`, `rejected`, and
+`blocked`. Even an approved decision is review-only evidence: it must name the
+reviewer, timestamp, reviewed surfaces, public-access fail-closed proof,
+redaction policy, operator summary, and the next manual step, while keeping
+`authority.a4Execution` blocked and all execution markers false. The verifier
+rejects unknown decisions, missing reviewer or timestamp, missing reviewed
+surfaces, leaked raw artifacts, stale publication receipts, and any claim that
+approval caused execution, posting, runner enablement, or writes.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
