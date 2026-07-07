@@ -19,24 +19,29 @@ import {
 } from './writeback-proposals.js';
 import {
   acceptSuggestion,
-  activateStoryStep,
   addEdge,
   addNode,
   addObservation,
-  addStoryQuestion,
-  advanceStoryStep,
-  clearStoryFocus,
   createSession,
   exportSessionMarkdown,
   getSessionPath,
   listSessions,
   readSession,
   removeNode,
-  setStoryFocus,
   updateNode,
   updateEdge,
   updateNodes
 } from './store.js';
+import {
+  activateStoryApiStep,
+  addStoryApiQuestion,
+  advanceStoryApiStep,
+  clearStory,
+  focusStory,
+  getStory,
+  type AtlasStoryApiSource,
+  storySessionPayload
+} from './story-api.js';
 import { tidyNodeUpdates } from './client/layout.js';
 import type { AtlasWritebackActionStatus } from './types.js';
 
@@ -77,6 +82,10 @@ function sendJson(response: http.ServerResponse, status: number, payload: unknow
     'cache-control': 'no-store'
   });
   response.end(JSON.stringify(payload, null, 2));
+}
+
+function storyApiSource(request: http.IncomingMessage): AtlasStoryApiSource {
+  return request.headers['x-atlas-story-source'] === 'tauri' ? 'tauri' : 'http';
 }
 
 function sendText(
@@ -524,12 +533,25 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
       }
 
       const storyMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/story$/);
-      if (method === 'POST' && storyMatch) {
-        const body = await readJson<Parameters<typeof setStoryFocus>[1]>(request);
+      if (method === 'GET' && storyMatch) {
         sendJson(
           response,
           200,
-          await setStoryFocus(decodeURIComponent(storyMatch[1] ?? ''), body, cwd)
+          storySessionPayload(
+            await getStory(decodeURIComponent(storyMatch[1] ?? ''), storyApiSource(request), cwd)
+          )
+        );
+        return;
+      }
+
+      if (method === 'POST' && storyMatch) {
+        const body = await readJson(request);
+        sendJson(
+          response,
+          200,
+          storySessionPayload(
+            await focusStory(decodeURIComponent(storyMatch[1] ?? ''), body, storyApiSource(request), cwd)
+          )
         );
         return;
       }
@@ -538,7 +560,9 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
         sendJson(
           response,
           200,
-          await clearStoryFocus(decodeURIComponent(storyMatch[1] ?? ''), {}, cwd)
+          storySessionPayload(
+            await clearStory(decodeURIComponent(storyMatch[1] ?? ''), storyApiSource(request), cwd)
+          )
         );
         return;
       }
@@ -550,10 +574,13 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
         sendJson(
           response,
           200,
-          await activateStoryStep(
-            decodeURIComponent(storyStepActivateMatch[1] ?? ''),
-            decodeURIComponent(storyStepActivateMatch[2] ?? ''),
-            cwd
+          storySessionPayload(
+            await activateStoryApiStep(
+              decodeURIComponent(storyStepActivateMatch[1] ?? ''),
+              decodeURIComponent(storyStepActivateMatch[2] ?? ''),
+              storyApiSource(request),
+              cwd
+            )
           )
         );
         return;
@@ -566,10 +593,13 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
         sendJson(
           response,
           200,
-          await advanceStoryStep(
-            decodeURIComponent(storyDirectionMatch[1] ?? ''),
-            storyDirectionMatch[2] === 'previous' ? 'previous' : 'next',
-            cwd
+          storySessionPayload(
+            await advanceStoryApiStep(
+              decodeURIComponent(storyDirectionMatch[1] ?? ''),
+              storyDirectionMatch[2] === 'previous' ? 'previous' : 'next',
+              storyApiSource(request),
+              cwd
+            )
           )
         );
         return;
@@ -577,11 +607,18 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
 
       const storyQuestionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/story\/questions$/);
       if (method === 'POST' && storyQuestionMatch) {
-        const body = await readJson<Parameters<typeof addStoryQuestion>[1]>(request);
+        const body = await readJson(request);
         sendJson(
           response,
           201,
-          await addStoryQuestion(decodeURIComponent(storyQuestionMatch[1] ?? ''), body, cwd)
+          storySessionPayload(
+            await addStoryApiQuestion(
+              decodeURIComponent(storyQuestionMatch[1] ?? ''),
+              body,
+              storyApiSource(request),
+              cwd
+            )
+          )
         );
         return;
       }

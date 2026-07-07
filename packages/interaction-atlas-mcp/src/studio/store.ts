@@ -70,7 +70,7 @@ type AddObservationInput = {
   suggest?: boolean;
 };
 
-type SetStoryInput = {
+export type SetStoryInput = {
   activeStepId?: string;
   callouts?: Array<Omit<AtlasStoryCallout, 'id'> & { id?: string }>;
   dimUnfocused?: boolean;
@@ -89,11 +89,11 @@ type SetStoryInput = {
   updatedBy?: AtlasSessionActor;
 };
 
-type AddStoryQuestionInput = Omit<AtlasStoryQuestion, 'id' | 'status'> & {
+export type AddStoryQuestionInput = Omit<AtlasStoryQuestion, 'id' | 'status'> & {
   updatedBy?: AtlasSessionActor;
 };
 
-type StoryStepDirection = 'next' | 'previous';
+export type StoryStepDirection = 'next' | 'previous';
 
 function now(): string {
   return new Date().toISOString();
