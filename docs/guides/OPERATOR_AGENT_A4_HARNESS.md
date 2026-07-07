@@ -294,6 +294,39 @@ The policy-patch dry run must match the proposal receipt's
 validates what a later operator-reviewed PR would change; it does not change the
 checked-in manifest or grant execution authority.
 
+After the dry-run receipt exists, a future policy-application PR can validate
+its candidate manifest against the exact reviewed patch before applying it:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs policy-application-diff-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The application diff verifier compares the current blocked manifest to the
+candidate manifest after applying the dry-run receipt's `policyPatchPreview` in
+memory. It accepts only that exact diff and rejects unrelated manifest edits,
+missing runner fields, missing required rollback/smoke/public fail-closed
+proofs, drifted dry-run receipts, or verifier artifacts that claim execution
+already happened. A valid diff receipt still keeps `policyChangeApplied`,
+`runnerEnabled`, `executionReady`, `executionEnabled`, `wouldExecute`, and
+`writesPerformed` as `false`, `false`, `false`, `false`, `false`, and `0` in
+the verifier PR.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:

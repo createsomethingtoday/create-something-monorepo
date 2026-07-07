@@ -205,6 +205,15 @@
     "policyChangeApplied": false,
     "blockedUntil": "a separate operator-reviewed PR applies the validated patch and reruns public access, rollback, and smoke proof"
   },
+  "a4PolicyApplicationDiff": {
+    "requiresPolicyPatchDryRunReceipt": true,
+    "exactPatchOnly": true,
+    "policyChangeApplied": false,
+    "runnerEnabled": false,
+    "executionEnabled": false,
+    "writesPerformed": 0,
+    "blockedUntil": "a separate operator-reviewed policy application PR uses this verifier against its candidate manifest before enabling any runner path"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -270,6 +279,11 @@
       "id": "gate-10-a4-policy-patch-dry-run",
       "required": "A4 policy patch dry run validates the proposal receipt and exact patch preview without changing the manifest or enabling the runner",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs policy-patch-dry-run-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-11-a4-policy-application-diff",
+      "required": "A4 policy application diff validates a candidate manifest against the dry-run receipt without changing the checked-in manifest in the verifier PR",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs policy-application-diff-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --policy-patch-receipt <policy-patch-receipt.json> --candidate-manifest <candidate-manifest.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

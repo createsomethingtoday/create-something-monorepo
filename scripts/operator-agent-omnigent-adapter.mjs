@@ -93,6 +93,8 @@ function parseArgs(argv) {
     enablementProposal: null,
     enablementProposalReceipt: null,
     policyPatch: null,
+    policyPatchReceipt: null,
+    candidateManifest: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -118,6 +120,8 @@ function parseArgs(argv) {
     else if (arg === '--enablement-proposal' && args[index + 1]) options.enablementProposal = args[++index];
     else if (arg === '--enablement-proposal-receipt' && args[index + 1]) options.enablementProposalReceipt = args[++index];
     else if (arg === '--policy-patch' && args[index + 1]) options.policyPatch = args[++index];
+    else if (arg === '--policy-patch-receipt' && args[index + 1]) options.policyPatchReceipt = args[++index];
+    else if (arg === '--candidate-manifest' && args[index + 1]) options.candidateManifest = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -172,6 +176,37 @@ function canonicalJson(value) {
 
 function sameJson(left, right) {
   return JSON.stringify(canonicalJson(left)) === JSON.stringify(canonicalJson(right));
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function applyObjectPatch(base, patch) {
+  const result = cloneJson(base);
+  for (const [key, value] of Object.entries(patch || {})) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      result[key] = applyObjectPatch(result[key] || {}, value);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+function collectJsonDiffPaths(left, right, prefix = '') {
+  if (sameJson(left, right)) return [];
+  const leftIsObject = left && typeof left === 'object' && !Array.isArray(left);
+  const rightIsObject = right && typeof right === 'object' && !Array.isArray(right);
+  if (!leftIsObject || !rightIsObject) return [prefix || '.'];
+
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+  const paths = [];
+  for (const key of [...keys].sort()) {
+    const nextPrefix = prefix ? `${prefix}.${key}` : key;
+    paths.push(...collectJsonDiffPaths(left[key], right[key], nextPrefix));
+  }
+  return paths;
 }
 
 function commandLooksHighRisk(command) {
@@ -351,6 +386,26 @@ function validateManifest(manifest) {
   ]);
   if (missingAllowedPatchFields.length) {
     errors.push(`a4PolicyPatchDryRun.allowedPatchFields missing: ${missingAllowedPatchFields.join(', ')}`);
+  }
+
+  const policyApplicationDiff = manifest.a4PolicyApplicationDiff || {};
+  if (policyApplicationDiff.requiresPolicyPatchDryRunReceipt !== true) {
+    errors.push('a4PolicyApplicationDiff.requiresPolicyPatchDryRunReceipt must be true');
+  }
+  if (policyApplicationDiff.exactPatchOnly !== true) {
+    errors.push('a4PolicyApplicationDiff.exactPatchOnly must be true');
+  }
+  if (policyApplicationDiff.policyChangeApplied !== false) {
+    errors.push('a4PolicyApplicationDiff.policyChangeApplied must remain false');
+  }
+  if (policyApplicationDiff.runnerEnabled !== false) {
+    errors.push('a4PolicyApplicationDiff.runnerEnabled must remain false');
+  }
+  if (policyApplicationDiff.executionEnabled !== false) {
+    errors.push('a4PolicyApplicationDiff.executionEnabled must remain false');
+  }
+  if (policyApplicationDiff.writesPerformed !== 0) {
+    errors.push('a4PolicyApplicationDiff.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -1678,6 +1733,248 @@ function buildPolicyPatchDryRunReceipt({
   };
 }
 
+function validatePolicyPatchDryRunReceipt(receipt, policyPatch, packet, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'policy-patch-dry-run-check') {
+    errors.push('policy patch dry-run receipt mode must be policy-patch-dry-run-check');
+  }
+  if (receipt.ok !== true || receipt.policyPatchDryRunOk !== true) {
+    errors.push('policy patch dry-run receipt must be ok');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`policy patch dry-run receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`policy patch dry-run receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`policy patch dry-run receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.packetPath !== rel(paths.packetPath)) {
+    errors.push('policy patch dry-run receipt packetPath must match packet path');
+  }
+  if (receipt.preflightReceipt !== rel(paths.preflightPath)) {
+    errors.push('policy patch dry-run receipt preflightReceipt must match preflight receipt path');
+  }
+  if (receipt.executionReceipt !== rel(paths.executionPath)) {
+    errors.push('policy patch dry-run receipt executionReceipt must match execution receipt path');
+  }
+  if (receipt.authorization !== rel(paths.authorizationPath)) {
+    errors.push('policy patch dry-run receipt authorization must match authorization artifact path');
+  }
+  if (receipt.commandArtifact !== rel(paths.commandPath)) {
+    errors.push('policy patch dry-run receipt commandArtifact must match command artifact path');
+  }
+  if (receipt.commandReceipt !== rel(paths.commandReceiptPath)) {
+    errors.push('policy patch dry-run receipt commandReceipt must match command receipt path');
+  }
+  if (receipt.executorProofReceipt !== rel(paths.executorProofPath)) {
+    errors.push('policy patch dry-run receipt executorProofReceipt must match executor proof receipt path');
+  }
+  if (receipt.enablementProposal !== rel(paths.proposalPath)) {
+    errors.push('policy patch dry-run receipt enablementProposal must match proposal path');
+  }
+  if (receipt.enablementProposalReceipt !== rel(paths.proposalReceiptPath)) {
+    errors.push('policy patch dry-run receipt enablementProposalReceipt must match proposal receipt path');
+  }
+  if (receipt.policyPatchDryRun !== rel(paths.policyPatchPath)) {
+    errors.push('policy patch dry-run receipt policyPatchDryRun must match policy patch artifact path');
+  }
+  if (!sameJson(receipt.policyPatchPreview, policyPatch.policyPatch)) {
+    errors.push('policy patch dry-run receipt policyPatchPreview must match policy patch artifact');
+  }
+  if (receipt.dryRunOnly !== true) errors.push('policy patch dry-run receipt dryRunOnly must be true');
+  if (receipt.policyFileChanged !== false) errors.push('policy patch dry-run receipt policyFileChanged must be false');
+  if (receipt.policyChangeApplied !== false) errors.push('policy patch dry-run receipt policyChangeApplied must be false');
+  if (receipt.runnerEnabled !== false) errors.push('policy patch dry-run receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('policy patch dry-run receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('policy patch dry-run receipt executionEnabled must be false');
+  if (receipt.wouldExecute !== false) errors.push('policy patch dry-run receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('policy patch dry-run receipt writesPerformed must be 0');
+
+  if (packet.issue !== receipt.issue) errors.push('policy patch dry-run receipt issue must match packet issue');
+  if (packet.target !== receipt.target) errors.push('policy patch dry-run receipt target must match packet target');
+  if (packet.action !== receipt.action) errors.push('policy patch dry-run receipt action must match packet action');
+
+  return errors;
+}
+
+function validatePolicyApplicationCandidateManifest(candidateManifest, baseManifest, policyPatchReceipt, manifest, constraints) {
+  const errors = [];
+  const expectedManifest = applyObjectPatch(baseManifest, policyPatchReceipt.policyPatchPreview || {});
+  const actualDiffPaths = collectJsonDiffPaths(baseManifest, candidateManifest);
+  const expectedDiffPaths = collectJsonDiffPaths(baseManifest, expectedManifest);
+
+  if (candidateManifest.id !== baseManifest.id) {
+    errors.push('policy application candidate manifest id must match base manifest');
+  }
+  if (!sameJson(candidateManifest, expectedManifest)) {
+    const extraPaths = actualDiffPaths.filter((entry) => !expectedDiffPaths.includes(entry));
+    const missingPaths = expectedDiffPaths.filter((entry) => !actualDiffPaths.includes(entry));
+    errors.push('policy application candidate manifest must equal base manifest plus policy patch preview');
+    if (extraPaths.length) errors.push(`policy application candidate has extra changed paths: ${extraPaths.join(', ')}`);
+    if (missingPaths.length) errors.push(`policy application candidate is missing changed paths: ${missingPaths.join(', ')}`);
+  }
+  if (candidateManifest.authority?.a4Execution !== 'enabled') {
+    errors.push('policy application candidate authority.a4Execution must be enabled');
+  }
+  if (candidateManifest.a4ExecutionCommand?.runnerEnabled !== true) {
+    errors.push('policy application candidate a4ExecutionCommand.runnerEnabled must be true');
+  }
+  if (candidateManifest.a4ExecutorProof?.runnerEnabled !== true) {
+    errors.push('policy application candidate a4ExecutorProof.runnerEnabled must be true');
+  }
+  if (candidateManifest.a4ExecutorEnablementProposal?.maxWritesPerRun !== 1) {
+    errors.push('policy application candidate maxWritesPerRun must remain 1');
+  }
+  for (const proof of manifest.a4PolicyPatchDryRun?.requiredProofs || []) {
+    if (!candidateManifest.a4ExecutorEnablementProposal?.requiredProofs?.includes(proof)) {
+      errors.push(`policy application candidate requiredProofs must include ${proof}`);
+    }
+  }
+  if (candidateManifest.a4PolicyApplicationDiff?.policyChangeApplied === true) {
+    errors.push('policy application candidate must not claim policyChangeApplied in the verifier gate');
+  }
+  if (candidateManifest.a4PolicyApplicationDiff?.runnerEnabled === true) {
+    errors.push('policy application candidate must not claim verifier runnerEnabled');
+  }
+  if (candidateManifest.a4PolicyApplicationDiff?.executionEnabled === true) {
+    errors.push('policy application candidate must not claim verifier executionEnabled');
+  }
+  if (candidateManifest.issue !== baseManifest.issue) {
+    errors.push('policy application candidate issue must match base manifest issue');
+  }
+  if (policyPatchReceipt.issue !== constraints.expectedIssue) {
+    errors.push('policy application policy patch receipt issue must match expected issue');
+  }
+
+  return {
+    errors,
+    actualDiffPaths,
+    expectedDiffPaths,
+  };
+}
+
+function buildPolicyApplicationDiffReceipt({
+  manifest,
+  manifestValidation,
+  packet,
+  packetPath,
+  preflightReceipt,
+  preflightPath,
+  executionReceipt,
+  executionPath,
+  authorization,
+  authorizationPath,
+  commandArtifact,
+  commandPath,
+  commandReceipt,
+  commandReceiptPath,
+  executorProofReceipt,
+  executorProofPath,
+  proposal,
+  proposalPath,
+  proposalReceipt,
+  proposalReceiptPath,
+  policyPatch,
+  policyPatchPath,
+  policyPatchReceipt,
+  policyPatchReceiptPath,
+  candidateManifest,
+  candidateManifestPath,
+  constraints,
+  packetValidation,
+  preflightErrors,
+  executionErrors,
+  authorizationErrors,
+  commandErrors,
+  commandReceiptErrors,
+  executorProofErrors,
+  proposalErrors,
+  proposalReceiptErrors,
+  policyPatchErrors,
+  policyPatchReceiptErrors,
+  candidateValidation,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...packetValidation.errors,
+    ...preflightErrors,
+    ...executionErrors,
+    ...authorizationErrors,
+    ...commandErrors,
+    ...commandReceiptErrors,
+    ...executorProofErrors,
+    ...proposalErrors,
+    ...proposalReceiptErrors,
+    ...policyPatchErrors,
+    ...policyPatchReceiptErrors,
+    ...candidateValidation.errors,
+  ];
+  const policyApplicationDiffOk = errors.length === 0;
+
+  return {
+    mode: 'policy-application-diff-check',
+    ok: policyApplicationDiffOk,
+    policyApplicationDiffOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    candidateManifest: rel(candidateManifestPath),
+    packetPath: rel(packetPath),
+    preflightReceipt: rel(preflightPath),
+    executionReceipt: rel(executionPath),
+    authorization: rel(authorizationPath),
+    commandArtifact: rel(commandPath),
+    commandReceipt: rel(commandReceiptPath),
+    executorProofReceipt: rel(executorProofPath),
+    enablementProposal: rel(proposalPath),
+    enablementProposalReceipt: rel(proposalReceiptPath),
+    policyPatchDryRun: rel(policyPatchPath),
+    policyPatchDryRunReceipt: rel(policyPatchReceiptPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    targetScope: policyPatchReceipt.targetScope,
+    maxWritesPerRun: policyPatchReceipt.maxWritesPerRun,
+    requiredProofs: policyPatchReceipt.requiredProofs || [],
+    constraints,
+    exactPatchOnly: true,
+    expectedDiffPaths: candidateValidation.expectedDiffPaths,
+    actualDiffPaths: candidateValidation.actualDiffPaths,
+    policyPatchPreview: policyApplicationDiffOk ? policyPatchReceipt.policyPatchPreview : null,
+    candidateA4Execution: candidateManifest.authority?.a4Execution,
+    candidateCommandRunnerEnabled: candidateManifest.a4ExecutionCommand?.runnerEnabled,
+    candidateExecutorRunnerEnabled: candidateManifest.a4ExecutorProof?.runnerEnabled,
+    policyFileChanged: false,
+    policyChangeApplied: false,
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: policyApplicationDiffOk
+      ? 'policy application diff validated against the dry-run receipt; current checked-in policy remains blocked in this verifier PR'
+      : 'policy application diff rejected before any policy file change',
+    evidenceTarget: policyPatchReceipt.evidenceTarget || policyPatch.evidenceTarget || proposal.evidenceTarget || packet.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator-reviewed policy application PR may use this verifier against its candidate manifest before enabling any runner path',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      policyApplicationDiffExactPatchOnly: manifest.a4PolicyApplicationDiff?.exactPatchOnly,
+      policyApplicationDiffChangeApplied: manifest.a4PolicyApplicationDiff?.policyChangeApplied,
+    },
+  };
+}
+
 function print(result, options) {
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -2226,6 +2523,166 @@ function commandPolicyPatchDryRunCheck(options) {
   return result;
 }
 
+function commandPolicyApplicationDiffCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for policy-application-diff-check'));
+  }
+  if (!options.preflightReceipt) throw new Error('--preflight-receipt is required for policy-application-diff-check');
+  if (!options.executionReceipt) throw new Error('--execution-receipt is required for policy-application-diff-check');
+  if (!options.authorization) throw new Error('--authorization is required for policy-application-diff-check');
+  if (!options.commandArtifact) throw new Error('--command-artifact is required for policy-application-diff-check');
+  if (!options.commandReceipt) throw new Error('--command-receipt is required for policy-application-diff-check');
+  if (!options.executorProofReceipt) throw new Error('--executor-proof-receipt is required for policy-application-diff-check');
+  if (!options.enablementProposal) throw new Error('--enablement-proposal is required for policy-application-diff-check');
+  if (!options.enablementProposalReceipt) {
+    throw new Error('--enablement-proposal-receipt is required for policy-application-diff-check');
+  }
+  if (!options.policyPatch) throw new Error('--policy-patch is required for policy-application-diff-check');
+  if (!options.policyPatchReceipt) throw new Error('--policy-patch-receipt is required for policy-application-diff-check');
+  if (!options.candidateManifest) throw new Error('--candidate-manifest is required for policy-application-diff-check');
+
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const preflightPath = resolveFromRoot(options.preflightReceipt);
+  const executionPath = resolveFromRoot(options.executionReceipt);
+  const authorizationPath = resolveFromRoot(options.authorization);
+  const commandPath = resolveFromRoot(options.commandArtifact);
+  const commandReceiptPath = resolveFromRoot(options.commandReceipt);
+  const executorProofPath = resolveFromRoot(options.executorProofReceipt);
+  const proposalPath = resolveFromRoot(options.enablementProposal);
+  const proposalReceiptPath = resolveFromRoot(options.enablementProposalReceipt);
+  const policyPatchPath = resolveFromRoot(options.policyPatch);
+  const policyPatchReceiptPath = resolveFromRoot(options.policyPatchReceipt);
+  const candidateManifestPath = resolveFromRoot(options.candidateManifest);
+  const packet = readJson(packetPath);
+  const preflightReceipt = readJson(preflightPath);
+  const executionReceipt = readJson(executionPath);
+  const authorization = readJson(authorizationPath);
+  const commandArtifact = readJson(commandPath);
+  const commandReceipt = readJson(commandReceiptPath);
+  const executorProofReceipt = readJson(executorProofPath);
+  const proposal = readJson(proposalPath);
+  const proposalReceipt = readJson(proposalReceiptPath);
+  const policyPatch = readJson(policyPatchPath);
+  const policyPatchReceipt = readJson(policyPatchReceiptPath);
+  const candidateManifest = readJson(candidateManifestPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const preflightErrors = validatePreflightReceipt(preflightReceipt, packet, constraints);
+  const executionErrors = validateExecutionReceipt(executionReceipt, packet, preflightReceipt, constraints);
+  const authorizationErrors = validateExecutionAuthorization(authorization, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+  }, constraints);
+  const commandErrors = validateExecutionCommandArtifact(commandArtifact, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+  }, constraints);
+  const commandReceiptErrors = validateExecutionCommandReceipt(commandReceipt, packet, executionReceipt, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+  }, constraints);
+  const executorProofErrors = validateExecutorProofReceipt(executorProofReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+  }, constraints);
+  const proposalErrors = validateExecutorEnablementProposal(proposal, packet, executorProofReceipt, manifest, {
+    executorProofPath,
+  }, constraints);
+  const proposalReceiptErrors = validateExecutorEnablementProposalReceipt(proposalReceipt, proposal, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+  }, constraints);
+  const policyPatchErrors = validatePolicyPatchDryRunArtifact(policyPatch, proposalReceipt, manifest, {
+    proposalReceiptPath,
+  }, constraints);
+  const policyPatchReceiptErrors = validatePolicyPatchDryRunReceipt(policyPatchReceipt, policyPatch, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+  }, constraints);
+  const candidateValidation = validatePolicyApplicationCandidateManifest(
+    candidateManifest,
+    manifest,
+    policyPatchReceipt,
+    manifest,
+    constraints,
+  );
+  const result = buildPolicyApplicationDiffReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    preflightReceipt,
+    preflightPath,
+    executionReceipt,
+    executionPath,
+    authorization,
+    authorizationPath,
+    commandArtifact,
+    commandPath,
+    commandReceipt,
+    commandReceiptPath,
+    executorProofReceipt,
+    executorProofPath,
+    proposal,
+    proposalPath,
+    proposalReceipt,
+    proposalReceiptPath,
+    policyPatch,
+    policyPatchPath,
+    policyPatchReceipt,
+    policyPatchReceiptPath,
+    candidateManifest,
+    candidateManifestPath,
+    constraints,
+    packetValidation,
+    preflightErrors,
+    executionErrors,
+    authorizationErrors,
+    commandErrors,
+    commandReceiptErrors,
+    executorProofErrors,
+    proposalErrors,
+    proposalReceiptErrors,
+    policyPatchErrors,
+    policyPatchReceiptErrors,
+    candidateValidation,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -2273,6 +2730,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs executor-proof-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs executor-enable-proposal-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs policy-patch-dry-run-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs policy-application-diff-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -2295,6 +2753,7 @@ async function main() {
   else if (options.command === 'executor-proof-check') result = commandExecutorProofCheck(options);
   else if (options.command === 'executor-enable-proposal-check') result = commandExecutorEnableProposalCheck(options);
   else if (options.command === 'policy-patch-dry-run-check') result = commandPolicyPatchDryRunCheck(options);
+  else if (options.command === 'policy-application-diff-check') result = commandPolicyApplicationDiffCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -2313,6 +2772,7 @@ export {
   commandLooksHighRisk,
   commandExecutorEnableProposalCheck,
   commandPolicyPatchDryRunCheck,
+  commandPolicyApplicationDiffCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,

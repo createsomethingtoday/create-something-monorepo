@@ -24,7 +24,7 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
-const EXPECTED_ISSUE = 'CRE-1074';
+const EXPECTED_ISSUE = 'CRE-1075';
 const EXPECTED_TARGET = 'create-something-internal-production';
 const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
 const FIXED_NOW = '2026-07-06T20:00:00.000Z';
@@ -152,6 +152,37 @@ function policyPatchDryRunCheckArgs(packetPath, preflightReceiptPath, executionR
   return args;
 }
 
+function policyApplicationDiffCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, receiptDir) {
+  const args = policyPatchDryRunCheckArgs(
+    packetPath,
+    preflightReceiptPath,
+    executionReceiptPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    receiptDir,
+  );
+  args[1] = 'policy-application-diff-check';
+  args.push('--policy-patch-receipt', policyPatchReceiptPath, '--candidate-manifest', candidateManifestPath);
+  return args;
+}
+
+function mergePatch(base, patch) {
+  const result = JSON.parse(JSON.stringify(base));
+  for (const [key, value] of Object.entries(patch || {})) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      result[key] = mergePatch(result[key] || {}, value);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 function writeValidPreflightReceipt(t, packetPath) {
   const root = makeWorkspace(t);
   const preflightResult = spawnSync(process.execPath, preflightCheckArgs(packetPath, root), {
@@ -237,6 +268,34 @@ function writeValidEnablementProposalReceipt(t, packetPath, preflightPath, execu
     root,
     proposalReceiptPath: path.join(REPO_ROOT, proposalPayload.receiptPath),
     proposalPayload,
+  };
+}
+
+function writeValidPolicyPatchDryRunReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath) {
+  const root = makeWorkspace(t);
+  const dryRunResult = spawnSync(
+    process.execPath,
+    policyPatchDryRunCheckArgs(
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+      commandPath,
+      commandReceiptPath,
+      executorProofPath,
+      proposalPath,
+      proposalReceiptPath,
+      policyPatchPath,
+      root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+  assert.equal(dryRunResult.status, 0, dryRunResult.stderr || dryRunResult.stdout);
+  const dryRunPayload = JSON.parse(dryRunResult.stdout);
+  return {
+    root,
+    policyPatchReceiptPath: path.join(REPO_ROOT, dryRunPayload.receiptPath),
+    dryRunPayload,
   };
 }
 
@@ -346,6 +405,90 @@ function validPolicyPatchDryRun({ proposalReceiptPath } = {}) {
     postActionSmokeRequired: true,
     publicAccessFailClosedRequired: true,
     evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
+function writePolicyApplicationFixture(t) {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+  const { preflightPath } = writeValidPreflightReceipt(t, packetPath);
+  const { executionPath } = writeValidExecutionReceipt(t, packetPath, preflightPath);
+  const authorizationPath = path.join(root, 'authorization.json');
+  writeFileSync(
+    authorizationPath,
+    `${JSON.stringify(validAuthorization({ packetPath, preflightPath, executionPath }), null, 2)}\n`,
+  );
+  const commandPath = path.join(root, 'command.json');
+  writeFileSync(
+    commandPath,
+    `${JSON.stringify(validExecutionCommand({
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+    }), null, 2)}\n`,
+  );
+  const { commandReceiptPath } = writeValidCommandReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath);
+  const { executorProofPath } = writeValidExecutorProofReceipt(
+    t,
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+  );
+  const proposalPath = path.join(root, 'enablement-proposal.json');
+  writeFileSync(
+    proposalPath,
+    `${JSON.stringify(validEnablementProposal({ executorProofPath }), null, 2)}\n`,
+  );
+  const { proposalReceiptPath } = writeValidEnablementProposalReceipt(
+    t,
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+  );
+  const policyPatchPath = path.join(root, 'policy-patch-dry-run.json');
+  const policyPatch = validPolicyPatchDryRun({ proposalReceiptPath });
+  writeFileSync(policyPatchPath, `${JSON.stringify(policyPatch, null, 2)}\n`);
+  const { policyPatchReceiptPath } = writeValidPolicyPatchDryRunReceipt(
+    t,
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+  );
+  const candidateManifestPath = path.join(root, 'candidate-manifest.json');
+  writeFileSync(candidateManifestPath, `${JSON.stringify(mergePatch(readManifest(), policyPatch.policyPatch), null, 2)}\n`);
+
+  return {
+    root,
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    policyPatch,
   };
 }
 
@@ -1481,6 +1624,160 @@ test('policy-patch-dry-run-check fails closed on broader scope, mutation claims,
     assert.equal(payload.wouldExecute, false, entry.name);
     assert.equal(payload.writesPerformed, 0, entry.name);
     assert.equal(payload.policyPatchPreview, null, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('policy-application-diff-check validates candidate manifest against dry-run receipt', (t) => {
+  const fixture = writePolicyApplicationFixture(t);
+
+  const result = spawnSync(
+    process.execPath,
+    policyApplicationDiffCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'policy-application-diff-check');
+  assert.equal(payload.policyApplicationDiffOk, true);
+  assert.equal(payload.exactPatchOnly, true);
+  assert.deepEqual(payload.expectedDiffPaths, [
+    'a4ExecutionCommand.runnerEnabled',
+    'a4ExecutorProof.runnerEnabled',
+    'authority.a4Execution',
+  ]);
+  assert.deepEqual(payload.actualDiffPaths, payload.expectedDiffPaths);
+  assert.equal(payload.candidateA4Execution, 'enabled');
+  assert.equal(payload.candidateCommandRunnerEnabled, true);
+  assert.equal(payload.candidateExecutorRunnerEnabled, true);
+  assert.equal(payload.policyPatchPreview.authority.a4Execution, 'enabled');
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.runnerEnabled, false);
+  assert.equal(payload.policy.executorRunnerEnabled, false);
+  assert.equal(payload.policyChangeApplied, false);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.blockedReason, /current checked-in policy remains blocked/);
+  assert.match(payload.nextGate, /operator-reviewed policy application PR/);
+  assert.match(payload.receiptPath, /policy-application-diff-check\.json$/);
+});
+
+test('policy-application-diff-check fails closed on extra candidate manifest changes', (t) => {
+  const fixture = writePolicyApplicationFixture(t);
+  const candidate = JSON.parse(readFileSync(fixture.candidateManifestPath, 'utf8'));
+  candidate.status = 'candidate-local-only';
+  const changedCandidatePath = path.join(fixture.root, 'candidate-extra-change.json');
+  writeFileSync(changedCandidatePath, `${JSON.stringify(candidate, null, 2)}\n`);
+
+  const result = spawnSync(
+    process.execPath,
+    policyApplicationDiffCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      changedCandidatePath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.policyApplicationDiffOk, false);
+  assert.equal(payload.policyPatchPreview, null);
+  assert.equal(payload.policyChangeApplied, false);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /extra changed paths: status/);
+});
+
+test('policy-application-diff-check fails closed on missing patch fields or drifted dry-run receipts', (t) => {
+  const fixture = writePolicyApplicationFixture(t);
+  const missingRunnerCandidate = JSON.parse(readFileSync(fixture.candidateManifestPath, 'utf8'));
+  missingRunnerCandidate.a4ExecutionCommand.runnerEnabled = false;
+  const missingRunnerPath = path.join(fixture.root, 'candidate-missing-runner.json');
+  writeFileSync(missingRunnerPath, `${JSON.stringify(missingRunnerCandidate, null, 2)}\n`);
+
+  const driftedReceipt = JSON.parse(readFileSync(fixture.policyPatchReceiptPath, 'utf8'));
+  driftedReceipt.policyFileChanged = true;
+  const driftedReceiptPath = path.join(fixture.root, 'drifted-policy-patch-receipt.json');
+  writeFileSync(driftedReceiptPath, `${JSON.stringify(driftedReceipt, null, 2)}\n`);
+
+  const cases = [
+    {
+      name: 'missing-runner-field',
+      policyPatchReceiptPath: fixture.policyPatchReceiptPath,
+      candidateManifestPath: missingRunnerPath,
+      pattern: /candidate manifest must equal base manifest plus policy patch preview/,
+    },
+    {
+      name: 'drifted-dry-run-receipt',
+      policyPatchReceiptPath: driftedReceiptPath,
+      candidateManifestPath: fixture.candidateManifestPath,
+      pattern: /policy patch dry-run receipt policyFileChanged must be false/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const result = spawnSync(
+      process.execPath,
+      policyApplicationDiffCheckArgs(
+        fixture.packetPath,
+        fixture.preflightPath,
+        fixture.executionPath,
+        fixture.authorizationPath,
+        fixture.commandPath,
+        fixture.commandReceiptPath,
+        fixture.executorProofPath,
+        fixture.proposalPath,
+        fixture.proposalReceiptPath,
+        fixture.policyPatchPath,
+        entry.policyPatchReceiptPath,
+        entry.candidateManifestPath,
+        fixture.root,
+      ),
+      { cwd: REPO_ROOT, encoding: 'utf8' },
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.policyApplicationDiffOk, false, entry.name);
+    assert.equal(payload.policyPatchPreview, null, entry.name);
+    assert.equal(payload.policyChangeApplied, false, entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
     assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
   }
 });
