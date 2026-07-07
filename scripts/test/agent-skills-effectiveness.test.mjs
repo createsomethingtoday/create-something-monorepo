@@ -108,6 +108,24 @@ const intentMappingBehaviorFixtures = [
       /one concrete outcome/i,
       /observable done condition/i
     ]
+  },
+  {
+    name: 'multi-session wayfinding',
+    prompt: 'Use intent mapping as an orchestrator for many grilling sessions.',
+    expectedBehaviors: [
+      /Map Mode/,
+      /Linear-native way to orchestrate/i,
+      /Destination/,
+      /Decisions so far/,
+      /Not yet specified/,
+      /Out of scope/,
+      /frontier/i,
+      /Never resolve more than one map ticket in a single session/i,
+      /Grilling/,
+      /Research/,
+      /Prototype/,
+      /Task/
+    ]
   }
 ];
 
