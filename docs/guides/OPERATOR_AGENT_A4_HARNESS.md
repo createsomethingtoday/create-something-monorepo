@@ -234,6 +234,34 @@ also records `runnerBlocked`, `processSpawned`, `executedCommands`,
 fail-closed receipt before any future operator-approved policy change can enable
 a narrowly scoped executor with rollback and smoke proof.
 
+After the disabled executor proof, validate the proposed policy patch before
+any PR or operator action applies it:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs executor-enable-proposal-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The enablement proposal names the exact future policy patch, target scope,
+write ceiling, rollback proof, post-action smoke proof, and public access
+fail-closed proof that must exist before a later PR can enable the runner. A
+valid proposal sets `enablementProposalOk` to `true`, but it still records
+`policyChangeApplied`, `runnerEnabled`, `executionReady`, `executionEnabled`,
+`wouldExecute`, and `writesPerformed` as `false`, `false`, `false`, `false`,
+`false`, and `0`. The proposal check does not edit the manifest and does not
+grant execution authority.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
