@@ -5061,6 +5061,111 @@ function validImplementationProductionPolicyEnablementPr({ implementationProduct
   };
 }
 
+function validImplementationProductionPolicyEnablementMergeDecision({ implementationProductionPolicyEnablementPrPath, implementationProductionPolicyEnablementPrReceiptPath } = {}) {
+  const prEvidence = validImplementationProductionPolicyEnablementPr();
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    implementationProductionPolicyEnablementPr: implementationProductionPolicyEnablementPrPath
+      ? path.relative(REPO_ROOT, implementationProductionPolicyEnablementPrPath)
+      : 'implementation-production-policy-enablement-pr.json',
+    implementationProductionPolicyEnablementPrReceipt: implementationProductionPolicyEnablementPrReceiptPath
+      ? path.relative(REPO_ROOT, implementationProductionPolicyEnablementPrReceiptPath)
+      : 'implementation-production-policy-enablement-pr-check.json',
+    mergeDecisionOnly: true,
+    mergeDecision: 'approve-policy-enablement-merge',
+    decidedBy: 'CREATE SOMETHING operator',
+    decidedAt: '2026-07-07T18:00:00.000Z',
+    decisionRationale: 'Candidate policy enablement PR is reviewed as an evidence-only merge decision; verifier will not merge, mutate, execute, or apply policy.',
+    evidenceReview: 'All upstream receipts are present, redacted, and bound to the same issue, target, action, PR, and policy patch proposal reference.',
+    readinessAssessment: 'Ready for separate manual merge review only after operator confirms the reversible internal-production rollback boundary.',
+    prUrl: prEvidence.prUrl,
+    prNumber: prEvidence.prNumber,
+    baseRef: prEvidence.baseRef,
+    headRef: prEvidence.headRef,
+    commitSha: prEvidence.commitSha,
+    policyPatchProposalReference: prEvidence.policyPatchProposalReference,
+    proposedPolicyChanges: prEvidence.proposedPolicyChanges,
+    rollbackBoundary: prEvidence.rollbackBoundary,
+    rollbackAuthorizationScope: prEvidence.rollbackAuthorizationScope,
+    postActionSmoke: prEvidence.postActionSmoke,
+    publicAccessFailClosedProof: prEvidence.publicAccessFailClosedProof,
+    requiredReceiptReferences: [
+      'implementation-production-policy-enablement-pr-check',
+      'implementation-production-a4-enablement-approval-check',
+      'implementation-production-ownership-review-check',
+      'implementation-production-release-closeout-check',
+      'implementation-production-post-deploy-validation-check',
+      'implementation-production-deploy-evidence-check',
+      'implementation-production-release-admission-check',
+      'implementation-production-release-decision-check',
+      'implementation-post-merge-validation-check',
+      'implementation-merge-evidence-check',
+      'implementation-merge-decision-check',
+      'implementation-pr-evidence-check',
+      'implementation-workspace-evidence-check',
+    ],
+    requiredEvidence: [
+      'implementation-production-policy-enablement-pr-receipt',
+      'valid-policy-enablement-pr',
+      'merge-decision',
+      'decision-rationale',
+      'evidence-review',
+      'readiness-assessment',
+      'rollback-boundary',
+      'rollback-authorization-scope',
+      'post-action-smoke',
+      'public-access-fail-closed-proof',
+      'redaction-policy',
+    ],
+    redactionPolicyApplied: true,
+    redactionPolicy: {
+      excludes: ['secrets', 'raw-logs', 'prompts', 'raw-transcripts'],
+      evidenceOnly: true,
+    },
+    containsSecrets: false,
+    containsRawLogs: false,
+    containsPrompts: false,
+    containsRawTranscripts: false,
+    noExecutionMarkers: [
+      'current-policy-blocked',
+      'policy-change-not-applied-by-verifier',
+      'process-not-spawned',
+      'executed-commands-empty',
+      'runner-disabled',
+      'execution-not-ready',
+      'execution-disabled',
+      'execution-not-approved',
+      'would-execute-false',
+      'writes-performed-zero',
+      'deploy-not-performed-by-verifier',
+      'third-party-write-not-performed-by-verifier',
+      'issue-mutation-not-performed-by-verifier',
+      'pr-mutation-not-performed-by-verifier',
+      'production-policy-enablement-merge-decision-only',
+    ],
+    currentPolicyBlocked: true,
+    policyChangeAppliedByVerifier: false,
+    runnerEnabledByVerifier: false,
+    prMutationPerformedByVerifier: false,
+    deployedByVerifier: false,
+    thirdPartyWritePerformedByVerifier: false,
+    issueMutationPerformedByVerifier: false,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
 function writePolicyApplicationFixture(t) {
   const root = makeWorkspace(t);
   const packetPath = path.join(root, 'packet.json');
@@ -8205,6 +8310,30 @@ function writeImplementationProductionA4EnablementApprovalFixture(t) {
   };
 }
 
+function writeImplementationProductionPolicyEnablementPrFixture(t) {
+  const fixture = writeImplementationProductionA4EnablementApprovalFixture(t);
+  const implementationProductionPolicyEnablementPrPath = path.join(fixture.root, 'implementation-production-policy-enablement-pr.json');
+  writeFileSync(
+    implementationProductionPolicyEnablementPrPath,
+    `${JSON.stringify(validImplementationProductionPolicyEnablementPr({
+      implementationProductionA4EnablementApprovalPath: fixture.implementationProductionA4EnablementApprovalPath,
+      implementationProductionA4EnablementApprovalReceiptPath: fixture.implementationProductionA4EnablementApprovalReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const result = runImplementationProductionPolicyEnablementPrCheck(fixture, implementationProductionPolicyEnablementPrPath);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  const implementationProductionPolicyEnablementPrReceiptPath = path.isAbsolute(payload.receiptPath)
+    ? payload.receiptPath
+    : path.resolve(REPO_ROOT, payload.receiptPath);
+
+  return {
+    ...fixture,
+    implementationProductionPolicyEnablementPrPath,
+    implementationProductionPolicyEnablementPrReceiptPath,
+  };
+}
+
 function runImplementationWorkspaceEvidenceCheck(fixture, implementationWorkspaceEvidencePath, receiptDir = fixture.root, followUpWorkIntakeReceiptPath = fixture.followUpWorkIntakeReceiptPath) {
   return spawnSync(
     process.execPath,
@@ -8970,6 +9099,86 @@ function runImplementationProductionPolicyEnablementPrCheck(fixture, implementat
     ),
     { cwd: REPO_ROOT, encoding: 'utf8' },
   );
+}
+
+function runImplementationProductionPolicyEnablementMergeDecisionCheck(
+  fixture,
+  implementationProductionPolicyEnablementMergeDecisionPath,
+  receiptDir = fixture.root,
+  implementationProductionPolicyEnablementPrReceiptPath = fixture.implementationProductionPolicyEnablementPrReceiptPath,
+) {
+  const args = implementationProductionPolicyEnablementPrCheckArgs(
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    fixture.runnerDiffPath,
+    fixture.runnerDiffReceiptPath,
+    fixture.releaseAdmissionPath,
+    fixture.releaseAdmissionReceiptPath,
+    fixture.executionRunbookPath,
+    fixture.executionRunbookReceiptPath,
+    fixture.receiptBundlePath,
+    fixture.receiptBundleReceiptPath,
+    fixture.receiptPublicationPath,
+    fixture.receiptPublicationReceiptPath,
+    fixture.receiptReviewDecisionPath,
+    fixture.receiptReviewDecisionReceiptPath,
+    fixture.manualNextStepHandoffPath,
+    fixture.manualNextStepHandoffReceiptPath,
+    fixture.manualFollowUpIssueEvidencePath,
+    fixture.manualFollowUpIssueEvidenceReceiptPath,
+    fixture.followUpWorkIntakePath,
+    fixture.followUpWorkIntakeReceiptPath,
+    fixture.implementationWorkspaceEvidencePath,
+    fixture.implementationWorkspaceEvidenceReceiptPath,
+    fixture.implementationPrEvidencePath,
+    fixture.implementationPrEvidenceReceiptPath,
+    fixture.implementationMergeDecisionPath,
+    fixture.implementationMergeDecisionReceiptPath,
+    fixture.implementationMergeEvidencePath,
+    fixture.implementationMergeEvidenceReceiptPath,
+    fixture.implementationPostMergeValidationPath,
+    fixture.implementationPostMergeValidationReceiptPath,
+    fixture.implementationProductionReleaseDecisionPath,
+    fixture.implementationProductionReleaseDecisionReceiptPath,
+    fixture.implementationProductionReleaseAdmissionPath,
+    fixture.implementationProductionReleaseAdmissionReceiptPath,
+    fixture.implementationProductionDeployEvidencePath,
+    fixture.implementationProductionDeployEvidenceReceiptPath,
+    fixture.implementationProductionPostDeployValidationPath,
+    fixture.implementationProductionPostDeployValidationReceiptPath,
+    fixture.implementationProductionReleaseCloseoutPath,
+    fixture.implementationProductionReleaseCloseoutReceiptPath,
+    fixture.implementationProductionOwnershipReviewPath,
+    fixture.implementationProductionOwnershipReviewReceiptPath,
+    fixture.implementationProductionA4EnablementApprovalPath,
+    fixture.implementationProductionA4EnablementApprovalReceiptPath,
+    fixture.implementationProductionPolicyEnablementPrPath,
+    receiptDir,
+  );
+  args[1] = 'implementation-production-policy-enablement-merge-decision-check';
+  args.push(
+    '--implementation-production-policy-enablement-pr-receipt',
+    implementationProductionPolicyEnablementPrReceiptPath,
+    '--implementation-production-policy-enablement-merge-decision',
+    implementationProductionPolicyEnablementMergeDecisionPath,
+  );
+  return spawnSync(process.execPath, args, { cwd: REPO_ROOT, encoding: 'utf8' });
 }
 
 test('runner-implementation-diff-check validates candidate-only runner implementation diff', (t) => {
@@ -13727,6 +13936,196 @@ test('implementation-production-policy-enablement-pr-check fails closed on drift
   assert.equal(payload.writesPerformed, 0);
   assert.match(payload.errors.join('\n'), /approvalDecision must match approval/);
   assert.match(payload.errors.join('\n'), /policyPatchProposalReference must match approval/);
+  assert.match(payload.errors.join('\n'), /processSpawned must be false/);
+});
+
+test('implementation-production-policy-enablement-merge-decision-check validates operator merge decision without verifier writes', (t) => {
+  const fixture = writeImplementationProductionPolicyEnablementPrFixture(t);
+  const implementationProductionPolicyEnablementMergeDecisionPath = path.join(fixture.root, 'implementation-production-policy-enablement-merge-decision.json');
+  writeFileSync(
+    implementationProductionPolicyEnablementMergeDecisionPath,
+    `${JSON.stringify(validImplementationProductionPolicyEnablementMergeDecision({
+      implementationProductionPolicyEnablementPrPath: fixture.implementationProductionPolicyEnablementPrPath,
+      implementationProductionPolicyEnablementPrReceiptPath: fixture.implementationProductionPolicyEnablementPrReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationProductionPolicyEnablementMergeDecisionCheck(fixture, implementationProductionPolicyEnablementMergeDecisionPath);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'implementation-production-policy-enablement-merge-decision-check');
+  assert.equal(payload.implementationProductionPolicyEnablementMergeDecisionOk, true);
+  assert.equal(payload.mergeDecisionOnly, true);
+  assert.equal(payload.policyEnablementPrOnly, true);
+  assert.equal(payload.mergeDecision, 'approve-policy-enablement-merge');
+  assert.match(payload.prUrl, /create-something-monorepo\/pull\/999/);
+  assert.equal(payload.prNumber, 999);
+  assert.equal(payload.rollbackAuthorizationScope, 'reversible-internal-production-only');
+  assert.ok(payload.proposedPolicyChanges.some((change) => change.field === 'authority.a4Execution' && change.to === 'enabled'));
+  assert.match(payload.publicAccessFailClosedProof, /rawOriginExposed=false/);
+  assert.ok(payload.requiredReceiptReferences.includes('implementation-production-policy-enablement-pr-check'));
+  assert.ok(payload.requiredEvidence.includes('readiness-assessment'));
+  assert.equal(payload.redactionPolicyApplied, true);
+  assert.equal(payload.containsSecrets, false);
+  assert.equal(payload.containsRawLogs, false);
+  assert.equal(payload.containsPrompts, false);
+  assert.equal(payload.containsRawTranscripts, false);
+  assert.ok(payload.noExecutionMarkers.includes('production-policy-enablement-merge-decision-only'));
+  assert.equal(payload.currentPolicyBlocked, true);
+  assert.equal(payload.policyChangeAppliedByVerifier, false);
+  assert.equal(payload.runnerEnabledByVerifier, false);
+  assert.equal(payload.prMutationPerformedByVerifier, false);
+  assert.equal(payload.deployedByVerifier, false);
+  assert.equal(payload.thirdPartyWritePerformedByVerifier, false);
+  assert.equal(payload.issueMutationPerformedByVerifier, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.implementationProductionPolicyEnablementMergeDecisionRequiresPrReceipt, true);
+  assert.equal(payload.policy.implementationProductionPolicyEnablementMergeDecisionPolicyChangeAppliedByVerifier, false);
+  assert.match(payload.nextGate, /manually merge the policy enablement PR/);
+  assert.match(payload.receiptPath, /implementation-production-policy-enablement-merge-decision-check\.json$/);
+});
+
+test('implementation-production-policy-enablement-merge-decision-check fails closed on unsafe, mismatched, or leaky merge decisions', (t) => {
+  const cases = [
+    {
+      name: 'bad-decision',
+      mutate(decision) {
+        decision.mergeDecision = 'auto-merge-and-run';
+      },
+      pattern: /mergeDecision must be allowed/,
+    },
+    {
+      name: 'missing-readiness',
+      mutate(decision) {
+        decision.readinessAssessment = '';
+      },
+      pattern: /readinessAssessment is required/,
+    },
+    {
+      name: 'pr-drift',
+      mutate(decision) {
+        decision.prNumber = 1000;
+        decision.commitSha = 'drifted';
+      },
+      pattern: /prNumber must match policy enablement PR receipt/,
+    },
+    {
+      name: 'bad-rollback-scope',
+      mutate(decision) {
+        decision.rollbackAuthorizationScope = 'any-production';
+      },
+      pattern: /rollbackAuthorizationScope must be reversible-internal-production-only/,
+    },
+    {
+      name: 'policy-applied',
+      mutate(decision) {
+        decision.policyChangeAppliedByVerifier = true;
+      },
+      pattern: /policyChangeAppliedByVerifier must not be true/,
+    },
+    {
+      name: 'pr-mutated',
+      mutate(decision) {
+        decision.prMutationPerformedByVerifier = true;
+      },
+      pattern: /prMutationPerformedByVerifier must not be true/,
+    },
+    {
+      name: 'secret-leak',
+      mutate(decision) {
+        decision.containsSecrets = true;
+      },
+      pattern: /containsSecrets must be false/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(decision) {
+        decision.processSpawned = true;
+        decision.executedCommands = ['gh pr merge 999'];
+        decision.executionApproved = true;
+        decision.wouldExecute = true;
+        decision.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationProductionPolicyEnablementPrFixture(t);
+    const decision = validImplementationProductionPolicyEnablementMergeDecision({
+      implementationProductionPolicyEnablementPrPath: fixture.implementationProductionPolicyEnablementPrPath,
+      implementationProductionPolicyEnablementPrReceiptPath: fixture.implementationProductionPolicyEnablementPrReceiptPath,
+    });
+    entry.mutate(decision);
+    const implementationProductionPolicyEnablementMergeDecisionPath = path.join(fixture.root, `${entry.name}-implementation-production-policy-enablement-merge-decision.json`);
+    writeFileSync(implementationProductionPolicyEnablementMergeDecisionPath, `${JSON.stringify(decision, null, 2)}\n`);
+
+    const result = runImplementationProductionPolicyEnablementMergeDecisionCheck(fixture, implementationProductionPolicyEnablementMergeDecisionPath);
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationProductionPolicyEnablementMergeDecisionOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-production-policy-enablement-merge-decision-check fails closed on drifted policy enablement PR receipts', (t) => {
+  const fixture = writeImplementationProductionPolicyEnablementPrFixture(t);
+  const driftedPrReceipt = JSON.parse(readFileSync(fixture.implementationProductionPolicyEnablementPrReceiptPath, 'utf8'));
+  driftedPrReceipt.prNumber = 1000;
+  driftedPrReceipt.policyPatchProposalReference = 'drifted';
+  driftedPrReceipt.processSpawned = true;
+  const driftedPrReceiptPath = path.join(fixture.root, 'drifted-implementation-production-policy-enablement-pr-receipt.json');
+  writeFileSync(driftedPrReceiptPath, `${JSON.stringify(driftedPrReceipt, null, 2)}\n`);
+  const implementationProductionPolicyEnablementMergeDecisionPath = path.join(fixture.root, 'implementation-production-policy-enablement-merge-decision.json');
+  writeFileSync(
+    implementationProductionPolicyEnablementMergeDecisionPath,
+    `${JSON.stringify(validImplementationProductionPolicyEnablementMergeDecision({
+      implementationProductionPolicyEnablementPrPath: fixture.implementationProductionPolicyEnablementPrPath,
+      implementationProductionPolicyEnablementPrReceiptPath: driftedPrReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationProductionPolicyEnablementMergeDecisionCheck(
+    fixture,
+    implementationProductionPolicyEnablementMergeDecisionPath,
+    fixture.root,
+    driftedPrReceiptPath,
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.implementationProductionPolicyEnablementMergeDecisionOk, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /prNumber must match PR evidence/);
+  assert.match(payload.errors.join('\n'), /policyPatchProposalReference must match PR evidence/);
   assert.match(payload.errors.join('\n'), /processSpawned must be false/);
 });
 
