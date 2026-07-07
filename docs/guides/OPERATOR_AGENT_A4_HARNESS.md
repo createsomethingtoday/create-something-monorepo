@@ -183,6 +183,31 @@ operator authorization artifact is admissible. It still keeps
 closed at `false`, `false`, `false`, and `0` until a separate explicit
 execution command revalidates the authorization immediately before acting.
 
+After authorization, admit an explicit execution command artifact. This is still
+not a runner; it proves only that the command request binds to the same
+authorization chain:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs execution-command-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The command artifact must bind to the same issue, target, action, packet,
+preflight receipt, disabled execution receipt, and authorization artifact. It
+must use an allowed command surface and execution mode. A valid command artifact
+sets `commandOk` to `true`, but `executionReady`, `executionEnabled`,
+`executionApproved`, `wouldExecute`, and `writesPerformed` remain closed because
+the manifest keeps `authority.a4Execution` as `blocked` and the command runner
+as disabled.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
