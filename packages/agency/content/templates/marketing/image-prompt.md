@@ -14,6 +14,11 @@
 > Output hash:
 > Last updated:
 
+Use the current `.agency` article visual family as the default precedent for
+article and internal marketing visuals: `packages/agency/static/images/articles/`.
+Do not default to the `.learn`/LMS lesson-diagram style unless the target surface
+is explicitly educational.
+
 ## Model
 
 ```text
@@ -71,10 +76,19 @@ panels, onyx `#0a0e19`, quiet grey `#636363`, thin `#e1e1e1` borders, 4-8px
 radii, compact proof panels, receipt grids, state rows, decision panels, and a
 small isometric cube system signature only when useful. Use ocean `#0048ff`, moss `#1e3c2c`, and stop `#c41e3a` only as semantic state accents.
 
+For `.agency` article and internal marketing visuals, make the image feel like a
+polished operating workspace instead of a flat explanatory slide. Use layered
+white panels, subtle shadows, dense but readable UI rows, small icons, owners,
+status counts, proof summaries, dotted connectors, receipt rails, and optional
+isometric system objects. Target primary generated exports at 1536x1024. Keep
+real screenshots separate at 1280x720 with source metadata when they prove a
+tool claim.
+
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains, stock
 photography, generic premium desk scenes, random decorative objects, fake
-dashboards, unreadable file paths, client secrets, PHI, private prompts,
-watermarks, vendor endorsement, and decorative AI atmosphere.
+dashboards, unreadable file paths, flat `.learn`/LMS lesson diagrams for
+`.agency` marketing pages, client secrets, PHI, private prompts, watermarks,
+vendor endorsement, and decorative AI atmosphere.
 ```
 
 ## Review Gate
@@ -84,6 +98,7 @@ watermarks, vendor endorsement, and decorative AI atmosphere.
 - [ ] TASTE references are attached or explicitly marked not applicable.
 - [ ] TASTE references were used as judgment inputs and were not copied.
 - [ ] Workflow, governance, or agent-behavior visuals preserve a graph, SVG, Atlas map, or written source brief unless explicitly marked not applicable.
+- [ ] `.agency` article/internal marketing visuals match the existing generated operating-artifact family rather than the LMS lesson-diagram style.
 - [ ] The source brief shows owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
 - [ ] The claim is supported by visible proof or a real screenshot.
 - [ ] No fake UI is presented as a screenshot.

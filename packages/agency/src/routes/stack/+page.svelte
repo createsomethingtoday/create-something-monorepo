@@ -8,6 +8,7 @@
     type ClearCardItem,
     type ClearCtaItem
   } from '@create-something/canon';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -117,6 +118,14 @@
 
   const stackRoles: ClearCardItem[] = [
     {
+      eyebrow: 'Substrate',
+      icon: 'folder',
+      title: 'CREATE SOMETHING database layer',
+      detail:
+        'Custom Cloudflare-native records, Atlas bindings, workflow actions, runs, receipts, and API/MCP access become the operating source of truth once a workflow is transferred.',
+      href: '/database'
+    },
+    {
       eyebrow: 'Runtime',
       icon: 'settings',
       title: 'Cloudflare',
@@ -144,7 +153,7 @@
       icon: 'folder',
       title: 'Notion',
       detail:
-        'PM visibility, client-readable evidence, template distribution, and human review around agent work without treating Notion as the source of truth for everything.',
+        'PM visibility, capture, client-readable evidence, template distribution, and source transfer into the CREATE SOMETHING database layer when a workflow needs API/MCP operation.',
       href: '/notion'
     },
     {
@@ -201,8 +210,8 @@
 
 <SEO
   title="Stack Boundary | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING separates what your team owns, what vendors provide, and what the workflow needs before delegated work becomes production work."
-  keywords="delegated work control, workflow control layer, transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow"
+  description="CREATE SOMETHING separates what your team owns, what vendors provide, and what Substrate runs before delegated work becomes production work."
+  keywords="delegated work control, workflow control layer, Substrate database layer, AI-native database, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
@@ -243,6 +252,15 @@
 >
   {#snippet after()}
     <ClearCardGrid items={journey} columns={3} ariaLabel="Stack service journey" />
+    <ArticleVisualFigure
+      id="stack-boundary-visual"
+      src="/images/pages/stack-boundary-map.png"
+      alt="Diagram showing team ownership, CREATE SOMETHING delivery, vendor infrastructure, and run ask stop states."
+      eyebrow="Canon visual"
+      title="The stack boundary is the first proof object."
+      caption="This image follows the .agency operating-artifact language: ownership, handoff lanes, receipts, and visible run, ask, and stop states."
+      sourceLabel="Generated PNG with SVG source brief and prompt metadata retained."
+    />
   {/snippet}
 </ClearPageSection>
 

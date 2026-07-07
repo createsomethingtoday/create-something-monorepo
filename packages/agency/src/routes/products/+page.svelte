@@ -12,6 +12,7 @@
     type ClearProofItem
   } from '@create-something/canon';
   import { listGovernanceProducts, type GovernanceProduct } from '@create-something/canon/governance';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
   import { products, type Product } from '$lib/data/services';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -94,6 +95,39 @@
     {
       label: 'Proof',
       detail: 'Record the evidence, outcome, receipt, and recovery path the operator can inspect.'
+    }
+  ];
+
+  const databaseLayerItems: ClearCardItem[] = [
+    {
+      eyebrow: 'Substrate',
+      icon: 'folder',
+      title: 'Source records',
+      detail:
+        'Imported workspace rows land as durable records before they become map nodes, actions, or client-facing proof.',
+      href: '/database'
+    },
+    {
+      eyebrow: 'Atlas',
+      icon: 'settings',
+      title: 'Map bindings',
+      detail:
+        'Every important record can point to its Atlas canvas, node, relation evidence, and current binding health.'
+    },
+    {
+      eyebrow: 'API + MCP',
+      icon: 'plus',
+      title: 'Agent-accessible state',
+      detail:
+        'Agents and operators inspect, repair, approve, run, hand off, and receipt the same database state through API and MCP.'
+    },
+    {
+      eyebrow: 'Experience',
+      icon: 'check',
+      title: 'Fast operator UI',
+      detail:
+        'The front end should feel local and direct: quick filtering, stable rows, selected records, direct object movement, receipts, and map context.',
+      href: '/database'
     }
   ];
 
@@ -274,6 +308,30 @@
         </article>
       {/each}
     </div>
+    <ArticleVisualFigure
+      id="product-system-visual"
+      src="/images/pages/product-system-map.png"
+      alt="Diagram showing Atlas connected to Signal, Decision, Proof, and run wait stop receipt states."
+      eyebrow="Canon visual"
+      title="The product system follows the workflow state."
+      caption="Atlas holds the map while Signal, Decision, and Proof show how the work is watched, routed, and preserved."
+      sourceLabel="Generated PNG with SVG source brief and prompt metadata retained."
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
+  eyebrow="Substrate"
+  title="The map runs on its own database layer."
+  description="Atlas, Signal, Decision, and Proof sit on a custom Cloudflare-native record layer: source records, map bindings, workflow actions, runs, receipts, and API/MCP access. Notion can be an input or workspace, but the operating state lives in CREATE SOMETHING once the workflow is transferred."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={databaseLayerItems}
+      columns={4}
+      ariaLabel="CREATE SOMETHING database layer proof points"
+    />
   {/snippet}
 </ClearPageSection>
 

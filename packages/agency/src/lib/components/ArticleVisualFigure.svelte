@@ -7,14 +7,15 @@
     caption: string;
     sourceLabel?: string;
     sourceHref?: string;
+    id?: string;
   }
 
-  let { src, alt, eyebrow, title, caption, sourceLabel, sourceHref }: Props = $props();
+  let { src, alt, eyebrow, title, caption, sourceLabel, sourceHref, id }: Props = $props();
 </script>
 
-<figure class="article-visual product-surface">
+<figure {id} class="article-visual product-surface">
   <div class="visual-frame">
-    <img {src} {alt} loading="lazy" decoding="async" />
+    <img {src} {alt} loading="eager" decoding="async" />
   </div>
 
   <figcaption class="visual-copy">
@@ -38,6 +39,7 @@
     gap: clamp(1.2rem, 3vw, 2rem);
     align-items: center;
     padding: clamp(0.85rem, 2vw, 1.1rem);
+    scroll-margin-top: 6rem;
   }
 
   .visual-frame {
@@ -50,9 +52,9 @@
   img {
     display: block;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 3 / 2;
     object-fit: contain;
-    background: #060607;
+    background: color-mix(in srgb, var(--color-shell-surface-primary) 94%, white);
   }
 
   .visual-copy {

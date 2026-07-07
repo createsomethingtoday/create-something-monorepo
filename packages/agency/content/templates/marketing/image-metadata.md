@@ -17,6 +17,11 @@
 | File | Source prompt | Source brief | Model | Output hash | Owner | Review status | Refresh due | Notes |
 | ---- | ------------- | ------------ | ----- | ----------- | ----- | ------------- | ----------- | ----- |
 |      |               |             |       |             |       |               |             |       |
+For `.agency` article and internal marketing visuals, the expected primary
+export is a 1536x1024 generated PNG in the current operating-artifact style used
+by `packages/agency/static/images/articles/`. Note any exception here, especially
+if a raw SVG, Atlas render, or LMS-style instructional diagram is intentionally
+published.
 
 ## Canvas Artifacts
 
@@ -55,6 +60,7 @@ briefs and control artifacts unless they are explicitly approved for publication
 - [ ] Canvas artifacts preserve a graph source and do not move the source of truth into the renderer or generated image.
 - [ ] Canvas/source artifacts show owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
 - [ ] Public article, education, social, deck, and client-update visuals use the approved OpenAI generated export unless the raw SVG/Atlas artifact is quality-approved.
+- [ ] `.agency` article/internal marketing visuals are not using the `.learn`/LMS lesson-diagram style by default.
 - [ ] Screenshots prove a concrete claim and are not decorative.
 - [ ] Screenshots are redacted and do not expose secrets, private data, prompts, or customer records.
 - [ ] Primary owned visual is placed in the article body when it is part of the page argument.

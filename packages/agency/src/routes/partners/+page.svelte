@@ -8,6 +8,7 @@
     type ClearCardItem,
     type ClearCtaItem
   } from '@create-something/canon';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const fitCards: ClearCardItem[] = [
@@ -151,6 +152,15 @@
 >
   {#snippet after()}
     <ClearCardGrid items={fitCards} columns={4} ariaLabel="Workflow tool fit" />
+    <ArticleVisualFigure
+      id="workflow-tool-stack-visual"
+      src="/images/pages/workflow-tool-stack-map.png"
+      alt="Diagram showing one workflow routed through visible app, owned runtime, workspace, reasoning layer, and proof receipt."
+      eyebrow="Canon visual"
+      title="The workflow decides which tool gets a job."
+      caption="The map makes the page less like a vendor directory and more like an operator-facing selection artifact."
+      sourceLabel="Generated PNG with SVG source brief and prompt metadata retained."
+    />
   {/snippet}
 </ClearPageSection>
 

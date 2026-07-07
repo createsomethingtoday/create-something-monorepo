@@ -8,6 +8,7 @@
     type ClearCardItem,
     type ClearCtaItem
   } from '@create-something/canon';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const statusCards: ClearCardItem[] = [
@@ -197,6 +198,15 @@
 >
   {#snippet after()}
     <ClearCardGrid items={proofCards} columns={4} ariaLabel="Dify proof cards" />
+    <ArticleVisualFigure
+      id="dify-operating-boundary-visual"
+      src="/images/pages/dify-operating-boundary.png"
+      alt="Diagram showing Dify app, MCP card, Policy OS, eval gates, evidence, and allowed ask blocked states."
+      eyebrow="Canon visual"
+      title="The Dify workflow needs its boundary on the page."
+      caption="The visual turns the lane into an operating artifact: surface, capability, policy, eval, and receipt are visible together."
+      sourceLabel="Generated PNG with SVG source brief and prompt metadata retained."
+    />
   {/snippet}
 </ClearPageSection>
 

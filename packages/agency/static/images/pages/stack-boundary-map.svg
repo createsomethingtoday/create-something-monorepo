@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Stack boundary map</title>
+  <desc id="desc">A CREATE SOMETHING diagram showing team ownership, CREATE SOMETHING delivery, vendor infrastructure, policy gates, and receipt handoff.</desc>
+  <rect width="1200" height="720" fill="#f7f7f7"/>
+  <rect x="72" y="68" width="1056" height="584" rx="18" fill="#ffffff" stroke="#d9d9d9" stroke-width="2"/>
+  <text x="112" y="128" fill="#0a0e19" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="650">The stack is a handoff boundary.</text>
+  <text x="112" y="172" fill="#636363" font-family="Inter, Arial, sans-serif" font-size="22">Name what the team owns, what we deliver, and what vendors provide before tools act.</text>
+  <g font-family="Inter, Arial, sans-serif">
+    <rect x="112" y="238" width="274" height="236" rx="14" fill="#f2f2f2" stroke="#cfcfcf"/>
+    <text x="138" y="292" fill="#0a0e19" font-size="28" font-weight="650">Team owns</text>
+    <text x="138" y="336" fill="#636363" font-size="19">Accounts</text>
+    <text x="138" y="368" fill="#636363" font-size="19">Approval authority</text>
+    <text x="138" y="400" fill="#636363" font-size="19">Final decisions</text>
+    <rect x="463" y="238" width="274" height="236" rx="14" fill="#f8fbff" stroke="#b8c7ff"/>
+    <text x="489" y="292" fill="#0a0e19" font-size="28" font-weight="650">We deliver</text>
+    <text x="489" y="336" fill="#3553a6" font-size="19">Workflow map</text>
+    <text x="489" y="368" fill="#3553a6" font-size="19">Action contract</text>
+    <text x="489" y="400" fill="#3553a6" font-size="19">Runbook + evidence</text>
+    <rect x="814" y="238" width="274" height="236" rx="14" fill="#eef5ef" stroke="#b8cbbb"/>
+    <text x="840" y="292" fill="#0a0e19" font-size="28" font-weight="650">Vendors provide</text>
+    <text x="840" y="336" fill="#4e6f55" font-size="19">Hosted services</text>
+    <text x="840" y="368" fill="#4e6f55" font-size="19">APIs and limits</text>
+    <text x="840" y="400" fill="#4e6f55" font-size="19">Replaceable runtime</text>
+    <path d="M398 356h52" stroke="#2251ff" stroke-width="4" stroke-linecap="round"/>
+    <path d="M442 343l17 13-17 13" fill="none" stroke="#2251ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M749 356h52" stroke="#2251ff" stroke-width="4" stroke-linecap="round"/>
+    <path d="M793 343l17 13-17 13" fill="none" stroke="#2251ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="168" y="534" width="184" height="54" rx="27" fill="#eef5ef"/>
+    <text x="260" y="568" fill="#4e6f55" font-size="20" font-weight="650" text-anchor="middle">Run</text>
+    <rect x="508" y="534" width="184" height="54" rx="27" fill="#fff9ec"/>
+    <text x="600" y="568" fill="#806224" font-size="20" font-weight="650" text-anchor="middle">Ask</text>
+    <rect x="848" y="534" width="184" height="54" rx="27" fill="#fff2f2"/>
+    <text x="940" y="568" fill="#9b2c2c" font-size="20" font-weight="650" text-anchor="middle">Stop</text>
+  </g>
+</svg>

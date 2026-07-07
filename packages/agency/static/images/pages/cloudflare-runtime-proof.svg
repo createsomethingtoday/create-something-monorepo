@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Cloudflare runtime proof</title>
+  <desc id="desc">A CREATE SOMETHING receipt diagram showing route, gate, state, act, and prove steps for a Cloudflare runtime workflow.</desc>
+  <rect width="1200" height="720" fill="#f7f7f7"/>
+  <rect x="72" y="68" width="1056" height="584" rx="18" fill="#ffffff" stroke="#d9d9d9" stroke-width="2"/>
+  <text x="112" y="128" fill="#0a0e19" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="650">Runtime should return a receipt.</text>
+  <text x="112" y="172" fill="#636363" font-family="Inter, Arial, sans-serif" font-size="22">A route is production-ready when gate, state, action, and rollback evidence are visible.</text>
+  <g font-family="Inter, Arial, sans-serif">
+    <rect x="112" y="248" width="164" height="134" rx="12" fill="#f8fbff" stroke="#b8c7ff"/>
+    <text x="140" y="304" fill="#0a0e19" font-size="26" font-weight="650">Route</text>
+    <text x="140" y="338" fill="#3553a6" font-size="17">Worker or page</text>
+    <rect x="322" y="248" width="164" height="134" rx="12" fill="#fff9ec" stroke="#ead4a2"/>
+    <text x="350" y="304" fill="#0a0e19" font-size="26" font-weight="650">Gate</text>
+    <text x="350" y="338" fill="#806224" font-size="17">Classify risk</text>
+    <rect x="532" y="248" width="164" height="134" rx="12" fill="#f2f2f2" stroke="#cfcfcf"/>
+    <text x="560" y="304" fill="#0a0e19" font-size="26" font-weight="650">State</text>
+    <text x="560" y="338" fill="#636363" font-size="17">Durable record</text>
+    <rect x="742" y="248" width="164" height="134" rx="12" fill="#eef5ef" stroke="#b8cbbb"/>
+    <text x="770" y="304" fill="#0a0e19" font-size="26" font-weight="650">Act</text>
+    <text x="770" y="338" fill="#4e6f55" font-size="17">Scoped API call</text>
+    <rect x="952" y="248" width="136" height="134" rx="12" fill="#0a0e19"/>
+    <text x="980" y="304" fill="#ffffff" font-size="26" font-weight="650">Prove</text>
+    <text x="980" y="338" fill="#d9d9d9" font-size="17">Handoff</text>
+    <path d="M276 315h46M486 315h46M696 315h46M906 315h46" stroke="#2251ff" stroke-width="4" stroke-linecap="round"/>
+    <rect x="224" y="466" width="752" height="98" rx="12" fill="#f2f2f2" stroke="#cfcfcf"/>
+    <text x="258" y="506" fill="#636363" font-size="17" font-weight="650">HANDOFF RECEIPT</text>
+    <text x="258" y="540" fill="#0a0e19" font-size="22">Owner named · deploy id recorded · rollback note attached · evidence link ready</text>
+  </g>
+</svg>

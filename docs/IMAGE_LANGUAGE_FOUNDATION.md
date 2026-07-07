@@ -24,6 +24,15 @@ The foundation is:
 
 Generated images are preferred when they clarify the system and meet the review
 gate. They are not acceptable when they only create AI atmosphere.
+For `.agency` marketing and article pages, the current visual precedent lives in
+`packages/agency/static/images/articles/`. That family is not the flat LMS
+lesson-diagram style. Use LMS-style deterministic diagrams only for learning
+lessons and simple instructional figures. `.agency` article and internal
+marketing visuals should read as high-fidelity operating artifacts: product-like
+workspaces, connected panels, owners, policy gates, evidence rails, status rows,
+subtle isometric system objects, and real screenshot evidence when a concrete
+tool claim needs proof. SVGs and Atlas graphs are source briefs unless they meet
+the same polish bar as the generated export.
 
 ## Tier Mapping
 
@@ -91,6 +100,22 @@ marketing.
 | Motion | Move only selection, state, progression, handoff, or proof reveal. |
 | Evidence | Real screenshots are evidence. Generated images are explanatory artifacts. Do not mix the two without labeling. |
 
+`.agency` article visuals add a stricter style distinction:
+
+- Use 1536x1024 generated PNG exports for primary in-page article/marketing
+  visuals.
+- Use 1280x720 screenshots only when the image is evidence from a real tool,
+  docs page, or review workspace.
+- Keep SVG/Atlas/source diagrams as briefs, control artifacts, or editable
+  sources; do not publish a flat deterministic SVG as the default `.agency`
+  marketing visual.
+- Prefer high-fidelity operating UI compositions: multi-panel workspaces,
+  dotted connectors, compact state rows, owner panels, proof summaries, receipt
+  rails, status counts, subtle iconography, and small cube signatures.
+- Avoid oversized lesson-card layouts, sparse educational lane diagrams, and
+  flat 1200x720 figures for `.agency` marketing pages unless the page is
+  explicitly educational.
+
 ## Core Image Families
 
 Use repeatable families so generated assets become a recognizable system.
@@ -102,14 +127,30 @@ Use repeatable families so generated assets become a recognizable system.
 | Database / Automation / Judgment diagram | The three-tier framework is the point | Resources, tools, prompts or policy, plus one concrete example |
 | Policy gate chart | The argument is about approval, risk, or control | Allowed, ask, blocked, escalated, complete |
 | Evidence map | A claim needs supporting proof | Claim, artifact cards, dates, owners, source labels |
+| Database layer proof | A page needs to show the CREATE SOMETHING-owned operating database | Source records, Atlas bindings, action state, receipt, API/MCP boundary |
+| Front-end database demo | A visitor needs to understand the product experience before booking | Filtered records, selected row, binding health, related map node, read-only proof receipt |
 | Handoff receipt | The image closes a delivery or client update | Owner, state, validation, rollback, next action |
 | Screenshot annotation | A real product/tool claim needs evidence | Real screenshot, date checked, numbered callouts, redactions |
 | CTA visual | The image supports conversion | Specific next action and what artifact the user receives |
 
 Default to a graph or Atlas-style brief when the image explains behavior, then
 use an approved generated export for the public visual when the brief would look
-too crude or low quality. Publish raw SVG or Atlas renders only when they meet
-the same quality bar as the generated export.
+too crude or low quality. For `.agency`, assume the generated export is the
+publishable layer and the SVG/Atlas artifact is the source brief unless a human
+explicitly approves the source artifact as production-quality.
+
+For database-layer marketing, Canon is the source of the design and
+implementation context. Use Clear components, Atlas graph/story primitives, and
+the database-layer UI patterns before inventing a new visual system. The best
+database images are either real dated screenshots with redactions or generated
+exports briefed from real Atlas/database state: source rows, binding ledgers,
+transfer readiness, workflow actions, receipts, and selected node details.
+
+Do not make the database layer look like a generic SaaS table. It should read as
+a fast operator surface: compact rows, direct record identity, visible status,
+source bindings, map context, and proof receipts. A public page may use a
+generated image to explain the experience, but a claim that a transfer or
+workflow is complete needs screenshot evidence or a dated receipt.
 
 ## Generation Route
 
@@ -169,11 +210,18 @@ porcelain `#f9f9f9`, white panels, onyx `#0a0e19`, quiet grey `#636363`, thin
 Clear-style receipts, state rows, decision panels, artifact cards, policy gates,
 owners, and proof rails. Use the isometric cube as a small system signature only
 when useful. The image should feel mapped, governed, validated, and handed off.
+For `.agency` article and internal marketing visuals, push this into a polished
+operating workspace rather than a teaching diagram: layered white panels,
+small icons, status rows, owner panels, evidence tables, proof summaries,
+timestamp-like receipts, dotted connectors, subtle shadows, and isometric
+system objects. The visual should feel like a client-safe product proof surface,
+not a flat explanatory slide.
 
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains, stock
 photography, generic premium desk scenes, random decorative objects, fake
-dashboard evidence, unreadable labels, client secrets, private prompts, PHI,
-vendor endorsement, and watermarks.
+dashboard evidence, unreadable labels, flat LMS lesson-card diagrams for
+`.agency` marketing pages, client secrets, private prompts, PHI, vendor
+endorsement, and watermarks.
 ```
 
 ## Review Gate

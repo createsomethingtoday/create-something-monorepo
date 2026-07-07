@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Substrate record proof</title>
+  <desc id="desc">A CREATE SOMETHING database-layer image showing records, selected row, Atlas binding, workflow action, and proof receipt.</desc>
+  <rect width="1200" height="720" fill="#f7f7f7"/>
+  <text x="72" y="96" fill="#0a0e19" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="650">Database state should be inspectable.</text>
+  <text x="72" y="140" fill="#636363" font-family="Inter, Arial, sans-serif" font-size="22">Substrate turns source records into Atlas bindings, actions, and receipts.</text>
+  <g font-family="Inter, Arial, sans-serif">
+    <rect x="72" y="206" width="318" height="382" rx="14" fill="#ffffff" stroke="#d9d9d9"/>
+    <text x="104" y="258" fill="#0a0e19" font-size="26" font-weight="650">Source records</text>
+    <rect x="104" y="292" width="254" height="58" rx="8" fill="#f8fbff" stroke="#2251ff"/>
+    <text x="124" y="327" fill="#0a0e19" font-size="18" font-weight="650">Slack signal · ready</text>
+    <rect x="104" y="366" width="254" height="58" rx="8" fill="#f2f2f2" stroke="#cfcfcf"/>
+    <text x="124" y="401" fill="#636363" font-size="18">D1 binding · review</text>
+    <rect x="104" y="440" width="254" height="58" rx="8" fill="#f2f2f2" stroke="#cfcfcf"/>
+    <text x="124" y="475" fill="#636363" font-size="18">Runbook note · stop</text>
+    <rect x="438" y="206" width="318" height="382" rx="14" fill="#ffffff" stroke="#d9d9d9"/>
+    <text x="470" y="258" fill="#0a0e19" font-size="26" font-weight="650">Selected record</text>
+    <text x="470" y="316" fill="#636363" font-size="18">Owner</text>
+    <text x="590" y="316" fill="#0a0e19" font-size="20" font-weight="650">Operator</text>
+    <text x="470" y="366" fill="#636363" font-size="18">Status</text>
+    <text x="590" y="366" fill="#4e6f55" font-size="20" font-weight="650">Ready</text>
+    <text x="470" y="416" fill="#636363" font-size="18">Binding</text>
+    <text x="590" y="416" fill="#3553a6" font-size="20" font-weight="650">Atlas node</text>
+    <rect x="470" y="482" width="224" height="56" rx="28" fill="#eef5ef"/>
+    <text x="582" y="518" fill="#4e6f55" font-size="20" font-weight="650" text-anchor="middle">Action can run</text>
+    <rect x="804" y="206" width="324" height="382" rx="14" fill="#ffffff" stroke="#d9d9d9"/>
+    <text x="836" y="258" fill="#0a0e19" font-size="26" font-weight="650">Proof receipt</text>
+    <text x="836" y="316" fill="#636363" font-size="18">Evidence</text>
+    <text x="836" y="348" fill="#0a0e19" font-size="20">Source row and map link</text>
+    <text x="836" y="406" fill="#636363" font-size="18">Rollback</text>
+    <text x="836" y="438" fill="#0a0e19" font-size="20">Return to wait state</text>
+    <text x="836" y="496" fill="#636363" font-size="18">Next action</text>
+    <text x="836" y="528" fill="#0a0e19" font-size="20">Approve scoped run</text>
+  </g>
+</svg>

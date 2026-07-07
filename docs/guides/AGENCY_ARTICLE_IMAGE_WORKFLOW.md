@@ -23,6 +23,11 @@ image family, proof requirement, source prompt, metadata, and review gate.
 For public-quality article and education visuals, prefer approved OpenAI
 generated exports over raw SVG or Atlas renders when the generated image better
 communicates the proof object.
+Current `.agency` article precedent is the generated operating-artifact family
+under `packages/agency/static/images/articles/`. Do not use the LMS lesson image
+style as the default for `.agency` marketing pages. The LMS style is useful for
+teaching concepts; `.agency` article visuals should feel like polished,
+client-safe product proof surfaces.
 
 ## Canvas-First Visual Language
 
@@ -52,6 +57,11 @@ Use this hierarchy:
 Do not move the source of truth into a renderer. The source of truth should be a
 graph artifact that can be adapted into a story canvas, an interactive canvas,
 large-network renderer, or an OpenAI generated export.
+For `.agency`, SVG and Atlas artifacts usually sit in the source-brief position.
+They can define layout, labels, relationships, and proof requirements, but the
+publishable in-page article visual should normally be the generated PNG export
+at 1536x1024. Publish a raw SVG only when it has the same polish as the existing
+article images, not merely because the labels are deterministic.
 
 Canvas visuals should show, at minimum:
 
@@ -109,6 +119,18 @@ Use the Image API for one completed prompt or direct edits. Use the Responses AP
 image generation tool when the work needs conversational, multi-turn refinement.
 Use edits from an approved export when continuity matters more than fresh
 variation.
+When creating `.agency` article/internal-page images, match the established
+article family:
+
+- 1536x1024 generated PNG for the primary original visual.
+- Light operational canvas, white cards, subtle borders/shadows, compact rows,
+  small icons, owners, status counts, proof summaries, receipt rails, and dotted
+  connectors.
+- Isometric system objects are allowed when they clarify layers or ownership.
+- Real screenshots stay separate as 1280x720 evidence captures with source,
+  checked date, rights note, and refresh due date.
+- Avoid flat 1200x720 educational diagrams, oversized title-only panels, and
+  sparse lane charts for `.agency` marketing pages.
 
 ## Collect
 
@@ -151,6 +173,7 @@ Do not use:
 - generic brain imagery
 - abstract stock dashboards
 - decorative screenshots that do not support a claim
+- LMS-style lesson diagrams as the default `.agency` article/marketing visual
 
 If an image does not make the article clearer, more credible, or more
 memorable, skip it.

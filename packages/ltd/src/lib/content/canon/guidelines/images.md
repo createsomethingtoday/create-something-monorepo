@@ -20,6 +20,13 @@ work gets mapped, integrated, governed, validated, shipped, and handed off.
 For external education, marketing, social, deck, and client-proof surfaces, the
 approved OpenAI generated export is the first-class visual when it communicates
 better than a raw SVG or Atlas render.
+Property context matters. The `.learn`/LMS Canon lesson figures are an
+educational format. They should not become the default `.agency` marketing or
+article style. `.agency` uses the generated operating-artifact family visible in
+`packages/agency/static/images/articles/`: polished workspace-like proof
+surfaces with panels, owners, status rows, proof rails, receipt summaries,
+subtle isometric objects, and screenshot evidence only when a real tool claim is
+being proven.
 
 Use `docs/IMAGE_LANGUAGE_FOUNDATION.md` when a generated, designed, captured, or
 rendered image needs TASTE-backed judgment context. TASTE references are inputs
@@ -55,6 +62,12 @@ decks, and client updates:
 Raw SVGs, Atlas renders, and graph exports are useful control artifacts. Publish
 them only when they meet the same quality bar as a generated export; otherwise
 use them as source briefs for OpenAI generation or edits.
+
+For `.agency` articles and internal marketing pages, treat raw SVGs and flat
+deterministic diagrams as source briefs by default. The public visual should
+usually be a 1536x1024 generated PNG export that reads like a client-safe
+operating surface, not a lesson slide. The 1280x720 format is reserved for real
+screenshot evidence unless a route has a specific crop need.
 
 ## Image families
 
@@ -92,7 +105,8 @@ isometric cube signature only when useful. Use ocean `#0048ff`, moss `#1e3c2c`,
 and stop `#c41e3a` only as semantic state accents.
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains,
 fake dashboards, stock photography, generic premium desk scenes, unreadable file
-paths, private data, client secrets, vendor endorsement, watermarks.
+paths, flat LMS lesson diagrams for `.agency` marketing pages, private data,
+client secrets, vendor endorsement, watermarks.
 ```
 
 The prompt should name the artifact family and proof requirement before style.
