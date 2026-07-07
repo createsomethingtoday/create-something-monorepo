@@ -608,6 +608,54 @@ or logs, stale execution-runbook receipts, and any claim that a runner process,
 command, approval, or write occurred. This is still a review artifact only:
 checked-in `authority.a4Execution` remains blocked.
 
+After the receipt bundle receipt exists, validate the manual publication packet
+that says where the redacted bundle may be shared:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs receipt-publication-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --runner-contract-receipt <runner-contract-receipt.json> \
+  --runner-plan <runner-plan.json> \
+  --runner-plan-receipt <runner-plan-receipt.json> \
+  --runner-diff <runner-diff.json> \
+  --runner-diff-receipt <runner-diff-receipt.json> \
+  --release-admission <release-admission.json> \
+  --release-admission-receipt <release-admission-receipt.json> \
+  --execution-runbook <execution-runbook.json> \
+  --execution-runbook-receipt <execution-runbook-receipt.json> \
+  --receipt-bundle <receipt-bundle.json> \
+  --receipt-bundle-receipt <receipt-bundle-receipt.json> \
+  --receipt-publication <receipt-publication.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The receipt publication packet is not a publisher. It validates that the
+operator intends to share the redacted bundle only through an allowed surface
+(`Linear` or `signed-release-record`), with an intended audience, publication
+evidence, public-access fail-closed proof, redaction policy, and no-execution
+markers. It rejects auto-publish claims, completed publication claims,
+third-party write claims, leaked raw artifacts, stale receipt-bundle receipts,
+missing audience, or any process/command/write marker. The verifier does not
+post to Linear, write a signed record, deploy, rotate secrets, or mutate any
+third-party system.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
