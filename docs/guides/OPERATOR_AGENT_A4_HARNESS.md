@@ -159,6 +159,30 @@ the preflight receipt matches the packet, but it does not run the action. A
 failed or mismatched preflight receipt produces empty execution plans and remains
 a stop condition.
 
+After the disabled execution receipt validates, bind a separate execution
+authorization artifact to the same packet, preflight receipt, and execution
+receipt:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs execution-authorization-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The authorization artifact must use an allowed approval surface, name the exact
+A4 risks, and bind to the same issue, target, action, packet, preflight receipt,
+and disabled execution receipt. A valid authorization only proves that the
+operator authorization artifact is admissible. It still keeps
+`executionEnabled`, `executionApproved`, `wouldExecute`, and `writesPerformed`
+closed at `false`, `false`, `false`, and `0` until a separate explicit
+execution command revalidates the authorization immediately before acting.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:

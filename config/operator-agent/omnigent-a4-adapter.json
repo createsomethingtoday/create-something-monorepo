@@ -179,6 +179,11 @@
       "id": "gate-5-a4-execution-receipt-disabled",
       "required": "A4 execution receipt schema validates the packet and preflight receipt while keeping execution disabled",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs execution-receipt-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-6-a4-execution-authorization",
+      "required": "A4 execution authorization artifact validates the packet, preflight receipt, and disabled execution receipt while keeping execution disabled",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs execution-authorization-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

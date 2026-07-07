@@ -24,7 +24,7 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
-const EXPECTED_ISSUE = 'CRE-1067';
+const EXPECTED_ISSUE = 'CRE-1069';
 const EXPECTED_TARGET = 'create-something-internal-production';
 const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
 const FIXED_NOW = '2026-07-06T20:00:00.000Z';
@@ -107,6 +107,13 @@ function executionReceiptCheckArgs(packetPath, preflightReceiptPath, receiptDir)
   return args;
 }
 
+function executionAuthorizationCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, receiptDir) {
+  const args = executionReceiptCheckArgs(packetPath, preflightReceiptPath, receiptDir);
+  args[1] = 'execution-authorization-check';
+  args.splice(6, 0, '--execution-receipt', executionReceiptPath, '--authorization', authorizationPath);
+  return args;
+}
+
 function writeValidPreflightReceipt(t, packetPath) {
   const root = makeWorkspace(t);
   const preflightResult = spawnSync(process.execPath, preflightCheckArgs(packetPath, root), {
@@ -119,6 +126,45 @@ function writeValidPreflightReceipt(t, packetPath) {
     root,
     preflightPath: path.join(REPO_ROOT, preflightPayload.receiptPath),
     preflightPayload,
+  };
+}
+
+function writeValidExecutionReceipt(t, packetPath, preflightPath) {
+  const root = makeWorkspace(t);
+  const executionResult = spawnSync(process.execPath, executionReceiptCheckArgs(packetPath, preflightPath, root), {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+  });
+  assert.equal(executionResult.status, 0, executionResult.stderr || executionResult.stdout);
+  const executionPayload = JSON.parse(executionResult.stdout);
+  return {
+    root,
+    executionPath: path.join(REPO_ROOT, executionPayload.receiptPath),
+    executionPayload,
+  };
+}
+
+function validAuthorization({ packetPath, preflightPath, executionPath } = {}) {
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    approver: 'Micah Johnson',
+    approvalSurface: 'Linear',
+    approvedAt: '2026-07-06T19:30:00.000Z',
+    expiresAt: '2026-07-07T19:30:00.000Z',
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    namedRisks: [
+      'credential-write',
+      'billing-change',
+      'client-production',
+      'destructive-write',
+      'irreversible-data-operation',
+    ],
+    packet: packetPath ? path.relative(REPO_ROOT, packetPath) : 'packet.json',
+    preflightReceipt: preflightPath ? path.relative(REPO_ROOT, preflightPath) : 'preflight.json',
+    executionReceipt: executionPath ? path.relative(REPO_ROOT, executionPath) : 'execution.json',
+    evidenceTarget: 'Linear CRE-1069',
   };
 }
 
@@ -442,6 +488,111 @@ test('execution-receipt-check fails closed when preflight admission failed', (t)
   assert.equal(payload.executionApproved, false);
   assert.equal(payload.writesPerformed, 0);
   assert.match(payload.errors.join('\n'), /preflight receipt admission must be ok/);
+});
+
+test('execution-authorization-check validates authorization but keeps execution disabled', (t) => {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+  const { preflightPath } = writeValidPreflightReceipt(t, packetPath);
+  const { executionPath } = writeValidExecutionReceipt(t, packetPath, preflightPath);
+  const authorizationPath = path.join(root, 'authorization.json');
+  writeFileSync(
+    authorizationPath,
+    `${JSON.stringify(validAuthorization({ packetPath, preflightPath, executionPath }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    executionAuthorizationCheckArgs(packetPath, preflightPath, executionPath, authorizationPath, root),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'execution-authorization-check');
+  assert.equal(payload.authorizationOk, true);
+  assert.equal(payload.issue, EXPECTED_ISSUE);
+  assert.equal(payload.authorityLevel, 'A4');
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.blockedReason, /separate explicit execution command/);
+  assert.match(payload.nextGate, /revalidates this authorization/);
+  assert.deepEqual(payload.validationPlan, validPacket().validation);
+  assert.deepEqual(payload.rollbackPlan, validPacket().rollback);
+  assert.deepEqual(payload.postActionSmokePlan, validPacket().postActionSmoke);
+  assert.match(payload.receiptPath, /execution-authorization-check\.json$/);
+});
+
+test('execution-authorization-check fails closed on stale or mismatched authorization', (t) => {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+  const { preflightPath } = writeValidPreflightReceipt(t, packetPath);
+  const { executionPath } = writeValidExecutionReceipt(t, packetPath, preflightPath);
+
+  const cases = [
+    {
+      name: 'wrong-issue',
+      patch: { issue: 'CRE-9999' },
+      pattern: /execution authorization issue mismatch/,
+    },
+    {
+      name: 'missing-risk',
+      patch: { namedRisks: ['credential-write'] },
+      pattern: /execution authorization must name risk: billing-change/,
+    },
+    {
+      name: 'stale',
+      patch: { approvedAt: '2026-07-04T19:00:00.000Z' },
+      pattern: /execution authorization is stale/,
+    },
+    {
+      name: 'unsupported-approval-surface',
+      patch: { approvalSurface: 'chat-message' },
+      pattern: /execution authorization approvalSurface is not allowed/,
+    },
+    {
+      name: 'wrong-preflight-binding',
+      patch: { preflightReceipt: 'wrong-preflight.json' },
+      pattern: /preflightReceipt must match preflight receipt path/,
+    },
+    {
+      name: 'wrong-execution-binding',
+      patch: { executionReceipt: 'wrong-execution.json' },
+      pattern: /executionReceipt must match execution receipt path/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const authorizationPath = path.join(root, `${entry.name}.json`);
+    writeFileSync(
+      authorizationPath,
+      `${JSON.stringify({
+        ...validAuthorization({ packetPath, preflightPath, executionPath }),
+        ...entry.patch,
+      }, null, 2)}\n`,
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      executionAuthorizationCheckArgs(packetPath, preflightPath, executionPath, authorizationPath, root),
+      { cwd: REPO_ROOT, encoding: 'utf8' },
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.authorizationOk, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.deepEqual(payload.validationPlan, [], entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
 });
 
 test('read-only scout profile and receipt match the local harness parity contract', () => {

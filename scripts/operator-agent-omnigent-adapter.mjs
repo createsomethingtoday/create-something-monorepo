@@ -67,6 +67,8 @@ function parseArgs(argv) {
     manifest: DEFAULT_MANIFEST_PATH,
     packet: null,
     preflightReceipt: null,
+    executionReceipt: null,
+    authorization: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -84,6 +86,8 @@ function parseArgs(argv) {
     if (arg === '--manifest' && args[index + 1]) options.manifest = args[++index];
     else if (arg === '--packet' && args[index + 1]) options.packet = args[++index];
     else if (arg === '--preflight-receipt' && args[index + 1]) options.preflightReceipt = args[++index];
+    else if (arg === '--execution-receipt' && args[index + 1]) options.executionReceipt = args[++index];
+    else if (arg === '--authorization' && args[index + 1]) options.authorization = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -568,6 +572,182 @@ function buildDisabledExecutionReceipt({ manifest, manifestValidation, packet, p
   };
 }
 
+function validateExecutionReceipt(executionReceipt, packet, preflightReceipt, constraints) {
+  const errors = [];
+
+  if (executionReceipt.mode !== 'execution-receipt-check') {
+    errors.push('execution receipt mode must be execution-receipt-check');
+  }
+  if (executionReceipt.ok !== true || executionReceipt.prerequisitesOk !== true) {
+    errors.push('execution receipt prerequisites must be ok');
+  }
+  if (executionReceipt.issue !== constraints.expectedIssue) {
+    errors.push(`execution receipt issue mismatch: expected ${constraints.expectedIssue}, got ${executionReceipt.issue}`);
+  }
+  if (executionReceipt.target !== constraints.expectedTarget) {
+    errors.push(`execution receipt target mismatch: expected ${constraints.expectedTarget}, got ${executionReceipt.target}`);
+  }
+  if (executionReceipt.action !== constraints.expectedAction) {
+    errors.push(`execution receipt action mismatch: expected ${constraints.expectedAction}, got ${executionReceipt.action}`);
+  }
+  if (executionReceipt.authorityLevel !== 'A4') errors.push('execution receipt authorityLevel must be A4');
+  if (executionReceipt.executionEnabled !== false) errors.push('execution receipt executionEnabled must be false');
+  if (executionReceipt.executionApproved !== false) errors.push('execution receipt executionApproved must be false');
+  if (executionReceipt.wouldExecute !== false) errors.push('execution receipt wouldExecute must be false');
+  if (executionReceipt.writesPerformed !== 0) errors.push('execution receipt writesPerformed must be 0');
+
+  for (const [field, packetField] of [
+    ['validationPlan', 'validation'],
+    ['rollbackPlan', 'rollback'],
+    ['postActionSmokePlan', 'postActionSmoke'],
+    ['stopConditions', 'stopConditions'],
+  ]) {
+    if (JSON.stringify(executionReceipt[field] || []) !== JSON.stringify(packet[packetField] || [])) {
+      errors.push(`execution receipt ${field} must match packet ${packetField}`);
+    }
+  }
+
+  if (JSON.stringify(executionReceipt.executionPlan || []) !== JSON.stringify(preflightReceipt.executionPlan || [])) {
+    errors.push('execution receipt executionPlan must match preflight receipt executionPlan');
+  }
+
+  return errors;
+}
+
+function validateExecutionAuthorization(authorization, packet, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ApprovalPacket || {};
+
+  const requiredFields = [
+    'authorityLevel',
+    'issue',
+    'approver',
+    'approvalSurface',
+    'approvedAt',
+    'expiresAt',
+    'target',
+    'action',
+    'namedRisks',
+    'packet',
+    'preflightReceipt',
+    'executionReceipt',
+    'evidenceTarget',
+  ];
+  for (const field of requiredFields) {
+    if (!hasValue(authorization[field])) errors.push(`execution authorization missing ${field}`);
+  }
+  if (authorization.authorityLevel !== 'A4') errors.push('execution authorization authorityLevel must be A4');
+  if (!rules.allowedApprovalSurfaces?.includes(authorization.approvalSurface)) {
+    errors.push(`execution authorization approvalSurface is not allowed: ${authorization.approvalSurface}`);
+  }
+  if (authorization.issue !== constraints.expectedIssue) {
+    errors.push(`execution authorization issue mismatch: expected ${constraints.expectedIssue}, got ${authorization.issue}`);
+  }
+  if (authorization.target !== constraints.expectedTarget) {
+    errors.push(`execution authorization target mismatch: expected ${constraints.expectedTarget}, got ${authorization.target}`);
+  }
+  if (authorization.action !== constraints.expectedAction) {
+    errors.push(`execution authorization action mismatch: expected ${constraints.expectedAction}, got ${authorization.action}`);
+  }
+  if (authorization.packet !== rel(paths.packetPath)) {
+    errors.push('execution authorization packet must match packet path');
+  }
+  if (authorization.preflightReceipt !== rel(paths.preflightPath)) {
+    errors.push('execution authorization preflightReceipt must match preflight receipt path');
+  }
+  if (authorization.executionReceipt !== rel(paths.executionPath)) {
+    errors.push('execution authorization executionReceipt must match execution receipt path');
+  }
+
+  const namedRisks = new Set(authorization.namedRisks || []);
+  for (const risk of rules.mustNameExactRisks || REQUIRED_A4_RISKS) {
+    if (!namedRisks.has(risk)) errors.push(`execution authorization must name risk: ${risk}`);
+  }
+
+  const timestampErrors = [];
+  const now = constraints.now ? parseTimestamp(constraints.now, 'now', timestampErrors) : Date.now();
+  const approvedAt = parseTimestamp(authorization.approvedAt, 'approvedAt', timestampErrors);
+  const expiresAt = parseTimestamp(authorization.expiresAt, 'expiresAt', timestampErrors);
+  errors.push(...timestampErrors.map((error) => error.replace('approval packet', 'execution authorization')));
+  const maxAgeHours = constraints.maxAgeHours ?? 24;
+  if (approvedAt !== null && now !== null) {
+    if (approvedAt > now) errors.push('execution authorization approvedAt must not be in the future');
+    if (Number.isFinite(maxAgeHours) && now - approvedAt > maxAgeHours * 60 * 60 * 1000) {
+      errors.push(`execution authorization is stale: approvedAt is older than ${maxAgeHours} hours`);
+    }
+  }
+  if (expiresAt !== null && now !== null && expiresAt <= now) {
+    errors.push('execution authorization expiresAt must be in the future');
+  }
+
+  return errors;
+}
+
+function buildExecutionAuthorizationReceipt({
+  manifest,
+  manifestValidation,
+  packet,
+  packetPath,
+  preflightReceipt,
+  preflightPath,
+  executionReceipt,
+  executionPath,
+  authorization,
+  authorizationPath,
+  constraints,
+  packetValidation,
+  preflightErrors,
+  executionErrors,
+  authorizationErrors,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...packetValidation.errors,
+    ...preflightErrors,
+    ...executionErrors,
+    ...authorizationErrors,
+  ];
+  const authorizationOk = errors.length === 0;
+
+  return {
+    mode: 'execution-authorization-check',
+    ok: authorizationOk,
+    authorizationOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    packetPath: rel(packetPath),
+    preflightReceipt: rel(preflightPath),
+    executionReceipt: rel(executionPath),
+    authorization: rel(authorizationPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    approver: authorization.approver,
+    approvalSurface: authorization.approvalSurface,
+    constraints,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: 'authorization artifact validated; execution still requires a separate explicit execution command',
+    evidenceTarget: authorization.evidenceTarget || packet.evidenceTarget || executionReceipt.evidenceTarget || null,
+    validationPlan: authorizationOk ? executionReceipt.validationPlan : [],
+    rollbackPlan: authorizationOk ? executionReceipt.rollbackPlan : [],
+    postActionSmokePlan: authorizationOk ? executionReceipt.postActionSmokePlan : [],
+    stopConditions: authorizationOk ? executionReceipt.stopConditions : [],
+    checkedAt: new Date().toISOString(),
+    nextGate: 'explicit execution command that revalidates this authorization immediately before running any action',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+    },
+  };
+}
+
 function print(result, options) {
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -686,6 +866,60 @@ function commandExecutionReceiptCheck(options) {
   return result;
 }
 
+function commandExecutionAuthorizationCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for execution-authorization-check'));
+  }
+  if (!options.preflightReceipt) throw new Error('--preflight-receipt is required for execution-authorization-check');
+  if (!options.executionReceipt) throw new Error('--execution-receipt is required for execution-authorization-check');
+  if (!options.authorization) throw new Error('--authorization is required for execution-authorization-check');
+
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const preflightPath = resolveFromRoot(options.preflightReceipt);
+  const executionPath = resolveFromRoot(options.executionReceipt);
+  const authorizationPath = resolveFromRoot(options.authorization);
+  const packet = readJson(packetPath);
+  const preflightReceipt = readJson(preflightPath);
+  const executionReceipt = readJson(executionPath);
+  const authorization = readJson(authorizationPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const preflightErrors = validatePreflightReceipt(preflightReceipt, packet, constraints);
+  const executionErrors = validateExecutionReceipt(executionReceipt, packet, preflightReceipt, constraints);
+  const authorizationErrors = validateExecutionAuthorization(authorization, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+  }, constraints);
+  const result = buildExecutionAuthorizationReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    preflightReceipt,
+    preflightPath,
+    executionReceipt,
+    executionPath,
+    authorization,
+    authorizationPath,
+    constraints,
+    packetValidation,
+    preflightErrors,
+    executionErrors,
+    authorizationErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -728,6 +962,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs approval-check --packet <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs preflight-check --packet <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs execution-receipt-check --packet <path> --preflight-receipt <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs execution-authorization-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -745,6 +980,7 @@ async function main() {
   else if (options.command === 'approval-check') result = commandApprovalCheck(options);
   else if (options.command === 'preflight-check') result = commandPreflightCheck(options);
   else if (options.command === 'execution-receipt-check') result = commandExecutionReceiptCheck(options);
+  else if (options.command === 'execution-authorization-check') result = commandExecutionAuthorizationCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -761,6 +997,7 @@ export {
   REQUIRED_PACKET_FIELDS,
   REQUIRED_TRIAL_RECEIPT_FIELDS,
   commandLooksHighRisk,
+  commandExecutionAuthorizationCheck,
   commandExecutionReceiptCheck,
   commandPreflightCheck,
   parseArgs,
