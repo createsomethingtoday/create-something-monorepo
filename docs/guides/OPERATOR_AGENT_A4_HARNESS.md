@@ -1749,6 +1749,39 @@ scopes, verifier PR or issue mutation claims, leaked raw artifacts, and any
 process/command/write marker. `authority.a4Execution` remains blocked in this
 verifier branch.
 
+After the policy-enablement merge decision passes, validate separate manual
+merge evidence:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-policy-enablement-merge-evidence-check \
+  <same chain arguments as implementation-production-policy-enablement-merge-decision-check> \
+  --implementation-production-policy-enablement-merge-decision-receipt <implementation-production-policy-enablement-merge-decision-receipt.json> \
+  --implementation-production-policy-enablement-merge-evidence <implementation-production-policy-enablement-merge-evidence.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production policy enablement merge evidence packet proves a
+separate manual merge of the policy-enablement PR after an approved merge
+decision. It must bind to the merge-decision artifact and receipt, carry the
+same PR URL, number, refs, head commit SHA, policy patch proposal reference,
+proposed policy changes, rollback boundary, post-action smoke, and
+public-access fail-closed proof, and include merge status, merge commit SHA,
+merged-by, merged-at, merged policy state, immediate full-chain revalidation
+plan, and redaction policy. The rollback authorization scope remains
+`reversible-internal-production-only`.
+
+This gate validates manual merge evidence only. It does not merge or mutate
+PRs, apply the policy patch in this verifier branch, enable a runner, close or
+update Linear issues, deploy, post updates, rotate secrets, expose raw
+artifacts, or mutate third-party systems. It rejects drifted merge-decision
+receipts, non-approved merge decisions, missing merged-policy state, missing
+immediate revalidation proof, broader rollback scopes, verifier policy or PR
+mutation claims, leaked raw artifacts, and any process/command/write marker.
+`authority.a4Execution` remains blocked in this verifier branch.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:

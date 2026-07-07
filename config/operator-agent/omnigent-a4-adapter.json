@@ -1903,6 +1903,82 @@
     "writesPerformed": 0,
     "blockedUntil": "implementation production policy enablement merge decision may prove operator review of the candidate policy enablement PR, but this verifier must not merge or mutate PRs, apply policy, enable a runner, deploy, expose raw artifacts, mutate issues, or write third-party systems"
   },
+  "a4ImplementationProductionPolicyEnablementMergeEvidence": {
+    "requiresImplementationProductionPolicyEnablementMergeDecisionReceipt": true,
+    "manualMergeEvidenceOnly": true,
+    "allowedMergeStatuses": [
+      "merged"
+    ],
+    "requiresApprovedMergeDecision": true,
+    "requiresMergedBy": true,
+    "requiresMergedAt": true,
+    "requiresMergeCommitSha": true,
+    "requiresMergedPolicyState": true,
+    "requiresRollbackBoundary": true,
+    "requiresRollbackAuthorizationScope": true,
+    "rollbackAuthorizationScope": "reversible-internal-production-only",
+    "requiresPostActionSmoke": true,
+    "requiresImmediateFullChainRevalidation": true,
+    "requiresPublicAccessFailClosedProof": true,
+    "requiresCurrentVerifierPolicyBlocked": true,
+    "policyChangeAppliedByVerifier": false,
+    "runnerEnabledByVerifier": false,
+    "prMutationPerformedByVerifier": false,
+    "deployedByVerifier": false,
+    "requiresNoThirdPartyWriteByVerifier": true,
+    "requiresNoIssueMutationByVerifier": true,
+    "requiresRedactionPolicy": true,
+    "forbidsSecrets": true,
+    "forbidsRawLogs": true,
+    "forbidsPrompts": true,
+    "forbidsRawTranscripts": true,
+    "requiresNoExecutionOnEvidence": true,
+    "requiredReceiptReferences": [
+      "implementation-production-policy-enablement-merge-decision-check",
+      "implementation-production-policy-enablement-pr-check",
+      "implementation-production-a4-enablement-approval-check",
+      "implementation-production-ownership-review-check",
+      "implementation-production-release-closeout-check",
+      "implementation-production-post-deploy-validation-check",
+      "implementation-production-deploy-evidence-check",
+      "implementation-production-release-admission-check",
+      "implementation-production-release-decision-check"
+    ],
+    "requiredEvidence": [
+      "implementation-production-policy-enablement-merge-decision-receipt",
+      "approved-policy-enablement-merge-decision",
+      "manual-merge-status",
+      "merged-by",
+      "merged-at",
+      "merge-commit-sha",
+      "merged-policy-state",
+      "rollback-boundary",
+      "rollback-authorization-scope",
+      "post-action-smoke",
+      "immediate-full-chain-revalidation",
+      "public-access-fail-closed-proof",
+      "redaction-policy"
+    ],
+    "requiredNoExecutionMarkers": [
+      "current-verifier-policy-blocked",
+      "policy-change-not-applied-by-verifier",
+      "process-not-spawned",
+      "executed-commands-empty",
+      "runner-disabled-in-verifier",
+      "execution-not-ready",
+      "execution-disabled",
+      "execution-not-approved",
+      "would-execute-false",
+      "writes-performed-zero",
+      "deploy-not-performed-by-verifier",
+      "third-party-write-not-performed-by-verifier",
+      "issue-mutation-not-performed-by-verifier",
+      "pr-mutation-not-performed-by-verifier",
+      "production-policy-enablement-merge-evidence-only"
+    ],
+    "writesPerformed": 0,
+    "blockedUntil": "implementation production policy enablement merge evidence may prove that a separate manual merge enabled policy elsewhere, but this verifier must not apply policy in this branch, enable a runner, mutate PRs or issues, deploy, expose raw artifacts, or write third-party systems"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -2103,6 +2179,11 @@
       "id": "gate-37-a4-implementation-production-policy-enablement-merge-decision",
       "required": "A4 implementation production policy enablement merge decision validates operator review of the candidate policy enablement PR without merging or mutating PRs, changing checked-in policy, enabling a runner, mutating issues, deploying, exposing raw artifacts, or executing",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-production-policy-enablement-merge-decision-check <same chain arguments as implementation-production-policy-enablement-pr-check> --implementation-production-policy-enablement-pr-receipt <implementation-production-policy-enablement-pr-receipt.json> --implementation-production-policy-enablement-merge-decision <implementation-production-policy-enablement-merge-decision.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-38-a4-implementation-production-policy-enablement-merge-evidence",
+      "required": "A4 implementation production policy enablement merge evidence validates separate manual merge proof after the operator merge decision without merging or mutating PRs, changing this verifier branch policy, enabling a runner, mutating issues, deploying, exposing raw artifacts, or executing",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-production-policy-enablement-merge-evidence-check <same chain arguments as implementation-production-policy-enablement-merge-decision-check> --implementation-production-policy-enablement-merge-decision-receipt <implementation-production-policy-enablement-merge-decision-receipt.json> --implementation-production-policy-enablement-merge-evidence <implementation-production-policy-enablement-merge-evidence.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }
