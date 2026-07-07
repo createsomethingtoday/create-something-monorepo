@@ -49,10 +49,16 @@ export function HeroSection({
       <HalfDozenHeader />
       <div className="hd-hero__headline">
         <h1>
-          <span>Cut the Noise</span>
-          <span>Make it Count</span>
+          <span>
+            <span>Cut the Noise</span>
+          </span>
+          <span>
+            <span>Make it Count</span>
+          </span>
         </h1>
-        <img className="hd-hero__card" src={heroCard} alt="Half Dozen live event system visual" />
+        <span className="hd-hero__card">
+          <img src={heroCard} alt="Half Dozen live event system visual" />
+        </span>
       </div>
       <div className="hd-hero__meta">
         <p>{eyebrow}</p>
@@ -71,7 +77,9 @@ export function HeroSection({
           </div>
         </div>
       </div>
-      <img className="hd-hero__photo" src={eventPhoto} alt="DJ performing at a live event" />
+      <span className="hd-hero__photo-frame">
+        <img className="hd-hero__photo" src={eventPhoto} alt="DJ performing at a live event" />
+      </span>
     </section>
   );
 }
