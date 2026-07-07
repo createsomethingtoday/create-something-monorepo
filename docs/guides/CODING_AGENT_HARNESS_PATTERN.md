@@ -13,6 +13,7 @@ Turn a coding agent from a one-shot assistant into a repeatable worker by giving
 - direct validation surfaces
 - review loops
 - explicit escalation boundaries
+- production-stable closeout when the work affects a live surface
 
 ## The default loop
 
@@ -30,6 +31,21 @@ CLI-first verification, visible stream steering, and targeted tests in the same
 context. It does not replace production provenance or shared-work safeguards.
 Use [SOLO_OPERATOR_AGENT_LOOP.md](./SOLO_OPERATOR_AGENT_LOOP.md) for the full
 decision table.
+
+### Spark fast lane
+
+Use Codex Spark when the main advantage is interaction speed: small UI/code
+iterations, read-heavy context sweeps, duplicate issue clustering, PR-comment
+prep, or sub-agents that summarize Slack, Drive, Meet, GitHub, logs, or repo
+state for a supervising loop.
+
+Spark should receive narrow target lists and return a receipt or handoff packet.
+It is a good executor for "read these ten things and classify them" or "make
+this local edit while I watch." It is not the default executor for production
+promotion, security-sensitive review, destructive migrations, or long unattended
+debugging. When the work crosses those boundaries, escalate to the strongest
+full Codex model and keep the same Linear, worktree, verification, and evidence
+requirements.
 
 ### 1. Track the work
 
@@ -140,6 +156,22 @@ A useful checkpoint captures:
 This makes pause/resume and handoff real instead of conversational.
 
 For DEV or preview work, a direct deploy with linked Linear evidence is a valid checkpoint. Use Linear comments for non-terminal checkpoints that affect handoff, review, rollback, or promotion. Do not force a commit just to manufacture state.
+
+For production-relevant agentic work, the checkpoint is not enough. The normal
+closeout is:
+
+1. commit the scoped diff
+2. push the branch
+3. merge through the required review or release gate
+4. deploy the merged artifact or approved immutable release
+5. verify production with the owning smoke, browser proof, API check, or live
+   health signal
+6. record the deploy ID, live proof, and rollback note in Linear, the PR, or
+   the release record
+
+Stop before that only when the work is explicitly exploratory, draft/review-only,
+blocked on external access, or scoped to non-production evidence. In the final
+handoff, name the missing step instead of calling production stable.
 
 ## Fleet maintenance lane
 
