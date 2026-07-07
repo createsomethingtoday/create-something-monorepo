@@ -91,6 +91,8 @@ function parseArgs(argv) {
     commandReceipt: null,
     executorProofReceipt: null,
     enablementProposal: null,
+    enablementProposalReceipt: null,
+    policyPatch: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -114,6 +116,8 @@ function parseArgs(argv) {
     else if (arg === '--command-receipt' && args[index + 1]) options.commandReceipt = args[++index];
     else if (arg === '--executor-proof-receipt' && args[index + 1]) options.executorProofReceipt = args[++index];
     else if (arg === '--enablement-proposal' && args[index + 1]) options.enablementProposal = args[++index];
+    else if (arg === '--enablement-proposal-receipt' && args[index + 1]) options.enablementProposalReceipt = args[++index];
+    else if (arg === '--policy-patch' && args[index + 1]) options.policyPatch = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -156,6 +160,18 @@ function hasValue(value) {
 function includesAll(actual, expected) {
   const set = new Set(actual || []);
   return expected.filter((entry) => !set.has(entry));
+}
+
+function canonicalJson(value) {
+  if (Array.isArray(value)) return value.map((entry) => canonicalJson(entry));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalJson(value[key])]));
+  }
+  return value;
+}
+
+function sameJson(left, right) {
+  return JSON.stringify(canonicalJson(left)) === JSON.stringify(canonicalJson(right));
 }
 
 function commandLooksHighRisk(command) {
@@ -301,6 +317,40 @@ function validateManifest(manifest) {
   }
   if (enablement.policyChangeApplied !== false) {
     errors.push('a4ExecutorEnablementProposal.policyChangeApplied must remain false');
+  }
+
+  const policyPatchDryRun = manifest.a4PolicyPatchDryRun || {};
+  if (policyPatchDryRun.requiresEnablementProposalReceipt !== true) {
+    errors.push('a4PolicyPatchDryRun.requiresEnablementProposalReceipt must be true');
+  }
+  if (policyPatchDryRun.dryRunOnly !== true) {
+    errors.push('a4PolicyPatchDryRun.dryRunOnly must be true');
+  }
+  if (policyPatchDryRun.policyFileChanged !== false) {
+    errors.push('a4PolicyPatchDryRun.policyFileChanged must remain false');
+  }
+  if (policyPatchDryRun.policyChangeApplied !== false) {
+    errors.push('a4PolicyPatchDryRun.policyChangeApplied must remain false');
+  }
+  if (policyPatchDryRun.maxWritesPerRun !== 1) {
+    errors.push('a4PolicyPatchDryRun.maxWritesPerRun must be 1');
+  }
+  if (!policyPatchDryRun.requiredProofs?.includes('rollback')) {
+    errors.push('a4PolicyPatchDryRun.requiredProofs must include rollback');
+  }
+  if (!policyPatchDryRun.requiredProofs?.includes('post-action-smoke')) {
+    errors.push('a4PolicyPatchDryRun.requiredProofs must include post-action-smoke');
+  }
+  if (!policyPatchDryRun.requiredProofs?.includes('public-access-fail-closed')) {
+    errors.push('a4PolicyPatchDryRun.requiredProofs must include public-access-fail-closed');
+  }
+  const missingAllowedPatchFields = includesAll(policyPatchDryRun.allowedPatchFields, [
+    'authority.a4Execution',
+    'a4ExecutionCommand.runnerEnabled',
+    'a4ExecutorProof.runnerEnabled',
+  ]);
+  if (missingAllowedPatchFields.length) {
+    errors.push(`a4PolicyPatchDryRun.allowedPatchFields missing: ${missingAllowedPatchFields.join(', ')}`);
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -1355,6 +1405,279 @@ function buildExecutorEnablementProposalReceipt({
   };
 }
 
+function validateExecutorEnablementProposalReceipt(proposalReceipt, proposal, packet, paths, constraints) {
+  const errors = [];
+
+  if (proposalReceipt.mode !== 'executor-enable-proposal-check') {
+    errors.push('executor enablement proposal receipt mode must be executor-enable-proposal-check');
+  }
+  if (proposalReceipt.ok !== true || proposalReceipt.enablementProposalOk !== true) {
+    errors.push('executor enablement proposal receipt must be ok');
+  }
+  if (proposalReceipt.issue !== constraints.expectedIssue) {
+    errors.push(`executor enablement proposal receipt issue mismatch: expected ${constraints.expectedIssue}, got ${proposalReceipt.issue}`);
+  }
+  if (proposalReceipt.target !== constraints.expectedTarget) {
+    errors.push(`executor enablement proposal receipt target mismatch: expected ${constraints.expectedTarget}, got ${proposalReceipt.target}`);
+  }
+  if (proposalReceipt.action !== constraints.expectedAction) {
+    errors.push(`executor enablement proposal receipt action mismatch: expected ${constraints.expectedAction}, got ${proposalReceipt.action}`);
+  }
+  if (proposalReceipt.packetPath !== rel(paths.packetPath)) {
+    errors.push('executor enablement proposal receipt packetPath must match packet path');
+  }
+  if (proposalReceipt.preflightReceipt !== rel(paths.preflightPath)) {
+    errors.push('executor enablement proposal receipt preflightReceipt must match preflight receipt path');
+  }
+  if (proposalReceipt.executionReceipt !== rel(paths.executionPath)) {
+    errors.push('executor enablement proposal receipt executionReceipt must match execution receipt path');
+  }
+  if (proposalReceipt.authorization !== rel(paths.authorizationPath)) {
+    errors.push('executor enablement proposal receipt authorization must match authorization artifact path');
+  }
+  if (proposalReceipt.commandArtifact !== rel(paths.commandPath)) {
+    errors.push('executor enablement proposal receipt commandArtifact must match command artifact path');
+  }
+  if (proposalReceipt.commandReceipt !== rel(paths.commandReceiptPath)) {
+    errors.push('executor enablement proposal receipt commandReceipt must match command receipt path');
+  }
+  if (proposalReceipt.executorProofReceipt !== rel(paths.executorProofPath)) {
+    errors.push('executor enablement proposal receipt executorProofReceipt must match executor proof receipt path');
+  }
+  if (proposalReceipt.enablementProposal !== rel(paths.proposalPath)) {
+    errors.push('executor enablement proposal receipt enablementProposal must match proposal path');
+  }
+  if (!sameJson(proposalReceipt.proposedPolicyPatch, proposal.policyPatch)) {
+    errors.push('executor enablement proposal receipt proposedPolicyPatch must match proposal policyPatch');
+  }
+  if (proposalReceipt.policyChangeApplied !== false) {
+    errors.push('executor enablement proposal receipt policyChangeApplied must be false');
+  }
+  if (proposalReceipt.runnerEnabled !== false) {
+    errors.push('executor enablement proposal receipt runnerEnabled must be false');
+  }
+  if (proposalReceipt.executionReady !== false) {
+    errors.push('executor enablement proposal receipt executionReady must be false');
+  }
+  if (proposalReceipt.executionEnabled !== false) {
+    errors.push('executor enablement proposal receipt executionEnabled must be false');
+  }
+  if (proposalReceipt.wouldExecute !== false) {
+    errors.push('executor enablement proposal receipt wouldExecute must be false');
+  }
+  if (proposalReceipt.writesPerformed !== 0) {
+    errors.push('executor enablement proposal receipt writesPerformed must be 0');
+  }
+
+  if (packet.issue !== proposalReceipt.issue) errors.push('executor enablement proposal receipt issue must match packet issue');
+  if (packet.target !== proposalReceipt.target) errors.push('executor enablement proposal receipt target must match packet target');
+  if (packet.action !== proposalReceipt.action) errors.push('executor enablement proposal receipt action must match packet action');
+
+  return errors;
+}
+
+function validatePolicyPatchShape(policyPatch, errors, label) {
+  const allowedTopLevel = new Set(['authority', 'a4ExecutionCommand', 'a4ExecutorProof']);
+  for (const key of Object.keys(policyPatch || {})) {
+    if (!allowedTopLevel.has(key)) errors.push(`${label} may not patch ${key}`);
+  }
+
+  const authorityKeys = Object.keys(policyPatch?.authority || {});
+  for (const key of authorityKeys) {
+    if (key !== 'a4Execution') errors.push(`${label} may not patch authority.${key}`);
+  }
+  const commandKeys = Object.keys(policyPatch?.a4ExecutionCommand || {});
+  for (const key of commandKeys) {
+    if (key !== 'runnerEnabled') errors.push(`${label} may not patch a4ExecutionCommand.${key}`);
+  }
+  const proofKeys = Object.keys(policyPatch?.a4ExecutorProof || {});
+  for (const key of proofKeys) {
+    if (key !== 'runnerEnabled') errors.push(`${label} may not patch a4ExecutorProof.${key}`);
+  }
+}
+
+function validatePolicyPatchDryRunArtifact(artifact, proposalReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4PolicyPatchDryRun || {};
+  const requiredFields = [
+    'authorityLevel',
+    'issue',
+    'target',
+    'action',
+    'targetScope',
+    'maxWritesPerRun',
+    'requiredProofs',
+    'policyPatch',
+    'enablementProposalReceipt',
+    'dryRunOnly',
+    'policyFileChanged',
+    'policyChangeApplied',
+    'writesPerformed',
+    'rollbackProofRequired',
+    'postActionSmokeRequired',
+    'publicAccessFailClosedRequired',
+    'evidenceTarget',
+  ];
+
+  for (const field of requiredFields) {
+    if (!hasValue(artifact[field])) errors.push(`policy patch dry-run missing ${field}`);
+  }
+  if (artifact.authorityLevel !== 'A4') errors.push('policy patch dry-run authorityLevel must be A4');
+  if (artifact.issue !== constraints.expectedIssue) {
+    errors.push(`policy patch dry-run issue mismatch: expected ${constraints.expectedIssue}, got ${artifact.issue}`);
+  }
+  if (artifact.target !== constraints.expectedTarget) {
+    errors.push(`policy patch dry-run target mismatch: expected ${constraints.expectedTarget}, got ${artifact.target}`);
+  }
+  if (artifact.action !== constraints.expectedAction) {
+    errors.push(`policy patch dry-run action mismatch: expected ${constraints.expectedAction}, got ${artifact.action}`);
+  }
+  if (artifact.enablementProposalReceipt !== rel(paths.proposalReceiptPath)) {
+    errors.push('policy patch dry-run enablementProposalReceipt must match proposal receipt path');
+  }
+  if (artifact.targetScope !== proposalReceipt.targetScope) {
+    errors.push('policy patch dry-run targetScope must match enablement proposal receipt');
+  }
+  if (artifact.maxWritesPerRun !== rules.maxWritesPerRun) {
+    errors.push(`policy patch dry-run maxWritesPerRun must be ${rules.maxWritesPerRun}`);
+  }
+  if (artifact.dryRunOnly !== true) errors.push('policy patch dry-run dryRunOnly must be true');
+  if (artifact.policyFileChanged !== false) errors.push('policy patch dry-run policyFileChanged must be false');
+  if (artifact.policyChangeApplied !== false) errors.push('policy patch dry-run policyChangeApplied must be false');
+  if (artifact.rollbackProofRequired !== true) errors.push('policy patch dry-run rollbackProofRequired must be true');
+  if (artifact.postActionSmokeRequired !== true) errors.push('policy patch dry-run postActionSmokeRequired must be true');
+  if (artifact.publicAccessFailClosedRequired !== true) {
+    errors.push('policy patch dry-run publicAccessFailClosedRequired must be true');
+  }
+  if (artifact.runnerEnabled === true) errors.push('policy patch dry-run runnerEnabled must not be true');
+  if (artifact.executionReady === true) errors.push('policy patch dry-run executionReady must not be true');
+  if (artifact.executionEnabled === true) errors.push('policy patch dry-run executionEnabled must not be true');
+  if (artifact.wouldExecute === true) errors.push('policy patch dry-run wouldExecute must not be true');
+  if (artifact.writesPerformed !== 0) {
+    errors.push('policy patch dry-run writesPerformed must be 0');
+  }
+
+  const requiredProofs = new Set(artifact.requiredProofs || []);
+  for (const proof of rules.requiredProofs || []) {
+    if (!requiredProofs.has(proof)) errors.push(`policy patch dry-run requiredProofs must include ${proof}`);
+  }
+  validatePolicyPatchShape(artifact.policyPatch, errors, 'policy patch dry-run policyPatch');
+  if (!sameJson(artifact.policyPatch, proposalReceipt.proposedPolicyPatch)) {
+    errors.push('policy patch dry-run policyPatch must match enablement proposal receipt proposedPolicyPatch');
+  }
+
+  return errors;
+}
+
+function buildPolicyPatchDryRunReceipt({
+  manifest,
+  manifestValidation,
+  packet,
+  packetPath,
+  preflightReceipt,
+  preflightPath,
+  executionReceipt,
+  executionPath,
+  authorization,
+  authorizationPath,
+  commandArtifact,
+  commandPath,
+  commandReceipt,
+  commandReceiptPath,
+  executorProofReceipt,
+  executorProofPath,
+  proposal,
+  proposalPath,
+  proposalReceipt,
+  proposalReceiptPath,
+  policyPatch,
+  policyPatchPath,
+  constraints,
+  packetValidation,
+  preflightErrors,
+  executionErrors,
+  authorizationErrors,
+  commandErrors,
+  commandReceiptErrors,
+  executorProofErrors,
+  proposalErrors,
+  proposalReceiptErrors,
+  policyPatchErrors,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...packetValidation.errors,
+    ...preflightErrors,
+    ...executionErrors,
+    ...authorizationErrors,
+    ...commandErrors,
+    ...commandReceiptErrors,
+    ...executorProofErrors,
+    ...proposalErrors,
+    ...proposalReceiptErrors,
+    ...policyPatchErrors,
+  ];
+  const policyPatchDryRunOk = errors.length === 0;
+
+  return {
+    mode: 'policy-patch-dry-run-check',
+    ok: policyPatchDryRunOk,
+    policyPatchDryRunOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    packetPath: rel(packetPath),
+    preflightReceipt: rel(preflightPath),
+    executionReceipt: rel(executionPath),
+    authorization: rel(authorizationPath),
+    commandArtifact: rel(commandPath),
+    commandReceipt: rel(commandReceiptPath),
+    executorProofReceipt: rel(executorProofPath),
+    enablementProposal: rel(proposalPath),
+    enablementProposalReceipt: rel(proposalReceiptPath),
+    policyPatchDryRun: rel(policyPatchPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    targetScope: policyPatch.targetScope,
+    maxWritesPerRun: policyPatch.maxWritesPerRun,
+    requiredProofs: policyPatch.requiredProofs || [],
+    constraints,
+    dryRunOnly: true,
+    policyFileChanged: false,
+    policyChangeApplied: false,
+    policyPatchPreview: policyPatchDryRunOk ? policyPatch.policyPatch : null,
+    runnerBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: policyPatchDryRunOk
+      ? 'policy patch dry run validated; checked-in repo policy remains blocked until a separate operator PR applies it'
+      : 'policy patch dry run rejected before any policy file change',
+    evidenceTarget: policyPatch.evidenceTarget || proposalReceipt.evidenceTarget || proposal.evidenceTarget || packet.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'separate operator-reviewed PR applies the policy patch and reruns public access, rollback, and post-action smoke proof',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      enablementPolicyChangeApplied: manifest.a4ExecutorEnablementProposal?.policyChangeApplied,
+      policyPatchDryRunOnly: manifest.a4PolicyPatchDryRun?.dryRunOnly,
+      policyPatchFileChanged: manifest.a4PolicyPatchDryRun?.policyFileChanged,
+      policyPatchChangeApplied: manifest.a4PolicyPatchDryRun?.policyChangeApplied,
+    },
+  };
+}
+
 function print(result, options) {
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -1774,6 +2097,135 @@ function commandExecutorEnableProposalCheck(options) {
   return result;
 }
 
+function commandPolicyPatchDryRunCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for policy-patch-dry-run-check'));
+  }
+  if (!options.preflightReceipt) throw new Error('--preflight-receipt is required for policy-patch-dry-run-check');
+  if (!options.executionReceipt) throw new Error('--execution-receipt is required for policy-patch-dry-run-check');
+  if (!options.authorization) throw new Error('--authorization is required for policy-patch-dry-run-check');
+  if (!options.commandArtifact) throw new Error('--command-artifact is required for policy-patch-dry-run-check');
+  if (!options.commandReceipt) throw new Error('--command-receipt is required for policy-patch-dry-run-check');
+  if (!options.executorProofReceipt) throw new Error('--executor-proof-receipt is required for policy-patch-dry-run-check');
+  if (!options.enablementProposal) throw new Error('--enablement-proposal is required for policy-patch-dry-run-check');
+  if (!options.enablementProposalReceipt) {
+    throw new Error('--enablement-proposal-receipt is required for policy-patch-dry-run-check');
+  }
+  if (!options.policyPatch) throw new Error('--policy-patch is required for policy-patch-dry-run-check');
+
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const preflightPath = resolveFromRoot(options.preflightReceipt);
+  const executionPath = resolveFromRoot(options.executionReceipt);
+  const authorizationPath = resolveFromRoot(options.authorization);
+  const commandPath = resolveFromRoot(options.commandArtifact);
+  const commandReceiptPath = resolveFromRoot(options.commandReceipt);
+  const executorProofPath = resolveFromRoot(options.executorProofReceipt);
+  const proposalPath = resolveFromRoot(options.enablementProposal);
+  const proposalReceiptPath = resolveFromRoot(options.enablementProposalReceipt);
+  const policyPatchPath = resolveFromRoot(options.policyPatch);
+  const packet = readJson(packetPath);
+  const preflightReceipt = readJson(preflightPath);
+  const executionReceipt = readJson(executionPath);
+  const authorization = readJson(authorizationPath);
+  const commandArtifact = readJson(commandPath);
+  const commandReceipt = readJson(commandReceiptPath);
+  const executorProofReceipt = readJson(executorProofPath);
+  const proposal = readJson(proposalPath);
+  const proposalReceipt = readJson(proposalReceiptPath);
+  const policyPatch = readJson(policyPatchPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const preflightErrors = validatePreflightReceipt(preflightReceipt, packet, constraints);
+  const executionErrors = validateExecutionReceipt(executionReceipt, packet, preflightReceipt, constraints);
+  const authorizationErrors = validateExecutionAuthorization(authorization, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+  }, constraints);
+  const commandErrors = validateExecutionCommandArtifact(commandArtifact, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+  }, constraints);
+  const commandReceiptErrors = validateExecutionCommandReceipt(commandReceipt, packet, executionReceipt, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+  }, constraints);
+  const executorProofErrors = validateExecutorProofReceipt(executorProofReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+  }, constraints);
+  const proposalErrors = validateExecutorEnablementProposal(proposal, packet, executorProofReceipt, manifest, {
+    executorProofPath,
+  }, constraints);
+  const proposalReceiptErrors = validateExecutorEnablementProposalReceipt(proposalReceipt, proposal, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+  }, constraints);
+  const policyPatchErrors = validatePolicyPatchDryRunArtifact(policyPatch, proposalReceipt, manifest, {
+    proposalReceiptPath,
+  }, constraints);
+  const result = buildPolicyPatchDryRunReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    preflightReceipt,
+    preflightPath,
+    executionReceipt,
+    executionPath,
+    authorization,
+    authorizationPath,
+    commandArtifact,
+    commandPath,
+    commandReceipt,
+    commandReceiptPath,
+    executorProofReceipt,
+    executorProofPath,
+    proposal,
+    proposalPath,
+    proposalReceipt,
+    proposalReceiptPath,
+    policyPatch,
+    policyPatchPath,
+    constraints,
+    packetValidation,
+    preflightErrors,
+    executionErrors,
+    authorizationErrors,
+    commandErrors,
+    commandReceiptErrors,
+    executorProofErrors,
+    proposalErrors,
+    proposalReceiptErrors,
+    policyPatchErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -1820,6 +2272,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs execution-command-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs executor-proof-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs executor-enable-proposal-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs policy-patch-dry-run-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -1841,6 +2294,7 @@ async function main() {
   else if (options.command === 'execution-command-check') result = commandExecutionCommandCheck(options);
   else if (options.command === 'executor-proof-check') result = commandExecutorProofCheck(options);
   else if (options.command === 'executor-enable-proposal-check') result = commandExecutorEnableProposalCheck(options);
+  else if (options.command === 'policy-patch-dry-run-check') result = commandPolicyPatchDryRunCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -1858,6 +2312,7 @@ export {
   REQUIRED_TRIAL_RECEIPT_FIELDS,
   commandLooksHighRisk,
   commandExecutorEnableProposalCheck,
+  commandPolicyPatchDryRunCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
