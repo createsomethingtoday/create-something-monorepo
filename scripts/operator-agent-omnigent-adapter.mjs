@@ -88,6 +88,7 @@ function parseArgs(argv) {
     executionReceipt: null,
     authorization: null,
     commandArtifact: null,
+    commandReceipt: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -108,6 +109,7 @@ function parseArgs(argv) {
     else if (arg === '--execution-receipt' && args[index + 1]) options.executionReceipt = args[++index];
     else if (arg === '--authorization' && args[index + 1]) options.authorization = args[++index];
     else if (arg === '--command-artifact' && args[index + 1]) options.commandArtifact = args[++index];
+    else if (arg === '--command-receipt' && args[index + 1]) options.commandReceipt = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -264,6 +266,17 @@ function validateManifest(manifest) {
   }
   if (executionCommand.runnerEnabled !== false) {
     errors.push('a4ExecutionCommand.runnerEnabled must remain false while authority.a4Execution is blocked');
+  }
+
+  const executorProof = manifest.a4ExecutorProof || {};
+  if (executorProof.runnerEnabled !== false) {
+    errors.push('a4ExecutorProof.runnerEnabled must remain false while authority.a4Execution is blocked');
+  }
+  if (executorProof.processSpawnPolicy !== 'blocked') {
+    errors.push('a4ExecutorProof.processSpawnPolicy must be blocked');
+  }
+  if (executorProof.requiresCommandReceipt !== true) {
+    errors.push('a4ExecutorProof.requiresCommandReceipt must be true');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -929,6 +942,152 @@ function buildExecutionCommandReceipt({
   };
 }
 
+function validateExecutionCommandReceipt(commandReceipt, packet, executionReceipt, paths, constraints) {
+  const errors = [];
+
+  if (commandReceipt.mode !== 'execution-command-check') {
+    errors.push('execution command receipt mode must be execution-command-check');
+  }
+  if (commandReceipt.ok !== true || commandReceipt.commandOk !== true || commandReceipt.commandAdmitted !== true) {
+    errors.push('execution command receipt admission must be ok');
+  }
+  if (commandReceipt.issue !== constraints.expectedIssue) {
+    errors.push(`execution command receipt issue mismatch: expected ${constraints.expectedIssue}, got ${commandReceipt.issue}`);
+  }
+  if (commandReceipt.target !== constraints.expectedTarget) {
+    errors.push(`execution command receipt target mismatch: expected ${constraints.expectedTarget}, got ${commandReceipt.target}`);
+  }
+  if (commandReceipt.action !== constraints.expectedAction) {
+    errors.push(`execution command receipt action mismatch: expected ${constraints.expectedAction}, got ${commandReceipt.action}`);
+  }
+  if (commandReceipt.authorityLevel !== 'A4') errors.push('execution command receipt authorityLevel must be A4');
+  if (commandReceipt.packetPath !== rel(paths.packetPath)) {
+    errors.push('execution command receipt packetPath must match packet path');
+  }
+  if (commandReceipt.preflightReceipt !== rel(paths.preflightPath)) {
+    errors.push('execution command receipt preflightReceipt must match preflight receipt path');
+  }
+  if (commandReceipt.executionReceipt !== rel(paths.executionPath)) {
+    errors.push('execution command receipt executionReceipt must match execution receipt path');
+  }
+  if (commandReceipt.authorization !== rel(paths.authorizationPath)) {
+    errors.push('execution command receipt authorization must match authorization artifact path');
+  }
+  if (commandReceipt.commandArtifact !== rel(paths.commandPath)) {
+    errors.push('execution command receipt commandArtifact must match command artifact path');
+  }
+  if (commandReceipt.runnerEnabled !== false) errors.push('execution command receipt runnerEnabled must be false');
+  if (commandReceipt.executionReady !== false) errors.push('execution command receipt executionReady must be false');
+  if (commandReceipt.executionEnabled !== false) errors.push('execution command receipt executionEnabled must be false');
+  if (commandReceipt.executionApproved !== false) errors.push('execution command receipt executionApproved must be false');
+  if (commandReceipt.wouldExecute !== false) errors.push('execution command receipt wouldExecute must be false');
+  if (commandReceipt.writesPerformed !== 0) errors.push('execution command receipt writesPerformed must be 0');
+  if (commandReceipt.processSpawned === true) errors.push('execution command receipt must not report processSpawned');
+  if (Array.isArray(commandReceipt.executedCommands) && commandReceipt.executedCommands.length > 0) {
+    errors.push('execution command receipt executedCommands must be empty');
+  }
+
+  if (packet.issue !== commandReceipt.issue) errors.push('execution command receipt issue must match packet issue');
+  if (packet.target !== commandReceipt.target) errors.push('execution command receipt target must match packet target');
+  if (packet.action !== commandReceipt.action) errors.push('execution command receipt action must match packet action');
+
+  for (const field of ['validationPlan', 'rollbackPlan', 'postActionSmokePlan', 'stopConditions', 'executionPlan']) {
+    if (JSON.stringify(commandReceipt[field] || []) !== JSON.stringify(executionReceipt[field] || [])) {
+      errors.push(`execution command receipt ${field} must match execution receipt ${field}`);
+    }
+  }
+
+  return errors;
+}
+
+function buildExecutorProofReceipt({
+  manifest,
+  manifestValidation,
+  packet,
+  packetPath,
+  preflightReceipt,
+  preflightPath,
+  executionReceipt,
+  executionPath,
+  authorization,
+  authorizationPath,
+  commandArtifact,
+  commandPath,
+  commandReceipt,
+  commandReceiptPath,
+  constraints,
+  packetValidation,
+  preflightErrors,
+  executionErrors,
+  authorizationErrors,
+  commandErrors,
+  commandReceiptErrors,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...packetValidation.errors,
+    ...preflightErrors,
+    ...executionErrors,
+    ...authorizationErrors,
+    ...commandErrors,
+    ...commandReceiptErrors,
+  ];
+  const executorProofOk = errors.length === 0;
+
+  return {
+    mode: 'executor-proof-check',
+    ok: executorProofOk,
+    executorProofOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    packetPath: rel(packetPath),
+    preflightReceipt: rel(preflightPath),
+    executionReceipt: rel(executionPath),
+    authorization: rel(authorizationPath),
+    commandArtifact: rel(commandPath),
+    commandReceipt: rel(commandReceiptPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    commandId: commandArtifact.commandId,
+    commandSurface: commandArtifact.commandSurface,
+    executionMode: commandArtifact.executionMode,
+    constraints,
+    runnerBlocked: true,
+    processSpawnPolicy: manifest.a4ExecutorProof?.processSpawnPolicy || 'blocked',
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: executorProofOk
+      ? 'executor proof validated full A4 chain and stopped before process spawn because repo policy blocks the runner'
+      : 'executor proof rejected chain before any process spawn',
+    evidenceTarget: commandReceipt.evidenceTarget || commandArtifact.evidenceTarget || authorization.evidenceTarget || packet.evidenceTarget || null,
+    validationPlan: executorProofOk ? executionReceipt.validationPlan : [],
+    rollbackPlan: executorProofOk ? executionReceipt.rollbackPlan : [],
+    postActionSmokePlan: executorProofOk ? executionReceipt.postActionSmokePlan : [],
+    stopConditions: executorProofOk ? executionReceipt.stopConditions : [],
+    executionPlan: executorProofOk ? executionReceipt.executionPlan : [],
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator-approved repo policy change that enables a narrowly scoped executor implementation with rollback and smoke proof',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      processSpawnPolicy: manifest.a4ExecutorProof?.processSpawnPolicy,
+    },
+  };
+}
+
 function print(result, options) {
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -1167,6 +1326,85 @@ function commandExecutionCommandCheck(options) {
   return result;
 }
 
+function commandExecutorProofCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for executor-proof-check'));
+  }
+  if (!options.preflightReceipt) throw new Error('--preflight-receipt is required for executor-proof-check');
+  if (!options.executionReceipt) throw new Error('--execution-receipt is required for executor-proof-check');
+  if (!options.authorization) throw new Error('--authorization is required for executor-proof-check');
+  if (!options.commandArtifact) throw new Error('--command-artifact is required for executor-proof-check');
+  if (!options.commandReceipt) throw new Error('--command-receipt is required for executor-proof-check');
+
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const preflightPath = resolveFromRoot(options.preflightReceipt);
+  const executionPath = resolveFromRoot(options.executionReceipt);
+  const authorizationPath = resolveFromRoot(options.authorization);
+  const commandPath = resolveFromRoot(options.commandArtifact);
+  const commandReceiptPath = resolveFromRoot(options.commandReceipt);
+  const packet = readJson(packetPath);
+  const preflightReceipt = readJson(preflightPath);
+  const executionReceipt = readJson(executionPath);
+  const authorization = readJson(authorizationPath);
+  const commandArtifact = readJson(commandPath);
+  const commandReceipt = readJson(commandReceiptPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const preflightErrors = validatePreflightReceipt(preflightReceipt, packet, constraints);
+  const executionErrors = validateExecutionReceipt(executionReceipt, packet, preflightReceipt, constraints);
+  const authorizationErrors = validateExecutionAuthorization(authorization, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+  }, constraints);
+  const commandErrors = validateExecutionCommandArtifact(commandArtifact, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+  }, constraints);
+  const commandReceiptErrors = validateExecutionCommandReceipt(commandReceipt, packet, executionReceipt, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+  }, constraints);
+  const result = buildExecutorProofReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    preflightReceipt,
+    preflightPath,
+    executionReceipt,
+    executionPath,
+    authorization,
+    authorizationPath,
+    commandArtifact,
+    commandPath,
+    commandReceipt,
+    commandReceiptPath,
+    constraints,
+    packetValidation,
+    preflightErrors,
+    executionErrors,
+    authorizationErrors,
+    commandErrors,
+    commandReceiptErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -1211,6 +1449,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs execution-receipt-check --packet <path> --preflight-receipt <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs execution-authorization-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs execution-command-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs executor-proof-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -1230,6 +1469,7 @@ async function main() {
   else if (options.command === 'execution-receipt-check') result = commandExecutionReceiptCheck(options);
   else if (options.command === 'execution-authorization-check') result = commandExecutionAuthorizationCheck(options);
   else if (options.command === 'execution-command-check') result = commandExecutionCommandCheck(options);
+  else if (options.command === 'executor-proof-check') result = commandExecutorProofCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -1246,6 +1486,7 @@ export {
   REQUIRED_PACKET_FIELDS,
   REQUIRED_TRIAL_RECEIPT_FIELDS,
   commandLooksHighRisk,
+  commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
   commandExecutionReceiptCheck,
