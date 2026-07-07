@@ -518,6 +518,49 @@ the checked-in manifest remains blocked, `processSpawned` is `false`,
 `executionEnabled`, and `wouldExecute` remain `false`, and `writesPerformed`
 remains `0`.
 
+After the release admission receipt exists, validate the future supervised
+execution runbook:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs execution-runbook-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --runner-contract-receipt <runner-contract-receipt.json> \
+  --runner-plan <runner-plan.json> \
+  --runner-plan-receipt <runner-plan-receipt.json> \
+  --runner-diff <runner-diff.json> \
+  --runner-diff-receipt <runner-diff-receipt.json> \
+  --release-admission <release-admission.json> \
+  --release-admission-receipt <release-admission-receipt.json> \
+  --execution-runbook <execution-runbook.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The execution runbook is still runbook-only. It must name the target validation
+commands, approved write command, post-action smoke commands, rollback
+commands, public-access fail-closed proof, final receipt outputs, stop
+conditions, Linear evidence, and `maxWritesPerRun` of `1`. It rejects runbooks
+that skip target validation, omit rollback or smoke, drop final receipt outputs,
+loosen the write ceiling, request auto execution, or claim process/command
+execution while the checked-in manifest is blocked. This gate does not spawn the
+runner and does not execute the write command.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:

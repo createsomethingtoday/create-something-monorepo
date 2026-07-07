@@ -104,6 +104,8 @@ function parseArgs(argv) {
     runnerDiff: null,
     runnerDiffReceipt: null,
     releaseAdmission: null,
+    releaseAdmissionReceipt: null,
+    executionRunbook: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -140,6 +142,8 @@ function parseArgs(argv) {
     else if (arg === '--runner-diff' && args[index + 1]) options.runnerDiff = args[++index];
     else if (arg === '--runner-diff-receipt' && args[index + 1]) options.runnerDiffReceipt = args[++index];
     else if (arg === '--release-admission' && args[index + 1]) options.releaseAdmission = args[++index];
+    else if (arg === '--release-admission-receipt' && args[index + 1]) options.releaseAdmissionReceipt = args[++index];
+    else if (arg === '--execution-runbook' && args[index + 1]) options.executionRunbook = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -614,6 +618,45 @@ function validateManifest(manifest) {
   }
   if (releaseAdmission.writesPerformed !== 0) {
     errors.push('a4ReleaseAdmission.writesPerformed must be 0');
+  }
+
+  const executionRunbook = manifest.a4ExecutionRunbook || {};
+  if (executionRunbook.requiresReleaseAdmissionReceipt !== true) {
+    errors.push('a4ExecutionRunbook.requiresReleaseAdmissionReceipt must be true');
+  }
+  if (executionRunbook.runbookOnly !== true) {
+    errors.push('a4ExecutionRunbook.runbookOnly must be true');
+  }
+  if (executionRunbook.requiresTargetValidation !== true) {
+    errors.push('a4ExecutionRunbook.requiresTargetValidation must be true');
+  }
+  if (executionRunbook.requiresWriteCommand !== true) {
+    errors.push('a4ExecutionRunbook.requiresWriteCommand must be true');
+  }
+  if (executionRunbook.requiresPostActionSmoke !== true) {
+    errors.push('a4ExecutionRunbook.requiresPostActionSmoke must be true');
+  }
+  if (executionRunbook.requiresRollbackCommand !== true) {
+    errors.push('a4ExecutionRunbook.requiresRollbackCommand must be true');
+  }
+  if (executionRunbook.requiresPublicAccessFailClosedProof !== true) {
+    errors.push('a4ExecutionRunbook.requiresPublicAccessFailClosedProof must be true');
+  }
+  for (const output of ['pre-action-receipt', 'execution-receipt', 'post-action-smoke', 'rollback-readiness', 'final-outcome']) {
+    if (!executionRunbook.requiredFinalReceiptOutputs?.includes(output)) {
+      errors.push(`a4ExecutionRunbook.requiredFinalReceiptOutputs must include ${output}`);
+    }
+  }
+  for (const condition of ['target-mismatch', 'command-expired', 'receipt-drift', 'smoke-failed', 'rollback-unavailable']) {
+    if (!executionRunbook.requiredStopConditions?.includes(condition)) {
+      errors.push(`a4ExecutionRunbook.requiredStopConditions must include ${condition}`);
+    }
+  }
+  if (executionRunbook.maxWritesPerRun !== 1) {
+    errors.push('a4ExecutionRunbook.maxWritesPerRun must be 1');
+  }
+  if (executionRunbook.writesPerformed !== 0) {
+    errors.push('a4ExecutionRunbook.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -3050,6 +3093,146 @@ function validateReleaseAdmission(admission, packet, readinessReceipt, runnerDif
   return errors;
 }
 
+function validateReleaseAdmissionReceipt(receipt, admission, releaseResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'release-admission-check') errors.push('release admission receipt mode must be release-admission-check');
+  if (receipt.ok !== true || receipt.releaseAdmissionOk !== true) {
+    errors.push('release admission receipt must be ok');
+  }
+  if (receipt.releaseAdmission !== rel(paths.releaseAdmissionPath)) {
+    errors.push('release admission receipt releaseAdmission must match release admission artifact path');
+  }
+  if (receipt.runnerImplementationDiffReceipt !== rel(paths.runnerDiffReceiptPath)) {
+    errors.push('release admission receipt runnerImplementationDiffReceipt must match runner diff receipt path');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`release admission receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`release admission receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`release admission receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.releaseMode !== admission.releaseMode) {
+    errors.push('release admission receipt releaseMode must match release admission');
+  }
+  if (receipt.packetOnly !== true) errors.push('release admission receipt packetOnly must be true');
+  if (receipt.requiresManualMerge !== true) errors.push('release admission receipt requiresManualMerge must be true');
+  if (receipt.autoMerge === true) errors.push('release admission receipt autoMerge must not be true');
+  if (!sameJson(receipt.prs, admission.prs || [])) {
+    errors.push('release admission receipt prs must match release admission');
+  }
+  if (!sameJson(receipt.mergeOrder, admission.mergeOrder || [])) {
+    errors.push('release admission receipt mergeOrder must match release admission');
+  }
+  if (!sameJson(receipt.requiredEvidence, admission.requiredEvidence || [])) {
+    errors.push('release admission receipt requiredEvidence must match release admission');
+  }
+  if (!sameJson(receipt.requiredGuards, admission.requiredGuards || [])) {
+    errors.push('release admission receipt requiredGuards must match release admission');
+  }
+  if (receipt.maxWritesPerRun !== admission.maxWritesPerRun) {
+    errors.push('release admission receipt maxWritesPerRun must match release admission');
+  }
+  if (receipt.currentPolicyBlocked !== true) errors.push('release admission receipt currentPolicyBlocked must be true');
+  if (receipt.processSpawned !== false) errors.push('release admission receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('release admission receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('release admission receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('release admission receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('release admission receipt executionEnabled must be false');
+  if (receipt.wouldExecute !== false) errors.push('release admission receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('release admission receipt writesPerformed must be 0');
+  if (releaseResult.releaseAdmissionOk !== true) errors.push('release admission receipt requires valid release admission result');
+
+  return errors;
+}
+
+function validateExecutionRunbook(runbook, releaseAdmissionReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ExecutionRunbook || {};
+
+  if (runbook.authorityLevel !== 'A4') errors.push('execution runbook authorityLevel must be A4');
+  if (runbook.issue !== constraints.expectedIssue) {
+    errors.push(`execution runbook issue mismatch: expected ${constraints.expectedIssue}, got ${runbook.issue}`);
+  }
+  if (runbook.target !== constraints.expectedTarget) {
+    errors.push(`execution runbook target mismatch: expected ${constraints.expectedTarget}, got ${runbook.target}`);
+  }
+  if (runbook.action !== constraints.expectedAction) {
+    errors.push(`execution runbook action mismatch: expected ${constraints.expectedAction}, got ${runbook.action}`);
+  }
+  if (runbook.releaseAdmissionReceipt !== rel(paths.releaseAdmissionReceiptPath)) {
+    errors.push('execution runbook releaseAdmissionReceipt must match release admission receipt path');
+  }
+  if (runbook.releaseAdmission !== rel(paths.releaseAdmissionPath)) {
+    errors.push('execution runbook releaseAdmission must match release admission artifact path');
+  }
+  if (runbook.runbookOnly !== true) errors.push('execution runbook runbookOnly must be true');
+  if (runbook.executionMode !== 'operator-supervised') {
+    errors.push('execution runbook executionMode must be operator-supervised');
+  }
+  if (runbook.requiresManualTrigger !== true) {
+    errors.push('execution runbook requiresManualTrigger must be true');
+  }
+  if (!Array.isArray(runbook.targetValidationCommands) || runbook.targetValidationCommands.length === 0) {
+    errors.push('execution runbook targetValidationCommands must be non-empty');
+  }
+  if (!hasValue(runbook.writeCommand?.command)) {
+    errors.push('execution runbook writeCommand.command is required');
+  }
+  if (runbook.writeCommand?.requiresManualTrigger !== true) {
+    errors.push('execution runbook writeCommand.requiresManualTrigger must be true');
+  }
+  if (runbook.writeCommand?.approvedCommandOnly !== true) {
+    errors.push('execution runbook writeCommand.approvedCommandOnly must be true');
+  }
+  if (!Array.isArray(runbook.postActionSmokeCommands) || runbook.postActionSmokeCommands.length === 0) {
+    errors.push('execution runbook postActionSmokeCommands must be non-empty');
+  }
+  if (!Array.isArray(runbook.rollbackCommands) || runbook.rollbackCommands.length === 0) {
+    errors.push('execution runbook rollbackCommands must be non-empty');
+  }
+  if (!hasValue(runbook.publicAccessFailClosedProof)) {
+    errors.push('execution runbook publicAccessFailClosedProof is required');
+  }
+  for (const output of rules.requiredFinalReceiptOutputs || []) {
+    if (!runbook.finalReceiptOutputs?.includes(output)) {
+      errors.push(`execution runbook finalReceiptOutputs must include ${output}`);
+    }
+  }
+  for (const condition of rules.requiredStopConditions || []) {
+    if (!runbook.stopConditions?.includes(condition)) {
+      errors.push(`execution runbook stopConditions must include ${condition}`);
+    }
+  }
+  if (runbook.maxWritesPerRun !== rules.maxWritesPerRun) {
+    errors.push(`execution runbook maxWritesPerRun must be ${rules.maxWritesPerRun}`);
+  }
+  if (!hasValue(runbook.linearEvidence)) errors.push('execution runbook linearEvidence is required');
+  if (runbook.currentPolicyBlocked !== true) errors.push('execution runbook currentPolicyBlocked must be true');
+  if (runbook.processSpawned === true) errors.push('execution runbook processSpawned must not be true');
+  if (Array.isArray(runbook.executedCommands) && runbook.executedCommands.length > 0) {
+    errors.push('execution runbook executedCommands must be empty');
+  }
+  if (runbook.runnerEnabled === true) errors.push('execution runbook runnerEnabled must not be true');
+  if (runbook.executionReady === true) errors.push('execution runbook executionReady must not be true');
+  if (runbook.executionEnabled === true) errors.push('execution runbook executionEnabled must not be true');
+  if (runbook.wouldExecute === true) errors.push('execution runbook wouldExecute must not be true');
+  if (runbook.writesPerformed !== 0) errors.push('execution runbook writesPerformed must be 0');
+  if (releaseAdmissionReceipt.releaseAdmissionOk !== true) {
+    errors.push('execution runbook requires valid release admission receipt');
+  }
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('execution runbook current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -3787,6 +3970,88 @@ function buildReleaseAdmissionReceipt({
       releaseAdmissionRequiresReadinessReceipt: manifest.a4ReleaseAdmission?.requiresEnabledManifestReadinessReceipt,
       releaseAdmissionRequiresRunnerDiffReceipt: manifest.a4ReleaseAdmission?.requiresRunnerImplementationDiffReceipt,
       releaseAdmissionPacketOnly: manifest.a4ReleaseAdmission?.packetOnly,
+    },
+  };
+}
+
+function buildExecutionRunbookReceipt({
+  manifest,
+  manifestValidation,
+  releaseResult,
+  releaseAdmission,
+  releaseAdmissionPath,
+  releaseAdmissionReceipt,
+  releaseAdmissionReceiptPath,
+  executionRunbook,
+  executionRunbookPath,
+  constraints,
+  releaseAdmissionReceiptErrors,
+  executionRunbookErrors,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(releaseResult.errors || []),
+    ...releaseAdmissionReceiptErrors,
+    ...executionRunbookErrors,
+  ];
+  const executionRunbookOk = errors.length === 0;
+
+  return {
+    mode: 'execution-runbook-check',
+    ok: executionRunbookOk,
+    executionRunbookOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    executionRunbook: rel(executionRunbookPath),
+    releaseAdmissionReceipt: rel(releaseAdmissionReceiptPath),
+    releaseAdmission: rel(releaseAdmissionPath),
+    runnerImplementationDiffReceipt: releaseResult.runnerImplementationDiffReceipt,
+    runnerDiff: releaseResult.runnerDiff,
+    readinessReceipt: releaseResult.readinessReceipt,
+    candidateManifest: releaseResult.candidateManifest,
+    packetPath: releaseResult.packetPath,
+    issue: releaseResult.issue || constraints.expectedIssue,
+    authorityLevel: releaseResult.authorityLevel,
+    target: releaseResult.target,
+    action: releaseResult.action,
+    targetScope: executionRunbook.targetScope || releaseAdmissionReceipt.targetScope || releaseResult.targetScope,
+    runbookOnly: executionRunbook.runbookOnly === true,
+    executionMode: executionRunbook.executionMode,
+    requiresManualTrigger: executionRunbook.requiresManualTrigger === true,
+    targetValidationCommands: executionRunbook.targetValidationCommands || [],
+    writeCommand: executionRunbook.writeCommand || null,
+    postActionSmokeCommands: executionRunbook.postActionSmokeCommands || [],
+    rollbackCommands: executionRunbook.rollbackCommands || [],
+    publicAccessFailClosedProof: executionRunbook.publicAccessFailClosedProof || null,
+    finalReceiptOutputs: executionRunbook.finalReceiptOutputs || [],
+    stopConditions: executionRunbook.stopConditions || [],
+    linearEvidence: executionRunbook.linearEvidence || null,
+    maxWritesPerRun: executionRunbook.maxWritesPerRun,
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: executionRunbookOk
+      ? 'execution runbook accepted for future operator-supervised use; checked-in policy remains blocked and no command executed'
+      : 'execution runbook rejected before any runner process or write command',
+    evidenceTarget: executionRunbook.evidenceTarget || releaseAdmissionReceipt.evidenceTarget || releaseAdmission.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may use this runbook only after checked-in policy enablement, exact command receipt, target validation, rollback readiness, smoke plan, and public fail-closed proof are revalidated',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      executionRunbookRequiresReleaseAdmissionReceipt: manifest.a4ExecutionRunbook?.requiresReleaseAdmissionReceipt,
+      executionRunbookOnly: manifest.a4ExecutionRunbook?.runbookOnly,
     },
   };
 }
@@ -5738,6 +6003,61 @@ function commandReleaseAdmissionCheck(options) {
   return result;
 }
 
+function commandExecutionRunbookCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for execution-runbook-check'));
+  }
+  if (!options.releaseAdmissionReceipt) {
+    throw new Error('--release-admission-receipt is required for execution-runbook-check');
+  }
+  if (!options.executionRunbook) throw new Error('--execution-runbook is required for execution-runbook-check');
+
+  const releaseResult = commandReleaseAdmissionCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const releaseAdmissionPath = resolveFromRoot(options.releaseAdmission);
+  const releaseAdmissionReceiptPath = resolveFromRoot(options.releaseAdmissionReceipt);
+  const executionRunbookPath = resolveFromRoot(options.executionRunbook);
+  const runnerDiffReceiptPath = resolveFromRoot(options.runnerDiffReceipt);
+  const releaseAdmission = readJson(releaseAdmissionPath);
+  const releaseAdmissionReceipt = readJson(releaseAdmissionReceiptPath);
+  const executionRunbook = readJson(executionRunbookPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const releaseAdmissionReceiptErrors = validateReleaseAdmissionReceipt(releaseAdmissionReceipt, releaseAdmission, releaseResult, {
+    releaseAdmissionPath,
+    runnerDiffReceiptPath,
+  }, constraints);
+  const executionRunbookErrors = validateExecutionRunbook(executionRunbook, releaseAdmissionReceipt, manifest, {
+    releaseAdmissionPath,
+    releaseAdmissionReceiptPath,
+  }, constraints);
+  const result = buildExecutionRunbookReceipt({
+    manifest,
+    manifestValidation,
+    releaseResult,
+    releaseAdmission,
+    releaseAdmissionPath,
+    releaseAdmissionReceipt,
+    releaseAdmissionReceiptPath,
+    executionRunbook,
+    executionRunbookPath,
+    constraints,
+    releaseAdmissionReceiptErrors,
+    executionRunbookErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -5791,6 +6111,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-plan-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-diff-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs release-admission-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs execution-runbook-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -5819,6 +6140,7 @@ async function main() {
   else if (options.command === 'runner-implementation-plan-check') result = commandRunnerImplementationPlanCheck(options);
   else if (options.command === 'runner-implementation-diff-check') result = commandRunnerImplementationDiffCheck(options);
   else if (options.command === 'release-admission-check') result = commandReleaseAdmissionCheck(options);
+  else if (options.command === 'execution-runbook-check') result = commandExecutionRunbookCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -5843,6 +6165,7 @@ export {
   commandRunnerImplementationPlanCheck,
   commandRunnerImplementationDiffCheck,
   commandReleaseAdmissionCheck,
+  commandExecutionRunbookCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
