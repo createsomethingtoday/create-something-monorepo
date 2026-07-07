@@ -14,24 +14,31 @@
 
 ## Original Visuals
 
-| File | Source prompt | Source file | Model | Owner | Review status | Refresh due | Notes |
-| ---- | ------------- | ----------- | ----- | ----- | ------------- | ----------- | ----- |
-|      |               |             |       |       |               |             |       |
+| File | Source prompt | Source brief | Model | Output hash | Owner | Review status | Refresh due | Notes |
+| ---- | ------------- | ------------ | ----- | ----------- | ----- | ------------- | ----------- | ----- |
+|      |               |             |       |             |       |               |             |       |
+
+For `.agency` article and internal marketing visuals, the expected primary
+export is a 1536x1024 generated PNG in the current operating-artifact style used
+by `packages/agency/static/images/articles/`. Note any exception here, especially
+if a raw SVG, Atlas render, or LMS-style instructional diagram is intentionally
+published.
 
 ## Canvas Artifacts
 
 Use this section when a visual explains workflow behavior, governance, an offer,
-a case study, a tool comparison, or agent behavior.
+a case study, a tool comparison, or agent behavior. These artifacts are source
+briefs and control artifacts unless they are explicitly approved for publication.
 
-| File | Graph source | Renderer | Nodes shown | Relationships shown | Motion plan | Accessibility summary | Notes |
-| ---- | ------------ | -------- | ----------- | ------------------- | ----------- | --------------------- | ----- |
-|      |              |          |             |                     |             |                       |       |
+| File | Graph source | Renderer | Publishable as-is? | Nodes shown | Relationships shown | Motion plan | Accessibility summary | Notes |
+| ---- | ------------ | -------- | ------------------ | ----------- | ------------------- | ----------- | --------------------- | ----- |
+|      |              |          |                    |             |                     |             |                       |       |
 
 ## Generated Exports
 
-| File | Target surface | Size | Source prompt | Approved by | Published at | Notes |
-| ---- | -------------- | ---- | ------------- | ----------- | ------------ | ----- |
-|      |                |      |               |             |              |       |
+| File | Target surface | Size | Source prompt | Source brief | Output hash | Approved by | Published at | Notes |
+| ---- | -------------- | ---- | ------------- | ------------ | ----------- | ----------- | ------------ | ----- |
+|      |                |      |               |              |             |             |              |       |
 
 ## Route Placement
 
@@ -50,13 +57,15 @@ a case study, a tool comparison, or agent behavior.
 - [ ] Original visuals use the Canon Images guideline.
 - [ ] TASTE packet is attached or explicitly marked not applicable.
 - [ ] TASTE references were used as judgment inputs and were not copied.
-- [ ] Workflow, governance, and agent-behavior visuals were attempted as Atlas canvas artifacts before one-off graphics.
-- [ ] Canvas artifacts preserve a graph source and do not move the source of truth into the renderer.
-- [ ] Canvas artifacts show owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
+- [ ] Workflow, governance, and agent-behavior visuals preserve a graph, SVG, Atlas map, or written source brief before generated export.
+- [ ] Canvas artifacts preserve a graph source and do not move the source of truth into the renderer or generated image.
+- [ ] Canvas/source artifacts show owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
+- [ ] Public article, education, social, deck, and client-update visuals use the approved OpenAI generated export unless the raw SVG/Atlas artifact is quality-approved.
+- [ ] `.agency` article/internal marketing visuals are not using the `.learn`/LMS lesson-diagram style by default.
 - [ ] Screenshots prove a concrete claim and are not decorative.
 - [ ] Screenshots are redacted and do not expose secrets, private data, prompts, or customer records.
 - [ ] Primary owned visual is placed in the article body when it is part of the page argument.
 - [ ] Captions and alt text are written.
 - [ ] Refresh dates are assigned.
-- [ ] No generated image is treated as durable source-of-truth evidence.
+- [ ] No generated image is treated as durable source-of-truth evidence unless backed by workflow artifacts, screenshots, receipts, metadata, or policy records.
 - [ ] Langfuse is excluded unless this asset is part of a separate scored rubric.

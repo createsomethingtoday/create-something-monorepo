@@ -6,11 +6,18 @@
 > Image family: atlas-story-canvas | system-map-hero | db-automation-judgment | policy-gate-chart | evidence-map | handoff-receipt | screenshot-annotation | cta-visual
 > Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable
 > Atlas graph source: existing starter map | new graph artifact | not applicable
+> Source brief: graph | SVG | Atlas map | written brief | screenshot | not applicable
 > TASTE packet: approved references attached | not applicable
 > Owner:
 > Review status: draft | approved | published | retired
 > Target export:
+> Output hash:
 > Last updated:
+
+Use the current `.agency` article visual family as the default precedent for
+article and internal marketing visuals: `packages/agency/static/images/articles/`.
+Do not default to the `.learn`/LMS lesson-diagram style unless the target surface
+is explicitly educational.
 
 ## Model
 
@@ -34,6 +41,7 @@ Proof object:
 Next action:
 Canvas source:
 Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt
+Publishable layer: approved OpenAI generated export | screenshot evidence | raw SVG/Atlas only if quality-approved
 TASTE references:
 ```
 
@@ -51,20 +59,36 @@ communication pattern to borrow>. Use references for judgment only. Do not copy
 source assets, brand marks, fonts, layouts, campaign language, or images.
 
 If the image explains workflow behavior, governance, an offer, a case study, a
-tool comparison, or agent behavior, use an Atlas-style canvas with nodes and
-mapped relationships before any decorative composition. Preserve the graph as the source of truth: owner, workflow or data artifact, automation route, AI-assisted task when present, human judgment point, stop condition, and receipt surface. Use static story canvas for marketing and article visuals, interactive Atlas canvas only when the surface needs editing or intake, and Sigma/Cosmograph only for large read-only network exploration.
+tool comparison, or agent behavior, preserve a graph, SVG, Atlas map, or written
+brief with nodes and mapped relationships before any decorative composition. Use
+that source brief to generate the publishable OpenAI export.
+Preserve the graph
+as source context: owner, workflow or data artifact, automation route,
+AI-assisted task when present, human judgment point, stop condition, and receipt
+surface. Publish raw SVG/Atlas output only when it meets the same quality bar as
+the generated export.
 
-Style: Use Ona.com as the design and communication foundation: calm hierarchy,
-plain claims, compact proof, governed execution, visible evidence, and restrained
-action states. Translate that foundation into CREATE SOMETHING artifact language:
-system maps, MCP boundaries, policy gates, receipts, validation proof, owners,
-and handoff state. Prefer porcelain or quiet near-black surfaces, crisp labels,
-restrained cobalt/moss/stop accents, compact proof panels, and the isometric cube
-as a persistent system signature.
+Style: Canon Clear image language. Use Ona.com as the communication foundation:
+plain claim, calm hierarchy, compact proof, governed execution, visible evidence,
+and restrained action states. Translate that foundation into CREATE SOMETHING artifact language: system maps, MCP boundaries, policy gates, receipts,
+validation proof, owners, and handoff state. Prefer porcelain `#f9f9f9`, white
+panels, onyx `#0a0e19`, quiet grey `#636363`, thin `#e1e1e1` borders, 4-8px
+radii, compact proof panels, receipt grids, state rows, decision panels, and a
+small isometric cube system signature only when useful. Use ocean `#0048ff`, moss `#1e3c2c`, and stop `#c41e3a` only as semantic state accents.
+
+For `.agency` article and internal marketing visuals, make the image feel like a
+polished operating workspace instead of a flat explanatory slide. Use layered
+white panels, subtle shadows, dense but readable UI rows, small icons, owners,
+status counts, proof summaries, dotted connectors, receipt rails, and optional
+isometric system objects. Target primary generated exports at 1536x1024. Keep
+real screenshots separate at 1280x720 with source metadata when they prove a
+tool claim.
 
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains, stock
-photography, fake dashboards, unreadable file paths, client secrets, PHI, private
-prompts, watermarks, vendor endorsement, and decorative AI atmosphere.
+photography, generic premium desk scenes, random decorative objects, fake
+dashboards, unreadable file paths, flat `.learn`/LMS lesson diagrams for
+`.agency` marketing pages, client secrets, PHI, private prompts, watermarks,
+vendor endorsement, and decorative AI atmosphere.
 ```
 
 ## Review Gate
@@ -73,10 +97,11 @@ prompts, watermarks, vendor endorsement, and decorative AI atmosphere.
 - [ ] The image answers a specific operational question.
 - [ ] TASTE references are attached or explicitly marked not applicable.
 - [ ] TASTE references were used as judgment inputs and were not copied.
-- [ ] Workflow, governance, or agent-behavior visuals use an Atlas canvas unless explicitly marked not applicable.
-- [ ] The canvas shows owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
+- [ ] Workflow, governance, or agent-behavior visuals preserve a graph, SVG, Atlas map, or written source brief unless explicitly marked not applicable.
+- [ ] `.agency` article/internal marketing visuals match the existing generated operating-artifact family rather than the LMS lesson-diagram style.
+- [ ] The source brief shows owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
 - [ ] The claim is supported by visible proof or a real screenshot.
 - [ ] No fake UI is presented as a screenshot.
 - [ ] No secrets, private data, private prompts, client records, or tokens appear.
-- [ ] The source prompt, model, date, owner, target surface, and refresh date are stored.
+- [ ] The source prompt, source brief, model, date, output hash, owner, target surface, and refresh date are stored.
 - [ ] Langfuse is not required unless a separate scored image-quality rubric exists.

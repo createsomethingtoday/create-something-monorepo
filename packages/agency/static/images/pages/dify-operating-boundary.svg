@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Dify operating boundary</title>
+  <desc id="desc">A CREATE SOMETHING diagram showing Dify, MCP, Policy OS, eval gates, evidence, and action states.</desc>
+  <rect width="1200" height="720" fill="#f7f7f7"/>
+  <text x="72" y="96" fill="#0a0e19" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="650">Dify is useful when the boundary is visible.</text>
+  <text x="72" y="140" fill="#636363" font-family="Inter, Arial, sans-serif" font-size="22">The app surface, tools, rules, evals, and evidence must travel together.</text>
+  <g font-family="Inter, Arial, sans-serif">
+    <rect x="78" y="226" width="196" height="202" rx="14" fill="#ffffff" stroke="#d9d9d9"/>
+    <text x="108" y="284" fill="#0a0e19" font-size="28" font-weight="650">Dify app</text>
+    <text x="108" y="326" fill="#636363" font-size="18">Visible task</text>
+    <text x="108" y="354" fill="#636363" font-size="18">and operator UX.</text>
+    <rect x="294" y="226" width="196" height="202" rx="14" fill="#f8fbff" stroke="#b8c7ff"/>
+    <text x="324" y="284" fill="#0a0e19" font-size="28" font-weight="650">MCP card</text>
+    <text x="324" y="326" fill="#3553a6" font-size="18">Tools, auth,</text>
+    <text x="324" y="354" fill="#3553a6" font-size="18">resources.</text>
+    <rect x="510" y="226" width="196" height="202" rx="14" fill="#fff9ec" stroke="#ead4a2"/>
+    <text x="540" y="284" fill="#0a0e19" font-size="28" font-weight="650">Policy OS</text>
+    <text x="540" y="326" fill="#806224" font-size="18">Allowed, ask,</text>
+    <text x="540" y="354" fill="#806224" font-size="18">blocked.</text>
+    <rect x="726" y="226" width="196" height="202" rx="14" fill="#eef5ef" stroke="#b8cbbb"/>
+    <text x="756" y="284" fill="#0a0e19" font-size="28" font-weight="650">Eval gates</text>
+    <text x="756" y="326" fill="#4e6f55" font-size="18">Golden tasks</text>
+    <text x="756" y="354" fill="#4e6f55" font-size="18">and refusals.</text>
+    <rect x="942" y="226" width="196" height="202" rx="14" fill="#0a0e19"/>
+    <text x="972" y="284" fill="#ffffff" font-size="28" font-weight="650">Evidence</text>
+    <text x="972" y="326" fill="#d9d9d9" font-size="18">Receipt, runbook,</text>
+    <text x="972" y="354" fill="#d9d9d9" font-size="18">rollback note.</text>
+    <path d="M274 327h20M490 327h20M706 327h20M922 327h20" stroke="#2251ff" stroke-width="4" stroke-linecap="round"/>
+    <rect x="224" y="520" width="180" height="56" rx="28" fill="#eef5ef"/>
+    <text x="314" y="556" fill="#4e6f55" font-size="20" font-weight="650" text-anchor="middle">Allowed</text>
+    <rect x="510" y="520" width="180" height="56" rx="28" fill="#fff9ec"/>
+    <text x="600" y="556" fill="#806224" font-size="20" font-weight="650" text-anchor="middle">Ask</text>
+    <rect x="796" y="520" width="180" height="56" rx="28" fill="#fff2f2"/>
+    <text x="886" y="556" fill="#9b2c2c" font-size="20" font-weight="650" text-anchor="middle">Blocked</text>
+  </g>
+</svg>

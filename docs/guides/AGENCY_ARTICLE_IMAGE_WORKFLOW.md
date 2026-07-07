@@ -20,12 +20,22 @@ system-map, policy, receipt, validation, and handoff language.
 Use `docs/IMAGE_LANGUAGE_FOUNDATION.md` as the foundation for TASTE-backed image
 generation. TASTE supplies judgment context; generated images still need a named
 image family, proof requirement, source prompt, metadata, and review gate.
+For public-quality article and education visuals, prefer approved OpenAI
+generated exports over raw SVG or Atlas renders when the generated image better
+communicates the proof object.
+
+Current `.agency` article precedent is the generated operating-artifact family
+under `packages/agency/static/images/articles/`. Do not use the LMS lesson image
+style as the default for `.agency` marketing pages. The LMS style is useful for
+teaching concepts; `.agency` article visuals should feel like polished,
+client-safe product proof surfaces.
 
 ## Canvas-First Visual Language
 
 When a visual needs to explain a workflow, service, offer, case study, tool
-comparison, governance boundary, or agent behavior, default to an Atlas-style
-canvas with nodes and mapped relationships before creating a decorative graphic.
+comparison, governance boundary, or agent behavior, default to a graph, SVG, or
+Atlas-style source brief with nodes and mapped relationships before creating a
+decorative graphic.
 
 The canvas is the communication artifact because it can serve both audiences:
 
@@ -35,16 +45,25 @@ The canvas is the communication artifact because it can serve both audiences:
 
 Use this hierarchy:
 
-1. Static story canvas for marketing, articles, presentations, social crops, and
-   non-interactive route sections.
-2. Interactive Atlas canvas for education, intake, editing, accessibility, and
+1. Approved OpenAI generated export for marketing, articles, education,
+   presentations, social crops, client updates, and non-interactive route
+   sections when visual quality matters.
+2. Static story canvas or SVG/Atlas brief as source context, layout structure,
+   and fallback evidence when it meets the quality bar.
+3. Interactive Atlas canvas for education, intake, editing, accessibility, and
    agent-operable workflow state.
-3. Sigma or Cosmograph only for large read-only network exploration where the
+4. Sigma or Cosmograph only for large read-only network exploration where the
    graph is too large for rich workflow editing.
 
 Do not move the source of truth into a renderer. The source of truth should be a
 graph artifact that can be adapted into a story canvas, an interactive canvas,
-or a large-network renderer.
+large-network renderer, or an OpenAI generated export.
+
+For `.agency`, SVG and Atlas artifacts usually sit in the source-brief position.
+They can define layout, labels, relationships, and proof requirements, but the
+publishable in-page article visual should normally be the generated PNG export
+at 1536x1024. Publish a raw SVG only when it has the same polish as the existing
+article images, not merely because the labels are deterministic.
 
 Canvas visuals should show, at minimum:
 
@@ -89,16 +108,32 @@ Create original visuals for the operating-design point of view:
 These should be owned assets with editable source files. They can be reused,
 updated, and adapted across articles, demos, sales decks, and social posts.
 
-Prefer generating these as Atlas story-canvas variants when the visual is about
-system behavior, not just brand mood. If the live route already has a matching
-starter map, reuse its graph and render a static story canvas instead of
-redrawing the workflow by hand.
+Prefer generating these from a graph, SVG, or Atlas source brief when the visual
+is about system behavior, not just brand mood. If the live route already has a
+matching starter map, reuse its graph as generation context instead of redrawing
+the workflow by hand.
 
 For generated images, use `gpt-image-2` when access is available and keep the
-source prompt beside the export. The prompt must state the image family, proof
-requirement, target surface, and constraints before style direction.
+source prompt and source brief beside the export. The prompt must state the
+image family, proof requirement, target surface, and constraints before style
+direction.
 Use the Image API for one completed prompt or direct edits. Use the Responses API
 image generation tool when the work needs conversational, multi-turn refinement.
+Use edits from an approved export when continuity matters more than fresh
+variation.
+
+When creating `.agency` article/internal-page images, match the established
+article family:
+
+- 1536x1024 generated PNG for the primary original visual.
+- Light operational canvas, white cards, subtle borders/shadows, compact rows,
+  small icons, owners, status counts, proof summaries, receipt rails, and dotted
+  connectors.
+- Isometric system objects are allowed when they clarify layers or ownership.
+- Real screenshots stay separate as 1280x720 evidence captures with source,
+  checked date, rights note, and refresh due date.
+- Avoid flat 1200x720 educational diagrams, oversized title-only panels, and
+  sparse lane charts for `.agency` marketing pages.
 
 ## Collect
 
@@ -141,6 +176,7 @@ Do not use:
 - generic brain imagery
 - abstract stock dashboards
 - decorative screenshots that do not support a claim
+- LMS-style lesson diagrams as the default `.agency` article/marketing visual
 
 If an image does not make the article clearer, more credible, or more
 memorable, skip it.

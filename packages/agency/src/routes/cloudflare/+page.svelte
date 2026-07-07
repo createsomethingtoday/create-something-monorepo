@@ -8,6 +8,7 @@
     type ClearCardItem,
     type ClearCtaItem
   } from '@create-something/canon';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const statusCards: ClearCardItem[] = [
@@ -168,7 +169,7 @@
   title="Cloudflare Workflow Runtime | CREATE SOMETHING .agency"
   description="CREATE SOMETHING builds Cloudflare-native workflow systems with Workers, Pages, D1, scoped tool surfaces, and runtime control paths."
   keywords="Cloudflare workflow runtime, Cloudflare Workers, scoped tools, D1, workflow control, AI workflow infrastructure"
-  ogImage="/og/cloudflare-lane.svg"
+  ogImage="/og/cloudflare-lane.png"
   propertyName="agency"
   {faqItems}
 />
@@ -217,6 +218,15 @@
 >
   {#snippet after()}
     <ClearCardGrid items={runtimeFlow} columns={4} ariaLabel="Cloudflare runtime flow" />
+    <ArticleVisualFigure
+      id="cloudflare-runtime-visual"
+      src="/images/pages/cloudflare-runtime-proof.png"
+      alt="Diagram showing route, gate, state, act, prove, and a handoff receipt for runtime work."
+      eyebrow="Canon visual"
+      title="Runtime proof is route, gate, state, act, and receipt."
+      caption="This keeps Cloudflare positioned as the controlled runtime path inside the workflow, not as the whole operating model."
+      sourceLabel="Generated PNG with SVG source brief and prompt metadata retained."
+    />
   {/snippet}
 </ClearPageSection>
 
