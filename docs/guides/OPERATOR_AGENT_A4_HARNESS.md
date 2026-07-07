@@ -707,6 +707,59 @@ rejects unknown decisions, missing reviewer or timestamp, missing reviewed
 surfaces, leaked raw artifacts, stale publication receipts, and any claim that
 approval caused execution, posting, runner enablement, or writes.
 
+After an approved receipt-review decision exists, validate the manual next-step
+handoff packet:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs manual-next-step-handoff-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --runner-contract-receipt <runner-contract-receipt.json> \
+  --runner-plan <runner-plan.json> \
+  --runner-plan-receipt <runner-plan-receipt.json> \
+  --runner-diff <runner-diff.json> \
+  --runner-diff-receipt <runner-diff-receipt.json> \
+  --release-admission <release-admission.json> \
+  --release-admission-receipt <release-admission-receipt.json> \
+  --execution-runbook <execution-runbook.json> \
+  --execution-runbook-receipt <execution-runbook-receipt.json> \
+  --receipt-bundle <receipt-bundle.json> \
+  --receipt-bundle-receipt <receipt-bundle-receipt.json> \
+  --receipt-publication <receipt-publication.json> \
+  --receipt-publication-receipt <receipt-publication-receipt.json> \
+  --receipt-review-decision <receipt-review-decision.json> \
+  --receipt-review-decision-receipt <receipt-review-decision-receipt.json> \
+  --manual-next-step-handoff <manual-next-step-handoff.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The manual next-step handoff packet turns an approved review decision into a
+human-readable follow-up issue proposal for an operator. It must include the
+approved receipt-review-decision receipt, proposed issue title and body, owner,
+required receipt references, public-access fail-closed proof, redaction policy,
+operator summary, and explicit no-execution markers. It is not an issue
+creator, poster, runner, deployer, or production writer. The verifier rejects
+unapproved or drifted review receipts, missing owner or proposed issue fields,
+issue-created claims, Linear-created claims, third-party write claims, leaked
+secrets, raw logs, prompts, raw transcripts, and any process/command/write
+marker. `authority.a4Execution` remains blocked.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:

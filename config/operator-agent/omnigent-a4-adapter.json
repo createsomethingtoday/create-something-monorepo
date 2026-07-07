@@ -504,6 +504,55 @@
     "writesPerformed": 0,
     "blockedUntil": "operator receipt-review decisions may approve, request changes, reject, or block a future manual next step, but this verifier must not enable execution, post updates, spawn a runner, or mutate third-party systems"
   },
+  "a4ManualNextStepHandoff": {
+    "requiresReceiptReviewDecisionReceipt": true,
+    "handoffPacketOnly": true,
+    "requiresApprovedReviewDecision": true,
+    "requiresProposedIssue": true,
+    "requiresOwner": true,
+    "issueCreationPerformed": false,
+    "requiresRedactionPolicy": true,
+    "forbidsSecrets": true,
+    "forbidsRawLogs": true,
+    "forbidsPrompts": true,
+    "forbidsRawTranscripts": true,
+    "requiresNoExecutionOnHandoff": true,
+    "allowedHandoffSurfaces": [
+      "Linear",
+      "signed-release-record"
+    ],
+    "requiredReceiptReferences": [
+      "receipt-review-decision-check",
+      "receipt-publication-check",
+      "receipt-bundle-check",
+      "execution-runbook-check",
+      "release-admission-check"
+    ],
+    "requiredEvidence": [
+      "receipt-review-decision-receipt",
+      "approved-review-decision",
+      "proposed-follow-up-issue",
+      "owner",
+      "public-access-fail-closed-proof",
+      "redaction-policy",
+      "operator-summary"
+    ],
+    "requiredNoExecutionMarkers": [
+      "current-policy-blocked",
+      "process-not-spawned",
+      "executed-commands-empty",
+      "runner-disabled",
+      "execution-not-ready",
+      "execution-disabled",
+      "execution-not-approved",
+      "would-execute-false",
+      "writes-performed-zero",
+      "issue-not-created",
+      "handoff-only"
+    ],
+    "writesPerformed": 0,
+    "blockedUntil": "manual next-step handoff packets may describe a proposed follow-up issue for an operator, but this verifier must not create or post issues, enable execution, spawn a runner, expose raw artifacts, or mutate third-party systems"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -619,6 +668,11 @@
       "id": "gate-20-a4-receipt-review-decision",
       "required": "A4 receipt review decision validates the operator review outcome for the published receipt packet without enabling execution, posting updates, or mutating production",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs receipt-review-decision-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --policy-patch-receipt <policy-patch-receipt.json> --candidate-manifest <candidate-manifest.json> --application-diff-receipt <application-diff-receipt.json> --readiness-receipt <readiness-receipt.json> --runner-contract <runner-contract.json> --runner-contract-receipt <runner-contract-receipt.json> --runner-plan <runner-plan.json> --runner-plan-receipt <runner-plan-receipt.json> --runner-diff <runner-diff.json> --runner-diff-receipt <runner-diff-receipt.json> --release-admission <release-admission.json> --release-admission-receipt <release-admission-receipt.json> --execution-runbook <execution-runbook.json> --execution-runbook-receipt <execution-runbook-receipt.json> --receipt-bundle <receipt-bundle.json> --receipt-bundle-receipt <receipt-bundle-receipt.json> --receipt-publication <receipt-publication.json> --receipt-publication-receipt <receipt-publication-receipt.json> --receipt-review-decision <receipt-review-decision.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-21-a4-manual-next-step-handoff",
+      "required": "A4 manual next-step handoff validates an approved review decision and proposed follow-up issue packet without creating issues, posting updates, exposing raw artifacts, or executing",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs manual-next-step-handoff-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --policy-patch-receipt <policy-patch-receipt.json> --candidate-manifest <candidate-manifest.json> --application-diff-receipt <application-diff-receipt.json> --readiness-receipt <readiness-receipt.json> --runner-contract <runner-contract.json> --runner-contract-receipt <runner-contract-receipt.json> --runner-plan <runner-plan.json> --runner-plan-receipt <runner-plan-receipt.json> --runner-diff <runner-diff.json> --runner-diff-receipt <runner-diff-receipt.json> --release-admission <release-admission.json> --release-admission-receipt <release-admission-receipt.json> --execution-runbook <execution-runbook.json> --execution-runbook-receipt <execution-runbook-receipt.json> --receipt-bundle <receipt-bundle.json> --receipt-bundle-receipt <receipt-bundle-receipt.json> --receipt-publication <receipt-publication.json> --receipt-publication-receipt <receipt-publication-receipt.json> --receipt-review-decision <receipt-review-decision.json> --receipt-review-decision-receipt <receipt-review-decision-receipt.json> --manual-next-step-handoff <manual-next-step-handoff.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }
