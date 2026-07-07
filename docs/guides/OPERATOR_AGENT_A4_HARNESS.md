@@ -2009,6 +2009,39 @@ verifier-side PR mutation claims, verifier-side runner admission claims, runner
 enablement claims, leaked raw artifacts, and any process/command/write marker.
 `authority.a4Execution` remains blocked in this verifier branch.
 
+After the admission PR review passes, validate the operator merge decision for
+that reviewed admission PR:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-merge-decision-check \
+  <same chain arguments as implementation-production-runner-implementation-admission-pr-review-check> \
+  --implementation-production-runner-implementation-admission-pr-review-receipt <implementation-production-runner-implementation-admission-pr-review-receipt.json> \
+  --implementation-production-runner-implementation-admission-merge-decision <implementation-production-runner-implementation-admission-merge-decision.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production runner implementation admission merge-decision
+packet proves an operator approved a separate manual merge path after admission
+PR review. It must bind to the admission PR review artifact and receipt, carry
+merge decision, decided-by, decided-at, decision rationale, evidence review,
+readiness assessment, no-execution-approval, runner implementation reference,
+runner contract reference, runner entry point, PR URL, PR number, head ref, base
+ref, commit SHA, diff reference, checks reference, review scope, and redaction
+policy.
+
+This gate validates merge-decision evidence only. It does not admit runner code,
+apply the policy patch in this verifier branch, enable a runner, spawn a
+process, merge or mutate PRs, close or update Linear issues, deploy, post
+updates, rotate secrets, expose raw artifacts, or mutate third-party systems. It
+rejects drifted admission PR review receipts, non-approved merge decisions,
+missing rationale or readiness assessment, execution approval claims,
+verifier-side PR mutation claims, verifier-side runner admission claims, runner
+enablement claims, leaked raw artifacts, and any process/command/write marker.
+`authority.a4Execution` remains blocked in this verifier branch.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
