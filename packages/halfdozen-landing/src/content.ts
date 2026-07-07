@@ -54,15 +54,21 @@ export const services = [
 export const keepUpItems = [
   {
     type: 'Article',
-    title: 'Why Every Team Needs an Operating System'
+    title: 'Why Every Team Needs an Operating System',
+    summary: 'A clear operating layer keeps teams aligned when the show clock is moving.',
+    image: '/assets/live-event-photo.png'
   },
   {
     type: 'Case Study',
-    title: 'Custom Workflows for Production Teams'
+    title: 'Custom Workflows for Production Teams',
+    summary: 'How shared intake, approvals, and handoffs remove the hidden work between teams.',
+    image: '/assets/hero-motion-card.png'
   },
   {
     type: 'Insights',
-    title: 'Simplifying Operations Across the Live Industry'
+    title: 'Simplifying Operations Across the Live Industry',
+    summary: 'Practical ways to turn scattered tools into one system people keep using.',
+    image: '/assets/testimonial-crowd.png'
   }
 ];
 

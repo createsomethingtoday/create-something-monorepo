@@ -115,6 +115,14 @@ export function DetailsSection() {
         <p>{featuredService.summary}</p>
         <h2>{featuredService.title}</h2>
       </article>
+      <div className="hd-service-rail" aria-label="Service system">
+        {services.map((service) => (
+          <span key={service.number}>
+            <strong>{service.number}</strong>
+            {service.title}
+          </span>
+        ))}
+      </div>
     </section>
   );
 }
@@ -132,10 +140,14 @@ export function ContentCtaSection() {
         <div className="hd-feed-list">
           {keepUpItems.map((item, index) => (
             <a className="hd-feed-item" href="#contact" key={item.title}>
-              <span className={`hd-feed-thumb hd-feed-thumb--${index + 1}`} />
-              <span>
+              <span className={`hd-feed-thumb hd-feed-thumb--${index + 1}`}>
+                <img src={item.image} alt="" loading="lazy" aria-hidden="true" />
+                <span>{item.type}</span>
+              </span>
+              <span className="hd-feed-copy">
                 <small>{item.type}</small>
                 <strong>{item.title}</strong>
+                <em>{item.summary}</em>
               </span>
             </a>
           ))}
