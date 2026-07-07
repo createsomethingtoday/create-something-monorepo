@@ -24,11 +24,15 @@ const HIGH_RISK_PATTERNS = [
 
 const REQUIRED_PACKET_FIELDS = [
   'authorityLevel',
+  'issue',
   'approver',
   'approvalSurface',
+  'approvedAt',
+  'expiresAt',
   'target',
   'action',
   'riskClass',
+  'namedRisks',
   'forbiddenSideEffects',
   'validation',
   'rollback',
@@ -65,6 +69,11 @@ function parseArgs(argv) {
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
+    expectedIssue: null,
+    expectedTarget: null,
+    expectedAction: null,
+    maxAgeHours: 24,
+    now: null,
     json: false,
     writeReceipt: true,
   };
@@ -76,6 +85,11 @@ function parseArgs(argv) {
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
+    else if (arg === '--expected-issue' && args[index + 1]) options.expectedIssue = args[++index];
+    else if (arg === '--expected-target' && args[index + 1]) options.expectedTarget = args[++index];
+    else if (arg === '--expected-action' && args[index + 1]) options.expectedAction = args[++index];
+    else if (arg === '--max-age-hours' && args[index + 1]) options.maxAgeHours = Number(args[++index]);
+    else if (arg === '--now' && args[index + 1]) options.now = args[++index];
     else if (arg === '--json') options.json = true;
     else if (arg === '--no-receipt') options.writeReceipt = false;
     else if (arg === '--help' || arg === '-h') options.help = true;
@@ -114,6 +128,15 @@ function includesAll(actual, expected) {
 
 function commandLooksHighRisk(command) {
   return HIGH_RISK_PATTERNS.some((pattern) => pattern.test(command || ''));
+}
+
+function parseTimestamp(value, label, errors) {
+  const time = Date.parse(value || '');
+  if (!Number.isFinite(time)) {
+    errors.push(`approval packet ${label} must be a valid ISO timestamp`);
+    return null;
+  }
+  return time;
 }
 
 function validateManifest(manifest) {
@@ -200,7 +223,7 @@ function validateManifest(manifest) {
   };
 }
 
-function validateApprovalPacket(packet, manifest) {
+function validateApprovalPacket(packet, manifest, constraints = {}) {
   const errors = [];
   const rules = manifest.a4ApprovalPacket || {};
 
@@ -212,6 +235,16 @@ function validateApprovalPacket(packet, manifest) {
     errors.push(`approval packet approvalSurface is not allowed: ${packet.approvalSurface}`);
   }
 
+  if (constraints.expectedIssue && packet.issue !== constraints.expectedIssue) {
+    errors.push(`approval packet issue mismatch: expected ${constraints.expectedIssue}, got ${packet.issue}`);
+  }
+  if (constraints.expectedTarget && packet.target !== constraints.expectedTarget) {
+    errors.push(`approval packet target mismatch: expected ${constraints.expectedTarget}, got ${packet.target}`);
+  }
+  if (constraints.expectedAction && packet.action !== constraints.expectedAction) {
+    errors.push(`approval packet action mismatch: expected ${constraints.expectedAction}, got ${packet.action}`);
+  }
+
   const namedRisks = new Set(packet.namedRisks || []);
   for (const risk of rules.mustNameExactRisks || REQUIRED_A4_RISKS) {
     if (!namedRisks.has(risk)) errors.push(`approval packet must name risk: ${risk}`);
@@ -219,6 +252,23 @@ function validateApprovalPacket(packet, manifest) {
 
   for (const field of ['validation', 'rollback', 'postActionSmoke', 'stopConditions']) {
     if (!hasValue(packet[field])) errors.push(`approval packet ${field} must be non-empty`);
+  }
+
+  const now = constraints.now ? parseTimestamp(constraints.now, 'now', errors) : Date.now();
+  const approvedAt = parseTimestamp(packet.approvedAt, 'approvedAt', errors);
+  const expiresAt = parseTimestamp(packet.expiresAt, 'expiresAt', errors);
+  const maxAgeHours = constraints.maxAgeHours ?? 24;
+  if (!Number.isFinite(maxAgeHours) || maxAgeHours <= 0) {
+    errors.push('approval packet maxAgeHours must be a positive number');
+  }
+  if (approvedAt !== null && now !== null) {
+    if (approvedAt > now) errors.push('approval packet approvedAt must not be in the future');
+    if (Number.isFinite(maxAgeHours) && now - approvedAt > maxAgeHours * 60 * 60 * 1000) {
+      errors.push(`approval packet is stale: approvedAt is older than ${maxAgeHours} hours`);
+    }
+  }
+  if (expiresAt !== null && now !== null && expiresAt <= now) {
+    errors.push('approval packet expiresAt must be in the future');
   }
 
   return {
@@ -325,7 +375,7 @@ function writeReceipt(options, receipt) {
 function buildReceipt(mode, options, result) {
   return {
     mode,
-    issue: 'CRE-1061',
+    issue: result.issue || result.constraints?.expectedIssue || 'CRE-1061',
     manifest: options.manifest,
     ok: result.ok,
     errors: result.errors || [],
@@ -363,17 +413,29 @@ function commandCheck(options) {
 
 function commandApprovalCheck(options) {
   if (!options.packet) throw new Error('--packet is required for approval-check');
+  if (!options.expectedIssue) throw new Error('--expected-issue is required for approval-check');
+  if (!options.expectedTarget) throw new Error('--expected-target is required for approval-check');
+  if (!options.expectedAction) throw new Error('--expected-action is required for approval-check');
   const manifest = readJson(resolveFromRoot(options.manifest));
   const packetPath = resolveFromRoot(options.packet);
   const packet = readJson(packetPath);
   const manifestValidation = validateManifest(manifest);
-  const packetValidation = validateApprovalPacket(packet, manifest);
+  const constraints = {
+    expectedIssue: options.expectedIssue,
+    expectedTarget: options.expectedTarget,
+    expectedAction: options.expectedAction,
+    maxAgeHours: options.maxAgeHours,
+    now: options.now,
+  };
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
   const result = {
     ok: manifestValidation.ok && packetValidation.ok,
     errors: [...manifestValidation.errors, ...packetValidation.errors],
     warnings: manifestValidation.warnings,
     manifestPath: options.manifest,
     packetPath: rel(packetPath),
+    issue: packet.issue,
+    constraints,
   };
   if (options.writeReceipt) {
     result.receiptPath = writeReceipt(options, buildReceipt('approval-check', options, result));
@@ -420,7 +482,7 @@ function commandPrint(options) {
 function usage() {
   console.log(`Usage:
   node scripts/operator-agent-omnigent-adapter.mjs check [--manifest <path>] [--json]
-  node scripts/operator-agent-omnigent-adapter.mjs approval-check --packet <path> [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs approval-check --packet <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);

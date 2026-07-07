@@ -21,11 +21,15 @@ writes, or irreversible data operations.
 
 ```text
 Authority level: A4
+Issue:
 Approver:
 Approval surface:
+Approved at:
+Expires at:
 Target:
 Action:
 Risk class:
+Named risks:
 Forbidden side effects:
 Validation:
 Rollback:
@@ -102,12 +106,21 @@ Before any real high-risk action is exposed through Omnigent, validate the
 approval packet:
 
 ```bash
-node scripts/operator-agent-omnigent-adapter.mjs approval-check --packet <packet.json> --json
+node scripts/operator-agent-omnigent-adapter.mjs approval-check \
+  --packet <packet.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
 ```
 
-The packet must name exact risks for credentials, billing, client production,
-destructive writes, and irreversible data. A packet that omits one of those
-risks fails closed even if the operator approved a related action.
+The packet must bind to the same Linear issue, target, and action that the
+harness is about to execute. It must also include `approvedAt` and `expiresAt`
+timestamps, and it must remain within the validator freshness window. The packet
+must name exact risks for credentials, billing, client production, destructive
+writes, and irreversible data. A packet that omits one of those risks, mismatches
+the expected target/action, is stale, is expired, or lacks rollback/smoke/stop
+conditions fails closed even if the operator approved a related action.
 
 ## Regression Cadence
 

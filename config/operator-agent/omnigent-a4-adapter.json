@@ -95,11 +95,15 @@
   "a4ApprovalPacket": {
     "requiredFields": [
       "authorityLevel",
+      "issue",
       "approver",
       "approvalSurface",
+      "approvedAt",
+      "expiresAt",
       "target",
       "action",
       "riskClass",
+      "namedRisks",
       "forbiddenSideEffects",
       "validation",
       "rollback",
@@ -122,6 +126,8 @@
     "mustStopOn": [
       "missing approval packet",
       "stale approval packet",
+      "expired approval packet",
+      "issue mismatch",
       "target mismatch",
       "action mismatch",
       "missing rollback",
