@@ -232,6 +232,8 @@ function parseArgs(argv) {
     else if (arg === '--implementation-production-policy-enablement-merge-evidence' && args[index + 1]) options.implementationProductionPolicyEnablementMergeEvidence = args[++index];
     else if (arg === '--implementation-production-policy-enablement-merge-evidence-receipt' && args[index + 1]) options.implementationProductionPolicyEnablementMergeEvidenceReceipt = args[++index];
     else if (arg === '--implementation-production-policy-enablement-revalidation' && args[index + 1]) options.implementationProductionPolicyEnablementRevalidation = args[++index];
+    else if (arg === '--implementation-production-policy-enablement-revalidation-receipt' && args[index + 1]) options.implementationProductionPolicyEnablementRevalidationReceipt = args[++index];
+    else if (arg === '--implementation-production-runner-admission' && args[index + 1]) options.implementationProductionRunnerAdmission = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -3207,6 +3209,113 @@ function validateManifest(manifest) {
   }
   if (implementationProductionPolicyEnablementRevalidation.writesPerformed !== 0) {
     errors.push('a4ImplementationProductionPolicyEnablementRevalidation.writesPerformed must be 0');
+  }
+
+  const implementationProductionRunnerAdmission = manifest.a4ImplementationProductionRunnerAdmission || {};
+  if (implementationProductionRunnerAdmission.requiresImplementationProductionPolicyEnablementRevalidationReceipt !== true) {
+    errors.push('a4ImplementationProductionRunnerAdmission.requiresImplementationProductionPolicyEnablementRevalidationReceipt must be true');
+  }
+  if (implementationProductionRunnerAdmission.runnerAdmissionEvidenceOnly !== true) {
+    errors.push('a4ImplementationProductionRunnerAdmission.runnerAdmissionEvidenceOnly must be true');
+  }
+  if (!implementationProductionRunnerAdmission.allowedAdmissionDecisions?.includes('approve-runner-implementation-review')) {
+    errors.push('a4ImplementationProductionRunnerAdmission.allowedAdmissionDecisions must include approve-runner-implementation-review');
+  }
+  for (const field of [
+    'requiresValidRevalidationReceipt',
+    'requiresApprovedRunnerImplementationReview',
+    'requiresRunnerImplementationReference',
+    'requiresRunnerContractReference',
+    'requiresFullChainRevalidated',
+    'requiresMergedPolicyState',
+    'requiresPublicAccessFailClosedProof',
+    'requiresCurrentVerifierPolicyBlocked',
+  ]) {
+    if (implementationProductionRunnerAdmission[field] !== true) {
+      errors.push(`a4ImplementationProductionRunnerAdmission.${field} must be true`);
+    }
+  }
+  if (implementationProductionRunnerAdmission.policyChangeAppliedByVerifier !== false) {
+    errors.push('a4ImplementationProductionRunnerAdmission.policyChangeAppliedByVerifier must be false');
+  }
+  if (implementationProductionRunnerAdmission.runnerEnabledByVerifier !== false) {
+    errors.push('a4ImplementationProductionRunnerAdmission.runnerEnabledByVerifier must be false');
+  }
+  if (implementationProductionRunnerAdmission.runnerImplementationAdmittedByVerifier !== false) {
+    errors.push('a4ImplementationProductionRunnerAdmission.runnerImplementationAdmittedByVerifier must be false');
+  }
+  if (implementationProductionRunnerAdmission.prMutationPerformedByVerifier !== false) {
+    errors.push('a4ImplementationProductionRunnerAdmission.prMutationPerformedByVerifier must be false');
+  }
+  if (implementationProductionRunnerAdmission.deployedByVerifier !== false) {
+    errors.push('a4ImplementationProductionRunnerAdmission.deployedByVerifier must be false');
+  }
+  if (implementationProductionRunnerAdmission.requiresNoThirdPartyWriteByVerifier !== true) {
+    errors.push('a4ImplementationProductionRunnerAdmission.requiresNoThirdPartyWriteByVerifier must be true');
+  }
+  if (implementationProductionRunnerAdmission.requiresNoIssueMutationByVerifier !== true) {
+    errors.push('a4ImplementationProductionRunnerAdmission.requiresNoIssueMutationByVerifier must be true');
+  }
+  if (implementationProductionRunnerAdmission.requiresRedactionPolicy !== true) {
+    errors.push('a4ImplementationProductionRunnerAdmission.requiresRedactionPolicy must be true');
+  }
+  for (const field of ['forbidsSecrets', 'forbidsRawLogs', 'forbidsPrompts', 'forbidsRawTranscripts']) {
+    if (implementationProductionRunnerAdmission[field] !== true) {
+      errors.push(`a4ImplementationProductionRunnerAdmission.${field} must be true`);
+    }
+  }
+  if (implementationProductionRunnerAdmission.requiresNoExecutionOnEvidence !== true) {
+    errors.push('a4ImplementationProductionRunnerAdmission.requiresNoExecutionOnEvidence must be true');
+  }
+  for (const receiptReference of [
+    'implementation-production-policy-enablement-revalidation-check',
+    'implementation-production-policy-enablement-merge-evidence-check',
+    'implementation-production-policy-enablement-merge-decision-check',
+    'implementation-production-policy-enablement-pr-check',
+    'implementation-production-a4-enablement-approval-check',
+  ]) {
+    if (!implementationProductionRunnerAdmission.requiredReceiptReferences?.includes(receiptReference)) {
+      errors.push(`a4ImplementationProductionRunnerAdmission.requiredReceiptReferences must include ${receiptReference}`);
+    }
+  }
+  for (const evidence of [
+    'implementation-production-policy-enablement-revalidation-receipt',
+    'approved-runner-implementation-review',
+    'runner-implementation-reference',
+    'runner-contract-reference',
+    'full-chain-revalidation',
+    'merged-policy-state',
+    'public-access-fail-closed-proof',
+    'redaction-policy',
+  ]) {
+    if (!implementationProductionRunnerAdmission.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ImplementationProductionRunnerAdmission.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-verifier-policy-blocked',
+    'policy-change-not-applied-by-verifier',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled-in-verifier',
+    'runner-implementation-not-admitted-by-verifier',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+    'deploy-not-performed-by-verifier',
+    'third-party-write-not-performed-by-verifier',
+    'issue-mutation-not-performed-by-verifier',
+    'pr-mutation-not-performed-by-verifier',
+    'production-runner-admission-evidence-only',
+  ]) {
+    if (!implementationProductionRunnerAdmission.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ImplementationProductionRunnerAdmission.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (implementationProductionRunnerAdmission.writesPerformed !== 0) {
+    errors.push('a4ImplementationProductionRunnerAdmission.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -10362,6 +10471,254 @@ function validateImplementationProductionPolicyEnablementRevalidation(revalidati
   return errors;
 }
 
+function validateImplementationProductionPolicyEnablementRevalidationReceipt(receipt, revalidation, revalidationResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'implementation-production-policy-enablement-revalidation-check') {
+    errors.push('implementation production policy enablement revalidation receipt mode must be implementation-production-policy-enablement-revalidation-check');
+  }
+  if (receipt.ok !== true || receipt.implementationProductionPolicyEnablementRevalidationOk !== true) {
+    errors.push('implementation production policy enablement revalidation receipt must be ok');
+  }
+  if (revalidationResult.ok !== true || revalidationResult.implementationProductionPolicyEnablementRevalidationOk !== true) {
+    errors.push('implementation production policy enablement revalidation current replay must be ok');
+  }
+  if (receipt.implementationProductionPolicyEnablementRevalidation !== rel(paths.implementationProductionPolicyEnablementRevalidationPath)) {
+    errors.push('implementation production policy enablement revalidation receipt implementationProductionPolicyEnablementRevalidation must match revalidation artifact path');
+  }
+  if (receipt.implementationProductionPolicyEnablementMergeEvidence !== revalidationResult.implementationProductionPolicyEnablementMergeEvidence) {
+    errors.push('implementation production policy enablement revalidation receipt implementationProductionPolicyEnablementMergeEvidence must match replay');
+  }
+  if (receipt.issue !== constraints.expectedIssue || receipt.issue !== revalidation.issue) {
+    errors.push('implementation production policy enablement revalidation receipt issue must match revalidation');
+  }
+  if (receipt.target !== constraints.expectedTarget || receipt.target !== revalidation.target) {
+    errors.push('implementation production policy enablement revalidation receipt target must match revalidation');
+  }
+  if (receipt.action !== constraints.expectedAction || receipt.action !== revalidation.action) {
+    errors.push('implementation production policy enablement revalidation receipt action must match revalidation');
+  }
+  for (const field of [
+    'targetScope',
+    'fullChainRevalidated',
+    'revalidationStatus',
+    'revalidatedBy',
+    'revalidatedAt',
+    'mergeStatus',
+    'mergeCommitSha',
+    'prUrl',
+    'prNumber',
+    'baseRef',
+    'headRef',
+    'commitSha',
+    'policyPatchProposalReference',
+    'publicAccessFailClosedProof',
+  ]) {
+    if (receipt[field] !== revalidation[field]) {
+      errors.push(`implementation production policy enablement revalidation receipt ${field} must match revalidation`);
+    }
+  }
+  for (const field of ['proposedPolicyChanges', 'mergedPolicyState', 'revalidatedReceiptReferences', 'requiredReceiptReferences', 'requiredEvidence']) {
+    if (!sameJson(receipt[field], revalidation[field])) {
+      errors.push(`implementation production policy enablement revalidation receipt ${field} must match revalidation`);
+    }
+  }
+  if (receipt.runnerAdmissionApproved !== false) {
+    errors.push('implementation production policy enablement revalidation receipt runnerAdmissionApproved must be false');
+  }
+  if (receipt.runnerImplementationAdmittedByVerifier !== false) {
+    errors.push('implementation production policy enablement revalidation receipt runnerImplementationAdmittedByVerifier must be false');
+  }
+  if (receipt.redactionPolicyApplied !== true) {
+    errors.push('implementation production policy enablement revalidation receipt redactionPolicyApplied must be true');
+  }
+  if (receipt.containsSecrets !== false) errors.push('implementation production policy enablement revalidation receipt containsSecrets must be false');
+  if (receipt.containsRawLogs !== false) errors.push('implementation production policy enablement revalidation receipt containsRawLogs must be false');
+  if (receipt.containsPrompts !== false) errors.push('implementation production policy enablement revalidation receipt containsPrompts must be false');
+  if (receipt.containsRawTranscripts !== false) {
+    errors.push('implementation production policy enablement revalidation receipt containsRawTranscripts must be false');
+  }
+  if (receipt.currentVerifierPolicyBlocked !== true) {
+    errors.push('implementation production policy enablement revalidation receipt currentVerifierPolicyBlocked must be true');
+  }
+  if (receipt.policyChangeAppliedByVerifier !== false) {
+    errors.push('implementation production policy enablement revalidation receipt policyChangeAppliedByVerifier must be false');
+  }
+  if (receipt.runnerEnabledByVerifier !== false) {
+    errors.push('implementation production policy enablement revalidation receipt runnerEnabledByVerifier must be false');
+  }
+  if (receipt.prMutationPerformedByVerifier !== false) {
+    errors.push('implementation production policy enablement revalidation receipt prMutationPerformedByVerifier must be false');
+  }
+  if (receipt.deployedByVerifier !== false) {
+    errors.push('implementation production policy enablement revalidation receipt deployedByVerifier must be false');
+  }
+  if (receipt.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation production policy enablement revalidation receipt thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (receipt.issueMutationPerformedByVerifier !== false) {
+    errors.push('implementation production policy enablement revalidation receipt issueMutationPerformedByVerifier must be false');
+  }
+  if (receipt.processSpawned !== false) errors.push('implementation production policy enablement revalidation receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('implementation production policy enablement revalidation receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('implementation production policy enablement revalidation receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('implementation production policy enablement revalidation receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('implementation production policy enablement revalidation receipt executionEnabled must be false');
+  if (receipt.executionApproved !== false) errors.push('implementation production policy enablement revalidation receipt executionApproved must be false');
+  if (receipt.wouldExecute !== false) errors.push('implementation production policy enablement revalidation receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('implementation production policy enablement revalidation receipt writesPerformed must be 0');
+
+  return errors;
+}
+
+function validateImplementationProductionRunnerAdmission(runnerAdmission, revalidationReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ImplementationProductionRunnerAdmission || {};
+
+  if (runnerAdmission.authorityLevel !== 'A4') errors.push('implementation production runner admission authorityLevel must be A4');
+  if (runnerAdmission.issue !== constraints.expectedIssue) {
+    errors.push(`implementation production runner admission issue mismatch: expected ${constraints.expectedIssue}, got ${runnerAdmission.issue}`);
+  }
+  if (runnerAdmission.target !== constraints.expectedTarget) {
+    errors.push(`implementation production runner admission target mismatch: expected ${constraints.expectedTarget}, got ${runnerAdmission.target}`);
+  }
+  if (runnerAdmission.action !== constraints.expectedAction) {
+    errors.push(`implementation production runner admission action mismatch: expected ${constraints.expectedAction}, got ${runnerAdmission.action}`);
+  }
+  if (runnerAdmission.implementationProductionPolicyEnablementRevalidation !== rel(paths.implementationProductionPolicyEnablementRevalidationPath)) {
+    errors.push('implementation production runner admission implementationProductionPolicyEnablementRevalidation must match revalidation artifact path');
+  }
+  if (runnerAdmission.implementationProductionPolicyEnablementRevalidationReceipt !== rel(paths.implementationProductionPolicyEnablementRevalidationReceiptPath)) {
+    errors.push('implementation production runner admission implementationProductionPolicyEnablementRevalidationReceipt must match revalidation receipt path');
+  }
+  if (runnerAdmission.runnerAdmissionEvidenceOnly !== true) {
+    errors.push('implementation production runner admission runnerAdmissionEvidenceOnly must be true');
+  }
+  if (!rules.allowedAdmissionDecisions?.includes(runnerAdmission.admissionDecision)) {
+    errors.push('implementation production runner admission admissionDecision must be allowed');
+  }
+  if (runnerAdmission.admissionDecision !== 'approve-runner-implementation-review') {
+    errors.push('implementation production runner admission admissionDecision must approve runner implementation review');
+  }
+  if (!hasValue(runnerAdmission.admittedBy)) errors.push('implementation production runner admission admittedBy is required');
+  if (!hasValue(runnerAdmission.admittedAt) || Number.isNaN(Date.parse(runnerAdmission.admittedAt))) {
+    errors.push('implementation production runner admission admittedAt must be an ISO timestamp');
+  }
+  if (!hasValue(runnerAdmission.runnerImplementationReference)) {
+    errors.push('implementation production runner admission runnerImplementationReference is required');
+  }
+  if (!hasValue(runnerAdmission.runnerContractReference)) {
+    errors.push('implementation production runner admission runnerContractReference is required');
+  }
+  if (!hasValue(runnerAdmission.runnerEntryPoint)) {
+    errors.push('implementation production runner admission runnerEntryPoint is required');
+  }
+  if (revalidationReceipt.ok !== true || revalidationReceipt.implementationProductionPolicyEnablementRevalidationOk !== true) {
+    errors.push('implementation production runner admission requires valid revalidation receipt');
+  }
+  for (const field of [
+    'targetScope',
+    'fullChainRevalidated',
+    'revalidationStatus',
+    'mergeStatus',
+    'mergeCommitSha',
+    'prUrl',
+    'prNumber',
+    'baseRef',
+    'headRef',
+    'commitSha',
+    'policyPatchProposalReference',
+    'publicAccessFailClosedProof',
+  ]) {
+    if (runnerAdmission[field] !== revalidationReceipt[field]) {
+      errors.push(`implementation production runner admission ${field} must match revalidation receipt`);
+    }
+  }
+  if (runnerAdmission.fullChainRevalidated !== true) {
+    errors.push('implementation production runner admission fullChainRevalidated must be true');
+  }
+  if (runnerAdmission.revalidationStatus !== 'passed') {
+    errors.push('implementation production runner admission revalidationStatus must be passed');
+  }
+  if (!sameJson(runnerAdmission.mergedPolicyState, revalidationReceipt.mergedPolicyState)) {
+    errors.push('implementation production runner admission mergedPolicyState must match revalidation receipt');
+  }
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!runnerAdmission.revalidatedReceiptReferences?.includes(reference)) {
+      errors.push(`implementation production runner admission revalidatedReceiptReferences must include ${reference}`);
+    }
+    if (!runnerAdmission.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`implementation production runner admission requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const requiredEvidence of rules.requiredEvidence || []) {
+    if (!runnerAdmission.requiredEvidence?.includes(requiredEvidence)) {
+      errors.push(`implementation production runner admission requiredEvidence must include ${requiredEvidence}`);
+    }
+  }
+  if (runnerAdmission.runnerAdmissionApproved !== true) {
+    errors.push('implementation production runner admission runnerAdmissionApproved must be true');
+  }
+  if (runnerAdmission.runnerImplementationAdmittedByVerifier === true) {
+    errors.push('implementation production runner admission runnerImplementationAdmittedByVerifier must not be true');
+  }
+  if (runnerAdmission.runnerEnabledByVerifier === true) {
+    errors.push('implementation production runner admission runnerEnabledByVerifier must not be true');
+  }
+  if (runnerAdmission.redactionPolicyApplied !== true) {
+    errors.push('implementation production runner admission redactionPolicyApplied must be true');
+  }
+  if (!hasValue(runnerAdmission.redactionPolicy)) errors.push('implementation production runner admission redactionPolicy is required');
+  if (runnerAdmission.containsSecrets !== false) errors.push('implementation production runner admission containsSecrets must be false');
+  if (runnerAdmission.containsRawLogs !== false) errors.push('implementation production runner admission containsRawLogs must be false');
+  if (runnerAdmission.containsPrompts !== false) errors.push('implementation production runner admission containsPrompts must be false');
+  if (runnerAdmission.containsRawTranscripts !== false) {
+    errors.push('implementation production runner admission containsRawTranscripts must be false');
+  }
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!runnerAdmission.noExecutionMarkers?.includes(marker)) {
+      errors.push(`implementation production runner admission noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (runnerAdmission.currentVerifierPolicyBlocked !== true) {
+    errors.push('implementation production runner admission currentVerifierPolicyBlocked must be true');
+  }
+  if (runnerAdmission.policyChangeAppliedByVerifier === true) {
+    errors.push('implementation production runner admission policyChangeAppliedByVerifier must not be true');
+  }
+  if (runnerAdmission.prMutationPerformedByVerifier === true) {
+    errors.push('implementation production runner admission prMutationPerformedByVerifier must not be true');
+  }
+  if (runnerAdmission.deployedByVerifier !== false) {
+    errors.push('implementation production runner admission deployedByVerifier must be false');
+  }
+  if (runnerAdmission.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation production runner admission thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (runnerAdmission.issueMutationPerformedByVerifier !== false) {
+    errors.push('implementation production runner admission issueMutationPerformedByVerifier must be false');
+  }
+  if (runnerAdmission.processSpawned === true) {
+    errors.push('implementation production runner admission processSpawned must not be true');
+  }
+  if (Array.isArray(runnerAdmission.executedCommands) && runnerAdmission.executedCommands.length > 0) {
+    errors.push('implementation production runner admission executedCommands must be empty');
+  }
+  if (runnerAdmission.runnerEnabled === true) errors.push('implementation production runner admission runnerEnabled must not be true');
+  if (runnerAdmission.executionReady === true) errors.push('implementation production runner admission executionReady must not be true');
+  if (runnerAdmission.executionEnabled === true) errors.push('implementation production runner admission executionEnabled must not be true');
+  if (runnerAdmission.executionApproved === true) errors.push('implementation production runner admission executionApproved must not be true');
+  if (runnerAdmission.wouldExecute === true) errors.push('implementation production runner admission wouldExecute must not be true');
+  if (runnerAdmission.writesPerformed !== 0) errors.push('implementation production runner admission writesPerformed must be 0');
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('implementation production runner admission current verifier manifest authority.a4Execution must remain blocked');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -13530,6 +13887,113 @@ function buildImplementationProductionPolicyEnablementRevalidationReceipt({
       implementationProductionPolicyEnablementRevalidationOnly: manifest.a4ImplementationProductionPolicyEnablementRevalidation?.revalidationEvidenceOnly,
       implementationProductionPolicyEnablementRevalidationPolicyChangeAppliedByVerifier: manifest.a4ImplementationProductionPolicyEnablementRevalidation?.policyChangeAppliedByVerifier,
       implementationProductionPolicyEnablementRevalidationRunnerImplementationAdmittedByVerifier: manifest.a4ImplementationProductionPolicyEnablementRevalidation?.runnerImplementationAdmittedByVerifier,
+    },
+  };
+}
+
+function buildImplementationProductionRunnerAdmissionReceipt({
+  manifest,
+  manifestValidation,
+  revalidationResult,
+  implementationProductionPolicyEnablementRevalidation,
+  implementationProductionPolicyEnablementRevalidationPath,
+  implementationProductionPolicyEnablementRevalidationReceipt,
+  implementationProductionPolicyEnablementRevalidationReceiptPath,
+  implementationProductionRunnerAdmission,
+  implementationProductionRunnerAdmissionPath,
+  implementationProductionPolicyEnablementRevalidationReceiptErrors,
+  implementationProductionRunnerAdmissionErrors,
+  constraints,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(revalidationResult.errors || []),
+    ...implementationProductionPolicyEnablementRevalidationReceiptErrors,
+    ...implementationProductionRunnerAdmissionErrors,
+  ];
+  const implementationProductionRunnerAdmissionOk = errors.length === 0;
+
+  return {
+    mode: 'implementation-production-runner-admission-check',
+    ok: implementationProductionRunnerAdmissionOk,
+    implementationProductionRunnerAdmissionOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    implementationProductionRunnerAdmission: rel(implementationProductionRunnerAdmissionPath),
+    implementationProductionPolicyEnablementRevalidation: rel(implementationProductionPolicyEnablementRevalidationPath),
+    implementationProductionPolicyEnablementRevalidationReceipt: rel(implementationProductionPolicyEnablementRevalidationReceiptPath),
+    implementationProductionPolicyEnablementMergeEvidenceReceipt: revalidationResult.implementationProductionPolicyEnablementMergeEvidenceReceipt,
+    implementationProductionPolicyEnablementMergeEvidence: revalidationResult.implementationProductionPolicyEnablementMergeEvidence,
+    packetPath: revalidationResult.packetPath,
+    issue: revalidationResult.issue || constraints.expectedIssue,
+    authorityLevel: revalidationResult.authorityLevel,
+    target: revalidationResult.target,
+    action: revalidationResult.action,
+    targetScope: implementationProductionRunnerAdmission.targetScope || implementationProductionPolicyEnablementRevalidationReceipt.targetScope || revalidationResult.targetScope,
+    runnerAdmissionEvidenceOnly: implementationProductionRunnerAdmission.runnerAdmissionEvidenceOnly === true,
+    admissionDecision: implementationProductionRunnerAdmission.admissionDecision || null,
+    admittedBy: implementationProductionRunnerAdmission.admittedBy || null,
+    admittedAt: implementationProductionRunnerAdmission.admittedAt || null,
+    runnerImplementationReference: implementationProductionRunnerAdmission.runnerImplementationReference || null,
+    runnerContractReference: implementationProductionRunnerAdmission.runnerContractReference || null,
+    runnerEntryPoint: implementationProductionRunnerAdmission.runnerEntryPoint || null,
+    fullChainRevalidated: implementationProductionRunnerAdmission.fullChainRevalidated === true,
+    revalidationStatus: implementationProductionRunnerAdmission.revalidationStatus || null,
+    mergeStatus: implementationProductionRunnerAdmission.mergeStatus || null,
+    mergeCommitSha: implementationProductionRunnerAdmission.mergeCommitSha || null,
+    prUrl: implementationProductionRunnerAdmission.prUrl || null,
+    prNumber: implementationProductionRunnerAdmission.prNumber || null,
+    baseRef: implementationProductionRunnerAdmission.baseRef || null,
+    headRef: implementationProductionRunnerAdmission.headRef || null,
+    commitSha: implementationProductionRunnerAdmission.commitSha || null,
+    policyPatchProposalReference: implementationProductionRunnerAdmission.policyPatchProposalReference || null,
+    mergedPolicyState: implementationProductionRunnerAdmission.mergedPolicyState || null,
+    revalidatedReceiptReferences: implementationProductionRunnerAdmission.revalidatedReceiptReferences || [],
+    publicAccessFailClosedProof: implementationProductionRunnerAdmission.publicAccessFailClosedProof || null,
+    runnerAdmissionApproved: implementationProductionRunnerAdmission.runnerAdmissionApproved === true,
+    runnerImplementationAdmittedByVerifier: implementationProductionRunnerAdmission.runnerImplementationAdmittedByVerifier === true,
+    requiredReceiptReferences: implementationProductionRunnerAdmission.requiredReceiptReferences || [],
+    requiredEvidence: implementationProductionRunnerAdmission.requiredEvidence || [],
+    redactionPolicyApplied: implementationProductionRunnerAdmission.redactionPolicyApplied === true,
+    redactionPolicy: implementationProductionRunnerAdmission.redactionPolicy || null,
+    containsSecrets: implementationProductionRunnerAdmission.containsSecrets === true,
+    containsRawLogs: implementationProductionRunnerAdmission.containsRawLogs === true,
+    containsPrompts: implementationProductionRunnerAdmission.containsPrompts === true,
+    containsRawTranscripts: implementationProductionRunnerAdmission.containsRawTranscripts === true,
+    noExecutionMarkers: implementationProductionRunnerAdmission.noExecutionMarkers || [],
+    currentVerifierPolicyBlocked: true,
+    policyChangeAppliedByVerifier: implementationProductionRunnerAdmission.policyChangeAppliedByVerifier === true,
+    runnerEnabledByVerifier: implementationProductionRunnerAdmission.runnerEnabledByVerifier === true,
+    prMutationPerformedByVerifier: implementationProductionRunnerAdmission.prMutationPerformedByVerifier === true,
+    deployedByVerifier: implementationProductionRunnerAdmission.deployedByVerifier === true,
+    thirdPartyWritePerformedByVerifier: implementationProductionRunnerAdmission.thirdPartyWritePerformedByVerifier === true,
+    issueMutationPerformedByVerifier: implementationProductionRunnerAdmission.issueMutationPerformedByVerifier === true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: implementationProductionRunnerAdmissionOk
+      ? 'implementation production runner admission evidence accepted; verifier did not admit runner code, enable a runner, spawn a process, mutate issues or PRs, deploy, or write third-party systems'
+      : 'implementation production runner admission evidence rejected before runner code admission, runner enablement, process spawn, issue mutation, PR mutation, third-party mutation, deploy, or write command',
+    evidenceTarget: implementationProductionRunnerAdmission.evidenceTarget || implementationProductionPolicyEnablementRevalidationReceipt.evidenceTarget || revalidationResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may review a separate runner implementation PR only after runner admission evidence stays green; verifier still cannot admit or execute runner code',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      implementationProductionRunnerAdmissionRequiresRevalidationReceipt: manifest.a4ImplementationProductionRunnerAdmission?.requiresImplementationProductionPolicyEnablementRevalidationReceipt,
+      implementationProductionRunnerAdmissionEvidenceOnly: manifest.a4ImplementationProductionRunnerAdmission?.runnerAdmissionEvidenceOnly,
+      implementationProductionRunnerAdmissionPolicyChangeAppliedByVerifier: manifest.a4ImplementationProductionRunnerAdmission?.policyChangeAppliedByVerifier,
+      implementationProductionRunnerAdmissionRunnerImplementationAdmittedByVerifier: manifest.a4ImplementationProductionRunnerAdmission?.runnerImplementationAdmittedByVerifier,
     },
   };
 }
@@ -17032,6 +17496,76 @@ function commandImplementationProductionPolicyEnablementRevalidationCheck(option
   return result;
 }
 
+function commandImplementationProductionRunnerAdmissionCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for implementation-production-runner-admission-check'));
+  }
+  if (!options.implementationProductionPolicyEnablementRevalidation) {
+    throw new Error('--implementation-production-policy-enablement-revalidation is required for implementation-production-runner-admission-check');
+  }
+  if (!options.implementationProductionPolicyEnablementRevalidationReceipt) {
+    throw new Error('--implementation-production-policy-enablement-revalidation-receipt is required for implementation-production-runner-admission-check');
+  }
+  if (!options.implementationProductionRunnerAdmission) {
+    throw new Error('--implementation-production-runner-admission is required for implementation-production-runner-admission-check');
+  }
+
+  const revalidationResult = commandImplementationProductionPolicyEnablementRevalidationCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const implementationProductionPolicyEnablementRevalidationPath = resolveFromRoot(options.implementationProductionPolicyEnablementRevalidation);
+  const implementationProductionPolicyEnablementRevalidationReceiptPath = resolveFromRoot(options.implementationProductionPolicyEnablementRevalidationReceipt);
+  const implementationProductionRunnerAdmissionPath = resolveFromRoot(options.implementationProductionRunnerAdmission);
+  const implementationProductionPolicyEnablementRevalidation = readJson(implementationProductionPolicyEnablementRevalidationPath);
+  const implementationProductionPolicyEnablementRevalidationReceipt = readJson(implementationProductionPolicyEnablementRevalidationReceiptPath);
+  const implementationProductionRunnerAdmission = readJson(implementationProductionRunnerAdmissionPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const implementationProductionPolicyEnablementRevalidationReceiptErrors = validateImplementationProductionPolicyEnablementRevalidationReceipt(
+    implementationProductionPolicyEnablementRevalidationReceipt,
+    implementationProductionPolicyEnablementRevalidation,
+    revalidationResult,
+    {
+      implementationProductionPolicyEnablementRevalidationPath,
+    },
+    constraints,
+  );
+  const implementationProductionRunnerAdmissionErrors = validateImplementationProductionRunnerAdmission(
+    implementationProductionRunnerAdmission,
+    implementationProductionPolicyEnablementRevalidationReceipt,
+    manifest,
+    {
+      implementationProductionPolicyEnablementRevalidationPath,
+      implementationProductionPolicyEnablementRevalidationReceiptPath,
+    },
+    constraints,
+  );
+  const result = buildImplementationProductionRunnerAdmissionReceipt({
+    manifest,
+    manifestValidation,
+    revalidationResult,
+    implementationProductionPolicyEnablementRevalidation,
+    implementationProductionPolicyEnablementRevalidationPath,
+    implementationProductionPolicyEnablementRevalidationReceipt,
+    implementationProductionPolicyEnablementRevalidationReceiptPath,
+    implementationProductionRunnerAdmission,
+    implementationProductionRunnerAdmissionPath,
+    implementationProductionPolicyEnablementRevalidationReceiptErrors,
+    implementationProductionRunnerAdmissionErrors,
+    constraints,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -17103,6 +17637,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-post-deploy-validation-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --implementation-merge-decision-receipt <path> --implementation-merge-evidence <path> --implementation-merge-evidence-receipt <path> --implementation-post-merge-validation <path> --implementation-post-merge-validation-receipt <path> --implementation-production-release-decision <path> --implementation-production-release-decision-receipt <path> --implementation-production-release-admission <path> --implementation-production-release-admission-receipt <path> --implementation-production-deploy-evidence <path> --implementation-production-deploy-evidence-receipt <path> --implementation-production-post-deploy-validation <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-release-closeout-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --implementation-merge-decision-receipt <path> --implementation-merge-evidence <path> --implementation-merge-evidence-receipt <path> --implementation-post-merge-validation <path> --implementation-post-merge-validation-receipt <path> --implementation-production-release-decision <path> --implementation-production-release-decision-receipt <path> --implementation-production-release-admission <path> --implementation-production-release-admission-receipt <path> --implementation-production-deploy-evidence <path> --implementation-production-deploy-evidence-receipt <path> --implementation-production-post-deploy-validation <path> --implementation-production-post-deploy-validation-receipt <path> --implementation-production-release-closeout <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-ownership-review-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --implementation-merge-decision-receipt <path> --implementation-merge-evidence <path> --implementation-merge-evidence-receipt <path> --implementation-post-merge-validation <path> --implementation-post-merge-validation-receipt <path> --implementation-production-release-decision <path> --implementation-production-release-decision-receipt <path> --implementation-production-release-admission <path> --implementation-production-release-admission-receipt <path> --implementation-production-deploy-evidence <path> --implementation-production-deploy-evidence-receipt <path> --implementation-production-post-deploy-validation <path> --implementation-production-post-deploy-validation-receipt <path> --implementation-production-release-closeout <path> --implementation-production-release-closeout-receipt <path> --implementation-production-ownership-review <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-admission-check <same chain arguments as implementation-production-policy-enablement-revalidation-check> --implementation-production-policy-enablement-revalidation-receipt <implementation-production-policy-enablement-revalidation-receipt.json> --implementation-production-runner-admission <implementation-production-runner-admission.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -17154,6 +17689,7 @@ async function main() {
   else if (options.command === 'implementation-production-policy-enablement-merge-decision-check') result = commandImplementationProductionPolicyEnablementMergeDecisionCheck(options);
   else if (options.command === 'implementation-production-policy-enablement-merge-evidence-check') result = commandImplementationProductionPolicyEnablementMergeEvidenceCheck(options);
   else if (options.command === 'implementation-production-policy-enablement-revalidation-check') result = commandImplementationProductionPolicyEnablementRevalidationCheck(options);
+  else if (options.command === 'implementation-production-runner-admission-check') result = commandImplementationProductionRunnerAdmissionCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -17201,6 +17737,7 @@ export {
   commandImplementationProductionPolicyEnablementMergeDecisionCheck,
   commandImplementationProductionPolicyEnablementMergeEvidenceCheck,
   commandImplementationProductionPolicyEnablementRevalidationCheck,
+  commandImplementationProductionRunnerAdmissionCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,

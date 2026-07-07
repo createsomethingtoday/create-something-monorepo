@@ -2052,6 +2052,73 @@
     "writesPerformed": 0,
     "blockedUntil": "implementation production policy enablement revalidation may prove that the separate merged policy state passed full-chain checks, but this verifier must not admit runner implementation, apply policy in this branch, mutate PRs or issues, deploy, expose raw artifacts, or write third-party systems"
   },
+  "a4ImplementationProductionRunnerAdmission": {
+    "requiresImplementationProductionPolicyEnablementRevalidationReceipt": true,
+    "runnerAdmissionEvidenceOnly": true,
+    "allowedAdmissionDecisions": [
+      "approve-runner-implementation-review",
+      "hold-at-revalidation-only",
+      "request-changes"
+    ],
+    "requiresValidRevalidationReceipt": true,
+    "requiresApprovedRunnerImplementationReview": true,
+    "requiresRunnerImplementationReference": true,
+    "requiresRunnerContractReference": true,
+    "requiresFullChainRevalidated": true,
+    "requiresMergedPolicyState": true,
+    "requiresPublicAccessFailClosedProof": true,
+    "requiresCurrentVerifierPolicyBlocked": true,
+    "policyChangeAppliedByVerifier": false,
+    "runnerEnabledByVerifier": false,
+    "runnerImplementationAdmittedByVerifier": false,
+    "prMutationPerformedByVerifier": false,
+    "deployedByVerifier": false,
+    "requiresNoThirdPartyWriteByVerifier": true,
+    "requiresNoIssueMutationByVerifier": true,
+    "requiresRedactionPolicy": true,
+    "forbidsSecrets": true,
+    "forbidsRawLogs": true,
+    "forbidsPrompts": true,
+    "forbidsRawTranscripts": true,
+    "requiresNoExecutionOnEvidence": true,
+    "requiredReceiptReferences": [
+      "implementation-production-policy-enablement-revalidation-check",
+      "implementation-production-policy-enablement-merge-evidence-check",
+      "implementation-production-policy-enablement-merge-decision-check",
+      "implementation-production-policy-enablement-pr-check",
+      "implementation-production-a4-enablement-approval-check"
+    ],
+    "requiredEvidence": [
+      "implementation-production-policy-enablement-revalidation-receipt",
+      "approved-runner-implementation-review",
+      "runner-implementation-reference",
+      "runner-contract-reference",
+      "full-chain-revalidation",
+      "merged-policy-state",
+      "public-access-fail-closed-proof",
+      "redaction-policy"
+    ],
+    "requiredNoExecutionMarkers": [
+      "current-verifier-policy-blocked",
+      "policy-change-not-applied-by-verifier",
+      "process-not-spawned",
+      "executed-commands-empty",
+      "runner-disabled-in-verifier",
+      "runner-implementation-not-admitted-by-verifier",
+      "execution-not-ready",
+      "execution-disabled",
+      "execution-not-approved",
+      "would-execute-false",
+      "writes-performed-zero",
+      "deploy-not-performed-by-verifier",
+      "third-party-write-not-performed-by-verifier",
+      "issue-mutation-not-performed-by-verifier",
+      "pr-mutation-not-performed-by-verifier",
+      "production-runner-admission-evidence-only"
+    ],
+    "writesPerformed": 0,
+    "blockedUntil": "implementation production runner admission may prove a separate approval to review runner implementation, but this verifier must not admit runner code, enable a runner, spawn a process, mutate PRs or issues, deploy, expose raw artifacts, or write third-party systems"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -2262,6 +2329,11 @@
       "id": "gate-39-a4-implementation-production-policy-enablement-revalidation",
       "required": "A4 implementation production policy enablement revalidation validates immediate full-chain checks after separate manual policy-enablement merge evidence without admitting runner implementation, changing this verifier branch policy, mutating PRs or issues, deploying, exposing raw artifacts, or executing",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-production-policy-enablement-revalidation-check <same chain arguments as implementation-production-policy-enablement-merge-evidence-check> --implementation-production-policy-enablement-merge-evidence-receipt <implementation-production-policy-enablement-merge-evidence-receipt.json> --implementation-production-policy-enablement-revalidation <implementation-production-policy-enablement-revalidation.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-40-a4-implementation-production-runner-admission",
+      "required": "A4 implementation production runner admission validates separate runner implementation admission evidence after policy-enablement revalidation without admitting runner code, changing this verifier branch policy, mutating PRs or issues, deploying, exposing raw artifacts, or executing",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-admission-check <same chain arguments as implementation-production-policy-enablement-revalidation-check> --implementation-production-policy-enablement-revalidation-receipt <implementation-production-policy-enablement-revalidation-receipt.json> --implementation-production-runner-admission <implementation-production-runner-admission.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }
