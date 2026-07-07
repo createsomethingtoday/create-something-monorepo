@@ -359,6 +359,44 @@ checked-in manifest must still be blocked, `processSpawned` must be `false`,
 remain `false` and `0`. A later implementation PR still needs to add a runner
 that revalidates the whole chain immediately before any write.
 
+After the enabled-manifest readiness receipt exists, validate the future runner
+implementation contract before adding any runner path:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-contract-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The runner implementation contract must require immediate full-chain
+revalidation before any write, a checked-in enabled policy, command receipt
+binding, `maxWritesPerRun` of `1`, rollback proof, post-action smoke proof, and
+public-access fail-closed proof. While the checked-in manifest is still blocked,
+the contract verifier must keep `processSpawned` as `false`,
+`executedCommands` as `[]`, `runnerEnabled`, `executionReady`,
+`executionEnabled`, and `wouldExecute` as `false`, and `writesPerformed` as `0`.
+It rejects contracts that claim execution already happened, allow execution
+while current policy is blocked, omit public fail-closed proof, or loosen the
+write ceiling. A later implementation PR must still prove the checked-in policy
+is enabled and rerun this full chain immediately before any write.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:

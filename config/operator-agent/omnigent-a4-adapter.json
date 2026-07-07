@@ -222,6 +222,26 @@
     "writesPerformed": 0,
     "blockedUntil": "a separate operator-reviewed implementation PR adds a runner that revalidates the full chain immediately before any write"
   },
+  "a4RunnerImplementationContract": {
+    "requiresEnabledManifestReadinessReceipt": true,
+    "requiresImmediateFullChainRevalidation": true,
+    "requiresEnabledCheckedInPolicy": true,
+    "allowedWhenCurrentPolicyBlocked": false,
+    "allowedImplementationSurfaces": [
+      "repo-pr",
+      "signed-release-record"
+    ],
+    "processSpawnPolicy": "blocked-until-checked-in-policy-enabled",
+    "maxWritesPerRun": 1,
+    "requiredProofs": [
+      "rollback",
+      "post-action-smoke",
+      "public-access-fail-closed"
+    ],
+    "requiresCommandReceipt": true,
+    "writesPerformed": 0,
+    "blockedUntil": "a separate operator-reviewed implementation PR can add runner code only after checked-in policy is enabled and the runner revalidates the full chain immediately before any write"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -297,6 +317,11 @@
       "id": "gate-12-a4-enabled-manifest-readiness",
       "required": "A4 enabled-manifest readiness validates the candidate enabled manifest and application diff receipt without spawning a runner or changing checked-in policy",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs enabled-manifest-readiness-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --policy-patch-receipt <policy-patch-receipt.json> --candidate-manifest <candidate-manifest.json> --application-diff-receipt <application-diff-receipt.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-13-a4-runner-implementation-contract",
+      "required": "A4 runner implementation contract validates the future runner obligations against the full readiness chain without spawning a runner or changing checked-in policy",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-contract-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --policy-patch-receipt <policy-patch-receipt.json> --candidate-manifest <candidate-manifest.json> --application-diff-receipt <application-diff-receipt.json> --readiness-receipt <readiness-receipt.json> --runner-contract <runner-contract.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }
