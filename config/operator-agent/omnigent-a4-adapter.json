@@ -2422,6 +2422,80 @@
     "writesPerformed": 0,
     "blockedUntil": "implementation production runner implementation admission PR evidence may prove a candidate checked-in admission PR is ready for review, but this verifier must not admit runner code, enable a runner, mutate PRs or issues, deploy, expose raw artifacts, or write third-party systems"
   },
+  "a4ImplementationProductionRunnerImplementationAdmissionPrReview": {
+    "requiresImplementationProductionRunnerImplementationAdmissionPrReceipt": true,
+    "runnerImplementationAdmissionPrReviewEvidenceOnly": true,
+    "allowedReviewDecisions": [
+      "approve-runner-implementation-admission-pr-review",
+      "request-changes",
+      "hold"
+    ],
+    "requiresValidRunnerImplementationAdmissionPrReceipt": true,
+    "requiresApprovedDiffReview": true,
+    "requiresApprovedChecksReview": true,
+    "requiresReviewedBy": true,
+    "requiresReviewedAt": true,
+    "requiresRunnerImplementationAdmissionPrReviewScope": true,
+    "requiresNoExecutionApproval": true,
+    "requiresCurrentVerifierPolicyBlocked": true,
+    "policyChangeAppliedByVerifier": false,
+    "runnerEnabledByVerifier": false,
+    "runnerImplementationAdmittedByVerifier": false,
+    "prMutationPerformedByVerifier": false,
+    "deployedByVerifier": false,
+    "requiresNoThirdPartyWriteByVerifier": true,
+    "requiresNoIssueMutationByVerifier": true,
+    "requiresRedactionPolicy": true,
+    "forbidsSecrets": true,
+    "forbidsRawLogs": true,
+    "forbidsPrompts": true,
+    "forbidsRawTranscripts": true,
+    "requiresNoExecutionOnEvidence": true,
+    "requiredReceiptReferences": [
+      "implementation-production-runner-implementation-admission-pr-check",
+      "implementation-production-runner-implementation-admission-check",
+      "implementation-production-runner-implementation-review-check",
+      "implementation-production-runner-implementation-pr-check",
+      "implementation-production-runner-admission-check",
+      "implementation-production-policy-enablement-revalidation-check",
+      "implementation-production-policy-enablement-merge-evidence-check",
+      "implementation-production-policy-enablement-merge-decision-check",
+      "implementation-production-policy-enablement-pr-check",
+      "implementation-production-a4-enablement-approval-check"
+    ],
+    "requiredEvidence": [
+      "implementation-production-runner-implementation-admission-pr-receipt",
+      "approved-runner-implementation-admission-pr-diff-review",
+      "approved-runner-implementation-admission-pr-checks-review",
+      "runner-implementation-admission-pr-review-decision",
+      "runner-implementation-admission-pr-reviewed-by",
+      "runner-implementation-admission-pr-reviewed-at",
+      "runner-implementation-admission-pr-review-scope",
+      "no-execution-approval",
+      "redaction-policy"
+    ],
+    "requiredNoExecutionMarkers": [
+      "current-verifier-policy-blocked",
+      "policy-change-not-applied-by-verifier",
+      "process-not-spawned",
+      "executed-commands-empty",
+      "runner-disabled-in-verifier",
+      "runner-implementation-not-admitted-by-verifier",
+      "runner-implementation-admission-pr-not-mutated-by-verifier",
+      "execution-not-ready",
+      "execution-disabled",
+      "execution-not-approved",
+      "would-execute-false",
+      "writes-performed-zero",
+      "deploy-not-performed-by-verifier",
+      "third-party-write-not-performed-by-verifier",
+      "issue-mutation-not-performed-by-verifier",
+      "pr-mutation-not-performed-by-verifier",
+      "production-runner-implementation-admission-pr-review-evidence-only"
+    ],
+    "writesPerformed": 0,
+    "blockedUntil": "implementation production runner implementation admission PR review evidence may approve checks and diff review, but this verifier must not admit runner code, enable a runner, mutate PRs or issues, deploy, expose raw artifacts, or write third-party systems"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -2657,6 +2731,11 @@
       "id": "gate-44-a4-implementation-production-runner-implementation-admission-pr",
       "required": "A4 implementation production runner implementation admission PR validates separate checked-in admission PR evidence after runner implementation admission without admitting runner code, changing this verifier branch policy, mutating PRs or issues, deploying, exposing raw artifacts, or executing",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-pr-check <same chain arguments as implementation-production-runner-implementation-admission-check> --implementation-production-runner-implementation-admission-receipt <implementation-production-runner-implementation-admission-receipt.json> --implementation-production-runner-implementation-admission-pr <implementation-production-runner-implementation-admission-pr.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-45-a4-implementation-production-runner-implementation-admission-pr-review",
+      "required": "A4 implementation production runner implementation admission PR review validates operator approval of admission PR checks and diff evidence without admitting runner code, changing this verifier branch policy, mutating PRs or issues, deploying, exposing raw artifacts, or executing",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-pr-review-check <same chain arguments as implementation-production-runner-implementation-admission-pr-check> --implementation-production-runner-implementation-admission-pr-receipt <implementation-production-runner-implementation-admission-pr-receipt.json> --implementation-production-runner-implementation-admission-pr-review <implementation-production-runner-implementation-admission-pr-review.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

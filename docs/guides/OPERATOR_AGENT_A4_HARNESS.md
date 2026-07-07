@@ -1977,6 +1977,38 @@ admission claims, runner enablement claims, leaked raw artifacts, and any
 process/command/write marker. `authority.a4Execution` remains blocked in this
 verifier branch.
 
+After runner implementation admission PR evidence passes, validate the operator
+review of admission PR checks and diff evidence:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-pr-review-check \
+  <same chain arguments as implementation-production-runner-implementation-admission-pr-check> \
+  --implementation-production-runner-implementation-admission-pr-receipt <implementation-production-runner-implementation-admission-pr-receipt.json> \
+  --implementation-production-runner-implementation-admission-pr-review <implementation-production-runner-implementation-admission-pr-review.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production runner implementation admission PR review packet
+proves an operator reviewed and approved the admission PR diff and checks. It
+must bind to the admission PR artifact and receipt, carry review decision,
+reviewed-by, reviewed-at, approved-diff-review, approved-checks-review,
+no-execution-approval, runner implementation reference, runner contract
+reference, runner entry point, PR URL, PR number, head ref, base ref, commit
+SHA, diff reference, checks reference, review scope, and redaction policy.
+
+This gate validates review evidence only. It does not admit runner code, apply
+the policy patch in this verifier branch, enable a runner, spawn a process,
+create or mutate PRs, close or update Linear issues, deploy, post updates,
+rotate secrets, expose raw artifacts, or mutate third-party systems. It rejects
+drifted admission PR receipts, non-approved review decisions, missing reviewer
+or review time, missing diff/check approval, execution approval claims,
+verifier-side PR mutation claims, verifier-side runner admission claims, runner
+enablement claims, leaked raw artifacts, and any process/command/write marker.
+`authority.a4Execution` remains blocked in this verifier branch.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
