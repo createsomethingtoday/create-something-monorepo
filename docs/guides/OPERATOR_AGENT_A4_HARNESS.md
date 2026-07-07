@@ -1782,6 +1782,37 @@ immediate revalidation proof, broader rollback scopes, verifier policy or PR
 mutation claims, leaked raw artifacts, and any process/command/write marker.
 `authority.a4Execution` remains blocked in this verifier branch.
 
+After manual policy-enablement merge evidence passes, validate immediate
+full-chain revalidation evidence:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-policy-enablement-revalidation-check \
+  <same chain arguments as implementation-production-policy-enablement-merge-evidence-check> \
+  --implementation-production-policy-enablement-merge-evidence-receipt <implementation-production-policy-enablement-merge-evidence-receipt.json> \
+  --implementation-production-policy-enablement-revalidation <implementation-production-policy-enablement-revalidation.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production policy enablement revalidation packet proves the
+separate merged policy state passed immediate full-chain checks before any
+runner implementation is admitted. It must bind to the merge-evidence artifact
+and receipt, carry the same PR, merge commit, policy patch proposal, merged
+policy state, and public-access fail-closed proof, and include revalidation
+status, revalidated-by, revalidated-at, revalidated receipt references, runner
+admission blocked status, and redaction policy.
+
+This gate validates revalidation evidence only. It does not admit a runner
+implementation, apply the policy patch in this verifier branch, enable a
+runner, close or update Linear issues, deploy, post updates, rotate secrets,
+expose raw artifacts, or mutate third-party systems. It rejects drifted
+merge-evidence receipts, failed or partial revalidation, missing receipt
+references, runner admission claims, verifier policy or PR mutation claims,
+leaked raw artifacts, and any process/command/write marker.
+`authority.a4Execution` remains blocked in this verifier branch.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
