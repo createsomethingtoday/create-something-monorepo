@@ -588,6 +588,52 @@ function implementationWorkspaceEvidenceCheckArgs(packetPath, preflightReceiptPa
   return args;
 }
 
+function implementationPrEvidenceCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath, receiptPublicationReceiptPath, receiptReviewDecisionPath, receiptReviewDecisionReceiptPath, manualNextStepHandoffPath, manualNextStepHandoffReceiptPath, manualFollowUpIssueEvidencePath, manualFollowUpIssueEvidenceReceiptPath, followUpWorkIntakePath, followUpWorkIntakeReceiptPath, implementationWorkspaceEvidencePath, implementationWorkspaceEvidenceReceiptPath, implementationPrEvidencePath, receiptDir) {
+  const args = implementationWorkspaceEvidenceCheckArgs(
+    packetPath,
+    preflightReceiptPath,
+    executionReceiptPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+    runnerContractReceiptPath,
+    runnerPlanPath,
+    runnerPlanReceiptPath,
+    runnerDiffPath,
+    runnerDiffReceiptPath,
+    releaseAdmissionPath,
+    releaseAdmissionReceiptPath,
+    executionRunbookPath,
+    executionRunbookReceiptPath,
+    receiptBundlePath,
+    receiptBundleReceiptPath,
+    receiptPublicationPath,
+    receiptPublicationReceiptPath,
+    receiptReviewDecisionPath,
+    receiptReviewDecisionReceiptPath,
+    manualNextStepHandoffPath,
+    manualNextStepHandoffReceiptPath,
+    manualFollowUpIssueEvidencePath,
+    manualFollowUpIssueEvidenceReceiptPath,
+    followUpWorkIntakePath,
+    followUpWorkIntakeReceiptPath,
+    implementationWorkspaceEvidencePath,
+    receiptDir,
+  );
+  args[1] = 'implementation-pr-evidence-check';
+  args.push('--implementation-workspace-evidence-receipt', implementationWorkspaceEvidenceReceiptPath, '--implementation-pr-evidence', implementationPrEvidencePath);
+  return args;
+}
+
 function mergePatch(base, patch) {
   const result = JSON.parse(JSON.stringify(base));
   for (const [key, value] of Object.entries(patch || {})) {
@@ -1247,6 +1293,61 @@ function writeValidFollowUpWorkIntakeReceipt(t, packetPath, preflightPath, execu
     root,
     followUpWorkIntakeReceiptPath: path.join(REPO_ROOT, intakePayload.receiptPath),
     intakePayload,
+  };
+}
+
+function writeValidImplementationWorkspaceEvidenceReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath, receiptPublicationReceiptPath, receiptReviewDecisionPath, receiptReviewDecisionReceiptPath, manualNextStepHandoffPath, manualNextStepHandoffReceiptPath, manualFollowUpIssueEvidencePath, manualFollowUpIssueEvidenceReceiptPath, followUpWorkIntakePath, followUpWorkIntakeReceiptPath, implementationWorkspaceEvidencePath) {
+  const root = makeWorkspace(t);
+  const workspaceResult = spawnSync(
+    process.execPath,
+    implementationWorkspaceEvidenceCheckArgs(
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+      commandPath,
+      commandReceiptPath,
+      executorProofPath,
+      proposalPath,
+      proposalReceiptPath,
+      policyPatchPath,
+      policyPatchReceiptPath,
+      candidateManifestPath,
+      applicationDiffReceiptPath,
+      readinessReceiptPath,
+      runnerContractPath,
+      runnerContractReceiptPath,
+      runnerPlanPath,
+      runnerPlanReceiptPath,
+      runnerDiffPath,
+      runnerDiffReceiptPath,
+      releaseAdmissionPath,
+      releaseAdmissionReceiptPath,
+      executionRunbookPath,
+      executionRunbookReceiptPath,
+      receiptBundlePath,
+      receiptBundleReceiptPath,
+      receiptPublicationPath,
+      receiptPublicationReceiptPath,
+      receiptReviewDecisionPath,
+      receiptReviewDecisionReceiptPath,
+      manualNextStepHandoffPath,
+      manualNextStepHandoffReceiptPath,
+      manualFollowUpIssueEvidencePath,
+      manualFollowUpIssueEvidenceReceiptPath,
+      followUpWorkIntakePath,
+      followUpWorkIntakeReceiptPath,
+      implementationWorkspaceEvidencePath,
+      root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+  assert.equal(workspaceResult.status, 0, workspaceResult.stderr || workspaceResult.stdout);
+  const workspacePayload = JSON.parse(workspaceResult.stdout);
+  return {
+    root,
+    implementationWorkspaceEvidenceReceiptPath: path.join(REPO_ROOT, workspacePayload.receiptPath),
+    workspacePayload,
   };
 }
 
@@ -2256,6 +2357,140 @@ function validImplementationWorkspaceEvidence({ followUpWorkIntakePath, followUp
       'pr-not-created-by-verifier',
       'third-party-write-not-performed-by-verifier',
       'workspace-evidence-only',
+    ],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
+function validImplementationPrEvidence({ implementationWorkspaceEvidencePath, implementationWorkspaceEvidenceReceiptPath } = {}) {
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    implementationWorkspaceEvidence: implementationWorkspaceEvidencePath
+      ? path.relative(REPO_ROOT, implementationWorkspaceEvidencePath)
+      : 'implementation-workspace-evidence.json',
+    implementationWorkspaceEvidenceReceipt: implementationWorkspaceEvidenceReceiptPath
+      ? path.relative(REPO_ROOT, implementationWorkspaceEvidenceReceiptPath)
+      : 'implementation-workspace-evidence-check.json',
+    prEvidencePacketOnly: true,
+    issueIdentifier: EXPECTED_ISSUE,
+    issueUrl: `https://linear.app/createsomething/issue/${EXPECTED_ISSUE.toLowerCase()}/manual-a4-execution-enablement-review-for-fixture`,
+    owner: 'Micah Johnson',
+    intendedAssignee: 'Micah Johnson',
+    prUrl: 'https://github.com/createsomethingtoday/create-something-monorepo/pull/999',
+    prNumber: 999,
+    prTitle: `${EXPECTED_ISSUE} Add Omnigent A4 implementation PR evidence verifier`,
+    headRef: `codex/${EXPECTED_ISSUE}-implementation-worktree`,
+    baseRef: 'codex/CRE-1090-agent-worktree',
+    headSha: 'abcdef0123456789abcdef0123456789abcdef01',
+    commitSha: 'abcdef0123456789abcdef0123456789abcdef01',
+    isDraft: true,
+    mergeStateStatus: 'CLEAN',
+    checks: [
+      { name: 'Philosophical Code Review', conclusion: 'SUCCESS' },
+      { name: 'Socket Security: Project Report', conclusion: 'SUCCESS' },
+      { name: 'Socket Security: Pull Request Alerts', conclusion: 'SUCCESS' },
+    ],
+    changedFilesOrModules: [
+      'config/operator-agent/omnigent-a4-adapter.json',
+      'scripts/operator-agent-omnigent-adapter.mjs',
+      'scripts/test/operator-agent-omnigent-adapter.test.mjs',
+      'docs/guides/OPERATOR_AGENT_A4_HARNESS.md',
+    ],
+    validationPlan: [
+      'node --check scripts/operator-agent-omnigent-adapter.mjs',
+      'node scripts/operator-agent-omnigent-adapter.mjs check --json',
+      'node scripts/operator-agent-omnigent-adapter.mjs trial-check --json',
+      'node --test scripts/test/operator-agent-omnigent-adapter.test.mjs',
+      'gh pr checks <pr>',
+    ],
+    rollbackPlan: [
+      'keep the PR draft until review',
+      'close or supersede the draft PR before merge',
+      'revert the verifier PR if it is merged and later invalidated',
+    ],
+    prCreatedByVerifier: false,
+    readyForReviewByVerifier: false,
+    mergedByVerifier: false,
+    thirdPartyWritePerformedByVerifier: false,
+    requiredReceiptReferences: [
+      'implementation-workspace-evidence-check',
+      'follow-up-work-intake-check',
+      'manual-follow-up-issue-evidence-check',
+      'manual-next-step-handoff-check',
+      'receipt-review-decision-check',
+      'receipt-publication-check',
+      'receipt-bundle-check',
+      'execution-runbook-check',
+      'release-admission-check',
+    ],
+    requiredEvidence: [
+      'implementation-workspace-evidence-receipt',
+      'issue-identifier',
+      'issue-url',
+      'owner',
+      'intended-assignee',
+      'pr-url',
+      'pr-number',
+      'pr-title',
+      'head-ref',
+      'base-ref',
+      'head-sha',
+      'commit-sha',
+      'draft-state',
+      'merge-state',
+      'checks',
+      'changed-files-or-modules',
+      'validation-plan',
+      'rollback-plan',
+      'public-access-fail-closed-proof',
+      'redaction-policy',
+      'operator-summary',
+    ],
+    redactionPolicyApplied: true,
+    redactionPolicy: {
+      excludes: ['secrets', 'raw-logs', 'prompts', 'raw-transcripts'],
+      evidenceOnly: true,
+    },
+    containsSecrets: false,
+    containsRawLogs: false,
+    containsPrompts: false,
+    containsRawTranscripts: false,
+    rawLogsIncluded: false,
+    promptsIncluded: false,
+    rawTranscriptIncluded: false,
+    publicAccessFailClosedProof: 'operator-agent-public-smoke rawOriginExposed=false and redirectsToAccess=true',
+    operatorSummary: 'Implementation PR evidence for an operator-opened draft PR with matching branch, base, commit, changed scope, and passing checks; verifier did not create, mark ready, merge, execute, or write.',
+    noExecutionMarkers: [
+      'current-policy-blocked',
+      'process-not-spawned',
+      'executed-commands-empty',
+      'runner-disabled',
+      'execution-not-ready',
+      'execution-disabled',
+      'execution-not-approved',
+      'would-execute-false',
+      'writes-performed-zero',
+      'issue-not-claimed-by-verifier',
+      'worktree-not-created-by-verifier',
+      'branch-not-created-by-verifier',
+      'pr-not-created-by-verifier',
+      'ready-for-review-not-performed-by-verifier',
+      'merge-not-performed-by-verifier',
+      'third-party-write-not-performed-by-verifier',
+      'pr-evidence-only',
     ],
     currentPolicyBlocked: true,
     processSpawned: false,
@@ -4798,6 +5033,64 @@ function writeFollowUpWorkIntakeFixture(t) {
   };
 }
 
+function writeImplementationWorkspaceEvidenceFixture(t) {
+  const fixture = writeFollowUpWorkIntakeFixture(t);
+  const implementationWorkspaceEvidencePath = path.join(fixture.root, 'implementation-workspace-evidence.json');
+  writeFileSync(
+    implementationWorkspaceEvidencePath,
+    `${JSON.stringify(validImplementationWorkspaceEvidence({
+      followUpWorkIntakePath: fixture.followUpWorkIntakePath,
+      followUpWorkIntakeReceiptPath: fixture.followUpWorkIntakeReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const { implementationWorkspaceEvidenceReceiptPath } = writeValidImplementationWorkspaceEvidenceReceipt(
+    t,
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    fixture.runnerDiffPath,
+    fixture.runnerDiffReceiptPath,
+    fixture.releaseAdmissionPath,
+    fixture.releaseAdmissionReceiptPath,
+    fixture.executionRunbookPath,
+    fixture.executionRunbookReceiptPath,
+    fixture.receiptBundlePath,
+    fixture.receiptBundleReceiptPath,
+    fixture.receiptPublicationPath,
+    fixture.receiptPublicationReceiptPath,
+    fixture.receiptReviewDecisionPath,
+    fixture.receiptReviewDecisionReceiptPath,
+    fixture.manualNextStepHandoffPath,
+    fixture.manualNextStepHandoffReceiptPath,
+    fixture.manualFollowUpIssueEvidencePath,
+    fixture.manualFollowUpIssueEvidenceReceiptPath,
+    fixture.followUpWorkIntakePath,
+    fixture.followUpWorkIntakeReceiptPath,
+    implementationWorkspaceEvidencePath,
+  );
+
+  return {
+    ...fixture,
+    implementationWorkspaceEvidencePath,
+    implementationWorkspaceEvidenceReceiptPath,
+  };
+}
+
 function runImplementationWorkspaceEvidenceCheck(fixture, implementationWorkspaceEvidencePath, receiptDir = fixture.root, followUpWorkIntakeReceiptPath = fixture.followUpWorkIntakeReceiptPath) {
   return spawnSync(
     process.execPath,
@@ -4839,6 +5132,55 @@ function runImplementationWorkspaceEvidenceCheck(fixture, implementationWorkspac
       fixture.followUpWorkIntakePath,
       followUpWorkIntakeReceiptPath,
       implementationWorkspaceEvidencePath,
+      receiptDir,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+}
+
+function runImplementationPrEvidenceCheck(fixture, implementationPrEvidencePath, receiptDir = fixture.root, implementationWorkspaceEvidenceReceiptPath = fixture.implementationWorkspaceEvidenceReceiptPath) {
+  return spawnSync(
+    process.execPath,
+    implementationPrEvidenceCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      fixture.releaseAdmissionPath,
+      fixture.releaseAdmissionReceiptPath,
+      fixture.executionRunbookPath,
+      fixture.executionRunbookReceiptPath,
+      fixture.receiptBundlePath,
+      fixture.receiptBundleReceiptPath,
+      fixture.receiptPublicationPath,
+      fixture.receiptPublicationReceiptPath,
+      fixture.receiptReviewDecisionPath,
+      fixture.receiptReviewDecisionReceiptPath,
+      fixture.manualNextStepHandoffPath,
+      fixture.manualNextStepHandoffReceiptPath,
+      fixture.manualFollowUpIssueEvidencePath,
+      fixture.manualFollowUpIssueEvidenceReceiptPath,
+      fixture.followUpWorkIntakePath,
+      fixture.followUpWorkIntakeReceiptPath,
+      fixture.implementationWorkspaceEvidencePath,
+      implementationWorkspaceEvidenceReceiptPath,
+      implementationPrEvidencePath,
       receiptDir,
     ),
     { cwd: REPO_ROOT, encoding: 'utf8' },
@@ -7387,6 +7729,197 @@ test('implementation-workspace-evidence-check fails closed on drifted follow-up 
   assert.equal(payload.writesPerformed, 0);
   assert.match(payload.errors.join('\n'), /issueIdentifier must match intake/);
   assert.match(payload.errors.join('\n'), /worktreeCreatedByVerifier must be false/);
+  assert.match(payload.errors.join('\n'), /processSpawned must be false/);
+});
+
+test('implementation-pr-evidence-check validates draft PR evidence without verifier PR writes', (t) => {
+  const fixture = writeImplementationWorkspaceEvidenceFixture(t);
+  const implementationPrEvidencePath = path.join(fixture.root, 'implementation-pr-evidence.json');
+  writeFileSync(
+    implementationPrEvidencePath,
+    `${JSON.stringify(validImplementationPrEvidence({
+      implementationWorkspaceEvidencePath: fixture.implementationWorkspaceEvidencePath,
+      implementationWorkspaceEvidenceReceiptPath: fixture.implementationWorkspaceEvidenceReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationPrEvidenceCheck(fixture, implementationPrEvidencePath);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'implementation-pr-evidence-check');
+  assert.equal(payload.implementationPrEvidenceOk, true);
+  assert.equal(payload.prEvidencePacketOnly, true);
+  assert.equal(payload.issueIdentifier, EXPECTED_ISSUE);
+  assert.equal(payload.prUrl, 'https://github.com/createsomethingtoday/create-something-monorepo/pull/999');
+  assert.equal(payload.prNumber, 999);
+  assert.equal(payload.headRef, `codex/${EXPECTED_ISSUE}-implementation-worktree`);
+  assert.equal(payload.baseRef, 'codex/CRE-1090-agent-worktree');
+  assert.equal(payload.headSha, 'abcdef0123456789abcdef0123456789abcdef01');
+  assert.equal(payload.commitSha, 'abcdef0123456789abcdef0123456789abcdef01');
+  assert.equal(payload.isDraft, true);
+  assert.equal(payload.mergeStateStatus, 'CLEAN');
+  assert.ok(payload.checks.every((check) => check.conclusion === 'SUCCESS'));
+  assert.ok(payload.changedFilesOrModules.includes('scripts/operator-agent-omnigent-adapter.mjs'));
+  assert.ok(payload.validationPlan.includes('gh pr checks <pr>'));
+  assert.match(payload.rollbackPlan.join('\n'), /close or supersede/);
+  assert.equal(payload.prCreatedByVerifier, false);
+  assert.equal(payload.readyForReviewByVerifier, false);
+  assert.equal(payload.mergedByVerifier, false);
+  assert.equal(payload.thirdPartyWritePerformedByVerifier, false);
+  assert.ok(payload.requiredReceiptReferences.includes('implementation-workspace-evidence-check'));
+  assert.ok(payload.requiredEvidence.includes('checks'));
+  assert.equal(payload.redactionPolicyApplied, true);
+  assert.equal(payload.containsSecrets, false);
+  assert.equal(payload.containsRawLogs, false);
+  assert.equal(payload.containsPrompts, false);
+  assert.equal(payload.containsRawTranscripts, false);
+  assert.match(payload.publicAccessFailClosedProof, /rawOriginExposed=false/);
+  assert.ok(payload.noExecutionMarkers.includes('pr-evidence-only'));
+  assert.equal(payload.currentPolicyBlocked, true);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.implementationPrEvidenceRequiresImplementationWorkspaceEvidenceReceipt, true);
+  assert.equal(payload.policy.implementationPrEvidencePrCreatedByVerifier, false);
+  assert.equal(payload.policy.implementationPrEvidenceReadyForReviewByVerifier, false);
+  assert.equal(payload.policy.implementationPrEvidenceMergedByVerifier, false);
+  assert.match(payload.nextGate, /merge or promotion decision/);
+  assert.match(payload.receiptPath, /implementation-pr-evidence-check\.json$/);
+});
+
+test('implementation-pr-evidence-check fails closed on unsafe, mismatched, or leaky PR evidence', (t) => {
+  const cases = [
+    {
+      name: 'issue-mismatch',
+      mutate(evidence) {
+        evidence.issueIdentifier = 'CRE-0000';
+      },
+      pattern: /issueIdentifier must match implementation workspace evidence receipt/,
+    },
+    {
+      name: 'invalid-pr-url',
+      mutate(evidence) {
+        evidence.prUrl = 'https://example.com/pull/1';
+      },
+      pattern: /prUrl must be a GitHub pull request URL/,
+    },
+    {
+      name: 'failing-check',
+      mutate(evidence) {
+        evidence.checks[0].conclusion = 'FAILURE';
+      },
+      pattern: /checks must all conclude SUCCESS/,
+    },
+    {
+      name: 'missing-scope',
+      mutate(evidence) {
+        evidence.changedFilesOrModules = ['config/operator-agent/omnigent-a4-adapter.json'];
+      },
+      pattern: /changedFilesOrModules missing:/,
+    },
+    {
+      name: 'verifier-pr-writes',
+      mutate(evidence) {
+        evidence.prCreatedByVerifier = true;
+        evidence.readyForReviewByVerifier = true;
+        evidence.mergedByVerifier = true;
+      },
+      pattern: /prCreatedByVerifier must be false/,
+    },
+    {
+      name: 'secret-leak',
+      mutate(evidence) {
+        evidence.containsSecrets = true;
+      },
+      pattern: /containsSecrets must be false/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(evidence) {
+        evidence.processSpawned = true;
+        evidence.executedCommands = ['gh pr merge 999'];
+        evidence.executionApproved = true;
+        evidence.wouldExecute = true;
+        evidence.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationWorkspaceEvidenceFixture(t);
+    const evidence = validImplementationPrEvidence({
+      implementationWorkspaceEvidencePath: fixture.implementationWorkspaceEvidencePath,
+      implementationWorkspaceEvidenceReceiptPath: fixture.implementationWorkspaceEvidenceReceiptPath,
+    });
+    entry.mutate(evidence);
+    const implementationPrEvidencePath = path.join(fixture.root, `${entry.name}-implementation-pr-evidence.json`);
+    writeFileSync(implementationPrEvidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
+
+    const result = runImplementationPrEvidenceCheck(fixture, implementationPrEvidencePath);
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationPrEvidenceOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-pr-evidence-check fails closed on drifted implementation workspace evidence receipts', (t) => {
+  const fixture = writeImplementationWorkspaceEvidenceFixture(t);
+  const driftedWorkspaceReceipt = JSON.parse(readFileSync(fixture.implementationWorkspaceEvidenceReceiptPath, 'utf8'));
+  driftedWorkspaceReceipt.branchName = 'codex/drifted-branch';
+  driftedWorkspaceReceipt.prCreatedByVerifier = true;
+  driftedWorkspaceReceipt.processSpawned = true;
+  const driftedWorkspaceReceiptPath = path.join(fixture.root, 'drifted-implementation-workspace-evidence-receipt.json');
+  writeFileSync(driftedWorkspaceReceiptPath, `${JSON.stringify(driftedWorkspaceReceipt, null, 2)}\n`);
+  const implementationPrEvidencePath = path.join(fixture.root, 'implementation-pr-evidence.json');
+  writeFileSync(
+    implementationPrEvidencePath,
+    `${JSON.stringify(validImplementationPrEvidence({
+      implementationWorkspaceEvidencePath: fixture.implementationWorkspaceEvidencePath,
+      implementationWorkspaceEvidenceReceiptPath: driftedWorkspaceReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationPrEvidenceCheck(
+    fixture,
+    implementationPrEvidencePath,
+    fixture.root,
+    driftedWorkspaceReceiptPath,
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.implementationPrEvidenceOk, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /branchName must match evidence/);
+  assert.match(payload.errors.join('\n'), /prCreatedByVerifier must be false/);
   assert.match(payload.errors.join('\n'), /processSpawned must be false/);
 });
 
