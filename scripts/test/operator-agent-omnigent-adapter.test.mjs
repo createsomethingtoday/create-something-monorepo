@@ -24,7 +24,7 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
-const EXPECTED_ISSUE = 'CRE-1081';
+const EXPECTED_ISSUE = 'CRE-1082';
 const EXPECTED_TARGET = 'create-something-internal-production';
 const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
 const FIXED_NOW = '2026-07-06T20:00:00.000Z';
@@ -289,6 +289,36 @@ function releaseAdmissionCheckArgs(packetPath, preflightReceiptPath, executionRe
   );
   args[1] = 'release-admission-check';
   args.push('--runner-diff-receipt', runnerDiffReceiptPath, '--release-admission', releaseAdmissionPath);
+  return args;
+}
+
+function executionRunbookCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, receiptDir) {
+  const args = releaseAdmissionCheckArgs(
+    packetPath,
+    preflightReceiptPath,
+    executionReceiptPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+    runnerContractReceiptPath,
+    runnerPlanPath,
+    runnerPlanReceiptPath,
+    runnerDiffPath,
+    runnerDiffReceiptPath,
+    releaseAdmissionPath,
+    receiptDir,
+  );
+  args[1] = 'execution-runbook-check';
+  args.push('--release-admission-receipt', releaseAdmissionReceiptPath, '--execution-runbook', executionRunbookPath);
   return args;
 }
 
@@ -583,6 +613,45 @@ function writeValidRunnerImplementationDiffReceipt(t, packetPath, preflightPath,
     root,
     runnerDiffReceiptPath: path.join(REPO_ROOT, diffPayload.receiptPath),
     diffPayload,
+  };
+}
+
+function writeValidReleaseAdmissionReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath) {
+  const root = makeWorkspace(t);
+  const releaseResult = spawnSync(
+    process.execPath,
+    releaseAdmissionCheckArgs(
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+      commandPath,
+      commandReceiptPath,
+      executorProofPath,
+      proposalPath,
+      proposalReceiptPath,
+      policyPatchPath,
+      policyPatchReceiptPath,
+      candidateManifestPath,
+      applicationDiffReceiptPath,
+      readinessReceiptPath,
+      runnerContractPath,
+      runnerContractReceiptPath,
+      runnerPlanPath,
+      runnerPlanReceiptPath,
+      runnerDiffPath,
+      runnerDiffReceiptPath,
+      releaseAdmissionPath,
+      root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+  assert.equal(releaseResult.status, 0, releaseResult.stderr || releaseResult.stdout);
+  const releasePayload = JSON.parse(releaseResult.stdout);
+  return {
+    root,
+    releaseAdmissionReceiptPath: path.join(REPO_ROOT, releasePayload.receiptPath),
+    releasePayload,
   };
 }
 
@@ -911,6 +980,65 @@ function validReleaseAdmission({ readinessReceiptPath, runnerDiffPath, runnerDif
     linearEvidence: `Linear ${EXPECTED_ISSUE} release admission evidence`,
     rollbackNote: 'Rollback by reverting runner-entrypoint PR first, then policy-enabled-manifest PR.',
     publicAccessFailClosedProof: 'operator-agent-public-smoke rawOriginExposed=false and redirectsToAccess=true',
+    currentPolicyBlocked: true,
+    maxWritesPerRun: 1,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
+function validExecutionRunbook({ releaseAdmissionPath, releaseAdmissionReceiptPath } = {}) {
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    releaseAdmission: releaseAdmissionPath ? path.relative(REPO_ROOT, releaseAdmissionPath) : 'release-admission.json',
+    releaseAdmissionReceipt: releaseAdmissionReceiptPath
+      ? path.relative(REPO_ROOT, releaseAdmissionReceiptPath)
+      : 'release-admission-check.json',
+    runbookOnly: true,
+    executionMode: 'operator-supervised',
+    requiresManualTrigger: true,
+    targetValidationCommands: [
+      'node scripts/operator-agent-omnigent-adapter.mjs check --json',
+      'node scripts/operator-agent-public-smoke.mjs --target create-something-internal-production --json',
+    ],
+    writeCommand: {
+      command: 'node scripts/operator-agent-omnigent-runner.mjs --command fixture-operator-command --json',
+      requiresManualTrigger: true,
+      approvedCommandOnly: true,
+    },
+    postActionSmokeCommands: [
+      'node scripts/operator-agent-public-smoke.mjs --target create-something-internal-production --json',
+    ],
+    rollbackCommands: [
+      'git revert <runner-entrypoint-merge-sha>',
+      'git revert <policy-enabled-manifest-merge-sha>',
+    ],
+    publicAccessFailClosedProof: 'operator-agent-public-smoke rawOriginExposed=false and redirectsToAccess=true',
+    finalReceiptOutputs: [
+      'pre-action-receipt',
+      'execution-receipt',
+      'post-action-smoke',
+      'rollback-readiness',
+      'final-outcome',
+    ],
+    stopConditions: [
+      'target-mismatch',
+      'command-expired',
+      'receipt-drift',
+      'smoke-failed',
+      'rollback-unavailable',
+    ],
+    linearEvidence: `Linear ${EXPECTED_ISSUE} execution runbook evidence`,
     currentPolicyBlocked: true,
     maxWritesPerRun: 1,
     processSpawned: false,
@@ -3059,11 +3187,46 @@ function writeReleaseAdmissionFixture(t) {
     fixture.runnerPlanReceiptPath,
     runnerDiffPath,
   );
+  const releaseAdmissionPath = path.join(fixture.root, 'release-admission.json');
+  writeFileSync(
+    releaseAdmissionPath,
+    `${JSON.stringify(validReleaseAdmission({
+      readinessReceiptPath: fixture.readinessReceiptPath,
+      runnerDiffPath,
+      runnerDiffReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const { releaseAdmissionReceiptPath } = writeValidReleaseAdmissionReceipt(
+    t,
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    runnerDiffPath,
+    runnerDiffReceiptPath,
+    releaseAdmissionPath,
+  );
 
   return {
     ...fixture,
     runnerDiffPath,
     runnerDiffReceiptPath,
+    releaseAdmissionPath,
+    releaseAdmissionReceiptPath,
   };
 }
 
@@ -3343,7 +3506,7 @@ test('release-admission-check validates manual release evidence without executio
   assert.equal(payload.prs.length, 2);
   assert.ok(payload.requiredEvidence.includes('public-access-fail-closed-proof'));
   assert.ok(payload.requiredGuards.includes('checked-in-policy-enabled'));
-  assert.match(payload.linearEvidence, /CRE-1081/);
+  assert.match(payload.linearEvidence, new RegExp(EXPECTED_ISSUE));
   assert.match(payload.rollbackNote, /reverting runner-entrypoint PR first/);
   assert.match(payload.publicAccessFailClosedProof, /rawOriginExposed=false/);
   assert.equal(payload.currentPolicyBlocked, true);
@@ -3522,6 +3685,249 @@ test('release-admission-check fails closed on drifted runner diff receipts', (t)
   assert.equal(payload.writesPerformed, 0);
   assert.match(payload.errors.join('\n'), /runner implementation diff receipt processSpawned must be false/);
   assert.match(payload.errors.join('\n'), /runner implementation diff receipt executedCommands must be empty/);
+});
+
+test('execution-runbook-check validates future supervised runbook without execution', (t) => {
+  const fixture = writeReleaseAdmissionFixture(t);
+  const executionRunbookPath = path.join(fixture.root, 'execution-runbook.json');
+  writeFileSync(
+    executionRunbookPath,
+    `${JSON.stringify(validExecutionRunbook({
+      releaseAdmissionPath: fixture.releaseAdmissionPath,
+      releaseAdmissionReceiptPath: fixture.releaseAdmissionReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    executionRunbookCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      fixture.releaseAdmissionPath,
+      fixture.releaseAdmissionReceiptPath,
+      executionRunbookPath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'execution-runbook-check');
+  assert.equal(payload.executionRunbookOk, true);
+  assert.equal(payload.runbookOnly, true);
+  assert.equal(payload.executionMode, 'operator-supervised');
+  assert.equal(payload.requiresManualTrigger, true);
+  assert.ok(payload.targetValidationCommands.some((command) => command.includes('operator-agent-public-smoke')));
+  assert.match(payload.writeCommand.command, /operator-agent-omnigent-runner/);
+  assert.equal(payload.writeCommand.requiresManualTrigger, true);
+  assert.equal(payload.writeCommand.approvedCommandOnly, true);
+  assert.ok(payload.postActionSmokeCommands.length > 0);
+  assert.ok(payload.rollbackCommands.length > 0);
+  assert.match(payload.publicAccessFailClosedProof, /rawOriginExposed=false/);
+  assert.ok(payload.finalReceiptOutputs.includes('final-outcome'));
+  assert.ok(payload.stopConditions.includes('rollback-unavailable'));
+  assert.equal(payload.maxWritesPerRun, 1);
+  assert.equal(payload.currentPolicyBlocked, true);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.executionRunbookRequiresReleaseAdmissionReceipt, true);
+  assert.match(payload.nextGate, /checked-in policy enablement/);
+  assert.match(payload.receiptPath, /execution-runbook-check\.json$/);
+});
+
+test('execution-runbook-check fails closed on unsafe runbooks', (t) => {
+  const cases = [
+    {
+      name: 'missing-validation',
+      mutate(runbook) {
+        runbook.targetValidationCommands = [];
+      },
+      pattern: /targetValidationCommands must be non-empty/,
+    },
+    {
+      name: 'unapproved-write-command',
+      mutate(runbook) {
+        runbook.writeCommand.approvedCommandOnly = false;
+      },
+      pattern: /writeCommand\.approvedCommandOnly must be true/,
+    },
+    {
+      name: 'missing-smoke',
+      mutate(runbook) {
+        runbook.postActionSmokeCommands = [];
+      },
+      pattern: /postActionSmokeCommands must be non-empty/,
+    },
+    {
+      name: 'missing-rollback',
+      mutate(runbook) {
+        runbook.rollbackCommands = [];
+      },
+      pattern: /rollbackCommands must be non-empty/,
+    },
+    {
+      name: 'missing-final-output',
+      mutate(runbook) {
+        runbook.finalReceiptOutputs = ['pre-action-receipt'];
+      },
+      pattern: /finalReceiptOutputs must include final-outcome/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(runbook) {
+        runbook.processSpawned = true;
+        runbook.executedCommands = ['node scripts/operator-agent-omnigent-runner.mjs'];
+        runbook.executionReady = true;
+        runbook.wouldExecute = true;
+        runbook.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeReleaseAdmissionFixture(t);
+    const runbook = validExecutionRunbook({
+      releaseAdmissionPath: fixture.releaseAdmissionPath,
+      releaseAdmissionReceiptPath: fixture.releaseAdmissionReceiptPath,
+    });
+    entry.mutate(runbook);
+    const executionRunbookPath = path.join(fixture.root, `${entry.name}-execution-runbook.json`);
+    writeFileSync(executionRunbookPath, `${JSON.stringify(runbook, null, 2)}\n`);
+
+    const result = spawnSync(
+      process.execPath,
+      executionRunbookCheckArgs(
+        fixture.packetPath,
+        fixture.preflightPath,
+        fixture.executionPath,
+        fixture.authorizationPath,
+        fixture.commandPath,
+        fixture.commandReceiptPath,
+        fixture.executorProofPath,
+        fixture.proposalPath,
+        fixture.proposalReceiptPath,
+        fixture.policyPatchPath,
+        fixture.policyPatchReceiptPath,
+        fixture.candidateManifestPath,
+        fixture.applicationDiffReceiptPath,
+        fixture.readinessReceiptPath,
+        fixture.runnerContractPath,
+        fixture.runnerContractReceiptPath,
+        fixture.runnerPlanPath,
+        fixture.runnerPlanReceiptPath,
+        fixture.runnerDiffPath,
+        fixture.runnerDiffReceiptPath,
+        fixture.releaseAdmissionPath,
+        fixture.releaseAdmissionReceiptPath,
+        executionRunbookPath,
+        fixture.root,
+      ),
+      { cwd: REPO_ROOT, encoding: 'utf8' },
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.executionRunbookOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('execution-runbook-check fails closed on drifted release admission receipts', (t) => {
+  const fixture = writeReleaseAdmissionFixture(t);
+  const driftedReleaseReceipt = JSON.parse(readFileSync(fixture.releaseAdmissionReceiptPath, 'utf8'));
+  driftedReleaseReceipt.processSpawned = true;
+  driftedReleaseReceipt.executedCommands = ['node scripts/operator-agent-omnigent-runner.mjs'];
+  const driftedReleaseReceiptPath = path.join(fixture.root, 'drifted-release-admission-receipt.json');
+  writeFileSync(driftedReleaseReceiptPath, `${JSON.stringify(driftedReleaseReceipt, null, 2)}\n`);
+  const executionRunbookPath = path.join(fixture.root, 'execution-runbook.json');
+  writeFileSync(
+    executionRunbookPath,
+    `${JSON.stringify(validExecutionRunbook({
+      releaseAdmissionPath: fixture.releaseAdmissionPath,
+      releaseAdmissionReceiptPath: driftedReleaseReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    executionRunbookCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      fixture.releaseAdmissionPath,
+      driftedReleaseReceiptPath,
+      executionRunbookPath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.executionRunbookOk, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /release admission receipt processSpawned must be false/);
+  assert.match(payload.errors.join('\n'), /release admission receipt executedCommands must be empty/);
 });
 
 test('read-only scout profile and receipt match the local harness parity contract', () => {
