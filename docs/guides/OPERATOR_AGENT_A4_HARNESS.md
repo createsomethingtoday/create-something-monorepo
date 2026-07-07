@@ -262,6 +262,38 @@ valid proposal sets `enablementProposalOk` to `true`, but it still records
 `false`, and `0`. The proposal check does not edit the manifest and does not
 grant execution authority.
 
+After the proposal receipt exists, validate the exact policy patch as a dry run
+before any PR applies it:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs policy-patch-dry-run-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The policy-patch dry run must match the proposal receipt's
+`proposedPolicyPatch` exactly and may preview only
+`authority.a4Execution`, `a4ExecutionCommand.runnerEnabled`, and
+`a4ExecutorProof.runnerEnabled`. It must also keep `dryRunOnly` as `true`,
+`policyFileChanged` and `policyChangeApplied` as `false`, and
+`writesPerformed` as `0`. A valid dry-run receipt still records
+`runnerEnabled`, `executionReady`, `executionEnabled`, `wouldExecute`, and
+`writesPerformed` as `false`, `false`, `false`, `false`, and `0`. This gate
+validates what a later operator-reviewed PR would change; it does not change the
+checked-in manifest or grant execution authority.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:

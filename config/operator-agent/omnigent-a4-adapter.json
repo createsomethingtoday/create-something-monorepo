@@ -187,6 +187,24 @@
     "policyChangeApplied": false,
     "blockedUntil": "a separate operator-reviewed PR applies the proposed policy patch and reruns access, rollback, and smoke proof"
   },
+  "a4PolicyPatchDryRun": {
+    "requiresEnablementProposalReceipt": true,
+    "dryRunOnly": true,
+    "maxWritesPerRun": 1,
+    "requiredProofs": [
+      "rollback",
+      "post-action-smoke",
+      "public-access-fail-closed"
+    ],
+    "allowedPatchFields": [
+      "authority.a4Execution",
+      "a4ExecutionCommand.runnerEnabled",
+      "a4ExecutorProof.runnerEnabled"
+    ],
+    "policyFileChanged": false,
+    "policyChangeApplied": false,
+    "blockedUntil": "a separate operator-reviewed PR applies the validated patch and reruns public access, rollback, and smoke proof"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -247,6 +265,11 @@
       "id": "gate-9-a4-executor-enable-proposal",
       "required": "A4 executor enablement proposal validates the future policy patch and proof requirements without applying the policy change",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs executor-enable-proposal-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-10-a4-policy-patch-dry-run",
+      "required": "A4 policy patch dry run validates the proposal receipt and exact patch preview without changing the manifest or enabling the runner",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs policy-patch-dry-run-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }
