@@ -9,7 +9,7 @@ function json(data: unknown) {
   };
 }
 
-async function logEvent(
+async function writeEvent(
   db: D1Database,
   actor: string,
   action: string,
@@ -87,7 +87,33 @@ const TRIAGE_STATES = ['new', 'categorized', 'linked', 'ignored'] as const;
 const NOTIFICATION_STATUSES = ['queued', 'sent', 'skipped', 'failed'] as const;
 const LINK_KINDS = ['zendesk', 'airtable', 'slack_thread', 'doc', 'app', 'other'] as const;
 
-export function registerTools(server: McpServer, getDb: GetDb): void {
+export type PresencePublish = (event: Record<string, unknown>) => void;
+
+export function registerTools(server: McpServer, getDb: GetDb, publish?: PresencePublish): void {
+  // Shadows the module-level writer: every audited write also fans out to the
+  // presence hub (fire-and-forget) so connected clients see live collaboration.
+  const logEvent = async (
+    db: D1Database,
+    actor: string,
+    action: string,
+    entityType: string,
+    entityId: string | number | null,
+    payload?: unknown,
+  ): Promise<void> => {
+    await writeEvent(db, actor, action, entityType, entityId, payload);
+    try {
+      publish?.({
+        ts: new Date().toISOString(),
+        actor,
+        action,
+        entity_type: entityType,
+        entity_id: entityId === null ? null : String(entityId),
+      });
+    } catch {
+      // presence is best-effort; never fail a write over it
+    }
+  };
+
   server.tool(
     'governance_sync_status',
     'Sources, sync cursors, and record counts for the app governance database. Call first in a sync session to learn where each source left off.',

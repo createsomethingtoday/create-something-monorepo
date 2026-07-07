@@ -20,6 +20,14 @@ database_id = "65e0fa00-e934-47b6-a154-baccd09afa1c"
 name = "MCP_OBJECT"
 class_name = "AppGovernanceMCP"
 
+[[durable_objects.bindings]]
+name = "PRESENCE"
+class_name = "PresenceHub"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["AppGovernanceMCP"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["PresenceHub"]

@@ -13,7 +13,8 @@ The database (Cloudflare D1) is the source of truth. Airtable is a projection fo
 | Surface | Where | Access |
 |---|---|---|
 | Dashboard (read-only) | https://app-governance-dash.createsomething.agency | Access key — Infisical `APP_GOVERNANCE_DASHBOARD_KEY` |
-| Governance MCP (agents & scripts) | https://app-governance.mcp.createsomething.agency/mcp | Bearer — Infisical `APP_GOVERNANCE_MCP_KEY` |
+| Governance MCP (agents & scripts) | https://app-governance.mcp.createsomething.agency/mcp | Bearer — per-operator keys (Infisical `APP_GOVERNANCE_MCP_KEY_<NAME>`) or shared `APP_GOVERNANCE_MCP_KEY` |
+| Live collaboration view | https://app-governance.mcp.createsomething.agency/live?key=<your key> | Same keys; shows agents working the database in real time |
 | Notifications | Posted to Slack targets (e.g. #triage-marketplace-apps) | Released by a human — see below |
 | Tracker canvas | Slack canvas `F0BB96552KG` | Narrative home; synced into the DB as items |
 | Airtable | Base `app1Q0o9xw2Zny7gw` | Projection only |
