@@ -174,6 +174,11 @@
       "id": "gate-4-a4-preflight",
       "required": "A4 preflight receipt emits the exact dry-run execution, validation, smoke, and rollback plan without executing writes",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs preflight-check --packet <packet.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-5-a4-execution-receipt-disabled",
+      "required": "A4 execution receipt schema validates the packet and preflight receipt while keeping execution disabled",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs execution-receipt-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

@@ -139,6 +139,26 @@ as `0`. It may name the execution, validation, smoke, rollback, and stop
 condition plans, but it must not run them. A failed admission packet produces an
 empty execution plan and remains a stop condition.
 
+After preflight, validate the disabled execution receipt schema. This remains a
+closed gate until a separate operator execution approval is recorded for the
+same issue, target, action, packet, and preflight receipt:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs execution-receipt-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The execution receipt check must keep `executionEnabled`, `executionApproved`,
+and `wouldExecute` as `false`, with `writesPerformed` at `0`. It validates that
+the preflight receipt matches the packet, but it does not run the action. A
+failed or mismatched preflight receipt produces empty execution plans and remains
+a stop condition.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
