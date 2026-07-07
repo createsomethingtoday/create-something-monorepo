@@ -2572,6 +2572,88 @@
     "writesPerformed": 0,
     "blockedUntil": "implementation production runner implementation admission merge decision evidence may approve a manual merge path after review, but this verifier must not admit runner code, enable a runner, mutate PRs or issues, deploy, expose raw artifacts, or write third-party systems"
   },
+  "a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence": {
+    "requiresImplementationProductionRunnerImplementationAdmissionMergeDecisionReceipt": true,
+    "manualMergeEvidenceOnly": true,
+    "allowedMergeStatuses": [
+      "merged"
+    ],
+    "requiresValidRunnerImplementationAdmissionMergeDecisionReceipt": true,
+    "requiresApprovedRunnerImplementationAdmissionMergeDecision": true,
+    "requiresMergedBy": true,
+    "requiresMergedAt": true,
+    "requiresMergeCommitSha": true,
+    "requiresNoExecutionApproval": true,
+    "requiresCurrentVerifierPolicyBlocked": true,
+    "policyChangeAppliedByVerifier": false,
+    "runnerEnabledByVerifier": false,
+    "runnerImplementationAdmittedByVerifier": false,
+    "prMutationPerformedByVerifier": false,
+    "mergedByVerifier": false,
+    "deployedByVerifier": false,
+    "requiresNoThirdPartyWriteByVerifier": true,
+    "requiresNoIssueMutationByVerifier": true,
+    "requiresRedactionPolicy": true,
+    "forbidsSecrets": true,
+    "forbidsRawLogs": true,
+    "forbidsPrompts": true,
+    "forbidsRawTranscripts": true,
+    "requiresNoExecutionOnEvidence": true,
+    "requiredReceiptReferences": [
+      "implementation-production-runner-implementation-admission-merge-decision-check",
+      "implementation-production-runner-implementation-admission-pr-review-check",
+      "implementation-production-runner-implementation-admission-pr-check",
+      "implementation-production-runner-implementation-admission-check",
+      "implementation-production-runner-implementation-review-check",
+      "implementation-production-runner-implementation-pr-check",
+      "implementation-production-runner-admission-check",
+      "implementation-production-policy-enablement-revalidation-check",
+      "implementation-production-policy-enablement-merge-evidence-check",
+      "implementation-production-policy-enablement-merge-decision-check",
+      "implementation-production-policy-enablement-pr-check",
+      "implementation-production-a4-enablement-approval-check"
+    ],
+    "requiredEvidence": [
+      "implementation-production-runner-implementation-admission-merge-decision-receipt",
+      "approved-runner-implementation-admission-merge-decision",
+      "merge-status",
+      "merged-by",
+      "merged-at",
+      "merge-commit-sha",
+      "runner-implementation-admission-pr-url",
+      "runner-implementation-admission-pr-number",
+      "runner-implementation-admission-pr-head-ref",
+      "runner-implementation-admission-pr-base-ref",
+      "runner-implementation-admission-pr-commit-sha",
+      "runner-implementation-reference",
+      "runner-contract-reference",
+      "runner-entry-point",
+      "no-execution-approval",
+      "redaction-policy"
+    ],
+    "requiredNoExecutionMarkers": [
+      "current-verifier-policy-blocked",
+      "policy-change-not-applied-by-verifier",
+      "process-not-spawned",
+      "executed-commands-empty",
+      "runner-disabled-in-verifier",
+      "runner-implementation-not-admitted-by-verifier",
+      "runner-implementation-admission-pr-not-merged-by-verifier",
+      "runner-implementation-admission-pr-not-mutated-by-verifier",
+      "execution-not-ready",
+      "execution-disabled",
+      "execution-not-approved",
+      "would-execute-false",
+      "writes-performed-zero",
+      "deploy-not-performed-by-verifier",
+      "third-party-write-not-performed-by-verifier",
+      "issue-mutation-not-performed-by-verifier",
+      "pr-mutation-not-performed-by-verifier",
+      "production-runner-implementation-admission-merge-evidence-only"
+    ],
+    "writesPerformed": 0,
+    "blockedUntil": "implementation production runner implementation admission merge evidence may prove a manual merge happened after approval, but this verifier must not admit runner code, enable a runner, mutate PRs or issues, deploy, expose raw artifacts, or write third-party systems"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -2817,6 +2899,11 @@
       "id": "gate-46-a4-implementation-production-runner-implementation-admission-merge-decision",
       "required": "A4 implementation production runner implementation admission merge decision validates operator merge-decision evidence after admission PR review without admitting runner code, changing this verifier branch policy, mutating PRs or issues, deploying, exposing raw artifacts, or executing",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-merge-decision-check <same chain arguments as implementation-production-runner-implementation-admission-pr-review-check> --implementation-production-runner-implementation-admission-pr-review-receipt <implementation-production-runner-implementation-admission-pr-review-receipt.json> --implementation-production-runner-implementation-admission-merge-decision <implementation-production-runner-implementation-admission-merge-decision.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-47-a4-implementation-production-runner-implementation-admission-merge-evidence",
+      "required": "A4 implementation production runner implementation admission merge evidence validates manual merge evidence after admission merge decision without admitting runner code, changing this verifier branch policy, mutating PRs or issues, deploying, exposing raw artifacts, or executing",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-merge-evidence-check <same chain arguments as implementation-production-runner-implementation-admission-merge-decision-check> --implementation-production-runner-implementation-admission-merge-decision-receipt <implementation-production-runner-implementation-admission-merge-decision-receipt.json> --implementation-production-runner-implementation-admission-merge-evidence <implementation-production-runner-implementation-admission-merge-evidence.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }
