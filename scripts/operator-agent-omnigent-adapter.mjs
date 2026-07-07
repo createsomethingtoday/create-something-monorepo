@@ -124,6 +124,8 @@ function parseArgs(argv) {
     implementationPrEvidence: null,
     implementationPrEvidenceReceipt: null,
     implementationMergeDecision: null,
+    implementationMergeDecisionReceipt: null,
+    implementationMergeEvidence: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -180,6 +182,8 @@ function parseArgs(argv) {
     else if (arg === '--implementation-pr-evidence' && args[index + 1]) options.implementationPrEvidence = args[++index];
     else if (arg === '--implementation-pr-evidence-receipt' && args[index + 1]) options.implementationPrEvidenceReceipt = args[++index];
     else if (arg === '--implementation-merge-decision' && args[index + 1]) options.implementationMergeDecision = args[++index];
+    else if (arg === '--implementation-merge-decision-receipt' && args[index + 1]) options.implementationMergeDecisionReceipt = args[++index];
+    else if (arg === '--implementation-merge-evidence' && args[index + 1]) options.implementationMergeEvidence = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -1562,6 +1566,124 @@ function validateManifest(manifest) {
   }
   if (implementationMergeDecision.writesPerformed !== 0) {
     errors.push('a4ImplementationMergeDecision.writesPerformed must be 0');
+  }
+
+  const implementationMergeEvidence = manifest.a4ImplementationMergeEvidence || {};
+  if (implementationMergeEvidence.requiresImplementationMergeDecisionReceipt !== true) {
+    errors.push('a4ImplementationMergeEvidence.requiresImplementationMergeDecisionReceipt must be true');
+  }
+  if (implementationMergeEvidence.mergeEvidenceOnly !== true) {
+    errors.push('a4ImplementationMergeEvidence.mergeEvidenceOnly must be true');
+  }
+  for (const field of [
+    'requiresApprovedMergeDecision',
+    'requiresOperatorMergedBy',
+    'requiresMergedAt',
+    'requiresIssueIdentifier',
+    'requiresIssueUrl',
+    'requiresPrUrl',
+    'requiresPrNumber',
+    'requiresHeadRef',
+    'requiresBaseRef',
+    'requiresCommitSha',
+    'requiresMergeCommitSha',
+    'requiresMergeState',
+    'requiresChecks',
+    'requiresValidationEvidence',
+    'requiresRollbackPlan',
+    'requiresPublicAccessFailClosedProof',
+  ]) {
+    if (implementationMergeEvidence[field] !== true) {
+      errors.push(`a4ImplementationMergeEvidence.${field} must be true`);
+    }
+  }
+  for (const field of [
+    'readyForReviewByVerifier',
+    'mergedByVerifier',
+    'deployedByVerifier',
+  ]) {
+    if (implementationMergeEvidence[field] !== false) {
+      errors.push(`a4ImplementationMergeEvidence.${field} must be false`);
+    }
+  }
+  if (implementationMergeEvidence.requiresNoThirdPartyWriteByVerifier !== true) {
+    errors.push('a4ImplementationMergeEvidence.requiresNoThirdPartyWriteByVerifier must be true');
+  }
+  if (implementationMergeEvidence.requiresRedactionPolicy !== true) {
+    errors.push('a4ImplementationMergeEvidence.requiresRedactionPolicy must be true');
+  }
+  for (const field of ['forbidsSecrets', 'forbidsRawLogs', 'forbidsPrompts', 'forbidsRawTranscripts']) {
+    if (implementationMergeEvidence[field] !== true) {
+      errors.push(`a4ImplementationMergeEvidence.${field} must be true`);
+    }
+  }
+  if (implementationMergeEvidence.requiresNoExecutionOnEvidence !== true) {
+    errors.push('a4ImplementationMergeEvidence.requiresNoExecutionOnEvidence must be true');
+  }
+  for (const receiptReference of [
+    'implementation-merge-decision-check',
+    'implementation-pr-evidence-check',
+    'implementation-workspace-evidence-check',
+    'follow-up-work-intake-check',
+    'manual-follow-up-issue-evidence-check',
+    'manual-next-step-handoff-check',
+    'receipt-review-decision-check',
+    'receipt-publication-check',
+    'receipt-bundle-check',
+    'execution-runbook-check',
+    'release-admission-check',
+  ]) {
+    if (!implementationMergeEvidence.requiredReceiptReferences?.includes(receiptReference)) {
+      errors.push(`a4ImplementationMergeEvidence.requiredReceiptReferences must include ${receiptReference}`);
+    }
+  }
+  for (const evidence of [
+    'implementation-merge-decision-receipt',
+    'approved-merge-decision',
+    'operator-merged-by',
+    'merged-at',
+    'issue-identifier',
+    'issue-url',
+    'pr-url',
+    'pr-number',
+    'head-ref',
+    'base-ref',
+    'commit-sha',
+    'merge-commit-sha',
+    'merge-state',
+    'checks',
+    'validation-evidence',
+    'rollback-plan',
+    'public-access-fail-closed-proof',
+    'redaction-policy',
+    'operator-summary',
+  ]) {
+    if (!implementationMergeEvidence.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ImplementationMergeEvidence.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-policy-blocked',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+    'ready-for-review-not-performed-by-verifier',
+    'merge-not-performed-by-verifier',
+    'deploy-not-performed-by-verifier',
+    'third-party-write-not-performed-by-verifier',
+    'manual-merge-evidence-only',
+  ]) {
+    if (!implementationMergeEvidence.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ImplementationMergeEvidence.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (implementationMergeEvidence.writesPerformed !== 0) {
+    errors.push('a4ImplementationMergeEvidence.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -5810,6 +5932,224 @@ function validateImplementationMergeDecision(decision, prReceipt, manifest, path
   return errors;
 }
 
+function validateImplementationMergeDecisionReceipt(receipt, decision, decisionResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'implementation-merge-decision-check') {
+    errors.push('implementation merge decision receipt mode must be implementation-merge-decision-check');
+  }
+  if (receipt.ok !== true || receipt.implementationMergeDecisionOk !== true) {
+    errors.push('implementation merge decision receipt must be ok');
+  }
+  if (receipt.implementationMergeDecision !== rel(paths.implementationMergeDecisionPath)) {
+    errors.push('implementation merge decision receipt implementationMergeDecision must match implementation merge decision artifact path');
+  }
+  if (receipt.implementationPrEvidenceReceipt !== rel(paths.implementationPrEvidenceReceiptPath)) {
+    errors.push('implementation merge decision receipt implementationPrEvidenceReceipt must match implementation PR evidence receipt path');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`implementation merge decision receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`implementation merge decision receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`implementation merge decision receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.decisionPacketOnly !== true) {
+    errors.push('implementation merge decision receipt decisionPacketOnly must be true');
+  }
+  if (receipt.decision !== 'approved-for-manual-merge') {
+    errors.push('implementation merge decision receipt decision must be approved-for-manual-merge');
+  }
+  for (const field of [
+    'reviewer',
+    'reviewedAt',
+    'issueIdentifier',
+    'issueUrl',
+    'prUrl',
+    'prNumber',
+    'headRef',
+    'baseRef',
+    'commitSha',
+    'mergeStateStatus',
+  ]) {
+    if (receipt[field] !== decision[field]) {
+      errors.push(`implementation merge decision receipt ${field} must match decision`);
+    }
+  }
+  if (!Array.isArray(receipt.checks) || receipt.checks.length === 0) {
+    errors.push('implementation merge decision receipt checks must not be empty');
+  } else if (receipt.checks.some((check) => check.conclusion !== 'SUCCESS')) {
+    errors.push('implementation merge decision receipt checks must all conclude SUCCESS');
+  }
+  if (!Array.isArray(receipt.validationEvidence) || receipt.validationEvidence.length === 0) {
+    errors.push('implementation merge decision receipt validationEvidence must not be empty');
+  }
+  if (!Array.isArray(receipt.rollbackPlan) || receipt.rollbackPlan.length === 0) {
+    errors.push('implementation merge decision receipt rollbackPlan must not be empty');
+  }
+  if (receipt.readyForReviewByVerifier !== false) {
+    errors.push('implementation merge decision receipt readyForReviewByVerifier must be false');
+  }
+  if (receipt.mergedByVerifier !== false) {
+    errors.push('implementation merge decision receipt mergedByVerifier must be false');
+  }
+  if (receipt.deployedByVerifier !== false) {
+    errors.push('implementation merge decision receipt deployedByVerifier must be false');
+  }
+  if (receipt.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation merge decision receipt thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (receipt.redactionPolicyApplied !== true) {
+    errors.push('implementation merge decision receipt redactionPolicyApplied must be true');
+  }
+  if (receipt.containsSecrets !== false) errors.push('implementation merge decision receipt containsSecrets must be false');
+  if (receipt.containsRawLogs !== false) errors.push('implementation merge decision receipt containsRawLogs must be false');
+  if (receipt.containsPrompts !== false) errors.push('implementation merge decision receipt containsPrompts must be false');
+  if (receipt.containsRawTranscripts !== false) {
+    errors.push('implementation merge decision receipt containsRawTranscripts must be false');
+  }
+  if (receipt.currentPolicyBlocked !== true) errors.push('implementation merge decision receipt currentPolicyBlocked must be true');
+  if (receipt.processSpawned !== false) errors.push('implementation merge decision receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('implementation merge decision receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('implementation merge decision receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('implementation merge decision receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('implementation merge decision receipt executionEnabled must be false');
+  if (receipt.executionApproved !== false) errors.push('implementation merge decision receipt executionApproved must be false');
+  if (receipt.wouldExecute !== false) errors.push('implementation merge decision receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('implementation merge decision receipt writesPerformed must be 0');
+  if (decisionResult.implementationMergeDecisionOk !== true) {
+    errors.push('implementation merge decision receipt requires valid implementation merge decision result');
+  }
+
+  return errors;
+}
+
+function validateImplementationMergeEvidence(evidence, decisionReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ImplementationMergeEvidence || {};
+
+  if (evidence.authorityLevel !== 'A4') errors.push('implementation merge evidence authorityLevel must be A4');
+  if (evidence.issue !== constraints.expectedIssue) {
+    errors.push(`implementation merge evidence issue mismatch: expected ${constraints.expectedIssue}, got ${evidence.issue}`);
+  }
+  if (evidence.target !== constraints.expectedTarget) {
+    errors.push(`implementation merge evidence target mismatch: expected ${constraints.expectedTarget}, got ${evidence.target}`);
+  }
+  if (evidence.action !== constraints.expectedAction) {
+    errors.push(`implementation merge evidence action mismatch: expected ${constraints.expectedAction}, got ${evidence.action}`);
+  }
+  if (evidence.implementationMergeDecision !== rel(paths.implementationMergeDecisionPath)) {
+    errors.push('implementation merge evidence implementationMergeDecision must match implementation merge decision artifact path');
+  }
+  if (evidence.implementationMergeDecisionReceipt !== rel(paths.implementationMergeDecisionReceiptPath)) {
+    errors.push('implementation merge evidence implementationMergeDecisionReceipt must match implementation merge decision receipt path');
+  }
+  if (evidence.mergeEvidenceOnly !== true) {
+    errors.push('implementation merge evidence mergeEvidenceOnly must be true');
+  }
+  if (decisionReceipt.decision !== 'approved-for-manual-merge') {
+    errors.push('implementation merge evidence requires an approved-for-manual-merge decision receipt');
+  }
+  if (!hasValue(evidence.operatorMergedBy)) {
+    errors.push('implementation merge evidence operatorMergedBy is required');
+  }
+  if (!hasValue(evidence.mergedAt) || Number.isNaN(Date.parse(evidence.mergedAt))) {
+    errors.push('implementation merge evidence mergedAt must be an ISO timestamp');
+  }
+  for (const field of [
+    'issueIdentifier',
+    'issueUrl',
+    'prUrl',
+    'prNumber',
+    'headRef',
+    'baseRef',
+    'commitSha',
+  ]) {
+    if (evidence[field] !== decisionReceipt[field]) {
+      errors.push(`implementation merge evidence ${field} must match implementation merge decision receipt`);
+    }
+  }
+  if (!hasValue(evidence.mergeCommitSha) || !/^[0-9a-f]{40}$/i.test(evidence.mergeCommitSha)) {
+    errors.push('implementation merge evidence mergeCommitSha must be a 40-character SHA');
+  }
+  if (!['MERGED', 'CLOSED', 'CLEAN'].includes(evidence.mergeStateStatus)) {
+    errors.push('implementation merge evidence mergeStateStatus must be MERGED, CLOSED, or CLEAN');
+  }
+  if (!Array.isArray(evidence.checks) || evidence.checks.length === 0) {
+    errors.push('implementation merge evidence checks must not be empty');
+  } else if (evidence.checks.some((check) => check.conclusion !== 'SUCCESS')) {
+    errors.push('implementation merge evidence checks must all conclude SUCCESS');
+  }
+  if (!Array.isArray(evidence.validationEvidence) || evidence.validationEvidence.length === 0) {
+    errors.push('implementation merge evidence validationEvidence must not be empty');
+  }
+  if (!Array.isArray(evidence.rollbackPlan) || evidence.rollbackPlan.length === 0) {
+    errors.push('implementation merge evidence rollbackPlan must not be empty');
+  }
+  if (evidence.readyForReviewByVerifier !== false) {
+    errors.push('implementation merge evidence readyForReviewByVerifier must be false');
+  }
+  if (evidence.mergedByVerifier !== false) errors.push('implementation merge evidence mergedByVerifier must be false');
+  if (evidence.deployedByVerifier !== false) errors.push('implementation merge evidence deployedByVerifier must be false');
+  if (evidence.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation merge evidence thirdPartyWritePerformedByVerifier must be false');
+  }
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!evidence.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`implementation merge evidence requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const requiredEvidence of rules.requiredEvidence || []) {
+    if (!evidence.requiredEvidence?.includes(requiredEvidence)) {
+      errors.push(`implementation merge evidence requiredEvidence must include ${requiredEvidence}`);
+    }
+  }
+  if (evidence.redactionPolicyApplied !== true) {
+    errors.push('implementation merge evidence redactionPolicyApplied must be true');
+  }
+  if (!hasValue(evidence.redactionPolicy)) errors.push('implementation merge evidence redactionPolicy is required');
+  if (evidence.containsSecrets !== false) errors.push('implementation merge evidence containsSecrets must be false');
+  if (evidence.containsRawLogs !== false) errors.push('implementation merge evidence containsRawLogs must be false');
+  if (evidence.containsPrompts !== false) errors.push('implementation merge evidence containsPrompts must be false');
+  if (evidence.containsRawTranscripts !== false) {
+    errors.push('implementation merge evidence containsRawTranscripts must be false');
+  }
+  if (evidence.rawLogsIncluded === true) errors.push('implementation merge evidence rawLogsIncluded must not be true');
+  if (evidence.promptsIncluded === true) errors.push('implementation merge evidence promptsIncluded must not be true');
+  if (evidence.rawTranscriptIncluded === true) {
+    errors.push('implementation merge evidence rawTranscriptIncluded must not be true');
+  }
+  if (!hasValue(evidence.publicAccessFailClosedProof)) {
+    errors.push('implementation merge evidence publicAccessFailClosedProof is required');
+  }
+  if (!hasValue(evidence.operatorSummary)) errors.push('implementation merge evidence operatorSummary is required');
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!evidence.noExecutionMarkers?.includes(marker)) {
+      errors.push(`implementation merge evidence noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (evidence.currentPolicyBlocked !== true) errors.push('implementation merge evidence currentPolicyBlocked must be true');
+  if (evidence.processSpawned === true) errors.push('implementation merge evidence processSpawned must not be true');
+  if (Array.isArray(evidence.executedCommands) && evidence.executedCommands.length > 0) {
+    errors.push('implementation merge evidence executedCommands must be empty');
+  }
+  if (evidence.runnerEnabled === true) errors.push('implementation merge evidence runnerEnabled must not be true');
+  if (evidence.executionReady === true) errors.push('implementation merge evidence executionReady must not be true');
+  if (evidence.executionEnabled === true) errors.push('implementation merge evidence executionEnabled must not be true');
+  if (evidence.executionApproved === true) errors.push('implementation merge evidence executionApproved must not be true');
+  if (evidence.wouldExecute === true) errors.push('implementation merge evidence wouldExecute must not be true');
+  if (evidence.writesPerformed !== 0) errors.push('implementation merge evidence writesPerformed must be 0');
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('implementation merge evidence current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -7524,6 +7864,116 @@ function buildImplementationMergeDecisionReceipt({
       implementationMergeDecisionMergedByVerifier: manifest.a4ImplementationMergeDecision?.mergedByVerifier,
       implementationMergeDecisionDeployedByVerifier: manifest.a4ImplementationMergeDecision?.deployedByVerifier,
       implementationMergeDecisionRequiresNoExecutionOnDecision: manifest.a4ImplementationMergeDecision?.requiresNoExecutionOnDecision,
+    },
+  };
+}
+
+function buildImplementationMergeEvidenceReceipt({
+  manifest,
+  manifestValidation,
+  decisionResult,
+  implementationMergeDecision,
+  implementationMergeDecisionPath,
+  implementationMergeDecisionReceipt,
+  implementationMergeDecisionReceiptPath,
+  implementationMergeEvidence,
+  implementationMergeEvidencePath,
+  implementationMergeDecisionReceiptErrors,
+  implementationMergeEvidenceErrors,
+  constraints,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(decisionResult.errors || []),
+    ...implementationMergeDecisionReceiptErrors,
+    ...implementationMergeEvidenceErrors,
+  ];
+  const implementationMergeEvidenceOk = errors.length === 0;
+
+  return {
+    mode: 'implementation-merge-evidence-check',
+    ok: implementationMergeEvidenceOk,
+    implementationMergeEvidenceOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    implementationMergeEvidence: rel(implementationMergeEvidencePath),
+    implementationMergeDecision: rel(implementationMergeDecisionPath),
+    implementationMergeDecisionReceipt: rel(implementationMergeDecisionReceiptPath),
+    implementationPrEvidenceReceipt: decisionResult.implementationPrEvidenceReceipt,
+    implementationPrEvidence: decisionResult.implementationPrEvidence,
+    implementationWorkspaceEvidenceReceipt: decisionResult.implementationWorkspaceEvidenceReceipt,
+    implementationWorkspaceEvidence: decisionResult.implementationWorkspaceEvidence,
+    followUpWorkIntakeReceipt: decisionResult.followUpWorkIntakeReceipt,
+    followUpWorkIntake: decisionResult.followUpWorkIntake,
+    packetPath: decisionResult.packetPath,
+    issue: decisionResult.issue || constraints.expectedIssue,
+    authorityLevel: decisionResult.authorityLevel,
+    target: decisionResult.target,
+    action: decisionResult.action,
+    targetScope: implementationMergeEvidence.targetScope || implementationMergeDecisionReceipt.targetScope || decisionResult.targetScope,
+    mergeEvidenceOnly: implementationMergeEvidence.mergeEvidenceOnly === true,
+    approvedDecision: implementationMergeDecisionReceipt.decision || implementationMergeDecision.decision || null,
+    operatorMergedBy: implementationMergeEvidence.operatorMergedBy || null,
+    mergedAt: implementationMergeEvidence.mergedAt || null,
+    issueIdentifier: implementationMergeEvidence.issueIdentifier || null,
+    issueUrl: implementationMergeEvidence.issueUrl || null,
+    prUrl: implementationMergeEvidence.prUrl || null,
+    prNumber: implementationMergeEvidence.prNumber || null,
+    headRef: implementationMergeEvidence.headRef || null,
+    baseRef: implementationMergeEvidence.baseRef || null,
+    commitSha: implementationMergeEvidence.commitSha || null,
+    mergeCommitSha: implementationMergeEvidence.mergeCommitSha || null,
+    mergeStateStatus: implementationMergeEvidence.mergeStateStatus || null,
+    checks: implementationMergeEvidence.checks || [],
+    validationEvidence: implementationMergeEvidence.validationEvidence || [],
+    rollbackPlan: implementationMergeEvidence.rollbackPlan || [],
+    readyForReviewByVerifier: implementationMergeEvidence.readyForReviewByVerifier === true,
+    mergedByVerifier: implementationMergeEvidence.mergedByVerifier === true,
+    deployedByVerifier: implementationMergeEvidence.deployedByVerifier === true,
+    thirdPartyWritePerformedByVerifier: implementationMergeEvidence.thirdPartyWritePerformedByVerifier === true,
+    requiredReceiptReferences: implementationMergeEvidence.requiredReceiptReferences || [],
+    requiredEvidence: implementationMergeEvidence.requiredEvidence || [],
+    redactionPolicyApplied: implementationMergeEvidence.redactionPolicyApplied === true,
+    redactionPolicy: implementationMergeEvidence.redactionPolicy || null,
+    containsSecrets: implementationMergeEvidence.containsSecrets === true,
+    containsRawLogs: implementationMergeEvidence.containsRawLogs === true,
+    containsPrompts: implementationMergeEvidence.containsPrompts === true,
+    containsRawTranscripts: implementationMergeEvidence.containsRawTranscripts === true,
+    rawLogsIncluded: implementationMergeEvidence.rawLogsIncluded === true,
+    promptsIncluded: implementationMergeEvidence.promptsIncluded === true,
+    rawTranscriptIncluded: implementationMergeEvidence.rawTranscriptIncluded === true,
+    publicAccessFailClosedProof: implementationMergeEvidence.publicAccessFailClosedProof || null,
+    operatorSummary: implementationMergeEvidence.operatorSummary || null,
+    noExecutionMarkers: implementationMergeEvidence.noExecutionMarkers || [],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: implementationMergeEvidenceOk
+      ? 'implementation merge evidence accepted as manual evidence only; verifier did not mark ready, merge, deploy, spawn a runner process, or perform a production write'
+      : 'implementation merge evidence rejected before deploy, runner process, policy enablement, or write command',
+    evidenceTarget: implementationMergeEvidence.evidenceTarget || implementationMergeDecisionReceipt.evidenceTarget || decisionResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may use this manual merge evidence for a separate post-merge release or production-readiness decision; automated execution still requires explicit checked-in policy enablement and a separate runner path',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      implementationMergeEvidenceRequiresImplementationMergeDecisionReceipt: manifest.a4ImplementationMergeEvidence?.requiresImplementationMergeDecisionReceipt,
+      implementationMergeEvidenceOnly: manifest.a4ImplementationMergeEvidence?.mergeEvidenceOnly,
+      implementationMergeEvidenceReadyForReviewByVerifier: manifest.a4ImplementationMergeEvidence?.readyForReviewByVerifier,
+      implementationMergeEvidenceMergedByVerifier: manifest.a4ImplementationMergeEvidence?.mergedByVerifier,
+      implementationMergeEvidenceDeployedByVerifier: manifest.a4ImplementationMergeEvidence?.deployedByVerifier,
+      implementationMergeEvidenceRequiresNoExecutionOnEvidence: manifest.a4ImplementationMergeEvidence?.requiresNoExecutionOnEvidence,
     },
   };
 }
@@ -10113,6 +10563,75 @@ function commandImplementationMergeDecisionCheck(options) {
   return result;
 }
 
+function commandImplementationMergeEvidenceCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for implementation-merge-evidence-check'));
+  }
+  if (!options.implementationMergeDecisionReceipt) {
+    throw new Error('--implementation-merge-decision-receipt is required for implementation-merge-evidence-check');
+  }
+  if (!options.implementationMergeEvidence) {
+    throw new Error('--implementation-merge-evidence is required for implementation-merge-evidence-check');
+  }
+
+  const decisionResult = commandImplementationMergeDecisionCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const implementationPrEvidenceReceiptPath = resolveFromRoot(options.implementationPrEvidenceReceipt);
+  const implementationMergeDecisionPath = resolveFromRoot(options.implementationMergeDecision);
+  const implementationMergeDecisionReceiptPath = resolveFromRoot(options.implementationMergeDecisionReceipt);
+  const implementationMergeEvidencePath = resolveFromRoot(options.implementationMergeEvidence);
+  const implementationMergeDecision = readJson(implementationMergeDecisionPath);
+  const implementationMergeDecisionReceipt = readJson(implementationMergeDecisionReceiptPath);
+  const implementationMergeEvidence = readJson(implementationMergeEvidencePath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const implementationMergeDecisionReceiptErrors = validateImplementationMergeDecisionReceipt(
+    implementationMergeDecisionReceipt,
+    implementationMergeDecision,
+    decisionResult,
+    {
+      implementationMergeDecisionPath,
+      implementationPrEvidenceReceiptPath,
+    },
+    constraints,
+  );
+  const implementationMergeEvidenceErrors = validateImplementationMergeEvidence(
+    implementationMergeEvidence,
+    implementationMergeDecisionReceipt,
+    manifest,
+    {
+      implementationMergeDecisionPath,
+      implementationMergeDecisionReceiptPath,
+    },
+    constraints,
+  );
+  const result = buildImplementationMergeEvidenceReceipt({
+    manifest,
+    manifestValidation,
+    decisionResult,
+    implementationMergeDecision,
+    implementationMergeDecisionPath,
+    implementationMergeDecisionReceipt,
+    implementationMergeDecisionReceiptPath,
+    implementationMergeEvidence,
+    implementationMergeEvidencePath,
+    implementationMergeDecisionReceiptErrors,
+    implementationMergeEvidenceErrors,
+    constraints,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -10176,6 +10695,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs implementation-workspace-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-pr-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-merge-decision-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs implementation-merge-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --implementation-merge-decision-receipt <path> --implementation-merge-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -10214,6 +10734,7 @@ async function main() {
   else if (options.command === 'implementation-workspace-evidence-check') result = commandImplementationWorkspaceEvidenceCheck(options);
   else if (options.command === 'implementation-pr-evidence-check') result = commandImplementationPrEvidenceCheck(options);
   else if (options.command === 'implementation-merge-decision-check') result = commandImplementationMergeDecisionCheck(options);
+  else if (options.command === 'implementation-merge-evidence-check') result = commandImplementationMergeEvidenceCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -10248,6 +10769,7 @@ export {
   commandImplementationWorkspaceEvidenceCheck,
   commandImplementationPrEvidenceCheck,
   commandImplementationMergeDecisionCheck,
+  commandImplementationMergeEvidenceCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
