@@ -24,7 +24,7 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
-const EXPECTED_ISSUE = 'CRE-1086';
+const EXPECTED_ISSUE = 'CRE-1088';
 const EXPECTED_TARGET = 'create-something-internal-production';
 const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
 const FIXED_NOW = '2026-07-06T20:00:00.000Z';
@@ -459,6 +459,46 @@ function manualNextStepHandoffCheckArgs(packetPath, preflightReceiptPath, execut
   );
   args[1] = 'manual-next-step-handoff-check';
   args.push('--receipt-review-decision-receipt', receiptReviewDecisionReceiptPath, '--manual-next-step-handoff', manualNextStepHandoffPath);
+  return args;
+}
+
+function manualFollowUpIssueEvidenceCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath, receiptPublicationReceiptPath, receiptReviewDecisionPath, receiptReviewDecisionReceiptPath, manualNextStepHandoffPath, manualNextStepHandoffReceiptPath, manualFollowUpIssueEvidencePath, receiptDir) {
+  const args = manualNextStepHandoffCheckArgs(
+    packetPath,
+    preflightReceiptPath,
+    executionReceiptPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+    runnerContractReceiptPath,
+    runnerPlanPath,
+    runnerPlanReceiptPath,
+    runnerDiffPath,
+    runnerDiffReceiptPath,
+    releaseAdmissionPath,
+    releaseAdmissionReceiptPath,
+    executionRunbookPath,
+    executionRunbookReceiptPath,
+    receiptBundlePath,
+    receiptBundleReceiptPath,
+    receiptPublicationPath,
+    receiptPublicationReceiptPath,
+    receiptReviewDecisionPath,
+    receiptReviewDecisionReceiptPath,
+    manualNextStepHandoffPath,
+    receiptDir,
+  );
+  args[1] = 'manual-follow-up-issue-evidence-check';
+  args.push('--manual-next-step-handoff-receipt', manualNextStepHandoffReceiptPath, '--manual-follow-up-issue-evidence', manualFollowUpIssueEvidencePath);
   return args;
 }
 
@@ -968,6 +1008,55 @@ function writeValidReceiptReviewDecisionReceipt(t, packetPath, preflightPath, ex
     root,
     receiptReviewDecisionReceiptPath: path.join(REPO_ROOT, decisionPayload.receiptPath),
     decisionPayload,
+  };
+}
+
+function writeValidManualNextStepHandoffReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath, receiptPublicationReceiptPath, receiptReviewDecisionPath, receiptReviewDecisionReceiptPath, manualNextStepHandoffPath) {
+  const root = makeWorkspace(t);
+  const handoffResult = spawnSync(
+    process.execPath,
+    manualNextStepHandoffCheckArgs(
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+      commandPath,
+      commandReceiptPath,
+      executorProofPath,
+      proposalPath,
+      proposalReceiptPath,
+      policyPatchPath,
+      policyPatchReceiptPath,
+      candidateManifestPath,
+      applicationDiffReceiptPath,
+      readinessReceiptPath,
+      runnerContractPath,
+      runnerContractReceiptPath,
+      runnerPlanPath,
+      runnerPlanReceiptPath,
+      runnerDiffPath,
+      runnerDiffReceiptPath,
+      releaseAdmissionPath,
+      releaseAdmissionReceiptPath,
+      executionRunbookPath,
+      executionRunbookReceiptPath,
+      receiptBundlePath,
+      receiptBundleReceiptPath,
+      receiptPublicationPath,
+      receiptPublicationReceiptPath,
+      receiptReviewDecisionPath,
+      receiptReviewDecisionReceiptPath,
+      manualNextStepHandoffPath,
+      root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+  assert.equal(handoffResult.status, 0, handoffResult.stderr || handoffResult.stdout);
+  const handoffPayload = JSON.parse(handoffResult.stdout);
+  return {
+    root,
+    manualNextStepHandoffReceiptPath: path.join(REPO_ROOT, handoffPayload.receiptPath),
+    handoffPayload,
   };
 }
 
@@ -1659,6 +1748,98 @@ function validManualNextStepHandoff({ receiptReviewDecisionPath, receiptReviewDe
       'writes-performed-zero',
       'issue-not-created',
       'handoff-only',
+    ],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
+function validManualFollowUpIssueEvidence({ manualNextStepHandoffPath, manualNextStepHandoffReceiptPath } = {}) {
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    manualNextStepHandoff: manualNextStepHandoffPath
+      ? path.relative(REPO_ROOT, manualNextStepHandoffPath)
+      : 'manual-next-step-handoff.json',
+    manualNextStepHandoffReceipt: manualNextStepHandoffReceiptPath
+      ? path.relative(REPO_ROOT, manualNextStepHandoffReceiptPath)
+      : 'manual-next-step-handoff-check.json',
+    evidencePacketOnly: true,
+    issueSurface: 'Linear',
+    manualIssueCreated: true,
+    issueIdentifier: EXPECTED_ISSUE,
+    issueUrl: `https://linear.app/createsomething/issue/${EXPECTED_ISSUE.toLowerCase()}/manual-a4-execution-enablement-review-for-fixture`,
+    createdBy: 'Micah Johnson',
+    createdAt: '2026-07-06T22:00:00.000Z',
+    owner: 'Micah Johnson',
+    createdIssue: {
+      identifier: EXPECTED_ISSUE,
+      url: `https://linear.app/createsomething/issue/${EXPECTED_ISSUE.toLowerCase()}/manual-a4-execution-enablement-review-for-fixture`,
+      title: 'Manual A4 execution enablement review for fixture',
+      bodySummary: 'Review the approved receipt decision and decide whether to create a separate implementation issue.',
+      labels: ['code-quality'],
+      state: 'In Progress',
+    },
+    issueCreationPerformedByVerifier: false,
+    thirdPartyWritePerformedByVerifier: false,
+    postedByVerifier: false,
+    requiredReceiptReferences: [
+      'manual-next-step-handoff-check',
+      'receipt-review-decision-check',
+      'receipt-publication-check',
+      'receipt-bundle-check',
+      'execution-runbook-check',
+      'release-admission-check',
+    ],
+    requiredEvidence: [
+      'manual-next-step-handoff-receipt',
+      'manual-issue-identifier',
+      'manual-issue-url',
+      'created-by',
+      'created-at',
+      'owner',
+      'public-access-fail-closed-proof',
+      'redaction-policy',
+      'operator-summary',
+    ],
+    redactionPolicyApplied: true,
+    redactionPolicy: {
+      excludes: ['secrets', 'raw-logs', 'prompts', 'raw-transcripts'],
+      evidenceOnly: true,
+    },
+    containsSecrets: false,
+    containsRawLogs: false,
+    containsPrompts: false,
+    containsRawTranscripts: false,
+    rawLogsIncluded: false,
+    promptsIncluded: false,
+    rawTranscriptIncluded: false,
+    publicAccessFailClosedProof: 'operator-agent-public-smoke rawOriginExposed=false and redirectsToAccess=true',
+    operatorSummary: 'Evidence that the operator manually created the follow-up Linear issue from the approved handoff; verifier performed no issue creation, posting, execution, or third-party write.',
+    noExecutionMarkers: [
+      'current-policy-blocked',
+      'process-not-spawned',
+      'executed-commands-empty',
+      'runner-disabled',
+      'execution-not-ready',
+      'execution-disabled',
+      'execution-not-approved',
+      'would-execute-false',
+      'writes-performed-zero',
+      'verifier-issue-creation-not-performed',
+      'third-party-write-not-performed-by-verifier',
+      'evidence-only',
     ],
     currentPolicyBlocked: true,
     processSpawned: false,
@@ -4039,6 +4220,58 @@ function writeReceiptReviewDecisionFixture(t) {
   };
 }
 
+function writeManualNextStepHandoffFixture(t) {
+  const fixture = writeReceiptReviewDecisionFixture(t);
+  const manualNextStepHandoffPath = path.join(fixture.root, 'manual-next-step-handoff.json');
+  writeFileSync(
+    manualNextStepHandoffPath,
+    `${JSON.stringify(validManualNextStepHandoff({
+      receiptReviewDecisionPath: fixture.receiptReviewDecisionPath,
+      receiptReviewDecisionReceiptPath: fixture.receiptReviewDecisionReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const { manualNextStepHandoffReceiptPath } = writeValidManualNextStepHandoffReceipt(
+    t,
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    fixture.runnerDiffPath,
+    fixture.runnerDiffReceiptPath,
+    fixture.releaseAdmissionPath,
+    fixture.releaseAdmissionReceiptPath,
+    fixture.executionRunbookPath,
+    fixture.executionRunbookReceiptPath,
+    fixture.receiptBundlePath,
+    fixture.receiptBundleReceiptPath,
+    fixture.receiptPublicationPath,
+    fixture.receiptPublicationReceiptPath,
+    fixture.receiptReviewDecisionPath,
+    fixture.receiptReviewDecisionReceiptPath,
+    manualNextStepHandoffPath,
+  );
+
+  return {
+    ...fixture,
+    manualNextStepHandoffPath,
+    manualNextStepHandoffReceiptPath,
+  };
+}
+
 test('runner-implementation-diff-check validates candidate-only runner implementation diff', (t) => {
   const fixture = writeRunnerPlanFixture(t);
   const runnerDiffPath = path.join(fixture.root, 'runner-diff.json');
@@ -5801,6 +6034,304 @@ test('manual-next-step-handoff-check fails closed on drifted receipt review deci
   assert.equal(payload.writesPerformed, 0);
   assert.match(payload.errors.join('\n'), /decision must match receipt review decision/);
   assert.match(payload.errors.join('\n'), /decision must be approved-for-manual-next-step/);
+  assert.match(payload.errors.join('\n'), /processSpawned must be false/);
+});
+
+test('manual-follow-up-issue-evidence-check validates manual issue evidence without verifier writes', (t) => {
+  const fixture = writeManualNextStepHandoffFixture(t);
+  const manualFollowUpIssueEvidencePath = path.join(fixture.root, 'manual-follow-up-issue-evidence.json');
+  writeFileSync(
+    manualFollowUpIssueEvidencePath,
+    `${JSON.stringify(validManualFollowUpIssueEvidence({
+      manualNextStepHandoffPath: fixture.manualNextStepHandoffPath,
+      manualNextStepHandoffReceiptPath: fixture.manualNextStepHandoffReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    manualFollowUpIssueEvidenceCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      fixture.releaseAdmissionPath,
+      fixture.releaseAdmissionReceiptPath,
+      fixture.executionRunbookPath,
+      fixture.executionRunbookReceiptPath,
+      fixture.receiptBundlePath,
+      fixture.receiptBundleReceiptPath,
+      fixture.receiptPublicationPath,
+      fixture.receiptPublicationReceiptPath,
+      fixture.receiptReviewDecisionPath,
+      fixture.receiptReviewDecisionReceiptPath,
+      fixture.manualNextStepHandoffPath,
+      fixture.manualNextStepHandoffReceiptPath,
+      manualFollowUpIssueEvidencePath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'manual-follow-up-issue-evidence-check');
+  assert.equal(payload.manualFollowUpIssueEvidenceOk, true);
+  assert.equal(payload.evidencePacketOnly, true);
+  assert.equal(payload.issueSurface, 'Linear');
+  assert.equal(payload.manualIssueCreated, true);
+  assert.equal(payload.issueIdentifier, EXPECTED_ISSUE);
+  assert.match(payload.issueUrl, new RegExp(EXPECTED_ISSUE.toLowerCase()));
+  assert.equal(payload.createdBy, 'Micah Johnson');
+  assert.equal(payload.owner, 'Micah Johnson');
+  assert.equal(payload.createdIssue.identifier, EXPECTED_ISSUE);
+  assert.match(payload.createdIssue.title, /Manual A4 execution enablement review/);
+  assert.ok(payload.createdIssue.labels.includes('code-quality'));
+  assert.equal(payload.issueCreationPerformedByVerifier, false);
+  assert.equal(payload.thirdPartyWritePerformedByVerifier, false);
+  assert.equal(payload.postedByVerifier, false);
+  assert.ok(payload.requiredReceiptReferences.includes('manual-next-step-handoff-check'));
+  assert.ok(payload.requiredReceiptReferences.includes('release-admission-check'));
+  assert.ok(payload.requiredEvidence.includes('manual-issue-identifier'));
+  assert.equal(payload.redactionPolicyApplied, true);
+  assert.equal(payload.containsSecrets, false);
+  assert.equal(payload.containsRawLogs, false);
+  assert.equal(payload.containsPrompts, false);
+  assert.equal(payload.containsRawTranscripts, false);
+  assert.match(payload.publicAccessFailClosedProof, /rawOriginExposed=false/);
+  assert.match(payload.operatorSummary, /manually created/);
+  assert.ok(payload.noExecutionMarkers.includes('verifier-issue-creation-not-performed'));
+  assert.ok(payload.noExecutionMarkers.includes('evidence-only'));
+  assert.equal(payload.currentPolicyBlocked, true);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.manualFollowUpIssueEvidenceRequiresManualNextStepHandoffReceipt, true);
+  assert.equal(payload.policy.manualFollowUpIssueEvidenceCreationPerformedByVerifier, false);
+  assert.match(payload.nextGate, /manually created follow-up issue/);
+  assert.match(payload.receiptPath, /manual-follow-up-issue-evidence-check\.json$/);
+});
+
+test('manual-follow-up-issue-evidence-check fails closed on unsafe, mismatched, or leaky evidence', (t) => {
+  const cases = [
+    {
+      name: 'missing-issue-url',
+      mutate(evidence) {
+        evidence.issueUrl = '';
+        evidence.createdIssue.url = '';
+      },
+      pattern: /issueUrl is required/,
+    },
+    {
+      name: 'title-mismatch',
+      mutate(evidence) {
+        evidence.createdIssue.title = 'Different issue title';
+      },
+      pattern: /createdIssue.title must match handoff proposedIssue.title/,
+    },
+    {
+      name: 'verifier-created-issue',
+      mutate(evidence) {
+        evidence.issueCreationPerformedByVerifier = true;
+        evidence.thirdPartyWritePerformedByVerifier = true;
+        evidence.postedByVerifier = true;
+      },
+      pattern: /issueCreationPerformedByVerifier must be false/,
+    },
+    {
+      name: 'secret-leak',
+      mutate(evidence) {
+        evidence.containsSecrets = true;
+      },
+      pattern: /containsSecrets must be false/,
+    },
+    {
+      name: 'missing-reference',
+      mutate(evidence) {
+        evidence.requiredReceiptReferences = ['manual-next-step-handoff-check'];
+      },
+      pattern: /requiredReceiptReferences must include release-admission-check/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(evidence) {
+        evidence.processSpawned = true;
+        evidence.executedCommands = ['node scripts/operator-agent-omnigent-runner.mjs'];
+        evidence.executionApproved = true;
+        evidence.wouldExecute = true;
+        evidence.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeManualNextStepHandoffFixture(t);
+    const evidence = validManualFollowUpIssueEvidence({
+      manualNextStepHandoffPath: fixture.manualNextStepHandoffPath,
+      manualNextStepHandoffReceiptPath: fixture.manualNextStepHandoffReceiptPath,
+    });
+    entry.mutate(evidence);
+    const manualFollowUpIssueEvidencePath = path.join(fixture.root, `${entry.name}-manual-follow-up-issue-evidence.json`);
+    writeFileSync(manualFollowUpIssueEvidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
+
+    const result = spawnSync(
+      process.execPath,
+      manualFollowUpIssueEvidenceCheckArgs(
+        fixture.packetPath,
+        fixture.preflightPath,
+        fixture.executionPath,
+        fixture.authorizationPath,
+        fixture.commandPath,
+        fixture.commandReceiptPath,
+        fixture.executorProofPath,
+        fixture.proposalPath,
+        fixture.proposalReceiptPath,
+        fixture.policyPatchPath,
+        fixture.policyPatchReceiptPath,
+        fixture.candidateManifestPath,
+        fixture.applicationDiffReceiptPath,
+        fixture.readinessReceiptPath,
+        fixture.runnerContractPath,
+        fixture.runnerContractReceiptPath,
+        fixture.runnerPlanPath,
+        fixture.runnerPlanReceiptPath,
+        fixture.runnerDiffPath,
+        fixture.runnerDiffReceiptPath,
+        fixture.releaseAdmissionPath,
+        fixture.releaseAdmissionReceiptPath,
+        fixture.executionRunbookPath,
+        fixture.executionRunbookReceiptPath,
+        fixture.receiptBundlePath,
+        fixture.receiptBundleReceiptPath,
+        fixture.receiptPublicationPath,
+        fixture.receiptPublicationReceiptPath,
+        fixture.receiptReviewDecisionPath,
+        fixture.receiptReviewDecisionReceiptPath,
+        fixture.manualNextStepHandoffPath,
+        fixture.manualNextStepHandoffReceiptPath,
+        manualFollowUpIssueEvidencePath,
+        fixture.root,
+      ),
+      { cwd: REPO_ROOT, encoding: 'utf8' },
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.manualFollowUpIssueEvidenceOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('manual-follow-up-issue-evidence-check fails closed on drifted manual handoff receipts', (t) => {
+  const fixture = writeManualNextStepHandoffFixture(t);
+  const driftedHandoffReceipt = JSON.parse(readFileSync(fixture.manualNextStepHandoffReceiptPath, 'utf8'));
+  driftedHandoffReceipt.issueCreationPerformed = true;
+  driftedHandoffReceipt.linearIssueCreated = true;
+  driftedHandoffReceipt.processSpawned = true;
+  driftedHandoffReceipt.proposedIssue = {
+    ...driftedHandoffReceipt.proposedIssue,
+    title: 'Different manual handoff title',
+  };
+  const driftedHandoffReceiptPath = path.join(fixture.root, 'drifted-manual-next-step-handoff-receipt.json');
+  writeFileSync(driftedHandoffReceiptPath, `${JSON.stringify(driftedHandoffReceipt, null, 2)}\n`);
+  const manualFollowUpIssueEvidencePath = path.join(fixture.root, 'manual-follow-up-issue-evidence.json');
+  writeFileSync(
+    manualFollowUpIssueEvidencePath,
+    `${JSON.stringify(validManualFollowUpIssueEvidence({
+      manualNextStepHandoffPath: fixture.manualNextStepHandoffPath,
+      manualNextStepHandoffReceiptPath: driftedHandoffReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    manualFollowUpIssueEvidenceCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      fixture.releaseAdmissionPath,
+      fixture.releaseAdmissionReceiptPath,
+      fixture.executionRunbookPath,
+      fixture.executionRunbookReceiptPath,
+      fixture.receiptBundlePath,
+      fixture.receiptBundleReceiptPath,
+      fixture.receiptPublicationPath,
+      fixture.receiptPublicationReceiptPath,
+      fixture.receiptReviewDecisionPath,
+      fixture.receiptReviewDecisionReceiptPath,
+      fixture.manualNextStepHandoffPath,
+      driftedHandoffReceiptPath,
+      manualFollowUpIssueEvidencePath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.manualFollowUpIssueEvidenceOk, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /proposedIssue must match manual next-step handoff/);
+  assert.match(payload.errors.join('\n'), /issueCreationPerformed must be false/);
+  assert.match(payload.errors.join('\n'), /linearIssueCreated must be false/);
   assert.match(payload.errors.join('\n'), /processSpawned must be false/);
 });
 
