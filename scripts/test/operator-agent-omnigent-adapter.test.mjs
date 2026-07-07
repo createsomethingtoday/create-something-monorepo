@@ -6027,6 +6027,116 @@ function validImplementationProductionRunnerImplementationAdmissionPrReview({
   };
 }
 
+function validImplementationProductionRunnerImplementationAdmissionMergeDecision({
+  implementationProductionRunnerImplementationAdmissionPrReviewPath,
+  implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath,
+} = {}) {
+  const review = validImplementationProductionRunnerImplementationAdmissionPrReview();
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    implementationProductionRunnerImplementationAdmissionPrReview: implementationProductionRunnerImplementationAdmissionPrReviewPath
+      ? path.relative(REPO_ROOT, implementationProductionRunnerImplementationAdmissionPrReviewPath)
+      : 'implementation-production-runner-implementation-admission-pr-review.json',
+    implementationProductionRunnerImplementationAdmissionPrReviewReceipt: implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath
+      ? path.relative(REPO_ROOT, implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath)
+      : 'implementation-production-runner-implementation-admission-pr-review-check.json',
+    mergeDecisionOnly: true,
+    mergeDecision: 'approve-runner-implementation-admission-merge',
+    decidedBy: 'CREATE SOMETHING operator',
+    decidedAt: '2026-07-07T21:30:00.000Z',
+    decisionRationale: 'Reviewed admission PR approval receipt and confirmed the manual merge path is ready without granting execution authority.',
+    evidenceReview: 'Admission PR review receipt, diff reference, checks reference, and runner contract references were reviewed.',
+    readinessAssessment: 'Ready for separate manual merge evidence; verifier remains blocked from runner admission or execution.',
+    executionApprovalGranted: false,
+    runnerImplementationAdmissionPrUrl: review.runnerImplementationAdmissionPrUrl,
+    runnerImplementationAdmissionPrNumber: review.runnerImplementationAdmissionPrNumber,
+    runnerImplementationAdmissionPrHeadRef: review.runnerImplementationAdmissionPrHeadRef,
+    runnerImplementationAdmissionPrBaseRef: review.runnerImplementationAdmissionPrBaseRef,
+    runnerImplementationAdmissionPrCommitSha: review.runnerImplementationAdmissionPrCommitSha,
+    runnerImplementationAdmissionPrDiffReference: review.runnerImplementationAdmissionPrDiffReference,
+    runnerImplementationAdmissionPrChecksReference: review.runnerImplementationAdmissionPrChecksReference,
+    runnerImplementationAdmissionPrReviewScope: review.runnerImplementationAdmissionPrReviewScope,
+    runnerImplementationReference: review.runnerImplementationReference,
+    runnerContractReference: review.runnerContractReference,
+    runnerEntryPoint: review.runnerEntryPoint,
+    runnerImplementationAdmittedByVerifier: false,
+    requiredReceiptReferences: [
+      'implementation-production-runner-implementation-admission-pr-review-check',
+      'implementation-production-runner-implementation-admission-pr-check',
+      'implementation-production-runner-implementation-admission-check',
+      'implementation-production-runner-implementation-review-check',
+      'implementation-production-runner-implementation-pr-check',
+      'implementation-production-runner-admission-check',
+      'implementation-production-policy-enablement-revalidation-check',
+      'implementation-production-policy-enablement-merge-evidence-check',
+      'implementation-production-policy-enablement-merge-decision-check',
+      'implementation-production-policy-enablement-pr-check',
+      'implementation-production-a4-enablement-approval-check',
+    ],
+    requiredEvidence: [
+      'implementation-production-runner-implementation-admission-pr-review-receipt',
+      'approved-runner-implementation-admission-pr-review',
+      'merge-decision',
+      'decision-rationale',
+      'evidence-review',
+      'readiness-assessment',
+      'runner-implementation-reference',
+      'runner-contract-reference',
+      'runner-entry-point',
+      'no-execution-approval',
+      'redaction-policy',
+    ],
+    redactionPolicyApplied: true,
+    redactionPolicy: {
+      excludes: ['secrets', 'raw-logs', 'prompts', 'raw-transcripts'],
+      evidenceOnly: true,
+    },
+    containsSecrets: false,
+    containsRawLogs: false,
+    containsPrompts: false,
+    containsRawTranscripts: false,
+    noExecutionMarkers: [
+      'current-verifier-policy-blocked',
+      'policy-change-not-applied-by-verifier',
+      'process-not-spawned',
+      'executed-commands-empty',
+      'runner-disabled-in-verifier',
+      'runner-implementation-not-admitted-by-verifier',
+      'runner-implementation-admission-pr-not-mutated-by-verifier',
+      'execution-not-ready',
+      'execution-disabled',
+      'execution-not-approved',
+      'would-execute-false',
+      'writes-performed-zero',
+      'deploy-not-performed-by-verifier',
+      'third-party-write-not-performed-by-verifier',
+      'issue-mutation-not-performed-by-verifier',
+      'pr-mutation-not-performed-by-verifier',
+      'production-runner-implementation-admission-merge-decision-only',
+    ],
+    currentVerifierPolicyBlocked: true,
+    policyChangeAppliedByVerifier: false,
+    runnerEnabledByVerifier: false,
+    prMutationPerformedByVerifier: false,
+    deployedByVerifier: false,
+    thirdPartyWritePerformedByVerifier: false,
+    issueMutationPerformedByVerifier: false,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
 function writePolicyApplicationFixture(t) {
   const root = makeWorkspace(t);
   const packetPath = path.join(root, 'packet.json');
@@ -9387,6 +9497,30 @@ function writeImplementationProductionRunnerImplementationAdmissionPrFixture(t) 
   };
 }
 
+function writeImplementationProductionRunnerImplementationAdmissionPrReviewFixture(t) {
+  const fixture = writeImplementationProductionRunnerImplementationAdmissionPrFixture(t);
+  const implementationProductionRunnerImplementationAdmissionPrReviewPath = path.join(fixture.root, 'implementation-production-runner-implementation-admission-pr-review.json');
+  writeFileSync(
+    implementationProductionRunnerImplementationAdmissionPrReviewPath,
+    `${JSON.stringify(validImplementationProductionRunnerImplementationAdmissionPrReview({
+      implementationProductionRunnerImplementationAdmissionPrPath: fixture.implementationProductionRunnerImplementationAdmissionPrPath,
+      implementationProductionRunnerImplementationAdmissionPrReceiptPath: fixture.implementationProductionRunnerImplementationAdmissionPrReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const result = runImplementationProductionRunnerImplementationAdmissionPrReviewCheck(fixture, implementationProductionRunnerImplementationAdmissionPrReviewPath);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  const implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath = path.isAbsolute(payload.receiptPath)
+    ? payload.receiptPath
+    : path.resolve(REPO_ROOT, payload.receiptPath);
+
+  return {
+    ...fixture,
+    implementationProductionRunnerImplementationAdmissionPrReviewPath,
+    implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath,
+  };
+}
+
 function runImplementationWorkspaceEvidenceCheck(fixture, implementationWorkspaceEvidencePath, receiptDir = fixture.root, followUpWorkIntakeReceiptPath = fixture.followUpWorkIntakeReceiptPath) {
   return spawnSync(
     process.execPath,
@@ -11014,6 +11148,122 @@ function runImplementationProductionRunnerImplementationAdmissionPrReviewCheck(
     implementationProductionRunnerImplementationAdmissionPrReceiptPath,
     '--implementation-production-runner-implementation-admission-pr-review',
     implementationProductionRunnerImplementationAdmissionPrReviewPath,
+  );
+  return spawnSync(process.execPath, args, { cwd: REPO_ROOT, encoding: 'utf8' });
+}
+
+function runImplementationProductionRunnerImplementationAdmissionMergeDecisionCheck(
+  fixture,
+  implementationProductionRunnerImplementationAdmissionMergeDecisionPath,
+  receiptDir = fixture.root,
+  implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath = fixture.implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath,
+) {
+  const args = implementationProductionPolicyEnablementPrCheckArgs(
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    fixture.runnerDiffPath,
+    fixture.runnerDiffReceiptPath,
+    fixture.releaseAdmissionPath,
+    fixture.releaseAdmissionReceiptPath,
+    fixture.executionRunbookPath,
+    fixture.executionRunbookReceiptPath,
+    fixture.receiptBundlePath,
+    fixture.receiptBundleReceiptPath,
+    fixture.receiptPublicationPath,
+    fixture.receiptPublicationReceiptPath,
+    fixture.receiptReviewDecisionPath,
+    fixture.receiptReviewDecisionReceiptPath,
+    fixture.manualNextStepHandoffPath,
+    fixture.manualNextStepHandoffReceiptPath,
+    fixture.manualFollowUpIssueEvidencePath,
+    fixture.manualFollowUpIssueEvidenceReceiptPath,
+    fixture.followUpWorkIntakePath,
+    fixture.followUpWorkIntakeReceiptPath,
+    fixture.implementationWorkspaceEvidencePath,
+    fixture.implementationWorkspaceEvidenceReceiptPath,
+    fixture.implementationPrEvidencePath,
+    fixture.implementationPrEvidenceReceiptPath,
+    fixture.implementationMergeDecisionPath,
+    fixture.implementationMergeDecisionReceiptPath,
+    fixture.implementationMergeEvidencePath,
+    fixture.implementationMergeEvidenceReceiptPath,
+    fixture.implementationPostMergeValidationPath,
+    fixture.implementationPostMergeValidationReceiptPath,
+    fixture.implementationProductionReleaseDecisionPath,
+    fixture.implementationProductionReleaseDecisionReceiptPath,
+    fixture.implementationProductionReleaseAdmissionPath,
+    fixture.implementationProductionReleaseAdmissionReceiptPath,
+    fixture.implementationProductionDeployEvidencePath,
+    fixture.implementationProductionDeployEvidenceReceiptPath,
+    fixture.implementationProductionPostDeployValidationPath,
+    fixture.implementationProductionPostDeployValidationReceiptPath,
+    fixture.implementationProductionReleaseCloseoutPath,
+    fixture.implementationProductionReleaseCloseoutReceiptPath,
+    fixture.implementationProductionOwnershipReviewPath,
+    fixture.implementationProductionOwnershipReviewReceiptPath,
+    fixture.implementationProductionA4EnablementApprovalPath,
+    fixture.implementationProductionA4EnablementApprovalReceiptPath,
+    fixture.implementationProductionPolicyEnablementPrPath,
+    receiptDir,
+  );
+  args[1] = 'implementation-production-runner-implementation-admission-merge-decision-check';
+  args.push(
+    '--implementation-production-policy-enablement-pr-receipt',
+    fixture.implementationProductionPolicyEnablementPrReceiptPath,
+    '--implementation-production-policy-enablement-merge-decision',
+    fixture.implementationProductionPolicyEnablementMergeDecisionPath,
+    '--implementation-production-policy-enablement-merge-decision-receipt',
+    fixture.implementationProductionPolicyEnablementMergeDecisionReceiptPath,
+    '--implementation-production-policy-enablement-merge-evidence',
+    fixture.implementationProductionPolicyEnablementMergeEvidencePath,
+    '--implementation-production-policy-enablement-merge-evidence-receipt',
+    fixture.implementationProductionPolicyEnablementMergeEvidenceReceiptPath,
+    '--implementation-production-policy-enablement-revalidation',
+    fixture.implementationProductionPolicyEnablementRevalidationPath,
+    '--implementation-production-policy-enablement-revalidation-receipt',
+    fixture.implementationProductionPolicyEnablementRevalidationReceiptPath,
+    '--implementation-production-runner-admission',
+    fixture.implementationProductionRunnerAdmissionPath,
+    '--implementation-production-runner-admission-receipt',
+    fixture.implementationProductionRunnerAdmissionReceiptPath,
+    '--implementation-production-runner-implementation-pr',
+    fixture.implementationProductionRunnerImplementationPrPath,
+    '--implementation-production-runner-implementation-pr-receipt',
+    fixture.implementationProductionRunnerImplementationPrReceiptPath,
+    '--implementation-production-runner-implementation-review',
+    fixture.implementationProductionRunnerImplementationReviewPath,
+    '--implementation-production-runner-implementation-review-receipt',
+    fixture.implementationProductionRunnerImplementationReviewReceiptPath,
+    '--implementation-production-runner-implementation-admission',
+    fixture.implementationProductionRunnerImplementationAdmissionPath,
+    '--implementation-production-runner-implementation-admission-receipt',
+    fixture.implementationProductionRunnerImplementationAdmissionReceiptPath,
+    '--implementation-production-runner-implementation-admission-pr',
+    fixture.implementationProductionRunnerImplementationAdmissionPrPath,
+    '--implementation-production-runner-implementation-admission-pr-receipt',
+    fixture.implementationProductionRunnerImplementationAdmissionPrReceiptPath,
+    '--implementation-production-runner-implementation-admission-pr-review',
+    fixture.implementationProductionRunnerImplementationAdmissionPrReviewPath,
+    '--implementation-production-runner-implementation-admission-pr-review-receipt',
+    implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath,
+    '--implementation-production-runner-implementation-admission-merge-decision',
+    implementationProductionRunnerImplementationAdmissionMergeDecisionPath,
   );
   return spawnSync(process.execPath, args, { cwd: REPO_ROOT, encoding: 'utf8' });
 }
@@ -17603,6 +17853,217 @@ test('implementation-production-runner-implementation-admission-pr-review-check 
     const payload = JSON.parse(result.stdout);
     assert.equal(payload.ok, false, entry.name);
     assert.equal(payload.implementationProductionRunnerImplementationAdmissionPrReviewOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-production-runner-implementation-admission-merge-decision-check validates merge decision without admitting runner code', (t) => {
+  const fixture = writeImplementationProductionRunnerImplementationAdmissionPrReviewFixture(t);
+  const implementationProductionRunnerImplementationAdmissionMergeDecisionPath = path.join(fixture.root, 'implementation-production-runner-implementation-admission-merge-decision.json');
+  writeFileSync(
+    implementationProductionRunnerImplementationAdmissionMergeDecisionPath,
+    `${JSON.stringify(validImplementationProductionRunnerImplementationAdmissionMergeDecision({
+      implementationProductionRunnerImplementationAdmissionPrReviewPath: fixture.implementationProductionRunnerImplementationAdmissionPrReviewPath,
+      implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath: fixture.implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationProductionRunnerImplementationAdmissionMergeDecisionCheck(fixture, implementationProductionRunnerImplementationAdmissionMergeDecisionPath);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'implementation-production-runner-implementation-admission-merge-decision-check');
+  assert.equal(payload.implementationProductionRunnerImplementationAdmissionMergeDecisionOk, true);
+  assert.equal(payload.mergeDecisionOnly, true);
+  assert.equal(payload.reviewDecision, 'approve-runner-implementation-admission-pr-review');
+  assert.equal(payload.mergeDecision, 'approve-runner-implementation-admission-merge');
+  assert.equal(payload.decidedBy, 'CREATE SOMETHING operator');
+  assert.equal(payload.executionApprovalGranted, false);
+  assert.match(payload.runnerImplementationAdmissionPrUrl, /pull\/1113/);
+  assert.equal(payload.runnerImplementationAdmissionPrNumber, 1113);
+  assert.equal(payload.runnerImplementationAdmissionPrCommitSha, '1113runnerimplementationadmissionprcommit');
+  assert.match(payload.runnerImplementationAdmissionPrReviewScope, /no production execution approval/);
+  assert.equal(payload.runnerImplementationAdmittedByVerifier, false);
+  assert.equal(payload.redactionPolicyApplied, true);
+  assert.equal(payload.containsSecrets, false);
+  assert.equal(payload.containsRawLogs, false);
+  assert.equal(payload.containsPrompts, false);
+  assert.equal(payload.containsRawTranscripts, false);
+  assert.ok(payload.noExecutionMarkers.includes('production-runner-implementation-admission-merge-decision-only'));
+  assert.equal(payload.currentVerifierPolicyBlocked, true);
+  assert.equal(payload.policyChangeAppliedByVerifier, false);
+  assert.equal(payload.runnerEnabledByVerifier, false);
+  assert.equal(payload.prMutationPerformedByVerifier, false);
+  assert.equal(payload.deployedByVerifier, false);
+  assert.equal(payload.thirdPartyWritePerformedByVerifier, false);
+  assert.equal(payload.issueMutationPerformedByVerifier, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.implementationProductionRunnerImplementationAdmissionMergeDecisionRequiresReviewReceipt, true);
+  assert.equal(payload.policy.implementationProductionRunnerImplementationAdmissionMergeDecisionRunnerImplementationAdmittedByVerifier, false);
+  assert.match(payload.nextGate, /manual merge evidence/);
+  assert.match(payload.receiptPath, /implementation-production-runner-implementation-admission-merge-decision-check\.json$/);
+});
+
+test('implementation-production-runner-implementation-admission-merge-decision-check fails closed on unsafe, mismatched, or leaky merge decisions', (t) => {
+  const cases = [
+    {
+      name: 'bad-decision',
+      mutate(decision) {
+        decision.mergeDecision = 'hold';
+      },
+      pattern: /mergeDecision must approve runner implementation admission merge/,
+    },
+    {
+      name: 'missing-decider',
+      mutate(decision) {
+        decision.decidedBy = '';
+      },
+      pattern: /decidedBy is required/,
+    },
+    {
+      name: 'missing-rationale',
+      mutate(decision) {
+        decision.decisionRationale = '';
+      },
+      pattern: /decisionRationale is required/,
+    },
+    {
+      name: 'execution-approved',
+      mutate(decision) {
+        decision.executionApprovalGranted = true;
+      },
+      pattern: /executionApprovalGranted must be false/,
+    },
+    {
+      name: 'pr-url-drift',
+      mutate(decision) {
+        decision.runnerImplementationAdmissionPrUrl = 'https://github.com/createsomethingtoday/create-something-monorepo/pull/9999';
+      },
+      pattern: /runnerImplementationAdmissionPrUrl must match admission PR review receipt/,
+    },
+    {
+      name: 'runner-admitted-by-verifier',
+      mutate(decision) {
+        decision.runnerImplementationAdmittedByVerifier = true;
+      },
+      pattern: /runnerImplementationAdmittedByVerifier must not be true/,
+    },
+    {
+      name: 'secret-leak',
+      mutate(decision) {
+        decision.containsSecrets = true;
+      },
+      pattern: /containsSecrets must be false/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(decision) {
+        decision.processSpawned = true;
+        decision.executedCommands = ['node scripts/operator-agent-omnigent-runner.mjs'];
+        decision.executionApproved = true;
+        decision.wouldExecute = true;
+        decision.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationProductionRunnerImplementationAdmissionPrReviewFixture(t);
+    const decision = validImplementationProductionRunnerImplementationAdmissionMergeDecision({
+      implementationProductionRunnerImplementationAdmissionPrReviewPath: fixture.implementationProductionRunnerImplementationAdmissionPrReviewPath,
+      implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath: fixture.implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath,
+    });
+    entry.mutate(decision);
+    const implementationProductionRunnerImplementationAdmissionMergeDecisionPath = path.join(fixture.root, `${entry.name}-implementation-production-runner-implementation-admission-merge-decision.json`);
+    writeFileSync(implementationProductionRunnerImplementationAdmissionMergeDecisionPath, `${JSON.stringify(decision, null, 2)}\n`);
+
+    const result = runImplementationProductionRunnerImplementationAdmissionMergeDecisionCheck(fixture, implementationProductionRunnerImplementationAdmissionMergeDecisionPath);
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationProductionRunnerImplementationAdmissionMergeDecisionOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-production-runner-implementation-admission-merge-decision-check fails closed on drifted runner implementation admission PR review receipts', (t) => {
+  const cases = [
+    {
+      name: 'bad-review-decision',
+      mutate(receipt) {
+        receipt.reviewDecision = 'request-changes';
+      },
+      pattern: /receipt reviewDecision must match review/,
+    },
+    {
+      name: 'runner-admitted-by-verifier',
+      mutate(receipt) {
+        receipt.runnerImplementationAdmittedByVerifier = true;
+      },
+      pattern: /receipt runnerImplementationAdmittedByVerifier must be false/,
+    },
+    {
+      name: 'spawned-process',
+      mutate(receipt) {
+        receipt.processSpawned = true;
+      },
+      pattern: /receipt processSpawned must be false/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationProductionRunnerImplementationAdmissionPrReviewFixture(t);
+    const driftedReviewReceipt = JSON.parse(readFileSync(fixture.implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath, 'utf8'));
+    entry.mutate(driftedReviewReceipt);
+    const driftedReviewReceiptPath = path.join(fixture.root, `${entry.name}-implementation-production-runner-implementation-admission-pr-review-receipt.json`);
+    writeFileSync(driftedReviewReceiptPath, `${JSON.stringify(driftedReviewReceipt, null, 2)}\n`);
+    const implementationProductionRunnerImplementationAdmissionMergeDecisionPath = path.join(fixture.root, `${entry.name}-implementation-production-runner-implementation-admission-merge-decision.json`);
+    writeFileSync(
+      implementationProductionRunnerImplementationAdmissionMergeDecisionPath,
+      `${JSON.stringify(validImplementationProductionRunnerImplementationAdmissionMergeDecision({
+        implementationProductionRunnerImplementationAdmissionPrReviewPath: fixture.implementationProductionRunnerImplementationAdmissionPrReviewPath,
+        implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath: driftedReviewReceiptPath,
+      }), null, 2)}\n`,
+    );
+
+    const result = runImplementationProductionRunnerImplementationAdmissionMergeDecisionCheck(
+      fixture,
+      implementationProductionRunnerImplementationAdmissionMergeDecisionPath,
+      fixture.root,
+      driftedReviewReceiptPath,
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationProductionRunnerImplementationAdmissionMergeDecisionOk, false, entry.name);
     assert.equal(payload.processSpawned, false, entry.name);
     assert.deepEqual(payload.executedCommands, [], entry.name);
     assert.equal(payload.runnerEnabled, false, entry.name);
