@@ -168,7 +168,12 @@
     {
       "id": "gate-3-a4-packet",
       "required": "A4 approval packet validates before any high-risk action is exposed",
-      "command": "node scripts/operator-agent-omnigent-adapter.mjs approval-check --packet <packet.json> --json"
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs approval-check --packet <packet.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-4-a4-preflight",
+      "required": "A4 preflight receipt emits the exact dry-run execution, validation, smoke, and rollback plan without executing writes",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs preflight-check --packet <packet.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

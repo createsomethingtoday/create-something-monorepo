@@ -139,6 +139,20 @@ function parseTimestamp(value, label, errors) {
   return time;
 }
 
+function approvalConstraintsFromOptions(options) {
+  if (!options.packet) throw new Error('--packet is required');
+  if (!options.expectedIssue) throw new Error('--expected-issue is required');
+  if (!options.expectedTarget) throw new Error('--expected-target is required');
+  if (!options.expectedAction) throw new Error('--expected-action is required');
+  return {
+    expectedIssue: options.expectedIssue,
+    expectedTarget: options.expectedTarget,
+    expectedAction: options.expectedAction,
+    maxAgeHours: options.maxAgeHours,
+    now: options.now,
+  };
+}
+
 function validateManifest(manifest) {
   const errors = [];
   const warnings = [];
@@ -384,6 +398,82 @@ function buildReceipt(mode, options, result) {
   };
 }
 
+function buildPreflightReceipt({ manifest, manifestValidation, packet, packetPath, constraints, packetValidation, options }) {
+  const errors = [...manifestValidation.errors, ...packetValidation.errors];
+  const admissionOk = manifestValidation.ok && packetValidation.ok;
+  const base = {
+    mode: 'preflight-check',
+    ok: admissionOk,
+    admissionOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    packetPath: rel(packetPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    riskClass: packet.riskClass,
+    namedRisks: packet.namedRisks || [],
+    constraints,
+    wouldExecute: false,
+    writesPerformed: 0,
+    checkedAt: new Date().toISOString(),
+  };
+
+  if (!admissionOk) {
+    return {
+      ...base,
+      executionPlan: [],
+      validationPlan: [],
+      rollbackPlan: [],
+      postActionSmokePlan: [],
+      stopConditions: packet.stopConditions || [],
+      evidenceTarget: packet.evidenceTarget || null,
+    };
+  }
+
+  return {
+    ...base,
+    executionPlan: [
+      {
+        order: 1,
+        phase: 'validation',
+        steps: packet.validation,
+      },
+      {
+        order: 2,
+        phase: 'execution',
+        action: packet.action,
+        target: packet.target,
+        dryRunOnly: true,
+      },
+      {
+        order: 3,
+        phase: 'post-action-smoke',
+        steps: packet.postActionSmoke,
+      },
+      {
+        order: 4,
+        phase: 'rollback-readiness',
+        steps: packet.rollback,
+      },
+    ],
+    validationPlan: packet.validation,
+    rollbackPlan: packet.rollback,
+    postActionSmokePlan: packet.postActionSmoke,
+    stopConditions: packet.stopConditions,
+    forbiddenSideEffects: packet.forbiddenSideEffects,
+    evidenceTarget: packet.evidenceTarget,
+    nextGate: 'operator-authorized execution receipt; this preflight does not grant execution authority',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+    },
+  };
+}
+
 function print(result, options) {
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -412,21 +502,16 @@ function commandCheck(options) {
 }
 
 function commandApprovalCheck(options) {
-  if (!options.packet) throw new Error('--packet is required for approval-check');
-  if (!options.expectedIssue) throw new Error('--expected-issue is required for approval-check');
-  if (!options.expectedTarget) throw new Error('--expected-target is required for approval-check');
-  if (!options.expectedAction) throw new Error('--expected-action is required for approval-check');
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for approval-check'));
+  }
   const manifest = readJson(resolveFromRoot(options.manifest));
   const packetPath = resolveFromRoot(options.packet);
   const packet = readJson(packetPath);
   const manifestValidation = validateManifest(manifest);
-  const constraints = {
-    expectedIssue: options.expectedIssue,
-    expectedTarget: options.expectedTarget,
-    expectedAction: options.expectedAction,
-    maxAgeHours: options.maxAgeHours,
-    now: options.now,
-  };
+  const constraints = approvalConstraintsFromOptions(options);
   const packetValidation = validateApprovalPacket(packet, manifest, constraints);
   const result = {
     ok: manifestValidation.ok && packetValidation.ok,
@@ -439,6 +524,34 @@ function commandApprovalCheck(options) {
   };
   if (options.writeReceipt) {
     result.receiptPath = writeReceipt(options, buildReceipt('approval-check', options, result));
+  }
+  return result;
+}
+
+function commandPreflightCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for preflight-check'));
+  }
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const packet = readJson(packetPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const result = buildPreflightReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    constraints,
+    packetValidation,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
   }
   return result;
 }
@@ -483,6 +596,7 @@ function usage() {
   console.log(`Usage:
   node scripts/operator-agent-omnigent-adapter.mjs check [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs approval-check --packet <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs preflight-check --packet <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -498,6 +612,7 @@ async function main() {
   let result;
   if (options.command === 'check') result = commandCheck(options);
   else if (options.command === 'approval-check') result = commandApprovalCheck(options);
+  else if (options.command === 'preflight-check') result = commandPreflightCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -514,6 +629,7 @@ export {
   REQUIRED_PACKET_FIELDS,
   REQUIRED_TRIAL_RECEIPT_FIELDS,
   commandLooksHighRisk,
+  commandPreflightCheck,
   parseArgs,
   validateApprovalPacket,
   validateManifest,
