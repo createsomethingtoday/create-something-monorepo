@@ -98,6 +98,8 @@ function parseArgs(argv) {
     applicationDiffReceipt: null,
     readinessReceipt: null,
     runnerContract: null,
+    runnerContractReceipt: null,
+    runnerPlan: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -128,6 +130,8 @@ function parseArgs(argv) {
     else if (arg === '--application-diff-receipt' && args[index + 1]) options.applicationDiffReceipt = args[++index];
     else if (arg === '--readiness-receipt' && args[index + 1]) options.readinessReceipt = args[++index];
     else if (arg === '--runner-contract' && args[index + 1]) options.runnerContract = args[++index];
+    else if (arg === '--runner-contract-receipt' && args[index + 1]) options.runnerContractReceipt = args[++index];
+    else if (arg === '--runner-plan' && args[index + 1]) options.runnerPlan = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -467,6 +471,53 @@ function validateManifest(manifest) {
   }
   if (runnerImplementationContract.writesPerformed !== 0) {
     errors.push('a4RunnerImplementationContract.writesPerformed must be 0');
+  }
+
+  const runnerImplementationPlan = manifest.a4RunnerImplementationPlan || {};
+  if (runnerImplementationPlan.requiresRunnerImplementationContractReceipt !== true) {
+    errors.push('a4RunnerImplementationPlan.requiresRunnerImplementationContractReceipt must be true');
+  }
+  if (runnerImplementationPlan.planOnly !== true) {
+    errors.push('a4RunnerImplementationPlan.planOnly must be true');
+  }
+  if (runnerImplementationPlan.executableEntrypointAdded !== false) {
+    errors.push('a4RunnerImplementationPlan.executableEntrypointAdded must be false');
+  }
+  if (!runnerImplementationPlan.allowedImplementationSurfaces?.includes('repo-pr')) {
+    errors.push('a4RunnerImplementationPlan.allowedImplementationSurfaces must include repo-pr');
+  }
+  if (!runnerImplementationPlan.allowedPlannedEntrypoints?.includes('scripts/operator-agent-omnigent-runner.mjs')) {
+    errors.push('a4RunnerImplementationPlan.allowedPlannedEntrypoints must include scripts/operator-agent-omnigent-runner.mjs');
+  }
+  const missingPlanGuards = includesAll(runnerImplementationPlan.requiredGuards, [
+    'checked-in-policy-enabled',
+    'full-chain-revalidation',
+    'command-receipt-bound',
+    'max-writes-per-run',
+    'rollback-ready',
+    'post-action-smoke',
+    'public-access-fail-closed',
+    'stop-on-mismatch',
+    'stop-on-expired',
+    'stop-on-drift',
+  ]);
+  if (missingPlanGuards.length) {
+    errors.push(`a4RunnerImplementationPlan.requiredGuards missing: ${missingPlanGuards.join(', ')}`);
+  }
+  if (runnerImplementationPlan.maxWritesPerRun !== 1) {
+    errors.push('a4RunnerImplementationPlan.maxWritesPerRun must be 1');
+  }
+  if (!runnerImplementationPlan.requiredProofs?.includes('rollback')) {
+    errors.push('a4RunnerImplementationPlan.requiredProofs must include rollback');
+  }
+  if (!runnerImplementationPlan.requiredProofs?.includes('post-action-smoke')) {
+    errors.push('a4RunnerImplementationPlan.requiredProofs must include post-action-smoke');
+  }
+  if (!runnerImplementationPlan.requiredProofs?.includes('public-access-fail-closed')) {
+    errors.push('a4RunnerImplementationPlan.requiredProofs must include public-access-fail-closed');
+  }
+  if (runnerImplementationPlan.writesPerformed !== 0) {
+    errors.push('a4RunnerImplementationPlan.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -2329,6 +2380,215 @@ function validateRunnerImplementationContract(contract, packet, readinessReceipt
   return errors;
 }
 
+function validateRunnerImplementationContractReceipt(receipt, runnerContract, readinessReceipt, packet, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'runner-implementation-contract-check') {
+    errors.push('runner implementation contract receipt mode must be runner-implementation-contract-check');
+  }
+  if (receipt.ok !== true || receipt.runnerImplementationContractOk !== true) {
+    errors.push('runner implementation contract receipt must be ok');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`runner implementation contract receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`runner implementation contract receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`runner implementation contract receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.packetPath !== rel(paths.packetPath)) {
+    errors.push('runner implementation contract receipt packetPath must match packet path');
+  }
+  if (receipt.preflightReceipt !== rel(paths.preflightPath)) {
+    errors.push('runner implementation contract receipt preflightReceipt must match preflight receipt path');
+  }
+  if (receipt.executionReceipt !== rel(paths.executionPath)) {
+    errors.push('runner implementation contract receipt executionReceipt must match execution receipt path');
+  }
+  if (receipt.authorization !== rel(paths.authorizationPath)) {
+    errors.push('runner implementation contract receipt authorization must match authorization artifact path');
+  }
+  if (receipt.commandArtifact !== rel(paths.commandPath)) {
+    errors.push('runner implementation contract receipt commandArtifact must match command artifact path');
+  }
+  if (receipt.commandReceipt !== rel(paths.commandReceiptPath)) {
+    errors.push('runner implementation contract receipt commandReceipt must match command receipt path');
+  }
+  if (receipt.executorProofReceipt !== rel(paths.executorProofPath)) {
+    errors.push('runner implementation contract receipt executorProofReceipt must match executor proof receipt path');
+  }
+  if (receipt.enablementProposal !== rel(paths.proposalPath)) {
+    errors.push('runner implementation contract receipt enablementProposal must match proposal path');
+  }
+  if (receipt.enablementProposalReceipt !== rel(paths.proposalReceiptPath)) {
+    errors.push('runner implementation contract receipt enablementProposalReceipt must match proposal receipt path');
+  }
+  if (receipt.policyPatchDryRun !== rel(paths.policyPatchPath)) {
+    errors.push('runner implementation contract receipt policyPatchDryRun must match policy patch artifact path');
+  }
+  if (receipt.policyPatchDryRunReceipt !== rel(paths.policyPatchReceiptPath)) {
+    errors.push('runner implementation contract receipt policyPatchDryRunReceipt must match policy patch receipt path');
+  }
+  if (receipt.candidateManifest !== rel(paths.candidateManifestPath)) {
+    errors.push('runner implementation contract receipt candidateManifest must match candidate manifest path');
+  }
+  if (receipt.applicationDiffReceipt !== rel(paths.applicationDiffReceiptPath)) {
+    errors.push('runner implementation contract receipt applicationDiffReceipt must match application diff receipt path');
+  }
+  if (receipt.readinessReceipt !== rel(paths.readinessReceiptPath)) {
+    errors.push('runner implementation contract receipt readinessReceipt must match readiness receipt path');
+  }
+  if (receipt.runnerContract !== rel(paths.runnerContractPath)) {
+    errors.push('runner implementation contract receipt runnerContract must match runner contract artifact path');
+  }
+  if (receipt.implementationSurface !== runnerContract.implementationSurface) {
+    errors.push('runner implementation contract receipt implementationSurface must match runner contract');
+  }
+  if (receipt.revalidatesFullChainImmediatelyBeforeWrite !== true) {
+    errors.push('runner implementation contract receipt must require immediate full-chain revalidation');
+  }
+  if (receipt.requiresEnabledCheckedInPolicy !== true) {
+    errors.push('runner implementation contract receipt must require enabled checked-in policy');
+  }
+  if (receipt.allowedWhenCurrentPolicyBlocked !== false) {
+    errors.push('runner implementation contract receipt must not allow current blocked policy');
+  }
+  if (receipt.maxWritesPerRun !== runnerContract.maxWritesPerRun) {
+    errors.push('runner implementation contract receipt maxWritesPerRun must match runner contract');
+  }
+  if (!sameJson(receipt.requiredProofs, runnerContract.requiredProofs)) {
+    errors.push('runner implementation contract receipt requiredProofs must match runner contract');
+  }
+  if (receipt.currentPolicyBlocked !== true) errors.push('runner implementation contract receipt currentPolicyBlocked must be true');
+  if (receipt.candidateExecutionReady !== readinessReceipt.candidateExecutionReady) {
+    errors.push('runner implementation contract receipt candidateExecutionReady must match readiness receipt');
+  }
+  if (receipt.processSpawned !== false) errors.push('runner implementation contract receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('runner implementation contract receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('runner implementation contract receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('runner implementation contract receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('runner implementation contract receipt executionEnabled must be false');
+  if (receipt.wouldExecute !== false) errors.push('runner implementation contract receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('runner implementation contract receipt writesPerformed must be 0');
+
+  if (packet.issue !== receipt.issue) errors.push('runner implementation contract receipt issue must match packet issue');
+  if (packet.target !== receipt.target) errors.push('runner implementation contract receipt target must match packet target');
+  if (packet.action !== receipt.action) errors.push('runner implementation contract receipt action must match packet action');
+
+  return errors;
+}
+
+function validateRunnerImplementationPlan(plan, packet, contractReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4RunnerImplementationPlan || {};
+  const requiredRevalidationSequence = [
+    'approval-check',
+    'preflight-check',
+    'execution-receipt-check',
+    'execution-authorization-check',
+    'execution-command-check',
+    'executor-proof-check',
+    'executor-enable-proposal-check',
+    'policy-patch-dry-run-check',
+    'policy-application-diff-check',
+    'enabled-manifest-readiness-check',
+    'runner-implementation-contract-check',
+  ];
+  const requiredReceiptOutputs = [
+    'pre-action-receipt',
+    'execution-receipt',
+    'post-action-smoke',
+    'rollback-readiness',
+    'final-outcome',
+  ];
+
+  if (plan.authorityLevel !== 'A4') errors.push('runner implementation plan authorityLevel must be A4');
+  if (plan.issue !== constraints.expectedIssue) {
+    errors.push(`runner implementation plan issue mismatch: expected ${constraints.expectedIssue}, got ${plan.issue}`);
+  }
+  if (plan.target !== constraints.expectedTarget) {
+    errors.push(`runner implementation plan target mismatch: expected ${constraints.expectedTarget}, got ${plan.target}`);
+  }
+  if (plan.action !== constraints.expectedAction) {
+    errors.push(`runner implementation plan action mismatch: expected ${constraints.expectedAction}, got ${plan.action}`);
+  }
+  if (plan.runnerImplementationContractReceipt !== rel(paths.contractReceiptPath)) {
+    errors.push('runner implementation plan runnerImplementationContractReceipt must match contract receipt path');
+  }
+  if (!rules.allowedImplementationSurfaces?.includes(plan.implementationSurface)) {
+    errors.push('runner implementation plan implementationSurface must be allowed by manifest');
+  }
+  if (!rules.allowedPlannedEntrypoints?.includes(plan.plannedEntrypoint)) {
+    errors.push('runner implementation plan plannedEntrypoint must be allowed by manifest');
+  }
+  if (plan.implementationPlanOnly !== true) errors.push('runner implementation plan implementationPlanOnly must be true');
+  if (plan.executableEntrypointAdded !== false) errors.push('runner implementation plan executableEntrypointAdded must be false');
+  if (plan.revalidatesFullChainImmediatelyBeforeWrite !== true) {
+    errors.push('runner implementation plan must revalidate full chain immediately before write');
+  }
+  if (plan.requiresEnabledCheckedInPolicy !== true) {
+    errors.push('runner implementation plan must require enabled checked-in policy');
+  }
+  if (plan.requiresCommandReceipt !== true) errors.push('runner implementation plan must require command receipt');
+  if (plan.allowedWhenCurrentPolicyBlocked !== false) {
+    errors.push('runner implementation plan must not allow execution while current policy is blocked');
+  }
+  if (plan.maxWritesPerRun !== rules.maxWritesPerRun) {
+    errors.push(`runner implementation plan maxWritesPerRun must be ${rules.maxWritesPerRun}`);
+  }
+  for (const proof of rules.requiredProofs || []) {
+    if (!plan.requiredProofs?.includes(proof)) {
+      errors.push(`runner implementation plan requiredProofs must include ${proof}`);
+    }
+  }
+  for (const guard of rules.requiredGuards || []) {
+    if (!plan.requiredGuards?.includes(guard)) {
+      errors.push(`runner implementation plan requiredGuards must include ${guard}`);
+    }
+  }
+  for (const check of requiredRevalidationSequence) {
+    if (!plan.revalidationSequence?.includes(check)) {
+      errors.push(`runner implementation plan revalidationSequence must include ${check}`);
+    }
+  }
+  if (!hasValue(plan.rollbackPlan)) errors.push('runner implementation plan rollbackPlan is required');
+  if (!hasValue(plan.postActionSmokePlan)) errors.push('runner implementation plan postActionSmokePlan is required');
+  if (!hasValue(plan.publicAccessFailClosedPlan)) {
+    errors.push('runner implementation plan publicAccessFailClosedPlan is required');
+  }
+  if (!hasValue(plan.stopConditions)) errors.push('runner implementation plan stopConditions are required');
+  for (const output of requiredReceiptOutputs) {
+    if (!plan.receiptOutputs?.includes(output)) {
+      errors.push(`runner implementation plan receiptOutputs must include ${output}`);
+    }
+  }
+  if (plan.processSpawned === true) errors.push('runner implementation plan processSpawned must not be true');
+  if (Array.isArray(plan.executedCommands) && plan.executedCommands.length > 0) {
+    errors.push('runner implementation plan executedCommands must be empty');
+  }
+  if (plan.runnerEnabled === true) errors.push('runner implementation plan runnerEnabled must not be true');
+  if (plan.executionReady === true) errors.push('runner implementation plan executionReady must not be true');
+  if (plan.executionEnabled === true) errors.push('runner implementation plan executionEnabled must not be true');
+  if (plan.wouldExecute === true) errors.push('runner implementation plan wouldExecute must not be true');
+  if (plan.writesPerformed !== 0) errors.push('runner implementation plan writesPerformed must be 0');
+
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('runner implementation plan current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+  if (contractReceipt.runnerImplementationContractOk !== true) {
+    errors.push('runner implementation plan requires a valid runner implementation contract receipt');
+  }
+  if (packet.issue !== plan.issue) errors.push('runner implementation plan issue must match packet issue');
+  if (packet.target !== plan.target) errors.push('runner implementation plan target must match packet target');
+  if (packet.action !== plan.action) errors.push('runner implementation plan action must match packet action');
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -2588,6 +2848,156 @@ function buildRunnerImplementationContractReceipt({
       runnerContractRequiresReadinessReceipt: manifest.a4RunnerImplementationContract?.requiresEnabledManifestReadinessReceipt,
       runnerContractRequiresImmediateRevalidation: manifest.a4RunnerImplementationContract?.requiresImmediateFullChainRevalidation,
       runnerContractProcessSpawnPolicy: manifest.a4RunnerImplementationContract?.processSpawnPolicy,
+    },
+  };
+}
+
+function buildRunnerImplementationPlanReceipt({
+  manifest,
+  manifestValidation,
+  packet,
+  packetPath,
+  preflightReceipt,
+  preflightPath,
+  executionReceipt,
+  executionPath,
+  authorization,
+  authorizationPath,
+  commandArtifact,
+  commandPath,
+  commandReceipt,
+  commandReceiptPath,
+  executorProofReceipt,
+  executorProofPath,
+  proposal,
+  proposalPath,
+  proposalReceipt,
+  proposalReceiptPath,
+  policyPatch,
+  policyPatchPath,
+  policyPatchReceipt,
+  policyPatchReceiptPath,
+  candidateManifest,
+  candidateManifestPath,
+  applicationDiffReceipt,
+  applicationDiffReceiptPath,
+  readinessReceipt,
+  readinessReceiptPath,
+  runnerContract,
+  runnerContractPath,
+  contractReceipt,
+  contractReceiptPath,
+  runnerPlan,
+  runnerPlanPath,
+  constraints,
+  packetValidation,
+  preflightErrors,
+  executionErrors,
+  authorizationErrors,
+  commandErrors,
+  commandReceiptErrors,
+  executorProofErrors,
+  proposalErrors,
+  proposalReceiptErrors,
+  policyPatchErrors,
+  policyPatchReceiptErrors,
+  candidateValidation,
+  applicationDiffReceiptErrors,
+  readinessErrors,
+  readinessReceiptErrors,
+  runnerContractErrors,
+  contractReceiptErrors,
+  runnerPlanErrors,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...packetValidation.errors,
+    ...preflightErrors,
+    ...executionErrors,
+    ...authorizationErrors,
+    ...commandErrors,
+    ...commandReceiptErrors,
+    ...executorProofErrors,
+    ...proposalErrors,
+    ...proposalReceiptErrors,
+    ...policyPatchErrors,
+    ...policyPatchReceiptErrors,
+    ...candidateValidation.errors,
+    ...applicationDiffReceiptErrors,
+    ...readinessErrors,
+    ...readinessReceiptErrors,
+    ...runnerContractErrors,
+    ...contractReceiptErrors,
+    ...runnerPlanErrors,
+  ];
+  const runnerImplementationPlanOk = errors.length === 0;
+
+  return {
+    mode: 'runner-implementation-plan-check',
+    ok: runnerImplementationPlanOk,
+    runnerImplementationPlanOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    runnerPlan: rel(runnerPlanPath),
+    runnerImplementationContractReceipt: rel(contractReceiptPath),
+    runnerContract: rel(runnerContractPath),
+    readinessReceipt: rel(readinessReceiptPath),
+    candidateManifest: rel(candidateManifestPath),
+    applicationDiffReceipt: rel(applicationDiffReceiptPath),
+    packetPath: rel(packetPath),
+    preflightReceipt: rel(preflightPath),
+    executionReceipt: rel(executionPath),
+    authorization: rel(authorizationPath),
+    commandArtifact: rel(commandPath),
+    commandReceipt: rel(commandReceiptPath),
+    executorProofReceipt: rel(executorProofPath),
+    enablementProposal: rel(proposalPath),
+    enablementProposalReceipt: rel(proposalReceiptPath),
+    policyPatchDryRun: rel(policyPatchPath),
+    policyPatchDryRunReceipt: rel(policyPatchReceiptPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    targetScope: runnerPlan.targetScope || contractReceipt.targetScope || runnerContract.targetScope,
+    implementationSurface: runnerPlan.implementationSurface,
+    plannedEntrypoint: runnerPlan.plannedEntrypoint,
+    implementationPlanOnly: runnerPlan.implementationPlanOnly === true,
+    executableEntrypointAdded: runnerPlan.executableEntrypointAdded === true,
+    revalidatesFullChainImmediatelyBeforeWrite: runnerPlan.revalidatesFullChainImmediatelyBeforeWrite === true,
+    requiresEnabledCheckedInPolicy: runnerPlan.requiresEnabledCheckedInPolicy === true,
+    allowedWhenCurrentPolicyBlocked: runnerPlan.allowedWhenCurrentPolicyBlocked === true,
+    maxWritesPerRun: runnerPlan.maxWritesPerRun,
+    requiredProofs: runnerPlan.requiredProofs || [],
+    requiredGuards: runnerPlan.requiredGuards || [],
+    revalidationSequence: runnerPlan.revalidationSequence || [],
+    receiptOutputs: runnerPlan.receiptOutputs || [],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: runnerImplementationPlanOk
+      ? 'runner implementation plan admitted for a future PR; no executable entrypoint was added and current checked-in policy remains blocked'
+      : 'runner implementation plan rejected before any runner implementation path',
+    evidenceTarget: runnerPlan.evidenceTarget || contractReceipt.evidenceTarget || runnerContract.evidenceTarget || packet.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator-reviewed implementation PR may add the planned runner entrypoint only after checked-in policy is enabled and this plan is revalidated',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      runnerPlanRequiresContractReceipt: manifest.a4RunnerImplementationPlan?.requiresRunnerImplementationContractReceipt,
+      runnerPlanOnly: manifest.a4RunnerImplementationPlan?.planOnly,
+      runnerPlanEntrypointAdded: manifest.a4RunnerImplementationPlan?.executableEntrypointAdded,
     },
   };
 }
@@ -3700,6 +4110,256 @@ function commandRunnerImplementationContractCheck(options) {
   return result;
 }
 
+function commandRunnerImplementationPlanCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for runner-implementation-plan-check'));
+  }
+  if (!options.preflightReceipt) throw new Error('--preflight-receipt is required for runner-implementation-plan-check');
+  if (!options.executionReceipt) throw new Error('--execution-receipt is required for runner-implementation-plan-check');
+  if (!options.authorization) throw new Error('--authorization is required for runner-implementation-plan-check');
+  if (!options.commandArtifact) throw new Error('--command-artifact is required for runner-implementation-plan-check');
+  if (!options.commandReceipt) throw new Error('--command-receipt is required for runner-implementation-plan-check');
+  if (!options.executorProofReceipt) throw new Error('--executor-proof-receipt is required for runner-implementation-plan-check');
+  if (!options.enablementProposal) throw new Error('--enablement-proposal is required for runner-implementation-plan-check');
+  if (!options.enablementProposalReceipt) {
+    throw new Error('--enablement-proposal-receipt is required for runner-implementation-plan-check');
+  }
+  if (!options.policyPatch) throw new Error('--policy-patch is required for runner-implementation-plan-check');
+  if (!options.policyPatchReceipt) throw new Error('--policy-patch-receipt is required for runner-implementation-plan-check');
+  if (!options.candidateManifest) throw new Error('--candidate-manifest is required for runner-implementation-plan-check');
+  if (!options.applicationDiffReceipt) {
+    throw new Error('--application-diff-receipt is required for runner-implementation-plan-check');
+  }
+  if (!options.readinessReceipt) {
+    throw new Error('--readiness-receipt is required for runner-implementation-plan-check');
+  }
+  if (!options.runnerContract) throw new Error('--runner-contract is required for runner-implementation-plan-check');
+  if (!options.runnerContractReceipt) {
+    throw new Error('--runner-contract-receipt is required for runner-implementation-plan-check');
+  }
+  if (!options.runnerPlan) throw new Error('--runner-plan is required for runner-implementation-plan-check');
+
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const preflightPath = resolveFromRoot(options.preflightReceipt);
+  const executionPath = resolveFromRoot(options.executionReceipt);
+  const authorizationPath = resolveFromRoot(options.authorization);
+  const commandPath = resolveFromRoot(options.commandArtifact);
+  const commandReceiptPath = resolveFromRoot(options.commandReceipt);
+  const executorProofPath = resolveFromRoot(options.executorProofReceipt);
+  const proposalPath = resolveFromRoot(options.enablementProposal);
+  const proposalReceiptPath = resolveFromRoot(options.enablementProposalReceipt);
+  const policyPatchPath = resolveFromRoot(options.policyPatch);
+  const policyPatchReceiptPath = resolveFromRoot(options.policyPatchReceipt);
+  const candidateManifestPath = resolveFromRoot(options.candidateManifest);
+  const applicationDiffReceiptPath = resolveFromRoot(options.applicationDiffReceipt);
+  const readinessReceiptPath = resolveFromRoot(options.readinessReceipt);
+  const runnerContractPath = resolveFromRoot(options.runnerContract);
+  const contractReceiptPath = resolveFromRoot(options.runnerContractReceipt);
+  const runnerPlanPath = resolveFromRoot(options.runnerPlan);
+  const packet = readJson(packetPath);
+  const preflightReceipt = readJson(preflightPath);
+  const executionReceipt = readJson(executionPath);
+  const authorization = readJson(authorizationPath);
+  const commandArtifact = readJson(commandPath);
+  const commandReceipt = readJson(commandReceiptPath);
+  const executorProofReceipt = readJson(executorProofPath);
+  const proposal = readJson(proposalPath);
+  const proposalReceipt = readJson(proposalReceiptPath);
+  const policyPatch = readJson(policyPatchPath);
+  const policyPatchReceipt = readJson(policyPatchReceiptPath);
+  const candidateManifest = readJson(candidateManifestPath);
+  const applicationDiffReceipt = readJson(applicationDiffReceiptPath);
+  const readinessReceipt = readJson(readinessReceiptPath);
+  const runnerContract = readJson(runnerContractPath);
+  const contractReceipt = readJson(contractReceiptPath);
+  const runnerPlan = readJson(runnerPlanPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const preflightErrors = validatePreflightReceipt(preflightReceipt, packet, constraints);
+  const executionErrors = validateExecutionReceipt(executionReceipt, packet, preflightReceipt, constraints);
+  const authorizationErrors = validateExecutionAuthorization(authorization, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+  }, constraints);
+  const commandErrors = validateExecutionCommandArtifact(commandArtifact, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+  }, constraints);
+  const commandReceiptErrors = validateExecutionCommandReceipt(commandReceipt, packet, executionReceipt, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+  }, constraints);
+  const executorProofErrors = validateExecutorProofReceipt(executorProofReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+  }, constraints);
+  const proposalErrors = validateExecutorEnablementProposal(proposal, packet, executorProofReceipt, manifest, {
+    executorProofPath,
+  }, constraints);
+  const proposalReceiptErrors = validateExecutorEnablementProposalReceipt(proposalReceipt, proposal, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+  }, constraints);
+  const policyPatchErrors = validatePolicyPatchDryRunArtifact(policyPatch, proposalReceipt, manifest, {
+    proposalReceiptPath,
+  }, constraints);
+  const policyPatchReceiptErrors = validatePolicyPatchDryRunReceipt(policyPatchReceipt, policyPatch, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+  }, constraints);
+  const candidateValidation = validatePolicyApplicationCandidateManifest(
+    candidateManifest,
+    manifest,
+    policyPatchReceipt,
+    manifest,
+    constraints,
+  );
+  const applicationDiffReceiptErrors = validatePolicyApplicationDiffReceipt(applicationDiffReceipt, candidateManifest, policyPatchReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+  }, constraints);
+  const readinessErrors = validateEnabledCandidateReadiness(candidateManifest, applicationDiffReceipt, manifest);
+  const readinessReceiptErrors = validateEnabledManifestReadinessReceipt(readinessReceipt, candidateManifest, applicationDiffReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+  }, constraints);
+  const runnerContractErrors = validateRunnerImplementationContract(runnerContract, packet, readinessReceipt, manifest, {
+    readinessReceiptPath,
+  }, constraints);
+  const contractReceiptErrors = validateRunnerImplementationContractReceipt(contractReceipt, runnerContract, readinessReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+  }, constraints);
+  const runnerPlanErrors = validateRunnerImplementationPlan(runnerPlan, packet, contractReceipt, manifest, {
+    contractReceiptPath,
+  }, constraints);
+  const result = buildRunnerImplementationPlanReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    preflightReceipt,
+    preflightPath,
+    executionReceipt,
+    executionPath,
+    authorization,
+    authorizationPath,
+    commandArtifact,
+    commandPath,
+    commandReceipt,
+    commandReceiptPath,
+    executorProofReceipt,
+    executorProofPath,
+    proposal,
+    proposalPath,
+    proposalReceipt,
+    proposalReceiptPath,
+    policyPatch,
+    policyPatchPath,
+    policyPatchReceipt,
+    policyPatchReceiptPath,
+    candidateManifest,
+    candidateManifestPath,
+    applicationDiffReceipt,
+    applicationDiffReceiptPath,
+    readinessReceipt,
+    readinessReceiptPath,
+    runnerContract,
+    runnerContractPath,
+    contractReceipt,
+    contractReceiptPath,
+    runnerPlan,
+    runnerPlanPath,
+    constraints,
+    packetValidation,
+    preflightErrors,
+    executionErrors,
+    authorizationErrors,
+    commandErrors,
+    commandReceiptErrors,
+    executorProofErrors,
+    proposalErrors,
+    proposalReceiptErrors,
+    policyPatchErrors,
+    policyPatchReceiptErrors,
+    candidateValidation,
+    applicationDiffReceiptErrors,
+    readinessErrors,
+    readinessReceiptErrors,
+    runnerContractErrors,
+    contractReceiptErrors,
+    runnerPlanErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -3750,6 +4410,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs policy-application-diff-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs enabled-manifest-readiness-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-contract-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-plan-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -3775,6 +4436,7 @@ async function main() {
   else if (options.command === 'policy-application-diff-check') result = commandPolicyApplicationDiffCheck(options);
   else if (options.command === 'enabled-manifest-readiness-check') result = commandEnabledManifestReadinessCheck(options);
   else if (options.command === 'runner-implementation-contract-check') result = commandRunnerImplementationContractCheck(options);
+  else if (options.command === 'runner-implementation-plan-check') result = commandRunnerImplementationPlanCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -3796,6 +4458,7 @@ export {
   commandPolicyApplicationDiffCheck,
   commandEnabledManifestReadinessCheck,
   commandRunnerImplementationContractCheck,
+  commandRunnerImplementationPlanCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,

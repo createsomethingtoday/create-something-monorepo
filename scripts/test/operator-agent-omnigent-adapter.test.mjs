@@ -24,7 +24,7 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
-const EXPECTED_ISSUE = 'CRE-1078';
+const EXPECTED_ISSUE = 'CRE-1079';
 const EXPECTED_TARGET = 'create-something-internal-production';
 const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
 const FIXED_NOW = '2026-07-06T20:00:00.000Z';
@@ -211,6 +211,30 @@ function runnerImplementationContractCheckArgs(packetPath, preflightReceiptPath,
   );
   args[1] = 'runner-implementation-contract-check';
   args.push('--readiness-receipt', readinessReceiptPath, '--runner-contract', runnerContractPath);
+  return args;
+}
+
+function runnerImplementationPlanCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, receiptDir) {
+  const args = runnerImplementationContractCheckArgs(
+    packetPath,
+    preflightReceiptPath,
+    executionReceiptPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+    receiptDir,
+  );
+  args[1] = 'runner-implementation-plan-check';
+  args.push('--runner-contract-receipt', runnerContractReceiptPath, '--runner-plan', runnerPlanPath);
   return args;
 }
 
@@ -403,6 +427,39 @@ function writeValidEnabledManifestReadinessReceipt(t, packetPath, preflightPath,
   };
 }
 
+function writeValidRunnerImplementationContractReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath) {
+  const root = makeWorkspace(t);
+  const contractResult = spawnSync(
+    process.execPath,
+    runnerImplementationContractCheckArgs(
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+      commandPath,
+      commandReceiptPath,
+      executorProofPath,
+      proposalPath,
+      proposalReceiptPath,
+      policyPatchPath,
+      policyPatchReceiptPath,
+      candidateManifestPath,
+      applicationDiffReceiptPath,
+      readinessReceiptPath,
+      runnerContractPath,
+      root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+  assert.equal(contractResult.status, 0, contractResult.stderr || contractResult.stdout);
+  const contractPayload = JSON.parse(contractResult.stdout);
+  return {
+    root,
+    runnerContractReceiptPath: path.join(REPO_ROOT, contractPayload.receiptPath),
+    contractPayload,
+  };
+}
+
 function validAuthorization({ packetPath, preflightPath, executionPath } = {}) {
   return {
     authorityLevel: 'A4',
@@ -533,6 +590,73 @@ function validRunnerImplementationContract({ readinessReceiptPath } = {}) {
     rollbackProofRequired: true,
     postActionSmokeRequired: true,
     publicAccessFailClosedRequired: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
+function validRunnerImplementationPlan({ runnerContractReceiptPath } = {}) {
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    implementationSurface: 'repo-pr',
+    plannedEntrypoint: 'scripts/operator-agent-omnigent-runner.mjs',
+    runnerImplementationContractReceipt: runnerContractReceiptPath
+      ? path.relative(REPO_ROOT, runnerContractReceiptPath)
+      : 'runner-implementation-contract-check.json',
+    implementationPlanOnly: true,
+    executableEntrypointAdded: false,
+    revalidatesFullChainImmediatelyBeforeWrite: true,
+    requiresCommandReceipt: true,
+    requiresEnabledCheckedInPolicy: true,
+    allowedWhenCurrentPolicyBlocked: false,
+    maxWritesPerRun: 1,
+    requiredProofs: ['rollback', 'post-action-smoke', 'public-access-fail-closed'],
+    requiredGuards: [
+      'checked-in-policy-enabled',
+      'full-chain-revalidation',
+      'command-receipt-bound',
+      'max-writes-per-run',
+      'rollback-ready',
+      'post-action-smoke',
+      'public-access-fail-closed',
+      'stop-on-mismatch',
+      'stop-on-expired',
+      'stop-on-drift',
+    ],
+    revalidationSequence: [
+      'approval-check',
+      'preflight-check',
+      'execution-receipt-check',
+      'execution-authorization-check',
+      'execution-command-check',
+      'executor-proof-check',
+      'executor-enable-proposal-check',
+      'policy-patch-dry-run-check',
+      'policy-application-diff-check',
+      'enabled-manifest-readiness-check',
+      'runner-implementation-contract-check',
+    ],
+    rollbackPlan: ['run target-specific rollback before recording final failure'],
+    postActionSmokePlan: ['run target-specific post-action smoke before final success'],
+    publicAccessFailClosedPlan: ['run public operator-agent smoke and require rawOriginExposed=false'],
+    stopConditions: ['receipt drift', 'expired command', 'checked-in policy disabled'],
+    receiptOutputs: [
+      'pre-action-receipt',
+      'execution-receipt',
+      'post-action-smoke',
+      'rollback-readiness',
+      'final-outcome',
+    ],
     processSpawned: false,
     executedCommands: [],
     runnerEnabled: false,
@@ -2300,6 +2424,285 @@ test('runner-implementation-contract-check fails closed on drifted readiness rec
   const payload = JSON.parse(result.stdout);
   assert.equal(payload.ok, false);
   assert.equal(payload.runnerImplementationContractOk, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /processSpawned must be false/);
+  assert.match(payload.errors.join('\n'), /executedCommands must be empty/);
+});
+
+test('runner-implementation-plan-check validates a plan-only future runner implementation', (t) => {
+  const fixture = writePolicyApplicationFixture(t);
+  const runnerContractPath = path.join(fixture.root, 'runner-contract.json');
+  writeFileSync(
+    runnerContractPath,
+    `${JSON.stringify(validRunnerImplementationContract({ readinessReceiptPath: fixture.readinessReceiptPath }), null, 2)}\n`,
+  );
+  const { runnerContractReceiptPath } = writeValidRunnerImplementationContractReceipt(
+    t,
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    runnerContractPath,
+  );
+  const runnerPlanPath = path.join(fixture.root, 'runner-plan.json');
+  writeFileSync(
+    runnerPlanPath,
+    `${JSON.stringify(validRunnerImplementationPlan({ runnerContractReceiptPath }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    runnerImplementationPlanCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      runnerContractPath,
+      runnerContractReceiptPath,
+      runnerPlanPath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'runner-implementation-plan-check');
+  assert.equal(payload.runnerImplementationPlanOk, true);
+  assert.equal(payload.implementationSurface, 'repo-pr');
+  assert.equal(payload.plannedEntrypoint, 'scripts/operator-agent-omnigent-runner.mjs');
+  assert.equal(payload.implementationPlanOnly, true);
+  assert.equal(payload.executableEntrypointAdded, false);
+  assert.equal(payload.revalidatesFullChainImmediatelyBeforeWrite, true);
+  assert.equal(payload.requiresEnabledCheckedInPolicy, true);
+  assert.equal(payload.allowedWhenCurrentPolicyBlocked, false);
+  assert.equal(payload.maxWritesPerRun, 1);
+  assert.ok(payload.requiredGuards.includes('checked-in-policy-enabled'));
+  assert.ok(payload.requiredGuards.includes('public-access-fail-closed'));
+  assert.ok(payload.revalidationSequence.includes('runner-implementation-contract-check'));
+  assert.ok(payload.receiptOutputs.includes('final-outcome'));
+  assert.equal(payload.currentPolicyBlocked, true);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.runnerEnabled, false);
+  assert.equal(payload.policy.executorRunnerEnabled, false);
+  assert.match(payload.blockedReason, /no executable entrypoint was added/);
+  assert.match(payload.nextGate, /planned runner entrypoint/);
+  assert.match(payload.receiptPath, /runner-implementation-plan-check\.json$/);
+});
+
+test('runner-implementation-plan-check fails closed on unsafe implementation plans', (t) => {
+  const cases = [
+    {
+      name: 'missing-policy-guard',
+      mutate(plan) {
+        plan.requiredGuards = plan.requiredGuards.filter((guard) => guard !== 'checked-in-policy-enabled');
+      },
+      pattern: /requiredGuards must include checked-in-policy-enabled/,
+    },
+    {
+      name: 'missing-public-plan',
+      mutate(plan) {
+        plan.publicAccessFailClosedPlan = [];
+      },
+      pattern: /publicAccessFailClosedPlan is required/,
+    },
+    {
+      name: 'excessive-write-ceiling',
+      mutate(plan) {
+        plan.maxWritesPerRun = 2;
+      },
+      pattern: /maxWritesPerRun must be 1/,
+    },
+    {
+      name: 'entrypoint-added',
+      mutate(plan) {
+        plan.executableEntrypointAdded = true;
+      },
+      pattern: /executableEntrypointAdded must be false/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(plan) {
+        plan.processSpawned = true;
+        plan.executedCommands = ['node scripts/operator-agent-omnigent-runner.mjs'];
+        plan.executionReady = true;
+        plan.wouldExecute = true;
+        plan.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writePolicyApplicationFixture(t);
+    const runnerContractPath = path.join(fixture.root, 'runner-contract.json');
+    writeFileSync(
+      runnerContractPath,
+      `${JSON.stringify(validRunnerImplementationContract({ readinessReceiptPath: fixture.readinessReceiptPath }), null, 2)}\n`,
+    );
+    const { runnerContractReceiptPath } = writeValidRunnerImplementationContractReceipt(
+      t,
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      runnerContractPath,
+    );
+    const runnerPlan = validRunnerImplementationPlan({ runnerContractReceiptPath });
+    entry.mutate(runnerPlan);
+    const runnerPlanPath = path.join(fixture.root, `${entry.name}-runner-plan.json`);
+    writeFileSync(runnerPlanPath, `${JSON.stringify(runnerPlan, null, 2)}\n`);
+
+    const result = spawnSync(
+      process.execPath,
+      runnerImplementationPlanCheckArgs(
+        fixture.packetPath,
+        fixture.preflightPath,
+        fixture.executionPath,
+        fixture.authorizationPath,
+        fixture.commandPath,
+        fixture.commandReceiptPath,
+        fixture.executorProofPath,
+        fixture.proposalPath,
+        fixture.proposalReceiptPath,
+        fixture.policyPatchPath,
+        fixture.policyPatchReceiptPath,
+        fixture.candidateManifestPath,
+        fixture.applicationDiffReceiptPath,
+        fixture.readinessReceiptPath,
+        runnerContractPath,
+        runnerContractReceiptPath,
+        runnerPlanPath,
+        fixture.root,
+      ),
+      { cwd: REPO_ROOT, encoding: 'utf8' },
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.runnerImplementationPlanOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('runner-implementation-plan-check fails closed on drifted contract receipts', (t) => {
+  const fixture = writePolicyApplicationFixture(t);
+  const runnerContractPath = path.join(fixture.root, 'runner-contract.json');
+  writeFileSync(
+    runnerContractPath,
+    `${JSON.stringify(validRunnerImplementationContract({ readinessReceiptPath: fixture.readinessReceiptPath }), null, 2)}\n`,
+  );
+  const { runnerContractReceiptPath } = writeValidRunnerImplementationContractReceipt(
+    t,
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    runnerContractPath,
+  );
+  const driftedContractReceipt = JSON.parse(readFileSync(runnerContractReceiptPath, 'utf8'));
+  driftedContractReceipt.processSpawned = true;
+  driftedContractReceipt.executedCommands = ['node scripts/operator-agent-omnigent-runner.mjs'];
+  const driftedContractReceiptPath = path.join(fixture.root, 'drifted-runner-contract-receipt.json');
+  writeFileSync(driftedContractReceiptPath, `${JSON.stringify(driftedContractReceipt, null, 2)}\n`);
+  const runnerPlanPath = path.join(fixture.root, 'runner-plan.json');
+  writeFileSync(
+    runnerPlanPath,
+    `${JSON.stringify(validRunnerImplementationPlan({ runnerContractReceiptPath: driftedContractReceiptPath }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    runnerImplementationPlanCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      runnerContractPath,
+      driftedContractReceiptPath,
+      runnerPlanPath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.runnerImplementationPlanOk, false);
   assert.equal(payload.processSpawned, false);
   assert.deepEqual(payload.executedCommands, []);
   assert.equal(payload.runnerEnabled, false);
