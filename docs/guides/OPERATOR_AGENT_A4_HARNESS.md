@@ -561,6 +561,53 @@ loosen the write ceiling, request auto execution, or claim process/command
 execution while the checked-in manifest is blocked. This gate does not spawn the
 runner and does not execute the write command.
 
+After the execution runbook receipt exists, validate the shareable receipt
+bundle for asynchronous operator review:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs receipt-bundle-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --runner-contract-receipt <runner-contract-receipt.json> \
+  --runner-plan <runner-plan.json> \
+  --runner-plan-receipt <runner-plan-receipt.json> \
+  --runner-diff <runner-diff.json> \
+  --runner-diff-receipt <runner-diff-receipt.json> \
+  --release-admission <release-admission.json> \
+  --release-admission-receipt <release-admission-receipt.json> \
+  --execution-runbook <execution-runbook.json> \
+  --execution-runbook-receipt <execution-runbook-receipt.json> \
+  --receipt-bundle <receipt-bundle.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The receipt bundle is the "share only the receipts" artifact. It must reference
+the full validated receipt chain, include Linear evidence, GitHub check
+evidence, public-access fail-closed proof, a redaction policy, and an operator
+summary. It must be `shareable`, `bundleOnly`, and redaction-applied, and it
+must explicitly report `containsSecrets`, `containsRawLogs`, `containsPrompts`,
+`rawLogsIncluded`, `promptsIncluded`, and `rawTranscriptIncluded` as false. The
+gate rejects missing receipt references, unredacted references, leaked prompts
+or logs, stale execution-runbook receipts, and any claim that a runner process,
+command, approval, or write occurred. This is still a review artifact only:
+checked-in `authority.a4Execution` remains blocked.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
