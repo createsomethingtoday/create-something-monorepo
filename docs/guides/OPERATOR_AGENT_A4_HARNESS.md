@@ -1571,6 +1571,89 @@ evidence, verifier deploy markers, verifier third-party write claims, leaked
 raw artifacts, and any process/command/write marker. `authority.a4Execution`
 remains blocked.
 
+After release closeout passes, record the production ownership review packet:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-ownership-review-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --runner-contract-receipt <runner-contract-receipt.json> \
+  --runner-plan <runner-plan.json> \
+  --runner-plan-receipt <runner-plan-receipt.json> \
+  --runner-diff <runner-diff.json> \
+  --runner-diff-receipt <runner-diff-receipt.json> \
+  --release-admission <release-admission.json> \
+  --release-admission-receipt <release-admission-receipt.json> \
+  --execution-runbook <execution-runbook.json> \
+  --execution-runbook-receipt <execution-runbook-receipt.json> \
+  --receipt-bundle <receipt-bundle.json> \
+  --receipt-bundle-receipt <receipt-bundle-receipt.json> \
+  --receipt-publication <receipt-publication.json> \
+  --receipt-publication-receipt <receipt-publication-receipt.json> \
+  --receipt-review-decision <receipt-review-decision.json> \
+  --receipt-review-decision-receipt <receipt-review-decision-receipt.json> \
+  --manual-next-step-handoff <manual-next-step-handoff.json> \
+  --manual-next-step-handoff-receipt <manual-next-step-handoff-receipt.json> \
+  --manual-follow-up-issue-evidence <manual-follow-up-issue-evidence.json> \
+  --manual-follow-up-issue-evidence-receipt <manual-follow-up-issue-evidence-receipt.json> \
+  --follow-up-work-intake <follow-up-work-intake.json> \
+  --follow-up-work-intake-receipt <follow-up-work-intake-receipt.json> \
+  --implementation-workspace-evidence <implementation-workspace-evidence.json> \
+  --implementation-workspace-evidence-receipt <implementation-workspace-evidence-receipt.json> \
+  --implementation-pr-evidence <implementation-pr-evidence.json> \
+  --implementation-pr-evidence-receipt <implementation-pr-evidence-receipt.json> \
+  --implementation-merge-decision <implementation-merge-decision.json> \
+  --implementation-merge-decision-receipt <implementation-merge-decision-receipt.json> \
+  --implementation-merge-evidence <implementation-merge-evidence.json> \
+  --implementation-merge-evidence-receipt <implementation-merge-evidence-receipt.json> \
+  --implementation-post-merge-validation <implementation-post-merge-validation.json> \
+  --implementation-post-merge-validation-receipt <implementation-post-merge-validation-receipt.json> \
+  --implementation-production-release-decision <implementation-production-release-decision.json> \
+  --implementation-production-release-decision-receipt <implementation-production-release-decision-receipt.json> \
+  --implementation-production-release-admission <implementation-production-release-admission.json> \
+  --implementation-production-release-admission-receipt <implementation-production-release-admission-receipt.json> \
+  --implementation-production-deploy-evidence <implementation-production-deploy-evidence.json> \
+  --implementation-production-deploy-evidence-receipt <implementation-production-deploy-evidence-receipt.json> \
+  --implementation-production-post-deploy-validation <implementation-production-post-deploy-validation.json> \
+  --implementation-production-post-deploy-validation-receipt <implementation-production-post-deploy-validation-receipt.json> \
+  --implementation-production-release-closeout <implementation-production-release-closeout.json> \
+  --implementation-production-release-closeout-receipt <implementation-production-release-closeout-receipt.json> \
+  --implementation-production-ownership-review <implementation-production-ownership-review.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production ownership review packet proves an operator
+reviewed the redacted release closeout receipts and chose the next ownership
+lane. Allowed decisions are `advance-to-a4-enablement-review`,
+`hold-at-evidence-only`, and `request-changes`. Even an advance decision is
+only evidence for a separate explicit A4 enablement approval packet; it is not
+execution authority. The packet must bind to the same issue, deployment,
+release window, closeout evidence, receipt-publication evidence, operator
+handoff, and public-access fail-closed proof as the release closeout receipt.
+It also adds decision rationale, evidence review, readiness assessment,
+residual risks, and required follow-ups. This gate still does not deploy,
+enable policy, enable a runner, close Linear issues, post updates, rotate
+secrets, expose raw artifacts, or mutate any third-party system. It rejects
+drifted closeout receipts, invalid decisions, missing readiness evidence,
+verifier issue-mutation or policy-enablement claims, leaked raw artifacts, and
+any process/command/write marker. `authority.a4Execution` remains blocked.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
