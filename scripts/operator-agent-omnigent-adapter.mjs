@@ -95,6 +95,7 @@ function parseArgs(argv) {
     policyPatch: null,
     policyPatchReceipt: null,
     candidateManifest: null,
+    applicationDiffReceipt: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -122,6 +123,7 @@ function parseArgs(argv) {
     else if (arg === '--policy-patch' && args[index + 1]) options.policyPatch = args[++index];
     else if (arg === '--policy-patch-receipt' && args[index + 1]) options.policyPatchReceipt = args[++index];
     else if (arg === '--candidate-manifest' && args[index + 1]) options.candidateManifest = args[++index];
+    else if (arg === '--application-diff-receipt' && args[index + 1]) options.applicationDiffReceipt = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -406,6 +408,23 @@ function validateManifest(manifest) {
   }
   if (policyApplicationDiff.writesPerformed !== 0) {
     errors.push('a4PolicyApplicationDiff.writesPerformed must be 0');
+  }
+
+  const enabledManifestReadiness = manifest.a4EnabledManifestReadiness || {};
+  if (enabledManifestReadiness.requiresPolicyApplicationDiffReceipt !== true) {
+    errors.push('a4EnabledManifestReadiness.requiresPolicyApplicationDiffReceipt must be true');
+  }
+  if (enabledManifestReadiness.candidateOnly !== true) {
+    errors.push('a4EnabledManifestReadiness.candidateOnly must be true');
+  }
+  if (enabledManifestReadiness.currentPolicyMustRemainBlocked !== true) {
+    errors.push('a4EnabledManifestReadiness.currentPolicyMustRemainBlocked must be true');
+  }
+  if (enabledManifestReadiness.processSpawnPolicy !== 'blocked') {
+    errors.push('a4EnabledManifestReadiness.processSpawnPolicy must be blocked');
+  }
+  if (enabledManifestReadiness.writesPerformed !== 0) {
+    errors.push('a4EnabledManifestReadiness.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -1975,6 +1994,260 @@ function buildPolicyApplicationDiffReceipt({
   };
 }
 
+function validatePolicyApplicationDiffReceipt(receipt, candidateManifest, policyPatchReceipt, packet, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'policy-application-diff-check') {
+    errors.push('policy application diff receipt mode must be policy-application-diff-check');
+  }
+  if (receipt.ok !== true || receipt.policyApplicationDiffOk !== true) {
+    errors.push('policy application diff receipt must be ok');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`policy application diff receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`policy application diff receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`policy application diff receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.packetPath !== rel(paths.packetPath)) {
+    errors.push('policy application diff receipt packetPath must match packet path');
+  }
+  if (receipt.preflightReceipt !== rel(paths.preflightPath)) {
+    errors.push('policy application diff receipt preflightReceipt must match preflight receipt path');
+  }
+  if (receipt.executionReceipt !== rel(paths.executionPath)) {
+    errors.push('policy application diff receipt executionReceipt must match execution receipt path');
+  }
+  if (receipt.authorization !== rel(paths.authorizationPath)) {
+    errors.push('policy application diff receipt authorization must match authorization artifact path');
+  }
+  if (receipt.commandArtifact !== rel(paths.commandPath)) {
+    errors.push('policy application diff receipt commandArtifact must match command artifact path');
+  }
+  if (receipt.commandReceipt !== rel(paths.commandReceiptPath)) {
+    errors.push('policy application diff receipt commandReceipt must match command receipt path');
+  }
+  if (receipt.executorProofReceipt !== rel(paths.executorProofPath)) {
+    errors.push('policy application diff receipt executorProofReceipt must match executor proof receipt path');
+  }
+  if (receipt.enablementProposal !== rel(paths.proposalPath)) {
+    errors.push('policy application diff receipt enablementProposal must match proposal path');
+  }
+  if (receipt.enablementProposalReceipt !== rel(paths.proposalReceiptPath)) {
+    errors.push('policy application diff receipt enablementProposalReceipt must match proposal receipt path');
+  }
+  if (receipt.policyPatchDryRun !== rel(paths.policyPatchPath)) {
+    errors.push('policy application diff receipt policyPatchDryRun must match policy patch artifact path');
+  }
+  if (receipt.policyPatchDryRunReceipt !== rel(paths.policyPatchReceiptPath)) {
+    errors.push('policy application diff receipt policyPatchDryRunReceipt must match policy patch receipt path');
+  }
+  if (receipt.candidateManifest !== rel(paths.candidateManifestPath)) {
+    errors.push('policy application diff receipt candidateManifest must match candidate manifest path');
+  }
+  if (!sameJson(receipt.policyPatchPreview, policyPatchReceipt.policyPatchPreview)) {
+    errors.push('policy application diff receipt policyPatchPreview must match policy patch receipt');
+  }
+  if (receipt.candidateA4Execution !== candidateManifest.authority?.a4Execution) {
+    errors.push('policy application diff receipt candidateA4Execution must match candidate manifest');
+  }
+  if (receipt.candidateCommandRunnerEnabled !== candidateManifest.a4ExecutionCommand?.runnerEnabled) {
+    errors.push('policy application diff receipt candidateCommandRunnerEnabled must match candidate manifest');
+  }
+  if (receipt.candidateExecutorRunnerEnabled !== candidateManifest.a4ExecutorProof?.runnerEnabled) {
+    errors.push('policy application diff receipt candidateExecutorRunnerEnabled must match candidate manifest');
+  }
+  if (receipt.policyFileChanged !== false) errors.push('policy application diff receipt policyFileChanged must be false');
+  if (receipt.policyChangeApplied !== false) errors.push('policy application diff receipt policyChangeApplied must be false');
+  if (receipt.runnerEnabled !== false) errors.push('policy application diff receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('policy application diff receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('policy application diff receipt executionEnabled must be false');
+  if (receipt.wouldExecute !== false) errors.push('policy application diff receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('policy application diff receipt writesPerformed must be 0');
+  if (receipt.processSpawned === true) errors.push('policy application diff receipt processSpawned must not be true');
+  if (Array.isArray(receipt.executedCommands) && receipt.executedCommands.length > 0) {
+    errors.push('policy application diff receipt executedCommands must be empty');
+  }
+
+  if (packet.issue !== receipt.issue) errors.push('policy application diff receipt issue must match packet issue');
+  if (packet.target !== receipt.target) errors.push('policy application diff receipt target must match packet target');
+  if (packet.action !== receipt.action) errors.push('policy application diff receipt action must match packet action');
+
+  return errors;
+}
+
+function validateEnabledCandidateReadiness(candidateManifest, policyApplicationReceipt, manifest) {
+  const errors = [];
+
+  if (candidateManifest.authority?.a4Execution !== 'enabled') {
+    errors.push('enabled manifest readiness candidate authority.a4Execution must be enabled');
+  }
+  if (candidateManifest.a4ExecutionCommand?.runnerEnabled !== true) {
+    errors.push('enabled manifest readiness candidate command runner must be enabled');
+  }
+  if (candidateManifest.a4ExecutorProof?.runnerEnabled !== true) {
+    errors.push('enabled manifest readiness candidate executor runner must be enabled');
+  }
+  if (candidateManifest.a4ExecutorProof?.processSpawnPolicy !== 'blocked') {
+    errors.push('enabled manifest readiness candidate processSpawnPolicy must remain blocked until implementation PR');
+  }
+  if (candidateManifest.a4ExecutorProof?.requiresCommandReceipt !== true) {
+    errors.push('enabled manifest readiness candidate must still require command receipt');
+  }
+  if (candidateManifest.a4ExecutorEnablementProposal?.maxWritesPerRun !== 1) {
+    errors.push('enabled manifest readiness candidate maxWritesPerRun must remain 1');
+  }
+  for (const proof of manifest.a4PolicyPatchDryRun?.requiredProofs || []) {
+    if (!candidateManifest.a4ExecutorEnablementProposal?.requiredProofs?.includes(proof)) {
+      errors.push(`enabled manifest readiness candidate requiredProofs must include ${proof}`);
+    }
+  }
+  if (policyApplicationReceipt.policyApplicationDiffOk !== true) {
+    errors.push('enabled manifest readiness requires valid policy application diff receipt');
+  }
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('enabled manifest readiness current manifest authority.a4Execution must remain blocked');
+  }
+  if (manifest.a4ExecutionCommand?.runnerEnabled !== false) {
+    errors.push('enabled manifest readiness current manifest command runner must remain disabled');
+  }
+  if (manifest.a4ExecutorProof?.runnerEnabled !== false) {
+    errors.push('enabled manifest readiness current manifest executor runner must remain disabled');
+  }
+
+  return errors;
+}
+
+function buildEnabledManifestReadinessReceipt({
+  manifest,
+  manifestValidation,
+  packet,
+  packetPath,
+  preflightReceipt,
+  preflightPath,
+  executionReceipt,
+  executionPath,
+  authorization,
+  authorizationPath,
+  commandArtifact,
+  commandPath,
+  commandReceipt,
+  commandReceiptPath,
+  executorProofReceipt,
+  executorProofPath,
+  proposal,
+  proposalPath,
+  proposalReceipt,
+  proposalReceiptPath,
+  policyPatch,
+  policyPatchPath,
+  policyPatchReceipt,
+  policyPatchReceiptPath,
+  candidateManifest,
+  candidateManifestPath,
+  applicationDiffReceipt,
+  applicationDiffReceiptPath,
+  constraints,
+  packetValidation,
+  preflightErrors,
+  executionErrors,
+  authorizationErrors,
+  commandErrors,
+  commandReceiptErrors,
+  executorProofErrors,
+  proposalErrors,
+  proposalReceiptErrors,
+  policyPatchErrors,
+  policyPatchReceiptErrors,
+  candidateValidation,
+  applicationDiffReceiptErrors,
+  readinessErrors,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...packetValidation.errors,
+    ...preflightErrors,
+    ...executionErrors,
+    ...authorizationErrors,
+    ...commandErrors,
+    ...commandReceiptErrors,
+    ...executorProofErrors,
+    ...proposalErrors,
+    ...proposalReceiptErrors,
+    ...policyPatchErrors,
+    ...policyPatchReceiptErrors,
+    ...candidateValidation.errors,
+    ...applicationDiffReceiptErrors,
+    ...readinessErrors,
+  ];
+  const enabledManifestReadinessOk = errors.length === 0;
+
+  return {
+    mode: 'enabled-manifest-readiness-check',
+    ok: enabledManifestReadinessOk,
+    enabledManifestReadinessOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    candidateManifest: rel(candidateManifestPath),
+    applicationDiffReceipt: rel(applicationDiffReceiptPath),
+    packetPath: rel(packetPath),
+    preflightReceipt: rel(preflightPath),
+    executionReceipt: rel(executionPath),
+    authorization: rel(authorizationPath),
+    commandArtifact: rel(commandPath),
+    commandReceipt: rel(commandReceiptPath),
+    executorProofReceipt: rel(executorProofPath),
+    enablementProposal: rel(proposalPath),
+    enablementProposalReceipt: rel(proposalReceiptPath),
+    policyPatchDryRun: rel(policyPatchPath),
+    policyPatchDryRunReceipt: rel(policyPatchReceiptPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    targetScope: applicationDiffReceipt.targetScope,
+    maxWritesPerRun: applicationDiffReceipt.maxWritesPerRun,
+    requiredProofs: applicationDiffReceipt.requiredProofs || [],
+    constraints,
+    candidateOnly: true,
+    currentPolicyBlocked: true,
+    candidateA4Execution: candidateManifest.authority?.a4Execution,
+    candidateCommandRunnerEnabled: candidateManifest.a4ExecutionCommand?.runnerEnabled,
+    candidateExecutorRunnerEnabled: candidateManifest.a4ExecutorProof?.runnerEnabled,
+    candidateExecutionReady: enabledManifestReadinessOk,
+    policyPatchPreview: enabledManifestReadinessOk ? applicationDiffReceipt.policyPatchPreview : null,
+    processSpawnPolicy: manifest.a4EnabledManifestReadiness?.processSpawnPolicy || 'blocked',
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: enabledManifestReadinessOk
+      ? 'candidate enabled manifest is ready for a future implementation PR; current checked-in policy remains blocked and no process was spawned'
+      : 'candidate enabled manifest readiness rejected before any runner path',
+    evidenceTarget: applicationDiffReceipt.evidenceTarget || policyPatchReceipt.evidenceTarget || proposal.evidenceTarget || packet.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator-reviewed implementation PR may add a runner that revalidates this full chain immediately before any write',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      enabledManifestReadinessCandidateOnly: manifest.a4EnabledManifestReadiness?.candidateOnly,
+      enabledManifestReadinessProcessSpawnPolicy: manifest.a4EnabledManifestReadiness?.processSpawnPolicy,
+    },
+  };
+}
+
 function print(result, options) {
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -2683,6 +2956,190 @@ function commandPolicyApplicationDiffCheck(options) {
   return result;
 }
 
+function commandEnabledManifestReadinessCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for enabled-manifest-readiness-check'));
+  }
+  if (!options.preflightReceipt) throw new Error('--preflight-receipt is required for enabled-manifest-readiness-check');
+  if (!options.executionReceipt) throw new Error('--execution-receipt is required for enabled-manifest-readiness-check');
+  if (!options.authorization) throw new Error('--authorization is required for enabled-manifest-readiness-check');
+  if (!options.commandArtifact) throw new Error('--command-artifact is required for enabled-manifest-readiness-check');
+  if (!options.commandReceipt) throw new Error('--command-receipt is required for enabled-manifest-readiness-check');
+  if (!options.executorProofReceipt) throw new Error('--executor-proof-receipt is required for enabled-manifest-readiness-check');
+  if (!options.enablementProposal) throw new Error('--enablement-proposal is required for enabled-manifest-readiness-check');
+  if (!options.enablementProposalReceipt) {
+    throw new Error('--enablement-proposal-receipt is required for enabled-manifest-readiness-check');
+  }
+  if (!options.policyPatch) throw new Error('--policy-patch is required for enabled-manifest-readiness-check');
+  if (!options.policyPatchReceipt) throw new Error('--policy-patch-receipt is required for enabled-manifest-readiness-check');
+  if (!options.candidateManifest) throw new Error('--candidate-manifest is required for enabled-manifest-readiness-check');
+  if (!options.applicationDiffReceipt) {
+    throw new Error('--application-diff-receipt is required for enabled-manifest-readiness-check');
+  }
+
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const preflightPath = resolveFromRoot(options.preflightReceipt);
+  const executionPath = resolveFromRoot(options.executionReceipt);
+  const authorizationPath = resolveFromRoot(options.authorization);
+  const commandPath = resolveFromRoot(options.commandArtifact);
+  const commandReceiptPath = resolveFromRoot(options.commandReceipt);
+  const executorProofPath = resolveFromRoot(options.executorProofReceipt);
+  const proposalPath = resolveFromRoot(options.enablementProposal);
+  const proposalReceiptPath = resolveFromRoot(options.enablementProposalReceipt);
+  const policyPatchPath = resolveFromRoot(options.policyPatch);
+  const policyPatchReceiptPath = resolveFromRoot(options.policyPatchReceipt);
+  const candidateManifestPath = resolveFromRoot(options.candidateManifest);
+  const applicationDiffReceiptPath = resolveFromRoot(options.applicationDiffReceipt);
+  const packet = readJson(packetPath);
+  const preflightReceipt = readJson(preflightPath);
+  const executionReceipt = readJson(executionPath);
+  const authorization = readJson(authorizationPath);
+  const commandArtifact = readJson(commandPath);
+  const commandReceipt = readJson(commandReceiptPath);
+  const executorProofReceipt = readJson(executorProofPath);
+  const proposal = readJson(proposalPath);
+  const proposalReceipt = readJson(proposalReceiptPath);
+  const policyPatch = readJson(policyPatchPath);
+  const policyPatchReceipt = readJson(policyPatchReceiptPath);
+  const candidateManifest = readJson(candidateManifestPath);
+  const applicationDiffReceipt = readJson(applicationDiffReceiptPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const preflightErrors = validatePreflightReceipt(preflightReceipt, packet, constraints);
+  const executionErrors = validateExecutionReceipt(executionReceipt, packet, preflightReceipt, constraints);
+  const authorizationErrors = validateExecutionAuthorization(authorization, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+  }, constraints);
+  const commandErrors = validateExecutionCommandArtifact(commandArtifact, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+  }, constraints);
+  const commandReceiptErrors = validateExecutionCommandReceipt(commandReceipt, packet, executionReceipt, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+  }, constraints);
+  const executorProofErrors = validateExecutorProofReceipt(executorProofReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+  }, constraints);
+  const proposalErrors = validateExecutorEnablementProposal(proposal, packet, executorProofReceipt, manifest, {
+    executorProofPath,
+  }, constraints);
+  const proposalReceiptErrors = validateExecutorEnablementProposalReceipt(proposalReceipt, proposal, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+  }, constraints);
+  const policyPatchErrors = validatePolicyPatchDryRunArtifact(policyPatch, proposalReceipt, manifest, {
+    proposalReceiptPath,
+  }, constraints);
+  const policyPatchReceiptErrors = validatePolicyPatchDryRunReceipt(policyPatchReceipt, policyPatch, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+  }, constraints);
+  const candidateValidation = validatePolicyApplicationCandidateManifest(
+    candidateManifest,
+    manifest,
+    policyPatchReceipt,
+    manifest,
+    constraints,
+  );
+  const applicationDiffReceiptErrors = validatePolicyApplicationDiffReceipt(applicationDiffReceipt, candidateManifest, policyPatchReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+  }, constraints);
+  const readinessErrors = validateEnabledCandidateReadiness(candidateManifest, applicationDiffReceipt, manifest);
+  const result = buildEnabledManifestReadinessReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    preflightReceipt,
+    preflightPath,
+    executionReceipt,
+    executionPath,
+    authorization,
+    authorizationPath,
+    commandArtifact,
+    commandPath,
+    commandReceipt,
+    commandReceiptPath,
+    executorProofReceipt,
+    executorProofPath,
+    proposal,
+    proposalPath,
+    proposalReceipt,
+    proposalReceiptPath,
+    policyPatch,
+    policyPatchPath,
+    policyPatchReceipt,
+    policyPatchReceiptPath,
+    candidateManifest,
+    candidateManifestPath,
+    applicationDiffReceipt,
+    applicationDiffReceiptPath,
+    constraints,
+    packetValidation,
+    preflightErrors,
+    executionErrors,
+    authorizationErrors,
+    commandErrors,
+    commandReceiptErrors,
+    executorProofErrors,
+    proposalErrors,
+    proposalReceiptErrors,
+    policyPatchErrors,
+    policyPatchReceiptErrors,
+    candidateValidation,
+    applicationDiffReceiptErrors,
+    readinessErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -2731,6 +3188,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs executor-enable-proposal-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs policy-patch-dry-run-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs policy-application-diff-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs enabled-manifest-readiness-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -2754,6 +3212,7 @@ async function main() {
   else if (options.command === 'executor-enable-proposal-check') result = commandExecutorEnableProposalCheck(options);
   else if (options.command === 'policy-patch-dry-run-check') result = commandPolicyPatchDryRunCheck(options);
   else if (options.command === 'policy-application-diff-check') result = commandPolicyApplicationDiffCheck(options);
+  else if (options.command === 'enabled-manifest-readiness-check') result = commandEnabledManifestReadinessCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -2773,6 +3232,7 @@ export {
   commandExecutorEnableProposalCheck,
   commandPolicyPatchDryRunCheck,
   commandPolicyApplicationDiffCheck,
+  commandEnabledManifestReadinessCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,

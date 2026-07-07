@@ -327,6 +327,38 @@ already happened. A valid diff receipt still keeps `policyChangeApplied`,
 `writesPerformed` as `false`, `false`, `false`, `false`, `false`, and `0` in
 the verifier PR.
 
+After the application diff receipt validates, inspect the candidate enabled
+manifest for readiness without spawning a runner:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs enabled-manifest-readiness-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+This readiness gate proves only that the candidate manifest would enable
+`authority.a4Execution`, `a4ExecutionCommand.runnerEnabled`, and
+`a4ExecutorProof.runnerEnabled` after the verified policy patch. The current
+checked-in manifest must still be blocked, `processSpawned` must be `false`,
+`executedCommands` must be `[]`, and `wouldExecute` plus `writesPerformed` must
+remain `false` and `0`. A later implementation PR still needs to add a runner
+that revalidates the whole chain immediately before any write.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
