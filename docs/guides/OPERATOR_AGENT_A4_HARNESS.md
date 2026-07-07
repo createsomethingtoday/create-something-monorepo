@@ -475,6 +475,49 @@ It rejects unrelated file additions, any claim that the entrypoint is already
 checked in, missing rollback/smoke/public fail-closed hooks, loosened write
 ceilings, and any process or command execution markers.
 
+After the candidate runner diff receipt exists, validate the release admission
+packet before merging any policy or runner PR:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs release-admission-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --runner-contract-receipt <runner-contract-receipt.json> \
+  --runner-plan <runner-plan.json> \
+  --runner-plan-receipt <runner-plan-receipt.json> \
+  --runner-diff <runner-diff.json> \
+  --runner-diff-receipt <runner-diff-receipt.json> \
+  --release-admission <release-admission.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The release admission packet binds the candidate enabled-manifest readiness
+receipt, candidate runner diff receipt, policy PR evidence, runner PR evidence,
+manual merge order, rollback note, Linear evidence, and public-access
+fail-closed proof into a single review artifact. It requires the policy-enabled
+manifest PR to merge before the runner-entrypoint PR and requires both PRs to
+report successful checks and merge readiness. It is not an execution command:
+the checked-in manifest remains blocked, `processSpawned` is `false`,
+`executedCommands` is `[]`, `runnerEnabled`, `executionReady`,
+`executionEnabled`, and `wouldExecute` remain `false`, and `writesPerformed`
+remains `0`.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:

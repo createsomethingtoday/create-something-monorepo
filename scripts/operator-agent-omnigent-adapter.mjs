@@ -102,6 +102,8 @@ function parseArgs(argv) {
     runnerPlan: null,
     runnerPlanReceipt: null,
     runnerDiff: null,
+    runnerDiffReceipt: null,
+    releaseAdmission: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -136,6 +138,8 @@ function parseArgs(argv) {
     else if (arg === '--runner-plan' && args[index + 1]) options.runnerPlan = args[++index];
     else if (arg === '--runner-plan-receipt' && args[index + 1]) options.runnerPlanReceipt = args[++index];
     else if (arg === '--runner-diff' && args[index + 1]) options.runnerDiff = args[++index];
+    else if (arg === '--runner-diff-receipt' && args[index + 1]) options.runnerDiffReceipt = args[++index];
+    else if (arg === '--release-admission' && args[index + 1]) options.releaseAdmission = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -563,6 +567,53 @@ function validateManifest(manifest) {
   }
   if (runnerImplementationDiff.writesPerformed !== 0) {
     errors.push('a4RunnerImplementationDiff.writesPerformed must be 0');
+  }
+
+  const releaseAdmission = manifest.a4ReleaseAdmission || {};
+  if (releaseAdmission.requiresEnabledManifestReadinessReceipt !== true) {
+    errors.push('a4ReleaseAdmission.requiresEnabledManifestReadinessReceipt must be true');
+  }
+  if (releaseAdmission.requiresRunnerImplementationDiffReceipt !== true) {
+    errors.push('a4ReleaseAdmission.requiresRunnerImplementationDiffReceipt must be true');
+  }
+  if (releaseAdmission.packetOnly !== true) {
+    errors.push('a4ReleaseAdmission.packetOnly must be true');
+  }
+  if (releaseAdmission.requiresManualMerge !== true) {
+    errors.push('a4ReleaseAdmission.requiresManualMerge must be true');
+  }
+  for (const requiredPr of ['policy-enabled-manifest', 'runner-entrypoint']) {
+    if (!releaseAdmission.requiredPrs?.includes(requiredPr)) {
+      errors.push(`a4ReleaseAdmission.requiredPrs must include ${requiredPr}`);
+    }
+  }
+  if (!releaseAdmission.requiredCheckStatuses?.includes('success')) {
+    errors.push('a4ReleaseAdmission.requiredCheckStatuses must include success');
+  }
+  for (const requiredOrder of ['policy-enabled-manifest', 'runner-entrypoint']) {
+    if (!releaseAdmission.requiredMergeOrder?.includes(requiredOrder)) {
+      errors.push(`a4ReleaseAdmission.requiredMergeOrder must include ${requiredOrder}`);
+    }
+  }
+  for (const evidence of [
+    'linear-done-evidence',
+    'github-checks-passed',
+    'rollback-note',
+    'public-access-fail-closed-proof',
+  ]) {
+    if (!releaseAdmission.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ReleaseAdmission.requiredEvidence must include ${evidence}`);
+    }
+  }
+  const missingReleaseGuards = includesAll(releaseAdmission.requiredGuards, runnerImplementationDiff.requiredGuards || []);
+  if (missingReleaseGuards.length) {
+    errors.push(`a4ReleaseAdmission.requiredGuards missing: ${missingReleaseGuards.join(', ')}`);
+  }
+  if (releaseAdmission.maxWritesPerRun !== 1) {
+    errors.push('a4ReleaseAdmission.maxWritesPerRun must be 1');
+  }
+  if (releaseAdmission.writesPerformed !== 0) {
+    errors.push('a4ReleaseAdmission.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -2830,6 +2881,175 @@ function validateRunnerImplementationDiff(diff, packet, planReceipt, manifest, p
   return errors;
 }
 
+function validateRunnerImplementationDiffReceipt(receipt, runnerDiff, planReceipt, packet, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'runner-implementation-diff-check') {
+    errors.push('runner implementation diff receipt mode must be runner-implementation-diff-check');
+  }
+  if (receipt.ok !== true || receipt.runnerImplementationDiffOk !== true) {
+    errors.push('runner implementation diff receipt must be ok');
+  }
+  if (receipt.runnerDiff !== rel(paths.runnerDiffPath)) {
+    errors.push('runner implementation diff receipt runnerDiff must match runner diff artifact path');
+  }
+  if (receipt.runnerImplementationPlanReceipt !== rel(paths.planReceiptPath)) {
+    errors.push('runner implementation diff receipt runnerImplementationPlanReceipt must match plan receipt path');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`runner implementation diff receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`runner implementation diff receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`runner implementation diff receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.candidateOnly !== true) errors.push('runner implementation diff receipt candidateOnly must be true');
+  if (receipt.checkedInEntrypointExists !== false) {
+    errors.push('runner implementation diff receipt checkedInEntrypointExists must be false');
+  }
+  if (receipt.plannedEntrypoint !== runnerDiff.plannedEntrypoint) {
+    errors.push('runner implementation diff receipt plannedEntrypoint must match runner diff');
+  }
+  if (!sameJson(receipt.filesToAdd, runnerDiff.filesToAdd || [])) {
+    errors.push('runner implementation diff receipt filesToAdd must match runner diff');
+  }
+  if (!sameJson(receipt.filesToModify, runnerDiff.filesToModify || [])) {
+    errors.push('runner implementation diff receipt filesToModify must match runner diff');
+  }
+  if (receipt.maxWritesPerRun !== runnerDiff.maxWritesPerRun) {
+    errors.push('runner implementation diff receipt maxWritesPerRun must match runner diff');
+  }
+  if (!sameJson(receipt.requiredGuards, runnerDiff.requiredGuards || [])) {
+    errors.push('runner implementation diff receipt requiredGuards must match runner diff');
+  }
+  if (!sameJson(receipt.proofHooks, runnerDiff.proofHooks || [])) {
+    errors.push('runner implementation diff receipt proofHooks must match runner diff');
+  }
+  if (!sameJson(receipt.revalidationSequence, runnerDiff.revalidationSequence || [])) {
+    errors.push('runner implementation diff receipt revalidationSequence must match runner diff');
+  }
+  if (!sameJson(receipt.receiptOutputs, runnerDiff.receiptOutputs || [])) {
+    errors.push('runner implementation diff receipt receiptOutputs must match runner diff');
+  }
+  if (receipt.currentPolicyBlocked !== true) errors.push('runner implementation diff receipt currentPolicyBlocked must be true');
+  if (receipt.processSpawned !== false) errors.push('runner implementation diff receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('runner implementation diff receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('runner implementation diff receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('runner implementation diff receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('runner implementation diff receipt executionEnabled must be false');
+  if (receipt.wouldExecute !== false) errors.push('runner implementation diff receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('runner implementation diff receipt writesPerformed must be 0');
+  if (planReceipt.runnerImplementationPlanOk !== true) {
+    errors.push('runner implementation diff receipt requires valid runner implementation plan receipt');
+  }
+  if (packet.issue !== receipt.issue) errors.push('runner implementation diff receipt issue must match packet issue');
+  if (packet.target !== receipt.target) errors.push('runner implementation diff receipt target must match packet target');
+  if (packet.action !== receipt.action) errors.push('runner implementation diff receipt action must match packet action');
+
+  return errors;
+}
+
+function validateReleaseAdmission(admission, packet, readinessReceipt, runnerDiffReceipt, runnerDiff, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ReleaseAdmission || {};
+
+  if (admission.authorityLevel !== 'A4') errors.push('release admission authorityLevel must be A4');
+  if (admission.issue !== constraints.expectedIssue) {
+    errors.push(`release admission issue mismatch: expected ${constraints.expectedIssue}, got ${admission.issue}`);
+  }
+  if (admission.target !== constraints.expectedTarget) {
+    errors.push(`release admission target mismatch: expected ${constraints.expectedTarget}, got ${admission.target}`);
+  }
+  if (admission.action !== constraints.expectedAction) {
+    errors.push(`release admission action mismatch: expected ${constraints.expectedAction}, got ${admission.action}`);
+  }
+  if (admission.enabledManifestReadinessReceipt !== rel(paths.readinessReceiptPath)) {
+    errors.push('release admission enabledManifestReadinessReceipt must match readiness receipt path');
+  }
+  if (admission.runnerImplementationDiffReceipt !== rel(paths.runnerDiffReceiptPath)) {
+    errors.push('release admission runnerImplementationDiffReceipt must match runner diff receipt path');
+  }
+  if (admission.runnerDiff !== rel(paths.runnerDiffPath)) {
+    errors.push('release admission runnerDiff must match runner diff artifact path');
+  }
+  if (admission.releaseMode !== 'operator-reviewed-pr') {
+    errors.push('release admission releaseMode must be operator-reviewed-pr');
+  }
+  if (admission.packetOnly !== true) errors.push('release admission packetOnly must be true');
+  if (admission.requiresManualMerge !== true) errors.push('release admission requiresManualMerge must be true');
+  if (admission.autoMerge === true) errors.push('release admission autoMerge must not be true');
+  if (!sameJson(admission.mergeOrder, rules.requiredMergeOrder || [])) {
+    errors.push('release admission mergeOrder must match required merge order');
+  }
+  const prs = Array.isArray(admission.prs) ? admission.prs : [];
+  for (const role of rules.requiredPrs || []) {
+    const pr = prs.find((entry) => entry.role === role);
+    if (!pr) {
+      errors.push(`release admission missing PR evidence for ${role}`);
+      continue;
+    }
+    if (!/^https:\/\/github\.com\/.+\/pull\/\d+$/.test(pr.url || '')) {
+      errors.push(`release admission PR ${role} must include a GitHub pull request URL`);
+    }
+    if (pr.checkStatus !== 'success' || pr.checksPassed !== true) {
+      errors.push(`release admission PR ${role} checks must be success`);
+    }
+    if (pr.mergeReady !== true) {
+      errors.push(`release admission PR ${role} must be mergeReady`);
+    }
+  }
+  for (const evidence of rules.requiredEvidence || []) {
+    if (!admission.requiredEvidence?.includes(evidence)) {
+      errors.push(`release admission requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const guard of rules.requiredGuards || []) {
+    if (!admission.requiredGuards?.includes(guard)) {
+      errors.push(`release admission requiredGuards must include ${guard}`);
+    }
+  }
+  if (admission.maxWritesPerRun !== rules.maxWritesPerRun) {
+    errors.push(`release admission maxWritesPerRun must be ${rules.maxWritesPerRun}`);
+  }
+  if (!hasValue(admission.linearEvidence)) errors.push('release admission linearEvidence is required');
+  if (!hasValue(admission.rollbackNote)) errors.push('release admission rollbackNote is required');
+  if (!hasValue(admission.publicAccessFailClosedProof)) {
+    errors.push('release admission publicAccessFailClosedProof is required');
+  }
+  if (admission.currentPolicyBlocked !== true) errors.push('release admission currentPolicyBlocked must be true');
+  if (admission.processSpawned === true) errors.push('release admission processSpawned must not be true');
+  if (Array.isArray(admission.executedCommands) && admission.executedCommands.length > 0) {
+    errors.push('release admission executedCommands must be empty');
+  }
+  if (admission.runnerEnabled === true) errors.push('release admission runnerEnabled must not be true');
+  if (admission.executionReady === true) errors.push('release admission executionReady must not be true');
+  if (admission.executionEnabled === true) errors.push('release admission executionEnabled must not be true');
+  if (admission.wouldExecute === true) errors.push('release admission wouldExecute must not be true');
+  if (admission.writesPerformed !== 0) errors.push('release admission writesPerformed must be 0');
+
+  if (readinessReceipt.enabledManifestReadinessOk !== true) {
+    errors.push('release admission requires valid enabled manifest readiness receipt');
+  }
+  if (runnerDiffReceipt.runnerImplementationDiffOk !== true) {
+    errors.push('release admission requires valid runner implementation diff receipt');
+  }
+  if (runnerDiff.checkedInEntrypointExists !== false) {
+    errors.push('release admission runner diff must keep checkedInEntrypointExists false');
+  }
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('release admission current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+  if (packet.issue !== admission.issue) errors.push('release admission issue must match packet issue');
+  if (packet.target !== admission.target) errors.push('release admission target must match packet target');
+  if (packet.action !== admission.action) errors.push('release admission action must match packet action');
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -3397,6 +3617,176 @@ function buildRunnerImplementationDiffReceipt({
       runnerDiffRequiresPlanReceipt: manifest.a4RunnerImplementationDiff?.requiresRunnerImplementationPlanReceipt,
       runnerDiffCandidateOnly: manifest.a4RunnerImplementationDiff?.candidateOnly,
       runnerDiffEntrypointMustBeAbsent: manifest.a4RunnerImplementationDiff?.checkedInEntrypointMustBeAbsent,
+    },
+  };
+}
+
+function buildReleaseAdmissionReceipt({
+  manifest,
+  manifestValidation,
+  packet,
+  packetPath,
+  preflightReceipt,
+  preflightPath,
+  executionReceipt,
+  executionPath,
+  authorization,
+  authorizationPath,
+  commandArtifact,
+  commandPath,
+  commandReceipt,
+  commandReceiptPath,
+  executorProofReceipt,
+  executorProofPath,
+  proposal,
+  proposalPath,
+  proposalReceipt,
+  proposalReceiptPath,
+  policyPatch,
+  policyPatchPath,
+  policyPatchReceipt,
+  policyPatchReceiptPath,
+  candidateManifest,
+  candidateManifestPath,
+  applicationDiffReceipt,
+  applicationDiffReceiptPath,
+  readinessReceipt,
+  readinessReceiptPath,
+  runnerContract,
+  runnerContractPath,
+  contractReceipt,
+  contractReceiptPath,
+  runnerPlan,
+  runnerPlanPath,
+  planReceipt,
+  planReceiptPath,
+  runnerDiff,
+  runnerDiffPath,
+  runnerDiffReceipt,
+  runnerDiffReceiptPath,
+  releaseAdmission,
+  releaseAdmissionPath,
+  constraints,
+  packetValidation,
+  preflightErrors,
+  executionErrors,
+  authorizationErrors,
+  commandErrors,
+  commandReceiptErrors,
+  executorProofErrors,
+  proposalErrors,
+  proposalReceiptErrors,
+  policyPatchErrors,
+  policyPatchReceiptErrors,
+  candidateValidation,
+  applicationDiffReceiptErrors,
+  readinessErrors,
+  readinessReceiptErrors,
+  runnerContractErrors,
+  contractReceiptErrors,
+  runnerPlanErrors,
+  planReceiptErrors,
+  runnerDiffErrors,
+  runnerDiffReceiptErrors,
+  releaseAdmissionErrors,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...packetValidation.errors,
+    ...preflightErrors,
+    ...executionErrors,
+    ...authorizationErrors,
+    ...commandErrors,
+    ...commandReceiptErrors,
+    ...executorProofErrors,
+    ...proposalErrors,
+    ...proposalReceiptErrors,
+    ...policyPatchErrors,
+    ...policyPatchReceiptErrors,
+    ...candidateValidation.errors,
+    ...applicationDiffReceiptErrors,
+    ...readinessErrors,
+    ...readinessReceiptErrors,
+    ...runnerContractErrors,
+    ...contractReceiptErrors,
+    ...runnerPlanErrors,
+    ...planReceiptErrors,
+    ...runnerDiffErrors,
+    ...runnerDiffReceiptErrors,
+    ...releaseAdmissionErrors,
+  ];
+  const releaseAdmissionOk = errors.length === 0;
+
+  return {
+    mode: 'release-admission-check',
+    ok: releaseAdmissionOk,
+    releaseAdmissionOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    releaseAdmission: rel(releaseAdmissionPath),
+    runnerImplementationDiffReceipt: rel(runnerDiffReceiptPath),
+    runnerDiff: rel(runnerDiffPath),
+    runnerImplementationPlanReceipt: rel(planReceiptPath),
+    runnerPlan: rel(runnerPlanPath),
+    runnerImplementationContractReceipt: rel(contractReceiptPath),
+    runnerContract: rel(runnerContractPath),
+    readinessReceipt: rel(readinessReceiptPath),
+    candidateManifest: rel(candidateManifestPath),
+    applicationDiffReceipt: rel(applicationDiffReceiptPath),
+    packetPath: rel(packetPath),
+    preflightReceipt: rel(preflightPath),
+    executionReceipt: rel(executionPath),
+    authorization: rel(authorizationPath),
+    commandArtifact: rel(commandPath),
+    commandReceipt: rel(commandReceiptPath),
+    executorProofReceipt: rel(executorProofPath),
+    enablementProposal: rel(proposalPath),
+    enablementProposalReceipt: rel(proposalReceiptPath),
+    policyPatchDryRun: rel(policyPatchPath),
+    policyPatchDryRunReceipt: rel(policyPatchReceiptPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    targetScope: releaseAdmission.targetScope || runnerDiffReceipt.targetScope || runnerDiff.targetScope,
+    releaseMode: releaseAdmission.releaseMode,
+    packetOnly: releaseAdmission.packetOnly === true,
+    requiresManualMerge: releaseAdmission.requiresManualMerge === true,
+    autoMerge: releaseAdmission.autoMerge === true,
+    prs: releaseAdmission.prs || [],
+    mergeOrder: releaseAdmission.mergeOrder || [],
+    requiredEvidence: releaseAdmission.requiredEvidence || [],
+    requiredGuards: releaseAdmission.requiredGuards || [],
+    linearEvidence: releaseAdmission.linearEvidence || null,
+    rollbackNote: releaseAdmission.rollbackNote || null,
+    publicAccessFailClosedProof: releaseAdmission.publicAccessFailClosedProof || null,
+    maxWritesPerRun: releaseAdmission.maxWritesPerRun,
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: releaseAdmissionOk
+      ? 'release admission packet accepted for manual review; checked-in policy remains blocked and no runner execution occurred'
+      : 'release admission packet rejected before any policy merge or runner execution',
+    evidenceTarget: releaseAdmission.evidenceTarget || runnerDiffReceipt.evidenceTarget || runnerDiff.evidenceTarget || packet.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may review release admission evidence before merging policy enablement and runner entrypoint in the declared order',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      releaseAdmissionRequiresReadinessReceipt: manifest.a4ReleaseAdmission?.requiresEnabledManifestReadinessReceipt,
+      releaseAdmissionRequiresRunnerDiffReceipt: manifest.a4ReleaseAdmission?.requiresRunnerImplementationDiffReceipt,
+      releaseAdmissionPacketOnly: manifest.a4ReleaseAdmission?.packetOnly,
     },
   };
 }
@@ -5045,6 +5435,309 @@ function commandRunnerImplementationDiffCheck(options) {
   return result;
 }
 
+function commandReleaseAdmissionCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for release-admission-check'));
+  }
+  if (!options.preflightReceipt) throw new Error('--preflight-receipt is required for release-admission-check');
+  if (!options.executionReceipt) throw new Error('--execution-receipt is required for release-admission-check');
+  if (!options.authorization) throw new Error('--authorization is required for release-admission-check');
+  if (!options.commandArtifact) throw new Error('--command-artifact is required for release-admission-check');
+  if (!options.commandReceipt) throw new Error('--command-receipt is required for release-admission-check');
+  if (!options.executorProofReceipt) throw new Error('--executor-proof-receipt is required for release-admission-check');
+  if (!options.enablementProposal) throw new Error('--enablement-proposal is required for release-admission-check');
+  if (!options.enablementProposalReceipt) {
+    throw new Error('--enablement-proposal-receipt is required for release-admission-check');
+  }
+  if (!options.policyPatch) throw new Error('--policy-patch is required for release-admission-check');
+  if (!options.policyPatchReceipt) throw new Error('--policy-patch-receipt is required for release-admission-check');
+  if (!options.candidateManifest) throw new Error('--candidate-manifest is required for release-admission-check');
+  if (!options.applicationDiffReceipt) {
+    throw new Error('--application-diff-receipt is required for release-admission-check');
+  }
+  if (!options.readinessReceipt) throw new Error('--readiness-receipt is required for release-admission-check');
+  if (!options.runnerContract) throw new Error('--runner-contract is required for release-admission-check');
+  if (!options.runnerContractReceipt) {
+    throw new Error('--runner-contract-receipt is required for release-admission-check');
+  }
+  if (!options.runnerPlan) throw new Error('--runner-plan is required for release-admission-check');
+  if (!options.runnerPlanReceipt) throw new Error('--runner-plan-receipt is required for release-admission-check');
+  if (!options.runnerDiff) throw new Error('--runner-diff is required for release-admission-check');
+  if (!options.runnerDiffReceipt) throw new Error('--runner-diff-receipt is required for release-admission-check');
+  if (!options.releaseAdmission) throw new Error('--release-admission is required for release-admission-check');
+
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const preflightPath = resolveFromRoot(options.preflightReceipt);
+  const executionPath = resolveFromRoot(options.executionReceipt);
+  const authorizationPath = resolveFromRoot(options.authorization);
+  const commandPath = resolveFromRoot(options.commandArtifact);
+  const commandReceiptPath = resolveFromRoot(options.commandReceipt);
+  const executorProofPath = resolveFromRoot(options.executorProofReceipt);
+  const proposalPath = resolveFromRoot(options.enablementProposal);
+  const proposalReceiptPath = resolveFromRoot(options.enablementProposalReceipt);
+  const policyPatchPath = resolveFromRoot(options.policyPatch);
+  const policyPatchReceiptPath = resolveFromRoot(options.policyPatchReceipt);
+  const candidateManifestPath = resolveFromRoot(options.candidateManifest);
+  const applicationDiffReceiptPath = resolveFromRoot(options.applicationDiffReceipt);
+  const readinessReceiptPath = resolveFromRoot(options.readinessReceipt);
+  const runnerContractPath = resolveFromRoot(options.runnerContract);
+  const contractReceiptPath = resolveFromRoot(options.runnerContractReceipt);
+  const runnerPlanPath = resolveFromRoot(options.runnerPlan);
+  const planReceiptPath = resolveFromRoot(options.runnerPlanReceipt);
+  const runnerDiffPath = resolveFromRoot(options.runnerDiff);
+  const runnerDiffReceiptPath = resolveFromRoot(options.runnerDiffReceipt);
+  const releaseAdmissionPath = resolveFromRoot(options.releaseAdmission);
+  const packet = readJson(packetPath);
+  const preflightReceipt = readJson(preflightPath);
+  const executionReceipt = readJson(executionPath);
+  const authorization = readJson(authorizationPath);
+  const commandArtifact = readJson(commandPath);
+  const commandReceipt = readJson(commandReceiptPath);
+  const executorProofReceipt = readJson(executorProofPath);
+  const proposal = readJson(proposalPath);
+  const proposalReceipt = readJson(proposalReceiptPath);
+  const policyPatch = readJson(policyPatchPath);
+  const policyPatchReceipt = readJson(policyPatchReceiptPath);
+  const candidateManifest = readJson(candidateManifestPath);
+  const applicationDiffReceipt = readJson(applicationDiffReceiptPath);
+  const readinessReceipt = readJson(readinessReceiptPath);
+  const runnerContract = readJson(runnerContractPath);
+  const contractReceipt = readJson(contractReceiptPath);
+  const runnerPlan = readJson(runnerPlanPath);
+  const planReceipt = readJson(planReceiptPath);
+  const runnerDiff = readJson(runnerDiffPath);
+  const runnerDiffReceipt = readJson(runnerDiffReceiptPath);
+  const releaseAdmission = readJson(releaseAdmissionPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const preflightErrors = validatePreflightReceipt(preflightReceipt, packet, constraints);
+  const executionErrors = validateExecutionReceipt(executionReceipt, packet, preflightReceipt, constraints);
+  const authorizationErrors = validateExecutionAuthorization(authorization, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+  }, constraints);
+  const commandErrors = validateExecutionCommandArtifact(commandArtifact, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+  }, constraints);
+  const commandReceiptErrors = validateExecutionCommandReceipt(commandReceipt, packet, executionReceipt, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+  }, constraints);
+  const executorProofErrors = validateExecutorProofReceipt(executorProofReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+  }, constraints);
+  const proposalErrors = validateExecutorEnablementProposal(proposal, packet, executorProofReceipt, manifest, {
+    executorProofPath,
+  }, constraints);
+  const proposalReceiptErrors = validateExecutorEnablementProposalReceipt(proposalReceipt, proposal, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+  }, constraints);
+  const policyPatchErrors = validatePolicyPatchDryRunArtifact(policyPatch, proposalReceipt, manifest, {
+    proposalReceiptPath,
+  }, constraints);
+  const policyPatchReceiptErrors = validatePolicyPatchDryRunReceipt(policyPatchReceipt, policyPatch, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+  }, constraints);
+  const candidateValidation = validatePolicyApplicationCandidateManifest(
+    candidateManifest,
+    manifest,
+    policyPatchReceipt,
+    manifest,
+    constraints,
+  );
+  const applicationDiffReceiptErrors = validatePolicyApplicationDiffReceipt(applicationDiffReceipt, candidateManifest, policyPatchReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+  }, constraints);
+  const readinessErrors = validateEnabledCandidateReadiness(candidateManifest, applicationDiffReceipt, manifest);
+  const readinessReceiptErrors = validateEnabledManifestReadinessReceipt(readinessReceipt, candidateManifest, applicationDiffReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+  }, constraints);
+  const runnerContractErrors = validateRunnerImplementationContract(runnerContract, packet, readinessReceipt, manifest, {
+    readinessReceiptPath,
+  }, constraints);
+  const contractReceiptErrors = validateRunnerImplementationContractReceipt(contractReceipt, runnerContract, readinessReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+  }, constraints);
+  const runnerPlanErrors = validateRunnerImplementationPlan(runnerPlan, packet, contractReceipt, manifest, {
+    contractReceiptPath,
+  }, constraints);
+  const planReceiptErrors = validateRunnerImplementationPlanReceipt(planReceipt, runnerPlan, contractReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+    contractReceiptPath,
+    runnerPlanPath,
+  }, constraints);
+  const runnerDiffErrors = validateRunnerImplementationDiff(runnerDiff, packet, planReceipt, manifest, {
+    planReceiptPath,
+  }, constraints);
+  const runnerDiffReceiptErrors = validateRunnerImplementationDiffReceipt(runnerDiffReceipt, runnerDiff, planReceipt, packet, {
+    runnerDiffPath,
+    planReceiptPath,
+  }, constraints);
+  const releaseAdmissionErrors = validateReleaseAdmission(releaseAdmission, packet, readinessReceipt, runnerDiffReceipt, runnerDiff, manifest, {
+    readinessReceiptPath,
+    runnerDiffReceiptPath,
+    runnerDiffPath,
+  }, constraints);
+  const result = buildReleaseAdmissionReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    preflightReceipt,
+    preflightPath,
+    executionReceipt,
+    executionPath,
+    authorization,
+    authorizationPath,
+    commandArtifact,
+    commandPath,
+    commandReceipt,
+    commandReceiptPath,
+    executorProofReceipt,
+    executorProofPath,
+    proposal,
+    proposalPath,
+    proposalReceipt,
+    proposalReceiptPath,
+    policyPatch,
+    policyPatchPath,
+    policyPatchReceipt,
+    policyPatchReceiptPath,
+    candidateManifest,
+    candidateManifestPath,
+    applicationDiffReceipt,
+    applicationDiffReceiptPath,
+    readinessReceipt,
+    readinessReceiptPath,
+    runnerContract,
+    runnerContractPath,
+    contractReceipt,
+    contractReceiptPath,
+    runnerPlan,
+    runnerPlanPath,
+    planReceipt,
+    planReceiptPath,
+    runnerDiff,
+    runnerDiffPath,
+    runnerDiffReceipt,
+    runnerDiffReceiptPath,
+    releaseAdmission,
+    releaseAdmissionPath,
+    constraints,
+    packetValidation,
+    preflightErrors,
+    executionErrors,
+    authorizationErrors,
+    commandErrors,
+    commandReceiptErrors,
+    executorProofErrors,
+    proposalErrors,
+    proposalReceiptErrors,
+    policyPatchErrors,
+    policyPatchReceiptErrors,
+    candidateValidation,
+    applicationDiffReceiptErrors,
+    readinessErrors,
+    readinessReceiptErrors,
+    runnerContractErrors,
+    contractReceiptErrors,
+    runnerPlanErrors,
+    planReceiptErrors,
+    runnerDiffErrors,
+    runnerDiffReceiptErrors,
+    releaseAdmissionErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -5097,6 +5790,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-contract-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-plan-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-diff-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs release-admission-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -5124,6 +5818,7 @@ async function main() {
   else if (options.command === 'runner-implementation-contract-check') result = commandRunnerImplementationContractCheck(options);
   else if (options.command === 'runner-implementation-plan-check') result = commandRunnerImplementationPlanCheck(options);
   else if (options.command === 'runner-implementation-diff-check') result = commandRunnerImplementationDiffCheck(options);
+  else if (options.command === 'release-admission-check') result = commandReleaseAdmissionCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -5147,6 +5842,7 @@ export {
   commandRunnerImplementationContractCheck,
   commandRunnerImplementationPlanCheck,
   commandRunnerImplementationDiffCheck,
+  commandReleaseAdmissionCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
