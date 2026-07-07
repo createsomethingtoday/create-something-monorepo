@@ -437,6 +437,44 @@ drift stops. While the current manifest is blocked, `processSpawned` must be
 `executionEnabled`, and `wouldExecute` must be `false`, and `writesPerformed`
 must be `0`.
 
+After the runner implementation plan receipt exists, validate the candidate
+implementation diff before a PR adds the executable entrypoint:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-diff-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --runner-contract-receipt <runner-contract-receipt.json> \
+  --runner-plan <runner-plan.json> \
+  --runner-plan-receipt <runner-plan-receipt.json> \
+  --runner-diff <runner-diff.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The runner implementation diff verifier is still candidate-only. It validates
+that the future PR would add only the planned entrypoint,
+`scripts/operator-agent-omnigent-runner.mjs`, with the same guards,
+revalidation sequence, proof hooks, and receipt outputs from the accepted plan.
+It rejects unrelated file additions, any claim that the entrypoint is already
+checked in, missing rollback/smoke/public fail-closed hooks, loosened write
+ceilings, and any process or command execution markers.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:

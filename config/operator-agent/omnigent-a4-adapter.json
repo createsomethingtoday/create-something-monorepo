@@ -274,6 +274,42 @@
     "writesPerformed": 0,
     "blockedUntil": "a separate operator-reviewed implementation PR adds the planned runner entrypoint only after checked-in policy is enabled and the full plan is revalidated"
   },
+  "a4RunnerImplementationDiff": {
+    "requiresRunnerImplementationPlanReceipt": true,
+    "candidateOnly": true,
+    "checkedInEntrypointMustBeAbsent": true,
+    "allowedEntrypoint": "scripts/operator-agent-omnigent-runner.mjs",
+    "allowedFileAdditions": [
+      "scripts/operator-agent-omnigent-runner.mjs"
+    ],
+    "requiredGuards": [
+      "checked-in-policy-enabled",
+      "full-chain-revalidation",
+      "command-receipt-bound",
+      "max-writes-per-run",
+      "rollback-ready",
+      "post-action-smoke",
+      "public-access-fail-closed",
+      "stop-on-mismatch",
+      "stop-on-expired",
+      "stop-on-drift"
+    ],
+    "maxWritesPerRun": 1,
+    "requiredProofHooks": [
+      "rollback",
+      "post-action-smoke",
+      "public-access-fail-closed"
+    ],
+    "requiredReceiptOutputs": [
+      "pre-action-receipt",
+      "execution-receipt",
+      "post-action-smoke",
+      "rollback-readiness",
+      "final-outcome"
+    ],
+    "writesPerformed": 0,
+    "blockedUntil": "a separate operator-reviewed implementation PR may add only the exact planned runner entrypoint after checked-in policy is enabled and this diff is revalidated"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -359,6 +395,11 @@
       "id": "gate-14-a4-runner-implementation-plan",
       "required": "A4 runner implementation plan validates the future entrypoint, guards, revalidation sequence, proof plans, and receipt outputs without adding or running an executable runner",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-plan-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --policy-patch-receipt <policy-patch-receipt.json> --candidate-manifest <candidate-manifest.json> --application-diff-receipt <application-diff-receipt.json> --readiness-receipt <readiness-receipt.json> --runner-contract <runner-contract.json> --runner-contract-receipt <runner-contract-receipt.json> --runner-plan <runner-plan.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-15-a4-runner-implementation-diff",
+      "required": "A4 runner implementation diff validates the exact candidate entrypoint, guard surface, proof hooks, receipt outputs, and file additions without adding or running the executable runner",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-diff-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --policy-patch-receipt <policy-patch-receipt.json> --candidate-manifest <candidate-manifest.json> --application-diff-receipt <application-diff-receipt.json> --readiness-receipt <readiness-receipt.json> --runner-contract <runner-contract.json> --runner-contract-receipt <runner-contract-receipt.json> --runner-plan <runner-plan.json> --runner-plan-receipt <runner-plan-receipt.json> --runner-diff <runner-diff.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }
