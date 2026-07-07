@@ -70,6 +70,18 @@ button:focus-visible {
   padding: 38px clamp(22px, 4vw, 60px) 0;
 }
 
+.hd-header > * {
+  animation: hdNavIn 720ms var(--hd-ease) both;
+}
+
+.hd-header > :nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.hd-header > :nth-child(3) {
+  animation-delay: 160ms;
+}
+
 .hd-logo {
   display: inline-flex;
   align-items: center;
@@ -168,12 +180,14 @@ button:focus-visible {
 }
 
 .hd-hero {
+  isolation: isolate;
   min-height: clamp(1280px, 116vw, 1760px);
   padding-bottom: 150px;
 }
 
 .hd-hero__headline {
   position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   padding-top: 90px;
@@ -192,18 +206,51 @@ button:focus-visible {
 }
 
 .hd-hero h1 span {
-  animation: hdFadeUp 780ms var(--hd-ease) both;
+  display: block;
+  overflow: hidden;
   text-wrap: balance;
 }
 
-.hd-hero h1 span:last-child {
-  animation-delay: 140ms;
+.hd-hero h1 > span > span {
+  animation: hdHeadlineReveal 980ms var(--hd-ease) both;
+}
+
+.hd-hero h1 > span:last-child > span {
+  animation-delay: 180ms;
 }
 
 .hd-hero__card {
   position: absolute;
   top: 245px;
+  z-index: 2;
+  display: block;
   width: min(520px, 46vw);
+  pointer-events: none;
+  transform: translate3d(0, 34px, 0) scale(0.94);
+  opacity: 0;
+  animation: hdHeroCardIn 1100ms 320ms var(--hd-ease) both;
+  will-change: transform, opacity;
+}
+
+.hd-hero__card::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.hd-hero__card::before {
+  inset: 8%;
+  z-index: -1;
+  border-radius: 24px;
+  background: rgba(255, 116, 24, 0.18);
+  filter: blur(22px);
+  transform: rotate(-4deg);
+  animation: hdHeroPulse 4.8s ease-in-out infinite;
+}
+
+.hd-hero__card img {
+  display: block;
+  width: 100%;
   height: auto;
   filter: drop-shadow(0 24px 28px rgba(0, 0, 0, 0.13));
   transform: translate3d(0, 0, 0) rotate(-4deg);
@@ -224,6 +271,9 @@ button:focus-visible {
   font-size: 13px;
   line-height: 1.35;
   text-transform: capitalize;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: hdMetaIn 720ms 840ms var(--hd-ease) both;
 }
 
 .hd-hero__meta p {
@@ -256,6 +306,19 @@ button:focus-visible {
     background 180ms var(--hd-ease),
     color 180ms var(--hd-ease),
     transform 180ms var(--hd-ease);
+  animation: hdSocialIn 520ms var(--hd-ease) both;
+}
+
+.hd-socials a:nth-child(1) {
+  animation-delay: 1080ms;
+}
+
+.hd-socials a:nth-child(2) {
+  animation-delay: 1160ms;
+}
+
+.hd-socials a:nth-child(3) {
+  animation-delay: 1240ms;
 }
 
 .hd-socials a:hover {
@@ -264,10 +327,31 @@ button:focus-visible {
   transform: translateY(-2px);
 }
 
-.hd-hero__photo {
+.hd-hero__photo-frame {
+  position: relative;
+  z-index: 1;
   display: block;
   width: min(720px, 58vw);
   margin: 45px auto 0;
+  transform: translate3d(0, 60px, 0) scale(0.95);
+  opacity: 0;
+  animation: hdHeroPhotoIn 1200ms 560ms var(--hd-ease) both;
+  will-change: transform, opacity;
+}
+
+.hd-hero__photo-frame::before {
+  content: "";
+  position: absolute;
+  inset: 10% 7%;
+  z-index: -1;
+  background: rgba(6, 6, 6, 0.14);
+  filter: blur(28px);
+  transform: rotate(-14deg);
+}
+
+.hd-hero__photo {
+  display: block;
+  width: 100%;
   border-radius: 1px;
   object-fit: cover;
   box-shadow: 0 28px 50px rgba(0, 0, 0, 0.16);
@@ -980,7 +1064,7 @@ button:focus-visible {
     text-align: left;
   }
 
-  .hd-hero__photo {
+  .hd-hero__photo-frame {
     width: min(330px, 82vw);
     margin-top: 34px;
   }
@@ -1125,6 +1209,97 @@ button:focus-visible {
 
   .hd-footer__bottom {
     font-size: 14px;
+  }
+}
+
+@keyframes hdNavIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hdHeadlineReveal {
+  from {
+    transform: translateY(112%) rotate(2deg);
+  }
+
+  to {
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@keyframes hdHeroCardIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 34px, 0) scale(0.94);
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes hdHeroPhotoIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 60px, 0) scale(0.95);
+  }
+
+  72% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes hdMetaIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hdSocialIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.86);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hdHeroPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96) rotate(-4deg);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04) rotate(-3deg);
   }
 }
 
