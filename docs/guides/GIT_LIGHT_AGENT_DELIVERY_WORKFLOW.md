@@ -4,10 +4,16 @@
 
 Use this workflow when AI agents need fast DEV iteration without paying the cost of commit and push steps that do not materially improve confidence.
 
+This is an inner-loop exception. The normal terminal state for
+production-relevant agentic work is still: commit, push, merge, deploy, and
+prove the live production surface is stable.
+
 The operating rule is simple:
 
 - deploy is the DEV checkpoint
 - Git is the default PROD promotion boundary
+- production is not done until the deployed surface has been verified or the
+  work is explicitly marked blocked
 
 ## When To Use It
 
@@ -18,7 +24,8 @@ Use the Git-light path when:
 - the main goal is validation, smoke testing, or runtime confirmation
 - no human review or production promotion is being requested yet
 
-Do not use the Git-light path as a substitute for production provenance.
+Do not use the Git-light path as a substitute for production provenance or as a
+reason to leave production-relevant agentic work at a local diff.
 
 ## Inner Loop
 
@@ -72,6 +79,13 @@ Default production promotion remains:
 4. merge to `main`
 5. production deploy
 6. post-deploy verification
+7. stability evidence recorded in Linear, the PR, or the release record
+
+For most production-relevant agentic work, keep going through all seven steps.
+Stop earlier only when the task is explicitly exploratory, draft/review-only,
+blocked on external access, or scoped to non-production evidence. In that case,
+the final note must say what prevented commit, merge, deploy, or live
+verification.
 
 For CREATE SOMETHING internal production-lab work, the agent may auto-rollback
 the deploy it just performed when post-deploy verification fails and the
@@ -100,7 +114,7 @@ This repo keeps expensive scheduled automations behind repository variables. Kee
 | ----------------------------------------------- | ------------------------------------ |
 | `ENABLE_TEMPLATE_REVIEW_HUB_SCHEDULE=true`      | `Template Review Hub Agent Feedback` |
 | `ENABLE_TEMPLATE_DESCRIPTION_FIX_SCHEDULE=true` | `Fix Broken Template Descriptions`   |
-| `ENABLE_LANGFUSE_MCP_EVALS_SCHEDULE=true`     | `Langfuse MCP Evals`               |
+| `ENABLE_LANGFUSE_MCP_EVALS_SCHEDULE=true`       | `Langfuse MCP Evals`                 |
 
 To re-enable one scheduled automation after budget review:
 
@@ -114,7 +128,8 @@ Manual runs are still the preferred escape hatch during a budget crunch because 
 
 - Do not commit or push only to create a checkpoint.
 - Prefer direct DEV deploys when they are the fastest trustworthy validation surface.
-- Keep Git as the production and shared-review boundary.
+- Keep Git as the production and shared-review boundary, then deploy and verify
+  production before closing production-relevant work.
 - Use Linear comments for non-terminal deploy evidence and final Linear evidence on completion.
 
 ## Source Anchors

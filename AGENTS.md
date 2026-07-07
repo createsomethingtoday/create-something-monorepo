@@ -50,11 +50,11 @@ When you need:
 
 Before changing anything, identify which tier the work serves:
 
-| Tier | MCP Primitive | Repo examples |
-|------|---------------|---------------|
-| **Database** | Resources | D1, KV, R2, app data, policy/check artifacts |
-| **Automation** | Tools | MCP servers, workers, harnesses, skills |
-| **Judgment** | Prompts | policy packs, approval rules, escalation behavior |
+| Tier           | MCP Primitive | Repo examples                                     |
+| -------------- | ------------- | ------------------------------------------------- |
+| **Database**   | Resources     | D1, KV, R2, app data, policy/check artifacts      |
+| **Automation** | Tools         | MCP servers, workers, harnesses, skills           |
+| **Judgment**   | Prompts       | policy packs, approval rules, escalation behavior |
 
 Debug in this order:
 
@@ -69,16 +69,29 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 1. For solo exploratory work where one operator owns the checkout, start with
    `pnpm agent:solo-loop` and work in the current checkout with tight CLI
    validation.
-2. Find or create tracked work in Linear when the work is shared, delegated,
+2. Use Codex Spark as a speed-biased executor only when the loop benefits from
+   rapid iteration or many bounded context reads: Slack/Drive/Meet digests,
+   duplicate issue scans, PR comment triage, lightweight code review prep, and
+   interactive UI/code edits. Spark can be a sub-agent inside a governed loop;
+   it does not own the loop, the policy, or the done decision.
+3. Prefer the strongest full Codex model over Spark for production promotion,
+   security-sensitive review, destructive migrations, long-horizon debugging,
+   or any change where unattended correctness matters more than interaction
+   speed.
+4. Find or create tracked work in Linear when the work is shared, delegated,
    long-running, production-bound, or needs durable evidence.
-3. For isolated implementation work, claim an explicit worktree with
+5. For isolated implementation work, claim an explicit worktree with
    `pnpm agent:claim-worktree -- --issue CRE-123` so Linear records branch,
    worktree path, base ref, and base SHA.
-4. Verify symbols and import paths before using them.
-5. Run the relevant quality gates.
-6. Record evidence in Linear when the checkpoint affects handoff, review,
+6. Verify symbols and import paths before using them.
+7. Run the relevant quality gates.
+8. Record evidence in Linear when the checkpoint affects handoff, review,
    rollback, or promotion.
-7. Push or open/update a PR only when production promotion, shared review, or explicit user intent requires it.
+9. For production-relevant agentic work, default to a complete closeout:
+   commit, push, merge through the appropriate review gate, deploy, and verify
+   the live production surface. Stop before that only when the task is
+   explicitly exploratory, draft/review-only, blocked on external access, or
+   scoped to non-production evidence.
 
 Core commands:
 
@@ -107,7 +120,11 @@ For new worktrees, run `pnpm bootstrap:worktree` before type checks, smoke scrip
 - For DEV and preview work, prefer direct deploy from the current workspace after the relevant checks pass.
 - Record the Linear issue ID, package or surface, target environment, commands run, deploy URL or ID, and rollback note in the Linear issue.
 - Do not commit or push only to manufacture an agent checkpoint.
-- Use Git branches and PRs as the default production promotion boundary unless an approved immutable release path exists.
+- Treat Git-light as an inner-loop exception, not the normal terminal state for
+  production-relevant work.
+- Use Git branches and PRs as the default production promotion boundary unless
+  an approved immutable release path exists, then deploy and verify production
+  before marking the work done.
 - See `docs/policies/v1/policy.git-light-agent-delivery.v1.md` and `docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md`.
 
 ## Grounding discipline
@@ -183,12 +200,12 @@ Proposal handoff exports the reviewed plan as markdown. Use it as the starting c
 
 The monorepo contains publishable Pi coding agent packages:
 
-| Package | Scope | Purpose |
-|---------|-------|--------|
-| `packages/pi-three-tier-framework` | Public | Three-Tier Framework as installable agent knowledge |
-| `packages/pi-policy-os` | Public | Policy OS governance starter with quality gates |
-| `packages/pi-halfdozen` | Private | Half Dozen fleet knowledge and client management |
-| `packages/pi-webflow` | Private | Webflow fleet knowledge and template review |
+| Package                            | Scope   | Purpose                                             |
+| ---------------------------------- | ------- | --------------------------------------------------- |
+| `packages/pi-three-tier-framework` | Public  | Three-Tier Framework as installable agent knowledge |
+| `packages/pi-policy-os`            | Public  | Policy OS governance starter with quality gates     |
+| `packages/pi-halfdozen`            | Private | Half Dozen fleet knowledge and client management    |
+| `packages/pi-webflow`              | Private | Webflow fleet knowledge and template review         |
 
 Public packages are discovery wedges — developers install them, learn the framework, and become `.agency` leads. See `docs/AGENCY_CODEX_VECTOR_STRATEGY.md` for the delivery vector model.
 
