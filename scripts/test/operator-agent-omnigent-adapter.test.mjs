@@ -24,6 +24,10 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
+const EXPECTED_ISSUE = 'CRE-1065';
+const EXPECTED_TARGET = 'create-something-internal-production';
+const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
+const FIXED_NOW = '2026-07-06T20:00:00.000Z';
 
 function readManifest() {
   return JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'));
@@ -46,10 +50,13 @@ function makeWorkspace(t) {
 function validPacket() {
   return {
     authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
     approver: 'Micah Johnson',
     approvalSurface: 'Linear',
-    target: 'create-something-internal-production',
-    action: 'example high-risk action approved for fixture validation only',
+    approvedAt: '2026-07-06T19:00:00.000Z',
+    expiresAt: '2026-07-07T19:00:00.000Z',
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
     riskClass: 'high',
     namedRisks: [
       'credential-write',
@@ -65,6 +72,26 @@ function validPacket() {
     stopConditions: ['target mismatch', 'action mismatch', 'missing rollback'],
     evidenceTarget: 'Linear issue',
   };
+}
+
+function approvalCheckArgs(packetPath, receiptDir) {
+  return [
+    SCRIPT,
+    'approval-check',
+    '--packet',
+    packetPath,
+    '--expected-issue',
+    EXPECTED_ISSUE,
+    '--expected-target',
+    EXPECTED_TARGET,
+    '--expected-action',
+    EXPECTED_ACTION,
+    '--now',
+    FIXED_NOW,
+    '--receipt-dir',
+    receiptDir,
+    '--json',
+  ];
 }
 
 test('Omnigent adapter manifest stays read-only/local-only before A4 approval', () => {
@@ -114,13 +141,18 @@ test('A4 approval packet must name exact high-risk classes', () => {
   const packet = validPacket();
   packet.namedRisks = ['credential-write'];
 
-  const result = validateApprovalPacket(packet, manifest);
+  const result = validateApprovalPacket(packet, manifest, {
+    expectedIssue: EXPECTED_ISSUE,
+    expectedTarget: EXPECTED_TARGET,
+    expectedAction: EXPECTED_ACTION,
+    now: FIXED_NOW,
+  });
   assert.equal(result.ok, false);
   assert.match(result.errors.join('\n'), /billing-change/);
   assert.match(result.errors.join('\n'), /client-production/);
 });
 
-test('valid A4 approval packet fixture passes deterministic packet validation', (t) => {
+test('approval-check requires an expected issue, target, and action binding', (t) => {
   const root = makeWorkspace(t);
   const packetPath = path.join(root, 'packet.json');
   writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
@@ -131,10 +163,91 @@ test('valid A4 approval packet fixture passes deterministic packet validation', 
     { cwd: REPO_ROOT, encoding: 'utf8' },
   );
 
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /--expected-issue is required/);
+});
+
+test('valid A4 approval packet fixture passes deterministic packet validation', (t) => {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+
+  const result = spawnSync(
+    process.execPath,
+    approvalCheckArgs(packetPath, root),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const payload = JSON.parse(result.stdout);
   assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.constraints.expectedIssue, EXPECTED_ISSUE);
+  assert.equal(payload.constraints.expectedTarget, EXPECTED_TARGET);
+  assert.equal(payload.constraints.expectedAction, EXPECTED_ACTION);
   assert.match(payload.receiptPath, /approval-check\.json$/);
+  const receipt = JSON.parse(readFileSync(path.join(REPO_ROOT, payload.receiptPath), 'utf8'));
+  assert.equal(receipt.issue, EXPECTED_ISSUE);
+});
+
+test('approval-check fails closed on stale or mismatched packets', (t) => {
+  const root = makeWorkspace(t);
+
+  const cases = [
+    {
+      name: 'wrong-issue',
+      patch: { issue: 'CRE-9999' },
+      pattern: /issue mismatch/,
+    },
+    {
+      name: 'wrong-target',
+      patch: { target: 'different-production-surface' },
+      pattern: /target mismatch/,
+    },
+    {
+      name: 'wrong-action',
+      patch: { action: 'different action' },
+      pattern: /action mismatch/,
+    },
+    {
+      name: 'stale',
+      patch: { approvedAt: '2026-07-04T19:00:00.000Z' },
+      pattern: /stale/,
+    },
+    {
+      name: 'expired',
+      patch: { expiresAt: '2026-07-06T19:30:00.000Z' },
+      pattern: /expiresAt must be in the future/,
+    },
+    {
+      name: 'missing-rollback',
+      patch: { rollback: [] },
+      pattern: /rollback must be non-empty/,
+    },
+    {
+      name: 'missing-smoke',
+      patch: { postActionSmoke: [] },
+      pattern: /postActionSmoke must be non-empty/,
+    },
+    {
+      name: 'missing-stop-conditions',
+      patch: { stopConditions: [] },
+      pattern: /stopConditions must be non-empty/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const packetPath = path.join(root, `${entry.name}.json`);
+    writeFileSync(packetPath, `${JSON.stringify({ ...validPacket(), ...entry.patch }, null, 2)}\n`);
+    const result = spawnSync(process.execPath, approvalCheckArgs(packetPath, root), {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+    });
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
 });
 
 test('read-only scout profile and receipt match the local harness parity contract', () => {
