@@ -150,6 +150,8 @@ function parseArgs(argv) {
     implementationProductionPolicyEnablementMergeEvidence: null,
     implementationProductionPolicyEnablementMergeEvidenceReceipt: null,
     implementationProductionPolicyEnablementRevalidation: null,
+    implementationProductionRunnerImplementationAdmissionMergeEvidence: null,
+    implementationProductionRunnerImplementationAdmissionMergeEvidenceReceipt: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -247,6 +249,8 @@ function parseArgs(argv) {
     else if (arg === '--implementation-production-runner-implementation-admission-pr-review-receipt' && args[index + 1]) options.implementationProductionRunnerImplementationAdmissionPrReviewReceipt = args[++index];
     else if (arg === '--implementation-production-runner-implementation-admission-merge-decision' && args[index + 1]) options.implementationProductionRunnerImplementationAdmissionMergeDecision = args[++index];
     else if (arg === '--implementation-production-runner-implementation-admission-merge-decision-receipt' && args[index + 1]) options.implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt = args[++index];
+    else if (arg === '--implementation-production-runner-implementation-admission-merge-evidence' && args[index + 1]) options.implementationProductionRunnerImplementationAdmissionMergeEvidence = args[++index];
+    else if (arg === '--implementation-production-runner-implementation-admission-merge-evidence-receipt' && args[index + 1]) options.implementationProductionRunnerImplementationAdmissionMergeEvidenceReceipt = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -4024,6 +4028,126 @@ function validateManifest(manifest) {
   }
   if (implementationProductionRunnerImplementationAdmissionMergeDecision.writesPerformed !== 0) {
     errors.push('a4ImplementationProductionRunnerImplementationAdmissionMergeDecision.writesPerformed must be 0');
+  }
+
+  const implementationProductionRunnerImplementationAdmissionMergeEvidence = manifest.a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence || {};
+  if (implementationProductionRunnerImplementationAdmissionMergeEvidence.requiresImplementationProductionRunnerImplementationAdmissionMergeDecisionReceipt !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.requiresImplementationProductionRunnerImplementationAdmissionMergeDecisionReceipt must be true');
+  }
+  if (implementationProductionRunnerImplementationAdmissionMergeEvidence.manualMergeEvidenceOnly !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.manualMergeEvidenceOnly must be true');
+  }
+  if (!implementationProductionRunnerImplementationAdmissionMergeEvidence.allowedMergeStatuses?.includes('merged')) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.allowedMergeStatuses must include merged');
+  }
+  for (const field of [
+    'requiresValidRunnerImplementationAdmissionMergeDecisionReceipt',
+    'requiresApprovedRunnerImplementationAdmissionMergeDecision',
+    'requiresMergedBy',
+    'requiresMergedAt',
+    'requiresMergeCommitSha',
+    'requiresNoExecutionApproval',
+    'requiresCurrentVerifierPolicyBlocked',
+  ]) {
+    if (implementationProductionRunnerImplementationAdmissionMergeEvidence[field] !== true) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.${field} must be true`);
+    }
+  }
+  for (const field of [
+    'policyChangeAppliedByVerifier',
+    'runnerEnabledByVerifier',
+    'runnerImplementationAdmittedByVerifier',
+    'prMutationPerformedByVerifier',
+    'mergedByVerifier',
+    'deployedByVerifier',
+  ]) {
+    if (implementationProductionRunnerImplementationAdmissionMergeEvidence[field] !== false) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.${field} must be false`);
+    }
+  }
+  if (implementationProductionRunnerImplementationAdmissionMergeEvidence.requiresNoThirdPartyWriteByVerifier !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.requiresNoThirdPartyWriteByVerifier must be true');
+  }
+  if (implementationProductionRunnerImplementationAdmissionMergeEvidence.requiresNoIssueMutationByVerifier !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.requiresNoIssueMutationByVerifier must be true');
+  }
+  if (implementationProductionRunnerImplementationAdmissionMergeEvidence.requiresRedactionPolicy !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.requiresRedactionPolicy must be true');
+  }
+  for (const field of ['forbidsSecrets', 'forbidsRawLogs', 'forbidsPrompts', 'forbidsRawTranscripts']) {
+    if (implementationProductionRunnerImplementationAdmissionMergeEvidence[field] !== true) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.${field} must be true`);
+    }
+  }
+  if (implementationProductionRunnerImplementationAdmissionMergeEvidence.requiresNoExecutionOnEvidence !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.requiresNoExecutionOnEvidence must be true');
+  }
+  for (const receiptReference of [
+    'implementation-production-runner-implementation-admission-merge-decision-check',
+    'implementation-production-runner-implementation-admission-pr-review-check',
+    'implementation-production-runner-implementation-admission-pr-check',
+    'implementation-production-runner-implementation-admission-check',
+    'implementation-production-runner-implementation-review-check',
+    'implementation-production-runner-implementation-pr-check',
+    'implementation-production-runner-admission-check',
+    'implementation-production-policy-enablement-revalidation-check',
+    'implementation-production-policy-enablement-merge-evidence-check',
+    'implementation-production-policy-enablement-merge-decision-check',
+    'implementation-production-policy-enablement-pr-check',
+    'implementation-production-a4-enablement-approval-check',
+  ]) {
+    if (!implementationProductionRunnerImplementationAdmissionMergeEvidence.requiredReceiptReferences?.includes(receiptReference)) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.requiredReceiptReferences must include ${receiptReference}`);
+    }
+  }
+  for (const evidence of [
+    'implementation-production-runner-implementation-admission-merge-decision-receipt',
+    'approved-runner-implementation-admission-merge-decision',
+    'merge-status',
+    'merged-by',
+    'merged-at',
+    'merge-commit-sha',
+    'runner-implementation-admission-pr-url',
+    'runner-implementation-admission-pr-number',
+    'runner-implementation-admission-pr-head-ref',
+    'runner-implementation-admission-pr-base-ref',
+    'runner-implementation-admission-pr-commit-sha',
+    'runner-implementation-reference',
+    'runner-contract-reference',
+    'runner-entry-point',
+    'no-execution-approval',
+    'redaction-policy',
+  ]) {
+    if (!implementationProductionRunnerImplementationAdmissionMergeEvidence.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-verifier-policy-blocked',
+    'policy-change-not-applied-by-verifier',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled-in-verifier',
+    'runner-implementation-not-admitted-by-verifier',
+    'runner-implementation-admission-pr-not-merged-by-verifier',
+    'runner-implementation-admission-pr-not-mutated-by-verifier',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+    'deploy-not-performed-by-verifier',
+    'third-party-write-not-performed-by-verifier',
+    'issue-mutation-not-performed-by-verifier',
+    'pr-mutation-not-performed-by-verifier',
+    'production-runner-implementation-admission-merge-evidence-only',
+  ]) {
+    if (!implementationProductionRunnerImplementationAdmissionMergeEvidence.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (implementationProductionRunnerImplementationAdmissionMergeEvidence.writesPerformed !== 0) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -12883,6 +13007,255 @@ function validateImplementationProductionRunnerImplementationAdmissionMergeDecis
   return errors;
 }
 
+function validateImplementationProductionRunnerImplementationAdmissionMergeDecisionReceipt(receipt, decision, decisionResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'implementation-production-runner-implementation-admission-merge-decision-check') {
+    errors.push('implementation production runner implementation admission merge decision receipt mode must be implementation-production-runner-implementation-admission-merge-decision-check');
+  }
+  if (receipt.ok !== true || receipt.implementationProductionRunnerImplementationAdmissionMergeDecisionOk !== true) {
+    errors.push('implementation production runner implementation admission merge decision receipt must be ok');
+  }
+  if (decisionResult.ok !== true || decisionResult.implementationProductionRunnerImplementationAdmissionMergeDecisionOk !== true) {
+    errors.push('implementation production runner implementation admission merge decision current replay must be ok');
+  }
+  if (receipt.implementationProductionRunnerImplementationAdmissionMergeDecision !== rel(paths.implementationProductionRunnerImplementationAdmissionMergeDecisionPath)) {
+    errors.push('implementation production runner implementation admission merge decision receipt implementationProductionRunnerImplementationAdmissionMergeDecision must match merge decision artifact path');
+  }
+  if (receipt.implementationProductionRunnerImplementationAdmissionPrReview !== decisionResult.implementationProductionRunnerImplementationAdmissionPrReview) {
+    errors.push('implementation production runner implementation admission merge decision receipt implementationProductionRunnerImplementationAdmissionPrReview must match replay');
+  }
+  if (receipt.issue !== constraints.expectedIssue || receipt.issue !== decision.issue) {
+    errors.push('implementation production runner implementation admission merge decision receipt issue must match decision');
+  }
+  if (receipt.target !== constraints.expectedTarget || receipt.target !== decision.target) {
+    errors.push('implementation production runner implementation admission merge decision receipt target must match decision');
+  }
+  if (receipt.action !== constraints.expectedAction || receipt.action !== decision.action) {
+    errors.push('implementation production runner implementation admission merge decision receipt action must match decision');
+  }
+  for (const field of [
+    'targetScope',
+    'mergeDecisionOnly',
+    'reviewDecision',
+    'mergeDecision',
+    'decidedBy',
+    'decidedAt',
+    'decisionRationale',
+    'evidenceReview',
+    'readinessAssessment',
+    'executionApprovalGranted',
+    'runnerImplementationAdmissionPrUrl',
+    'runnerImplementationAdmissionPrNumber',
+    'runnerImplementationAdmissionPrHeadRef',
+    'runnerImplementationAdmissionPrBaseRef',
+    'runnerImplementationAdmissionPrCommitSha',
+    'runnerImplementationAdmissionPrDiffReference',
+    'runnerImplementationAdmissionPrChecksReference',
+    'runnerImplementationAdmissionPrReviewScope',
+    'runnerImplementationReference',
+    'runnerContractReference',
+    'runnerEntryPoint',
+  ]) {
+    if (receipt[field] !== decision[field] && field !== 'reviewDecision') {
+      errors.push(`implementation production runner implementation admission merge decision receipt ${field} must match decision`);
+    }
+  }
+  if (receipt.reviewDecision !== 'approve-runner-implementation-admission-pr-review') {
+    errors.push('implementation production runner implementation admission merge decision receipt reviewDecision must approve runner implementation admission PR review');
+  }
+  for (const field of ['requiredReceiptReferences', 'requiredEvidence']) {
+    if (!sameJson(receipt[field], decision[field])) {
+      errors.push(`implementation production runner implementation admission merge decision receipt ${field} must match decision`);
+    }
+  }
+  if (receipt.mergeDecision !== 'approve-runner-implementation-admission-merge') {
+    errors.push('implementation production runner implementation admission merge decision receipt mergeDecision must approve runner implementation admission merge');
+  }
+  if (receipt.executionApprovalGranted !== false) {
+    errors.push('implementation production runner implementation admission merge decision receipt executionApprovalGranted must be false');
+  }
+  if (receipt.runnerImplementationAdmittedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission merge decision receipt runnerImplementationAdmittedByVerifier must be false');
+  }
+  if (receipt.redactionPolicyApplied !== true) {
+    errors.push('implementation production runner implementation admission merge decision receipt redactionPolicyApplied must be true');
+  }
+  if (receipt.containsSecrets !== false) errors.push('implementation production runner implementation admission merge decision receipt containsSecrets must be false');
+  if (receipt.containsRawLogs !== false) errors.push('implementation production runner implementation admission merge decision receipt containsRawLogs must be false');
+  if (receipt.containsPrompts !== false) errors.push('implementation production runner implementation admission merge decision receipt containsPrompts must be false');
+  if (receipt.containsRawTranscripts !== false) {
+    errors.push('implementation production runner implementation admission merge decision receipt containsRawTranscripts must be false');
+  }
+  if (receipt.currentVerifierPolicyBlocked !== true) {
+    errors.push('implementation production runner implementation admission merge decision receipt currentVerifierPolicyBlocked must be true');
+  }
+  if (receipt.policyChangeAppliedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission merge decision receipt policyChangeAppliedByVerifier must be false');
+  }
+  if (receipt.runnerEnabledByVerifier !== false) {
+    errors.push('implementation production runner implementation admission merge decision receipt runnerEnabledByVerifier must be false');
+  }
+  if (receipt.prMutationPerformedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission merge decision receipt prMutationPerformedByVerifier must be false');
+  }
+  if (receipt.deployedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission merge decision receipt deployedByVerifier must be false');
+  }
+  if (receipt.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission merge decision receipt thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (receipt.issueMutationPerformedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission merge decision receipt issueMutationPerformedByVerifier must be false');
+  }
+  if (receipt.processSpawned !== false) errors.push('implementation production runner implementation admission merge decision receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('implementation production runner implementation admission merge decision receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('implementation production runner implementation admission merge decision receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('implementation production runner implementation admission merge decision receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('implementation production runner implementation admission merge decision receipt executionEnabled must be false');
+  if (receipt.executionApproved !== false) errors.push('implementation production runner implementation admission merge decision receipt executionApproved must be false');
+  if (receipt.wouldExecute !== false) errors.push('implementation production runner implementation admission merge decision receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('implementation production runner implementation admission merge decision receipt writesPerformed must be 0');
+
+  return errors;
+}
+
+function validateImplementationProductionRunnerImplementationAdmissionMergeEvidence(evidence, decisionReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence || {};
+
+  if (evidence.authorityLevel !== 'A4') errors.push('implementation production runner implementation admission merge evidence authorityLevel must be A4');
+  if (evidence.issue !== constraints.expectedIssue) {
+    errors.push(`implementation production runner implementation admission merge evidence issue mismatch: expected ${constraints.expectedIssue}, got ${evidence.issue}`);
+  }
+  if (evidence.target !== constraints.expectedTarget) {
+    errors.push(`implementation production runner implementation admission merge evidence target mismatch: expected ${constraints.expectedTarget}, got ${evidence.target}`);
+  }
+  if (evidence.action !== constraints.expectedAction) {
+    errors.push(`implementation production runner implementation admission merge evidence action mismatch: expected ${constraints.expectedAction}, got ${evidence.action}`);
+  }
+  if (evidence.implementationProductionRunnerImplementationAdmissionMergeDecision !== rel(paths.implementationProductionRunnerImplementationAdmissionMergeDecisionPath)) {
+    errors.push('implementation production runner implementation admission merge evidence implementationProductionRunnerImplementationAdmissionMergeDecision must match merge decision artifact path');
+  }
+  if (evidence.implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt !== rel(paths.implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptPath)) {
+    errors.push('implementation production runner implementation admission merge evidence implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt must match merge decision receipt path');
+  }
+  if (evidence.manualMergeEvidenceOnly !== true) {
+    errors.push('implementation production runner implementation admission merge evidence manualMergeEvidenceOnly must be true');
+  }
+  if (decisionReceipt.ok !== true || decisionReceipt.implementationProductionRunnerImplementationAdmissionMergeDecisionOk !== true) {
+    errors.push('implementation production runner implementation admission merge evidence requires valid admission merge decision receipt');
+  }
+  if (decisionReceipt.mergeDecision !== 'approve-runner-implementation-admission-merge') {
+    errors.push('implementation production runner implementation admission merge evidence requires approved admission merge decision receipt');
+  }
+  if (!rules.allowedMergeStatuses?.includes(evidence.mergeStatus)) {
+    errors.push('implementation production runner implementation admission merge evidence mergeStatus must be allowed');
+  }
+  if (evidence.mergeStatus !== 'merged') {
+    errors.push('implementation production runner implementation admission merge evidence mergeStatus must be merged');
+  }
+  if (!hasValue(evidence.mergedBy)) errors.push('implementation production runner implementation admission merge evidence mergedBy is required');
+  if (!hasValue(evidence.mergedAt) || Number.isNaN(Date.parse(evidence.mergedAt))) {
+    errors.push('implementation production runner implementation admission merge evidence mergedAt must be an ISO timestamp');
+  }
+  if (!hasValue(evidence.mergeCommitSha)) {
+    errors.push('implementation production runner implementation admission merge evidence mergeCommitSha is required');
+  }
+  for (const field of [
+    'targetScope',
+    'runnerImplementationAdmissionPrUrl',
+    'runnerImplementationAdmissionPrNumber',
+    'runnerImplementationAdmissionPrHeadRef',
+    'runnerImplementationAdmissionPrBaseRef',
+    'runnerImplementationAdmissionPrCommitSha',
+    'runnerImplementationAdmissionPrDiffReference',
+    'runnerImplementationAdmissionPrChecksReference',
+    'runnerImplementationAdmissionPrReviewScope',
+    'runnerImplementationReference',
+    'runnerContractReference',
+    'runnerEntryPoint',
+  ]) {
+    if (evidence[field] !== decisionReceipt[field]) {
+      errors.push(`implementation production runner implementation admission merge evidence ${field} must match admission merge decision receipt`);
+    }
+  }
+  if (evidence.executionApprovalGranted !== false) {
+    errors.push('implementation production runner implementation admission merge evidence executionApprovalGranted must be false');
+  }
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!evidence.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`implementation production runner implementation admission merge evidence requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const requiredEvidence of rules.requiredEvidence || []) {
+    if (!evidence.requiredEvidence?.includes(requiredEvidence)) {
+      errors.push(`implementation production runner implementation admission merge evidence requiredEvidence must include ${requiredEvidence}`);
+    }
+  }
+  if (evidence.runnerImplementationAdmittedByVerifier === true) {
+    errors.push('implementation production runner implementation admission merge evidence runnerImplementationAdmittedByVerifier must not be true');
+  }
+  if (evidence.mergedByVerifier === true) {
+    errors.push('implementation production runner implementation admission merge evidence mergedByVerifier must not be true');
+  }
+  if (evidence.runnerEnabledByVerifier === true) {
+    errors.push('implementation production runner implementation admission merge evidence runnerEnabledByVerifier must not be true');
+  }
+  if (evidence.redactionPolicyApplied !== true) {
+    errors.push('implementation production runner implementation admission merge evidence redactionPolicyApplied must be true');
+  }
+  if (!hasValue(evidence.redactionPolicy)) errors.push('implementation production runner implementation admission merge evidence redactionPolicy is required');
+  if (evidence.containsSecrets !== false) errors.push('implementation production runner implementation admission merge evidence containsSecrets must be false');
+  if (evidence.containsRawLogs !== false) errors.push('implementation production runner implementation admission merge evidence containsRawLogs must be false');
+  if (evidence.containsPrompts !== false) errors.push('implementation production runner implementation admission merge evidence containsPrompts must be false');
+  if (evidence.containsRawTranscripts !== false) {
+    errors.push('implementation production runner implementation admission merge evidence containsRawTranscripts must be false');
+  }
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!evidence.noExecutionMarkers?.includes(marker)) {
+      errors.push(`implementation production runner implementation admission merge evidence noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (evidence.currentVerifierPolicyBlocked !== true) {
+    errors.push('implementation production runner implementation admission merge evidence currentVerifierPolicyBlocked must be true');
+  }
+  if (evidence.policyChangeAppliedByVerifier === true) {
+    errors.push('implementation production runner implementation admission merge evidence policyChangeAppliedByVerifier must not be true');
+  }
+  if (evidence.prMutationPerformedByVerifier === true) {
+    errors.push('implementation production runner implementation admission merge evidence prMutationPerformedByVerifier must not be true');
+  }
+  if (evidence.deployedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission merge evidence deployedByVerifier must be false');
+  }
+  if (evidence.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission merge evidence thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (evidence.issueMutationPerformedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission merge evidence issueMutationPerformedByVerifier must be false');
+  }
+  if (evidence.processSpawned === true) {
+    errors.push('implementation production runner implementation admission merge evidence processSpawned must not be true');
+  }
+  if (Array.isArray(evidence.executedCommands) && evidence.executedCommands.length > 0) {
+    errors.push('implementation production runner implementation admission merge evidence executedCommands must be empty');
+  }
+  if (evidence.runnerEnabled === true) errors.push('implementation production runner implementation admission merge evidence runnerEnabled must not be true');
+  if (evidence.executionReady === true) errors.push('implementation production runner implementation admission merge evidence executionReady must not be true');
+  if (evidence.executionEnabled === true) errors.push('implementation production runner implementation admission merge evidence executionEnabled must not be true');
+  if (evidence.executionApproved === true) errors.push('implementation production runner implementation admission merge evidence executionApproved must not be true');
+  if (evidence.wouldExecute === true) errors.push('implementation production runner implementation admission merge evidence wouldExecute must not be true');
+  if (evidence.writesPerformed !== 0) errors.push('implementation production runner implementation admission merge evidence writesPerformed must be 0');
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('implementation production runner implementation admission merge evidence current verifier manifest authority.a4Execution must remain blocked');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -16795,6 +17168,119 @@ function buildImplementationProductionRunnerImplementationAdmissionMergeDecision
       implementationProductionRunnerImplementationAdmissionMergeDecisionOnly: manifest.a4ImplementationProductionRunnerImplementationAdmissionMergeDecision?.mergeDecisionOnly,
       implementationProductionRunnerImplementationAdmissionMergeDecisionPolicyChangeAppliedByVerifier: manifest.a4ImplementationProductionRunnerImplementationAdmissionMergeDecision?.policyChangeAppliedByVerifier,
       implementationProductionRunnerImplementationAdmissionMergeDecisionRunnerImplementationAdmittedByVerifier: manifest.a4ImplementationProductionRunnerImplementationAdmissionMergeDecision?.runnerImplementationAdmittedByVerifier,
+    },
+  };
+}
+
+function buildImplementationProductionRunnerImplementationAdmissionMergeEvidenceReceipt({
+  manifest,
+  manifestValidation,
+  decisionResult,
+  implementationProductionRunnerImplementationAdmissionMergeDecision,
+  implementationProductionRunnerImplementationAdmissionMergeDecisionPath,
+  implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt,
+  implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptPath,
+  implementationProductionRunnerImplementationAdmissionMergeEvidence,
+  implementationProductionRunnerImplementationAdmissionMergeEvidencePath,
+  implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptErrors,
+  implementationProductionRunnerImplementationAdmissionMergeEvidenceErrors,
+  constraints,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(decisionResult.errors || []),
+    ...implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptErrors,
+    ...implementationProductionRunnerImplementationAdmissionMergeEvidenceErrors,
+  ];
+  const implementationProductionRunnerImplementationAdmissionMergeEvidenceOk = errors.length === 0;
+
+  return {
+    mode: 'implementation-production-runner-implementation-admission-merge-evidence-check',
+    ok: implementationProductionRunnerImplementationAdmissionMergeEvidenceOk,
+    implementationProductionRunnerImplementationAdmissionMergeEvidenceOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    implementationProductionRunnerImplementationAdmissionMergeEvidence: rel(implementationProductionRunnerImplementationAdmissionMergeEvidencePath),
+    implementationProductionRunnerImplementationAdmissionMergeDecision: rel(implementationProductionRunnerImplementationAdmissionMergeDecisionPath),
+    implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt: rel(implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptPath),
+    implementationProductionRunnerImplementationAdmissionPrReview: decisionResult.implementationProductionRunnerImplementationAdmissionPrReview,
+    implementationProductionRunnerImplementationAdmissionPrReviewReceipt: decisionResult.implementationProductionRunnerImplementationAdmissionPrReviewReceipt,
+    implementationProductionRunnerImplementationAdmissionPr: decisionResult.implementationProductionRunnerImplementationAdmissionPr,
+    implementationProductionRunnerImplementationAdmissionPrReceipt: decisionResult.implementationProductionRunnerImplementationAdmissionPrReceipt,
+    implementationProductionRunnerImplementationAdmission: decisionResult.implementationProductionRunnerImplementationAdmission,
+    implementationProductionRunnerImplementationAdmissionReceipt: decisionResult.implementationProductionRunnerImplementationAdmissionReceipt,
+    implementationProductionRunnerImplementationReviewReceipt: decisionResult.implementationProductionRunnerImplementationReviewReceipt,
+    implementationProductionRunnerImplementationReview: decisionResult.implementationProductionRunnerImplementationReview,
+    implementationProductionRunnerImplementationPrReceipt: decisionResult.implementationProductionRunnerImplementationPrReceipt,
+    implementationProductionRunnerImplementationPr: decisionResult.implementationProductionRunnerImplementationPr,
+    packetPath: decisionResult.packetPath,
+    issue: decisionResult.issue || constraints.expectedIssue,
+    authorityLevel: decisionResult.authorityLevel,
+    target: decisionResult.target,
+    action: decisionResult.action,
+    targetScope: implementationProductionRunnerImplementationAdmissionMergeEvidence.targetScope || implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt.targetScope || decisionResult.targetScope,
+    manualMergeEvidenceOnly: implementationProductionRunnerImplementationAdmissionMergeEvidence.manualMergeEvidenceOnly === true,
+    mergeDecision: implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt.mergeDecision || implementationProductionRunnerImplementationAdmissionMergeDecision.mergeDecision || null,
+    mergeStatus: implementationProductionRunnerImplementationAdmissionMergeEvidence.mergeStatus || null,
+    mergedBy: implementationProductionRunnerImplementationAdmissionMergeEvidence.mergedBy || null,
+    mergedAt: implementationProductionRunnerImplementationAdmissionMergeEvidence.mergedAt || null,
+    mergeCommitSha: implementationProductionRunnerImplementationAdmissionMergeEvidence.mergeCommitSha || null,
+    executionApprovalGranted: implementationProductionRunnerImplementationAdmissionMergeEvidence.executionApprovalGranted === true,
+    runnerImplementationAdmissionPrUrl: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerImplementationAdmissionPrUrl || null,
+    runnerImplementationAdmissionPrNumber: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerImplementationAdmissionPrNumber || null,
+    runnerImplementationAdmissionPrHeadRef: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerImplementationAdmissionPrHeadRef || null,
+    runnerImplementationAdmissionPrBaseRef: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerImplementationAdmissionPrBaseRef || null,
+    runnerImplementationAdmissionPrCommitSha: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerImplementationAdmissionPrCommitSha || null,
+    runnerImplementationAdmissionPrDiffReference: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerImplementationAdmissionPrDiffReference || null,
+    runnerImplementationAdmissionPrChecksReference: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerImplementationAdmissionPrChecksReference || null,
+    runnerImplementationAdmissionPrReviewScope: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerImplementationAdmissionPrReviewScope || null,
+    runnerImplementationReference: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerImplementationReference || null,
+    runnerContractReference: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerContractReference || null,
+    runnerEntryPoint: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerEntryPoint || null,
+    runnerImplementationAdmittedByVerifier: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerImplementationAdmittedByVerifier === true,
+    mergedByVerifier: implementationProductionRunnerImplementationAdmissionMergeEvidence.mergedByVerifier === true,
+    requiredReceiptReferences: implementationProductionRunnerImplementationAdmissionMergeEvidence.requiredReceiptReferences || [],
+    requiredEvidence: implementationProductionRunnerImplementationAdmissionMergeEvidence.requiredEvidence || [],
+    redactionPolicyApplied: implementationProductionRunnerImplementationAdmissionMergeEvidence.redactionPolicyApplied === true,
+    redactionPolicy: implementationProductionRunnerImplementationAdmissionMergeEvidence.redactionPolicy || null,
+    containsSecrets: implementationProductionRunnerImplementationAdmissionMergeEvidence.containsSecrets === true,
+    containsRawLogs: implementationProductionRunnerImplementationAdmissionMergeEvidence.containsRawLogs === true,
+    containsPrompts: implementationProductionRunnerImplementationAdmissionMergeEvidence.containsPrompts === true,
+    containsRawTranscripts: implementationProductionRunnerImplementationAdmissionMergeEvidence.containsRawTranscripts === true,
+    noExecutionMarkers: implementationProductionRunnerImplementationAdmissionMergeEvidence.noExecutionMarkers || [],
+    currentVerifierPolicyBlocked: true,
+    policyChangeAppliedByVerifier: implementationProductionRunnerImplementationAdmissionMergeEvidence.policyChangeAppliedByVerifier === true,
+    runnerEnabledByVerifier: implementationProductionRunnerImplementationAdmissionMergeEvidence.runnerEnabledByVerifier === true,
+    prMutationPerformedByVerifier: implementationProductionRunnerImplementationAdmissionMergeEvidence.prMutationPerformedByVerifier === true,
+    deployedByVerifier: implementationProductionRunnerImplementationAdmissionMergeEvidence.deployedByVerifier === true,
+    thirdPartyWritePerformedByVerifier: implementationProductionRunnerImplementationAdmissionMergeEvidence.thirdPartyWritePerformedByVerifier === true,
+    issueMutationPerformedByVerifier: implementationProductionRunnerImplementationAdmissionMergeEvidence.issueMutationPerformedByVerifier === true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: implementationProductionRunnerImplementationAdmissionMergeEvidenceOk
+      ? 'implementation production runner implementation admission merge evidence accepted; verifier did not admit runner code, merge or mutate PRs, enable a runner, spawn a process, mutate issues, deploy, or write third-party systems'
+      : 'implementation production runner implementation admission merge evidence rejected before runner code admission, PR mutation, runner enablement, process spawn, issue mutation, third-party mutation, deploy, or write command',
+    evidenceTarget: implementationProductionRunnerImplementationAdmissionMergeEvidence.evidenceTarget || implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt.evidenceTarget || decisionResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may perform a separate post-merge revalidation gate for runner implementation admission evidence; verifier still cannot admit or execute runner code',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      implementationProductionRunnerImplementationAdmissionMergeEvidenceRequiresDecisionReceipt: manifest.a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence?.requiresImplementationProductionRunnerImplementationAdmissionMergeDecisionReceipt,
+      implementationProductionRunnerImplementationAdmissionMergeEvidenceOnly: manifest.a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence?.manualMergeEvidenceOnly,
+      implementationProductionRunnerImplementationAdmissionMergeEvidenceRunnerImplementationAdmittedByVerifier: manifest.a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence?.runnerImplementationAdmittedByVerifier,
+      implementationProductionRunnerImplementationAdmissionMergeEvidenceMergedByVerifier: manifest.a4ImplementationProductionRunnerImplementationAdmissionMergeEvidence?.mergedByVerifier,
     },
   };
 }
@@ -20787,6 +21273,76 @@ function commandImplementationProductionRunnerImplementationAdmissionMergeDecisi
   return result;
 }
 
+function commandImplementationProductionRunnerImplementationAdmissionMergeEvidenceCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for implementation-production-runner-implementation-admission-merge-evidence-check'));
+  }
+  if (!options.implementationProductionRunnerImplementationAdmissionMergeDecision) {
+    throw new Error('--implementation-production-runner-implementation-admission-merge-decision is required for implementation-production-runner-implementation-admission-merge-evidence-check');
+  }
+  if (!options.implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt) {
+    throw new Error('--implementation-production-runner-implementation-admission-merge-decision-receipt is required for implementation-production-runner-implementation-admission-merge-evidence-check');
+  }
+  if (!options.implementationProductionRunnerImplementationAdmissionMergeEvidence) {
+    throw new Error('--implementation-production-runner-implementation-admission-merge-evidence is required for implementation-production-runner-implementation-admission-merge-evidence-check');
+  }
+
+  const decisionResult = commandImplementationProductionRunnerImplementationAdmissionMergeDecisionCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const implementationProductionRunnerImplementationAdmissionMergeDecisionPath = resolveFromRoot(options.implementationProductionRunnerImplementationAdmissionMergeDecision);
+  const implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptPath = resolveFromRoot(options.implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt);
+  const implementationProductionRunnerImplementationAdmissionMergeEvidencePath = resolveFromRoot(options.implementationProductionRunnerImplementationAdmissionMergeEvidence);
+  const implementationProductionRunnerImplementationAdmissionMergeDecision = readJson(implementationProductionRunnerImplementationAdmissionMergeDecisionPath);
+  const implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt = readJson(implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptPath);
+  const implementationProductionRunnerImplementationAdmissionMergeEvidence = readJson(implementationProductionRunnerImplementationAdmissionMergeEvidencePath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptErrors = validateImplementationProductionRunnerImplementationAdmissionMergeDecisionReceipt(
+    implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt,
+    implementationProductionRunnerImplementationAdmissionMergeDecision,
+    decisionResult,
+    {
+      implementationProductionRunnerImplementationAdmissionMergeDecisionPath,
+    },
+    constraints,
+  );
+  const implementationProductionRunnerImplementationAdmissionMergeEvidenceErrors = validateImplementationProductionRunnerImplementationAdmissionMergeEvidence(
+    implementationProductionRunnerImplementationAdmissionMergeEvidence,
+    implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt,
+    manifest,
+    {
+      implementationProductionRunnerImplementationAdmissionMergeDecisionPath,
+      implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptPath,
+    },
+    constraints,
+  );
+  const result = buildImplementationProductionRunnerImplementationAdmissionMergeEvidenceReceipt({
+    manifest,
+    manifestValidation,
+    decisionResult,
+    implementationProductionRunnerImplementationAdmissionMergeDecision,
+    implementationProductionRunnerImplementationAdmissionMergeDecisionPath,
+    implementationProductionRunnerImplementationAdmissionMergeDecisionReceipt,
+    implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptPath,
+    implementationProductionRunnerImplementationAdmissionMergeEvidence,
+    implementationProductionRunnerImplementationAdmissionMergeEvidencePath,
+    implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptErrors,
+    implementationProductionRunnerImplementationAdmissionMergeEvidenceErrors,
+    constraints,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -20865,6 +21421,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-pr-check <same chain arguments as implementation-production-runner-implementation-admission-check> --implementation-production-runner-implementation-admission-receipt <implementation-production-runner-implementation-admission-receipt.json> --implementation-production-runner-implementation-admission-pr <implementation-production-runner-implementation-admission-pr.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-pr-review-check <same chain arguments as implementation-production-runner-implementation-admission-pr-check> --implementation-production-runner-implementation-admission-pr-receipt <implementation-production-runner-implementation-admission-pr-receipt.json> --implementation-production-runner-implementation-admission-pr-review <implementation-production-runner-implementation-admission-pr-review.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-merge-decision-check <same chain arguments as implementation-production-runner-implementation-admission-pr-review-check> --implementation-production-runner-implementation-admission-pr-review-receipt <implementation-production-runner-implementation-admission-pr-review-receipt.json> --implementation-production-runner-implementation-admission-merge-decision <implementation-production-runner-implementation-admission-merge-decision.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-merge-evidence-check <same chain arguments as implementation-production-runner-implementation-admission-merge-decision-check> --implementation-production-runner-implementation-admission-merge-decision-receipt <implementation-production-runner-implementation-admission-merge-decision-receipt.json> --implementation-production-runner-implementation-admission-merge-evidence <implementation-production-runner-implementation-admission-merge-evidence.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -20923,6 +21480,7 @@ async function main() {
   else if (options.command === 'implementation-production-runner-implementation-admission-pr-check') result = commandImplementationProductionRunnerImplementationAdmissionPrCheck(options);
   else if (options.command === 'implementation-production-runner-implementation-admission-pr-review-check') result = commandImplementationProductionRunnerImplementationAdmissionPrReviewCheck(options);
   else if (options.command === 'implementation-production-runner-implementation-admission-merge-decision-check') result = commandImplementationProductionRunnerImplementationAdmissionMergeDecisionCheck(options);
+  else if (options.command === 'implementation-production-runner-implementation-admission-merge-evidence-check') result = commandImplementationProductionRunnerImplementationAdmissionMergeEvidenceCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -20977,6 +21535,7 @@ export {
   commandImplementationProductionRunnerImplementationAdmissionPrCheck,
   commandImplementationProductionRunnerImplementationAdmissionPrReviewCheck,
   commandImplementationProductionRunnerImplementationAdmissionMergeDecisionCheck,
+  commandImplementationProductionRunnerImplementationAdmissionMergeEvidenceCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
