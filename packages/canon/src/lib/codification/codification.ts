@@ -85,6 +85,12 @@ export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 			'Webflow code components are packaged through Webflow library manifests and declareComponent registrations; Canon governs them through future candidate review, not direct Svelte package migration.'
 	},
 	{
+		path: 'packages/halfdozen-landing',
+		reason: 'webflow-code-component-library',
+		justification:
+			'Half Dozen landing sections are React/Webflow code components for a client-owned brand surface; Canon governs them through candidate review rather than direct Svelte package migration.'
+	},
+	{
 		path: 'packages/motion-studio',
 		reason: 'render-tooling-surface',
 		justification:
