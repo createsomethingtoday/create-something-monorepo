@@ -1808,10 +1808,43 @@ This gate validates revalidation evidence only. It does not admit a runner
 implementation, apply the policy patch in this verifier branch, enable a
 runner, close or update Linear issues, deploy, post updates, rotate secrets,
 expose raw artifacts, or mutate third-party systems. It rejects drifted
-merge-evidence receipts, failed or partial revalidation, missing receipt
-references, runner admission claims, verifier policy or PR mutation claims,
-leaked raw artifacts, and any process/command/write marker.
-`authority.a4Execution` remains blocked in this verifier branch.
+merge-evidence receipts, failed or partial revalidation, missing full-chain
+receipt references, missing merged-policy state, runner-admission claims,
+verifier policy or PR mutation claims, leaked raw artifacts, and any
+process/command/write marker. `authority.a4Execution` remains blocked in this
+verifier branch.
+
+After revalidation evidence passes, validate runner implementation admission
+evidence:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-admission-check \
+  <same chain arguments as implementation-production-policy-enablement-revalidation-check> \
+  --implementation-production-policy-enablement-revalidation-receipt <implementation-production-policy-enablement-revalidation-receipt.json> \
+  --implementation-production-runner-admission <implementation-production-runner-admission.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production runner admission packet proves a separate
+operator approval to review runner implementation after the merged policy state
+passed immediate full-chain revalidation. It must bind to the revalidation
+artifact and receipt, carry the same PR, merge commit, policy patch proposal,
+merged policy state, public-access fail-closed proof, and full-chain receipt
+references, and include an approved runner implementation review decision,
+runner implementation reference, runner contract reference, runner entry point,
+and redaction policy.
+
+This gate validates runner-admission evidence only. It does not admit runner
+code, apply the policy patch in this verifier branch, enable a runner, spawn a
+process, close or update Linear issues, mutate PRs, deploy, post updates,
+rotate secrets, expose raw artifacts, or mutate third-party systems. It rejects
+drifted revalidation receipts, non-approved admission decisions, missing runner
+implementation or contract references, verifier-side runner admission claims,
+runner enablement claims, leaked raw artifacts, and any process/command/write
+marker. `authority.a4Execution` remains blocked in this verifier branch.
 
 ## Regression Cadence
 
