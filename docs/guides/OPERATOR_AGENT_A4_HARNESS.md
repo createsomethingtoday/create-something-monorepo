@@ -397,6 +397,46 @@ while current policy is blocked, omit public fail-closed proof, or loosen the
 write ceiling. A later implementation PR must still prove the checked-in policy
 is enabled and rerun this full chain immediately before any write.
 
+After the runner implementation contract receipt exists, validate the future
+runner implementation plan before adding any executable entrypoint:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-plan-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --runner-contract-receipt <runner-contract-receipt.json> \
+  --runner-plan <runner-plan.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The runner implementation plan must stay plan-only. It may name the future
+entrypoint, guards, revalidation sequence, rollback plan, post-action smoke
+plan, public-access fail-closed plan, stop conditions, and receipt outputs, but
+it must not add an executable entrypoint or claim execution readiness. The
+verifier requires guards for checked-in policy enablement, full-chain
+revalidation, command receipt binding, write ceiling enforcement, rollback,
+post-action smoke, public fail-closed proof, mismatch stops, expiry stops, and
+drift stops. While the current manifest is blocked, `processSpawned` must be
+`false`, `executedCommands` must be `[]`, `runnerEnabled`, `executionReady`,
+`executionEnabled`, and `wouldExecute` must be `false`, and `writesPerformed`
+must be `0`.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
