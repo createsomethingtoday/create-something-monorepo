@@ -60,6 +60,24 @@ const REQUIRED_TRIAL_RECEIPT_FIELDS = [
   'evidenceTarget',
 ];
 
+const REQUIRED_EXECUTION_COMMAND_FIELDS = [
+  'authorityLevel',
+  'issue',
+  'target',
+  'action',
+  'commandId',
+  'commandSurface',
+  'requestedBy',
+  'requestedAt',
+  'expiresAt',
+  'executionMode',
+  'packet',
+  'preflightReceipt',
+  'executionReceipt',
+  'authorization',
+  'evidenceTarget',
+];
+
 function parseArgs(argv) {
   const args = argv.slice(2);
   const options = {
@@ -69,6 +87,7 @@ function parseArgs(argv) {
     preflightReceipt: null,
     executionReceipt: null,
     authorization: null,
+    commandArtifact: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -88,6 +107,7 @@ function parseArgs(argv) {
     else if (arg === '--preflight-receipt' && args[index + 1]) options.preflightReceipt = args[++index];
     else if (arg === '--execution-receipt' && args[index + 1]) options.executionReceipt = args[++index];
     else if (arg === '--authorization' && args[index + 1]) options.authorization = args[++index];
+    else if (arg === '--command-artifact' && args[index + 1]) options.commandArtifact = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -229,6 +249,21 @@ function validateManifest(manifest) {
   const missingRisks = includesAll(packet.mustNameExactRisks, REQUIRED_A4_RISKS);
   if (missingRisks.length) {
     errors.push(`a4ApprovalPacket.mustNameExactRisks missing: ${missingRisks.join(', ')}`);
+  }
+
+  const executionCommand = manifest.a4ExecutionCommand || {};
+  const missingCommandFields = includesAll(executionCommand.requiredFields, REQUIRED_EXECUTION_COMMAND_FIELDS);
+  if (missingCommandFields.length) {
+    errors.push(`a4ExecutionCommand.requiredFields missing: ${missingCommandFields.join(', ')}`);
+  }
+  if (!executionCommand.allowedCommandSurfaces?.includes('Linear')) {
+    errors.push('a4ExecutionCommand.allowedCommandSurfaces must include Linear');
+  }
+  if (!executionCommand.allowedExecutionModes?.includes('operator-supervised')) {
+    errors.push('a4ExecutionCommand.allowedExecutionModes must include operator-supervised');
+  }
+  if (executionCommand.runnerEnabled !== false) {
+    errors.push('a4ExecutionCommand.runnerEnabled must remain false while authority.a4Execution is blocked');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -748,6 +783,152 @@ function buildExecutionAuthorizationReceipt({
   };
 }
 
+function validateExecutionCommandArtifact(commandArtifact, packet, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ExecutionCommand || {};
+
+  for (const field of rules.requiredFields || REQUIRED_EXECUTION_COMMAND_FIELDS) {
+    if (!hasValue(commandArtifact[field])) errors.push(`execution command missing ${field}`);
+  }
+  if (commandArtifact.authorityLevel !== 'A4') errors.push('execution command authorityLevel must be A4');
+  if (!rules.allowedCommandSurfaces?.includes(commandArtifact.commandSurface)) {
+    errors.push(`execution command commandSurface is not allowed: ${commandArtifact.commandSurface}`);
+  }
+  if (!rules.allowedExecutionModes?.includes(commandArtifact.executionMode)) {
+    errors.push(`execution command executionMode is not allowed: ${commandArtifact.executionMode}`);
+  }
+  if (commandArtifact.issue !== constraints.expectedIssue) {
+    errors.push(`execution command issue mismatch: expected ${constraints.expectedIssue}, got ${commandArtifact.issue}`);
+  }
+  if (commandArtifact.target !== constraints.expectedTarget) {
+    errors.push(`execution command target mismatch: expected ${constraints.expectedTarget}, got ${commandArtifact.target}`);
+  }
+  if (commandArtifact.action !== constraints.expectedAction) {
+    errors.push(`execution command action mismatch: expected ${constraints.expectedAction}, got ${commandArtifact.action}`);
+  }
+  if (commandArtifact.packet !== rel(paths.packetPath)) {
+    errors.push('execution command packet must match packet path');
+  }
+  if (commandArtifact.preflightReceipt !== rel(paths.preflightPath)) {
+    errors.push('execution command preflightReceipt must match preflight receipt path');
+  }
+  if (commandArtifact.executionReceipt !== rel(paths.executionPath)) {
+    errors.push('execution command executionReceipt must match execution receipt path');
+  }
+  if (commandArtifact.authorization !== rel(paths.authorizationPath)) {
+    errors.push('execution command authorization must match authorization artifact path');
+  }
+
+  const timestampErrors = [];
+  const now = constraints.now ? parseTimestamp(constraints.now, 'now', timestampErrors) : Date.now();
+  const requestedAt = parseTimestamp(commandArtifact.requestedAt, 'requestedAt', timestampErrors);
+  const expiresAt = parseTimestamp(commandArtifact.expiresAt, 'expiresAt', timestampErrors);
+  errors.push(...timestampErrors.map((error) => error.replace('approval packet', 'execution command')));
+  const maxAgeHours = constraints.maxAgeHours ?? 24;
+  if (requestedAt !== null && now !== null) {
+    if (requestedAt > now) errors.push('execution command requestedAt must not be in the future');
+    if (Number.isFinite(maxAgeHours) && now - requestedAt > maxAgeHours * 60 * 60 * 1000) {
+      errors.push(`execution command is stale: requestedAt is older than ${maxAgeHours} hours`);
+    }
+  }
+  if (expiresAt !== null && now !== null && expiresAt <= now) {
+    errors.push('execution command expiresAt must be in the future');
+  }
+
+  if (packet.issue !== commandArtifact.issue) {
+    errors.push('execution command issue must match packet issue');
+  }
+  if (packet.target !== commandArtifact.target) {
+    errors.push('execution command target must match packet target');
+  }
+  if (packet.action !== commandArtifact.action) {
+    errors.push('execution command action must match packet action');
+  }
+
+  return errors;
+}
+
+function buildExecutionCommandReceipt({
+  manifest,
+  manifestValidation,
+  packet,
+  packetPath,
+  preflightReceipt,
+  preflightPath,
+  executionReceipt,
+  executionPath,
+  authorization,
+  authorizationPath,
+  commandArtifact,
+  commandPath,
+  constraints,
+  packetValidation,
+  preflightErrors,
+  executionErrors,
+  authorizationErrors,
+  commandErrors,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...packetValidation.errors,
+    ...preflightErrors,
+    ...executionErrors,
+    ...authorizationErrors,
+    ...commandErrors,
+  ];
+  const commandOk = errors.length === 0;
+  const runnerEnabled = manifest.a4ExecutionCommand?.runnerEnabled === true && manifest.authority?.a4Execution !== 'blocked';
+  const executionReady = commandOk && runnerEnabled;
+
+  return {
+    mode: 'execution-command-check',
+    ok: commandOk,
+    commandOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    packetPath: rel(packetPath),
+    preflightReceipt: rel(preflightPath),
+    executionReceipt: rel(executionPath),
+    authorization: rel(authorizationPath),
+    commandArtifact: rel(commandPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    commandId: commandArtifact.commandId,
+    commandSurface: commandArtifact.commandSurface,
+    requestedBy: commandArtifact.requestedBy,
+    executionMode: commandArtifact.executionMode,
+    constraints,
+    commandAdmitted: commandOk,
+    runnerEnabled,
+    executionReady,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: commandOk
+      ? 'execution command artifact validated; A4 runner remains disabled by repo policy'
+      : 'execution command artifact rejected before runner admission',
+    evidenceTarget: commandArtifact.evidenceTarget || authorization.evidenceTarget || packet.evidenceTarget || null,
+    validationPlan: commandOk ? executionReceipt.validationPlan : [],
+    rollbackPlan: commandOk ? executionReceipt.rollbackPlan : [],
+    postActionSmokePlan: commandOk ? executionReceipt.postActionSmokePlan : [],
+    stopConditions: commandOk ? executionReceipt.stopConditions : [],
+    executionPlan: commandOk ? executionReceipt.executionPlan : [],
+    checkedAt: new Date().toISOString(),
+    nextGate: 'repo policy change plus an explicit executor implementation that revalidates this receipt before any write',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+    },
+  };
+}
+
 function print(result, options) {
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -920,6 +1101,72 @@ function commandExecutionAuthorizationCheck(options) {
   return result;
 }
 
+function commandExecutionCommandCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for execution-command-check'));
+  }
+  if (!options.preflightReceipt) throw new Error('--preflight-receipt is required for execution-command-check');
+  if (!options.executionReceipt) throw new Error('--execution-receipt is required for execution-command-check');
+  if (!options.authorization) throw new Error('--authorization is required for execution-command-check');
+  if (!options.commandArtifact) throw new Error('--command-artifact is required for execution-command-check');
+
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const preflightPath = resolveFromRoot(options.preflightReceipt);
+  const executionPath = resolveFromRoot(options.executionReceipt);
+  const authorizationPath = resolveFromRoot(options.authorization);
+  const commandPath = resolveFromRoot(options.commandArtifact);
+  const packet = readJson(packetPath);
+  const preflightReceipt = readJson(preflightPath);
+  const executionReceipt = readJson(executionPath);
+  const authorization = readJson(authorizationPath);
+  const commandArtifact = readJson(commandPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const preflightErrors = validatePreflightReceipt(preflightReceipt, packet, constraints);
+  const executionErrors = validateExecutionReceipt(executionReceipt, packet, preflightReceipt, constraints);
+  const authorizationErrors = validateExecutionAuthorization(authorization, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+  }, constraints);
+  const commandErrors = validateExecutionCommandArtifact(commandArtifact, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+  }, constraints);
+  const result = buildExecutionCommandReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    preflightReceipt,
+    preflightPath,
+    executionReceipt,
+    executionPath,
+    authorization,
+    authorizationPath,
+    commandArtifact,
+    commandPath,
+    constraints,
+    packetValidation,
+    preflightErrors,
+    executionErrors,
+    authorizationErrors,
+    commandErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -963,6 +1210,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs preflight-check --packet <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs execution-receipt-check --packet <path> --preflight-receipt <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs execution-authorization-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs execution-command-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -981,6 +1229,7 @@ async function main() {
   else if (options.command === 'preflight-check') result = commandPreflightCheck(options);
   else if (options.command === 'execution-receipt-check') result = commandExecutionReceiptCheck(options);
   else if (options.command === 'execution-authorization-check') result = commandExecutionAuthorizationCheck(options);
+  else if (options.command === 'execution-command-check') result = commandExecutionCommandCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -997,6 +1246,7 @@ export {
   REQUIRED_PACKET_FIELDS,
   REQUIRED_TRIAL_RECEIPT_FIELDS,
   commandLooksHighRisk,
+  commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
   commandExecutionReceiptCheck,
   commandPreflightCheck,

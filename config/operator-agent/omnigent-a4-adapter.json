@@ -139,6 +139,34 @@
       "unrecorded irreversible-data risk"
     ]
   },
+  "a4ExecutionCommand": {
+    "requiredFields": [
+      "authorityLevel",
+      "issue",
+      "target",
+      "action",
+      "commandId",
+      "commandSurface",
+      "requestedBy",
+      "requestedAt",
+      "expiresAt",
+      "executionMode",
+      "packet",
+      "preflightReceipt",
+      "executionReceipt",
+      "authorization",
+      "evidenceTarget"
+    ],
+    "allowedCommandSurfaces": [
+      "Linear",
+      "signed-release-record"
+    ],
+    "allowedExecutionModes": [
+      "operator-supervised"
+    ],
+    "runnerEnabled": false,
+    "blockedUntil": "authority.a4Execution is changed by repo policy and an executor implementation revalidates the command receipt immediately before any write"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -184,6 +212,11 @@
       "id": "gate-6-a4-execution-authorization",
       "required": "A4 execution authorization artifact validates the packet, preflight receipt, and disabled execution receipt while keeping execution disabled",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs execution-authorization-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-7-a4-execution-command-admission",
+      "required": "A4 execution command artifact validates the full authorization chain while keeping the runner disabled and execution blocked",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs execution-command-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

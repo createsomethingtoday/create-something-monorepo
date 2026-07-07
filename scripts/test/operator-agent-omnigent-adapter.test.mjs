@@ -24,7 +24,7 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
-const EXPECTED_ISSUE = 'CRE-1069';
+const EXPECTED_ISSUE = 'CRE-1070';
 const EXPECTED_TARGET = 'create-something-internal-production';
 const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
 const FIXED_NOW = '2026-07-06T20:00:00.000Z';
@@ -114,6 +114,13 @@ function executionAuthorizationCheckArgs(packetPath, preflightReceiptPath, execu
   return args;
 }
 
+function executionCommandCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, receiptDir) {
+  const args = executionAuthorizationCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, receiptDir);
+  args[1] = 'execution-command-check';
+  args.splice(10, 0, '--command-artifact', commandPath);
+  return args;
+}
+
 function writeValidPreflightReceipt(t, packetPath) {
   const root = makeWorkspace(t);
   const preflightResult = spawnSync(process.execPath, preflightCheckArgs(packetPath, root), {
@@ -164,7 +171,27 @@ function validAuthorization({ packetPath, preflightPath, executionPath } = {}) {
     packet: packetPath ? path.relative(REPO_ROOT, packetPath) : 'packet.json',
     preflightReceipt: preflightPath ? path.relative(REPO_ROOT, preflightPath) : 'preflight.json',
     executionReceipt: executionPath ? path.relative(REPO_ROOT, executionPath) : 'execution.json',
-    evidenceTarget: 'Linear CRE-1069',
+    evidenceTarget: 'Linear CRE-1070',
+  };
+}
+
+function validExecutionCommand({ packetPath, preflightPath, executionPath, authorizationPath } = {}) {
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    commandId: 'fixture-operator-command',
+    commandSurface: 'Linear',
+    requestedBy: 'Micah Johnson',
+    requestedAt: '2026-07-06T19:45:00.000Z',
+    expiresAt: '2026-07-07T19:45:00.000Z',
+    executionMode: 'operator-supervised',
+    packet: packetPath ? path.relative(REPO_ROOT, packetPath) : 'packet.json',
+    preflightReceipt: preflightPath ? path.relative(REPO_ROOT, preflightPath) : 'preflight.json',
+    executionReceipt: executionPath ? path.relative(REPO_ROOT, executionPath) : 'execution.json',
+    authorization: authorizationPath ? path.relative(REPO_ROOT, authorizationPath) : 'authorization.json',
+    evidenceTarget: 'Linear CRE-1070',
   };
 }
 
@@ -591,6 +618,136 @@ test('execution-authorization-check fails closed on stale or mismatched authoriz
     assert.equal(payload.wouldExecute, false, entry.name);
     assert.equal(payload.writesPerformed, 0, entry.name);
     assert.deepEqual(payload.validationPlan, [], entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('execution-command-check admits command artifact but keeps runner disabled', (t) => {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+  const { preflightPath } = writeValidPreflightReceipt(t, packetPath);
+  const { executionPath } = writeValidExecutionReceipt(t, packetPath, preflightPath);
+  const authorizationPath = path.join(root, 'authorization.json');
+  writeFileSync(
+    authorizationPath,
+    `${JSON.stringify(validAuthorization({ packetPath, preflightPath, executionPath }), null, 2)}\n`,
+  );
+  const commandPath = path.join(root, 'command.json');
+  writeFileSync(
+    commandPath,
+    `${JSON.stringify(validExecutionCommand({
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    executionCommandCheckArgs(packetPath, preflightPath, executionPath, authorizationPath, commandPath, root),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'execution-command-check');
+  assert.equal(payload.commandOk, true);
+  assert.equal(payload.commandAdmitted, true);
+  assert.equal(payload.issue, EXPECTED_ISSUE);
+  assert.equal(payload.commandId, 'fixture-operator-command');
+  assert.equal(payload.commandSurface, 'Linear');
+  assert.equal(payload.executionMode, 'operator-supervised');
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.runnerEnabled, false);
+  assert.match(payload.blockedReason, /runner remains disabled/);
+  assert.match(payload.nextGate, /executor implementation/);
+  assert.deepEqual(payload.validationPlan, validPacket().validation);
+  assert.deepEqual(payload.rollbackPlan, validPacket().rollback);
+  assert.deepEqual(payload.postActionSmokePlan, validPacket().postActionSmoke);
+  assert.match(payload.receiptPath, /execution-command-check\.json$/);
+});
+
+test('execution-command-check fails closed on stale, unsupported, or mismatched command artifacts', (t) => {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+  const { preflightPath } = writeValidPreflightReceipt(t, packetPath);
+  const { executionPath } = writeValidExecutionReceipt(t, packetPath, preflightPath);
+  const authorizationPath = path.join(root, 'authorization.json');
+  writeFileSync(
+    authorizationPath,
+    `${JSON.stringify(validAuthorization({ packetPath, preflightPath, executionPath }), null, 2)}\n`,
+  );
+
+  const cases = [
+    {
+      name: 'wrong-action',
+      patch: { action: 'different action' },
+      pattern: /execution command action mismatch/,
+    },
+    {
+      name: 'unsupported-surface',
+      patch: { commandSurface: 'chat-message' },
+      pattern: /execution command commandSurface is not allowed/,
+    },
+    {
+      name: 'unsupported-mode',
+      patch: { executionMode: 'unsupervised' },
+      pattern: /execution command executionMode is not allowed/,
+    },
+    {
+      name: 'stale',
+      patch: { requestedAt: '2026-07-04T19:00:00.000Z' },
+      pattern: /execution command is stale/,
+    },
+    {
+      name: 'wrong-authorization-binding',
+      patch: { authorization: 'wrong-authorization.json' },
+      pattern: /execution command authorization must match authorization artifact path/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const commandPath = path.join(root, `${entry.name}.json`);
+    writeFileSync(
+      commandPath,
+      `${JSON.stringify({
+        ...validExecutionCommand({
+          packetPath,
+          preflightPath,
+          executionPath,
+          authorizationPath,
+        }),
+        ...entry.patch,
+      }, null, 2)}\n`,
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      executionCommandCheckArgs(packetPath, preflightPath, executionPath, authorizationPath, commandPath, root),
+      { cwd: REPO_ROOT, encoding: 'utf8' },
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.commandOk, false, entry.name);
+    assert.equal(payload.commandAdmitted, false, entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.deepEqual(payload.executionPlan, [], entry.name);
     assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
   }
 });
