@@ -24,7 +24,7 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
-const EXPECTED_ISSUE = 'CRE-1080';
+const EXPECTED_ISSUE = 'CRE-1081';
 const EXPECTED_TARGET = 'create-something-internal-production';
 const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
 const FIXED_NOW = '2026-07-06T20:00:00.000Z';
@@ -261,6 +261,34 @@ function runnerImplementationDiffCheckArgs(packetPath, preflightReceiptPath, exe
   );
   args[1] = 'runner-implementation-diff-check';
   args.push('--runner-plan-receipt', runnerPlanReceiptPath, '--runner-diff', runnerDiffPath);
+  return args;
+}
+
+function releaseAdmissionCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, receiptDir) {
+  const args = runnerImplementationDiffCheckArgs(
+    packetPath,
+    preflightReceiptPath,
+    executionReceiptPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+    runnerContractReceiptPath,
+    runnerPlanPath,
+    runnerPlanReceiptPath,
+    runnerDiffPath,
+    receiptDir,
+  );
+  args[1] = 'release-admission-check';
+  args.push('--runner-diff-receipt', runnerDiffReceiptPath, '--release-admission', releaseAdmissionPath);
   return args;
 }
 
@@ -518,6 +546,43 @@ function writeValidRunnerImplementationPlanReceipt(t, packetPath, preflightPath,
     root,
     runnerPlanReceiptPath: path.join(REPO_ROOT, planPayload.receiptPath),
     planPayload,
+  };
+}
+
+function writeValidRunnerImplementationDiffReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath) {
+  const root = makeWorkspace(t);
+  const diffResult = spawnSync(
+    process.execPath,
+    runnerImplementationDiffCheckArgs(
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+      commandPath,
+      commandReceiptPath,
+      executorProofPath,
+      proposalPath,
+      proposalReceiptPath,
+      policyPatchPath,
+      policyPatchReceiptPath,
+      candidateManifestPath,
+      applicationDiffReceiptPath,
+      readinessReceiptPath,
+      runnerContractPath,
+      runnerContractReceiptPath,
+      runnerPlanPath,
+      runnerPlanReceiptPath,
+      runnerDiffPath,
+      root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+  assert.equal(diffResult.status, 0, diffResult.stderr || diffResult.stdout);
+  const diffPayload = JSON.parse(diffResult.stdout);
+  return {
+    root,
+    runnerDiffReceiptPath: path.join(REPO_ROOT, diffPayload.receiptPath),
+    diffPayload,
   };
 }
 
@@ -779,6 +844,75 @@ function validRunnerImplementationDiff({ runnerPlanReceiptPath } = {}) {
       'rollback-readiness',
       'final-outcome',
     ],
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
+function validReleaseAdmission({ readinessReceiptPath, runnerDiffPath, runnerDiffReceiptPath } = {}) {
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    enabledManifestReadinessReceipt: readinessReceiptPath
+      ? path.relative(REPO_ROOT, readinessReceiptPath)
+      : 'enabled-manifest-readiness-check.json',
+    runnerDiff: runnerDiffPath ? path.relative(REPO_ROOT, runnerDiffPath) : 'runner-diff.json',
+    runnerImplementationDiffReceipt: runnerDiffReceiptPath
+      ? path.relative(REPO_ROOT, runnerDiffReceiptPath)
+      : 'runner-implementation-diff-check.json',
+    releaseMode: 'operator-reviewed-pr',
+    packetOnly: true,
+    requiresManualMerge: true,
+    autoMerge: false,
+    prs: [
+      {
+        role: 'policy-enabled-manifest',
+        url: 'https://github.com/createsomethingtoday/create-something-monorepo/pull/901',
+        checkStatus: 'success',
+        checksPassed: true,
+        mergeReady: true,
+      },
+      {
+        role: 'runner-entrypoint',
+        url: 'https://github.com/createsomethingtoday/create-something-monorepo/pull/902',
+        checkStatus: 'success',
+        checksPassed: true,
+        mergeReady: true,
+      },
+    ],
+    mergeOrder: ['policy-enabled-manifest', 'runner-entrypoint'],
+    requiredEvidence: [
+      'linear-done-evidence',
+      'github-checks-passed',
+      'rollback-note',
+      'public-access-fail-closed-proof',
+    ],
+    requiredGuards: [
+      'checked-in-policy-enabled',
+      'full-chain-revalidation',
+      'command-receipt-bound',
+      'max-writes-per-run',
+      'rollback-ready',
+      'post-action-smoke',
+      'public-access-fail-closed',
+      'stop-on-mismatch',
+      'stop-on-expired',
+      'stop-on-drift',
+    ],
+    linearEvidence: `Linear ${EXPECTED_ISSUE} release admission evidence`,
+    rollbackNote: 'Rollback by reverting runner-entrypoint PR first, then policy-enabled-manifest PR.',
+    publicAccessFailClosedProof: 'operator-agent-public-smoke rawOriginExposed=false and redirectsToAccess=true',
+    currentPolicyBlocked: true,
+    maxWritesPerRun: 1,
     processSpawned: false,
     executedCommands: [],
     runnerEnabled: false,
@@ -2896,6 +3030,43 @@ function writeRunnerPlanFixture(t) {
   };
 }
 
+function writeReleaseAdmissionFixture(t) {
+  const fixture = writeRunnerPlanFixture(t);
+  const runnerDiffPath = path.join(fixture.root, 'runner-diff.json');
+  writeFileSync(
+    runnerDiffPath,
+    `${JSON.stringify(validRunnerImplementationDiff({ runnerPlanReceiptPath: fixture.runnerPlanReceiptPath }), null, 2)}\n`,
+  );
+  const { runnerDiffReceiptPath } = writeValidRunnerImplementationDiffReceipt(
+    t,
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    runnerDiffPath,
+  );
+
+  return {
+    ...fixture,
+    runnerDiffPath,
+    runnerDiffReceiptPath,
+  };
+}
+
 test('runner-implementation-diff-check validates candidate-only runner implementation diff', (t) => {
   const fixture = writeRunnerPlanFixture(t);
   const runnerDiffPath = path.join(fixture.root, 'runner-diff.json');
@@ -3116,6 +3287,241 @@ test('runner-implementation-diff-check fails closed on drifted plan receipts', (
   assert.equal(payload.writesPerformed, 0);
   assert.match(payload.errors.join('\n'), /processSpawned must be false/);
   assert.match(payload.errors.join('\n'), /executedCommands must be empty/);
+});
+
+test('release-admission-check validates manual release evidence without execution', (t) => {
+  const fixture = writeReleaseAdmissionFixture(t);
+  const releaseAdmissionPath = path.join(fixture.root, 'release-admission.json');
+  writeFileSync(
+    releaseAdmissionPath,
+    `${JSON.stringify(validReleaseAdmission({
+      readinessReceiptPath: fixture.readinessReceiptPath,
+      runnerDiffPath: fixture.runnerDiffPath,
+      runnerDiffReceiptPath: fixture.runnerDiffReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    releaseAdmissionCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      releaseAdmissionPath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'release-admission-check');
+  assert.equal(payload.releaseAdmissionOk, true);
+  assert.equal(payload.releaseMode, 'operator-reviewed-pr');
+  assert.equal(payload.packetOnly, true);
+  assert.equal(payload.requiresManualMerge, true);
+  assert.equal(payload.autoMerge, false);
+  assert.deepEqual(payload.mergeOrder, ['policy-enabled-manifest', 'runner-entrypoint']);
+  assert.equal(payload.prs.length, 2);
+  assert.ok(payload.requiredEvidence.includes('public-access-fail-closed-proof'));
+  assert.ok(payload.requiredGuards.includes('checked-in-policy-enabled'));
+  assert.match(payload.linearEvidence, /CRE-1081/);
+  assert.match(payload.rollbackNote, /reverting runner-entrypoint PR first/);
+  assert.match(payload.publicAccessFailClosedProof, /rawOriginExposed=false/);
+  assert.equal(payload.currentPolicyBlocked, true);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.releaseAdmissionRequiresReadinessReceipt, true);
+  assert.equal(payload.policy.releaseAdmissionRequiresRunnerDiffReceipt, true);
+  assert.match(payload.nextGate, /merging policy enablement and runner entrypoint/);
+  assert.match(payload.receiptPath, /release-admission-check\.json$/);
+});
+
+test('release-admission-check fails closed on unsafe release packets', (t) => {
+  const cases = [
+    {
+      name: 'missing-runner-pr',
+      mutate(admission) {
+        admission.prs = admission.prs.filter((entry) => entry.role !== 'runner-entrypoint');
+      },
+      pattern: /missing PR evidence for runner-entrypoint/,
+    },
+    {
+      name: 'failed-checks',
+      mutate(admission) {
+        admission.prs[0].checkStatus = 'failure';
+        admission.prs[0].checksPassed = false;
+      },
+      pattern: /checks must be success/,
+    },
+    {
+      name: 'wrong-merge-order',
+      mutate(admission) {
+        admission.mergeOrder = ['runner-entrypoint', 'policy-enabled-manifest'];
+      },
+      pattern: /mergeOrder must match required merge order/,
+    },
+    {
+      name: 'missing-public-proof',
+      mutate(admission) {
+        admission.requiredEvidence = ['linear-done-evidence', 'github-checks-passed', 'rollback-note'];
+        admission.publicAccessFailClosedProof = '';
+      },
+      pattern: /publicAccessFailClosedProof is required/,
+    },
+    {
+      name: 'automerge-and-execution',
+      mutate(admission) {
+        admission.autoMerge = true;
+        admission.processSpawned = true;
+        admission.executedCommands = ['node scripts/operator-agent-omnigent-runner.mjs'];
+        admission.executionReady = true;
+        admission.wouldExecute = true;
+        admission.writesPerformed = 1;
+      },
+      pattern: /autoMerge must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeReleaseAdmissionFixture(t);
+    const admission = validReleaseAdmission({
+      readinessReceiptPath: fixture.readinessReceiptPath,
+      runnerDiffPath: fixture.runnerDiffPath,
+      runnerDiffReceiptPath: fixture.runnerDiffReceiptPath,
+    });
+    entry.mutate(admission);
+    const releaseAdmissionPath = path.join(fixture.root, `${entry.name}-release-admission.json`);
+    writeFileSync(releaseAdmissionPath, `${JSON.stringify(admission, null, 2)}\n`);
+
+    const result = spawnSync(
+      process.execPath,
+      releaseAdmissionCheckArgs(
+        fixture.packetPath,
+        fixture.preflightPath,
+        fixture.executionPath,
+        fixture.authorizationPath,
+        fixture.commandPath,
+        fixture.commandReceiptPath,
+        fixture.executorProofPath,
+        fixture.proposalPath,
+        fixture.proposalReceiptPath,
+        fixture.policyPatchPath,
+        fixture.policyPatchReceiptPath,
+        fixture.candidateManifestPath,
+        fixture.applicationDiffReceiptPath,
+        fixture.readinessReceiptPath,
+        fixture.runnerContractPath,
+        fixture.runnerContractReceiptPath,
+        fixture.runnerPlanPath,
+        fixture.runnerPlanReceiptPath,
+        fixture.runnerDiffPath,
+        fixture.runnerDiffReceiptPath,
+        releaseAdmissionPath,
+        fixture.root,
+      ),
+      { cwd: REPO_ROOT, encoding: 'utf8' },
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.releaseAdmissionOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('release-admission-check fails closed on drifted runner diff receipts', (t) => {
+  const fixture = writeReleaseAdmissionFixture(t);
+  const driftedRunnerDiffReceipt = JSON.parse(readFileSync(fixture.runnerDiffReceiptPath, 'utf8'));
+  driftedRunnerDiffReceipt.processSpawned = true;
+  driftedRunnerDiffReceipt.executedCommands = ['node scripts/operator-agent-omnigent-runner.mjs'];
+  const driftedRunnerDiffReceiptPath = path.join(fixture.root, 'drifted-runner-diff-receipt.json');
+  writeFileSync(driftedRunnerDiffReceiptPath, `${JSON.stringify(driftedRunnerDiffReceipt, null, 2)}\n`);
+  const releaseAdmissionPath = path.join(fixture.root, 'release-admission.json');
+  writeFileSync(
+    releaseAdmissionPath,
+    `${JSON.stringify(validReleaseAdmission({
+      readinessReceiptPath: fixture.readinessReceiptPath,
+      runnerDiffPath: fixture.runnerDiffPath,
+      runnerDiffReceiptPath: driftedRunnerDiffReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    releaseAdmissionCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      driftedRunnerDiffReceiptPath,
+      releaseAdmissionPath,
+      fixture.root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.releaseAdmissionOk, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /runner implementation diff receipt processSpawned must be false/);
+  assert.match(payload.errors.join('\n'), /runner implementation diff receipt executedCommands must be empty/);
 });
 
 test('read-only scout profile and receipt match the local harness parity contract', () => {
