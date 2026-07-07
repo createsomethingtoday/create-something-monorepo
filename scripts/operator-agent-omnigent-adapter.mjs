@@ -132,6 +132,8 @@ function parseArgs(argv) {
     implementationProductionReleaseDecision: null,
     implementationProductionReleaseDecisionReceipt: null,
     implementationProductionReleaseAdmission: null,
+    implementationProductionReleaseAdmissionReceipt: null,
+    implementationProductionDeployEvidence: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -196,6 +198,8 @@ function parseArgs(argv) {
     else if (arg === '--implementation-production-release-decision' && args[index + 1]) options.implementationProductionReleaseDecision = args[++index];
     else if (arg === '--implementation-production-release-decision-receipt' && args[index + 1]) options.implementationProductionReleaseDecisionReceipt = args[++index];
     else if (arg === '--implementation-production-release-admission' && args[index + 1]) options.implementationProductionReleaseAdmission = args[++index];
+    else if (arg === '--implementation-production-release-admission-receipt' && args[index + 1]) options.implementationProductionReleaseAdmissionReceipt = args[++index];
+    else if (arg === '--implementation-production-deploy-evidence' && args[index + 1]) options.implementationProductionDeployEvidence = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -2037,6 +2041,130 @@ function validateManifest(manifest) {
   }
   if (implementationProductionReleaseAdmission.writesPerformed !== 0) {
     errors.push('a4ImplementationProductionReleaseAdmission.writesPerformed must be 0');
+  }
+
+  const implementationProductionDeployEvidence = manifest.a4ImplementationProductionDeployEvidence || {};
+  if (implementationProductionDeployEvidence.requiresImplementationProductionReleaseAdmissionReceipt !== true) {
+    errors.push('a4ImplementationProductionDeployEvidence.requiresImplementationProductionReleaseAdmissionReceipt must be true');
+  }
+  if (implementationProductionDeployEvidence.deployEvidenceOnly !== true) {
+    errors.push('a4ImplementationProductionDeployEvidence.deployEvidenceOnly must be true');
+  }
+  for (const field of [
+    'requiresApprovedReleaseAdmission',
+    'requiresOperatorDeployedBy',
+    'requiresDeployedAt',
+    'requiresReleaseEnvironment',
+    'requiresReleaseWindow',
+    'requiresDeploymentSurface',
+    'requiresDeploymentId',
+    'requiresDeploymentUrl',
+    'requiresIssueIdentifier',
+    'requiresIssueUrl',
+    'requiresPrUrl',
+    'requiresPrNumber',
+    'requiresCommitSha',
+    'requiresMergeCommitSha',
+    'requiresChecks',
+    'requiresPostMergeChecks',
+    'requiresDeploymentEvidence',
+    'requiresPostDeploySmokeEvidence',
+    'requiresProductionValidationEvidence',
+    'requiresRollbackPlan',
+    'requiresPublicAccessFailClosedProof',
+  ]) {
+    if (implementationProductionDeployEvidence[field] !== true) {
+      errors.push(`a4ImplementationProductionDeployEvidence.${field} must be true`);
+    }
+  }
+  if (implementationProductionDeployEvidence.deployedByVerifier !== false) {
+    errors.push('a4ImplementationProductionDeployEvidence.deployedByVerifier must be false');
+  }
+  if (implementationProductionDeployEvidence.requiresNoThirdPartyWriteByVerifier !== true) {
+    errors.push('a4ImplementationProductionDeployEvidence.requiresNoThirdPartyWriteByVerifier must be true');
+  }
+  if (implementationProductionDeployEvidence.requiresRedactionPolicy !== true) {
+    errors.push('a4ImplementationProductionDeployEvidence.requiresRedactionPolicy must be true');
+  }
+  for (const field of ['forbidsSecrets', 'forbidsRawLogs', 'forbidsPrompts', 'forbidsRawTranscripts']) {
+    if (implementationProductionDeployEvidence[field] !== true) {
+      errors.push(`a4ImplementationProductionDeployEvidence.${field} must be true`);
+    }
+  }
+  if (implementationProductionDeployEvidence.requiresNoExecutionOnEvidence !== true) {
+    errors.push('a4ImplementationProductionDeployEvidence.requiresNoExecutionOnEvidence must be true');
+  }
+  for (const receiptReference of [
+    'implementation-production-release-admission-check',
+    'implementation-production-release-decision-check',
+    'implementation-post-merge-validation-check',
+    'implementation-merge-evidence-check',
+    'implementation-merge-decision-check',
+    'implementation-pr-evidence-check',
+    'implementation-workspace-evidence-check',
+    'follow-up-work-intake-check',
+    'manual-follow-up-issue-evidence-check',
+    'manual-next-step-handoff-check',
+    'receipt-review-decision-check',
+    'receipt-publication-check',
+    'receipt-bundle-check',
+    'execution-runbook-check',
+    'release-admission-check',
+  ]) {
+    if (!implementationProductionDeployEvidence.requiredReceiptReferences?.includes(receiptReference)) {
+      errors.push(`a4ImplementationProductionDeployEvidence.requiredReceiptReferences must include ${receiptReference}`);
+    }
+  }
+  for (const evidence of [
+    'implementation-production-release-admission-receipt',
+    'approved-release-admission',
+    'operator-deployed-by',
+    'deployed-at',
+    'release-environment',
+    'release-window',
+    'deployment-surface',
+    'deployment-id',
+    'deployment-url',
+    'issue-identifier',
+    'issue-url',
+    'pr-url',
+    'pr-number',
+    'commit-sha',
+    'merge-commit-sha',
+    'checks',
+    'post-merge-checks',
+    'deployment-evidence',
+    'post-deploy-smoke-evidence',
+    'production-validation-evidence',
+    'rollback-plan',
+    'public-access-fail-closed-proof',
+    'redaction-policy',
+    'operator-summary',
+  ]) {
+    if (!implementationProductionDeployEvidence.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ImplementationProductionDeployEvidence.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-policy-blocked',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+    'deploy-not-performed-by-verifier',
+    'third-party-write-not-performed-by-verifier',
+    'production-deploy-evidence-only',
+  ]) {
+    if (!implementationProductionDeployEvidence.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ImplementationProductionDeployEvidence.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (implementationProductionDeployEvidence.writesPerformed !== 0) {
+    errors.push('a4ImplementationProductionDeployEvidence.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -7160,6 +7288,240 @@ function validateImplementationProductionReleaseAdmission(admission, decisionRec
   return errors;
 }
 
+function validateImplementationProductionReleaseAdmissionReceipt(receipt, admission, admissionResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'implementation-production-release-admission-check') {
+    errors.push('implementation production release admission receipt mode must be implementation-production-release-admission-check');
+  }
+  if (receipt.ok !== true || receipt.implementationProductionReleaseAdmissionOk !== true) {
+    errors.push('implementation production release admission receipt must be ok');
+  }
+  if (receipt.implementationProductionReleaseAdmission !== rel(paths.implementationProductionReleaseAdmissionPath)) {
+    errors.push('implementation production release admission receipt implementationProductionReleaseAdmission must match implementation production release admission artifact path');
+  }
+  if (receipt.implementationProductionReleaseDecisionReceipt !== rel(paths.implementationProductionReleaseDecisionReceiptPath)) {
+    errors.push('implementation production release admission receipt implementationProductionReleaseDecisionReceipt must match implementation production release decision receipt path');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`implementation production release admission receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`implementation production release admission receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`implementation production release admission receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.releaseAdmissionOnly !== true) {
+    errors.push('implementation production release admission receipt releaseAdmissionOnly must be true');
+  }
+  if (receipt.releaseDecision !== 'approved-for-manual-release') {
+    errors.push('implementation production release admission receipt releaseDecision must be approved-for-manual-release');
+  }
+  for (const field of [
+    'admittedBy',
+    'admittedAt',
+    'releaseEnvironment',
+    'issueIdentifier',
+    'issueUrl',
+    'prUrl',
+    'prNumber',
+    'commitSha',
+    'mergeCommitSha',
+  ]) {
+    if (receipt[field] !== admission[field]) {
+      errors.push(`implementation production release admission receipt ${field} must match admission`);
+    }
+  }
+  if (JSON.stringify(receipt.releaseWindow || null) !== JSON.stringify(admission.releaseWindow || null)) {
+    errors.push('implementation production release admission receipt releaseWindow must match admission');
+  }
+  for (const field of ['checks', 'postMergeChecks', 'smokeEvidence', 'validationEvidence', 'rollbackPlan']) {
+    if (JSON.stringify(receipt[field] || []) !== JSON.stringify(admission[field] || [])) {
+      errors.push(`implementation production release admission receipt ${field} must match admission`);
+    }
+  }
+  if (!Array.isArray(receipt.checks) || receipt.checks.length === 0) {
+    errors.push('implementation production release admission receipt checks must not be empty');
+  } else if (receipt.checks.some((check) => check.conclusion !== 'SUCCESS')) {
+    errors.push('implementation production release admission receipt checks must all conclude SUCCESS');
+  }
+  if (!Array.isArray(receipt.postMergeChecks) || receipt.postMergeChecks.length === 0) {
+    errors.push('implementation production release admission receipt postMergeChecks must not be empty');
+  } else if (receipt.postMergeChecks.some((check) => check.conclusion !== 'SUCCESS')) {
+    errors.push('implementation production release admission receipt postMergeChecks must all conclude SUCCESS');
+  }
+  if (!Array.isArray(receipt.smokeEvidence) || receipt.smokeEvidence.length === 0) {
+    errors.push('implementation production release admission receipt smokeEvidence must not be empty');
+  }
+  if (!Array.isArray(receipt.validationEvidence) || receipt.validationEvidence.length === 0) {
+    errors.push('implementation production release admission receipt validationEvidence must not be empty');
+  }
+  if (!Array.isArray(receipt.rollbackPlan) || receipt.rollbackPlan.length === 0) {
+    errors.push('implementation production release admission receipt rollbackPlan must not be empty');
+  }
+  if (receipt.deployedByVerifier !== false) {
+    errors.push('implementation production release admission receipt deployedByVerifier must be false');
+  }
+  if (receipt.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation production release admission receipt thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (receipt.redactionPolicyApplied !== true) {
+    errors.push('implementation production release admission receipt redactionPolicyApplied must be true');
+  }
+  if (receipt.containsSecrets !== false) errors.push('implementation production release admission receipt containsSecrets must be false');
+  if (receipt.containsRawLogs !== false) errors.push('implementation production release admission receipt containsRawLogs must be false');
+  if (receipt.containsPrompts !== false) errors.push('implementation production release admission receipt containsPrompts must be false');
+  if (receipt.containsRawTranscripts !== false) {
+    errors.push('implementation production release admission receipt containsRawTranscripts must be false');
+  }
+  if (receipt.currentPolicyBlocked !== true) errors.push('implementation production release admission receipt currentPolicyBlocked must be true');
+  if (receipt.processSpawned !== false) errors.push('implementation production release admission receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('implementation production release admission receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('implementation production release admission receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('implementation production release admission receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('implementation production release admission receipt executionEnabled must be false');
+  if (receipt.executionApproved !== false) errors.push('implementation production release admission receipt executionApproved must be false');
+  if (receipt.wouldExecute !== false) errors.push('implementation production release admission receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('implementation production release admission receipt writesPerformed must be 0');
+  if (admissionResult.implementationProductionReleaseAdmissionOk !== true) {
+    errors.push('implementation production release admission receipt requires valid implementation production release admission result');
+  }
+
+  return errors;
+}
+
+function validateImplementationProductionDeployEvidence(evidence, admissionReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ImplementationProductionDeployEvidence || {};
+
+  if (evidence.authorityLevel !== 'A4') errors.push('implementation production deploy evidence authorityLevel must be A4');
+  if (evidence.issue !== constraints.expectedIssue) {
+    errors.push(`implementation production deploy evidence issue mismatch: expected ${constraints.expectedIssue}, got ${evidence.issue}`);
+  }
+  if (evidence.target !== constraints.expectedTarget) {
+    errors.push(`implementation production deploy evidence target mismatch: expected ${constraints.expectedTarget}, got ${evidence.target}`);
+  }
+  if (evidence.action !== constraints.expectedAction) {
+    errors.push(`implementation production deploy evidence action mismatch: expected ${constraints.expectedAction}, got ${evidence.action}`);
+  }
+  if (evidence.implementationProductionReleaseAdmission !== rel(paths.implementationProductionReleaseAdmissionPath)) {
+    errors.push('implementation production deploy evidence implementationProductionReleaseAdmission must match implementation production release admission artifact path');
+  }
+  if (evidence.implementationProductionReleaseAdmissionReceipt !== rel(paths.implementationProductionReleaseAdmissionReceiptPath)) {
+    errors.push('implementation production deploy evidence implementationProductionReleaseAdmissionReceipt must match implementation production release admission receipt path');
+  }
+  if (evidence.deployEvidenceOnly !== true) {
+    errors.push('implementation production deploy evidence deployEvidenceOnly must be true');
+  }
+  if (admissionReceipt.releaseDecision !== 'approved-for-manual-release') {
+    errors.push('implementation production deploy evidence requires approved-for-manual-release admission receipt');
+  }
+  if (evidence.releaseDecision !== admissionReceipt.releaseDecision) {
+    errors.push('implementation production deploy evidence releaseDecision must match admission receipt');
+  }
+  if (!hasValue(evidence.operatorDeployedBy)) errors.push('implementation production deploy evidence operatorDeployedBy is required');
+  if (!hasValue(evidence.deployedAt) || Number.isNaN(Date.parse(evidence.deployedAt))) {
+    errors.push('implementation production deploy evidence deployedAt must be an ISO timestamp');
+  }
+  for (const field of ['releaseEnvironment', 'issueIdentifier', 'issueUrl', 'prUrl', 'prNumber', 'commitSha', 'mergeCommitSha']) {
+    if (evidence[field] !== admissionReceipt[field]) {
+      errors.push(`implementation production deploy evidence ${field} must match admission receipt`);
+    }
+  }
+  if (JSON.stringify(evidence.releaseWindow || null) !== JSON.stringify(admissionReceipt.releaseWindow || null)) {
+    errors.push('implementation production deploy evidence releaseWindow must match admission receipt');
+  }
+  if (!hasValue(evidence.deploymentSurface)) errors.push('implementation production deploy evidence deploymentSurface is required');
+  if (!hasValue(evidence.deploymentId)) errors.push('implementation production deploy evidence deploymentId is required');
+  if (!hasValue(evidence.deploymentUrl)) errors.push('implementation production deploy evidence deploymentUrl is required');
+  for (const field of ['checks', 'postMergeChecks']) {
+    if (JSON.stringify(evidence[field] || []) !== JSON.stringify(admissionReceipt[field] || [])) {
+      errors.push(`implementation production deploy evidence ${field} must match admission receipt`);
+    }
+  }
+  if (!Array.isArray(evidence.checks) || evidence.checks.length === 0) {
+    errors.push('implementation production deploy evidence checks must not be empty');
+  } else if (evidence.checks.some((check) => check.conclusion !== 'SUCCESS')) {
+    errors.push('implementation production deploy evidence checks must all conclude SUCCESS');
+  }
+  if (!Array.isArray(evidence.postMergeChecks) || evidence.postMergeChecks.length === 0) {
+    errors.push('implementation production deploy evidence postMergeChecks must not be empty');
+  } else if (evidence.postMergeChecks.some((check) => check.conclusion !== 'SUCCESS')) {
+    errors.push('implementation production deploy evidence postMergeChecks must all conclude SUCCESS');
+  }
+  if (!Array.isArray(evidence.deploymentEvidence) || evidence.deploymentEvidence.length === 0) {
+    errors.push('implementation production deploy evidence deploymentEvidence must not be empty');
+  }
+  if (!Array.isArray(evidence.postDeploySmokeEvidence) || evidence.postDeploySmokeEvidence.length === 0) {
+    errors.push('implementation production deploy evidence postDeploySmokeEvidence must not be empty');
+  }
+  if (!Array.isArray(evidence.productionValidationEvidence) || evidence.productionValidationEvidence.length === 0) {
+    errors.push('implementation production deploy evidence productionValidationEvidence must not be empty');
+  }
+  if (!Array.isArray(evidence.rollbackPlan) || evidence.rollbackPlan.length === 0) {
+    errors.push('implementation production deploy evidence rollbackPlan must not be empty');
+  }
+  if (evidence.deployedByVerifier !== false) {
+    errors.push('implementation production deploy evidence deployedByVerifier must be false');
+  }
+  if (evidence.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation production deploy evidence thirdPartyWritePerformedByVerifier must be false');
+  }
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!evidence.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`implementation production deploy evidence requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const requiredEvidence of rules.requiredEvidence || []) {
+    if (!evidence.requiredEvidence?.includes(requiredEvidence)) {
+      errors.push(`implementation production deploy evidence requiredEvidence must include ${requiredEvidence}`);
+    }
+  }
+  if (evidence.redactionPolicyApplied !== true) {
+    errors.push('implementation production deploy evidence redactionPolicyApplied must be true');
+  }
+  if (!hasValue(evidence.redactionPolicy)) errors.push('implementation production deploy evidence redactionPolicy is required');
+  if (evidence.containsSecrets !== false) errors.push('implementation production deploy evidence containsSecrets must be false');
+  if (evidence.containsRawLogs !== false) errors.push('implementation production deploy evidence containsRawLogs must be false');
+  if (evidence.containsPrompts !== false) errors.push('implementation production deploy evidence containsPrompts must be false');
+  if (evidence.containsRawTranscripts !== false) {
+    errors.push('implementation production deploy evidence containsRawTranscripts must be false');
+  }
+  if (evidence.rawLogsIncluded === true) errors.push('implementation production deploy evidence rawLogsIncluded must not be true');
+  if (evidence.promptsIncluded === true) errors.push('implementation production deploy evidence promptsIncluded must not be true');
+  if (evidence.rawTranscriptIncluded === true) {
+    errors.push('implementation production deploy evidence rawTranscriptIncluded must not be true');
+  }
+  if (!hasValue(evidence.publicAccessFailClosedProof)) {
+    errors.push('implementation production deploy evidence publicAccessFailClosedProof is required');
+  }
+  if (!hasValue(evidence.operatorSummary)) errors.push('implementation production deploy evidence operatorSummary is required');
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!evidence.noExecutionMarkers?.includes(marker)) {
+      errors.push(`implementation production deploy evidence noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (evidence.currentPolicyBlocked !== true) errors.push('implementation production deploy evidence currentPolicyBlocked must be true');
+  if (evidence.processSpawned === true) errors.push('implementation production deploy evidence processSpawned must not be true');
+  if (Array.isArray(evidence.executedCommands) && evidence.executedCommands.length > 0) {
+    errors.push('implementation production deploy evidence executedCommands must be empty');
+  }
+  if (evidence.runnerEnabled === true) errors.push('implementation production deploy evidence runnerEnabled must not be true');
+  if (evidence.executionReady === true) errors.push('implementation production deploy evidence executionReady must not be true');
+  if (evidence.executionEnabled === true) errors.push('implementation production deploy evidence executionEnabled must not be true');
+  if (evidence.executionApproved === true) errors.push('implementation production deploy evidence executionApproved must not be true');
+  if (evidence.wouldExecute === true) errors.push('implementation production deploy evidence wouldExecute must not be true');
+  if (evidence.writesPerformed !== 0) errors.push('implementation production deploy evidence writesPerformed must be 0');
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('implementation production deploy evidence current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -9314,6 +9676,125 @@ function buildImplementationProductionReleaseAdmissionReceipt({
       implementationProductionReleaseAdmissionOnly: manifest.a4ImplementationProductionReleaseAdmission?.releaseAdmissionOnly,
       implementationProductionReleaseAdmissionDeployedByVerifier: manifest.a4ImplementationProductionReleaseAdmission?.deployedByVerifier,
       implementationProductionReleaseAdmissionRequiresNoExecutionOnAdmission: manifest.a4ImplementationProductionReleaseAdmission?.requiresNoExecutionOnAdmission,
+    },
+  };
+}
+
+function buildImplementationProductionDeployEvidenceReceipt({
+  manifest,
+  manifestValidation,
+  admissionResult,
+  implementationProductionReleaseAdmission,
+  implementationProductionReleaseAdmissionPath,
+  implementationProductionReleaseAdmissionReceipt,
+  implementationProductionReleaseAdmissionReceiptPath,
+  implementationProductionDeployEvidence,
+  implementationProductionDeployEvidencePath,
+  implementationProductionReleaseAdmissionReceiptErrors,
+  implementationProductionDeployEvidenceErrors,
+  constraints,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(admissionResult.errors || []),
+    ...implementationProductionReleaseAdmissionReceiptErrors,
+    ...implementationProductionDeployEvidenceErrors,
+  ];
+  const implementationProductionDeployEvidenceOk = errors.length === 0;
+
+  return {
+    mode: 'implementation-production-deploy-evidence-check',
+    ok: implementationProductionDeployEvidenceOk,
+    implementationProductionDeployEvidenceOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    implementationProductionDeployEvidence: rel(implementationProductionDeployEvidencePath),
+    implementationProductionReleaseAdmission: rel(implementationProductionReleaseAdmissionPath),
+    implementationProductionReleaseAdmissionReceipt: rel(implementationProductionReleaseAdmissionReceiptPath),
+    implementationProductionReleaseDecisionReceipt: admissionResult.implementationProductionReleaseDecisionReceipt,
+    implementationProductionReleaseDecision: admissionResult.implementationProductionReleaseDecision,
+    implementationPostMergeValidationReceipt: admissionResult.implementationPostMergeValidationReceipt,
+    implementationPostMergeValidation: admissionResult.implementationPostMergeValidation,
+    implementationMergeEvidenceReceipt: admissionResult.implementationMergeEvidenceReceipt,
+    implementationMergeEvidence: admissionResult.implementationMergeEvidence,
+    implementationMergeDecisionReceipt: admissionResult.implementationMergeDecisionReceipt,
+    implementationMergeDecision: admissionResult.implementationMergeDecision,
+    implementationPrEvidenceReceipt: admissionResult.implementationPrEvidenceReceipt,
+    implementationPrEvidence: admissionResult.implementationPrEvidence,
+    implementationWorkspaceEvidenceReceipt: admissionResult.implementationWorkspaceEvidenceReceipt,
+    implementationWorkspaceEvidence: admissionResult.implementationWorkspaceEvidence,
+    followUpWorkIntakeReceipt: admissionResult.followUpWorkIntakeReceipt,
+    followUpWorkIntake: admissionResult.followUpWorkIntake,
+    packetPath: admissionResult.packetPath,
+    issue: admissionResult.issue || constraints.expectedIssue,
+    authorityLevel: admissionResult.authorityLevel,
+    target: admissionResult.target,
+    action: admissionResult.action,
+    targetScope: implementationProductionDeployEvidence.targetScope || implementationProductionReleaseAdmissionReceipt.targetScope || admissionResult.targetScope,
+    deployEvidenceOnly: implementationProductionDeployEvidence.deployEvidenceOnly === true,
+    releaseDecision: implementationProductionDeployEvidence.releaseDecision || null,
+    operatorDeployedBy: implementationProductionDeployEvidence.operatorDeployedBy || null,
+    deployedAt: implementationProductionDeployEvidence.deployedAt || null,
+    releaseEnvironment: implementationProductionDeployEvidence.releaseEnvironment || null,
+    releaseWindow: implementationProductionDeployEvidence.releaseWindow || null,
+    deploymentSurface: implementationProductionDeployEvidence.deploymentSurface || null,
+    deploymentId: implementationProductionDeployEvidence.deploymentId || null,
+    deploymentUrl: implementationProductionDeployEvidence.deploymentUrl || null,
+    issueIdentifier: implementationProductionDeployEvidence.issueIdentifier || null,
+    issueUrl: implementationProductionDeployEvidence.issueUrl || null,
+    prUrl: implementationProductionDeployEvidence.prUrl || null,
+    prNumber: implementationProductionDeployEvidence.prNumber || null,
+    commitSha: implementationProductionDeployEvidence.commitSha || null,
+    mergeCommitSha: implementationProductionDeployEvidence.mergeCommitSha || null,
+    checks: implementationProductionDeployEvidence.checks || [],
+    postMergeChecks: implementationProductionDeployEvidence.postMergeChecks || [],
+    deploymentEvidence: implementationProductionDeployEvidence.deploymentEvidence || [],
+    postDeploySmokeEvidence: implementationProductionDeployEvidence.postDeploySmokeEvidence || [],
+    productionValidationEvidence: implementationProductionDeployEvidence.productionValidationEvidence || [],
+    rollbackPlan: implementationProductionDeployEvidence.rollbackPlan || [],
+    deployedByVerifier: implementationProductionDeployEvidence.deployedByVerifier === true,
+    thirdPartyWritePerformedByVerifier: implementationProductionDeployEvidence.thirdPartyWritePerformedByVerifier === true,
+    requiredReceiptReferences: implementationProductionDeployEvidence.requiredReceiptReferences || [],
+    requiredEvidence: implementationProductionDeployEvidence.requiredEvidence || [],
+    redactionPolicyApplied: implementationProductionDeployEvidence.redactionPolicyApplied === true,
+    redactionPolicy: implementationProductionDeployEvidence.redactionPolicy || null,
+    containsSecrets: implementationProductionDeployEvidence.containsSecrets === true,
+    containsRawLogs: implementationProductionDeployEvidence.containsRawLogs === true,
+    containsPrompts: implementationProductionDeployEvidence.containsPrompts === true,
+    containsRawTranscripts: implementationProductionDeployEvidence.containsRawTranscripts === true,
+    rawLogsIncluded: implementationProductionDeployEvidence.rawLogsIncluded === true,
+    promptsIncluded: implementationProductionDeployEvidence.promptsIncluded === true,
+    rawTranscriptIncluded: implementationProductionDeployEvidence.rawTranscriptIncluded === true,
+    publicAccessFailClosedProof: implementationProductionDeployEvidence.publicAccessFailClosedProof || null,
+    operatorSummary: implementationProductionDeployEvidence.operatorSummary || null,
+    noExecutionMarkers: implementationProductionDeployEvidence.noExecutionMarkers || [],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: implementationProductionDeployEvidenceOk
+      ? 'implementation production deploy evidence accepted as operator evidence only; verifier did not deploy, spawn a runner process, or perform a production write'
+      : 'implementation production deploy evidence rejected before deploy, runner process, policy enablement, or write command',
+    evidenceTarget: implementationProductionDeployEvidence.evidenceTarget || implementationProductionReleaseAdmissionReceipt.evidenceTarget || admissionResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may use this deploy evidence for separate post-deploy validation; automated execution still requires explicit checked-in policy enablement and a separate runner path',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      implementationProductionDeployEvidenceRequiresImplementationProductionReleaseAdmissionReceipt: manifest.a4ImplementationProductionDeployEvidence?.requiresImplementationProductionReleaseAdmissionReceipt,
+      implementationProductionDeployEvidenceOnly: manifest.a4ImplementationProductionDeployEvidence?.deployEvidenceOnly,
+      implementationProductionDeployEvidenceDeployedByVerifier: manifest.a4ImplementationProductionDeployEvidence?.deployedByVerifier,
+      implementationProductionDeployEvidenceRequiresNoExecutionOnEvidence: manifest.a4ImplementationProductionDeployEvidence?.requiresNoExecutionOnEvidence,
     },
   };
 }
@@ -12179,6 +12660,75 @@ function commandImplementationProductionReleaseAdmissionCheck(options) {
   return result;
 }
 
+function commandImplementationProductionDeployEvidenceCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for implementation-production-deploy-evidence-check'));
+  }
+  if (!options.implementationProductionReleaseAdmissionReceipt) {
+    throw new Error('--implementation-production-release-admission-receipt is required for implementation-production-deploy-evidence-check');
+  }
+  if (!options.implementationProductionDeployEvidence) {
+    throw new Error('--implementation-production-deploy-evidence is required for implementation-production-deploy-evidence-check');
+  }
+
+  const admissionResult = commandImplementationProductionReleaseAdmissionCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const implementationProductionReleaseDecisionReceiptPath = resolveFromRoot(options.implementationProductionReleaseDecisionReceipt);
+  const implementationProductionReleaseAdmissionPath = resolveFromRoot(options.implementationProductionReleaseAdmission);
+  const implementationProductionReleaseAdmissionReceiptPath = resolveFromRoot(options.implementationProductionReleaseAdmissionReceipt);
+  const implementationProductionDeployEvidencePath = resolveFromRoot(options.implementationProductionDeployEvidence);
+  const implementationProductionReleaseAdmission = readJson(implementationProductionReleaseAdmissionPath);
+  const implementationProductionReleaseAdmissionReceipt = readJson(implementationProductionReleaseAdmissionReceiptPath);
+  const implementationProductionDeployEvidence = readJson(implementationProductionDeployEvidencePath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const implementationProductionReleaseAdmissionReceiptErrors = validateImplementationProductionReleaseAdmissionReceipt(
+    implementationProductionReleaseAdmissionReceipt,
+    implementationProductionReleaseAdmission,
+    admissionResult,
+    {
+      implementationProductionReleaseAdmissionPath,
+      implementationProductionReleaseDecisionReceiptPath,
+    },
+    constraints,
+  );
+  const implementationProductionDeployEvidenceErrors = validateImplementationProductionDeployEvidence(
+    implementationProductionDeployEvidence,
+    implementationProductionReleaseAdmissionReceipt,
+    manifest,
+    {
+      implementationProductionReleaseAdmissionPath,
+      implementationProductionReleaseAdmissionReceiptPath,
+    },
+    constraints,
+  );
+  const result = buildImplementationProductionDeployEvidenceReceipt({
+    manifest,
+    manifestValidation,
+    admissionResult,
+    implementationProductionReleaseAdmission,
+    implementationProductionReleaseAdmissionPath,
+    implementationProductionReleaseAdmissionReceipt,
+    implementationProductionReleaseAdmissionReceiptPath,
+    implementationProductionDeployEvidence,
+    implementationProductionDeployEvidencePath,
+    implementationProductionReleaseAdmissionReceiptErrors,
+    implementationProductionDeployEvidenceErrors,
+    constraints,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -12246,6 +12796,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs implementation-post-merge-validation-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --implementation-merge-decision-receipt <path> --implementation-merge-evidence <path> --implementation-merge-evidence-receipt <path> --implementation-post-merge-validation <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-release-decision-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --implementation-merge-decision-receipt <path> --implementation-merge-evidence <path> --implementation-merge-evidence-receipt <path> --implementation-post-merge-validation <path> --implementation-post-merge-validation-receipt <path> --implementation-production-release-decision <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-release-admission-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --implementation-merge-decision-receipt <path> --implementation-merge-evidence <path> --implementation-merge-evidence-receipt <path> --implementation-post-merge-validation <path> --implementation-post-merge-validation-receipt <path> --implementation-production-release-decision <path> --implementation-production-release-decision-receipt <path> --implementation-production-release-admission <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs implementation-production-deploy-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --implementation-pr-evidence-receipt <path> --implementation-merge-decision <path> --implementation-merge-decision-receipt <path> --implementation-merge-evidence <path> --implementation-merge-evidence-receipt <path> --implementation-post-merge-validation <path> --implementation-post-merge-validation-receipt <path> --implementation-production-release-decision <path> --implementation-production-release-decision-receipt <path> --implementation-production-release-admission <path> --implementation-production-release-admission-receipt <path> --implementation-production-deploy-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -12288,6 +12839,7 @@ async function main() {
   else if (options.command === 'implementation-post-merge-validation-check') result = commandImplementationPostMergeValidationCheck(options);
   else if (options.command === 'implementation-production-release-decision-check') result = commandImplementationProductionReleaseDecisionCheck(options);
   else if (options.command === 'implementation-production-release-admission-check') result = commandImplementationProductionReleaseAdmissionCheck(options);
+  else if (options.command === 'implementation-production-deploy-evidence-check') result = commandImplementationProductionDeployEvidenceCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -12326,6 +12878,7 @@ export {
   commandImplementationPostMergeValidationCheck,
   commandImplementationProductionReleaseDecisionCheck,
   commandImplementationProductionReleaseAdmissionCheck,
+  commandImplementationProductionDeployEvidenceCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
