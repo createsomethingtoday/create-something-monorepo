@@ -66,6 +66,7 @@ function parseArgs(argv) {
     command: args[0] || 'check',
     manifest: DEFAULT_MANIFEST_PATH,
     packet: null,
+    preflightReceipt: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -82,6 +83,7 @@ function parseArgs(argv) {
     const arg = args[index];
     if (arg === '--manifest' && args[index + 1]) options.manifest = args[++index];
     else if (arg === '--packet' && args[index + 1]) options.packet = args[++index];
+    else if (arg === '--preflight-receipt' && args[index + 1]) options.preflightReceipt = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -474,6 +476,98 @@ function buildPreflightReceipt({ manifest, manifestValidation, packet, packetPat
   };
 }
 
+function validatePreflightReceipt(preflightReceipt, packet, constraints) {
+  const errors = [];
+
+  if (preflightReceipt.mode !== 'preflight-check') errors.push('preflight receipt mode must be preflight-check');
+  if (preflightReceipt.ok !== true || preflightReceipt.admissionOk !== true) {
+    errors.push('preflight receipt admission must be ok');
+  }
+  if (preflightReceipt.issue !== constraints.expectedIssue) {
+    errors.push(`preflight receipt issue mismatch: expected ${constraints.expectedIssue}, got ${preflightReceipt.issue}`);
+  }
+  if (preflightReceipt.target !== constraints.expectedTarget) {
+    errors.push(`preflight receipt target mismatch: expected ${constraints.expectedTarget}, got ${preflightReceipt.target}`);
+  }
+  if (preflightReceipt.action !== constraints.expectedAction) {
+    errors.push(`preflight receipt action mismatch: expected ${constraints.expectedAction}, got ${preflightReceipt.action}`);
+  }
+  if (preflightReceipt.authorityLevel !== 'A4') errors.push('preflight receipt authorityLevel must be A4');
+  if (preflightReceipt.wouldExecute !== false) errors.push('preflight receipt wouldExecute must be false');
+  if (preflightReceipt.writesPerformed !== 0) errors.push('preflight receipt writesPerformed must be 0');
+  if (!Array.isArray(preflightReceipt.executionPlan) || preflightReceipt.executionPlan.length === 0) {
+    errors.push('preflight receipt executionPlan must be non-empty');
+  }
+  if (!preflightReceipt.executionPlan?.some((step) => step?.phase === 'execution' && step?.dryRunOnly === true)) {
+    errors.push('preflight receipt execution phase must be dryRunOnly');
+  }
+
+  for (const [field, packetField] of [
+    ['validationPlan', 'validation'],
+    ['rollbackPlan', 'rollback'],
+    ['postActionSmokePlan', 'postActionSmoke'],
+    ['stopConditions', 'stopConditions'],
+  ]) {
+    if (JSON.stringify(preflightReceipt[field] || []) !== JSON.stringify(packet[packetField] || [])) {
+      errors.push(`preflight receipt ${field} must match packet ${packetField}`);
+    }
+  }
+
+  return errors;
+}
+
+function buildDisabledExecutionReceipt({ manifest, manifestValidation, packet, packetPath, preflightReceipt, preflightPath, constraints, packetValidation, preflightErrors, options }) {
+  const errors = [...manifestValidation.errors, ...packetValidation.errors, ...preflightErrors];
+  const prerequisitesOk = manifestValidation.ok && packetValidation.ok && preflightErrors.length === 0;
+  const base = {
+    mode: 'execution-receipt-check',
+    ok: prerequisitesOk,
+    prerequisitesOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    packetPath: rel(packetPath),
+    preflightReceipt: rel(preflightPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    constraints,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: 'A4 execution remains disabled until a separate explicit operator execution approval is recorded',
+    checkedAt: new Date().toISOString(),
+    evidenceTarget: packet.evidenceTarget || preflightReceipt.evidenceTarget || null,
+  };
+
+  if (!prerequisitesOk) {
+    return {
+      ...base,
+      validationPlan: [],
+      rollbackPlan: [],
+      postActionSmokePlan: [],
+      stopConditions: [],
+    };
+  }
+
+  return {
+    ...base,
+    validationPlan: preflightReceipt.validationPlan,
+    rollbackPlan: preflightReceipt.rollbackPlan,
+    postActionSmokePlan: preflightReceipt.postActionSmokePlan,
+    stopConditions: preflightReceipt.stopConditions,
+    executionPlan: preflightReceipt.executionPlan,
+    nextGate: 'explicit operator execution approval for this same issue, target, action, packet, and preflight receipt',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+    },
+  };
+}
+
 function print(result, options) {
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -556,6 +650,42 @@ function commandPreflightCheck(options) {
   return result;
 }
 
+function commandExecutionReceiptCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for execution-receipt-check'));
+  }
+  if (!options.preflightReceipt) throw new Error('--preflight-receipt is required for execution-receipt-check');
+
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const preflightPath = resolveFromRoot(options.preflightReceipt);
+  const packet = readJson(packetPath);
+  const preflightReceipt = readJson(preflightPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const preflightErrors = validatePreflightReceipt(preflightReceipt, packet, constraints);
+  const result = buildDisabledExecutionReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    preflightReceipt,
+    preflightPath,
+    constraints,
+    packetValidation,
+    preflightErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -597,6 +727,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs check [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs approval-check --packet <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs preflight-check --packet <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs execution-receipt-check --packet <path> --preflight-receipt <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -613,6 +744,7 @@ async function main() {
   if (options.command === 'check') result = commandCheck(options);
   else if (options.command === 'approval-check') result = commandApprovalCheck(options);
   else if (options.command === 'preflight-check') result = commandPreflightCheck(options);
+  else if (options.command === 'execution-receipt-check') result = commandExecutionReceiptCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -629,6 +761,7 @@ export {
   REQUIRED_PACKET_FIELDS,
   REQUIRED_TRIAL_RECEIPT_FIELDS,
   commandLooksHighRisk,
+  commandExecutionReceiptCheck,
   commandPreflightCheck,
   parseArgs,
   validateApprovalPacket,

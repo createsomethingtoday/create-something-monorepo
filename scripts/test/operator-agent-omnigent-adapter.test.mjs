@@ -24,7 +24,7 @@ const TRIAL_RECEIPT_PATH = path.join(
   'fixtures',
   'omnigent-readonly-scout.receipt.json',
 );
-const EXPECTED_ISSUE = 'CRE-1066';
+const EXPECTED_ISSUE = 'CRE-1067';
 const EXPECTED_TARGET = 'create-something-internal-production';
 const EXPECTED_ACTION = 'example high-risk action approved for fixture validation only';
 const FIXED_NOW = '2026-07-06T20:00:00.000Z';
@@ -98,6 +98,28 @@ function preflightCheckArgs(packetPath, receiptDir) {
   const args = approvalCheckArgs(packetPath, receiptDir);
   args[1] = 'preflight-check';
   return args;
+}
+
+function executionReceiptCheckArgs(packetPath, preflightReceiptPath, receiptDir) {
+  const args = approvalCheckArgs(packetPath, receiptDir);
+  args[1] = 'execution-receipt-check';
+  args.splice(4, 0, '--preflight-receipt', preflightReceiptPath);
+  return args;
+}
+
+function writeValidPreflightReceipt(t, packetPath) {
+  const root = makeWorkspace(t);
+  const preflightResult = spawnSync(process.execPath, preflightCheckArgs(packetPath, root), {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+  });
+  assert.equal(preflightResult.status, 0, preflightResult.stderr || preflightResult.stdout);
+  const preflightPayload = JSON.parse(preflightResult.stdout);
+  return {
+    root,
+    preflightPath: path.join(REPO_ROOT, preflightPayload.receiptPath),
+    preflightPayload,
+  };
 }
 
 test('Omnigent adapter manifest stays read-only/local-only before A4 approval', () => {
@@ -316,6 +338,110 @@ test('preflight-check fails closed without an executable plan when admission fai
   assert.deepEqual(payload.rollbackPlan, []);
   assert.deepEqual(payload.postActionSmokePlan, []);
   assert.match(payload.errors.join('\n'), /expiresAt must be in the future/);
+});
+
+test('execution-receipt-check emits a disabled execution receipt from valid packet and preflight', (t) => {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+  const { preflightPath } = writeValidPreflightReceipt(t, packetPath);
+
+  const result = spawnSync(process.execPath, executionReceiptCheckArgs(packetPath, preflightPath, root), {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'execution-receipt-check');
+  assert.equal(payload.issue, EXPECTED_ISSUE);
+  assert.equal(payload.authorityLevel, 'A4');
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.blockedReason, /explicit operator execution approval/);
+  assert.deepEqual(payload.validationPlan, validPacket().validation);
+  assert.deepEqual(payload.rollbackPlan, validPacket().rollback);
+  assert.deepEqual(payload.postActionSmokePlan, validPacket().postActionSmoke);
+  assert.deepEqual(payload.stopConditions, validPacket().stopConditions);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.match(payload.nextGate, /explicit operator execution approval/);
+  assert.match(payload.receiptPath, /execution-receipt-check\.json$/);
+
+  const receipt = JSON.parse(readFileSync(path.join(REPO_ROOT, payload.receiptPath), 'utf8'));
+  assert.equal(receipt.executionEnabled, false);
+  assert.equal(receipt.executionApproved, false);
+  assert.equal(receipt.writesPerformed, 0);
+});
+
+test('execution-receipt-check fails closed on mismatched preflight receipt', (t) => {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+  const { preflightPath } = writeValidPreflightReceipt(t, packetPath);
+  const preflight = JSON.parse(readFileSync(preflightPath, 'utf8'));
+  preflight.target = 'different-production-surface';
+  const mismatchedPath = path.join(root, 'mismatched-preflight.json');
+  writeFileSync(mismatchedPath, `${JSON.stringify(preflight, null, 2)}\n`);
+
+  const result = spawnSync(process.execPath, executionReceiptCheckArgs(packetPath, mismatchedPath, root), {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+  });
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.prerequisitesOk, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.deepEqual(payload.validationPlan, []);
+  assert.deepEqual(payload.rollbackPlan, []);
+  assert.deepEqual(payload.postActionSmokePlan, []);
+  assert.match(payload.errors.join('\n'), /preflight receipt target mismatch/);
+});
+
+test('execution-receipt-check fails closed when preflight admission failed', (t) => {
+  const root = makeWorkspace(t);
+  const packetPath = path.join(root, 'packet.json');
+  writeFileSync(packetPath, `${JSON.stringify(validPacket(), null, 2)}\n`);
+  const failedPreflightPath = path.join(root, 'failed-preflight.json');
+  writeFileSync(
+    failedPreflightPath,
+    `${JSON.stringify({
+      mode: 'preflight-check',
+      ok: false,
+      admissionOk: false,
+      issue: EXPECTED_ISSUE,
+      authorityLevel: 'A4',
+      target: EXPECTED_TARGET,
+      action: EXPECTED_ACTION,
+      wouldExecute: false,
+      writesPerformed: 0,
+      executionPlan: [],
+      validationPlan: [],
+      rollbackPlan: [],
+      postActionSmokePlan: [],
+      stopConditions: [],
+      evidenceTarget: 'Linear issue',
+    }, null, 2)}\n`,
+  );
+
+  const result = spawnSync(process.execPath, executionReceiptCheckArgs(packetPath, failedPreflightPath, root), {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+  });
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /preflight receipt admission must be ok/);
 });
 
 test('read-only scout profile and receipt match the local harness parity contract', () => {
