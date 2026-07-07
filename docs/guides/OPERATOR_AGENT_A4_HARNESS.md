@@ -1912,6 +1912,38 @@ admission claims, runner enablement claims, leaked raw artifacts, and any
 process/command/write marker. `authority.a4Execution` remains blocked in this
 verifier branch.
 
+After runner implementation review evidence passes, validate the separate
+runner implementation admission decision:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-check \
+  <same chain arguments as implementation-production-runner-implementation-review-check> \
+  --implementation-production-runner-implementation-review-receipt <implementation-production-runner-implementation-review-receipt.json> \
+  --implementation-production-runner-implementation-admission <implementation-production-runner-implementation-admission.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production runner implementation admission packet proves an
+operator approved runner implementation admission evidence after the review gate
+passed. It must bind to the runner implementation review artifact and receipt,
+carry the same runner implementation reference, contract reference, entry
+point, PR URL, PR number, head ref, base ref, commit SHA, diff reference,
+checks reference, and review scope, and include admission decision,
+admission-by, admission-at, no-execution-approval, and redaction policy.
+
+This gate validates admission decision evidence only. It does not admit runner
+code, apply the policy patch in this verifier branch, enable a runner, spawn a
+process, create or mutate PRs, close or update Linear issues, deploy, post
+updates, rotate secrets, expose raw artifacts, or mutate third-party systems.
+It rejects drifted review receipts, non-approved admission decisions, missing
+admission actor/time, execution approval claims, verifier-side runner admission
+claims, runner enablement claims, leaked raw artifacts, and any
+process/command/write marker. `authority.a4Execution` remains blocked in this
+verifier branch.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
