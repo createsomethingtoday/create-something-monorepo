@@ -3,6 +3,9 @@
 
 mod events;
 
+use std::env;
+use std::ffi::OsString;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use futures_util::StreamExt;
@@ -12,9 +15,10 @@ use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_notification::NotificationExt;
 
 const KEYCHAIN_SERVICE: &str = "app-governance";
-const KEYCHAIN_ACCOUNT: &str = "mcp-key";
+const KEYCHAIN_KEY_ACCOUNT: &str = "mcp-key";
+const KEYCHAIN_REPO_ACCOUNT: &str = "repo-dir";
 
-const REPO_DIR: &str = "/Users/micahjohnson/Code/create-something-monorepo";
+const REPO_DIR_ENV: &str = "APP_GOVERNANCE_REPO_DIR";
 const ADMIN_SYNC_SCRIPT: &str = "packages/app-governance-db/scripts/sync-admin-apps.playwright.mjs";
 const DOC_CHECK_SCRIPT: &str = "packages/app-governance-db/scripts/check-doc-changes.mjs";
 
@@ -30,12 +34,12 @@ const NO_KEY_RETRY_SECS: u64 = 60;
 // Keychain
 // ---------------------------------------------------------------------------
 
-fn keychain_entry() -> Result<keyring::Entry, String> {
-	keyring::Entry::new(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT).map_err(|e| e.to_string())
+fn keychain_entry(account: &str) -> Result<keyring::Entry, String> {
+	keyring::Entry::new(KEYCHAIN_SERVICE, account).map_err(|e| e.to_string())
 }
 
 fn read_key() -> Option<String> {
-	let entry = keychain_entry().ok()?;
+	let entry = keychain_entry(KEYCHAIN_KEY_ACCOUNT).ok()?;
 	entry
 		.get_password()
 		.ok()
@@ -49,12 +53,123 @@ fn save_key(key: String) -> Result<(), String> {
 	if key.is_empty() {
 		return Err("Key is empty".to_string());
 	}
-	keychain_entry()?.set_password(key).map_err(|e| e.to_string())
+	keychain_entry(KEYCHAIN_KEY_ACCOUNT)?
+		.set_password(key)
+		.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 fn get_key_present() -> bool {
 	read_key().is_some()
+}
+
+fn home_dir() -> Option<PathBuf> {
+	env::var_os("HOME")
+		.filter(|home| !home.is_empty())
+		.map(PathBuf::from)
+}
+
+fn path_from_input(input: &str, home: Option<&Path>) -> Option<PathBuf> {
+	let input = input.trim();
+	if input.is_empty() {
+		return None;
+	}
+	if input == "~" {
+		return home
+			.map(PathBuf::from)
+			.or_else(|| Some(PathBuf::from(input)));
+	}
+	if let Some(rest) = input.strip_prefix("~/") {
+		return home
+			.map(|home| home.join(rest))
+			.or_else(|| Some(PathBuf::from(input)));
+	}
+	Some(PathBuf::from(input))
+}
+
+fn path_from_env_value(value: OsString, home: Option<&Path>) -> Option<PathBuf> {
+	let value = value.to_string_lossy();
+	path_from_input(&value, home)
+}
+
+fn read_stored_repo_dir() -> Option<String> {
+	let entry = keychain_entry(KEYCHAIN_REPO_ACCOUNT).ok()?;
+	entry
+		.get_password()
+		.ok()
+		.map(|path| path.trim().to_string())
+		.filter(|path| !path.is_empty())
+}
+
+fn repo_dir_candidate(
+	env_dir: Option<OsString>,
+	stored_dir: Option<String>,
+	home: Option<PathBuf>,
+) -> Option<PathBuf> {
+	let home_ref = home.as_deref();
+	if let Some(path) = env_dir.and_then(|value| path_from_env_value(value, home_ref)) {
+		return Some(path);
+	}
+	if let Some(path) = stored_dir.and_then(|value| path_from_input(&value, home_ref)) {
+		return Some(path);
+	}
+	home.map(|home| home.join("Code").join("create-something-monorepo"))
+}
+
+fn configured_repo_dir() -> Option<PathBuf> {
+	repo_dir_candidate(
+		env::var_os(REPO_DIR_ENV),
+		read_stored_repo_dir(),
+		home_dir(),
+	)
+}
+
+fn validate_repo_dir(repo_dir: &Path) -> Result<(), String> {
+	if !repo_dir.is_dir() {
+		return Err(format!(
+			"Repo path does not exist: {}. Set {REPO_DIR_ENV} or update Settings.",
+			repo_dir.display()
+		));
+	}
+
+	for script in [ADMIN_SYNC_SCRIPT, DOC_CHECK_SCRIPT] {
+		if !repo_dir.join(script).is_file() {
+			return Err(format!(
+				"Repo path is missing {script}: {}. Set {REPO_DIR_ENV} or update Settings.",
+				repo_dir.display()
+			));
+		}
+	}
+
+	Ok(())
+}
+
+fn require_repo_dir() -> Result<PathBuf, String> {
+	let repo_dir = configured_repo_dir().ok_or_else(|| {
+		format!("No repo path configured. Set {REPO_DIR_ENV} or update Settings.")
+	})?;
+	validate_repo_dir(&repo_dir)?;
+	Ok(repo_dir)
+}
+
+#[tauri::command]
+fn save_repo_dir(repo_dir: String) -> Result<String, String> {
+	let repo_dir = path_from_input(&repo_dir, home_dir().as_deref())
+		.ok_or_else(|| "Repo path is empty".to_string())?;
+	validate_repo_dir(&repo_dir)?;
+	let repo_dir = repo_dir
+		.canonicalize()
+		.map_err(|e| format!("Repo path could not be resolved: {e}"))?;
+	let repo_dir = repo_dir.to_string_lossy().to_string();
+	keychain_entry(KEYCHAIN_REPO_ACCOUNT)?
+		.set_password(&repo_dir)
+		.map_err(|e| e.to_string())?;
+	Ok(repo_dir)
+}
+
+#[tauri::command]
+fn get_repo_dir() -> Option<String> {
+	configured_repo_dir().map(|repo_dir| repo_dir.to_string_lossy().to_string())
 }
 
 // ---------------------------------------------------------------------------
@@ -71,13 +186,7 @@ fn notify(app: &AppHandle, title: &str, body: &str) {
 // Windows
 // ---------------------------------------------------------------------------
 
-fn focus_or_build(
-	app: &AppHandle,
-	label: &str,
-	url: WebviewUrl,
-	title: &str,
-	size: (f64, f64),
-) {
+fn focus_or_build(app: &AppHandle, label: &str, url: WebviewUrl, title: &str, size: (f64, f64)) {
 	if let Some(window) = app.get_webview_window(label) {
 		let _ = window.show();
 		let _ = window.set_focus();
@@ -98,7 +207,7 @@ fn open_settings(app: &AppHandle) {
 		"settings",
 		WebviewUrl::App("settings.html".into()),
 		"App Governance — Settings",
-		(460.0, 340.0),
+		(500.0, 420.0),
 	);
 }
 
@@ -163,12 +272,24 @@ const DOC_CHECK: ScriptJob = ScriptJob {
 
 fn run_script(app: AppHandle, job: &'static ScriptJob) {
 	tauri::async_runtime::spawn(async move {
+		let repo_dir = match require_repo_dir() {
+			Ok(repo_dir) => repo_dir,
+			Err(e) => {
+				notify(&app, "App Governance", &e);
+				return;
+			}
+		};
+
 		let mut cmd = tokio::process::Command::new("node");
-		cmd.arg(job.script).args(job.args).current_dir(REPO_DIR);
+		cmd.arg(job.script).args(job.args).current_dir(repo_dir);
 
 		match cmd.status().await {
 			Ok(status) if status.success() => {
-				notify(&app, "App Governance", &format!("{} completed successfully.", job.name));
+				notify(
+					&app,
+					"App Governance",
+					&format!("{} completed successfully.", job.name),
+				);
 			}
 			Ok(status) => {
 				let code = status.code();
@@ -257,7 +378,16 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
 
 	let menu = Menu::with_items(
 		app,
-		&[&dashboard, &live, &sep1, &admin_sync, &doc_check, &sep2, &settings, &quit],
+		&[
+			&dashboard,
+			&live,
+			&sep1,
+			&admin_sync,
+			&doc_check,
+			&sep2,
+			&settings,
+			&quit,
+		],
 	)?;
 
 	let mut tray = TrayIconBuilder::with_id("app-governance-tray")
@@ -291,7 +421,12 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
 fn main() {
 	tauri::Builder::default()
 		.plugin(tauri_plugin_notification::init())
-		.invoke_handler(tauri::generate_handler![save_key, get_key_present])
+		.invoke_handler(tauri::generate_handler![
+			save_key,
+			get_key_present,
+			save_repo_dir,
+			get_repo_dir
+		])
 		.setup(|app| {
 			build_tray(app)?;
 
@@ -307,8 +442,52 @@ fn main() {
 		.expect("error while building App Governance")
 		.run(|_app, event| {
 			// Tray app: stay alive when all windows are closed.
-			if let tauri::RunEvent::ExitRequested { api, code: None, .. } = event {
+			if let tauri::RunEvent::ExitRequested {
+				api, code: None, ..
+			} = event
+			{
 				api.prevent_exit();
 			}
 		});
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn repo_dir_prefers_env_then_saved_then_home_default() {
+		let home = Some(PathBuf::from("/Users/operator"));
+
+		assert_eq!(
+			repo_dir_candidate(
+				Some(OsString::from("/tmp/repo")),
+				Some("/saved/repo".to_string()),
+				home.clone(),
+			),
+			Some(PathBuf::from("/tmp/repo"))
+		);
+		assert_eq!(
+			repo_dir_candidate(None, Some("/saved/repo".to_string()), home.clone()),
+			Some(PathBuf::from("/saved/repo"))
+		);
+		assert_eq!(
+			repo_dir_candidate(None, None, home),
+			Some(PathBuf::from(
+				"/Users/operator/Code/create-something-monorepo"
+			))
+		);
+	}
+
+	#[test]
+	fn repo_dir_expands_home_prefix() {
+		let home = PathBuf::from("/Users/operator");
+		assert_eq!(
+			path_from_input("~/src/create-something-monorepo", Some(&home)),
+			Some(PathBuf::from(
+				"/Users/operator/src/create-something-monorepo"
+			))
+		);
+		assert_eq!(path_from_input("  ", Some(&home)), None);
+	}
 }

@@ -28,9 +28,9 @@ keychain storage, native notifications, a tray menu, and local script execution.
   is stored it idles and rechecks every 60s.
 - **Tray menu** — Open Dashboard · Open Live Feed · Run Admin Sync · Run Doc Check ·
   Settings · Quit. The sync/check items spawn the existing node scripts in
-  `packages/app-governance-db/scripts/` (cwd: the monorepo root) and fire a native
-  notification with the exit status. Admin sync exit code 2 means the saved session
-  is stale — rerun the script with `--login`.
+  `packages/app-governance-db/scripts/` (cwd: the configured monorepo root) and
+  fire a native notification with the exit status. Admin sync exit code 2 means
+  the saved session is stale — rerun the script with `--login`.
 
 ## Security model
 
@@ -44,12 +44,21 @@ The remote dashboard/live windows are plain webviews with no Tauri IPC exposure.
 2. `pnpm --filter app-governance-desktop dev` (or `cargo build` inside `src-tauri/`)
 3. On first run the Settings window opens — paste your operator MCP key from
    Infisical (`APP_GOVERNANCE_MCP_KEY_<NAME>`) and save.
+4. Confirm the monorepo checkout path in Settings. Tray scripts use
+   `APP_GOVERNANCE_REPO_DIR` when set, then the saved Settings path, then
+   `~/Code/create-something-monorepo`.
+
+The repo path is validated before a tray script starts. It must contain the
+`packages/app-governance-db/scripts/` files used by Admin Sync and Doc Check.
 
 ## Commands
 
 ```bash
 pnpm --filter app-governance-desktop dev     # tauri dev
 pnpm --filter app-governance-desktop build   # tauri build (bundle)
+
+APP_GOVERNANCE_REPO_DIR=/path/to/create-something-monorepo \
+  pnpm --filter app-governance-desktop dev
 
 # or, shell-only verification without the CLI:
 cd packages/app-governance-desktop/src-tauri

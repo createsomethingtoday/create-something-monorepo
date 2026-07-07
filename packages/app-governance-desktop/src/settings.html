@@ -34,6 +34,9 @@
 			color: rgba(255, 255, 255, 0.7);
 			font-size: 12px;
 		}
+		.field {
+			margin-top: 14px;
+		}
 		input {
 			width: 100%;
 			padding: 8px 10px;
@@ -75,15 +78,25 @@
 		It is stored in the macOS keychain — service <code>app-governance</code>, account <code>mcp-key</code>.
 	</p>
 
-	<label for="key">Operator MCP key</label>
-	<input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="paste key" />
-	<button id="save">Save to Keychain</button>
+	<div class="field">
+		<label for="key">Operator MCP key</label>
+		<input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="paste key" />
+		<button id="save-key">Save Key</button>
+	</div>
+
+	<div class="field">
+		<label for="repo-dir">Monorepo checkout path</label>
+		<input id="repo-dir" type="text" autocomplete="off" spellcheck="false" placeholder="~/Code/create-something-monorepo" />
+		<button id="save-repo-dir">Save Repo Path</button>
+	</div>
+
 	<div id="status"></div>
 
 	<script>
 		const invoke = window.__TAURI__.core.invoke;
 		const statusEl = document.getElementById('status');
 		const keyEl = document.getElementById('key');
+		const repoDirEl = document.getElementById('repo-dir');
 
 		function setStatus(msg, cls) {
 			statusEl.textContent = msg;
@@ -92,9 +105,15 @@
 
 		async function refreshPresence() {
 			try {
-				const present = await invoke('get_key_present');
+				const [present, repoDir] = await Promise.all([
+					invoke('get_key_present'),
+					invoke('get_repo_dir')
+				]);
+				if (repoDir) {
+					repoDirEl.value = repoDir;
+				}
 				if (present) {
-					setStatus('A key is stored in the keychain. Saving replaces it.', 'ok');
+					setStatus('A key is stored in the keychain. Saving replaces existing settings.', 'ok');
 				} else {
 					setStatus('No key stored yet.');
 				}
@@ -103,11 +122,21 @@
 			}
 		}
 
-		document.getElementById('save').addEventListener('click', async () => {
+		document.getElementById('save-key').addEventListener('click', async () => {
 			try {
 				await invoke('save_key', { key: keyEl.value });
 				keyEl.value = '';
 				setStatus('Saved. Presence notifications will pick it up shortly.', 'ok');
+			} catch (e) {
+				setStatus(String(e), 'err');
+			}
+		});
+
+		document.getElementById('save-repo-dir').addEventListener('click', async () => {
+			try {
+				const repoDir = await invoke('save_repo_dir', { repoDir: repoDirEl.value });
+				repoDirEl.value = repoDir;
+				setStatus('Saved. Tray scripts will use this checkout path.', 'ok');
 			} catch (e) {
 				setStatus(String(e), 'err');
 			}
