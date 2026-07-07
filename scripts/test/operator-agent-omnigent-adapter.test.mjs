@@ -1138,6 +1138,72 @@ function implementationProductionOwnershipReviewCheckArgs(packetPath, preflightR
   return args;
 }
 
+function implementationProductionA4EnablementApprovalCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath, receiptPublicationReceiptPath, receiptReviewDecisionPath, receiptReviewDecisionReceiptPath, manualNextStepHandoffPath, manualNextStepHandoffReceiptPath, manualFollowUpIssueEvidencePath, manualFollowUpIssueEvidenceReceiptPath, followUpWorkIntakePath, followUpWorkIntakeReceiptPath, implementationWorkspaceEvidencePath, implementationWorkspaceEvidenceReceiptPath, implementationPrEvidencePath, implementationPrEvidenceReceiptPath, implementationMergeDecisionPath, implementationMergeDecisionReceiptPath, implementationMergeEvidencePath, implementationMergeEvidenceReceiptPath, implementationPostMergeValidationPath, implementationPostMergeValidationReceiptPath, implementationProductionReleaseDecisionPath, implementationProductionReleaseDecisionReceiptPath, implementationProductionReleaseAdmissionPath, implementationProductionReleaseAdmissionReceiptPath, implementationProductionDeployEvidencePath, implementationProductionDeployEvidenceReceiptPath, implementationProductionPostDeployValidationPath, implementationProductionPostDeployValidationReceiptPath, implementationProductionReleaseCloseoutPath, implementationProductionReleaseCloseoutReceiptPath, implementationProductionOwnershipReviewPath, implementationProductionOwnershipReviewReceiptPath, implementationProductionA4EnablementApprovalPath, receiptDir) {
+  const args = implementationProductionOwnershipReviewCheckArgs(
+    packetPath,
+    preflightReceiptPath,
+    executionReceiptPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+    runnerContractReceiptPath,
+    runnerPlanPath,
+    runnerPlanReceiptPath,
+    runnerDiffPath,
+    runnerDiffReceiptPath,
+    releaseAdmissionPath,
+    releaseAdmissionReceiptPath,
+    executionRunbookPath,
+    executionRunbookReceiptPath,
+    receiptBundlePath,
+    receiptBundleReceiptPath,
+    receiptPublicationPath,
+    receiptPublicationReceiptPath,
+    receiptReviewDecisionPath,
+    receiptReviewDecisionReceiptPath,
+    manualNextStepHandoffPath,
+    manualNextStepHandoffReceiptPath,
+    manualFollowUpIssueEvidencePath,
+    manualFollowUpIssueEvidenceReceiptPath,
+    followUpWorkIntakePath,
+    followUpWorkIntakeReceiptPath,
+    implementationWorkspaceEvidencePath,
+    implementationWorkspaceEvidenceReceiptPath,
+    implementationPrEvidencePath,
+    implementationPrEvidenceReceiptPath,
+    implementationMergeDecisionPath,
+    implementationMergeDecisionReceiptPath,
+    implementationMergeEvidencePath,
+    implementationMergeEvidenceReceiptPath,
+    implementationPostMergeValidationPath,
+    implementationPostMergeValidationReceiptPath,
+    implementationProductionReleaseDecisionPath,
+    implementationProductionReleaseDecisionReceiptPath,
+    implementationProductionReleaseAdmissionPath,
+    implementationProductionReleaseAdmissionReceiptPath,
+    implementationProductionDeployEvidencePath,
+    implementationProductionDeployEvidenceReceiptPath,
+    implementationProductionPostDeployValidationPath,
+    implementationProductionPostDeployValidationReceiptPath,
+    implementationProductionReleaseCloseoutPath,
+    implementationProductionReleaseCloseoutReceiptPath,
+    implementationProductionOwnershipReviewPath,
+    receiptDir,
+  );
+  args[1] = 'implementation-production-a4-enablement-approval-check';
+  args.push('--implementation-production-ownership-review-receipt', implementationProductionOwnershipReviewReceiptPath, '--implementation-production-a4-enablement-approval', implementationProductionA4EnablementApprovalPath);
+  return args;
+}
+
 function mergePatch(base, patch) {
   const result = JSON.parse(JSON.stringify(base));
   for (const [key, value] of Object.entries(patch || {})) {
@@ -4686,6 +4752,126 @@ function validImplementationProductionOwnershipReview({ implementationProduction
   };
 }
 
+function validImplementationProductionA4EnablementApproval({ implementationProductionOwnershipReviewPath, implementationProductionOwnershipReviewReceiptPath } = {}) {
+  const ownershipReview = validImplementationProductionOwnershipReview();
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    implementationProductionOwnershipReview: implementationProductionOwnershipReviewPath
+      ? path.relative(REPO_ROOT, implementationProductionOwnershipReviewPath)
+      : 'implementation-production-ownership-review.json',
+    implementationProductionOwnershipReviewReceipt: implementationProductionOwnershipReviewReceiptPath
+      ? path.relative(REPO_ROOT, implementationProductionOwnershipReviewReceiptPath)
+      : 'implementation-production-ownership-review-check.json',
+    approvalPacketOnly: true,
+    approvalDecision: 'approve-a4-enablement-review',
+    approvalSurface: 'Linear',
+    approvedBy: 'Micah Johnson',
+    approvedAt: '2026-07-07T03:20:00.000Z',
+    riskAcceptance: [
+      'credential-write',
+      'billing-change',
+      'client-production',
+      'destructive-write',
+      'irreversible-data-operation',
+    ],
+    rollbackBoundary: [
+      'future writes remain limited to one reversible CREATE SOMETHING internal production change per approved run',
+      'rollback command and rollback owner must be named in the future policy enablement PR before execution is enabled',
+    ],
+    rollbackAuthorizationScope: 'reversible-internal-production-only',
+    postActionSmoke: [
+      'future policy enablement PR must re-run public access fail-closed proof before any runner path is exposed',
+      'future runner PR must revalidate the full receipt chain immediately before any write',
+    ],
+    publicAccessFailClosedProof: ownershipReview.publicAccessFailClosedProof,
+    policyPatchProposalReference: 'CRE-1103 proposed checked-in policy enablement review packet; no policy patch applied by this verifier',
+    requiredReceiptReferences: [
+      'implementation-production-ownership-review-check',
+      'implementation-production-release-closeout-check',
+      'implementation-production-post-deploy-validation-check',
+      'implementation-production-deploy-evidence-check',
+      'implementation-production-release-admission-check',
+      'implementation-production-release-decision-check',
+      'implementation-post-merge-validation-check',
+      'implementation-merge-evidence-check',
+      'implementation-merge-decision-check',
+      'implementation-pr-evidence-check',
+      'implementation-workspace-evidence-check',
+      'follow-up-work-intake-check',
+      'manual-follow-up-issue-evidence-check',
+      'manual-next-step-handoff-check',
+      'receipt-review-decision-check',
+      'receipt-publication-check',
+      'receipt-bundle-check',
+      'execution-runbook-check',
+      'release-admission-check',
+    ],
+    requiredEvidence: [
+      'implementation-production-ownership-review-receipt',
+      'valid-ownership-review',
+      'approved-by',
+      'approved-at',
+      'approval-surface',
+      'approval-decision',
+      'risk-acceptance',
+      'rollback-boundary',
+      'rollback-authorization-scope',
+      'post-action-smoke',
+      'public-access-fail-closed-proof',
+      'redaction-policy',
+      'policy-patch-proposal-reference',
+      'operator-summary',
+    ],
+    redactionPolicyApplied: true,
+    redactionPolicy: {
+      excludes: ['secrets', 'raw-logs', 'prompts', 'raw-transcripts'],
+      evidenceOnly: true,
+    },
+    containsSecrets: false,
+    containsRawLogs: false,
+    containsPrompts: false,
+    containsRawTranscripts: false,
+    rawLogsIncluded: false,
+    promptsIncluded: false,
+    rawTranscriptIncluded: false,
+    operatorSummary: 'A4 enablement approval packet records operator approval for a future policy-enablement review; verifier did not enable policy, runner, issues, deploys, or writes.',
+    noExecutionMarkers: [
+      'current-policy-blocked',
+      'process-not-spawned',
+      'executed-commands-empty',
+      'runner-disabled',
+      'execution-not-ready',
+      'execution-disabled',
+      'execution-not-approved',
+      'would-execute-false',
+      'writes-performed-zero',
+      'deploy-not-performed-by-verifier',
+      'third-party-write-not-performed-by-verifier',
+      'issue-mutation-not-performed-by-verifier',
+      'production-a4-enablement-approval-only',
+    ],
+    currentPolicyBlocked: true,
+    policyEnabledByVerifier: false,
+    runnerEnabledByVerifier: false,
+    deployedByVerifier: false,
+    thirdPartyWritePerformedByVerifier: false,
+    issueMutationPerformedByVerifier: false,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
 function writePolicyApplicationFixture(t) {
   const root = makeWorkspace(t);
   const packetPath = path.join(root, 'packet.json');
@@ -7782,6 +7968,30 @@ function writeImplementationProductionReleaseCloseoutFixture(t) {
   };
 }
 
+function writeImplementationProductionOwnershipReviewFixture(t) {
+  const fixture = writeImplementationProductionReleaseCloseoutFixture(t);
+  const implementationProductionOwnershipReviewPath = path.join(fixture.root, 'implementation-production-ownership-review.json');
+  writeFileSync(
+    implementationProductionOwnershipReviewPath,
+    `${JSON.stringify(validImplementationProductionOwnershipReview({
+      implementationProductionReleaseCloseoutPath: fixture.implementationProductionReleaseCloseoutPath,
+      implementationProductionReleaseCloseoutReceiptPath: fixture.implementationProductionReleaseCloseoutReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const result = runImplementationProductionOwnershipReviewCheck(fixture, implementationProductionOwnershipReviewPath);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  const implementationProductionOwnershipReviewReceiptPath = path.isAbsolute(payload.receiptPath)
+    ? payload.receiptPath
+    : path.resolve(REPO_ROOT, payload.receiptPath);
+
+  return {
+    ...fixture,
+    implementationProductionOwnershipReviewPath,
+    implementationProductionOwnershipReviewReceiptPath,
+  };
+}
+
 function runImplementationWorkspaceEvidenceCheck(fixture, implementationWorkspaceEvidencePath, receiptDir = fixture.root, followUpWorkIntakeReceiptPath = fixture.followUpWorkIntakeReceiptPath) {
   return spawnSync(
     process.execPath,
@@ -8403,6 +8613,75 @@ function runImplementationProductionOwnershipReviewCheck(fixture, implementation
       fixture.implementationProductionReleaseCloseoutPath,
       implementationProductionReleaseCloseoutReceiptPath,
       implementationProductionOwnershipReviewPath,
+      receiptDir,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+}
+
+function runImplementationProductionA4EnablementApprovalCheck(fixture, implementationProductionA4EnablementApprovalPath, receiptDir = fixture.root, implementationProductionOwnershipReviewReceiptPath = fixture.implementationProductionOwnershipReviewReceiptPath) {
+  return spawnSync(
+    process.execPath,
+    implementationProductionA4EnablementApprovalCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      fixture.releaseAdmissionPath,
+      fixture.releaseAdmissionReceiptPath,
+      fixture.executionRunbookPath,
+      fixture.executionRunbookReceiptPath,
+      fixture.receiptBundlePath,
+      fixture.receiptBundleReceiptPath,
+      fixture.receiptPublicationPath,
+      fixture.receiptPublicationReceiptPath,
+      fixture.receiptReviewDecisionPath,
+      fixture.receiptReviewDecisionReceiptPath,
+      fixture.manualNextStepHandoffPath,
+      fixture.manualNextStepHandoffReceiptPath,
+      fixture.manualFollowUpIssueEvidencePath,
+      fixture.manualFollowUpIssueEvidenceReceiptPath,
+      fixture.followUpWorkIntakePath,
+      fixture.followUpWorkIntakeReceiptPath,
+      fixture.implementationWorkspaceEvidencePath,
+      fixture.implementationWorkspaceEvidenceReceiptPath,
+      fixture.implementationPrEvidencePath,
+      fixture.implementationPrEvidenceReceiptPath,
+      fixture.implementationMergeDecisionPath,
+      fixture.implementationMergeDecisionReceiptPath,
+      fixture.implementationMergeEvidencePath,
+      fixture.implementationMergeEvidenceReceiptPath,
+      fixture.implementationPostMergeValidationPath,
+      fixture.implementationPostMergeValidationReceiptPath,
+      fixture.implementationProductionReleaseDecisionPath,
+      fixture.implementationProductionReleaseDecisionReceiptPath,
+      fixture.implementationProductionReleaseAdmissionPath,
+      fixture.implementationProductionReleaseAdmissionReceiptPath,
+      fixture.implementationProductionDeployEvidencePath,
+      fixture.implementationProductionDeployEvidenceReceiptPath,
+      fixture.implementationProductionPostDeployValidationPath,
+      fixture.implementationProductionPostDeployValidationReceiptPath,
+      fixture.implementationProductionReleaseCloseoutPath,
+      fixture.implementationProductionReleaseCloseoutReceiptPath,
+      fixture.implementationProductionOwnershipReviewPath,
+      implementationProductionOwnershipReviewReceiptPath,
+      implementationProductionA4EnablementApprovalPath,
       receiptDir,
     ),
     { cwd: REPO_ROOT, encoding: 'utf8' },
@@ -12796,6 +13075,191 @@ test('implementation-production-ownership-review-check fails closed on drifted r
   assert.equal(payload.wouldExecute, false);
   assert.equal(payload.writesPerformed, 0);
   assert.match(payload.errors.join('\n'), /deploymentUrl must match closeout/);
+  assert.match(payload.errors.join('\n'), /processSpawned must be false/);
+});
+
+test('implementation-production-a4-enablement-approval-check validates approval packet without verifier writes', (t) => {
+  const fixture = writeImplementationProductionOwnershipReviewFixture(t);
+  const implementationProductionA4EnablementApprovalPath = path.join(fixture.root, 'implementation-production-a4-enablement-approval.json');
+  writeFileSync(
+    implementationProductionA4EnablementApprovalPath,
+    `${JSON.stringify(validImplementationProductionA4EnablementApproval({
+      implementationProductionOwnershipReviewPath: fixture.implementationProductionOwnershipReviewPath,
+      implementationProductionOwnershipReviewReceiptPath: fixture.implementationProductionOwnershipReviewReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationProductionA4EnablementApprovalCheck(fixture, implementationProductionA4EnablementApprovalPath);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'implementation-production-a4-enablement-approval-check');
+  assert.equal(payload.implementationProductionA4EnablementApprovalOk, true);
+  assert.equal(payload.approvalPacketOnly, true);
+  assert.equal(payload.approvalDecision, 'approve-a4-enablement-review');
+  assert.equal(payload.approvalSurface, 'Linear');
+  assert.equal(payload.approvedBy, 'Micah Johnson');
+  assert.equal(payload.ownershipDecision, 'advance-to-a4-enablement-review');
+  assert.ok(payload.riskAcceptance.includes('credential-write'));
+  assert.ok(payload.riskAcceptance.includes('irreversible-data-operation'));
+  assert.equal(payload.rollbackAuthorizationScope, 'reversible-internal-production-only');
+  assert.match(payload.rollbackBoundary.join('\n'), /reversible CREATE SOMETHING internal production/);
+  assert.match(payload.postActionSmoke.join('\n'), /public access fail-closed proof/);
+  assert.match(payload.publicAccessFailClosedProof, /rawOriginExposed=false/);
+  assert.match(payload.policyPatchProposalReference, /no policy patch applied by this verifier/);
+  assert.ok(payload.requiredReceiptReferences.includes('implementation-production-ownership-review-check'));
+  assert.ok(payload.requiredEvidence.includes('rollback-authorization-scope'));
+  assert.equal(payload.redactionPolicyApplied, true);
+  assert.equal(payload.containsSecrets, false);
+  assert.equal(payload.containsRawLogs, false);
+  assert.equal(payload.containsPrompts, false);
+  assert.equal(payload.containsRawTranscripts, false);
+  assert.ok(payload.noExecutionMarkers.includes('production-a4-enablement-approval-only'));
+  assert.equal(payload.currentPolicyBlocked, true);
+  assert.equal(payload.policyEnabledByVerifier, false);
+  assert.equal(payload.runnerEnabledByVerifier, false);
+  assert.equal(payload.deployedByVerifier, false);
+  assert.equal(payload.thirdPartyWritePerformedByVerifier, false);
+  assert.equal(payload.issueMutationPerformedByVerifier, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.implementationProductionA4EnablementApprovalRequiresOwnershipReviewReceipt, true);
+  assert.equal(payload.policy.implementationProductionA4EnablementApprovalRequiresCheckedInPolicyBlocked, true);
+  assert.match(payload.nextGate, /policy enablement PR/);
+  assert.match(payload.receiptPath, /implementation-production-a4-enablement-approval-check\.json$/);
+});
+
+test('implementation-production-a4-enablement-approval-check fails closed on unsafe, mismatched, or leaky approval packets', (t) => {
+  const cases = [
+    {
+      name: 'invalid-approval-decision',
+      mutate(approval) {
+        approval.approvalDecision = 'enable-now';
+      },
+      pattern: /approvalDecision must be one of allowedApprovalDecisions/,
+    },
+    {
+      name: 'missing-risk',
+      mutate(approval) {
+        approval.riskAcceptance = approval.riskAcceptance.filter((risk) => risk !== 'billing-change');
+      },
+      pattern: /riskAcceptance must include billing-change/,
+    },
+    {
+      name: 'bad-rollback-scope',
+      mutate(approval) {
+        approval.rollbackAuthorizationScope = 'any-production';
+      },
+      pattern: /rollbackAuthorizationScope must be reversible-internal-production-only/,
+    },
+    {
+      name: 'policy-enabled',
+      mutate(approval) {
+        approval.policyEnabledByVerifier = true;
+      },
+      pattern: /policyEnabledByVerifier must not be true/,
+    },
+    {
+      name: 'issue-mutation',
+      mutate(approval) {
+        approval.issueMutationPerformedByVerifier = true;
+      },
+      pattern: /issueMutationPerformedByVerifier must be false/,
+    },
+    {
+      name: 'secret-leak',
+      mutate(approval) {
+        approval.containsSecrets = true;
+      },
+      pattern: /containsSecrets must be false/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(approval) {
+        approval.processSpawned = true;
+        approval.executedCommands = ['wrangler deploy'];
+        approval.executionApproved = true;
+        approval.wouldExecute = true;
+        approval.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationProductionOwnershipReviewFixture(t);
+    const approval = validImplementationProductionA4EnablementApproval({
+      implementationProductionOwnershipReviewPath: fixture.implementationProductionOwnershipReviewPath,
+      implementationProductionOwnershipReviewReceiptPath: fixture.implementationProductionOwnershipReviewReceiptPath,
+    });
+    entry.mutate(approval);
+    const implementationProductionA4EnablementApprovalPath = path.join(fixture.root, `${entry.name}-implementation-production-a4-enablement-approval.json`);
+    writeFileSync(implementationProductionA4EnablementApprovalPath, `${JSON.stringify(approval, null, 2)}\n`);
+
+    const result = runImplementationProductionA4EnablementApprovalCheck(fixture, implementationProductionA4EnablementApprovalPath);
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationProductionA4EnablementApprovalOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-production-a4-enablement-approval-check fails closed on drifted ownership review receipts', (t) => {
+  const fixture = writeImplementationProductionOwnershipReviewFixture(t);
+  const driftedOwnershipReceipt = JSON.parse(readFileSync(fixture.implementationProductionOwnershipReviewReceiptPath, 'utf8'));
+  driftedOwnershipReceipt.ownershipDecision = 'hold-at-evidence-only';
+  driftedOwnershipReceipt.publicAccessFailClosedProof = 'rawOriginExposed=true';
+  driftedOwnershipReceipt.processSpawned = true;
+  const driftedOwnershipReceiptPath = path.join(fixture.root, 'drifted-implementation-production-ownership-review-receipt.json');
+  writeFileSync(driftedOwnershipReceiptPath, `${JSON.stringify(driftedOwnershipReceipt, null, 2)}\n`);
+  const implementationProductionA4EnablementApprovalPath = path.join(fixture.root, 'implementation-production-a4-enablement-approval.json');
+  writeFileSync(
+    implementationProductionA4EnablementApprovalPath,
+    `${JSON.stringify(validImplementationProductionA4EnablementApproval({
+      implementationProductionOwnershipReviewPath: fixture.implementationProductionOwnershipReviewPath,
+      implementationProductionOwnershipReviewReceiptPath: driftedOwnershipReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationProductionA4EnablementApprovalCheck(
+    fixture,
+    implementationProductionA4EnablementApprovalPath,
+    fixture.root,
+    driftedOwnershipReceiptPath,
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.implementationProductionA4EnablementApprovalOk, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /ownershipDecision must match ownership review/);
+  assert.match(payload.errors.join('\n'), /publicAccessFailClosedProof must match ownership review/);
   assert.match(payload.errors.join('\n'), /processSpawned must be false/);
 });
 

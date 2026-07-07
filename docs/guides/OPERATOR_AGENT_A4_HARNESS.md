@@ -1654,6 +1654,37 @@ drifted closeout receipts, invalid decisions, missing readiness evidence,
 verifier issue-mutation or policy-enablement claims, leaked raw artifacts, and
 any process/command/write marker. `authority.a4Execution` remains blocked.
 
+After ownership review passes, validate the production A4 enablement approval
+packet:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-a4-enablement-approval-check \
+  <same chain arguments as implementation-production-ownership-review-check> \
+  --implementation-production-ownership-review-receipt <implementation-production-ownership-review-receipt.json> \
+  --implementation-production-a4-enablement-approval <implementation-production-a4-enablement-approval.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production A4 enablement approval packet proves an operator
+explicitly approved the next policy-enablement review packet after ownership
+review. It must bind to the same ownership review artifact and receipt, use
+`Linear` or `signed-release-record` as the approval surface, name the approval
+decision, accept the exact A4 risk classes, include rollback and post-action
+smoke proof, carry the public-access fail-closed proof, and cite the future
+policy patch proposal. The rollback authorization scope is limited to
+`reversible-internal-production-only`.
+
+This gate is still approval evidence only. It does not change checked-in
+policy, enable a runner, deploy, close or update Linear issues, post updates,
+rotate secrets, expose raw artifacts, or mutate third-party systems. It rejects
+drifted ownership review receipts, invalid approval decisions, missing risk
+acceptance, broader rollback scopes, verifier policy-enablement or issue
+mutation claims, leaked raw artifacts, and any process/command/write marker.
+`authority.a4Execution` remains blocked.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
