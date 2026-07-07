@@ -173,6 +173,20 @@
     "requiresCommandReceipt": true,
     "blockedUntil": "operator-approved repo policy change enables a narrowly scoped executor implementation with rollback and smoke proof"
   },
+  "a4ExecutorEnablementProposal": {
+    "allowedApprovalSurfaces": [
+      "Linear",
+      "signed-release-record"
+    ],
+    "maxWritesPerRun": 1,
+    "requiredProofs": [
+      "rollback",
+      "post-action-smoke",
+      "public-access-fail-closed"
+    ],
+    "policyChangeApplied": false,
+    "blockedUntil": "a separate operator-reviewed PR applies the proposed policy patch and reruns access, rollback, and smoke proof"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -228,6 +242,11 @@
       "id": "gate-8-a4-disabled-executor-proof",
       "required": "A4 disabled executor proof validates the full command receipt chain and proves the runner stops before process spawn",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs executor-proof-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-9-a4-executor-enable-proposal",
+      "required": "A4 executor enablement proposal validates the future policy patch and proof requirements without applying the policy change",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs executor-enable-proposal-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

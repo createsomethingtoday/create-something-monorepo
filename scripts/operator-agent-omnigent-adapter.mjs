@@ -89,6 +89,8 @@ function parseArgs(argv) {
     authorization: null,
     commandArtifact: null,
     commandReceipt: null,
+    executorProofReceipt: null,
+    enablementProposal: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -110,6 +112,8 @@ function parseArgs(argv) {
     else if (arg === '--authorization' && args[index + 1]) options.authorization = args[++index];
     else if (arg === '--command-artifact' && args[index + 1]) options.commandArtifact = args[++index];
     else if (arg === '--command-receipt' && args[index + 1]) options.commandReceipt = args[++index];
+    else if (arg === '--executor-proof-receipt' && args[index + 1]) options.executorProofReceipt = args[++index];
+    else if (arg === '--enablement-proposal' && args[index + 1]) options.enablementProposal = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -277,6 +281,26 @@ function validateManifest(manifest) {
   }
   if (executorProof.requiresCommandReceipt !== true) {
     errors.push('a4ExecutorProof.requiresCommandReceipt must be true');
+  }
+
+  const enablement = manifest.a4ExecutorEnablementProposal || {};
+  if (!enablement.allowedApprovalSurfaces?.includes('Linear')) {
+    errors.push('a4ExecutorEnablementProposal.allowedApprovalSurfaces must include Linear');
+  }
+  if (enablement.maxWritesPerRun !== 1) {
+    errors.push('a4ExecutorEnablementProposal.maxWritesPerRun must be 1');
+  }
+  if (!enablement.requiredProofs?.includes('rollback')) {
+    errors.push('a4ExecutorEnablementProposal.requiredProofs must include rollback');
+  }
+  if (!enablement.requiredProofs?.includes('post-action-smoke')) {
+    errors.push('a4ExecutorEnablementProposal.requiredProofs must include post-action-smoke');
+  }
+  if (!enablement.requiredProofs?.includes('public-access-fail-closed')) {
+    errors.push('a4ExecutorEnablementProposal.requiredProofs must include public-access-fail-closed');
+  }
+  if (enablement.policyChangeApplied !== false) {
+    errors.push('a4ExecutorEnablementProposal.policyChangeApplied must remain false');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -1088,6 +1112,249 @@ function buildExecutorProofReceipt({
   };
 }
 
+function validateExecutorProofReceipt(executorProofReceipt, packet, paths, constraints) {
+  const errors = [];
+
+  if (executorProofReceipt.mode !== 'executor-proof-check') {
+    errors.push('executor proof receipt mode must be executor-proof-check');
+  }
+  if (executorProofReceipt.ok !== true || executorProofReceipt.executorProofOk !== true) {
+    errors.push('executor proof receipt must be ok');
+  }
+  if (executorProofReceipt.issue !== constraints.expectedIssue) {
+    errors.push(`executor proof receipt issue mismatch: expected ${constraints.expectedIssue}, got ${executorProofReceipt.issue}`);
+  }
+  if (executorProofReceipt.target !== constraints.expectedTarget) {
+    errors.push(`executor proof receipt target mismatch: expected ${constraints.expectedTarget}, got ${executorProofReceipt.target}`);
+  }
+  if (executorProofReceipt.action !== constraints.expectedAction) {
+    errors.push(`executor proof receipt action mismatch: expected ${constraints.expectedAction}, got ${executorProofReceipt.action}`);
+  }
+  if (executorProofReceipt.packetPath !== rel(paths.packetPath)) {
+    errors.push('executor proof receipt packetPath must match packet path');
+  }
+  if (executorProofReceipt.preflightReceipt !== rel(paths.preflightPath)) {
+    errors.push('executor proof receipt preflightReceipt must match preflight receipt path');
+  }
+  if (executorProofReceipt.executionReceipt !== rel(paths.executionPath)) {
+    errors.push('executor proof receipt executionReceipt must match execution receipt path');
+  }
+  if (executorProofReceipt.authorization !== rel(paths.authorizationPath)) {
+    errors.push('executor proof receipt authorization must match authorization artifact path');
+  }
+  if (executorProofReceipt.commandArtifact !== rel(paths.commandPath)) {
+    errors.push('executor proof receipt commandArtifact must match command artifact path');
+  }
+  if (executorProofReceipt.commandReceipt !== rel(paths.commandReceiptPath)) {
+    errors.push('executor proof receipt commandReceipt must match command receipt path');
+  }
+  if (executorProofReceipt.runnerBlocked !== true) errors.push('executor proof receipt runnerBlocked must be true');
+  if (executorProofReceipt.processSpawned !== false) errors.push('executor proof receipt processSpawned must be false');
+  if (!Array.isArray(executorProofReceipt.executedCommands) || executorProofReceipt.executedCommands.length !== 0) {
+    errors.push('executor proof receipt executedCommands must be empty');
+  }
+  if (executorProofReceipt.runnerEnabled !== false) errors.push('executor proof receipt runnerEnabled must be false');
+  if (executorProofReceipt.executionReady !== false) errors.push('executor proof receipt executionReady must be false');
+  if (executorProofReceipt.executionEnabled !== false) errors.push('executor proof receipt executionEnabled must be false');
+  if (executorProofReceipt.wouldExecute !== false) errors.push('executor proof receipt wouldExecute must be false');
+  if (executorProofReceipt.writesPerformed !== 0) errors.push('executor proof receipt writesPerformed must be 0');
+
+  if (packet.issue !== executorProofReceipt.issue) errors.push('executor proof receipt issue must match packet issue');
+  if (packet.target !== executorProofReceipt.target) errors.push('executor proof receipt target must match packet target');
+  if (packet.action !== executorProofReceipt.action) errors.push('executor proof receipt action must match packet action');
+
+  return errors;
+}
+
+function validateExecutorEnablementProposal(proposal, packet, executorProofReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ExecutorEnablementProposal || {};
+  const requiredFields = [
+    'authorityLevel',
+    'issue',
+    'target',
+    'action',
+    'approvalSurface',
+    'approvedBy',
+    'approvedAt',
+    'expiresAt',
+    'targetScope',
+    'maxWritesPerRun',
+    'requiredProofs',
+    'policyPatch',
+    'executorProofReceipt',
+    'rollbackProofRequired',
+    'postActionSmokeRequired',
+    'publicAccessFailClosedRequired',
+    'policyChangeApplied',
+    'evidenceTarget',
+  ];
+
+  for (const field of requiredFields) {
+    if (!hasValue(proposal[field])) errors.push(`executor enablement proposal missing ${field}`);
+  }
+  if (proposal.authorityLevel !== 'A4') errors.push('executor enablement proposal authorityLevel must be A4');
+  if (!rules.allowedApprovalSurfaces?.includes(proposal.approvalSurface)) {
+    errors.push(`executor enablement proposal approvalSurface is not allowed: ${proposal.approvalSurface}`);
+  }
+  if (proposal.issue !== constraints.expectedIssue) {
+    errors.push(`executor enablement proposal issue mismatch: expected ${constraints.expectedIssue}, got ${proposal.issue}`);
+  }
+  if (proposal.target !== constraints.expectedTarget) {
+    errors.push(`executor enablement proposal target mismatch: expected ${constraints.expectedTarget}, got ${proposal.target}`);
+  }
+  if (proposal.action !== constraints.expectedAction) {
+    errors.push(`executor enablement proposal action mismatch: expected ${constraints.expectedAction}, got ${proposal.action}`);
+  }
+  if (proposal.executorProofReceipt !== rel(paths.executorProofPath)) {
+    errors.push('executor enablement proposal executorProofReceipt must match executor proof receipt path');
+  }
+  if (proposal.targetScope !== packet.target) {
+    errors.push('executor enablement proposal targetScope must equal packet target');
+  }
+  if (proposal.maxWritesPerRun !== rules.maxWritesPerRun) {
+    errors.push(`executor enablement proposal maxWritesPerRun must be ${rules.maxWritesPerRun}`);
+  }
+  if (proposal.rollbackProofRequired !== true) errors.push('executor enablement proposal rollbackProofRequired must be true');
+  if (proposal.postActionSmokeRequired !== true) errors.push('executor enablement proposal postActionSmokeRequired must be true');
+  if (proposal.publicAccessFailClosedRequired !== true) {
+    errors.push('executor enablement proposal publicAccessFailClosedRequired must be true');
+  }
+  if (proposal.policyChangeApplied !== false) {
+    errors.push('executor enablement proposal policyChangeApplied must be false');
+  }
+  if (proposal.policyPatch?.authority?.a4Execution !== 'enabled') {
+    errors.push('executor enablement proposal policyPatch.authority.a4Execution must be enabled');
+  }
+  if (proposal.policyPatch?.a4ExecutionCommand?.runnerEnabled !== true) {
+    errors.push('executor enablement proposal policyPatch.a4ExecutionCommand.runnerEnabled must be true');
+  }
+  if (proposal.policyPatch?.a4ExecutorProof?.runnerEnabled !== true) {
+    errors.push('executor enablement proposal policyPatch.a4ExecutorProof.runnerEnabled must be true');
+  }
+
+  const requiredProofs = new Set(proposal.requiredProofs || []);
+  for (const proof of rules.requiredProofs || []) {
+    if (!requiredProofs.has(proof)) errors.push(`executor enablement proposal requiredProofs must include ${proof}`);
+  }
+
+  const timestampErrors = [];
+  const now = constraints.now ? parseTimestamp(constraints.now, 'now', timestampErrors) : Date.now();
+  const approvedAt = parseTimestamp(proposal.approvedAt, 'approvedAt', timestampErrors);
+  const expiresAt = parseTimestamp(proposal.expiresAt, 'expiresAt', timestampErrors);
+  errors.push(...timestampErrors.map((error) => error.replace('approval packet', 'executor enablement proposal')));
+  const maxAgeHours = constraints.maxAgeHours ?? 24;
+  if (approvedAt !== null && now !== null) {
+    if (approvedAt > now) errors.push('executor enablement proposal approvedAt must not be in the future');
+    if (Number.isFinite(maxAgeHours) && now - approvedAt > maxAgeHours * 60 * 60 * 1000) {
+      errors.push(`executor enablement proposal is stale: approvedAt is older than ${maxAgeHours} hours`);
+    }
+  }
+  if (expiresAt !== null && now !== null && expiresAt <= now) {
+    errors.push('executor enablement proposal expiresAt must be in the future');
+  }
+
+  if (executorProofReceipt.executorProofOk !== true) {
+    errors.push('executor enablement proposal requires a valid executor proof receipt');
+  }
+
+  return errors;
+}
+
+function buildExecutorEnablementProposalReceipt({
+  manifest,
+  manifestValidation,
+  packet,
+  packetPath,
+  preflightReceipt,
+  preflightPath,
+  executionReceipt,
+  executionPath,
+  authorization,
+  authorizationPath,
+  commandArtifact,
+  commandPath,
+  commandReceipt,
+  commandReceiptPath,
+  executorProofReceipt,
+  executorProofPath,
+  proposal,
+  proposalPath,
+  constraints,
+  packetValidation,
+  preflightErrors,
+  executionErrors,
+  authorizationErrors,
+  commandErrors,
+  commandReceiptErrors,
+  executorProofErrors,
+  proposalErrors,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...packetValidation.errors,
+    ...preflightErrors,
+    ...executionErrors,
+    ...authorizationErrors,
+    ...commandErrors,
+    ...commandReceiptErrors,
+    ...executorProofErrors,
+    ...proposalErrors,
+  ];
+  const enablementProposalOk = errors.length === 0;
+
+  return {
+    mode: 'executor-enable-proposal-check',
+    ok: enablementProposalOk,
+    enablementProposalOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    packetPath: rel(packetPath),
+    preflightReceipt: rel(preflightPath),
+    executionReceipt: rel(executionPath),
+    authorization: rel(authorizationPath),
+    commandArtifact: rel(commandPath),
+    commandReceipt: rel(commandReceiptPath),
+    executorProofReceipt: rel(executorProofPath),
+    enablementProposal: rel(proposalPath),
+    issue: packet.issue || constraints.expectedIssue,
+    authorityLevel: packet.authorityLevel,
+    target: packet.target,
+    action: packet.action,
+    targetScope: proposal.targetScope,
+    maxWritesPerRun: proposal.maxWritesPerRun,
+    requiredProofs: proposal.requiredProofs || [],
+    constraints,
+    policyChangeApplied: false,
+    proposedPolicyPatch: enablementProposalOk ? proposal.policyPatch : null,
+    runnerBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: enablementProposalOk
+      ? 'executor enablement proposal validated; repo policy remains blocked until the operator applies a separate policy change'
+      : 'executor enablement proposal rejected before any policy change',
+    evidenceTarget: proposal.evidenceTarget || executorProofReceipt.evidenceTarget || commandReceipt.evidenceTarget || packet.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator applies the reviewed policy patch in a separate PR and reruns public access, rollback, and post-action smoke proof',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      enablementPolicyChangeApplied: manifest.a4ExecutorEnablementProposal?.policyChangeApplied,
+    },
+  };
+}
+
 function print(result, options) {
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -1405,6 +1672,108 @@ function commandExecutorProofCheck(options) {
   return result;
 }
 
+function commandExecutorEnableProposalCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for executor-enable-proposal-check'));
+  }
+  if (!options.preflightReceipt) throw new Error('--preflight-receipt is required for executor-enable-proposal-check');
+  if (!options.executionReceipt) throw new Error('--execution-receipt is required for executor-enable-proposal-check');
+  if (!options.authorization) throw new Error('--authorization is required for executor-enable-proposal-check');
+  if (!options.commandArtifact) throw new Error('--command-artifact is required for executor-enable-proposal-check');
+  if (!options.commandReceipt) throw new Error('--command-receipt is required for executor-enable-proposal-check');
+  if (!options.executorProofReceipt) throw new Error('--executor-proof-receipt is required for executor-enable-proposal-check');
+  if (!options.enablementProposal) throw new Error('--enablement-proposal is required for executor-enable-proposal-check');
+
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const packetPath = resolveFromRoot(options.packet);
+  const preflightPath = resolveFromRoot(options.preflightReceipt);
+  const executionPath = resolveFromRoot(options.executionReceipt);
+  const authorizationPath = resolveFromRoot(options.authorization);
+  const commandPath = resolveFromRoot(options.commandArtifact);
+  const commandReceiptPath = resolveFromRoot(options.commandReceipt);
+  const executorProofPath = resolveFromRoot(options.executorProofReceipt);
+  const proposalPath = resolveFromRoot(options.enablementProposal);
+  const packet = readJson(packetPath);
+  const preflightReceipt = readJson(preflightPath);
+  const executionReceipt = readJson(executionPath);
+  const authorization = readJson(authorizationPath);
+  const commandArtifact = readJson(commandPath);
+  const commandReceipt = readJson(commandReceiptPath);
+  const executorProofReceipt = readJson(executorProofPath);
+  const proposal = readJson(proposalPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const packetValidation = validateApprovalPacket(packet, manifest, constraints);
+  const preflightErrors = validatePreflightReceipt(preflightReceipt, packet, constraints);
+  const executionErrors = validateExecutionReceipt(executionReceipt, packet, preflightReceipt, constraints);
+  const authorizationErrors = validateExecutionAuthorization(authorization, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+  }, constraints);
+  const commandErrors = validateExecutionCommandArtifact(commandArtifact, packet, manifest, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+  }, constraints);
+  const commandReceiptErrors = validateExecutionCommandReceipt(commandReceipt, packet, executionReceipt, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+  }, constraints);
+  const executorProofErrors = validateExecutorProofReceipt(executorProofReceipt, packet, {
+    packetPath,
+    preflightPath,
+    executionPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+  }, constraints);
+  const proposalErrors = validateExecutorEnablementProposal(proposal, packet, executorProofReceipt, manifest, {
+    executorProofPath,
+  }, constraints);
+  const result = buildExecutorEnablementProposalReceipt({
+    manifest,
+    manifestValidation,
+    packet,
+    packetPath,
+    preflightReceipt,
+    preflightPath,
+    executionReceipt,
+    executionPath,
+    authorization,
+    authorizationPath,
+    commandArtifact,
+    commandPath,
+    commandReceipt,
+    commandReceiptPath,
+    executorProofReceipt,
+    executorProofPath,
+    proposal,
+    proposalPath,
+    constraints,
+    packetValidation,
+    preflightErrors,
+    executionErrors,
+    authorizationErrors,
+    commandErrors,
+    commandReceiptErrors,
+    executorProofErrors,
+    proposalErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -1450,6 +1819,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs execution-authorization-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs execution-command-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs executor-proof-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs executor-enable-proposal-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -1470,6 +1840,7 @@ async function main() {
   else if (options.command === 'execution-authorization-check') result = commandExecutionAuthorizationCheck(options);
   else if (options.command === 'execution-command-check') result = commandExecutionCommandCheck(options);
   else if (options.command === 'executor-proof-check') result = commandExecutorProofCheck(options);
+  else if (options.command === 'executor-enable-proposal-check') result = commandExecutorEnableProposalCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -1486,6 +1857,7 @@ export {
   REQUIRED_PACKET_FIELDS,
   REQUIRED_TRIAL_RECEIPT_FIELDS,
   commandLooksHighRisk,
+  commandExecutorEnableProposalCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
