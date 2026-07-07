@@ -120,6 +120,8 @@ function parseArgs(argv) {
     followUpWorkIntake: null,
     followUpWorkIntakeReceipt: null,
     implementationWorkspaceEvidence: null,
+    implementationWorkspaceEvidenceReceipt: null,
+    implementationPrEvidence: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -172,6 +174,8 @@ function parseArgs(argv) {
     else if (arg === '--follow-up-work-intake' && args[index + 1]) options.followUpWorkIntake = args[++index];
     else if (arg === '--follow-up-work-intake-receipt' && args[index + 1]) options.followUpWorkIntakeReceipt = args[++index];
     else if (arg === '--implementation-workspace-evidence' && args[index + 1]) options.implementationWorkspaceEvidence = args[++index];
+    else if (arg === '--implementation-workspace-evidence-receipt' && args[index + 1]) options.implementationWorkspaceEvidenceReceipt = args[++index];
+    else if (arg === '--implementation-pr-evidence' && args[index + 1]) options.implementationPrEvidence = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -1308,6 +1312,132 @@ function validateManifest(manifest) {
   }
   if (implementationWorkspaceEvidence.writesPerformed !== 0) {
     errors.push('a4ImplementationWorkspaceEvidence.writesPerformed must be 0');
+  }
+
+  const implementationPrEvidence = manifest.a4ImplementationPrEvidence || {};
+  if (implementationPrEvidence.requiresImplementationWorkspaceEvidenceReceipt !== true) {
+    errors.push('a4ImplementationPrEvidence.requiresImplementationWorkspaceEvidenceReceipt must be true');
+  }
+  if (implementationPrEvidence.prEvidencePacketOnly !== true) {
+    errors.push('a4ImplementationPrEvidence.prEvidencePacketOnly must be true');
+  }
+  for (const field of [
+    'requiresIssueIdentifier',
+    'requiresIssueUrl',
+    'requiresOwner',
+    'requiresIntendedAssignee',
+    'requiresPrUrl',
+    'requiresPrNumber',
+    'requiresPrTitle',
+    'requiresHeadRef',
+    'requiresBaseRef',
+    'requiresHeadSha',
+    'requiresCommitSha',
+    'requiresDraftState',
+    'requiresMergeState',
+    'requiresChecks',
+    'requiresChangedFilesOrModules',
+    'requiresValidationPlan',
+    'requiresRollbackPlan',
+    'requiresPublicAccessFailClosedProof',
+  ]) {
+    if (implementationPrEvidence[field] !== true) {
+      errors.push(`a4ImplementationPrEvidence.${field} must be true`);
+    }
+  }
+  for (const field of [
+    'prCreatedByVerifier',
+    'readyForReviewByVerifier',
+    'mergedByVerifier',
+  ]) {
+    if (implementationPrEvidence[field] !== false) {
+      errors.push(`a4ImplementationPrEvidence.${field} must be false`);
+    }
+  }
+  if (implementationPrEvidence.requiresNoThirdPartyWriteByVerifier !== true) {
+    errors.push('a4ImplementationPrEvidence.requiresNoThirdPartyWriteByVerifier must be true');
+  }
+  if (implementationPrEvidence.requiresRedactionPolicy !== true) {
+    errors.push('a4ImplementationPrEvidence.requiresRedactionPolicy must be true');
+  }
+  for (const field of ['forbidsSecrets', 'forbidsRawLogs', 'forbidsPrompts', 'forbidsRawTranscripts']) {
+    if (implementationPrEvidence[field] !== true) {
+      errors.push(`a4ImplementationPrEvidence.${field} must be true`);
+    }
+  }
+  if (implementationPrEvidence.requiresNoExecutionOnEvidence !== true) {
+    errors.push('a4ImplementationPrEvidence.requiresNoExecutionOnEvidence must be true');
+  }
+  if (!implementationPrEvidence.allowedMergeStates?.includes('CLEAN')) {
+    errors.push('a4ImplementationPrEvidence.allowedMergeStates must include CLEAN');
+  }
+  for (const receiptReference of [
+    'implementation-workspace-evidence-check',
+    'follow-up-work-intake-check',
+    'manual-follow-up-issue-evidence-check',
+    'manual-next-step-handoff-check',
+    'receipt-review-decision-check',
+    'receipt-publication-check',
+    'receipt-bundle-check',
+    'execution-runbook-check',
+    'release-admission-check',
+  ]) {
+    if (!implementationPrEvidence.requiredReceiptReferences?.includes(receiptReference)) {
+      errors.push(`a4ImplementationPrEvidence.requiredReceiptReferences must include ${receiptReference}`);
+    }
+  }
+  for (const evidence of [
+    'implementation-workspace-evidence-receipt',
+    'issue-identifier',
+    'issue-url',
+    'owner',
+    'intended-assignee',
+    'pr-url',
+    'pr-number',
+    'pr-title',
+    'head-ref',
+    'base-ref',
+    'head-sha',
+    'commit-sha',
+    'draft-state',
+    'merge-state',
+    'checks',
+    'changed-files-or-modules',
+    'validation-plan',
+    'rollback-plan',
+    'public-access-fail-closed-proof',
+    'redaction-policy',
+    'operator-summary',
+  ]) {
+    if (!implementationPrEvidence.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ImplementationPrEvidence.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-policy-blocked',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+    'issue-not-claimed-by-verifier',
+    'worktree-not-created-by-verifier',
+    'branch-not-created-by-verifier',
+    'pr-not-created-by-verifier',
+    'ready-for-review-not-performed-by-verifier',
+    'merge-not-performed-by-verifier',
+    'third-party-write-not-performed-by-verifier',
+    'pr-evidence-only',
+  ]) {
+    if (!implementationPrEvidence.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ImplementationPrEvidence.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (implementationPrEvidence.writesPerformed !== 0) {
+    errors.push('a4ImplementationPrEvidence.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -5105,6 +5235,251 @@ function validateImplementationWorkspaceEvidence(evidence, intakeReceipt, manife
   return errors;
 }
 
+function validateImplementationWorkspaceEvidenceReceipt(receipt, evidence, evidenceResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'implementation-workspace-evidence-check') {
+    errors.push('implementation workspace evidence receipt mode must be implementation-workspace-evidence-check');
+  }
+  if (receipt.ok !== true || receipt.implementationWorkspaceEvidenceOk !== true) {
+    errors.push('implementation workspace evidence receipt must be ok');
+  }
+  if (receipt.implementationWorkspaceEvidence !== rel(paths.implementationWorkspaceEvidencePath)) {
+    errors.push('implementation workspace evidence receipt implementationWorkspaceEvidence must match implementation workspace evidence artifact path');
+  }
+  if (receipt.followUpWorkIntakeReceipt !== rel(paths.followUpWorkIntakeReceiptPath)) {
+    errors.push('implementation workspace evidence receipt followUpWorkIntakeReceipt must match follow-up work intake receipt path');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`implementation workspace evidence receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`implementation workspace evidence receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`implementation workspace evidence receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.workspaceEvidencePacketOnly !== true) {
+    errors.push('implementation workspace evidence receipt workspaceEvidencePacketOnly must be true');
+  }
+  for (const field of [
+    'issueIdentifier',
+    'issueUrl',
+    'owner',
+    'intendedAssignee',
+    'branchName',
+    'baseRef',
+    'baseSha',
+    'implementationSurface',
+  ]) {
+    if (receipt[field] !== evidence[field]) {
+      errors.push(`implementation workspace evidence receipt ${field} must match evidence`);
+    }
+  }
+  if (includesAll(receipt.scopedFilesOrModules || [], evidence.scopedFilesOrModules || []).length > 0) {
+    errors.push('implementation workspace evidence receipt scopedFilesOrModules must include evidence scope');
+  }
+  if (receipt.issueClaimedByVerifier !== false) {
+    errors.push('implementation workspace evidence receipt issueClaimedByVerifier must be false');
+  }
+  if (receipt.worktreeCreatedByVerifier !== false) {
+    errors.push('implementation workspace evidence receipt worktreeCreatedByVerifier must be false');
+  }
+  if (receipt.branchCreatedByVerifier !== false) {
+    errors.push('implementation workspace evidence receipt branchCreatedByVerifier must be false');
+  }
+  if (receipt.prCreatedByVerifier !== false) {
+    errors.push('implementation workspace evidence receipt prCreatedByVerifier must be false');
+  }
+  if (receipt.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation workspace evidence receipt thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (receipt.redactionPolicyApplied !== true) {
+    errors.push('implementation workspace evidence receipt redactionPolicyApplied must be true');
+  }
+  if (receipt.containsSecrets !== false) {
+    errors.push('implementation workspace evidence receipt containsSecrets must be false');
+  }
+  if (receipt.containsRawLogs !== false) {
+    errors.push('implementation workspace evidence receipt containsRawLogs must be false');
+  }
+  if (receipt.containsPrompts !== false) {
+    errors.push('implementation workspace evidence receipt containsPrompts must be false');
+  }
+  if (receipt.containsRawTranscripts !== false) {
+    errors.push('implementation workspace evidence receipt containsRawTranscripts must be false');
+  }
+  if (receipt.currentPolicyBlocked !== true) {
+    errors.push('implementation workspace evidence receipt currentPolicyBlocked must be true');
+  }
+  if (receipt.processSpawned !== false) {
+    errors.push('implementation workspace evidence receipt processSpawned must be false');
+  }
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('implementation workspace evidence receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) {
+    errors.push('implementation workspace evidence receipt runnerEnabled must be false');
+  }
+  if (receipt.executionReady !== false) {
+    errors.push('implementation workspace evidence receipt executionReady must be false');
+  }
+  if (receipt.executionEnabled !== false) {
+    errors.push('implementation workspace evidence receipt executionEnabled must be false');
+  }
+  if (receipt.executionApproved !== false) {
+    errors.push('implementation workspace evidence receipt executionApproved must be false');
+  }
+  if (receipt.wouldExecute !== false) {
+    errors.push('implementation workspace evidence receipt wouldExecute must be false');
+  }
+  if (receipt.writesPerformed !== 0) {
+    errors.push('implementation workspace evidence receipt writesPerformed must be 0');
+  }
+  if (evidenceResult.implementationWorkspaceEvidenceOk !== true) {
+    errors.push('implementation workspace evidence receipt requires valid implementation workspace evidence result');
+  }
+
+  return errors;
+}
+
+function validateImplementationPrEvidence(evidence, workspaceReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ImplementationPrEvidence || {};
+
+  if (evidence.authorityLevel !== 'A4') errors.push('implementation PR evidence authorityLevel must be A4');
+  if (evidence.issue !== constraints.expectedIssue) {
+    errors.push(`implementation PR evidence issue mismatch: expected ${constraints.expectedIssue}, got ${evidence.issue}`);
+  }
+  if (evidence.target !== constraints.expectedTarget) {
+    errors.push(`implementation PR evidence target mismatch: expected ${constraints.expectedTarget}, got ${evidence.target}`);
+  }
+  if (evidence.action !== constraints.expectedAction) {
+    errors.push(`implementation PR evidence action mismatch: expected ${constraints.expectedAction}, got ${evidence.action}`);
+  }
+  if (evidence.implementationWorkspaceEvidence !== rel(paths.implementationWorkspaceEvidencePath)) {
+    errors.push('implementation PR evidence implementationWorkspaceEvidence must match implementation workspace evidence artifact path');
+  }
+  if (evidence.implementationWorkspaceEvidenceReceipt !== rel(paths.implementationWorkspaceEvidenceReceiptPath)) {
+    errors.push('implementation PR evidence implementationWorkspaceEvidenceReceipt must match implementation workspace evidence receipt path');
+  }
+  if (evidence.prEvidencePacketOnly !== true) {
+    errors.push('implementation PR evidence prEvidencePacketOnly must be true');
+  }
+  for (const field of ['issueIdentifier', 'issueUrl', 'owner', 'intendedAssignee']) {
+    if (evidence[field] !== workspaceReceipt[field]) {
+      errors.push(`implementation PR evidence ${field} must match implementation workspace evidence receipt`);
+    }
+  }
+  if (!hasValue(evidence.prUrl) || !/^https:\/\/github\.com\/.+\/.+\/pull\/\d+$/i.test(evidence.prUrl)) {
+    errors.push('implementation PR evidence prUrl must be a GitHub pull request URL');
+  }
+  if (!Number.isInteger(evidence.prNumber) || evidence.prNumber <= 0) {
+    errors.push('implementation PR evidence prNumber must be a positive integer');
+  }
+  if (!hasValue(evidence.prTitle)) errors.push('implementation PR evidence prTitle is required');
+  if (hasValue(evidence.prTitle) && !String(evidence.prTitle).includes(evidence.issueIdentifier || '')) {
+    errors.push('implementation PR evidence prTitle must include issueIdentifier');
+  }
+  if (evidence.headRef !== workspaceReceipt.branchName) {
+    errors.push('implementation PR evidence headRef must match implementation workspace branchName');
+  }
+  if (evidence.baseRef !== workspaceReceipt.baseRef) {
+    errors.push('implementation PR evidence baseRef must match implementation workspace baseRef');
+  }
+  if (!/^[0-9a-f]{7,40}$/i.test(evidence.headSha || '')) {
+    errors.push('implementation PR evidence headSha must be a 7-40 character git SHA');
+  }
+  if (!/^[0-9a-f]{7,40}$/i.test(evidence.commitSha || '')) {
+    errors.push('implementation PR evidence commitSha must be a 7-40 character git SHA');
+  }
+  if (evidence.headSha !== evidence.commitSha) {
+    errors.push('implementation PR evidence headSha must match commitSha');
+  }
+  if (evidence.isDraft !== true) errors.push('implementation PR evidence isDraft must be true');
+  if (!rules.allowedMergeStates?.includes(evidence.mergeStateStatus)) {
+    errors.push('implementation PR evidence mergeStateStatus must be allowed');
+  }
+  if (!Array.isArray(evidence.checks) || evidence.checks.length === 0) {
+    errors.push('implementation PR evidence checks must not be empty');
+  } else {
+    for (const check of evidence.checks) {
+      if (!hasValue(check.name)) errors.push('implementation PR evidence checks must include names');
+      if (check.conclusion !== 'SUCCESS') {
+        errors.push('implementation PR evidence checks must all conclude SUCCESS');
+      }
+    }
+  }
+  const missingScope = includesAll(evidence.changedFilesOrModules || [], workspaceReceipt.scopedFilesOrModules || []);
+  if (missingScope.length) {
+    errors.push(`implementation PR evidence changedFilesOrModules missing: ${missingScope.join(', ')}`);
+  }
+  if (!Array.isArray(evidence.validationPlan) || evidence.validationPlan.length === 0) {
+    errors.push('implementation PR evidence validationPlan must not be empty');
+  }
+  if (!Array.isArray(evidence.rollbackPlan) || evidence.rollbackPlan.length === 0) {
+    errors.push('implementation PR evidence rollbackPlan must not be empty');
+  }
+  if (evidence.prCreatedByVerifier !== false) errors.push('implementation PR evidence prCreatedByVerifier must be false');
+  if (evidence.readyForReviewByVerifier !== false) {
+    errors.push('implementation PR evidence readyForReviewByVerifier must be false');
+  }
+  if (evidence.mergedByVerifier !== false) errors.push('implementation PR evidence mergedByVerifier must be false');
+  if (evidence.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation PR evidence thirdPartyWritePerformedByVerifier must be false');
+  }
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!evidence.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`implementation PR evidence requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const requiredEvidence of rules.requiredEvidence || []) {
+    if (!evidence.requiredEvidence?.includes(requiredEvidence)) {
+      errors.push(`implementation PR evidence requiredEvidence must include ${requiredEvidence}`);
+    }
+  }
+  if (evidence.redactionPolicyApplied !== true) {
+    errors.push('implementation PR evidence redactionPolicyApplied must be true');
+  }
+  if (!hasValue(evidence.redactionPolicy)) errors.push('implementation PR evidence redactionPolicy is required');
+  if (evidence.containsSecrets !== false) errors.push('implementation PR evidence containsSecrets must be false');
+  if (evidence.containsRawLogs !== false) errors.push('implementation PR evidence containsRawLogs must be false');
+  if (evidence.containsPrompts !== false) errors.push('implementation PR evidence containsPrompts must be false');
+  if (evidence.containsRawTranscripts !== false) {
+    errors.push('implementation PR evidence containsRawTranscripts must be false');
+  }
+  if (evidence.rawLogsIncluded === true) errors.push('implementation PR evidence rawLogsIncluded must not be true');
+  if (evidence.promptsIncluded === true) errors.push('implementation PR evidence promptsIncluded must not be true');
+  if (evidence.rawTranscriptIncluded === true) {
+    errors.push('implementation PR evidence rawTranscriptIncluded must not be true');
+  }
+  if (!hasValue(evidence.publicAccessFailClosedProof)) {
+    errors.push('implementation PR evidence publicAccessFailClosedProof is required');
+  }
+  if (!hasValue(evidence.operatorSummary)) errors.push('implementation PR evidence operatorSummary is required');
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!evidence.noExecutionMarkers?.includes(marker)) {
+      errors.push(`implementation PR evidence noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (evidence.currentPolicyBlocked !== true) errors.push('implementation PR evidence currentPolicyBlocked must be true');
+  if (evidence.processSpawned === true) errors.push('implementation PR evidence processSpawned must not be true');
+  if (Array.isArray(evidence.executedCommands) && evidence.executedCommands.length > 0) {
+    errors.push('implementation PR evidence executedCommands must be empty');
+  }
+  if (evidence.runnerEnabled === true) errors.push('implementation PR evidence runnerEnabled must not be true');
+  if (evidence.executionReady === true) errors.push('implementation PR evidence executionReady must not be true');
+  if (evidence.executionEnabled === true) errors.push('implementation PR evidence executionEnabled must not be true');
+  if (evidence.executionApproved === true) errors.push('implementation PR evidence executionApproved must not be true');
+  if (evidence.wouldExecute === true) errors.push('implementation PR evidence wouldExecute must not be true');
+  if (evidence.writesPerformed !== 0) errors.push('implementation PR evidence writesPerformed must be 0');
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('implementation PR evidence current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -6602,6 +6977,116 @@ function buildImplementationWorkspaceEvidenceReceipt({
       implementationWorkspaceEvidenceIssueClaimedByVerifier: manifest.a4ImplementationWorkspaceEvidence?.issueClaimedByVerifier,
       implementationWorkspaceEvidenceWorktreeCreatedByVerifier: manifest.a4ImplementationWorkspaceEvidence?.worktreeCreatedByVerifier,
       implementationWorkspaceEvidenceRequiresNoExecutionOnEvidence: manifest.a4ImplementationWorkspaceEvidence?.requiresNoExecutionOnEvidence,
+    },
+  };
+}
+
+function buildImplementationPrEvidenceReceipt({
+  manifest,
+  manifestValidation,
+  workspaceResult,
+  implementationWorkspaceEvidence,
+  implementationWorkspaceEvidencePath,
+  implementationWorkspaceEvidenceReceipt,
+  implementationWorkspaceEvidenceReceiptPath,
+  implementationPrEvidence,
+  implementationPrEvidencePath,
+  implementationWorkspaceEvidenceReceiptErrors,
+  implementationPrEvidenceErrors,
+  constraints,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(workspaceResult.errors || []),
+    ...implementationWorkspaceEvidenceReceiptErrors,
+    ...implementationPrEvidenceErrors,
+  ];
+  const implementationPrEvidenceOk = errors.length === 0;
+
+  return {
+    mode: 'implementation-pr-evidence-check',
+    ok: implementationPrEvidenceOk,
+    implementationPrEvidenceOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    implementationPrEvidence: rel(implementationPrEvidencePath),
+    implementationWorkspaceEvidence: rel(implementationWorkspaceEvidencePath),
+    implementationWorkspaceEvidenceReceipt: rel(implementationWorkspaceEvidenceReceiptPath),
+    followUpWorkIntakeReceipt: workspaceResult.followUpWorkIntakeReceipt,
+    followUpWorkIntake: workspaceResult.followUpWorkIntake,
+    manualFollowUpIssueEvidenceReceipt: workspaceResult.manualFollowUpIssueEvidenceReceipt,
+    manualFollowUpIssueEvidence: workspaceResult.manualFollowUpIssueEvidence,
+    packetPath: workspaceResult.packetPath,
+    issue: workspaceResult.issue || constraints.expectedIssue,
+    authorityLevel: workspaceResult.authorityLevel,
+    target: workspaceResult.target,
+    action: workspaceResult.action,
+    targetScope: implementationPrEvidence.targetScope || implementationWorkspaceEvidenceReceipt.targetScope || workspaceResult.targetScope,
+    prEvidencePacketOnly: implementationPrEvidence.prEvidencePacketOnly === true,
+    issueIdentifier: implementationPrEvidence.issueIdentifier || null,
+    issueUrl: implementationPrEvidence.issueUrl || null,
+    owner: implementationPrEvidence.owner || null,
+    intendedAssignee: implementationPrEvidence.intendedAssignee || null,
+    prUrl: implementationPrEvidence.prUrl || null,
+    prNumber: implementationPrEvidence.prNumber || null,
+    prTitle: implementationPrEvidence.prTitle || null,
+    headRef: implementationPrEvidence.headRef || null,
+    baseRef: implementationPrEvidence.baseRef || null,
+    headSha: implementationPrEvidence.headSha || null,
+    commitSha: implementationPrEvidence.commitSha || null,
+    isDraft: implementationPrEvidence.isDraft === true,
+    mergeStateStatus: implementationPrEvidence.mergeStateStatus || null,
+    checks: implementationPrEvidence.checks || [],
+    changedFilesOrModules: implementationPrEvidence.changedFilesOrModules || [],
+    validationPlan: implementationPrEvidence.validationPlan || [],
+    rollbackPlan: implementationPrEvidence.rollbackPlan || [],
+    prCreatedByVerifier: implementationPrEvidence.prCreatedByVerifier === true,
+    readyForReviewByVerifier: implementationPrEvidence.readyForReviewByVerifier === true,
+    mergedByVerifier: implementationPrEvidence.mergedByVerifier === true,
+    thirdPartyWritePerformedByVerifier: implementationPrEvidence.thirdPartyWritePerformedByVerifier === true,
+    requiredReceiptReferences: implementationPrEvidence.requiredReceiptReferences || [],
+    requiredEvidence: implementationPrEvidence.requiredEvidence || [],
+    redactionPolicyApplied: implementationPrEvidence.redactionPolicyApplied === true,
+    redactionPolicy: implementationPrEvidence.redactionPolicy || null,
+    containsSecrets: implementationPrEvidence.containsSecrets === true,
+    containsRawLogs: implementationPrEvidence.containsRawLogs === true,
+    containsPrompts: implementationPrEvidence.containsPrompts === true,
+    containsRawTranscripts: implementationPrEvidence.containsRawTranscripts === true,
+    rawLogsIncluded: implementationPrEvidence.rawLogsIncluded === true,
+    promptsIncluded: implementationPrEvidence.promptsIncluded === true,
+    rawTranscriptIncluded: implementationPrEvidence.rawTranscriptIncluded === true,
+    publicAccessFailClosedProof: implementationPrEvidence.publicAccessFailClosedProof || null,
+    operatorSummary: implementationPrEvidence.operatorSummary || null,
+    noExecutionMarkers: implementationPrEvidence.noExecutionMarkers || [],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: implementationPrEvidenceOk
+      ? 'implementation PR evidence accepted as PR-evidence-only proof; verifier did not create a PR, mark it ready, merge, spawn a runner process, or perform a production write'
+      : 'implementation PR evidence rejected before PR creation, ready-for-review transition, merge, runner process, policy enablement, or write command',
+    evidenceTarget: implementationPrEvidence.evidenceTarget || implementationWorkspaceEvidenceReceipt.evidenceTarget || workspaceResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may review this draft PR evidence for a separate merge or promotion decision; automated execution still requires explicit checked-in policy enablement and a separate runner path',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      implementationPrEvidenceRequiresImplementationWorkspaceEvidenceReceipt: manifest.a4ImplementationPrEvidence?.requiresImplementationWorkspaceEvidenceReceipt,
+      implementationPrEvidencePacketOnly: manifest.a4ImplementationPrEvidence?.prEvidencePacketOnly,
+      implementationPrEvidencePrCreatedByVerifier: manifest.a4ImplementationPrEvidence?.prCreatedByVerifier,
+      implementationPrEvidenceReadyForReviewByVerifier: manifest.a4ImplementationPrEvidence?.readyForReviewByVerifier,
+      implementationPrEvidenceMergedByVerifier: manifest.a4ImplementationPrEvidence?.mergedByVerifier,
+      implementationPrEvidenceRequiresNoExecutionOnEvidence: manifest.a4ImplementationPrEvidence?.requiresNoExecutionOnEvidence,
     },
   };
 }
@@ -9053,6 +9538,75 @@ function commandImplementationWorkspaceEvidenceCheck(options) {
   return result;
 }
 
+function commandImplementationPrEvidenceCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for implementation-pr-evidence-check'));
+  }
+  if (!options.implementationWorkspaceEvidenceReceipt) {
+    throw new Error('--implementation-workspace-evidence-receipt is required for implementation-pr-evidence-check');
+  }
+  if (!options.implementationPrEvidence) {
+    throw new Error('--implementation-pr-evidence is required for implementation-pr-evidence-check');
+  }
+
+  const workspaceResult = commandImplementationWorkspaceEvidenceCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const followUpWorkIntakeReceiptPath = resolveFromRoot(options.followUpWorkIntakeReceipt);
+  const implementationWorkspaceEvidencePath = resolveFromRoot(options.implementationWorkspaceEvidence);
+  const implementationWorkspaceEvidenceReceiptPath = resolveFromRoot(options.implementationWorkspaceEvidenceReceipt);
+  const implementationPrEvidencePath = resolveFromRoot(options.implementationPrEvidence);
+  const implementationWorkspaceEvidence = readJson(implementationWorkspaceEvidencePath);
+  const implementationWorkspaceEvidenceReceipt = readJson(implementationWorkspaceEvidenceReceiptPath);
+  const implementationPrEvidence = readJson(implementationPrEvidencePath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const implementationWorkspaceEvidenceReceiptErrors = validateImplementationWorkspaceEvidenceReceipt(
+    implementationWorkspaceEvidenceReceipt,
+    implementationWorkspaceEvidence,
+    workspaceResult,
+    {
+      implementationWorkspaceEvidencePath,
+      followUpWorkIntakeReceiptPath,
+    },
+    constraints,
+  );
+  const implementationPrEvidenceErrors = validateImplementationPrEvidence(
+    implementationPrEvidence,
+    implementationWorkspaceEvidenceReceipt,
+    manifest,
+    {
+      implementationWorkspaceEvidencePath,
+      implementationWorkspaceEvidenceReceiptPath,
+    },
+    constraints,
+  );
+  const result = buildImplementationPrEvidenceReceipt({
+    manifest,
+    manifestValidation,
+    workspaceResult,
+    implementationWorkspaceEvidence,
+    implementationWorkspaceEvidencePath,
+    implementationWorkspaceEvidenceReceipt,
+    implementationWorkspaceEvidenceReceiptPath,
+    implementationPrEvidence,
+    implementationPrEvidencePath,
+    implementationWorkspaceEvidenceReceiptErrors,
+    implementationPrEvidenceErrors,
+    constraints,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -9114,6 +9668,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs manual-follow-up-issue-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs follow-up-work-intake-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-workspace-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs implementation-pr-evidence-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --follow-up-work-intake-receipt <path> --implementation-workspace-evidence <path> --implementation-workspace-evidence-receipt <path> --implementation-pr-evidence <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -9150,6 +9705,7 @@ async function main() {
   else if (options.command === 'manual-follow-up-issue-evidence-check') result = commandManualFollowUpIssueEvidenceCheck(options);
   else if (options.command === 'follow-up-work-intake-check') result = commandFollowUpWorkIntakeCheck(options);
   else if (options.command === 'implementation-workspace-evidence-check') result = commandImplementationWorkspaceEvidenceCheck(options);
+  else if (options.command === 'implementation-pr-evidence-check') result = commandImplementationPrEvidenceCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -9182,6 +9738,7 @@ export {
   commandManualFollowUpIssueEvidenceCheck,
   commandFollowUpWorkIntakeCheck,
   commandImplementationWorkspaceEvidenceCheck,
+  commandImplementationPrEvidenceCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,

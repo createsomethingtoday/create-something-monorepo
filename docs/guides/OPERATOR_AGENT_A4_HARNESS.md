@@ -935,6 +935,68 @@ verifier-created claim/worktree/branch/PR markers, verifier third-party write
 claims, leaked raw artifacts, and any process/command/write marker.
 `authority.a4Execution` remains blocked.
 
+After an operator opens the implementation PR and checks finish, validate the
+PR evidence packet:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-pr-evidence-check \
+  --packet <packet.json> \
+  --preflight-receipt <preflight-receipt.json> \
+  --execution-receipt <execution-receipt.json> \
+  --authorization <authorization.json> \
+  --command-artifact <command.json> \
+  --command-receipt <command-receipt.json> \
+  --executor-proof-receipt <executor-proof.json> \
+  --enablement-proposal <proposal.json> \
+  --enablement-proposal-receipt <proposal-receipt.json> \
+  --policy-patch <policy-patch-dry-run.json> \
+  --policy-patch-receipt <policy-patch-receipt.json> \
+  --candidate-manifest <candidate-manifest.json> \
+  --application-diff-receipt <application-diff-receipt.json> \
+  --readiness-receipt <readiness-receipt.json> \
+  --runner-contract <runner-contract.json> \
+  --runner-contract-receipt <runner-contract-receipt.json> \
+  --runner-plan <runner-plan.json> \
+  --runner-plan-receipt <runner-plan-receipt.json> \
+  --runner-diff <runner-diff.json> \
+  --runner-diff-receipt <runner-diff-receipt.json> \
+  --release-admission <release-admission.json> \
+  --release-admission-receipt <release-admission-receipt.json> \
+  --execution-runbook <execution-runbook.json> \
+  --execution-runbook-receipt <execution-runbook-receipt.json> \
+  --receipt-bundle <receipt-bundle.json> \
+  --receipt-bundle-receipt <receipt-bundle-receipt.json> \
+  --receipt-publication <receipt-publication.json> \
+  --receipt-publication-receipt <receipt-publication-receipt.json> \
+  --receipt-review-decision <receipt-review-decision.json> \
+  --receipt-review-decision-receipt <receipt-review-decision-receipt.json> \
+  --manual-next-step-handoff <manual-next-step-handoff.json> \
+  --manual-next-step-handoff-receipt <manual-next-step-handoff-receipt.json> \
+  --manual-follow-up-issue-evidence <manual-follow-up-issue-evidence.json> \
+  --manual-follow-up-issue-evidence-receipt <manual-follow-up-issue-evidence-receipt.json> \
+  --follow-up-work-intake <follow-up-work-intake.json> \
+  --follow-up-work-intake-receipt <follow-up-work-intake-receipt.json> \
+  --implementation-workspace-evidence <implementation-workspace-evidence.json> \
+  --implementation-workspace-evidence-receipt <implementation-workspace-evidence-receipt.json> \
+  --implementation-pr-evidence <implementation-pr-evidence.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation PR evidence packet proves an operator-opened draft PR with
+matching issue, PR URL and number, title, head ref, base ref, head SHA, commit
+SHA, merge state, check conclusions, changed files or modules, validation plan,
+rollback plan, public-access fail-closed proof, redaction policy, and operator
+summary. It remains evidence-only: the verifier does not create the PR, mark it
+ready for review, merge it, enable a runner, deploy, rotate secrets, expose raw
+artifacts, or mutate any third-party system. It rejects drifted workspace
+receipts, invalid PR URLs, failed checks, scope gaps, verifier-created PR
+markers, ready-for-review or merge markers, verifier third-party write claims,
+leaked raw artifacts, and any process/command/write marker.
+`authority.a4Execution` remains blocked.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
