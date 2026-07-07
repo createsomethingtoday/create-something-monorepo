@@ -838,6 +838,62 @@ function implementationProductionReleaseDecisionCheckArgs(packetPath, preflightR
   return args;
 }
 
+function implementationProductionReleaseAdmissionCheckArgs(packetPath, preflightReceiptPath, executionReceiptPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath, receiptPublicationReceiptPath, receiptReviewDecisionPath, receiptReviewDecisionReceiptPath, manualNextStepHandoffPath, manualNextStepHandoffReceiptPath, manualFollowUpIssueEvidencePath, manualFollowUpIssueEvidenceReceiptPath, followUpWorkIntakePath, followUpWorkIntakeReceiptPath, implementationWorkspaceEvidencePath, implementationWorkspaceEvidenceReceiptPath, implementationPrEvidencePath, implementationPrEvidenceReceiptPath, implementationMergeDecisionPath, implementationMergeDecisionReceiptPath, implementationMergeEvidencePath, implementationMergeEvidenceReceiptPath, implementationPostMergeValidationPath, implementationPostMergeValidationReceiptPath, implementationProductionReleaseDecisionPath, implementationProductionReleaseDecisionReceiptPath, implementationProductionReleaseAdmissionPath, receiptDir) {
+  const args = implementationProductionReleaseDecisionCheckArgs(
+    packetPath,
+    preflightReceiptPath,
+    executionReceiptPath,
+    authorizationPath,
+    commandPath,
+    commandReceiptPath,
+    executorProofPath,
+    proposalPath,
+    proposalReceiptPath,
+    policyPatchPath,
+    policyPatchReceiptPath,
+    candidateManifestPath,
+    applicationDiffReceiptPath,
+    readinessReceiptPath,
+    runnerContractPath,
+    runnerContractReceiptPath,
+    runnerPlanPath,
+    runnerPlanReceiptPath,
+    runnerDiffPath,
+    runnerDiffReceiptPath,
+    releaseAdmissionPath,
+    releaseAdmissionReceiptPath,
+    executionRunbookPath,
+    executionRunbookReceiptPath,
+    receiptBundlePath,
+    receiptBundleReceiptPath,
+    receiptPublicationPath,
+    receiptPublicationReceiptPath,
+    receiptReviewDecisionPath,
+    receiptReviewDecisionReceiptPath,
+    manualNextStepHandoffPath,
+    manualNextStepHandoffReceiptPath,
+    manualFollowUpIssueEvidencePath,
+    manualFollowUpIssueEvidenceReceiptPath,
+    followUpWorkIntakePath,
+    followUpWorkIntakeReceiptPath,
+    implementationWorkspaceEvidencePath,
+    implementationWorkspaceEvidenceReceiptPath,
+    implementationPrEvidencePath,
+    implementationPrEvidenceReceiptPath,
+    implementationMergeDecisionPath,
+    implementationMergeDecisionReceiptPath,
+    implementationMergeEvidencePath,
+    implementationMergeEvidenceReceiptPath,
+    implementationPostMergeValidationPath,
+    implementationPostMergeValidationReceiptPath,
+    implementationProductionReleaseDecisionPath,
+    receiptDir,
+  );
+  args[1] = 'implementation-production-release-admission-check';
+  args.push('--implementation-production-release-decision-receipt', implementationProductionReleaseDecisionReceiptPath, '--implementation-production-release-admission', implementationProductionReleaseAdmissionPath);
+  return args;
+}
+
 function mergePatch(base, patch) {
   const result = JSON.parse(JSON.stringify(base));
   for (const [key, value] of Object.entries(patch || {})) {
@@ -1792,6 +1848,71 @@ function writeValidImplementationPostMergeValidationReceipt(t, packetPath, prefl
     root,
     implementationPostMergeValidationReceiptPath: path.join(REPO_ROOT, validationPayload.receiptPath),
     validationPayload,
+  };
+}
+
+function writeValidImplementationProductionReleaseDecisionReceipt(t, packetPath, preflightPath, executionPath, authorizationPath, commandPath, commandReceiptPath, executorProofPath, proposalPath, proposalReceiptPath, policyPatchPath, policyPatchReceiptPath, candidateManifestPath, applicationDiffReceiptPath, readinessReceiptPath, runnerContractPath, runnerContractReceiptPath, runnerPlanPath, runnerPlanReceiptPath, runnerDiffPath, runnerDiffReceiptPath, releaseAdmissionPath, releaseAdmissionReceiptPath, executionRunbookPath, executionRunbookReceiptPath, receiptBundlePath, receiptBundleReceiptPath, receiptPublicationPath, receiptPublicationReceiptPath, receiptReviewDecisionPath, receiptReviewDecisionReceiptPath, manualNextStepHandoffPath, manualNextStepHandoffReceiptPath, manualFollowUpIssueEvidencePath, manualFollowUpIssueEvidenceReceiptPath, followUpWorkIntakePath, followUpWorkIntakeReceiptPath, implementationWorkspaceEvidencePath, implementationWorkspaceEvidenceReceiptPath, implementationPrEvidencePath, implementationPrEvidenceReceiptPath, implementationMergeDecisionPath, implementationMergeDecisionReceiptPath, implementationMergeEvidencePath, implementationMergeEvidenceReceiptPath, implementationPostMergeValidationPath, implementationPostMergeValidationReceiptPath, implementationProductionReleaseDecisionPath) {
+  const root = makeWorkspace(t);
+  const decisionResult = spawnSync(
+    process.execPath,
+    implementationProductionReleaseDecisionCheckArgs(
+      packetPath,
+      preflightPath,
+      executionPath,
+      authorizationPath,
+      commandPath,
+      commandReceiptPath,
+      executorProofPath,
+      proposalPath,
+      proposalReceiptPath,
+      policyPatchPath,
+      policyPatchReceiptPath,
+      candidateManifestPath,
+      applicationDiffReceiptPath,
+      readinessReceiptPath,
+      runnerContractPath,
+      runnerContractReceiptPath,
+      runnerPlanPath,
+      runnerPlanReceiptPath,
+      runnerDiffPath,
+      runnerDiffReceiptPath,
+      releaseAdmissionPath,
+      releaseAdmissionReceiptPath,
+      executionRunbookPath,
+      executionRunbookReceiptPath,
+      receiptBundlePath,
+      receiptBundleReceiptPath,
+      receiptPublicationPath,
+      receiptPublicationReceiptPath,
+      receiptReviewDecisionPath,
+      receiptReviewDecisionReceiptPath,
+      manualNextStepHandoffPath,
+      manualNextStepHandoffReceiptPath,
+      manualFollowUpIssueEvidencePath,
+      manualFollowUpIssueEvidenceReceiptPath,
+      followUpWorkIntakePath,
+      followUpWorkIntakeReceiptPath,
+      implementationWorkspaceEvidencePath,
+      implementationWorkspaceEvidenceReceiptPath,
+      implementationPrEvidencePath,
+      implementationPrEvidenceReceiptPath,
+      implementationMergeDecisionPath,
+      implementationMergeDecisionReceiptPath,
+      implementationMergeEvidencePath,
+      implementationMergeEvidenceReceiptPath,
+      implementationPostMergeValidationPath,
+      implementationPostMergeValidationReceiptPath,
+      implementationProductionReleaseDecisionPath,
+      root,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+  assert.equal(decisionResult.status, 0, decisionResult.stderr || decisionResult.stdout);
+  const decisionPayload = JSON.parse(decisionResult.stdout);
+  return {
+    root,
+    implementationProductionReleaseDecisionReceiptPath: path.join(REPO_ROOT, decisionPayload.receiptPath),
+    decisionPayload,
   };
 }
 
@@ -3427,6 +3548,139 @@ function validImplementationProductionReleaseDecision({ implementationPostMergeV
       'deploy-not-performed-by-verifier',
       'third-party-write-not-performed-by-verifier',
       'production-release-decision-only',
+    ],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
+function validImplementationProductionReleaseAdmission({ implementationProductionReleaseDecisionPath, implementationProductionReleaseDecisionReceiptPath } = {}) {
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    implementationProductionReleaseDecision: implementationProductionReleaseDecisionPath
+      ? path.relative(REPO_ROOT, implementationProductionReleaseDecisionPath)
+      : 'implementation-production-release-decision.json',
+    implementationProductionReleaseDecisionReceipt: implementationProductionReleaseDecisionReceiptPath
+      ? path.relative(REPO_ROOT, implementationProductionReleaseDecisionReceiptPath)
+      : 'implementation-production-release-decision-check.json',
+    releaseAdmissionOnly: true,
+    releaseDecision: 'approved-for-manual-release',
+    admittedBy: 'Micah Johnson',
+    admittedAt: '2026-07-07T02:00:00.000Z',
+    releaseEnvironment: 'production',
+    releaseWindow: {
+      startsAt: '2026-07-07T02:00:00.000Z',
+      endsAt: '2026-07-07T03:00:00.000Z',
+      timezone: 'America/Chicago',
+    },
+    issueIdentifier: EXPECTED_ISSUE,
+    issueUrl: `https://linear.app/createsomething/issue/${EXPECTED_ISSUE.toLowerCase()}/manual-a4-execution-enablement-review-for-fixture`,
+    prUrl: 'https://github.com/createsomethingtoday/create-something-monorepo/pull/999',
+    prNumber: 999,
+    commitSha: 'abcdef0123456789abcdef0123456789abcdef01',
+    mergeCommitSha: '1234567890abcdef1234567890abcdef12345678',
+    checks: [
+      { name: 'Philosophical Code Review', conclusion: 'SUCCESS' },
+      { name: 'Socket Security: Project Report', conclusion: 'SUCCESS' },
+      { name: 'Socket Security: Pull Request Alerts', conclusion: 'SUCCESS' },
+    ],
+    postMergeChecks: [
+      { name: 'post-merge adapter check', conclusion: 'SUCCESS' },
+      { name: 'post-merge harness tests', conclusion: 'SUCCESS' },
+    ],
+    smokeEvidence: [
+      'node scripts/operator-agent-omnigent-adapter.mjs check --json after merge',
+      'operator-agent-public-smoke rawOriginExposed=false redirectsToAccess=true',
+    ],
+    validationEvidence: [
+      'post-merge validation receipt ok',
+      'node --test scripts/test/operator-agent-omnigent-adapter.test.mjs',
+      'git diff --check',
+    ],
+    rollbackPlan: [
+      'do not deploy from this verifier',
+      'revert the merge commit if release validation is later invalidated',
+      'require a separate release admission or deploy runbook before production mutation',
+    ],
+    deployedByVerifier: false,
+    thirdPartyWritePerformedByVerifier: false,
+    requiredReceiptReferences: [
+      'implementation-production-release-decision-check',
+      'implementation-post-merge-validation-check',
+      'implementation-merge-evidence-check',
+      'implementation-merge-decision-check',
+      'implementation-pr-evidence-check',
+      'implementation-workspace-evidence-check',
+      'follow-up-work-intake-check',
+      'manual-follow-up-issue-evidence-check',
+      'manual-next-step-handoff-check',
+      'receipt-review-decision-check',
+      'receipt-publication-check',
+      'receipt-bundle-check',
+      'execution-runbook-check',
+      'release-admission-check',
+    ],
+    requiredEvidence: [
+      'implementation-production-release-decision-receipt',
+      'approved-release-decision',
+      'admitted-by',
+      'admitted-at',
+      'release-environment',
+      'release-window',
+      'issue-identifier',
+      'issue-url',
+      'pr-url',
+      'pr-number',
+      'commit-sha',
+      'merge-commit-sha',
+      'checks',
+      'post-merge-checks',
+      'smoke-evidence',
+      'validation-evidence',
+      'rollback-plan',
+      'public-access-fail-closed-proof',
+      'redaction-policy',
+      'operator-summary',
+    ],
+    redactionPolicyApplied: true,
+    redactionPolicy: {
+      excludes: ['secrets', 'raw-logs', 'prompts', 'raw-transcripts'],
+      evidenceOnly: true,
+    },
+    containsSecrets: false,
+    containsRawLogs: false,
+    containsPrompts: false,
+    containsRawTranscripts: false,
+    rawLogsIncluded: false,
+    promptsIncluded: false,
+    rawTranscriptIncluded: false,
+    publicAccessFailClosedProof: 'operator-agent-public-smoke rawOriginExposed=false and redirectsToAccess=true',
+    operatorSummary: 'Production release admission binds the approved release decision to an operator-run window; verifier did not deploy, execute, or write.',
+    noExecutionMarkers: [
+      'current-policy-blocked',
+      'process-not-spawned',
+      'executed-commands-empty',
+      'runner-disabled',
+      'execution-not-ready',
+      'execution-disabled',
+      'execution-not-approved',
+      'would-execute-false',
+      'writes-performed-zero',
+      'deploy-not-performed-by-verifier',
+      'third-party-write-not-performed-by-verifier',
+      'production-release-admission-only',
     ],
     currentPolicyBlocked: true,
     processSpawned: false,
@@ -6279,6 +6533,74 @@ function writeImplementationPostMergeValidationFixture(t) {
   };
 }
 
+function writeImplementationProductionReleaseDecisionFixture(t) {
+  const fixture = writeImplementationPostMergeValidationFixture(t);
+  const implementationProductionReleaseDecisionPath = path.join(fixture.root, 'implementation-production-release-decision.json');
+  writeFileSync(
+    implementationProductionReleaseDecisionPath,
+    `${JSON.stringify(validImplementationProductionReleaseDecision({
+      implementationPostMergeValidationPath: fixture.implementationPostMergeValidationPath,
+      implementationPostMergeValidationReceiptPath: fixture.implementationPostMergeValidationReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const { implementationProductionReleaseDecisionReceiptPath } = writeValidImplementationProductionReleaseDecisionReceipt(
+    t,
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    fixture.runnerDiffPath,
+    fixture.runnerDiffReceiptPath,
+    fixture.releaseAdmissionPath,
+    fixture.releaseAdmissionReceiptPath,
+    fixture.executionRunbookPath,
+    fixture.executionRunbookReceiptPath,
+    fixture.receiptBundlePath,
+    fixture.receiptBundleReceiptPath,
+    fixture.receiptPublicationPath,
+    fixture.receiptPublicationReceiptPath,
+    fixture.receiptReviewDecisionPath,
+    fixture.receiptReviewDecisionReceiptPath,
+    fixture.manualNextStepHandoffPath,
+    fixture.manualNextStepHandoffReceiptPath,
+    fixture.manualFollowUpIssueEvidencePath,
+    fixture.manualFollowUpIssueEvidenceReceiptPath,
+    fixture.followUpWorkIntakePath,
+    fixture.followUpWorkIntakeReceiptPath,
+    fixture.implementationWorkspaceEvidencePath,
+    fixture.implementationWorkspaceEvidenceReceiptPath,
+    fixture.implementationPrEvidencePath,
+    fixture.implementationPrEvidenceReceiptPath,
+    fixture.implementationMergeDecisionPath,
+    fixture.implementationMergeDecisionReceiptPath,
+    fixture.implementationMergeEvidencePath,
+    fixture.implementationMergeEvidenceReceiptPath,
+    fixture.implementationPostMergeValidationPath,
+    fixture.implementationPostMergeValidationReceiptPath,
+    implementationProductionReleaseDecisionPath,
+  );
+
+  return {
+    ...fixture,
+    implementationProductionReleaseDecisionPath,
+    implementationProductionReleaseDecisionReceiptPath,
+  };
+}
+
 function runImplementationWorkspaceEvidenceCheck(fixture, implementationWorkspaceEvidencePath, receiptDir = fixture.root, followUpWorkIntakeReceiptPath = fixture.followUpWorkIntakeReceiptPath) {
   return spawnSync(
     process.execPath,
@@ -6585,6 +6907,65 @@ function runImplementationProductionReleaseDecisionCheck(fixture, implementation
       fixture.implementationPostMergeValidationPath,
       implementationPostMergeValidationReceiptPath,
       implementationProductionReleaseDecisionPath,
+      receiptDir,
+    ),
+    { cwd: REPO_ROOT, encoding: 'utf8' },
+  );
+}
+
+function runImplementationProductionReleaseAdmissionCheck(fixture, implementationProductionReleaseAdmissionPath, receiptDir = fixture.root, implementationProductionReleaseDecisionReceiptPath = fixture.implementationProductionReleaseDecisionReceiptPath) {
+  return spawnSync(
+    process.execPath,
+    implementationProductionReleaseAdmissionCheckArgs(
+      fixture.packetPath,
+      fixture.preflightPath,
+      fixture.executionPath,
+      fixture.authorizationPath,
+      fixture.commandPath,
+      fixture.commandReceiptPath,
+      fixture.executorProofPath,
+      fixture.proposalPath,
+      fixture.proposalReceiptPath,
+      fixture.policyPatchPath,
+      fixture.policyPatchReceiptPath,
+      fixture.candidateManifestPath,
+      fixture.applicationDiffReceiptPath,
+      fixture.readinessReceiptPath,
+      fixture.runnerContractPath,
+      fixture.runnerContractReceiptPath,
+      fixture.runnerPlanPath,
+      fixture.runnerPlanReceiptPath,
+      fixture.runnerDiffPath,
+      fixture.runnerDiffReceiptPath,
+      fixture.releaseAdmissionPath,
+      fixture.releaseAdmissionReceiptPath,
+      fixture.executionRunbookPath,
+      fixture.executionRunbookReceiptPath,
+      fixture.receiptBundlePath,
+      fixture.receiptBundleReceiptPath,
+      fixture.receiptPublicationPath,
+      fixture.receiptPublicationReceiptPath,
+      fixture.receiptReviewDecisionPath,
+      fixture.receiptReviewDecisionReceiptPath,
+      fixture.manualNextStepHandoffPath,
+      fixture.manualNextStepHandoffReceiptPath,
+      fixture.manualFollowUpIssueEvidencePath,
+      fixture.manualFollowUpIssueEvidenceReceiptPath,
+      fixture.followUpWorkIntakePath,
+      fixture.followUpWorkIntakeReceiptPath,
+      fixture.implementationWorkspaceEvidencePath,
+      fixture.implementationWorkspaceEvidenceReceiptPath,
+      fixture.implementationPrEvidencePath,
+      fixture.implementationPrEvidenceReceiptPath,
+      fixture.implementationMergeDecisionPath,
+      fixture.implementationMergeDecisionReceiptPath,
+      fixture.implementationMergeEvidencePath,
+      fixture.implementationMergeEvidenceReceiptPath,
+      fixture.implementationPostMergeValidationPath,
+      fixture.implementationPostMergeValidationReceiptPath,
+      fixture.implementationProductionReleaseDecisionPath,
+      implementationProductionReleaseDecisionReceiptPath,
+      implementationProductionReleaseAdmissionPath,
       receiptDir,
     ),
     { cwd: REPO_ROOT, encoding: 'utf8' },
@@ -10047,6 +10428,194 @@ test('implementation-production-release-decision-check fails closed on drifted p
   assert.equal(payload.wouldExecute, false);
   assert.equal(payload.writesPerformed, 0);
   assert.match(payload.errors.join('\n'), /prNumber must match validation/);
+  assert.match(payload.errors.join('\n'), /deployedByVerifier must be false/);
+  assert.match(payload.errors.join('\n'), /processSpawned must be false/);
+});
+
+test('implementation-production-release-admission-check validates release admission without verifier deploy writes', (t) => {
+  const fixture = writeImplementationProductionReleaseDecisionFixture(t);
+  const implementationProductionReleaseAdmissionPath = path.join(fixture.root, 'implementation-production-release-admission.json');
+  writeFileSync(
+    implementationProductionReleaseAdmissionPath,
+    `${JSON.stringify(validImplementationProductionReleaseAdmission({
+      implementationProductionReleaseDecisionPath: fixture.implementationProductionReleaseDecisionPath,
+      implementationProductionReleaseDecisionReceiptPath: fixture.implementationProductionReleaseDecisionReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationProductionReleaseAdmissionCheck(fixture, implementationProductionReleaseAdmissionPath);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'implementation-production-release-admission-check');
+  assert.equal(payload.implementationProductionReleaseAdmissionOk, true);
+  assert.equal(payload.releaseAdmissionOnly, true);
+  assert.equal(payload.releaseDecision, 'approved-for-manual-release');
+  assert.equal(payload.admittedBy, 'Micah Johnson');
+  assert.equal(payload.releaseEnvironment, 'production');
+  assert.equal(payload.releaseWindow.timezone, 'America/Chicago');
+  assert.equal(payload.issueIdentifier, EXPECTED_ISSUE);
+  assert.equal(payload.prUrl, 'https://github.com/createsomethingtoday/create-something-monorepo/pull/999');
+  assert.equal(payload.prNumber, 999);
+  assert.equal(payload.commitSha, 'abcdef0123456789abcdef0123456789abcdef01');
+  assert.equal(payload.mergeCommitSha, '1234567890abcdef1234567890abcdef12345678');
+  assert.ok(payload.checks.every((check) => check.conclusion === 'SUCCESS'));
+  assert.ok(payload.postMergeChecks.every((check) => check.conclusion === 'SUCCESS'));
+  assert.match(payload.smokeEvidence.join('\n'), /rawOriginExposed=false/);
+  assert.match(payload.rollbackPlan.join('\n'), /do not deploy/);
+  assert.equal(payload.deployedByVerifier, false);
+  assert.equal(payload.thirdPartyWritePerformedByVerifier, false);
+  assert.ok(payload.requiredReceiptReferences.includes('implementation-production-release-decision-check'));
+  assert.ok(payload.requiredEvidence.includes('approved-release-decision'));
+  assert.equal(payload.redactionPolicyApplied, true);
+  assert.equal(payload.containsSecrets, false);
+  assert.equal(payload.containsRawLogs, false);
+  assert.equal(payload.containsPrompts, false);
+  assert.equal(payload.containsRawTranscripts, false);
+  assert.match(payload.publicAccessFailClosedProof, /rawOriginExposed=false/);
+  assert.ok(payload.noExecutionMarkers.includes('production-release-admission-only'));
+  assert.equal(payload.currentPolicyBlocked, true);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.implementationProductionReleaseAdmissionRequiresImplementationProductionReleaseDecisionReceipt, true);
+  assert.equal(payload.policy.implementationProductionReleaseAdmissionDeployedByVerifier, false);
+  assert.match(payload.nextGate, /manual deploy or signed release record/);
+  assert.match(payload.receiptPath, /implementation-production-release-admission-check\.json$/);
+});
+
+test('implementation-production-release-admission-check fails closed on unsafe, mismatched, or leaky admission packets', (t) => {
+  const cases = [
+    {
+      name: 'non-approved-decision',
+      mutate(admission) {
+        admission.releaseDecision = 'hold';
+      },
+      pattern: /releaseDecision must match decision receipt/,
+    },
+    {
+      name: 'missing-release-window',
+      mutate(admission) {
+        admission.releaseWindow = {};
+      },
+      pattern: /releaseWindow is required/,
+    },
+    {
+      name: 'commit-mismatch',
+      mutate(admission) {
+        admission.mergeCommitSha = 'ffffffffffffffffffffffffffffffffffffffff';
+      },
+      pattern: /mergeCommitSha must match decision receipt/,
+    },
+    {
+      name: 'failing-post-merge-check',
+      mutate(admission) {
+        admission.postMergeChecks[0].conclusion = 'FAILURE';
+      },
+      pattern: /postMergeChecks must match decision receipt/,
+    },
+    {
+      name: 'verifier-deploy-write',
+      mutate(admission) {
+        admission.deployedByVerifier = true;
+        admission.thirdPartyWritePerformedByVerifier = true;
+      },
+      pattern: /deployedByVerifier must be false/,
+    },
+    {
+      name: 'secret-leak',
+      mutate(admission) {
+        admission.containsSecrets = true;
+      },
+      pattern: /containsSecrets must be false/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(admission) {
+        admission.processSpawned = true;
+        admission.executedCommands = ['wrangler deploy'];
+        admission.executionApproved = true;
+        admission.wouldExecute = true;
+        admission.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationProductionReleaseDecisionFixture(t);
+    const admission = validImplementationProductionReleaseAdmission({
+      implementationProductionReleaseDecisionPath: fixture.implementationProductionReleaseDecisionPath,
+      implementationProductionReleaseDecisionReceiptPath: fixture.implementationProductionReleaseDecisionReceiptPath,
+    });
+    entry.mutate(admission);
+    const implementationProductionReleaseAdmissionPath = path.join(fixture.root, `${entry.name}-implementation-production-release-admission.json`);
+    writeFileSync(implementationProductionReleaseAdmissionPath, `${JSON.stringify(admission, null, 2)}\n`);
+
+    const result = runImplementationProductionReleaseAdmissionCheck(fixture, implementationProductionReleaseAdmissionPath);
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationProductionReleaseAdmissionOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-production-release-admission-check fails closed on drifted release decision receipts', (t) => {
+  const fixture = writeImplementationProductionReleaseDecisionFixture(t);
+  const driftedDecisionReceipt = JSON.parse(readFileSync(fixture.implementationProductionReleaseDecisionReceiptPath, 'utf8'));
+  driftedDecisionReceipt.releaseDecision = 'hold';
+  driftedDecisionReceipt.prNumber = 1000;
+  driftedDecisionReceipt.deployedByVerifier = true;
+  driftedDecisionReceipt.processSpawned = true;
+  const driftedDecisionReceiptPath = path.join(fixture.root, 'drifted-implementation-production-release-decision-receipt.json');
+  writeFileSync(driftedDecisionReceiptPath, `${JSON.stringify(driftedDecisionReceipt, null, 2)}\n`);
+  const implementationProductionReleaseAdmissionPath = path.join(fixture.root, 'implementation-production-release-admission.json');
+  writeFileSync(
+    implementationProductionReleaseAdmissionPath,
+    `${JSON.stringify(validImplementationProductionReleaseAdmission({
+      implementationProductionReleaseDecisionPath: fixture.implementationProductionReleaseDecisionPath,
+      implementationProductionReleaseDecisionReceiptPath: driftedDecisionReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationProductionReleaseAdmissionCheck(
+    fixture,
+    implementationProductionReleaseAdmissionPath,
+    fixture.root,
+    driftedDecisionReceiptPath,
+  );
+
+  assert.notEqual(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.implementationProductionReleaseAdmissionOk, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.match(payload.errors.join('\n'), /releaseDecision must be approved-for-manual-release/);
+  assert.match(payload.errors.join('\n'), /prNumber must match decision/);
   assert.match(payload.errors.join('\n'), /deployedByVerifier must be false/);
   assert.match(payload.errors.join('\n'), /processSpawned must be false/);
 });
