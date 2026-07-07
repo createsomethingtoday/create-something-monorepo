@@ -1685,6 +1685,37 @@ acceptance, broader rollback scopes, verifier policy-enablement or issue
 mutation claims, leaked raw artifacts, and any process/command/write marker.
 `authority.a4Execution` remains blocked.
 
+After the A4 enablement approval packet passes, validate the candidate
+policy-enablement PR evidence:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-policy-enablement-pr-check \
+  <same chain arguments as implementation-production-a4-enablement-approval-check> \
+  --implementation-production-a4-enablement-approval-receipt <implementation-production-a4-enablement-approval-receipt.json> \
+  --implementation-production-policy-enablement-pr <implementation-production-policy-enablement-pr.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production policy enablement PR packet proves a candidate PR
+proposes only the approved policy fields: `authority.a4Execution`,
+`a4ExecutionCommand.runnerEnabled`, and `a4ExecutorProof.runnerEnabled`. It must
+bind to the A4 enablement approval artifact and receipt, include PR URL,
+number, base ref, head ref, commit SHA, the policy patch proposal reference,
+rollback boundary, post-action smoke, and the public-access fail-closed proof.
+The rollback authorization scope remains
+`reversible-internal-production-only`.
+
+This gate validates PR evidence only. It does not apply the policy patch,
+enable a runner, merge or mutate PRs, close or update Linear issues, deploy,
+post updates, rotate secrets, expose raw artifacts, or mutate third-party
+systems. It rejects drifted A4 enablement approval receipts, unapproved policy
+fields, missing enabled-policy fields, broader rollback scopes, verifier PR or
+issue mutation claims, leaked raw artifacts, and any process/command/write
+marker. `authority.a4Execution` remains blocked in this verifier branch.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
