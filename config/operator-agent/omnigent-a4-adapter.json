@@ -374,6 +374,52 @@
     "writesPerformed": 0,
     "blockedUntil": "operator-reviewed execution runbook may be used only after release admission receipt, checked-in enabled policy, exact command receipt, target validation, rollback readiness, post-action smoke, and public fail-closed proof are present"
   },
+  "a4ReceiptBundle": {
+    "requiresExecutionRunbookReceipt": true,
+    "bundleOnly": true,
+    "shareableOnly": true,
+    "requiresRedactionPolicy": true,
+    "forbidsSecrets": true,
+    "forbidsRawLogs": true,
+    "forbidsPrompts": true,
+    "requiredReceiptReferences": [
+      "approval-check",
+      "preflight-check",
+      "execution-receipt-check",
+      "execution-authorization-check",
+      "execution-command-check",
+      "executor-proof-check",
+      "executor-enable-proposal-check",
+      "policy-patch-dry-run-check",
+      "policy-application-diff-check",
+      "enabled-manifest-readiness-check",
+      "runner-implementation-contract-check",
+      "runner-implementation-plan-check",
+      "runner-implementation-diff-check",
+      "release-admission-check",
+      "execution-runbook-check"
+    ],
+    "requiredEvidence": [
+      "linear-evidence",
+      "github-checks-passed",
+      "public-access-fail-closed-proof",
+      "redaction-policy",
+      "operator-summary"
+    ],
+    "requiredNoExecutionMarkers": [
+      "current-policy-blocked",
+      "process-not-spawned",
+      "executed-commands-empty",
+      "runner-disabled",
+      "execution-not-ready",
+      "execution-disabled",
+      "execution-not-approved",
+      "would-execute-false",
+      "writes-performed-zero"
+    ],
+    "writesPerformed": 0,
+    "blockedUntil": "operator-reviewed receipt bundle may be shared only after the full receipt chain, redaction policy, public fail-closed proof, and no-execution markers validate without exposing secrets, raw logs, or prompts"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -474,6 +520,11 @@
       "id": "gate-17-a4-execution-runbook",
       "required": "A4 execution runbook validates target validation, write command, post-action smoke, rollback command, public fail-closed proof, final receipt outputs, and stop conditions against the release admission receipt without executing",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs execution-runbook-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --policy-patch-receipt <policy-patch-receipt.json> --candidate-manifest <candidate-manifest.json> --application-diff-receipt <application-diff-receipt.json> --readiness-receipt <readiness-receipt.json> --runner-contract <runner-contract.json> --runner-contract-receipt <runner-contract-receipt.json> --runner-plan <runner-plan.json> --runner-plan-receipt <runner-plan-receipt.json> --runner-diff <runner-diff.json> --runner-diff-receipt <runner-diff-receipt.json> --release-admission <release-admission.json> --release-admission-receipt <release-admission-receipt.json> --execution-runbook <execution-runbook.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-18-a4-receipt-bundle",
+      "required": "A4 receipt bundle validates a shareable redacted receipt set for asynchronous operator review against the execution runbook receipt without exposing secrets, raw logs, prompts, or executing",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs receipt-bundle-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --policy-patch-receipt <policy-patch-receipt.json> --candidate-manifest <candidate-manifest.json> --application-diff-receipt <application-diff-receipt.json> --readiness-receipt <readiness-receipt.json> --runner-contract <runner-contract.json> --runner-contract-receipt <runner-contract-receipt.json> --runner-plan <runner-plan.json> --runner-plan-receipt <runner-plan-receipt.json> --runner-diff <runner-diff.json> --runner-diff-receipt <runner-diff-receipt.json> --release-admission <release-admission.json> --release-admission-receipt <release-admission-receipt.json> --execution-runbook <execution-runbook.json> --execution-runbook-receipt <execution-runbook-receipt.json> --receipt-bundle <receipt-bundle.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }

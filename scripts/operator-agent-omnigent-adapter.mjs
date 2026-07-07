@@ -106,6 +106,8 @@ function parseArgs(argv) {
     releaseAdmission: null,
     releaseAdmissionReceipt: null,
     executionRunbook: null,
+    executionRunbookReceipt: null,
+    receiptBundle: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -144,6 +146,8 @@ function parseArgs(argv) {
     else if (arg === '--release-admission' && args[index + 1]) options.releaseAdmission = args[++index];
     else if (arg === '--release-admission-receipt' && args[index + 1]) options.releaseAdmissionReceipt = args[++index];
     else if (arg === '--execution-runbook' && args[index + 1]) options.executionRunbook = args[++index];
+    else if (arg === '--execution-runbook-receipt' && args[index + 1]) options.executionRunbookReceipt = args[++index];
+    else if (arg === '--receipt-bundle' && args[index + 1]) options.receiptBundle = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -657,6 +661,79 @@ function validateManifest(manifest) {
   }
   if (executionRunbook.writesPerformed !== 0) {
     errors.push('a4ExecutionRunbook.writesPerformed must be 0');
+  }
+
+  const receiptBundle = manifest.a4ReceiptBundle || {};
+  if (receiptBundle.requiresExecutionRunbookReceipt !== true) {
+    errors.push('a4ReceiptBundle.requiresExecutionRunbookReceipt must be true');
+  }
+  if (receiptBundle.bundleOnly !== true) {
+    errors.push('a4ReceiptBundle.bundleOnly must be true');
+  }
+  if (receiptBundle.shareableOnly !== true) {
+    errors.push('a4ReceiptBundle.shareableOnly must be true');
+  }
+  if (receiptBundle.requiresRedactionPolicy !== true) {
+    errors.push('a4ReceiptBundle.requiresRedactionPolicy must be true');
+  }
+  if (receiptBundle.forbidsSecrets !== true) {
+    errors.push('a4ReceiptBundle.forbidsSecrets must be true');
+  }
+  if (receiptBundle.forbidsRawLogs !== true) {
+    errors.push('a4ReceiptBundle.forbidsRawLogs must be true');
+  }
+  if (receiptBundle.forbidsPrompts !== true) {
+    errors.push('a4ReceiptBundle.forbidsPrompts must be true');
+  }
+  for (const reference of [
+    'approval-check',
+    'preflight-check',
+    'execution-receipt-check',
+    'execution-authorization-check',
+    'execution-command-check',
+    'executor-proof-check',
+    'executor-enable-proposal-check',
+    'policy-patch-dry-run-check',
+    'policy-application-diff-check',
+    'enabled-manifest-readiness-check',
+    'runner-implementation-contract-check',
+    'runner-implementation-plan-check',
+    'runner-implementation-diff-check',
+    'release-admission-check',
+    'execution-runbook-check',
+  ]) {
+    if (!receiptBundle.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`a4ReceiptBundle.requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const evidence of [
+    'linear-evidence',
+    'github-checks-passed',
+    'public-access-fail-closed-proof',
+    'redaction-policy',
+    'operator-summary',
+  ]) {
+    if (!receiptBundle.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ReceiptBundle.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-policy-blocked',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+  ]) {
+    if (!receiptBundle.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ReceiptBundle.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (receiptBundle.writesPerformed !== 0) {
+    errors.push('a4ReceiptBundle.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -3233,6 +3310,146 @@ function validateExecutionRunbook(runbook, releaseAdmissionReceipt, manifest, pa
   return errors;
 }
 
+function validateExecutionRunbookReceipt(receipt, runbook, runbookResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'execution-runbook-check') {
+    errors.push('execution runbook receipt mode must be execution-runbook-check');
+  }
+  if (receipt.ok !== true || receipt.executionRunbookOk !== true) {
+    errors.push('execution runbook receipt must be ok');
+  }
+  if (receipt.executionRunbook !== rel(paths.executionRunbookPath)) {
+    errors.push('execution runbook receipt executionRunbook must match execution runbook artifact path');
+  }
+  if (receipt.releaseAdmissionReceipt !== rel(paths.releaseAdmissionReceiptPath)) {
+    errors.push('execution runbook receipt releaseAdmissionReceipt must match release admission receipt path');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`execution runbook receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`execution runbook receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`execution runbook receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  if (receipt.runbookOnly !== true) errors.push('execution runbook receipt runbookOnly must be true');
+  if (receipt.executionMode !== runbook.executionMode) {
+    errors.push('execution runbook receipt executionMode must match execution runbook');
+  }
+  if (receipt.requiresManualTrigger !== true) {
+    errors.push('execution runbook receipt requiresManualTrigger must be true');
+  }
+  if (!sameJson(receipt.finalReceiptOutputs, runbook.finalReceiptOutputs || [])) {
+    errors.push('execution runbook receipt finalReceiptOutputs must match execution runbook');
+  }
+  if (!sameJson(receipt.stopConditions, runbook.stopConditions || [])) {
+    errors.push('execution runbook receipt stopConditions must match execution runbook');
+  }
+  if (receipt.maxWritesPerRun !== runbook.maxWritesPerRun) {
+    errors.push('execution runbook receipt maxWritesPerRun must match execution runbook');
+  }
+  if (receipt.currentPolicyBlocked !== true) errors.push('execution runbook receipt currentPolicyBlocked must be true');
+  if (receipt.processSpawned !== false) errors.push('execution runbook receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('execution runbook receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('execution runbook receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('execution runbook receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('execution runbook receipt executionEnabled must be false');
+  if (receipt.executionApproved !== false) errors.push('execution runbook receipt executionApproved must be false');
+  if (receipt.wouldExecute !== false) errors.push('execution runbook receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('execution runbook receipt writesPerformed must be 0');
+  if (runbookResult.executionRunbookOk !== true) {
+    errors.push('execution runbook receipt requires valid execution runbook result');
+  }
+
+  return errors;
+}
+
+function validateReceiptBundle(bundle, executionRunbookReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ReceiptBundle || {};
+
+  if (bundle.authorityLevel !== 'A4') errors.push('receipt bundle authorityLevel must be A4');
+  if (bundle.issue !== constraints.expectedIssue) {
+    errors.push(`receipt bundle issue mismatch: expected ${constraints.expectedIssue}, got ${bundle.issue}`);
+  }
+  if (bundle.target !== constraints.expectedTarget) {
+    errors.push(`receipt bundle target mismatch: expected ${constraints.expectedTarget}, got ${bundle.target}`);
+  }
+  if (bundle.action !== constraints.expectedAction) {
+    errors.push(`receipt bundle action mismatch: expected ${constraints.expectedAction}, got ${bundle.action}`);
+  }
+  if (bundle.executionRunbookReceipt !== rel(paths.executionRunbookReceiptPath)) {
+    errors.push('receipt bundle executionRunbookReceipt must match execution runbook receipt path');
+  }
+  if (bundle.executionRunbook !== rel(paths.executionRunbookPath)) {
+    errors.push('receipt bundle executionRunbook must match execution runbook artifact path');
+  }
+  if (bundle.bundleOnly !== true) errors.push('receipt bundle bundleOnly must be true');
+  if (bundle.shareable !== true) errors.push('receipt bundle shareable must be true');
+  if (bundle.redactionPolicyApplied !== true) errors.push('receipt bundle redactionPolicyApplied must be true');
+  if (!hasValue(bundle.redactionPolicy)) errors.push('receipt bundle redactionPolicy is required');
+  if (bundle.containsSecrets !== false) errors.push('receipt bundle containsSecrets must be false');
+  if (bundle.containsRawLogs !== false) errors.push('receipt bundle containsRawLogs must be false');
+  if (bundle.containsPrompts !== false) errors.push('receipt bundle containsPrompts must be false');
+  if (bundle.rawLogsIncluded === true) errors.push('receipt bundle rawLogsIncluded must not be true');
+  if (bundle.promptsIncluded === true) errors.push('receipt bundle promptsIncluded must not be true');
+  if (bundle.rawTranscriptIncluded === true) errors.push('receipt bundle rawTranscriptIncluded must not be true');
+
+  const references = Array.isArray(bundle.receiptReferences) ? bundle.receiptReferences : [];
+  const referenceModes = references.map((entry) => (typeof entry === 'string' ? entry : entry.mode));
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!referenceModes.includes(reference)) {
+      errors.push(`receipt bundle receiptReferences must include ${reference}`);
+    }
+  }
+  for (const reference of references) {
+    if (typeof reference === 'object' && reference.redacted !== true) {
+      errors.push(`receipt bundle reference ${reference.mode || 'unknown'} must be redacted`);
+    }
+  }
+
+  for (const evidence of rules.requiredEvidence || []) {
+    if (!bundle.requiredEvidence?.includes(evidence)) {
+      errors.push(`receipt bundle requiredEvidence must include ${evidence}`);
+    }
+  }
+  if (!hasValue(bundle.linearEvidence)) errors.push('receipt bundle linearEvidence is required');
+  if (bundle.githubChecksPassed !== true) errors.push('receipt bundle githubChecksPassed must be true');
+  if (!hasValue(bundle.publicAccessFailClosedProof)) {
+    errors.push('receipt bundle publicAccessFailClosedProof is required');
+  }
+  if (!hasValue(bundle.operatorSummary)) errors.push('receipt bundle operatorSummary is required');
+
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!bundle.noExecutionMarkers?.includes(marker)) {
+      errors.push(`receipt bundle noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (bundle.currentPolicyBlocked !== true) errors.push('receipt bundle currentPolicyBlocked must be true');
+  if (bundle.processSpawned === true) errors.push('receipt bundle processSpawned must not be true');
+  if (Array.isArray(bundle.executedCommands) && bundle.executedCommands.length > 0) {
+    errors.push('receipt bundle executedCommands must be empty');
+  }
+  if (bundle.runnerEnabled === true) errors.push('receipt bundle runnerEnabled must not be true');
+  if (bundle.executionReady === true) errors.push('receipt bundle executionReady must not be true');
+  if (bundle.executionEnabled === true) errors.push('receipt bundle executionEnabled must not be true');
+  if (bundle.executionApproved === true) errors.push('receipt bundle executionApproved must not be true');
+  if (bundle.wouldExecute === true) errors.push('receipt bundle wouldExecute must not be true');
+  if (bundle.writesPerformed !== 0) errors.push('receipt bundle writesPerformed must be 0');
+  if (executionRunbookReceipt.executionRunbookOk !== true) {
+    errors.push('receipt bundle requires valid execution runbook receipt');
+  }
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('receipt bundle current manifest authority.a4Execution must remain blocked in this verifier PR');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -4052,6 +4269,95 @@ function buildExecutionRunbookReceipt({
       executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
       executionRunbookRequiresReleaseAdmissionReceipt: manifest.a4ExecutionRunbook?.requiresReleaseAdmissionReceipt,
       executionRunbookOnly: manifest.a4ExecutionRunbook?.runbookOnly,
+    },
+  };
+}
+
+function buildReceiptBundleReceipt({
+  manifest,
+  manifestValidation,
+  runbookResult,
+  executionRunbook,
+  executionRunbookPath,
+  executionRunbookReceipt,
+  executionRunbookReceiptPath,
+  receiptBundle,
+  receiptBundlePath,
+  constraints,
+  executionRunbookReceiptErrors,
+  receiptBundleErrors,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(runbookResult.errors || []),
+    ...executionRunbookReceiptErrors,
+    ...receiptBundleErrors,
+  ];
+  const receiptBundleOk = errors.length === 0;
+
+  return {
+    mode: 'receipt-bundle-check',
+    ok: receiptBundleOk,
+    receiptBundleOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    receiptBundle: rel(receiptBundlePath),
+    executionRunbookReceipt: rel(executionRunbookReceiptPath),
+    executionRunbook: rel(executionRunbookPath),
+    releaseAdmissionReceipt: runbookResult.releaseAdmissionReceipt,
+    releaseAdmission: runbookResult.releaseAdmission,
+    packetPath: runbookResult.packetPath,
+    issue: runbookResult.issue || constraints.expectedIssue,
+    authorityLevel: runbookResult.authorityLevel,
+    target: runbookResult.target,
+    action: runbookResult.action,
+    targetScope: receiptBundle.targetScope || executionRunbookReceipt.targetScope || runbookResult.targetScope,
+    bundleOnly: receiptBundle.bundleOnly === true,
+    shareable: receiptBundle.shareable === true,
+    redactionPolicyApplied: receiptBundle.redactionPolicyApplied === true,
+    redactionPolicy: receiptBundle.redactionPolicy || null,
+    containsSecrets: receiptBundle.containsSecrets === true,
+    containsRawLogs: receiptBundle.containsRawLogs === true,
+    containsPrompts: receiptBundle.containsPrompts === true,
+    rawLogsIncluded: receiptBundle.rawLogsIncluded === true,
+    promptsIncluded: receiptBundle.promptsIncluded === true,
+    rawTranscriptIncluded: receiptBundle.rawTranscriptIncluded === true,
+    receiptReferences: receiptBundle.receiptReferences || [],
+    requiredEvidence: receiptBundle.requiredEvidence || [],
+    linearEvidence: receiptBundle.linearEvidence || null,
+    githubChecksPassed: receiptBundle.githubChecksPassed === true,
+    publicAccessFailClosedProof: receiptBundle.publicAccessFailClosedProof || null,
+    operatorSummary: receiptBundle.operatorSummary || null,
+    noExecutionMarkers: receiptBundle.noExecutionMarkers || [],
+    finalReceiptOutputs: executionRunbook.finalReceiptOutputs || [],
+    currentPolicyBlocked: true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: receiptBundleOk
+      ? 'shareable receipt bundle accepted for asynchronous operator review; checked-in policy remains blocked and no raw logs, prompts, secrets, commands, or writes are included'
+      : 'receipt bundle rejected before sharing, runner process, or write command',
+    evidenceTarget: receiptBundle.evidenceTarget || executionRunbookReceipt.evidenceTarget || runbookResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may review the redacted receipt bundle asynchronously; any production write still requires checked-in enabled policy, exact command receipt, manual trigger, and full-chain revalidation',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      receiptBundleRequiresExecutionRunbookReceipt: manifest.a4ReceiptBundle?.requiresExecutionRunbookReceipt,
+      receiptBundleShareableOnly: manifest.a4ReceiptBundle?.shareableOnly,
+      receiptBundleForbidsSecrets: manifest.a4ReceiptBundle?.forbidsSecrets,
+      receiptBundleForbidsRawLogs: manifest.a4ReceiptBundle?.forbidsRawLogs,
+      receiptBundleForbidsPrompts: manifest.a4ReceiptBundle?.forbidsPrompts,
     },
   };
 }
@@ -6058,6 +6364,61 @@ function commandExecutionRunbookCheck(options) {
   return result;
 }
 
+function commandReceiptBundleCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for receipt-bundle-check'));
+  }
+  if (!options.executionRunbookReceipt) {
+    throw new Error('--execution-runbook-receipt is required for receipt-bundle-check');
+  }
+  if (!options.receiptBundle) throw new Error('--receipt-bundle is required for receipt-bundle-check');
+
+  const runbookResult = commandExecutionRunbookCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const executionRunbookPath = resolveFromRoot(options.executionRunbook);
+  const releaseAdmissionReceiptPath = resolveFromRoot(options.releaseAdmissionReceipt);
+  const executionRunbookReceiptPath = resolveFromRoot(options.executionRunbookReceipt);
+  const receiptBundlePath = resolveFromRoot(options.receiptBundle);
+  const executionRunbook = readJson(executionRunbookPath);
+  const executionRunbookReceipt = readJson(executionRunbookReceiptPath);
+  const receiptBundle = readJson(receiptBundlePath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const executionRunbookReceiptErrors = validateExecutionRunbookReceipt(executionRunbookReceipt, executionRunbook, runbookResult, {
+    executionRunbookPath,
+    releaseAdmissionReceiptPath,
+  }, constraints);
+  const receiptBundleErrors = validateReceiptBundle(receiptBundle, executionRunbookReceipt, manifest, {
+    executionRunbookPath,
+    executionRunbookReceiptPath,
+  }, constraints);
+  const result = buildReceiptBundleReceipt({
+    manifest,
+    manifestValidation,
+    runbookResult,
+    executionRunbook,
+    executionRunbookPath,
+    executionRunbookReceipt,
+    executionRunbookReceiptPath,
+    receiptBundle,
+    receiptBundlePath,
+    constraints,
+    executionRunbookReceiptErrors,
+    receiptBundleErrors,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -6112,6 +6473,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs runner-implementation-diff-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs release-admission-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs execution-runbook-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs receipt-bundle-check --packet <path> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--max-age-hours <hours>] [--now <iso>] [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -6141,6 +6503,7 @@ async function main() {
   else if (options.command === 'runner-implementation-diff-check') result = commandRunnerImplementationDiffCheck(options);
   else if (options.command === 'release-admission-check') result = commandReleaseAdmissionCheck(options);
   else if (options.command === 'execution-runbook-check') result = commandExecutionRunbookCheck(options);
+  else if (options.command === 'receipt-bundle-check') result = commandReceiptBundleCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -6166,6 +6529,7 @@ export {
   commandRunnerImplementationDiffCheck,
   commandReleaseAdmissionCheck,
   commandExecutionRunbookCheck,
+  commandReceiptBundleCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
