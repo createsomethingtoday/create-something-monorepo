@@ -5603,6 +5603,109 @@ function validImplementationProductionRunnerImplementationPr({
   };
 }
 
+function validImplementationProductionRunnerImplementationReview({
+  implementationProductionRunnerImplementationPrPath,
+  implementationProductionRunnerImplementationPrReceiptPath,
+} = {}) {
+  const runnerImplementationPr = validImplementationProductionRunnerImplementationPr();
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    implementationProductionRunnerImplementationPr: implementationProductionRunnerImplementationPrPath
+      ? path.relative(REPO_ROOT, implementationProductionRunnerImplementationPrPath)
+      : 'implementation-production-runner-implementation-pr.json',
+    implementationProductionRunnerImplementationPrReceipt: implementationProductionRunnerImplementationPrReceiptPath
+      ? path.relative(REPO_ROOT, implementationProductionRunnerImplementationPrReceiptPath)
+      : 'implementation-production-runner-implementation-pr-check.json',
+    runnerImplementationReviewEvidenceOnly: true,
+    reviewDecision: 'approve-runner-implementation-pr-review',
+    reviewedBy: 'CREATE SOMETHING operator',
+    reviewedAt: '2026-07-07T20:00:00.000Z',
+    approvedDiffReview: true,
+    approvedChecksReview: true,
+    executionApprovalGranted: false,
+    runnerImplementationPrUrl: runnerImplementationPr.runnerImplementationPrUrl,
+    runnerImplementationPrNumber: runnerImplementationPr.runnerImplementationPrNumber,
+    runnerImplementationHeadRef: runnerImplementationPr.runnerImplementationHeadRef,
+    runnerImplementationBaseRef: runnerImplementationPr.runnerImplementationBaseRef,
+    runnerImplementationCommitSha: runnerImplementationPr.runnerImplementationCommitSha,
+    runnerImplementationDiffReference: runnerImplementationPr.runnerImplementationDiffReference,
+    runnerImplementationChecksReference: runnerImplementationPr.runnerImplementationChecksReference,
+    runnerImplementationReviewScope: runnerImplementationPr.runnerImplementationReviewScope,
+    runnerImplementationReference: runnerImplementationPr.runnerImplementationReference,
+    runnerContractReference: runnerImplementationPr.runnerContractReference,
+    runnerEntryPoint: runnerImplementationPr.runnerEntryPoint,
+    runnerImplementationAdmittedByVerifier: false,
+    requiredReceiptReferences: [
+      'implementation-production-runner-implementation-pr-check',
+      'implementation-production-runner-admission-check',
+      'implementation-production-policy-enablement-revalidation-check',
+      'implementation-production-policy-enablement-merge-evidence-check',
+      'implementation-production-policy-enablement-merge-decision-check',
+      'implementation-production-policy-enablement-pr-check',
+      'implementation-production-a4-enablement-approval-check',
+    ],
+    requiredEvidence: [
+      'implementation-production-runner-implementation-pr-receipt',
+      'approved-runner-implementation-diff-review',
+      'approved-runner-implementation-checks-review',
+      'runner-implementation-review-decision',
+      'runner-implementation-reviewed-by',
+      'runner-implementation-reviewed-at',
+      'runner-implementation-review-scope',
+      'no-execution-approval',
+      'redaction-policy',
+    ],
+    redactionPolicyApplied: true,
+    redactionPolicy: {
+      excludes: ['secrets', 'raw-logs', 'prompts', 'raw-transcripts'],
+      evidenceOnly: true,
+    },
+    containsSecrets: false,
+    containsRawLogs: false,
+    containsPrompts: false,
+    containsRawTranscripts: false,
+    noExecutionMarkers: [
+      'current-verifier-policy-blocked',
+      'policy-change-not-applied-by-verifier',
+      'process-not-spawned',
+      'executed-commands-empty',
+      'runner-disabled-in-verifier',
+      'runner-implementation-not-admitted-by-verifier',
+      'runner-implementation-pr-not-mutated-by-verifier',
+      'execution-not-ready',
+      'execution-disabled',
+      'execution-not-approved',
+      'would-execute-false',
+      'writes-performed-zero',
+      'deploy-not-performed-by-verifier',
+      'third-party-write-not-performed-by-verifier',
+      'issue-mutation-not-performed-by-verifier',
+      'pr-mutation-not-performed-by-verifier',
+      'production-runner-implementation-review-evidence-only',
+    ],
+    currentVerifierPolicyBlocked: true,
+    policyChangeAppliedByVerifier: false,
+    runnerEnabledByVerifier: false,
+    prMutationPerformedByVerifier: false,
+    deployedByVerifier: false,
+    thirdPartyWritePerformedByVerifier: false,
+    issueMutationPerformedByVerifier: false,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
 function writePolicyApplicationFixture(t) {
   const root = makeWorkspace(t);
   const packetPath = path.join(root, 'packet.json');
@@ -8867,6 +8970,30 @@ function writeImplementationProductionRunnerAdmissionFixture(t) {
   };
 }
 
+function writeImplementationProductionRunnerImplementationPrFixture(t) {
+  const fixture = writeImplementationProductionRunnerAdmissionFixture(t);
+  const implementationProductionRunnerImplementationPrPath = path.join(fixture.root, 'implementation-production-runner-implementation-pr.json');
+  writeFileSync(
+    implementationProductionRunnerImplementationPrPath,
+    `${JSON.stringify(validImplementationProductionRunnerImplementationPr({
+      implementationProductionRunnerAdmissionPath: fixture.implementationProductionRunnerAdmissionPath,
+      implementationProductionRunnerAdmissionReceiptPath: fixture.implementationProductionRunnerAdmissionReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const result = runImplementationProductionRunnerImplementationPrCheck(fixture, implementationProductionRunnerImplementationPrPath);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  const implementationProductionRunnerImplementationPrReceiptPath = path.isAbsolute(payload.receiptPath)
+    ? payload.receiptPath
+    : path.resolve(REPO_ROOT, payload.receiptPath);
+
+  return {
+    ...fixture,
+    implementationProductionRunnerImplementationPrPath,
+    implementationProductionRunnerImplementationPrReceiptPath,
+  };
+}
+
 function runImplementationWorkspaceEvidenceCheck(fixture, implementationWorkspaceEvidencePath, receiptDir = fixture.root, followUpWorkIntakeReceiptPath = fixture.followUpWorkIntakeReceiptPath) {
   return spawnSync(
     process.execPath,
@@ -10070,6 +10197,106 @@ function runImplementationProductionRunnerImplementationPrCheck(
     implementationProductionRunnerAdmissionReceiptPath,
     '--implementation-production-runner-implementation-pr',
     implementationProductionRunnerImplementationPrPath,
+  );
+  return spawnSync(process.execPath, args, { cwd: REPO_ROOT, encoding: 'utf8' });
+}
+
+function runImplementationProductionRunnerImplementationReviewCheck(
+  fixture,
+  implementationProductionRunnerImplementationReviewPath,
+  receiptDir = fixture.root,
+  implementationProductionRunnerImplementationPrReceiptPath = fixture.implementationProductionRunnerImplementationPrReceiptPath,
+) {
+  const args = implementationProductionPolicyEnablementPrCheckArgs(
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    fixture.runnerDiffPath,
+    fixture.runnerDiffReceiptPath,
+    fixture.releaseAdmissionPath,
+    fixture.releaseAdmissionReceiptPath,
+    fixture.executionRunbookPath,
+    fixture.executionRunbookReceiptPath,
+    fixture.receiptBundlePath,
+    fixture.receiptBundleReceiptPath,
+    fixture.receiptPublicationPath,
+    fixture.receiptPublicationReceiptPath,
+    fixture.receiptReviewDecisionPath,
+    fixture.receiptReviewDecisionReceiptPath,
+    fixture.manualNextStepHandoffPath,
+    fixture.manualNextStepHandoffReceiptPath,
+    fixture.manualFollowUpIssueEvidencePath,
+    fixture.manualFollowUpIssueEvidenceReceiptPath,
+    fixture.followUpWorkIntakePath,
+    fixture.followUpWorkIntakeReceiptPath,
+    fixture.implementationWorkspaceEvidencePath,
+    fixture.implementationWorkspaceEvidenceReceiptPath,
+    fixture.implementationPrEvidencePath,
+    fixture.implementationPrEvidenceReceiptPath,
+    fixture.implementationMergeDecisionPath,
+    fixture.implementationMergeDecisionReceiptPath,
+    fixture.implementationMergeEvidencePath,
+    fixture.implementationMergeEvidenceReceiptPath,
+    fixture.implementationPostMergeValidationPath,
+    fixture.implementationPostMergeValidationReceiptPath,
+    fixture.implementationProductionReleaseDecisionPath,
+    fixture.implementationProductionReleaseDecisionReceiptPath,
+    fixture.implementationProductionReleaseAdmissionPath,
+    fixture.implementationProductionReleaseAdmissionReceiptPath,
+    fixture.implementationProductionDeployEvidencePath,
+    fixture.implementationProductionDeployEvidenceReceiptPath,
+    fixture.implementationProductionPostDeployValidationPath,
+    fixture.implementationProductionPostDeployValidationReceiptPath,
+    fixture.implementationProductionReleaseCloseoutPath,
+    fixture.implementationProductionReleaseCloseoutReceiptPath,
+    fixture.implementationProductionOwnershipReviewPath,
+    fixture.implementationProductionOwnershipReviewReceiptPath,
+    fixture.implementationProductionA4EnablementApprovalPath,
+    fixture.implementationProductionA4EnablementApprovalReceiptPath,
+    fixture.implementationProductionPolicyEnablementPrPath,
+    receiptDir,
+  );
+  args[1] = 'implementation-production-runner-implementation-review-check';
+  args.push(
+    '--implementation-production-policy-enablement-pr-receipt',
+    fixture.implementationProductionPolicyEnablementPrReceiptPath,
+    '--implementation-production-policy-enablement-merge-decision',
+    fixture.implementationProductionPolicyEnablementMergeDecisionPath,
+    '--implementation-production-policy-enablement-merge-decision-receipt',
+    fixture.implementationProductionPolicyEnablementMergeDecisionReceiptPath,
+    '--implementation-production-policy-enablement-merge-evidence',
+    fixture.implementationProductionPolicyEnablementMergeEvidencePath,
+    '--implementation-production-policy-enablement-merge-evidence-receipt',
+    fixture.implementationProductionPolicyEnablementMergeEvidenceReceiptPath,
+    '--implementation-production-policy-enablement-revalidation',
+    fixture.implementationProductionPolicyEnablementRevalidationPath,
+    '--implementation-production-policy-enablement-revalidation-receipt',
+    fixture.implementationProductionPolicyEnablementRevalidationReceiptPath,
+    '--implementation-production-runner-admission',
+    fixture.implementationProductionRunnerAdmissionPath,
+    '--implementation-production-runner-admission-receipt',
+    fixture.implementationProductionRunnerAdmissionReceiptPath,
+    '--implementation-production-runner-implementation-pr',
+    fixture.implementationProductionRunnerImplementationPrPath,
+    '--implementation-production-runner-implementation-pr-receipt',
+    implementationProductionRunnerImplementationPrReceiptPath,
+    '--implementation-production-runner-implementation-review',
+    implementationProductionRunnerImplementationReviewPath,
   );
   return spawnSync(process.execPath, args, { cwd: REPO_ROOT, encoding: 'utf8' });
 }
@@ -15819,6 +16046,218 @@ test('implementation-production-runner-implementation-pr-check fails closed on d
     const payload = JSON.parse(result.stdout);
     assert.equal(payload.ok, false, entry.name);
     assert.equal(payload.implementationProductionRunnerImplementationPrOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-production-runner-implementation-review-check validates review approval without admitting runner code', (t) => {
+  const fixture = writeImplementationProductionRunnerImplementationPrFixture(t);
+  const implementationProductionRunnerImplementationReviewPath = path.join(fixture.root, 'implementation-production-runner-implementation-review.json');
+  writeFileSync(
+    implementationProductionRunnerImplementationReviewPath,
+    `${JSON.stringify(validImplementationProductionRunnerImplementationReview({
+      implementationProductionRunnerImplementationPrPath: fixture.implementationProductionRunnerImplementationPrPath,
+      implementationProductionRunnerImplementationPrReceiptPath: fixture.implementationProductionRunnerImplementationPrReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationProductionRunnerImplementationReviewCheck(fixture, implementationProductionRunnerImplementationReviewPath);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'implementation-production-runner-implementation-review-check');
+  assert.equal(payload.implementationProductionRunnerImplementationReviewOk, true);
+  assert.equal(payload.runnerImplementationReviewEvidenceOnly, true);
+  assert.equal(payload.reviewDecision, 'approve-runner-implementation-pr-review');
+  assert.equal(payload.reviewedBy, 'CREATE SOMETHING operator');
+  assert.equal(payload.approvedDiffReview, true);
+  assert.equal(payload.approvedChecksReview, true);
+  assert.equal(payload.executionApprovalGranted, false);
+  assert.match(payload.runnerImplementationPrUrl, /pull\/1110/);
+  assert.equal(payload.runnerImplementationPrNumber, 1110);
+  assert.equal(payload.runnerImplementationCommitSha, '1110runnerimplementationcommit');
+  assert.match(payload.runnerImplementationReviewScope, /no production execution approval/);
+  assert.equal(payload.runnerImplementationAdmittedByVerifier, false);
+  assert.equal(payload.redactionPolicyApplied, true);
+  assert.equal(payload.containsSecrets, false);
+  assert.equal(payload.containsRawLogs, false);
+  assert.equal(payload.containsPrompts, false);
+  assert.equal(payload.containsRawTranscripts, false);
+  assert.ok(payload.noExecutionMarkers.includes('production-runner-implementation-review-evidence-only'));
+  assert.equal(payload.currentVerifierPolicyBlocked, true);
+  assert.equal(payload.policyChangeAppliedByVerifier, false);
+  assert.equal(payload.runnerEnabledByVerifier, false);
+  assert.equal(payload.prMutationPerformedByVerifier, false);
+  assert.equal(payload.deployedByVerifier, false);
+  assert.equal(payload.thirdPartyWritePerformedByVerifier, false);
+  assert.equal(payload.issueMutationPerformedByVerifier, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.implementationProductionRunnerImplementationReviewRequiresPrReceipt, true);
+  assert.equal(payload.policy.implementationProductionRunnerImplementationReviewRunnerImplementationAdmittedByVerifier, false);
+  assert.match(payload.nextGate, /runner implementation admission gate/);
+  assert.match(payload.receiptPath, /implementation-production-runner-implementation-review-check\.json$/);
+});
+
+test('implementation-production-runner-implementation-review-check fails closed on unsafe, mismatched, or leaky review evidence', (t) => {
+  const cases = [
+    {
+      name: 'bad-decision',
+      mutate(review) {
+        review.reviewDecision = 'request-changes';
+      },
+      pattern: /reviewDecision must approve runner implementation PR review/,
+    },
+    {
+      name: 'missing-diff-approval',
+      mutate(review) {
+        review.approvedDiffReview = false;
+      },
+      pattern: /approvedDiffReview must be true/,
+    },
+    {
+      name: 'missing-checks-approval',
+      mutate(review) {
+        review.approvedChecksReview = false;
+      },
+      pattern: /approvedChecksReview must be true/,
+    },
+    {
+      name: 'execution-approved',
+      mutate(review) {
+        review.executionApprovalGranted = true;
+      },
+      pattern: /executionApprovalGranted must be false/,
+    },
+    {
+      name: 'pr-url-drift',
+      mutate(review) {
+        review.runnerImplementationPrUrl = 'https://github.com/createsomethingtoday/create-something-monorepo/pull/9999';
+      },
+      pattern: /runnerImplementationPrUrl must match runner implementation PR receipt/,
+    },
+    {
+      name: 'runner-admitted-by-verifier',
+      mutate(review) {
+        review.runnerImplementationAdmittedByVerifier = true;
+      },
+      pattern: /runnerImplementationAdmittedByVerifier must not be true/,
+    },
+    {
+      name: 'secret-leak',
+      mutate(review) {
+        review.containsSecrets = true;
+      },
+      pattern: /containsSecrets must be false/,
+    },
+    {
+      name: 'execution-markers',
+      mutate(review) {
+        review.processSpawned = true;
+        review.executedCommands = ['node scripts/operator-agent-omnigent-runner.mjs'];
+        review.executionApproved = true;
+        review.wouldExecute = true;
+        review.writesPerformed = 1;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationProductionRunnerImplementationPrFixture(t);
+    const review = validImplementationProductionRunnerImplementationReview({
+      implementationProductionRunnerImplementationPrPath: fixture.implementationProductionRunnerImplementationPrPath,
+      implementationProductionRunnerImplementationPrReceiptPath: fixture.implementationProductionRunnerImplementationPrReceiptPath,
+    });
+    entry.mutate(review);
+    const implementationProductionRunnerImplementationReviewPath = path.join(fixture.root, `${entry.name}-implementation-production-runner-implementation-review.json`);
+    writeFileSync(implementationProductionRunnerImplementationReviewPath, `${JSON.stringify(review, null, 2)}\n`);
+
+    const result = runImplementationProductionRunnerImplementationReviewCheck(fixture, implementationProductionRunnerImplementationReviewPath);
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationProductionRunnerImplementationReviewOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-production-runner-implementation-review-check fails closed on drifted runner implementation PR receipts', (t) => {
+  const cases = [
+    {
+      name: 'bad-status',
+      mutate(receipt) {
+        receipt.runnerImplementationPrStatus = 'draft';
+      },
+      pattern: /receipt runnerImplementationPrStatus must match runner implementation PR/,
+    },
+    {
+      name: 'created-by-verifier',
+      mutate(receipt) {
+        receipt.runnerImplementationPrCreatedByVerifier = true;
+      },
+      pattern: /receipt runnerImplementationPrCreatedByVerifier must be false/,
+    },
+    {
+      name: 'spawned-process',
+      mutate(receipt) {
+        receipt.processSpawned = true;
+      },
+      pattern: /receipt processSpawned must be false/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationProductionRunnerImplementationPrFixture(t);
+    const driftedRunnerImplementationPrReceipt = JSON.parse(readFileSync(fixture.implementationProductionRunnerImplementationPrReceiptPath, 'utf8'));
+    entry.mutate(driftedRunnerImplementationPrReceipt);
+    const driftedRunnerImplementationPrReceiptPath = path.join(fixture.root, `${entry.name}-implementation-production-runner-implementation-pr-receipt.json`);
+    writeFileSync(driftedRunnerImplementationPrReceiptPath, `${JSON.stringify(driftedRunnerImplementationPrReceipt, null, 2)}\n`);
+    const implementationProductionRunnerImplementationReviewPath = path.join(fixture.root, `${entry.name}-implementation-production-runner-implementation-review.json`);
+    writeFileSync(
+      implementationProductionRunnerImplementationReviewPath,
+      `${JSON.stringify(validImplementationProductionRunnerImplementationReview({
+        implementationProductionRunnerImplementationPrPath: fixture.implementationProductionRunnerImplementationPrPath,
+        implementationProductionRunnerImplementationPrReceiptPath: driftedRunnerImplementationPrReceiptPath,
+      }), null, 2)}\n`,
+    );
+
+    const result = runImplementationProductionRunnerImplementationReviewCheck(
+      fixture,
+      implementationProductionRunnerImplementationReviewPath,
+      fixture.root,
+      driftedRunnerImplementationPrReceiptPath,
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationProductionRunnerImplementationReviewOk, false, entry.name);
     assert.equal(payload.processSpawned, false, entry.name);
     assert.deepEqual(payload.executedCommands, [], entry.name);
     assert.equal(payload.runnerEnabled, false, entry.name);
