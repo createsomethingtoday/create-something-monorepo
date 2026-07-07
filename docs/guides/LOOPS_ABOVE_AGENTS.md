@@ -22,6 +22,12 @@ Git history and current repo primitives show the same pattern repeating:
 The next stage is not "more agents." It is fewer ambiguous agent launches and
 more named loops with explicit promotion rules.
 
+Codex Spark fits this model as a fast executor profile, not as a new authority
+surface. Use it where speed changes the shape of the loop: frequent context
+digests, many small read/triage passes, interactive coding, or sub-agents that
+collect evidence for a stronger supervising agent. The loop still owns signal,
+policy, verification, proof, rollback, and the next decision.
+
 ## Definition
 
 A CREATE SOMETHING loop is a repeatable operating circuit with seven parts:
@@ -37,6 +43,12 @@ A CREATE SOMETHING loop is a repeatable operating circuit with seven parts:
 | Next decision | Continue, split, promote, block, or stop? | operator review, Linear status, PR/promotion gate                       |
 
 If one of these parts is missing, the work is still a task. It is not a loop yet.
+
+For production-relevant loops, the default terminal state is stronger than a
+validated diff: commit, push, merge, deploy, and live verification. A loop may
+stop before deploy only when it is explicitly exploratory, draft/review-only,
+blocked on external access, or scoped to non-production evidence; the receipt
+must name that boundary.
 
 ## Tier mapping
 
@@ -74,6 +86,8 @@ Judgment owns the decision boundary:
 
 - whether the work is solo, Linear-tracked, PR-bound, or production-bound
 - whether evidence is strong enough to mark done
+- whether done means local validation, review-ready, merged, deployed, or
+  production-stable
 - whether the next action is a fix, a no-op, a split issue, or escalation
 - whether an unattended daemon is allowed or only a single-pass dispatch is safe
 
@@ -84,14 +98,40 @@ Third question: did the loop apply the right policy to the observed evidence?
 These loops already exist in the repo and should be promoted before new
 automation is invented.
 
-| Loop                | Purpose                                                              | Primary command                                               | Evidence target                                      | Promotion state |
-| ------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------- | --------------- |
-| Solo operator loop  | Fast current-checkout iteration when one operator owns the workspace | `pnpm agent:solo-loop:check`                                  | local summary or PR evidence                         | active          |
-| Intent mapping loop | Convert fuzzy or long-running work into a durable execution packet   | skill: `intent-mapping`                                       | issue description, Linear comment, or starter prompt | active          |
-| Code-quality loop   | Run a bounded Symphony pass on reviewed Linear `code-quality` work   | `pnpm agent:loop-pilot` then `pnpm agent:loop-pilot:dispatch` | Linear issue and workspace path                      | pilot           |
-| Policy loop         | Repair or align policy artifacts and governance docs                 | `pnpm symphony:policy:once`                                   | Linear issue, policy check output                    | pilot           |
-| Skill feedback loop | Keep repo-owned skills tested and behaviorally legible               | `pnpm agent:skills:test`                                      | package README, PR, Linear closeout                  | active          |
-| Cleanup loop        | Keep docs, architecture, quality grades, and policy integrity fresh  | see `RECURRING_CLEANUP_LOOPS.md`                              | targeted fix or Linear follow-up                     | design-ready    |
+| Loop                | Purpose                                                                 | Primary command                                               | Evidence target                                      | Promotion state |
+| ------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------- | --------------- |
+| Solo operator loop  | Fast current-checkout iteration when one operator owns the workspace    | `pnpm agent:solo-loop:check`                                  | local summary or PR evidence                         | active          |
+| Intent mapping loop | Convert fuzzy or long-running work into a durable execution packet      | skill: `intent-mapping`                                       | issue description, Linear comment, or starter prompt | active          |
+| Code-quality loop   | Run a bounded Symphony pass on reviewed Linear `code-quality` work      | `pnpm agent:loop-pilot` then `pnpm agent:loop-pilot:dispatch` | Linear issue and workspace path                      | pilot           |
+| Fast context loop   | Use Spark-style fast sub-agents for recurring digests, triage, and prep | Codex automation, operator schedule, or reviewed dispatch     | local receipt, Linear comment, or handoff packet     | design-ready    |
+| Policy loop         | Repair or align policy artifacts and governance docs                    | `pnpm symphony:policy:once`                                   | Linear issue, policy check output                    | pilot           |
+| Skill feedback loop | Keep repo-owned skills tested and behaviorally legible                  | `pnpm agent:skills:test`                                      | package README, PR, Linear closeout                  | active          |
+| Cleanup loop        | Keep docs, architecture, quality grades, and policy integrity fresh     | see `RECURRING_CLEANUP_LOOPS.md`                              | targeted fix or Linear follow-up                     | design-ready    |
+
+## Fast executor profile
+
+Spark-style executors are useful when low latency lets the operator keep the
+loop warm:
+
+- Slack, Drive, Meet, GitHub, or repo digests where the output is a routing
+  packet, not a write.
+- Duplicate issue clustering, PR comment triage, and lightweight review prep
+  that a stronger agent or human can inspect.
+- Interactive coding where the operator is watching the stream and can correct
+  drift immediately.
+- Fan-out reads where a supervising agent assigns narrow context-gathering work
+  to multiple fast sub-agents.
+
+Keep these boundaries:
+
+- Do not treat Spark output as the source of truth. Verify against Linear, git,
+  repo files, tests, logs, or live systems before acting.
+- Do not grant Spark-only runs destructive tools, production deploy authority,
+  secret rotation, or final review authority.
+- Do not use speed as evidence. The receipt must still name the signal,
+  context, policy, verification, outcome, and next decision.
+- Escalate to the strongest full Codex model when the task becomes long-horizon,
+  security-sensitive, production-bound, or correctness-heavy.
 
 ## Promotion rules
 

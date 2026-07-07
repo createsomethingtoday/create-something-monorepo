@@ -61,6 +61,22 @@ The starter output includes the provider launch shape plus the prompt to paste
 or hand to the worker. Use `--starter` without `--task` when you want the same
 prompt scaffold with a task placeholder.
 
+## Spark Mode
+
+Use Codex Spark inside the solo loop when speed is the constraint and the
+operator is actively watching:
+
+- interactive UI/code edits with hot reload or quick tests
+- fast repo scans where the output is a short target list
+- Slack, Drive, Meet, GitHub, or log summaries that inform the next task
+- duplicate issue or PR-comment triage before a deeper implementation pass
+
+Keep the task compact and inspectable. Spark mode should produce one patch,
+one target inventory, or one handoff packet at a time. Escalate to the strongest
+full Codex model when the task needs long unattended reasoning, production
+promotion, security review, destructive actions, or high-confidence final
+judgment.
+
 ## Operating Loop
 
 1. Work in the current checkout when the operator owns it.

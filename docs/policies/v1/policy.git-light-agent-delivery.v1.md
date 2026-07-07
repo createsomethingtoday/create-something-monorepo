@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Define a Git-light delivery workflow for AI agents in the monorepo so DEV and preview iteration can move through direct validation and deploy evidence, while production promotion retains an explicit provenance and rollback boundary.
+Define a Git-light delivery workflow for AI agents in the monorepo so DEV and preview iteration can move through direct validation and deploy evidence, while production promotion retains an explicit provenance, deployment, verification, and rollback boundary.
 
 ## Scope
 
@@ -29,6 +29,8 @@ Define a Git-light delivery workflow for AI agents in the monorepo so DEV and pr
 10. Rollback MUST remain human-controlled and MUST point to the last known-good deployed state, a revert commit, or an approved immutable release artifact.
 11. Commit count, push count, or an agent completion message MUST NOT be used as a deploy trigger, promotion trigger, or readiness signal.
 12. Non-terminal DEV and preview deploy checkpoints SHOULD be captured as Linear comments and MUST be summarized when the issue is completed or promoted.
+13. Production-relevant agentic work SHOULD close with commit, push, merge, production deploy, and post-deploy verification unless the task is explicitly exploratory, draft/review-only, blocked on external access, or scoped to non-production evidence.
+14. Agents MUST NOT report production as stable unless the deployed production surface has been verified through the owning smoke, browser proof, API check, health check, or live-system evidence.
 
 ## DEV / Preview Eligibility
 
@@ -56,6 +58,7 @@ Required:
 - required human approval exists
 - rollback path is defined
 - post-deploy verification path is defined
+- live verification evidence is recorded before the work is called production-stable
 
 Default path:
 
@@ -63,6 +66,7 @@ Default path:
 - merge to `main`
 - production deploy
 - post-deploy verification
+- Linear, PR, or release evidence with deploy ID, live proof, and rollback note
 
 Approved alternative:
 
