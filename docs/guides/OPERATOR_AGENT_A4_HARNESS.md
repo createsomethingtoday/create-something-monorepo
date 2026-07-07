@@ -122,6 +122,23 @@ writes, and irreversible data. A packet that omits one of those risks, mismatche
 the expected target/action, is stale, is expired, or lacks rollback/smoke/stop
 conditions fails closed even if the operator approved a related action.
 
+After the packet validates, produce a dry-run preflight receipt before any
+execution path is exposed:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs preflight-check \
+  --packet <packet.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The preflight receipt must keep `wouldExecute` as `false` and `writesPerformed`
+as `0`. It may name the execution, validation, smoke, rollback, and stop
+condition plans, but it must not run them. A failed admission packet produces an
+empty execution plan and remains a stop condition.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
