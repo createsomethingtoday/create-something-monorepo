@@ -609,6 +609,76 @@
     "writesPerformed": 0,
     "blockedUntil": "manual follow-up issue evidence packets may prove an operator-created Linear issue matches the approved handoff, but this verifier must not create or post issues, enable execution, spawn a runner, expose raw artifacts, or mutate third-party systems"
   },
+  "a4FollowUpWorkIntake": {
+    "requiresManualFollowUpIssueEvidenceReceipt": true,
+    "intakePacketOnly": true,
+    "requiresIssueIdentifier": true,
+    "requiresIssueUrl": true,
+    "requiresOwner": true,
+    "requiresIntendedAssignee": true,
+    "requiresImplementationSurface": true,
+    "requiresScopedFilesOrModules": true,
+    "requiresValidationPlan": true,
+    "requiresRollbackPlan": true,
+    "requiresPublicAccessFailClosedProof": true,
+    "issueClaimedByVerifier": false,
+    "worktreeCreatedByVerifier": false,
+    "branchCreatedByVerifier": false,
+    "prCreatedByVerifier": false,
+    "requiresNoThirdPartyWriteByVerifier": true,
+    "requiresRedactionPolicy": true,
+    "forbidsSecrets": true,
+    "forbidsRawLogs": true,
+    "forbidsPrompts": true,
+    "forbidsRawTranscripts": true,
+    "requiresNoExecutionOnIntake": true,
+    "allowedImplementationSurfaces": [
+      "repo-worktree",
+      "repo-pr"
+    ],
+    "requiredReceiptReferences": [
+      "manual-follow-up-issue-evidence-check",
+      "manual-next-step-handoff-check",
+      "receipt-review-decision-check",
+      "receipt-publication-check",
+      "receipt-bundle-check",
+      "execution-runbook-check",
+      "release-admission-check"
+    ],
+    "requiredEvidence": [
+      "manual-follow-up-issue-evidence-receipt",
+      "issue-identifier",
+      "issue-url",
+      "owner",
+      "intended-assignee",
+      "implementation-surface",
+      "scoped-files-or-modules",
+      "validation-plan",
+      "rollback-plan",
+      "public-access-fail-closed-proof",
+      "redaction-policy",
+      "operator-summary"
+    ],
+    "requiredNoExecutionMarkers": [
+      "current-policy-blocked",
+      "process-not-spawned",
+      "executed-commands-empty",
+      "runner-disabled",
+      "execution-not-ready",
+      "execution-disabled",
+      "execution-not-approved",
+      "would-execute-false",
+      "writes-performed-zero",
+      "issue-not-claimed-by-verifier",
+      "worktree-not-created-by-verifier",
+      "branch-not-created-by-verifier",
+      "pr-not-created-by-verifier",
+      "third-party-write-not-performed-by-verifier",
+      "intake-only"
+    ],
+    "writesPerformed": 0,
+    "blockedUntil": "follow-up work intake packets may describe the next implementation scope, but this verifier must not claim issues, create worktrees, create branches, open PRs, enable execution, spawn a runner, expose raw artifacts, or mutate third-party systems"
+  },
   "receiptMirrors": {
     "local": ".cache/operator-agent-omnigent/",
     "linearIssue": "CRE-1061",
@@ -734,6 +804,11 @@
       "id": "gate-22-a4-manual-follow-up-issue-evidence",
       "required": "A4 manual follow-up issue evidence validates that operator-supplied Linear issue evidence matches the approved handoff without creating issues, posting updates, exposing raw artifacts, or executing",
       "command": "node scripts/operator-agent-omnigent-adapter.mjs manual-follow-up-issue-evidence-check --packet <packet.json> --preflight-receipt <preflight-receipt.json> --execution-receipt <execution-receipt.json> --authorization <authorization.json> --command-artifact <command.json> --command-receipt <command-receipt.json> --executor-proof-receipt <executor-proof.json> --enablement-proposal <proposal.json> --enablement-proposal-receipt <proposal-receipt.json> --policy-patch <policy-patch-dry-run.json> --policy-patch-receipt <policy-patch-receipt.json> --candidate-manifest <candidate-manifest.json> --application-diff-receipt <application-diff-receipt.json> --readiness-receipt <readiness-receipt.json> --runner-contract <runner-contract.json> --runner-contract-receipt <runner-contract-receipt.json> --runner-plan <runner-plan.json> --runner-plan-receipt <runner-plan-receipt.json> --runner-diff <runner-diff.json> --runner-diff-receipt <runner-diff-receipt.json> --release-admission <release-admission.json> --release-admission-receipt <release-admission-receipt.json> --execution-runbook <execution-runbook.json> --execution-runbook-receipt <execution-runbook-receipt.json> --receipt-bundle <receipt-bundle.json> --receipt-bundle-receipt <receipt-bundle-receipt.json> --receipt-publication <receipt-publication.json> --receipt-publication-receipt <receipt-publication-receipt.json> --receipt-review-decision <receipt-review-decision.json> --receipt-review-decision-receipt <receipt-review-decision-receipt.json> --manual-next-step-handoff <manual-next-step-handoff.json> --manual-next-step-handoff-receipt <manual-next-step-handoff-receipt.json> --manual-follow-up-issue-evidence <manual-follow-up-issue-evidence.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
+    },
+    {
+      "id": "gate-23-a4-follow-up-work-intake",
+      "required": "A4 follow-up work intake validates the scoped implementation intake packet from manual issue evidence without claiming issues, creating worktrees, creating branches, opening PRs, exposing raw artifacts, or executing",
+      "command": "node scripts/operator-agent-omnigent-adapter.mjs follow-up-work-intake-check --packet <packet.json> --preflight-receipt <path> --execution-receipt <path> --authorization <path> --command-artifact <path> --command-receipt <path> --executor-proof-receipt <path> --enablement-proposal <path> --enablement-proposal-receipt <path> --policy-patch <path> --policy-patch-receipt <path> --candidate-manifest <path> --application-diff-receipt <path> --readiness-receipt <path> --runner-contract <path> --runner-contract-receipt <path> --runner-plan <path> --runner-plan-receipt <path> --runner-diff <path> --runner-diff-receipt <path> --release-admission <path> --release-admission-receipt <path> --execution-runbook <path> --execution-runbook-receipt <path> --receipt-bundle <path> --receipt-bundle-receipt <path> --receipt-publication <path> --receipt-publication-receipt <path> --receipt-review-decision <path> --receipt-review-decision-receipt <path> --manual-next-step-handoff <path> --manual-next-step-handoff-receipt <path> --manual-follow-up-issue-evidence <path> --manual-follow-up-issue-evidence-receipt <path> --follow-up-work-intake <path> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> --json"
     }
   ]
 }
