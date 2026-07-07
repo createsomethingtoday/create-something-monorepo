@@ -1,0 +1,14 @@
+{
+	"name": "app-governance-desktop",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Tauri operator shell for the app-governance surfaces (Phase 2)",
+	"scripts": {
+		"dev": "tauri dev",
+		"build": "tauri build",
+		"tauri": "tauri"
+	},
+	"devDependencies": {
+		"@tauri-apps/cli": "^2"
+	}
+}

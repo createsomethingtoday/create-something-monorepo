@@ -1,0 +1,25 @@
+{
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "App Governance",
+	"version": "0.1.0",
+	"identifier": "agency.createsomething.app-governance",
+	"build": {
+		"frontendDist": "../src"
+	},
+	"app": {
+		"withGlobalTauri": true,
+		"windows": [],
+		"security": {
+			"csp": null
+		}
+	},
+	"bundle": {
+		"active": true,
+		"targets": ["app"],
+		"icon": ["icons/icon.png"],
+		"category": "DeveloperTool",
+		"macOS": {
+			"minimumSystemVersion": "10.15"
+		}
+	}
+}
