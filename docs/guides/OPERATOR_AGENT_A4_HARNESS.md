@@ -2142,6 +2142,43 @@ admission claims, runner enablement claims, leaked raw artifacts, and any
 process/command/write marker. `authority.a4Execution` remains blocked in this
 verifier branch.
 
+After final review passes, validate the E2B sandbox-readiness evidence for a
+future Ornith runner substrate:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-e2b-readiness-check \
+  <same chain arguments as implementation-production-runner-implementation-admission-final-review-check> \
+  --implementation-production-runner-implementation-admission-final-review-receipt <implementation-production-runner-implementation-admission-final-review-receipt.json> \
+  --implementation-production-runner-implementation-admission-e2b-readiness <implementation-production-runner-implementation-admission-e2b-readiness.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production runner implementation admission E2B readiness
+packet proves an operator or approved integration has bounded evidence that E2B
+can serve as a future sandbox substrate for Ornith autonomous engineering work.
+It must bind to the final-review artifact and receipt, carry sandbox-provider
+`e2b`, E2B template reference, runtime profile, credential readiness without
+credential value exposure, secret-exclusion proof, bounded timeouts, resource
+limits, network policy, artifact policy, sandbox smoke evidence, fallback plan,
+rollback plan, no-execution-approval, runner implementation reference, runner
+contract reference, runner entry point, and redaction policy.
+
+This gate validates E2B readiness evidence only. It does not create E2B
+sandboxes, run E2B code or commands, upload or download files, admit runner
+code, apply the policy patch in this verifier branch, enable a runner, spawn a
+process, merge or mutate PRs, close or update Linear issues, deploy, post
+updates, rotate secrets, expose raw artifacts, or mutate third-party systems. It
+rejects drifted final-review receipts, missing E2B provider/template/runtime
+evidence, exposed credential values, unrestricted network claims, raw artifact
+storage, failed sandbox smoke evidence, execution approval claims,
+verifier-side sandbox or E2B execution claims, verifier-side runner admission
+claims, runner enablement claims, leaked raw artifacts, and any
+process/command/write marker. `authority.a4Execution` remains blocked in this
+verifier branch.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
