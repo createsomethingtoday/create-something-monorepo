@@ -436,6 +436,11 @@
   --font-heading: var(--font-sans);
   --font-mono: 'ABC Diatype Mono', "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
   --font-serif: 'Martina Plantijn', Georgia, "Times New Roman", serif;
+  --font-interface: var(--font-sans);
+  --font-prose: var(--font-sans);
+  --font-record: var(--font-mono);
+  --font-topology-label: var(--font-mono);
+  --font-code: var(--font-mono);
 
   /* Font weights */
   --font-light: 300;
@@ -492,6 +497,15 @@
   --text-body-sm: 0.913rem;                                   /* 1/√1.2 */
   --text-caption: 0.833rem;                                   /* 1/1.2 */
   --text-overline: 0.618rem;                                  /* 1/φ */
+  --text-record: var(--text-body-sm);
+  --text-record-meta: var(--text-caption);
+  --text-operator-label: 0.72rem;
+  --text-topology-label: 0.72rem;
+  --tracking-record: 0;
+  --tracking-operator-label: 0;
+  --tracking-topology-label: 0;
+  --leading-record: 1.35;
+  --leading-topology-label: 1.2;
 
   /* Watermark typography - oversized decorative text
    * Used for background watermarks in editorial layouts.

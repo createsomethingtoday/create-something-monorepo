@@ -1,6 +1,22 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 import { createSessionManager, type User } from '@create-something/canon/auth';
 
+function getSafeAdminNextPath(url: URL) {
+	const next = url.searchParams.get('next');
+
+	if (
+		!next ||
+		!next.startsWith('/admin') ||
+		next.startsWith('//') ||
+		next === '/admin/login' ||
+		next.startsWith('/admin/login?')
+	) {
+		return '/admin';
+	}
+
+	return next;
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
 	const isProduction = event.platform?.env?.ENVIRONMENT === 'production';
 	const domain = isProduction ? '.createsomething.io' : undefined;
@@ -11,6 +27,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const isUserApiRoute = event.url.pathname.startsWith('/api/user');
 	const isLoginPage = event.url.pathname === '/admin/login';
 	const isAuthApi = event.url.pathname.startsWith('/api/auth');
+	const adminLoginUrl = `/admin/login?next=${encodeURIComponent(
+		event.url.pathname + event.url.search
+	)}`;
 
 	// Set locals.user for user API routes (analytics, preferences, etc.)
 	if (isUserApiRoute) {
@@ -48,7 +67,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					headers: { 'Content-Type': 'application/json' }
 				});
 			}
-			throw redirect(303, '/admin/login');
+			throw redirect(303, adminLoginUrl);
 		}
 
 		// Verify admin role in local D1 database
@@ -60,7 +79,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					headers: { 'Content-Type': 'application/json' }
 				});
 			}
-			throw redirect(303, '/admin/login');
+			throw redirect(303, adminLoginUrl);
 		}
 
 		const adminUser = await db
@@ -76,7 +95,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					headers: { 'Content-Type': 'application/json' }
 				});
 			}
-			throw redirect(303, '/admin/login');
+			throw redirect(303, adminLoginUrl);
 		}
 
 		// Add user to locals for use in routes
@@ -107,7 +126,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					.first();
 
 				if (adminUser) {
-					throw redirect(303, '/admin');
+					throw redirect(303, getSafeAdminNextPath(event.url));
 				}
 			}
 		}

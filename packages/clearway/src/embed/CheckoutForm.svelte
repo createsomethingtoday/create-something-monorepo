@@ -222,7 +222,7 @@
 		border-radius: var(--radius-lg, 12px);
 		background: var(--color-bg-surface, #111111);
 		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		font-family: var(--font-sans, 'Stack Sans Notch', system-ui, sans-serif);
+		font-family: var(--font-sans, 'ABC Diatype', 'Stack Sans Notch', system-ui, sans-serif);
 	}
 
 	.checkout-form[data-theme='dark'] {

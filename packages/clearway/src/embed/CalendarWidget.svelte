@@ -421,7 +421,7 @@
 <style>
 	/* Canon Design System - Monochrome */
 	.calendar-widget {
-		font-family: var(--font-sans, 'Stack Sans Notch', system-ui, sans-serif);
+		font-family: var(--font-sans, 'ABC Diatype', 'Stack Sans Notch', system-ui, sans-serif);
 		border-radius: var(--radius-lg, 12px);
 		padding: var(--space-lg, 1.5rem);
 		max-width: 800px;

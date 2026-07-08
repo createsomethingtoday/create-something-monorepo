@@ -1240,6 +1240,25 @@ importers:
         specifier: ^4.103.0
         version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  packages/database-layer:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/database-layer/worker:
+    dependencies:
+      '@create-something/database-layer':
+        specifier: workspace:*
+        version: link:..
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260621.1
+        version: 4.20260621.1
+      wrangler:
+        specifier: ^4.103.0
+        version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+
   packages/delivery-schema:
     devDependencies:
       typescript:

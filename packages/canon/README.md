@@ -140,6 +140,24 @@ Canon uses CSS custom properties for all design decisions:
 | **Clear Communication** | `--color-clear-*`, `--radius-clear-*`, `--shadow-clear-*` |
 | **Performance Excellence** | `--color-performance-*`, `--radius-performance-*`, `--shadow-performance-*` |
 
+### Typography Roles
+
+Canon separates type by job, not only by size. Use the base families for brand
+and prose, then use role tokens anywhere Atlas, Topology, Substrate, or operator
+surfaces need stable scanning:
+
+| Role | Tokens | Use |
+|------|--------|-----|
+| Interface prose | `--font-interface`, `--font-prose` | Human-readable labels, controls, public Atlas copy |
+| Records | `--font-record`, `--text-record`, `--text-record-meta` | IDs, counts, timestamps, receipts, source bindings |
+| Topology labels | `--font-topology-label`, `--text-topology-label`, `--tracking-topology-label` | Atlas graph labels, edge text, run/wait/stop badges |
+| Code and payloads | `--font-code` | CLI commands, JSON payloads, terminal output |
+
+Topology and record labels use `letter-spacing: 0` and tabular numerics where
+the value is machine-shaped. Do not hard-code `Inter` or local `ABCDiatype`
+aliases in Atlas renderers; route through these tokens so public Atlas, local
+Atlas Studio, and Substrate views keep the same typography contract.
+
 ## Ona-Derived Clear Communication
 
 Canon uses Ona's public design/UI/UX direction as the communication reference for CREATE

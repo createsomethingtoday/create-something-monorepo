@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CREATE SOMETHING Topology</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="scene" aria-label="CREATE SOMETHING topology 3D scene"></canvas>
+      <div class="toolbar" aria-label="Topology filters">
+        <div class="toolbar-title">
+          <span>Substrate</span>
+          <strong>Topology</strong>
+        </div>
+        <label>
+          <span>Lens</span>
+          <select id="lensFilter" aria-label="Lens">
+            <option value="operational">Operational</option>
+            <option value="business">Business</option>
+          </select>
+        </label>
+        <label class="field-wide">
+          <span>Group</span>
+          <select id="clusterFilter" aria-label="Group"></select>
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="statusFilter" aria-label="Status">
+            <option value="">All status</option>
+            <option value="mapped">Mapped</option>
+            <option value="needs_atlas">Needs Atlas</option>
+            <option value="needs_substrate">Needs Substrate</option>
+          </select>
+        </label>
+        <label>
+          <span>Tier</span>
+          <select id="tierFilter" aria-label="Tier">
+            <option value="">All tiers</option>
+            <option value="Database">Database</option>
+            <option value="Automation">Automation</option>
+            <option value="Judgment">Judgment</option>
+            <option value="Mixed">Mixed</option>
+          </select>
+        </label>
+        <label>
+          <span>Edges</span>
+          <select id="edgeFilter" aria-label="Edges">
+            <option value="operational">Operational</option>
+            <option value="structural">Structural</option>
+            <option value="all">All edges</option>
+            <option value="contains">Contains</option>
+          </select>
+        </label>
+        <label class="search-field">
+          <span>Find</span>
+          <input id="searchFilter" type="search" autocomplete="off" placeholder="Path, owner, surface" aria-label="Search" />
+        </label>
+        <button id="resetView" type="button">Reset</button>
+      </div>
+      <aside class="inspector" aria-live="polite">
+        <p class="panel-label">Selected record</p>
+        <div class="metric-row">
+          <span id="nodeCount">0 nodes</span>
+          <span id="edgeCount">0 edges</span>
+          <span id="loadMs">0 ms</span>
+        </div>
+        <h1 id="nodeTitle">CREATE SOMETHING topology</h1>
+        <dl>
+          <dt>Cluster</dt>
+          <dd id="nodeCluster">All clusters</dd>
+          <dt>Status</dt>
+          <dd id="nodeStatus">Ready</dd>
+          <dt>Tier</dt>
+          <dd id="nodeTier">Mixed</dd>
+          <dt>Surface</dt>
+          <dd id="nodeSurface">repo</dd>
+          <dt>Path</dt>
+          <dd id="nodePath">.</dd>
+          <dt>Substrate</dt>
+          <dd id="nodeSubstrate">substrate://topology/internal</dd>
+          <dt>API</dt>
+          <dd id="nodeApiPath">/api/substrate/topology/internal</dd>
+          <dt>Receipt</dt>
+          <dd id="nodeReceipt">receipt:pending</dd>
+          <dt>Meaning</dt>
+          <dd id="nodeMeaning">Topology projection</dd>
+        </dl>
+      </aside>
+    </main>
+    <script type="module" src="./viewer.mjs"></script>
+  </body>
+</html>

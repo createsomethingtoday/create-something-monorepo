@@ -169,7 +169,7 @@
 	}
 
 	code {
-		font-family: var(--font-mono, 'JetBrains Mono', monospace);
+		font-family: var(--font-mono, 'ABC Diatype Mono', 'JetBrains Mono', monospace);
 		font-size: 0.9rem;
 		color: var(--color-fg-primary, #fff);
 	}

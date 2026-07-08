@@ -1,0 +1,194 @@
+{
+  "id": "substrate:create-something:topology:completion-report:internal",
+  "topologyId": "substrate:create-something:topology:internal",
+  "atlasCanvasId": "create-something-internal-operating-topology",
+  "generatedAt": "2026-07-08T03:41:12.397Z",
+  "totals": {
+    "nodes": 429,
+    "edges": 868,
+    "mapped": 429,
+    "gaps": 0,
+    "gapCounts": {
+      "needs_atlas": 0,
+      "needs_substrate": 0
+    }
+  },
+  "statusBySurface": [
+    {
+      "status": "mapped",
+      "surface": "agent",
+      "count": 28
+    },
+    {
+      "status": "mapped",
+      "surface": "app",
+      "count": 6
+    },
+    {
+      "status": "mapped",
+      "surface": "client",
+      "count": 6
+    },
+    {
+      "status": "mapped",
+      "surface": "config",
+      "count": 24
+    },
+    {
+      "status": "mapped",
+      "surface": "doc",
+      "count": 5
+    },
+    {
+      "status": "mapped",
+      "surface": "guide",
+      "count": 49
+    },
+    {
+      "status": "mapped",
+      "surface": "mcp",
+      "count": 72
+    },
+    {
+      "status": "mapped",
+      "surface": "package",
+      "count": 40
+    },
+    {
+      "status": "mapped",
+      "surface": "policy",
+      "count": 54
+    },
+    {
+      "status": "mapped",
+      "surface": "repo",
+      "count": 1
+    },
+    {
+      "status": "mapped",
+      "surface": "worker",
+      "count": 144
+    }
+  ],
+  "statusByTier": [
+    {
+      "tier": "Automation",
+      "status": "mapped",
+      "count": 236
+    },
+    {
+      "tier": "Database",
+      "status": "mapped",
+      "count": 24
+    },
+    {
+      "tier": "Judgment",
+      "status": "mapped",
+      "count": 88
+    },
+    {
+      "tier": "Mixed",
+      "status": "mapped",
+      "count": 81
+    }
+  ],
+  "clientOverlays": [
+    {
+      "clientSlug": "cato-supply-insights-review",
+      "path": "packages/agency/clients/cato-supply-insights-review",
+      "title": "@create-something/cato-supply-insights-review",
+      "status": "mapped",
+      "tier": "Automation",
+      "runtime": "cloudflare, node",
+      "relationCount": 3
+    },
+    {
+      "clientSlug": "jandjhomehealth",
+      "path": "packages/agency/clients/jandjhomehealth",
+      "title": "@create-something/jandjhomehealth",
+      "status": "mapped",
+      "tier": "Mixed",
+      "runtime": "cloudflare, node",
+      "relationCount": 3
+    },
+    {
+      "clientSlug": "outerfields",
+      "path": "packages/agency/clients/outerfields",
+      "title": "@create-something/outerfields",
+      "status": "mapped",
+      "tier": "Mixed",
+      "runtime": "cloudflare, node",
+      "relationCount": 3
+    },
+    {
+      "clientSlug": "outerfields",
+      "path": "packages/agency/clients/outerfields/mcp-remote",
+      "title": "@outerfields/pcn-mcp-remote",
+      "status": "mapped",
+      "tier": "Automation",
+      "runtime": "cloudflare, node",
+      "relationCount": 3
+    },
+    {
+      "clientSlug": "outerfields",
+      "path": "packages/agency/clients/outerfields/mcp-server",
+      "title": "@outerfields/pcn-tools",
+      "status": "mapped",
+      "tier": "Automation",
+      "runtime": "node",
+      "relationCount": 2
+    },
+    {
+      "clientSlug": "the-stack",
+      "path": "packages/agency/clients/the-stack",
+      "title": "@create-something/the-stack",
+      "status": "mapped",
+      "tier": "Mixed",
+      "runtime": "cloudflare, node",
+      "relationCount": 2
+    }
+  ],
+  "completionLanes": [
+    {
+      "id": "client_atlas",
+      "title": "Client Atlas coverage",
+      "gapKind": "needs_atlas",
+      "count": 0,
+      "summary": "Managed client overlays become first-class Atlas maps connected to the CREATE SOMETHING root topology.",
+      "nextAction": "Review each client overlay and attach workflow, agent, MCP, database, and proof nodes."
+    },
+    {
+      "id": "substrate_runtime",
+      "title": "Substrate runtime bindings",
+      "gapKind": "needs_substrate",
+      "count": 0,
+      "summary": "Cloudflare runtime configs become canonical Substrate records before automation depends on them.",
+      "nextAction": "Bind worker configs to API/MCP-addressable records with receipt-backed sync checks."
+    },
+    {
+      "id": "mcp_agent",
+      "title": "MCP and agent operating graph",
+      "gapKind": "needs_substrate",
+      "count": 0,
+      "summary": "MCP, Dify, and agent surfaces are made legible as database-backed automation lanes.",
+      "nextAction": "Connect MCP/agent records to owners, policies, and runtime evidence."
+    },
+    {
+      "id": "policy_judgment",
+      "title": "Policy and judgment map",
+      "gapKind": "needs_atlas",
+      "count": 0,
+      "summary": "Policy artifacts and operating guides remain visible beside execution rather than living as detached docs.",
+      "nextAction": "Attach policy and guide nodes to the workflows they govern."
+    },
+    {
+      "id": "package_atlas",
+      "title": "Package and app Atlas coverage",
+      "gapKind": "needs_atlas",
+      "count": 0,
+      "summary": "Remaining packages and apps are grouped into the root topology for complete codebase legibility.",
+      "nextAction": "Cluster packages/apps by product lane and bind cross-package dependencies."
+    }
+  ],
+  "firstCompletionWave": []
+}

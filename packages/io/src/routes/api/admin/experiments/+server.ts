@@ -1,6 +1,20 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { adminDelete } from '$lib/admin/index.js';
+import { getCatalogExperimentPapers } from '$lib/config/experimentCatalog';
+import { fileBasedPapers } from '$lib/config/fileBasedPapers';
+import type { PaperMeta } from '../../../papers/types';
+
+const catalogExperiments = getCatalogExperimentPapers();
+const fileBasedExperimentSlugs = new Set(catalogExperiments.map((experiment) => experiment.slug));
+const fileBasedExperimentIds = new Set(catalogExperiments.map((experiment) => experiment.id));
+const paperModules = import.meta.glob<{ meta: PaperMeta }>('../../../papers/*/meta.ts', {
+	eager: true
+});
+const knownPaperSlugs = new Set([
+	...fileBasedPapers.map((paper) => paper.slug),
+	...Object.values(paperModules).map((module) => module.meta.slug)
+]);
 
 interface ExperimentRequest {
 	id?: string;
@@ -14,25 +28,61 @@ interface ExperimentRequest {
 	published?: boolean;
 }
 
-export const GET: RequestHandler = async ({ platform }) => {
+interface ExperimentRow {
+	id?: string;
+	slug?: string | null;
+	[key: string]: unknown;
+}
+
+function isAdminBackedExperiment(row: ExperimentRow) {
+	const id = row.id || '';
+	const slug = row.slug || id;
+
+	return (
+		Boolean(id) &&
+		Boolean(slug) &&
+		!knownPaperSlugs.has(slug) &&
+		!fileBasedExperimentSlugs.has(slug) &&
+		!fileBasedExperimentIds.has(id)
+	);
+}
+
+function withExecutionCount(row: ExperimentRow) {
+	return {
+		...row,
+		slug: row.slug || row.id,
+		execution_count: 0 // TODO: Get actual execution counts
+	};
+}
+
+export const GET: RequestHandler = async ({ platform, url }) => {
 	const db = platform?.env?.DB;
+	const id = url.searchParams.get('id');
 
 	if (!db) {
 		return json({ error: 'Database not available' }, { status: 500 });
 	}
 
 	try {
-		// Get all papers and add execution_count as 0 for now
+		if (id) {
+			const experiment = await db.prepare('SELECT * FROM papers WHERE id = ? LIMIT 1').bind(id).first<ExperimentRow>();
+
+			if (!experiment || !isAdminBackedExperiment(experiment)) {
+				return json({ error: 'Experiment not found' }, { status: 404 });
+			}
+
+			return json(withExecutionCount(experiment));
+		}
+
 		const papersResult = await db
 			.prepare('SELECT * FROM papers ORDER BY created_at DESC')
-			.all();
+			.all<ExperimentRow>();
 
-		const papers = (papersResult.results || []).map((paper: any) => ({
-			...paper,
-			execution_count: 0 // TODO: Get actual execution counts
-		}));
+		const experiments = (papersResult.results || [])
+			.filter(isAdminBackedExperiment)
+			.map(withExecutionCount);
 
-		return json(papers);
+		return json(experiments);
 	} catch (error) {
 		console.error('Failed to fetch experiments:', error);
 		return json({ error: 'Failed to fetch experiments', details: String(error) }, { status: 500 });
