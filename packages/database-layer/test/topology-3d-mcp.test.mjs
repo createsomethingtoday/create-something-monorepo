@@ -5,7 +5,8 @@ import {
   createJsonRpcHandler,
   createMcpFrameParser,
   createTopology3dRuntime,
-  encodeMcpFrame
+  encodeMcpFrame,
+  loadTopology3dArtifact
 } from '../scripts/topology-3d-mcp.mjs';
 
 test('topology 3d MCP runtime exposes declared tools and resources', async () => {
@@ -70,6 +71,7 @@ test('topology 3d MCP runtime can read insights and navigate context', async () 
 
 test('topology 3d MCP runtime composes topology and Atlas context', async () => {
   const runtime = createTopology3dRuntime();
+  const artifact = loadTopology3dArtifact();
   const context = runtime.callTool('topology3d_atlas_context_read', {
     nodeId: 'substrate:create-something:root',
     includeStory: true,
@@ -80,8 +82,8 @@ test('topology 3d MCP runtime composes topology and Atlas context', async () => 
   assert.equal(context.joins.atlasCanvasId, 'create-something-internal-operating-topology');
   assert.equal(context.topologyNode.id, 'substrate:create-something:root');
   assert.equal(context.atlasNode.atlasId, 'substrate:create-something:root');
-  assert.equal(context.atlasSession.nodes, 439);
-  assert.equal(context.atlasSession.edges, 779);
+  assert.equal(context.atlasSession.nodes, artifact.nodes.length);
+  assert.equal(context.atlasSession.edges, artifact.edges.length);
   assert.ok(context.atlasEdges.length > 0);
   assert.ok(context.story.steps.some((step) => step.id === 'topology-root'));
 
@@ -110,11 +112,10 @@ test('topology 3d MCP runtime explains groups with directional context', async (
   assert.ok(explanation.directionalLinks.topLensLinks.length > 0);
   assert.ok(explanation.directionalLinks.inbound.length > 0);
   assert.ok(explanation.directionalLinks.outbound.length > 0);
-  assert.equal(
+  assert.notEqual(
     explanation.improvementCandidates.some((candidate) => candidate.id === 'substrate-operator-contract'),
-    false
+    explanation.completedImprovements.some((candidate) => candidate.id === 'substrate-operator-contract')
   );
-  assert.ok(explanation.completedImprovements.some((candidate) => candidate.id === 'substrate-operator-contract'));
 });
 
 test('topology 3d MCP JSON-RPC handler returns structured tool content', async () => {

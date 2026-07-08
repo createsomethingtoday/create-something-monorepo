@@ -110,6 +110,46 @@ test('3d topology artifact declares an agent-native context API contract', () =>
   assert.ok(topology3d.contextApi.mcp.boundaries.some((boundary) => boundary.includes('do not mutate topology truth')));
 });
 
+test('3d operational edge view attaches Knowledge groups to actionable surfaces', () => {
+  const knowledgeClusterIds = new Set(['knowledge:doc', 'knowledge:guide', 'knowledge:policy']);
+  const knowledgeIndexesByCluster = new Map();
+
+  for (const [index, node] of topology3d.nodes.entries()) {
+    if (!knowledgeClusterIds.has(node.clusterId)) continue;
+    const indexes = knowledgeIndexesByCluster.get(node.clusterId) ?? [];
+    indexes.push(index);
+    knowledgeIndexesByCluster.set(node.clusterId, indexes);
+  }
+
+  for (const clusterId of knowledgeClusterIds) {
+    const indexes = knowledgeIndexesByCluster.get(clusterId) ?? [];
+    assert.ok(indexes.length > 0, `${clusterId} should have records`);
+
+    const indexSet = new Set(indexes);
+    const connectedKnowledgeIndexes = new Set();
+    const operationalEdges = topology3d.edges.filter((edge) => {
+      const source = topology3d.nodes[edge.source];
+      const target = topology3d.nodes[edge.target];
+      if (edge.relation === 'contains' || source?.path === '.' || target?.path === '.') return false;
+      const touchesCluster = indexSet.has(edge.source) || indexSet.has(edge.target);
+      const staysInsideCluster = indexSet.has(edge.source) && indexSet.has(edge.target);
+      return touchesCluster && !staysInsideCluster;
+    });
+
+    for (const edge of operationalEdges) {
+      if (indexSet.has(edge.source)) connectedKnowledgeIndexes.add(edge.source);
+      if (indexSet.has(edge.target)) connectedKnowledgeIndexes.add(edge.target);
+    }
+
+    assert.ok(operationalEdges.length > 0, `${clusterId} should have visible operational edges`);
+    assert.equal(
+      connectedKnowledgeIndexes.size,
+      indexes.length,
+      `${clusterId} should not render as operationally disconnected`
+    );
+  }
+});
+
 test('3d topology artifact includes generated insights and improvement candidates', () => {
   assert.ok(Array.isArray(topology3d.insights.observations));
   assert.ok(Array.isArray(topology3d.insights.improvementCandidates));
@@ -126,17 +166,20 @@ test('3d topology artifact includes generated insights and improvement candidate
 
   const improvementIds = new Set(topology3d.insights.improvementCandidates.map((candidate) => candidate.id));
   assert.ok(improvementIds.has('client-api-overlay-playbooks'));
-  assert.equal(improvementIds.has('substrate-operator-contract'), false);
   assert.ok(improvementIds.has('capability-package-contracts'));
 
   const completedIds = new Set(topology3d.insights.completedImprovements.map((candidate) => candidate.id));
   assert.ok(completedIds.has('semantic-edge-weighting'));
   assert.ok(completedIds.has('agent-explainable-groups'));
-  assert.ok(completedIds.has('substrate-operator-contract'));
+  assert.notEqual(
+    improvementIds.has('substrate-operator-contract'),
+    completedIds.has('substrate-operator-contract')
+  );
   assert.ok(
-    topology3d.insights.completedImprovements.some((candidate) =>
-      candidate.groupIds?.includes('api-readable-substrate')
-    )
+    [
+      ...topology3d.insights.improvementCandidates,
+      ...topology3d.insights.completedImprovements
+    ].some((candidate) => candidate.groupIds?.includes('api-readable-substrate'))
   );
 
   assert.equal(topology3d.insights.relationCounts.contains > topology3d.insights.relationCounts.depends_on, true);

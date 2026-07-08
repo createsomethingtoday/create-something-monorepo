@@ -2,12 +2,12 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-07-07T23:42:24.883Z",
+  "generatedAt": "2026-07-08T03:41:12.397Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 439,
-    "edges": 779,
-    "mapped": 439,
+    "nodes": 429,
+    "edges": 868,
+    "mapped": 429,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
@@ -18,18 +18,18 @@
       "app": 6,
       "mcp": 72,
       "client": 6,
-      "worker": 146,
+      "worker": 144,
       "agent": 28,
-      "doc": 6,
-      "policy": 56,
-      "guide": 54,
+      "doc": 5,
+      "policy": 54,
+      "guide": 49,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 88,
-      "Judgment": 93,
-      "Automation": 237,
-      "Database": 21
+      "Mixed": 81,
+      "Judgment": 88,
+      "Automation": 236,
+      "Database": 24
     }
   },
   "signals": [
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 237 record(s); Database has 21 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 236 record(s); Database has 24 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=237",
-        "Database=21",
-        "Total nodes=439"
+        "Automation=236",
+        "Database=24",
+        "Total nodes=429"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,22 +75,21 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "146 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "144 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
         "worker: packages/agency",
         "worker: packages/agency/workers/social-poster",
         "worker: packages/airtable-primary-tags-worker",
-        "worker: packages/app-governance-db/dashboard",
         "worker: packages/app-governance-db/worker",
         "worker: packages/calm-operator-ink-bridge",
         "worker: packages/check-asset-name-worker",
-        "worker: packages/clearway"
+        "worker: packages/clearway",
+        "worker: packages/clearway/workers/notifier"
       ],
       "nodeIds": [
         "substrate:create-something:package:create-something-agency-packages-agency",
         "substrate:create-something:package:social-poster-worker-packages-agency-workers-social-poster",
         "substrate:create-something:package:create-something-airtable-primary-tags-worker-packages-airtable-primary-tags-worker",
-        "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
         "substrate:create-something:package:app-governance-db-worker-packages-app-governance-db-worker",
         "substrate:create-something:package:create-something-calm-operator-ink-bridge-packages-calm-operator-ink-bridge",
         "substrate:create-something:package:create-something-check-asset-name-worker-packages-check-asset-name-worker",
@@ -110,13 +109,13 @@
         "substrate:create-something:package:create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api",
         "substrate:create-something:package:create-something-webflow-validation-packages-io-workers-webflow-validation",
         "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter",
-        "substrate:create-something:package:create-something-lms-packages-lms"
+        "substrate:create-something:package:create-something-lms-packages-lms",
+        "substrate:create-something:package:create-something-ltd-packages-ltd"
       ],
       "paths": [
         "packages/agency",
         "packages/agency/workers/social-poster",
         "packages/airtable-primary-tags-worker",
-        "packages/app-governance-db/dashboard",
         "packages/app-governance-db/worker",
         "packages/calm-operator-ink-bridge",
         "packages/check-asset-name-worker",
@@ -136,7 +135,8 @@
         "packages/io/workers/bundle-scanner-api",
         "packages/io/workers/webflow-validation",
         "packages/landing-page-filter",
-        "packages/lms"
+        "packages/lms",
+        "packages/ltd"
       ],
       "nextAction": "Review worker records through runtime binding coverage before promoting execution claims."
     },
@@ -145,19 +145,18 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "146 record(s) are classified as worker.",
+      "summary": "144 record(s) are classified as worker.",
       "evidence": [
         "@create-something/agency: packages/agency",
         "social-poster-worker: packages/agency/workers/social-poster",
         "@create-something/airtable-primary-tags-worker: packages/airtable-primary-tags-worker",
-        "app-governance-dashboard: packages/app-governance-db/dashboard",
-        "app-governance-db-worker: packages/app-governance-db/worker"
+        "app-governance-db-worker: packages/app-governance-db/worker",
+        "@create-something/calm-operator-ink-bridge: packages/calm-operator-ink-bridge"
       ],
       "nodeIds": [
         "substrate:create-something:package:create-something-agency-packages-agency",
         "substrate:create-something:package:social-poster-worker-packages-agency-workers-social-poster",
         "substrate:create-something:package:create-something-airtable-primary-tags-worker-packages-airtable-primary-tags-worker",
-        "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
         "substrate:create-something:package:app-governance-db-worker-packages-app-governance-db-worker",
         "substrate:create-something:package:create-something-calm-operator-ink-bridge-packages-calm-operator-ink-bridge",
         "substrate:create-something:package:create-something-check-asset-name-worker-packages-check-asset-name-worker",
@@ -165,13 +164,13 @@
         "substrate:create-something:package:court-reserve-notifier-worker-packages-clearway-workers-notifier",
         "substrate:create-something:package:court-reserve-realtime-worker-packages-clearway-workers-realtime",
         "substrate:create-something:package:create-something-court-reserve-router-packages-clearway-workers-router",
-        "substrate:create-something:package:create-something-codebase-vector-database-packages-codebase-vector-database"
+        "substrate:create-something:package:create-something-codebase-vector-database-packages-codebase-vector-database",
+        "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat"
       ],
       "paths": [
         "packages/agency",
         "packages/agency/workers/social-poster",
         "packages/airtable-primary-tags-worker",
-        "packages/app-governance-db/dashboard",
         "packages/app-governance-db/worker",
         "packages/calm-operator-ink-bridge",
         "packages/check-asset-name-worker",
@@ -179,7 +178,8 @@
         "packages/clearway/workers/notifier",
         "packages/clearway/workers/realtime",
         "packages/clearway/workers/router",
-        "packages/codebase-vector-database"
+        "packages/codebase-vector-database",
+        "packages/concierge-chat"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     },
@@ -231,7 +231,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "policy surface review",
-      "summary": "56 record(s) are classified as policy.",
+      "summary": "54 record(s) are classified as policy.",
       "evidence": [
         "policy.hub-route-authorization.v1.json: docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
         "policy.judgment-baseline.v1.json: docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
@@ -274,7 +274,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "54 record(s) are classified as guide.",
+      "summary": "49 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
