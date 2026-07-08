@@ -223,13 +223,17 @@ Notes:
 - `WEBFLOW_ANALYZER_REGISTRY_PATH` lets a hosted Node process keep script-version state outside the repo checkout.
 - The Hub registry points at the remote HTTP analyzer endpoint. The Phase B reviewer bundle also includes the remote `webflow-local` compatibility entry for plagiarism and framework analysis.
 
-#### Container-backed Remote Host
+#### Retired Container-backed Remote Host
 
-This repo now includes a dedicated Cloudflare Containers deploy surface for browser-backed remote execution:
+The Cloudflare Containers remote host is retired for reviewer workflows. It now
+deploys as a quarantine shim: `/` and `/health` report retired status, while MCP
+traffic returns `410 Gone` without starting the old analyzer container. Reviewer
+hubs should use `webflow-template-review-mcp` published-site validation and
+sandbox evidence instead.
 
 ```bash
-infisical run --env=prod --path=/ --include-imports=true -- pnpm --dir packages/webflow-site-analyzer-mcp/workers/remote run preflight
-infisical run --env=prod --path=/ --include-imports=true -- pnpm run deploy:webflow-site-analyzer-mcp-remote
+pnpm --dir packages/webflow-site-analyzer-mcp/workers/remote run typecheck
+pnpm --dir packages/webflow-site-analyzer-mcp/workers/remote run deploy
 ```
 
 Files:
@@ -239,10 +243,9 @@ Files:
 - `packages/webflow-site-analyzer-mcp/scripts/prepare-remote-runtime.mjs`
 
 Runtime notes:
-- `preflight` verifies the required secret names are present without printing values: one browser provider (`STEEL_API_KEY`, `BROWSERLESS_TOKEN`, or `BROWSERLESS_API_KEY`), one MCP auth token (`WEBFLOW_SITE_ANALYZER_MCP_API_KEY` or `MCP_API_KEY`), and one Cloudflare deploy token (`CLOUDFLARE_API_TOKEN` or `CLOUDFLARE_WORKERS_API_TOKEN`).
-- `prepare:runtime` builds `@create-something/observability`, builds this package, and materializes a standalone runtime tree into `workers/remote/runtime/` using `pnpm deploy`.
-- The Worker is a thin proxy. The actual MCP server runs inside the container via `node dist/http.js`.
-- The deployment requires a local Docker-compatible engine because Wrangler builds the container image locally before upload.
+- The active Worker no longer binds `AnalyzerContainer` and no longer proxies to `node dist/http.js`.
+- `prepare:runtime`, `preflight`, and `Dockerfile` remain as historical rollback context only.
+- Rollback requires restoring the container binding config, running the old preflight/runtime preparation, and redeploying through the production promotion path.
 
 The companion marketplace MCP deploys separately:
 

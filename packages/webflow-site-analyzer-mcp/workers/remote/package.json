@@ -7,8 +7,8 @@
     "prepare:runtime": "node ../../scripts/prepare-remote-runtime.mjs",
     "preflight": "node ../../scripts/remote-deploy-preflight.mjs",
     "typecheck": "tsc --project tsconfig.json",
-    "dev": "pnpm run prepare:runtime && node ../../../../scripts/run-wrangler.mjs dev",
-    "deploy": "pnpm run preflight && pnpm run prepare:runtime && node ../../../../scripts/run-wrangler.mjs deploy",
+    "dev": "node ../../../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../../../scripts/run-wrangler.mjs deploy",
     "tail": "node ../../../../scripts/run-wrangler.mjs tail"
   },
   "dependencies": {

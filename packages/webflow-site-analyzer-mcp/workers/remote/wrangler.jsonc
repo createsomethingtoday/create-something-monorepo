@@ -8,30 +8,7 @@
   "observability": {
     "enabled": true
   },
-  "containers": [
-    {
-      "class_name": "AnalyzerContainer",
-      "image": "./Dockerfile",
-      "instance_type": "standard-4",
-      "max_instances": 1
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "class_name": "AnalyzerContainer",
-        "name": "AnalyzerContainer"
-      }
-    ]
-  },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_sqlite_classes": ["AnalyzerContainer"]
-    }
-  ],
   "vars": {
-    "SANDBOX_SLEEP_AFTER": "never",
-    "UPSTREAM_PORT": "8788"
+    "RETIRED_REPLACEMENT_SERVICE": "webflow-template-review-mcp"
   }
 }
