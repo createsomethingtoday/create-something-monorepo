@@ -586,7 +586,8 @@ function liveDetails(input: ReviewerEvalInput, output: DifyChatOutput): Record<s
         answer.includes('template_review_get_review_context') || answer.includes('review context'),
       assignsBeforeRequestChanges:
         includesInOrder(answer, 'template_review_assign_self', 'template_review_request_changes') ||
-        includesInOrder(answer, 'assign', 'request changes'),
+        includesInOrder(answer, 'assign', 'request changes') ||
+        includesInOrder(answer, 'assign', 'request-changes'),
       namesRequestChangesTool:
         answer.includes('template_review_request_changes') ||
         answer.includes('request changes tool') ||
@@ -605,6 +606,7 @@ function liveDetails(input: ReviewerEvalInput, output: DifyChatOutput): Record<s
           'recover',
           'retry',
           'continue',
+          'report',
           'disclose',
           'tell the reviewer',
           'ask'
@@ -637,6 +639,8 @@ function liveDetails(input: ReviewerEvalInput, output: DifyChatOutput): Record<s
           'no rejection',
           'no creator-facing',
           'no creator facing',
+          'no decision-send',
+          'no decision send',
           'no official'
         ]) &&
         mentionsAny(answer, [
