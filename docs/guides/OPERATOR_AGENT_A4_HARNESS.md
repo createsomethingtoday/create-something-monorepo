@@ -2213,6 +2213,39 @@ claims, verifier-side runner admission claims, runner enablement claims, leaked
 raw artifacts, and any process/command/write marker. `authority.a4Execution`
 remains blocked in this verifier branch.
 
+After the promotion decision passes, validate the separate E2B sandbox-smoke PR
+evidence:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-check \
+  <same chain arguments as implementation-production-runner-implementation-admission-e2b-promotion-decision-check> \
+  --implementation-production-runner-implementation-admission-e2b-promotion-decision-receipt <implementation-production-runner-implementation-admission-e2b-promotion-decision-receipt.json> \
+  --implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr <implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production runner implementation admission E2B sandbox-smoke
+PR packet proves a separate reviewed PR surface exists for the future sandbox
+smoke path. It must bind to the E2B promotion-decision artifact and receipt,
+carry the PR URL, PR number, open status, base ref, head ref, commit SHA,
+sandbox-smoke plan, credential-handling policy, artifact policy, fallback and
+rollback plans, runner references, no-execution approval, and redaction policy.
+
+This gate validates PR evidence only. It does not create E2B sandboxes, run E2B
+code or commands, upload or download files, create or mutate PRs, close or
+update Linear issues, admit runner code, apply the policy patch in this
+verifier branch, enable a runner, spawn a process, deploy, post updates, rotate
+secrets, expose raw artifacts, or mutate third-party systems. It rejects
+drifted promotion-decision receipts, missing PR references, non-open PR status,
+missing smoke plans, exposed credential values, raw artifact storage, execution
+approval claims, verifier-side sandbox or E2B execution claims, verifier-side
+PR creation or mutation claims, verifier-side runner admission claims, runner
+enablement claims, leaked raw artifacts, and any process/command/write marker.
+`authority.a4Execution` remains blocked in this verifier branch.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
