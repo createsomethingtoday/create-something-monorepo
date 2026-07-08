@@ -140,6 +140,9 @@ const snapshot = await page.evaluate(
 );
 
 await context.close();
+snapshot.admin_api_routes = [...apiRoutes.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .map(([route, count]) => ({ route, count }));
 console.log(`✓ snapshot captured: ${snapshot.count} apps (${ENRICH ? 'enriched' : 'listing-only'})`);
 
 // Defense in depth: an admin-view capture must yield client_ids. A snapshot with
