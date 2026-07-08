@@ -1,0 +1,91 @@
+{
+  "$schema": "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux.schema.json",
+  "schemaVersion": 1,
+  "paneBorderColor": "#1a1a1a",
+  "activePaneBorderColor": "#444444",
+  "app": {
+    "appearance": "dark",
+    "appIcon": "dark",
+    "newWorkspacePlacement": "afterCurrent",
+    "windowTitleTemplate": "CREATE SOMETHING / {activeWorkspace}",
+    "confirmQuit": "dirty-only",
+    "workspaceInheritWorkingDirectory": true,
+    "minimalMode": false,
+    "globalFontMagnification": 100,
+    "sendAnonymousTelemetry": false
+  },
+  "sidebarAppearance": {
+    "matchTerminalBackground": true,
+    "tintColor": "#000000",
+    "darkModeTintColor": "#000000",
+    "tintOpacity": 0
+  },
+  "workspaceColors": {
+    "indicatorStyle": "leftRail",
+    "selectionColor": "#111111",
+    "notificationBadgeColor": "#44aa44",
+    "colors": {
+      "CREATE SOMETHING": "#ffffff",
+      "Database": "#4477aa",
+      "Automation": "#44aa44",
+      "Judgment": "#aa8844",
+      "Blocked": "#cc4444",
+      "Quiet": "#666666"
+    }
+  },
+  "workspaceGroups": {
+    "newWorkspacePlacement": "afterCurrent",
+    "byCwd": {
+      "~/Code/create-something-monorepo": {
+        "color": "#ffffff",
+        "icon": "cube.fill"
+      }
+    }
+  },
+  "terminal": {
+    "copyOnSelect": true,
+    "autoResumeAgentSessions": false,
+    "showTextBoxOnNewTerminals": false,
+    "focusTextBoxOnNewTerminals": false,
+    "textBoxMaxLines": 10,
+    "agentHibernation": {
+      "enabled": false
+    }
+  },
+  "browser": {
+    "openTerminalLinksInCmuxBrowser": true,
+    "hostsToOpenInEmbeddedBrowser": [
+      "localhost",
+      "127.0.0.1",
+      "*.webflow.com",
+      "webflow.com"
+    ]
+  },
+  "notifications": {
+    "dockBadge": true,
+    "showInMenuBar": true,
+    "unreadPaneRing": true,
+    "agentPermissionPrompt": true
+  },
+  "sidebar": {
+    "wrapWorkspaceTitles": true,
+    "showWorkspaceDescription": true,
+    "branchLayout": "inline"
+  },
+  "markdown": {
+    "fontFamily": "ABC Diatype, Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+    "fontSize": 15,
+    "maxWidth": 980
+  },
+  "diffViewer": {
+    "defaultLayout": "unified"
+  },
+  "canvas": {
+    "paneGap": 8,
+    "snappingEnabled": true
+  },
+  "automation": {
+    "socketControlMode": "automation",
+    "suppressSubagentNotifications": false
+  }
+}
