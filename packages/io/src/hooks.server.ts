@@ -1,6 +1,22 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 import { createSessionManager, type User } from '@create-something/canon/auth';
 
+function getSafeAdminNextPath(url: URL) {
+	const next = url.searchParams.get('next');
+
+	if (
+		!next ||
+		!next.startsWith('/admin') ||
+		next.startsWith('//') ||
+		next === '/admin/login' ||
+		next.startsWith('/admin/login?')
+	) {
+		return '/admin';
+	}
+
+	return next;
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
 	const isProduction = event.platform?.env?.ENVIRONMENT === 'production';
 	const domain = isProduction ? '.createsomething.io' : undefined;
@@ -110,7 +126,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					.first();
 
 				if (adminUser) {
-					throw redirect(303, '/admin');
+					throw redirect(303, getSafeAdminNextPath(event.url));
 				}
 			}
 		}

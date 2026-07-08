@@ -9,7 +9,13 @@
 
 	function getNextPath() {
 		const next = $page.url.searchParams.get('next');
-		if (!next || !next.startsWith('/admin') || next.startsWith('//')) {
+		if (
+			!next ||
+			!next.startsWith('/admin') ||
+			next.startsWith('//') ||
+			next === '/admin/login' ||
+			next.startsWith('/admin/login?')
+		) {
 			return '/admin';
 		}
 		return next;
