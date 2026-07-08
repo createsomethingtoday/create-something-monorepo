@@ -6698,6 +6698,136 @@ function validImplementationProductionRunnerImplementationAdmissionE2bReadiness(
   };
 }
 
+function validImplementationProductionRunnerImplementationAdmissionE2bPromotionDecision({
+  implementationProductionRunnerImplementationAdmissionE2bReadinessPath,
+  implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath,
+} = {}) {
+  const readiness = validImplementationProductionRunnerImplementationAdmissionE2bReadiness();
+  return {
+    authorityLevel: 'A4',
+    issue: EXPECTED_ISSUE,
+    target: EXPECTED_TARGET,
+    action: EXPECTED_ACTION,
+    targetScope: EXPECTED_TARGET,
+    implementationProductionRunnerImplementationAdmissionE2bReadiness: implementationProductionRunnerImplementationAdmissionE2bReadinessPath
+      ? path.relative(REPO_ROOT, implementationProductionRunnerImplementationAdmissionE2bReadinessPath)
+      : 'implementation-production-runner-implementation-admission-e2b-readiness.json',
+    implementationProductionRunnerImplementationAdmissionE2bReadinessReceipt: implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath
+      ? path.relative(REPO_ROOT, implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath)
+      : 'implementation-production-runner-implementation-admission-e2b-readiness-check.json',
+    e2bPromotionDecisionOnly: true,
+    e2bReadinessOk: true,
+    promotionDecision: 'approve-e2b-sandbox-smoke-pr',
+    promotionDecisionApproved: true,
+    decidedBy: 'Micah Johnson',
+    decidedAt: '2026-07-08T01:30:00.000Z',
+    decisionRationale: 'E2B readiness evidence is bounded and redacted; next work should be a separate reviewed sandbox-smoke PR.',
+    riskAcceptance: [
+      'E2B sandbox smoke remains a future reviewed work item, not verifier execution',
+      'production mutation stays denied until a later explicit runner execution approval gate',
+    ],
+    credentialReadinessReview: [
+      'E2B_API_KEY presence was reviewed without exposing the credential value',
+      'promotion decision stores only secret name and readiness status',
+    ],
+    sandboxSmokeReference: readiness.sandboxSmokeEvidence,
+    sandboxProvider: readiness.sandboxProvider,
+    templateReference: readiness.templateReference,
+    runtimeProfile: readiness.runtimeProfile,
+    credentialReadiness: readiness.credentialReadiness,
+    fallbackPlan: readiness.fallbackPlan,
+    rollbackPlan: readiness.rollbackPlan,
+    executionApprovalGranted: false,
+    runnerImplementationReference: readiness.runnerImplementationReference,
+    runnerContractReference: readiness.runnerContractReference,
+    runnerEntryPoint: readiness.runnerEntryPoint,
+    runnerImplementationAdmittedByVerifier: false,
+    sandboxCreatedByVerifier: false,
+    e2bCodeExecutedByVerifier: false,
+    e2bCommandExecutedByVerifier: false,
+    filesUploadedByVerifier: false,
+    filesDownloadedByVerifier: false,
+    e2bPromotionAppliedByVerifier: false,
+    requiredReceiptReferences: [
+      'implementation-production-runner-implementation-admission-e2b-readiness-check',
+      'implementation-production-runner-implementation-admission-final-review-check',
+      'implementation-production-runner-implementation-admission-post-merge-validation-check',
+      'implementation-production-runner-implementation-admission-merge-evidence-check',
+      'implementation-production-runner-implementation-admission-merge-decision-check',
+      'implementation-production-runner-implementation-admission-pr-review-check',
+      'implementation-production-runner-implementation-admission-pr-check',
+      'implementation-production-runner-implementation-admission-check',
+      'implementation-production-runner-implementation-review-check',
+      'implementation-production-runner-implementation-pr-check',
+      'implementation-production-runner-admission-check',
+      'implementation-production-policy-enablement-revalidation-check',
+    ],
+    requiredEvidence: [
+      'implementation-production-runner-implementation-admission-e2b-readiness-receipt',
+      'promotion-decision',
+      'decision-rationale',
+      'risk-acceptance',
+      'credential-readiness-review',
+      'sandbox-smoke-reference',
+      'fallback-plan',
+      'rollback-plan',
+      'runner-implementation-reference',
+      'runner-contract-reference',
+      'runner-entry-point',
+      'no-execution-approval',
+      'redaction-policy',
+    ],
+    redactionPolicyApplied: true,
+    redactionPolicy: {
+      excludes: ['secrets', 'raw-logs', 'prompts', 'raw-transcripts'],
+      evidenceOnly: true,
+    },
+    containsSecrets: false,
+    containsRawLogs: false,
+    containsPrompts: false,
+    containsRawTranscripts: false,
+    noExecutionMarkers: [
+      'current-verifier-policy-blocked',
+      'policy-change-not-applied-by-verifier',
+      'process-not-spawned',
+      'executed-commands-empty',
+      'runner-disabled-in-verifier',
+      'runner-implementation-not-admitted-by-verifier',
+      'sandbox-not-created-by-verifier',
+      'e2b-code-not-executed-by-verifier',
+      'e2b-command-not-executed-by-verifier',
+      'files-not-uploaded-by-verifier',
+      'files-not-downloaded-by-verifier',
+      'execution-not-ready',
+      'execution-disabled',
+      'execution-not-approved',
+      'would-execute-false',
+      'writes-performed-zero',
+      'deploy-not-performed-by-verifier',
+      'third-party-write-not-performed-by-verifier',
+      'issue-mutation-not-performed-by-verifier',
+      'pr-mutation-not-performed-by-verifier',
+      'production-runner-implementation-admission-e2b-promotion-decision-only',
+    ],
+    currentVerifierPolicyBlocked: true,
+    policyChangeAppliedByVerifier: false,
+    runnerEnabledByVerifier: false,
+    prMutationPerformedByVerifier: false,
+    deployedByVerifier: false,
+    thirdPartyWritePerformedByVerifier: false,
+    issueMutationPerformedByVerifier: false,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    evidenceTarget: `Linear ${EXPECTED_ISSUE}`,
+  };
+}
+
 function writePolicyApplicationFixture(t) {
   const root = makeWorkspace(t);
   const packetPath = path.join(root, 'packet.json');
@@ -10184,6 +10314,33 @@ function writeImplementationProductionRunnerImplementationAdmissionFinalReviewFi
   };
 }
 
+function writeImplementationProductionRunnerImplementationAdmissionE2bReadinessFixture(t) {
+  const fixture = writeImplementationProductionRunnerImplementationAdmissionFinalReviewFixture(t);
+  const implementationProductionRunnerImplementationAdmissionE2bReadinessPath = path.join(fixture.root, 'implementation-production-runner-implementation-admission-e2b-readiness.json');
+  writeFileSync(
+    implementationProductionRunnerImplementationAdmissionE2bReadinessPath,
+    `${JSON.stringify(validImplementationProductionRunnerImplementationAdmissionE2bReadiness({
+      implementationProductionRunnerImplementationAdmissionFinalReviewPath: fixture.implementationProductionRunnerImplementationAdmissionFinalReviewPath,
+      implementationProductionRunnerImplementationAdmissionFinalReviewReceiptPath: fixture.implementationProductionRunnerImplementationAdmissionFinalReviewReceiptPath,
+    }), null, 2)}\n`,
+  );
+  const result = runImplementationProductionRunnerImplementationAdmissionE2bReadinessCheck(
+    fixture,
+    implementationProductionRunnerImplementationAdmissionE2bReadinessPath,
+  );
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  const implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath = path.isAbsolute(payload.receiptPath)
+    ? payload.receiptPath
+    : path.resolve(REPO_ROOT, payload.receiptPath);
+
+  return {
+    ...fixture,
+    implementationProductionRunnerImplementationAdmissionE2bReadinessPath,
+    implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath,
+  };
+}
+
 function runImplementationWorkspaceEvidenceCheck(fixture, implementationWorkspaceEvidencePath, receiptDir = fixture.root, followUpWorkIntakeReceiptPath = fixture.followUpWorkIntakeReceiptPath) {
   return spawnSync(
     process.execPath,
@@ -12431,6 +12588,142 @@ function runImplementationProductionRunnerImplementationAdmissionE2bReadinessChe
     implementationProductionRunnerImplementationAdmissionFinalReviewReceiptPath,
     '--implementation-production-runner-implementation-admission-e2b-readiness',
     implementationProductionRunnerImplementationAdmissionE2bReadinessPath,
+  );
+  return spawnSync(process.execPath, args, { cwd: REPO_ROOT, encoding: 'utf8' });
+}
+
+function runImplementationProductionRunnerImplementationAdmissionE2bPromotionDecisionCheck(
+  fixture,
+  implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath,
+  receiptDir = fixture.root,
+  implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath = fixture.implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath,
+) {
+  const args = implementationProductionPolicyEnablementPrCheckArgs(
+    fixture.packetPath,
+    fixture.preflightPath,
+    fixture.executionPath,
+    fixture.authorizationPath,
+    fixture.commandPath,
+    fixture.commandReceiptPath,
+    fixture.executorProofPath,
+    fixture.proposalPath,
+    fixture.proposalReceiptPath,
+    fixture.policyPatchPath,
+    fixture.policyPatchReceiptPath,
+    fixture.candidateManifestPath,
+    fixture.applicationDiffReceiptPath,
+    fixture.readinessReceiptPath,
+    fixture.runnerContractPath,
+    fixture.runnerContractReceiptPath,
+    fixture.runnerPlanPath,
+    fixture.runnerPlanReceiptPath,
+    fixture.runnerDiffPath,
+    fixture.runnerDiffReceiptPath,
+    fixture.releaseAdmissionPath,
+    fixture.releaseAdmissionReceiptPath,
+    fixture.executionRunbookPath,
+    fixture.executionRunbookReceiptPath,
+    fixture.receiptBundlePath,
+    fixture.receiptBundleReceiptPath,
+    fixture.receiptPublicationPath,
+    fixture.receiptPublicationReceiptPath,
+    fixture.receiptReviewDecisionPath,
+    fixture.receiptReviewDecisionReceiptPath,
+    fixture.manualNextStepHandoffPath,
+    fixture.manualNextStepHandoffReceiptPath,
+    fixture.manualFollowUpIssueEvidencePath,
+    fixture.manualFollowUpIssueEvidenceReceiptPath,
+    fixture.followUpWorkIntakePath,
+    fixture.followUpWorkIntakeReceiptPath,
+    fixture.implementationWorkspaceEvidencePath,
+    fixture.implementationWorkspaceEvidenceReceiptPath,
+    fixture.implementationPrEvidencePath,
+    fixture.implementationPrEvidenceReceiptPath,
+    fixture.implementationMergeDecisionPath,
+    fixture.implementationMergeDecisionReceiptPath,
+    fixture.implementationMergeEvidencePath,
+    fixture.implementationMergeEvidenceReceiptPath,
+    fixture.implementationPostMergeValidationPath,
+    fixture.implementationPostMergeValidationReceiptPath,
+    fixture.implementationProductionReleaseDecisionPath,
+    fixture.implementationProductionReleaseDecisionReceiptPath,
+    fixture.implementationProductionReleaseAdmissionPath,
+    fixture.implementationProductionReleaseAdmissionReceiptPath,
+    fixture.implementationProductionDeployEvidencePath,
+    fixture.implementationProductionDeployEvidenceReceiptPath,
+    fixture.implementationProductionPostDeployValidationPath,
+    fixture.implementationProductionPostDeployValidationReceiptPath,
+    fixture.implementationProductionReleaseCloseoutPath,
+    fixture.implementationProductionReleaseCloseoutReceiptPath,
+    fixture.implementationProductionOwnershipReviewPath,
+    fixture.implementationProductionOwnershipReviewReceiptPath,
+    fixture.implementationProductionA4EnablementApprovalPath,
+    fixture.implementationProductionA4EnablementApprovalReceiptPath,
+    fixture.implementationProductionPolicyEnablementPrPath,
+    receiptDir,
+  );
+  args[1] = 'implementation-production-runner-implementation-admission-e2b-promotion-decision-check';
+  args.push(
+    '--implementation-production-policy-enablement-pr-receipt',
+    fixture.implementationProductionPolicyEnablementPrReceiptPath,
+    '--implementation-production-policy-enablement-merge-decision',
+    fixture.implementationProductionPolicyEnablementMergeDecisionPath,
+    '--implementation-production-policy-enablement-merge-decision-receipt',
+    fixture.implementationProductionPolicyEnablementMergeDecisionReceiptPath,
+    '--implementation-production-policy-enablement-merge-evidence',
+    fixture.implementationProductionPolicyEnablementMergeEvidencePath,
+    '--implementation-production-policy-enablement-merge-evidence-receipt',
+    fixture.implementationProductionPolicyEnablementMergeEvidenceReceiptPath,
+    '--implementation-production-policy-enablement-revalidation',
+    fixture.implementationProductionPolicyEnablementRevalidationPath,
+    '--implementation-production-policy-enablement-revalidation-receipt',
+    fixture.implementationProductionPolicyEnablementRevalidationReceiptPath,
+    '--implementation-production-runner-admission',
+    fixture.implementationProductionRunnerAdmissionPath,
+    '--implementation-production-runner-admission-receipt',
+    fixture.implementationProductionRunnerAdmissionReceiptPath,
+    '--implementation-production-runner-implementation-pr',
+    fixture.implementationProductionRunnerImplementationPrPath,
+    '--implementation-production-runner-implementation-pr-receipt',
+    fixture.implementationProductionRunnerImplementationPrReceiptPath,
+    '--implementation-production-runner-implementation-review',
+    fixture.implementationProductionRunnerImplementationReviewPath,
+    '--implementation-production-runner-implementation-review-receipt',
+    fixture.implementationProductionRunnerImplementationReviewReceiptPath,
+    '--implementation-production-runner-implementation-admission',
+    fixture.implementationProductionRunnerImplementationAdmissionPath,
+    '--implementation-production-runner-implementation-admission-receipt',
+    fixture.implementationProductionRunnerImplementationAdmissionReceiptPath,
+    '--implementation-production-runner-implementation-admission-pr',
+    fixture.implementationProductionRunnerImplementationAdmissionPrPath,
+    '--implementation-production-runner-implementation-admission-pr-receipt',
+    fixture.implementationProductionRunnerImplementationAdmissionPrReceiptPath,
+    '--implementation-production-runner-implementation-admission-pr-review',
+    fixture.implementationProductionRunnerImplementationAdmissionPrReviewPath,
+    '--implementation-production-runner-implementation-admission-pr-review-receipt',
+    fixture.implementationProductionRunnerImplementationAdmissionPrReviewReceiptPath,
+    '--implementation-production-runner-implementation-admission-merge-decision',
+    fixture.implementationProductionRunnerImplementationAdmissionMergeDecisionPath,
+    '--implementation-production-runner-implementation-admission-merge-decision-receipt',
+    fixture.implementationProductionRunnerImplementationAdmissionMergeDecisionReceiptPath,
+    '--implementation-production-runner-implementation-admission-merge-evidence',
+    fixture.implementationProductionRunnerImplementationAdmissionMergeEvidencePath,
+    '--implementation-production-runner-implementation-admission-merge-evidence-receipt',
+    fixture.implementationProductionRunnerImplementationAdmissionMergeEvidenceReceiptPath,
+    '--implementation-production-runner-implementation-admission-post-merge-validation',
+    fixture.implementationProductionRunnerImplementationAdmissionPostMergeValidationPath,
+    '--implementation-production-runner-implementation-admission-post-merge-validation-receipt',
+    fixture.implementationProductionRunnerImplementationAdmissionPostMergeValidationReceiptPath,
+    '--implementation-production-runner-implementation-admission-final-review',
+    fixture.implementationProductionRunnerImplementationAdmissionFinalReviewPath,
+    '--implementation-production-runner-implementation-admission-final-review-receipt',
+    fixture.implementationProductionRunnerImplementationAdmissionFinalReviewReceiptPath,
+    '--implementation-production-runner-implementation-admission-e2b-readiness',
+    fixture.implementationProductionRunnerImplementationAdmissionE2bReadinessPath,
+    '--implementation-production-runner-implementation-admission-e2b-readiness-receipt',
+    implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath,
+    '--implementation-production-runner-implementation-admission-e2b-promotion-decision',
+    implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath,
   );
   return spawnSync(process.execPath, args, { cwd: REPO_ROOT, encoding: 'utf8' });
 }
@@ -20135,6 +20428,241 @@ test('implementation-production-runner-implementation-admission-e2b-readiness-ch
     const payload = JSON.parse(result.stdout);
     assert.equal(payload.ok, false, entry.name);
     assert.equal(payload.implementationProductionRunnerImplementationAdmissionE2bReadinessOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-production-runner-implementation-admission-e2b-promotion-decision-check validates promotion decision without creating sandboxes', (t) => {
+  const fixture = writeImplementationProductionRunnerImplementationAdmissionE2bReadinessFixture(t);
+  const implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath = path.join(fixture.root, 'implementation-production-runner-implementation-admission-e2b-promotion-decision.json');
+  writeFileSync(
+    implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath,
+    `${JSON.stringify(validImplementationProductionRunnerImplementationAdmissionE2bPromotionDecision({
+      implementationProductionRunnerImplementationAdmissionE2bReadinessPath: fixture.implementationProductionRunnerImplementationAdmissionE2bReadinessPath,
+      implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath: fixture.implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath,
+    }), null, 2)}\n`,
+  );
+
+  const result = runImplementationProductionRunnerImplementationAdmissionE2bPromotionDecisionCheck(fixture, implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true, payload.errors.join('\n'));
+  assert.equal(payload.mode, 'implementation-production-runner-implementation-admission-e2b-promotion-decision-check');
+  assert.equal(payload.implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionOk, true);
+  assert.equal(payload.e2bPromotionDecisionOnly, true);
+  assert.equal(payload.e2bReadinessOk, true);
+  assert.equal(payload.promotionDecision, 'approve-e2b-sandbox-smoke-pr');
+  assert.equal(payload.promotionDecisionApproved, true);
+  assert.equal(payload.sandboxProvider, 'e2b');
+  assert.equal(payload.templateReference, 'e2b-code-interpreter-js-2.5.0');
+  assert.equal(payload.credentialReadiness.credentialValueExposed, false);
+  assert.ok(payload.riskAcceptance.length > 0);
+  assert.ok(payload.credentialReadinessReview.length > 0);
+  assert.ok(payload.sandboxSmokeReference.length > 0);
+  assert.ok(payload.fallbackPlan.length > 0);
+  assert.ok(payload.rollbackPlan.length > 0);
+  assert.equal(payload.executionApprovalGranted, false);
+  assert.equal(payload.runnerImplementationAdmittedByVerifier, false);
+  assert.equal(payload.sandboxCreatedByVerifier, false);
+  assert.equal(payload.e2bCodeExecutedByVerifier, false);
+  assert.equal(payload.e2bCommandExecutedByVerifier, false);
+  assert.equal(payload.filesUploadedByVerifier, false);
+  assert.equal(payload.filesDownloadedByVerifier, false);
+  assert.equal(payload.e2bPromotionAppliedByVerifier, false);
+  assert.equal(payload.redactionPolicyApplied, true);
+  assert.equal(payload.containsSecrets, false);
+  assert.equal(payload.containsRawLogs, false);
+  assert.equal(payload.containsPrompts, false);
+  assert.equal(payload.containsRawTranscripts, false);
+  assert.ok(payload.noExecutionMarkers.includes('production-runner-implementation-admission-e2b-promotion-decision-only'));
+  assert.equal(payload.currentVerifierPolicyBlocked, true);
+  assert.equal(payload.policyChangeAppliedByVerifier, false);
+  assert.equal(payload.runnerEnabledByVerifier, false);
+  assert.equal(payload.prMutationPerformedByVerifier, false);
+  assert.equal(payload.deployedByVerifier, false);
+  assert.equal(payload.thirdPartyWritePerformedByVerifier, false);
+  assert.equal(payload.issueMutationPerformedByVerifier, false);
+  assert.equal(payload.processSpawned, false);
+  assert.deepEqual(payload.executedCommands, []);
+  assert.equal(payload.runnerEnabled, false);
+  assert.equal(payload.executionReady, false);
+  assert.equal(payload.executionEnabled, false);
+  assert.equal(payload.executionApproved, false);
+  assert.equal(payload.wouldExecute, false);
+  assert.equal(payload.writesPerformed, 0);
+  assert.equal(payload.policy.a4Execution, 'blocked');
+  assert.equal(payload.policy.implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionRequiresReadinessReceipt, true);
+  assert.equal(payload.policy.implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionSandboxCreatedByVerifier, false);
+  assert.equal(payload.policy.implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionCodeExecutedByVerifier, false);
+  assert.match(payload.nextGate, /sandbox-smoke PR/);
+  assert.match(payload.receiptPath, /implementation-production-runner-implementation-admission-e2b-promotion-decision-check\.json$/);
+});
+
+test('implementation-production-runner-implementation-admission-e2b-promotion-decision-check fails closed on unsafe, mismatched, or leaky promotion decisions', (t) => {
+  const cases = [
+    {
+      name: 'unsupported-decision',
+      mutate(decision) {
+        decision.promotionDecision = 'execute-e2b-now';
+      },
+      pattern: /promotionDecision is not allowed/,
+    },
+    {
+      name: 'not-approved',
+      mutate(decision) {
+        decision.promotionDecisionApproved = false;
+      },
+      pattern: /promotionDecisionApproved must be true/,
+    },
+    {
+      name: 'missing-rationale',
+      mutate(decision) {
+        decision.decisionRationale = '';
+      },
+      pattern: /decisionRationale is required/,
+    },
+    {
+      name: 'missing-risk-acceptance',
+      mutate(decision) {
+        decision.riskAcceptance = [];
+      },
+      pattern: /riskAcceptance must not be empty/,
+    },
+    {
+      name: 'runtime-drift',
+      mutate(decision) {
+        decision.runtimeProfile.model = 'qwen';
+      },
+      pattern: /runtimeProfile must match e2b readiness receipt/,
+    },
+    {
+      name: 'execution-approved',
+      mutate(decision) {
+        decision.executionApprovalGranted = true;
+      },
+      pattern: /executionApprovalGranted must be false/,
+    },
+    {
+      name: 'sandbox-created-by-verifier',
+      mutate(decision) {
+        decision.sandboxCreatedByVerifier = true;
+      },
+      pattern: /sandboxCreatedByVerifier must not be true/,
+    },
+    {
+      name: 'e2b-command-executed-by-verifier',
+      mutate(decision) {
+        decision.e2bCommandExecutedByVerifier = true;
+      },
+      pattern: /e2bCommandExecutedByVerifier must not be true/,
+    },
+    {
+      name: 'contains-secrets',
+      mutate(decision) {
+        decision.containsSecrets = true;
+      },
+      pattern: /containsSecrets must be false/,
+    },
+    {
+      name: 'spawned-process',
+      mutate(decision) {
+        decision.processSpawned = true;
+      },
+      pattern: /processSpawned must not be true/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationProductionRunnerImplementationAdmissionE2bReadinessFixture(t);
+    const decision = validImplementationProductionRunnerImplementationAdmissionE2bPromotionDecision({
+      implementationProductionRunnerImplementationAdmissionE2bReadinessPath: fixture.implementationProductionRunnerImplementationAdmissionE2bReadinessPath,
+      implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath: fixture.implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath,
+    });
+    entry.mutate(decision);
+    const implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath = path.join(fixture.root, `${entry.name}-implementation-production-runner-implementation-admission-e2b-promotion-decision.json`);
+    writeFileSync(
+      implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath,
+      `${JSON.stringify(decision, null, 2)}\n`,
+    );
+
+    const result = runImplementationProductionRunnerImplementationAdmissionE2bPromotionDecisionCheck(fixture, implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath);
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionOk, false, entry.name);
+    assert.equal(payload.processSpawned, false, entry.name);
+    assert.deepEqual(payload.executedCommands, [], entry.name);
+    assert.equal(payload.runnerEnabled, false, entry.name);
+    assert.equal(payload.executionReady, false, entry.name);
+    assert.equal(payload.executionEnabled, false, entry.name);
+    assert.equal(payload.executionApproved, false, entry.name);
+    assert.equal(payload.wouldExecute, false, entry.name);
+    assert.equal(payload.writesPerformed, 0, entry.name);
+    assert.match(payload.errors.join('\n'), entry.pattern, entry.name);
+  }
+});
+
+test('implementation-production-runner-implementation-admission-e2b-promotion-decision-check fails closed on drifted E2B readiness receipts', (t) => {
+  const cases = [
+    {
+      name: 'bad-mode',
+      mutate(receipt) {
+        receipt.mode = 'different-check';
+      },
+      pattern: /readiness receipt mode must be implementation-production-runner-implementation-admission-e2b-readiness-check/,
+    },
+    {
+      name: 'sandbox-created-by-verifier',
+      mutate(receipt) {
+        receipt.sandboxCreatedByVerifier = true;
+      },
+      pattern: /readiness receipt sandboxCreatedByVerifier must be false/,
+    },
+    {
+      name: 'spawned-process',
+      mutate(receipt) {
+        receipt.processSpawned = true;
+      },
+      pattern: /readiness receipt processSpawned must be false/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const fixture = writeImplementationProductionRunnerImplementationAdmissionE2bReadinessFixture(t);
+    const driftedE2bReadinessReceipt = JSON.parse(readFileSync(fixture.implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath, 'utf8'));
+    entry.mutate(driftedE2bReadinessReceipt);
+    const driftedE2bReadinessReceiptPath = path.join(fixture.root, `${entry.name}-implementation-production-runner-implementation-admission-e2b-readiness-receipt.json`);
+    writeFileSync(driftedE2bReadinessReceiptPath, `${JSON.stringify(driftedE2bReadinessReceipt, null, 2)}\n`);
+    const implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath = path.join(fixture.root, `${entry.name}-implementation-production-runner-implementation-admission-e2b-promotion-decision.json`);
+    writeFileSync(
+      implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath,
+      `${JSON.stringify(validImplementationProductionRunnerImplementationAdmissionE2bPromotionDecision({
+        implementationProductionRunnerImplementationAdmissionE2bReadinessPath: fixture.implementationProductionRunnerImplementationAdmissionE2bReadinessPath,
+        implementationProductionRunnerImplementationAdmissionE2bReadinessReceiptPath: driftedE2bReadinessReceiptPath,
+      }), null, 2)}\n`,
+    );
+
+    const result = runImplementationProductionRunnerImplementationAdmissionE2bPromotionDecisionCheck(
+      fixture,
+      implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionPath,
+      fixture.root,
+      driftedE2bReadinessReceiptPath,
+    );
+
+    assert.notEqual(result.status, 0, entry.name);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false, entry.name);
+    assert.equal(payload.implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionOk, false, entry.name);
     assert.equal(payload.processSpawned, false, entry.name);
     assert.deepEqual(payload.executedCommands, [], entry.name);
     assert.equal(payload.runnerEnabled, false, entry.name);
