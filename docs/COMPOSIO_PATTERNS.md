@@ -2,15 +2,27 @@
 
 When to use Composio for app connectivity, how we wrap it, and where the SDK surfaces fit. For package-level API details see `packages/composio-bridge/` and [DOCS_REFERENCE.md](packages/composio-bridge/DOCS_REFERENCE.md). For evaluation see [internal/COMPOSIO_EVALUATION.md](internal/COMPOSIO_EVALUATION.md).
 
+> Status: legacy/frozen for new work.
+>
+> Composio remains supported only for existing production paths until each
+> workflow is audited, replaced, or explicitly retired. New connector work
+> should start from Dify as the client/operator surface plus custom
+> CREATE SOMETHING MCPs, Dify MCP tools, or governed Dify Custom Endpoints.
+> Add new Composio usage only with explicit operator approval recorded in
+> Linear.
+
 ## When to use Composio vs custom
 
 | Use Composio                                                         | Use custom CREATE SOMETHING MCPs                                                                            |
 | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Commodity app connectivity (Gmail, Notion, Slack, HubSpot, etc.)     | Deep or client-specific integrations (e.g. Half Dozen Gmail Sync: custom OAuth, Notion schema, automations) |
-| You want managed auth (OAuth, connect links) and standard CRUD tools | You need full control over tokens, lifecycle, or an app not on Composio                                     |
-| New MCP for "most users" or multi-tenant with generic app actions    | Single-client MCP with fixed schema and custom workflows                                                    |
+| Existing Composio-backed production path with no verified replacement | Deep or client-specific integrations (e.g. Half Dozen Gmail Sync: custom OAuth, Notion schema, automations) |
+| Temporary bridge while a Dify/custom MCP replacement is being proven | You need full control over tokens, lifecycle, governance, or client-specific behavior                        |
+| Operator-approved exception recorded in Linear                       | New connector work, Dify-first workflows, and all strategic integration surfaces                             |
 
-**Default**: For new MCPs that need "connect to Gmail/Notion/Slack/…", consider Composio first via `@create-something/composio-bridge`. Use custom when the integration is strategic or client-specific.
+**Default**: Do not start new Composio integrations. For new MCPs that need
+"connect to Gmail/Notion/Slack/...", start with a Dify-first workflow surface
+and a custom CREATE SOMETHING MCP or governed Dify Custom Endpoint. Preserve
+existing Composio paths only until replacement or retirement is verified.
 
 ## Notion-specific decision matrix
 
@@ -18,7 +30,7 @@ Notion now has first-party Worker and hosted MCP surfaces. Treat them as deliver
 
 | Surface                         | Use when                                                                                                                            | Avoid when                                                                                                         |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **Composio wrapped by our MCP** | The workflow needs generic Notion plus other SaaS CRUD tools with managed OAuth.                                                    | The workflow needs fixed client schema semantics, our custom Notion policies, or deep workspace-specific behavior. |
+| **Composio wrapped by our MCP** | An existing production workflow still depends on generic Notion plus other SaaS CRUD tools with managed OAuth and has not been drained. | New work, fixed client schema semantics, custom Notion policies, or deep workspace-specific behavior.              |
 | **CREATE SOMETHING MCP**        | The workflow needs cross-client governed execution, telemetry, bearer-token routing, headless agents, or dual-workspace operations. | The workflow only needs a small capability inside a Notion Custom Agent.                                           |
 | **Notion hosted MCP**           | A human user wants to connect their Notion workspace to ChatGPT, Claude, Cursor, or another supported AI client.                    | The agent is headless, bearer-token based, or needs CREATE SOMETHING resources/prompts/telemetry.                  |
 | **Notion Workers Agent Tools**  | A capability should run inside a Notion Custom Agent with `context.notion` and Notion-scoped permissions.                           | The tool needs our fleet gateway, non-Notion runtime controls, or broad external orchestration.                    |
@@ -28,7 +40,7 @@ See [guides/NOTION_WORKERS_AND_CLI_2026.md](./guides/NOTION_WORKERS_AND_CLI_2026
 
 ## Commercial packaging (Codex vector)
 
-Composio usage does **not** change the commercial packaging rule:
+Legacy Composio usage does **not** change the commercial packaging rule:
 
 - `MCP-only` remains a narrow discovery/compliance offer.
 - `Policy OS` (agents + MCPs + governed execution) is the default paid delivery.
@@ -36,7 +48,7 @@ Composio usage does **not** change the commercial packaging rule:
 
 ## Wrap pattern
 
-Clients see a CREATE SOMETHING MCP server; Composio is plumbing. We do not expose Composio as a product name.
+Clients see a CREATE SOMETHING MCP server; Composio is plumbing. We do not expose Composio as a product name, and we do not use it as the default connector plane for new Policy OS work.
 
 - **Bridge**: `packages/composio-bridge` — `ComposioToolFactory` fetches tool definitions from Composio and registers them as MCP tools; `ComposioClient.executeTool()` delegates execution. Supports both `ScopedMcpServer` (with AccountContext) and raw `McpServer` via `registerToolsOnMcpServer(server, entityId)`.
 - **Example in repo**: [packages/halfdozen-zoom-sync](packages/halfdozen-zoom-sync) — Zoom Clips are custom (Steel.dev); Zoom API tools (meetings, recordings) are optional and come from Composio via the bridge. See worker `index.ts` (ComposioToolFactory + registerToolsOnMcpServer) and [src/tools/zoom-api-auth.ts](packages/halfdozen-zoom-sync/src/tools/zoom-api-auth.ts) for connect-link flow.
@@ -54,7 +66,10 @@ Official reference: [Composio TypeScript SDK](https://docs.composio.dev/referenc
 
 ## Single-toolkit hosted MCPs
 
-Use this when the goal is a narrow Composio-hosted MCP for one commodity toolkit and we do not need CREATE SOMETHING resources, prompts, telemetry, or custom workflow tools.
+This pattern is legacy. Use it only to maintain or drain an existing
+Composio-backed path, or when a Linear-recorded operator approval explicitly
+accepts Composio as the temporary connector. New commodity-toolkit work should
+prefer Dify plus a custom MCP or governed Dify Custom Endpoint.
 
 QuickBooks helper:
 

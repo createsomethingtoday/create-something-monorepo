@@ -99,8 +99,14 @@ See `packages/pi-three-tier-framework/`, `packages/pi-policy-os/`, `packages/pi-
    - Managed judgment loop (approvals, escalation, monthly tuning).
    - `Workflow Infrastructure` is the implementation layer inside the package.
    - `Enterprise Extension` is the high-stakes expansion layer inside the package.
-5. Supplier wrap pattern remains unchanged:
-   - Commodity connectivity via `@create-something/composio-bridge`.
+5. Supplier wrap pattern is now legacy/frozen for Composio:
+   - Existing Composio-backed connectivity may remain in place while each live
+     path is audited, replaced, or retired.
+   - New connector work starts from Dify as the client/operator surface plus
+     custom CREATE SOMETHING MCPs, Dify MCP tools, or governed Dify Custom
+     Endpoints.
+   - Add new Composio usage only with explicit operator approval recorded in
+     Linear.
    - Deep-domain logic and intelligence layer are always custom.
 6. Runtime graduation is explicit:
    - Dify-first delivery remains valid for client-facing agent surfaces.
