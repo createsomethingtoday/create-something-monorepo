@@ -162,6 +162,8 @@ function parseArgs(argv) {
     implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionReceipt: null,
     implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr: null,
     implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt: null,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview: null,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewReceipt: null,
     profile: DEFAULT_PROFILE_PATH,
     trialReceipt: DEFAULT_TRIAL_RECEIPT_PATH,
     receiptDir: DEFAULT_RECEIPT_DIR,
@@ -271,6 +273,8 @@ function parseArgs(argv) {
     else if (arg === '--implementation-production-runner-implementation-admission-e2b-promotion-decision-receipt' && args[index + 1]) options.implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionReceipt = args[++index];
     else if (arg === '--implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr' && args[index + 1]) options.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr = args[++index];
     else if (arg === '--implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-receipt' && args[index + 1]) options.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt = args[++index];
+    else if (arg === '--implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review' && args[index + 1]) options.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview = args[++index];
+    else if (arg === '--implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review-receipt' && args[index + 1]) options.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewReceipt = args[++index];
     else if (arg === '--profile' && args[index + 1]) options.profile = args[++index];
     else if (arg === '--trial-receipt' && args[index + 1]) options.trialReceipt = args[++index];
     else if (arg === '--receipt-dir' && args[index + 1]) options.receiptDir = args[++index];
@@ -4822,6 +4826,129 @@ function validateManifest(manifest) {
   }
   if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr.writesPerformed !== 0) {
     errors.push('a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr.writesPerformed must be 0');
+  }
+
+  const implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview = manifest.a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview || {};
+  if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiresImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiresImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt must be true');
+  }
+  if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.sandboxSmokePrReviewEvidenceOnly !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.sandboxSmokePrReviewEvidenceOnly must be true');
+  }
+  if (!implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.allowedReviewDecisions?.includes('approve-e2b-sandbox-smoke-pr-review')) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.allowedReviewDecisions must include approve-e2b-sandbox-smoke-pr-review');
+  }
+  for (const field of [
+    'requiresValidE2bSandboxSmokePrReceipt',
+    'requiresApprovedDiffReview',
+    'requiresApprovedChecksReview',
+    'requiresReviewedBy',
+    'requiresReviewedAt',
+    'requiresSandboxSmokePrReviewScope',
+    'requiresNoExecutionApproval',
+    'requiresCurrentVerifierPolicyBlocked',
+  ]) {
+    if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview[field] !== true) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.${field} must be true`);
+    }
+  }
+  for (const field of [
+    'policyChangeAppliedByVerifier',
+    'runnerEnabledByVerifier',
+    'runnerImplementationAdmittedByVerifier',
+    'sandboxCreatedByVerifier',
+    'e2bCodeExecutedByVerifier',
+    'e2bCommandExecutedByVerifier',
+    'filesUploadedByVerifier',
+    'filesDownloadedByVerifier',
+    'prMutationPerformedByVerifier',
+    'e2bSmokeExecutedByVerifier',
+    'deployedByVerifier',
+  ]) {
+    if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview[field] !== false) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.${field} must be false`);
+    }
+  }
+  if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiresNoThirdPartyWriteByVerifier !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiresNoThirdPartyWriteByVerifier must be true');
+  }
+  if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiresNoIssueMutationByVerifier !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiresNoIssueMutationByVerifier must be true');
+  }
+  if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiresRedactionPolicy !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiresRedactionPolicy must be true');
+  }
+  for (const field of ['forbidsSecrets', 'forbidsRawLogs', 'forbidsPrompts', 'forbidsRawTranscripts']) {
+    if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview[field] !== true) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.${field} must be true`);
+    }
+  }
+  if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiresNoExecutionOnEvidence !== true) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiresNoExecutionOnEvidence must be true');
+  }
+  for (const receiptReference of [
+    'implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-check',
+    'implementation-production-runner-implementation-admission-e2b-promotion-decision-check',
+    'implementation-production-runner-implementation-admission-e2b-readiness-check',
+    'implementation-production-runner-implementation-admission-final-review-check',
+    'implementation-production-runner-implementation-admission-post-merge-validation-check',
+    'implementation-production-runner-implementation-admission-merge-evidence-check',
+    'implementation-production-runner-implementation-admission-merge-decision-check',
+    'implementation-production-runner-implementation-admission-pr-review-check',
+    'implementation-production-runner-implementation-admission-pr-check',
+    'implementation-production-runner-implementation-admission-check',
+    'implementation-production-runner-implementation-review-check',
+    'implementation-production-runner-implementation-pr-check',
+    'implementation-production-runner-admission-check',
+  ]) {
+    if (!implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiredReceiptReferences?.includes(receiptReference)) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiredReceiptReferences must include ${receiptReference}`);
+    }
+  }
+  for (const evidence of [
+    'implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-receipt',
+    'approved-sandbox-smoke-pr-diff-review',
+    'approved-sandbox-smoke-pr-checks-review',
+    'sandbox-smoke-pr-review-decision',
+    'sandbox-smoke-pr-reviewed-by',
+    'sandbox-smoke-pr-reviewed-at',
+    'sandbox-smoke-pr-review-scope',
+    'no-execution-approval',
+    'redaction-policy',
+  ]) {
+    if (!implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiredEvidence?.includes(evidence)) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiredEvidence must include ${evidence}`);
+    }
+  }
+  for (const marker of [
+    'current-verifier-policy-blocked',
+    'policy-change-not-applied-by-verifier',
+    'process-not-spawned',
+    'executed-commands-empty',
+    'runner-disabled-in-verifier',
+    'runner-implementation-not-admitted-by-verifier',
+    'sandbox-not-created-by-verifier',
+    'e2b-code-not-executed-by-verifier',
+    'e2b-command-not-executed-by-verifier',
+    'files-not-uploaded-by-verifier',
+    'files-not-downloaded-by-verifier',
+    'execution-not-ready',
+    'execution-disabled',
+    'execution-not-approved',
+    'would-execute-false',
+    'writes-performed-zero',
+    'deploy-not-performed-by-verifier',
+    'third-party-write-not-performed-by-verifier',
+    'issue-mutation-not-performed-by-verifier',
+    'pr-mutation-not-performed-by-verifier',
+    'production-runner-implementation-admission-e2b-sandbox-smoke-pr-review-evidence-only',
+  ]) {
+    if (!implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiredNoExecutionMarkers?.includes(marker)) {
+      errors.push(`a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiredNoExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.writesPerformed !== 0) {
+    errors.push('a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.writesPerformed must be 0');
   }
 
   if (manifest.receiptMirrors?.linearIssue !== 'CRE-1061') {
@@ -15254,6 +15381,250 @@ function validateImplementationProductionRunnerImplementationAdmissionE2bSandbox
   return errors;
 }
 
+function validateImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt(receipt, sandboxSmokePr, sandboxSmokePrResult, paths, constraints) {
+  const errors = [];
+
+  if (receipt.mode !== 'implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-check') {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt mode must be implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-check');
+  }
+  if (receipt.ok !== true || receipt.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrOk !== true) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt must be ok');
+  }
+  if (sandboxSmokePrResult.ok !== true || sandboxSmokePrResult.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrOk !== true) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt replay must be ok');
+  }
+  if (receipt.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr !== rel(paths.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrPath)) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr must match sandbox-smoke PR artifact path');
+  }
+  if (receipt.issue !== constraints.expectedIssue) {
+    errors.push(`implementation production runner implementation admission e2b sandbox smoke pr receipt issue mismatch: expected ${constraints.expectedIssue}, got ${receipt.issue}`);
+  }
+  if (receipt.target !== constraints.expectedTarget) {
+    errors.push(`implementation production runner implementation admission e2b sandbox smoke pr receipt target mismatch: expected ${constraints.expectedTarget}, got ${receipt.target}`);
+  }
+  if (receipt.action !== constraints.expectedAction) {
+    errors.push(`implementation production runner implementation admission e2b sandbox smoke pr receipt action mismatch: expected ${constraints.expectedAction}, got ${receipt.action}`);
+  }
+  for (const field of [
+    'targetScope',
+    'sandboxSmokePrEvidenceOnly',
+    'promotionDecision',
+    'promotionDecisionApproved',
+    'prUrl',
+    'prNumber',
+    'prStatus',
+    'baseRef',
+    'headRef',
+    'commitSha',
+    'sandboxSmokePlan',
+    'sandboxProvider',
+    'templateReference',
+    'runtimeProfile',
+    'credentialReadiness',
+    'credentialHandling',
+    'artifactPolicy',
+    'fallbackPlan',
+    'rollbackPlan',
+    'runnerImplementationReference',
+    'runnerContractReference',
+    'runnerEntryPoint',
+  ]) {
+    if (!sameJson(receipt[field], sandboxSmokePrResult[field])) {
+      errors.push(`implementation production runner implementation admission e2b sandbox smoke pr receipt ${field} must match replay`);
+    }
+  }
+  if (sandboxSmokePr.prStatus !== 'OPEN' || receipt.prStatus !== 'OPEN') {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt requires OPEN sandbox-smoke PR');
+  }
+  for (const field of [
+    'runnerImplementationAdmittedByVerifier',
+    'sandboxCreatedByVerifier',
+    'e2bCodeExecutedByVerifier',
+    'e2bCommandExecutedByVerifier',
+    'filesUploadedByVerifier',
+    'filesDownloadedByVerifier',
+    'e2bSmokeExecutedByVerifier',
+    'runnerEnabledByVerifier',
+    'policyChangeAppliedByVerifier',
+    'prMutationPerformedByVerifier',
+    'deployedByVerifier',
+    'thirdPartyWritePerformedByVerifier',
+    'issueMutationPerformedByVerifier',
+  ]) {
+    if (receipt[field] !== false) {
+      errors.push(`implementation production runner implementation admission e2b sandbox smoke pr receipt ${field} must be false`);
+    }
+  }
+  if (receipt.processSpawned !== false) errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt processSpawned must be false');
+  if (!Array.isArray(receipt.executedCommands) || receipt.executedCommands.length !== 0) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt executedCommands must be empty');
+  }
+  if (receipt.runnerEnabled !== false) errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt runnerEnabled must be false');
+  if (receipt.executionReady !== false) errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt executionReady must be false');
+  if (receipt.executionEnabled !== false) errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt executionEnabled must be false');
+  if (receipt.executionApproved !== false) errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt executionApproved must be false');
+  if (receipt.wouldExecute !== false) errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt wouldExecute must be false');
+  if (receipt.writesPerformed !== 0) errors.push('implementation production runner implementation admission e2b sandbox smoke pr receipt writesPerformed must be 0');
+
+  return errors;
+}
+
+function validateImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview(review, sandboxSmokePrReceipt, manifest, paths, constraints) {
+  const errors = [];
+  const rules = manifest.a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview || {};
+
+  if (review.authorityLevel !== 'A4') errors.push('implementation production runner implementation admission e2b sandbox smoke pr review authorityLevel must be A4');
+  if (review.issue !== constraints.expectedIssue) {
+    errors.push(`implementation production runner implementation admission e2b sandbox smoke pr review issue mismatch: expected ${constraints.expectedIssue}, got ${review.issue}`);
+  }
+  if (review.target !== constraints.expectedTarget) {
+    errors.push(`implementation production runner implementation admission e2b sandbox smoke pr review target mismatch: expected ${constraints.expectedTarget}, got ${review.target}`);
+  }
+  if (review.action !== constraints.expectedAction) {
+    errors.push(`implementation production runner implementation admission e2b sandbox smoke pr review action mismatch: expected ${constraints.expectedAction}, got ${review.action}`);
+  }
+  if (review.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr !== rel(paths.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrPath)) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr must match sandbox-smoke PR artifact path');
+  }
+  if (review.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt !== rel(paths.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptPath)) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt must match sandbox-smoke PR receipt path');
+  }
+  if (review.sandboxSmokePrReviewEvidenceOnly !== true) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review sandboxSmokePrReviewEvidenceOnly must be true');
+  }
+  if (!rules.allowedReviewDecisions?.includes(review.reviewDecision)) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review reviewDecision must be allowed');
+  }
+  if (review.reviewDecision !== 'approve-e2b-sandbox-smoke-pr-review') {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review reviewDecision must approve e2b sandbox smoke pr review');
+  }
+  if (sandboxSmokePrReceipt.ok !== true || sandboxSmokePrReceipt.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrOk !== true) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review requires valid sandbox-smoke PR receipt');
+  }
+  for (const field of [
+    'targetScope',
+    'prUrl',
+    'prNumber',
+    'prStatus',
+    'baseRef',
+    'headRef',
+    'commitSha',
+    'sandboxSmokePlan',
+    'sandboxProvider',
+    'templateReference',
+    'runtimeProfile',
+    'credentialReadiness',
+    'credentialHandling',
+    'artifactPolicy',
+    'fallbackPlan',
+    'rollbackPlan',
+    'runnerImplementationReference',
+    'runnerContractReference',
+    'runnerEntryPoint',
+  ]) {
+    if (!sameJson(review[field], sandboxSmokePrReceipt[field])) {
+      errors.push(`implementation production runner implementation admission e2b sandbox smoke pr review ${field} must match sandbox-smoke PR receipt`);
+    }
+  }
+  if (sandboxSmokePrReceipt.prStatus !== 'OPEN') {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review requires OPEN sandbox-smoke PR receipt');
+  }
+  if (!hasValue(review.sandboxSmokePrDiffReference)) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review sandboxSmokePrDiffReference is required');
+  }
+  if (!hasValue(review.sandboxSmokePrChecksReference)) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review sandboxSmokePrChecksReference is required');
+  }
+  if (!hasValue(review.sandboxSmokePrReviewScope)) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review sandboxSmokePrReviewScope is required');
+  }
+  if (review.approvedDiffReview !== true) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review approvedDiffReview must be true');
+  }
+  if (review.approvedChecksReview !== true) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review approvedChecksReview must be true');
+  }
+  if (!hasValue(review.reviewedBy)) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review reviewedBy is required');
+  if (!hasValue(review.reviewedAt) || Number.isNaN(Date.parse(review.reviewedAt))) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review reviewedAt must be an ISO timestamp');
+  }
+  if (review.executionApprovalGranted !== false) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review executionApprovalGranted must be false');
+  }
+  for (const reference of rules.requiredReceiptReferences || []) {
+    if (!review.requiredReceiptReferences?.includes(reference)) {
+      errors.push(`implementation production runner implementation admission e2b sandbox smoke pr review requiredReceiptReferences must include ${reference}`);
+    }
+  }
+  for (const requiredEvidence of rules.requiredEvidence || []) {
+    if (!review.requiredEvidence?.includes(requiredEvidence)) {
+      errors.push(`implementation production runner implementation admission e2b sandbox smoke pr review requiredEvidence must include ${requiredEvidence}`);
+    }
+  }
+  for (const field of [
+    'runnerImplementationAdmittedByVerifier',
+    'sandboxCreatedByVerifier',
+    'e2bCodeExecutedByVerifier',
+    'e2bCommandExecutedByVerifier',
+    'filesUploadedByVerifier',
+    'filesDownloadedByVerifier',
+    'e2bSmokeExecutedByVerifier',
+    'runnerEnabledByVerifier',
+  ]) {
+    if (review[field] === true) {
+      errors.push(`implementation production runner implementation admission e2b sandbox smoke pr review ${field} must not be true`);
+    }
+  }
+  if (review.redactionPolicyApplied !== true) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review redactionPolicyApplied must be true');
+  }
+  if (!hasValue(review.redactionPolicy)) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review redactionPolicy is required');
+  if (review.containsSecrets !== false) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review containsSecrets must be false');
+  if (review.containsRawLogs !== false) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review containsRawLogs must be false');
+  if (review.containsPrompts !== false) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review containsPrompts must be false');
+  if (review.containsRawTranscripts !== false) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review containsRawTranscripts must be false');
+  }
+  for (const marker of rules.requiredNoExecutionMarkers || []) {
+    if (!review.noExecutionMarkers?.includes(marker)) {
+      errors.push(`implementation production runner implementation admission e2b sandbox smoke pr review noExecutionMarkers must include ${marker}`);
+    }
+  }
+  if (review.currentVerifierPolicyBlocked !== true) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review currentVerifierPolicyBlocked must be true');
+  }
+  if (review.policyChangeAppliedByVerifier === true) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review policyChangeAppliedByVerifier must not be true');
+  }
+  if (review.prMutationPerformedByVerifier === true) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review prMutationPerformedByVerifier must not be true');
+  }
+  if (review.deployedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review deployedByVerifier must be false');
+  }
+  if (review.thirdPartyWritePerformedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review thirdPartyWritePerformedByVerifier must be false');
+  }
+  if (review.issueMutationPerformedByVerifier !== false) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review issueMutationPerformedByVerifier must be false');
+  }
+  if (review.processSpawned === true) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review processSpawned must not be true');
+  if (Array.isArray(review.executedCommands) && review.executedCommands.length > 0) {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review executedCommands must be empty');
+  }
+  if (review.runnerEnabled === true) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review runnerEnabled must not be true');
+  if (review.executionReady === true) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review executionReady must not be true');
+  if (review.executionEnabled === true) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review executionEnabled must not be true');
+  if (review.executionApproved === true) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review executionApproved must not be true');
+  if (review.wouldExecute === true) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review wouldExecute must not be true');
+  if (review.writesPerformed !== 0) errors.push('implementation production runner implementation admission e2b sandbox smoke pr review writesPerformed must be 0');
+  if (manifest.authority?.a4Execution !== 'blocked') {
+    errors.push('implementation production runner implementation admission e2b sandbox smoke pr review current verifier manifest authority.a4Execution must remain blocked');
+  }
+
+  return errors;
+}
+
 function buildEnabledManifestReadinessReceipt({
   manifest,
   manifestValidation,
@@ -19913,6 +20284,132 @@ function buildImplementationProductionRunnerImplementationAdmissionE2bSandboxSmo
   };
 }
 
+function buildImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewReceipt({
+  manifest,
+  manifestValidation,
+  sandboxSmokePrResult,
+  implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr,
+  implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrPath,
+  implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt,
+  implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptPath,
+  implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview,
+  implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewPath,
+  implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptErrors,
+  implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewErrors,
+  constraints,
+  options,
+}) {
+  const errors = [
+    ...manifestValidation.errors,
+    ...(sandboxSmokePrResult.errors || []),
+    ...implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptErrors,
+    ...implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewErrors,
+  ];
+  const implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewOk = errors.length === 0;
+
+  return {
+    mode: 'implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review-check',
+    ok: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewOk,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewOk,
+    errors,
+    warnings: manifestValidation.warnings,
+    manifest: options.manifest,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview: rel(implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewPath),
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr: rel(implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrPath),
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt: rel(implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptPath),
+    implementationProductionRunnerImplementationAdmissionE2bPromotionDecision: sandboxSmokePrResult.implementationProductionRunnerImplementationAdmissionE2bPromotionDecision,
+    implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionReceipt: sandboxSmokePrResult.implementationProductionRunnerImplementationAdmissionE2bPromotionDecisionReceipt,
+    implementationProductionRunnerImplementationAdmissionE2bReadiness: sandboxSmokePrResult.implementationProductionRunnerImplementationAdmissionE2bReadiness,
+    implementationProductionRunnerImplementationAdmissionE2bReadinessReceipt: sandboxSmokePrResult.implementationProductionRunnerImplementationAdmissionE2bReadinessReceipt,
+    implementationProductionRunnerImplementationAdmissionFinalReview: sandboxSmokePrResult.implementationProductionRunnerImplementationAdmissionFinalReview,
+    implementationProductionRunnerImplementationAdmissionFinalReviewReceipt: sandboxSmokePrResult.implementationProductionRunnerImplementationAdmissionFinalReviewReceipt,
+    implementationProductionRunnerImplementationAdmissionPrReview: sandboxSmokePrResult.implementationProductionRunnerImplementationAdmissionPrReview,
+    implementationProductionRunnerImplementationAdmissionPrReviewReceipt: sandboxSmokePrResult.implementationProductionRunnerImplementationAdmissionPrReviewReceipt,
+    packetPath: sandboxSmokePrResult.packetPath,
+    issue: sandboxSmokePrResult.issue || constraints.expectedIssue,
+    authorityLevel: sandboxSmokePrResult.authorityLevel,
+    target: sandboxSmokePrResult.target,
+    action: sandboxSmokePrResult.action,
+    targetScope: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.targetScope || implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt.targetScope || sandboxSmokePrResult.targetScope,
+    sandboxSmokePrReviewEvidenceOnly: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.sandboxSmokePrReviewEvidenceOnly === true,
+    reviewDecision: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.reviewDecision || null,
+    reviewedBy: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.reviewedBy || null,
+    reviewedAt: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.reviewedAt || null,
+    approvedDiffReview: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.approvedDiffReview === true,
+    approvedChecksReview: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.approvedChecksReview === true,
+    executionApprovalGranted: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.executionApprovalGranted === true,
+    prUrl: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.prUrl || null,
+    prNumber: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.prNumber || null,
+    prStatus: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.prStatus || null,
+    baseRef: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.baseRef || null,
+    headRef: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.headRef || null,
+    commitSha: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.commitSha || null,
+    sandboxSmokePrDiffReference: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.sandboxSmokePrDiffReference || null,
+    sandboxSmokePrChecksReference: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.sandboxSmokePrChecksReference || null,
+    sandboxSmokePrReviewScope: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.sandboxSmokePrReviewScope || null,
+    sandboxSmokePlan: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.sandboxSmokePlan || [],
+    sandboxProvider: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.sandboxProvider || null,
+    templateReference: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.templateReference || null,
+    runtimeProfile: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.runtimeProfile || null,
+    credentialReadiness: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.credentialReadiness || null,
+    credentialHandling: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.credentialHandling || null,
+    artifactPolicy: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.artifactPolicy || null,
+    fallbackPlan: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.fallbackPlan || [],
+    rollbackPlan: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.rollbackPlan || [],
+    runnerImplementationReference: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.runnerImplementationReference || null,
+    runnerContractReference: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.runnerContractReference || null,
+    runnerEntryPoint: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.runnerEntryPoint || null,
+    runnerImplementationAdmittedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.runnerImplementationAdmittedByVerifier === true,
+    sandboxCreatedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.sandboxCreatedByVerifier === true,
+    e2bCodeExecutedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.e2bCodeExecutedByVerifier === true,
+    e2bCommandExecutedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.e2bCommandExecutedByVerifier === true,
+    filesUploadedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.filesUploadedByVerifier === true,
+    filesDownloadedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.filesDownloadedByVerifier === true,
+    e2bSmokeExecutedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.e2bSmokeExecutedByVerifier === true,
+    requiredReceiptReferences: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiredReceiptReferences || [],
+    requiredEvidence: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.requiredEvidence || [],
+    redactionPolicyApplied: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.redactionPolicyApplied === true,
+    redactionPolicy: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.redactionPolicy || null,
+    containsSecrets: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.containsSecrets === true,
+    containsRawLogs: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.containsRawLogs === true,
+    containsPrompts: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.containsPrompts === true,
+    containsRawTranscripts: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.containsRawTranscripts === true,
+    noExecutionMarkers: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.noExecutionMarkers || [],
+    currentVerifierPolicyBlocked: true,
+    policyChangeAppliedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.policyChangeAppliedByVerifier === true,
+    runnerEnabledByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.runnerEnabledByVerifier === true,
+    prMutationPerformedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.prMutationPerformedByVerifier === true,
+    deployedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.deployedByVerifier === true,
+    thirdPartyWritePerformedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.thirdPartyWritePerformedByVerifier === true,
+    issueMutationPerformedByVerifier: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.issueMutationPerformedByVerifier === true,
+    processSpawned: false,
+    executedCommands: [],
+    runnerEnabled: false,
+    executionReady: false,
+    executionEnabled: false,
+    executionApproved: false,
+    wouldExecute: false,
+    writesPerformed: 0,
+    blockedReason: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewOk
+      ? 'implementation production runner implementation admission E2B sandbox-smoke PR review evidence accepted; verifier did not create a sandbox, execute code, mutate PRs, admit runner code, enable a runner, mutate issues, deploy, or write third-party systems'
+      : 'implementation production runner implementation admission E2B sandbox-smoke PR review evidence rejected before sandbox creation, code execution, PR mutation, runner code admission, runner enablement, process spawn, issue mutation, third-party mutation, deploy, or write command',
+    evidenceTarget: implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview.evidenceTarget || implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt.evidenceTarget || sandboxSmokePrResult.evidenceTarget || null,
+    checkedAt: new Date().toISOString(),
+    nextGate: 'operator may use this sandbox-smoke PR review approval in a separate sandbox-smoke execution approval gate; verifier still cannot create E2B sandboxes, admit runner code, or execute runner code',
+    policy: {
+      a4Execution: manifest.authority?.a4Execution,
+      authoritySource: manifest.authority?.authoritySource,
+      omnigentRole: manifest.authority?.omnigentRole,
+      runnerEnabled: manifest.a4ExecutionCommand?.runnerEnabled,
+      executorRunnerEnabled: manifest.a4ExecutorProof?.runnerEnabled,
+      implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewRequiresPrReceipt: manifest.a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview?.requiresImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt,
+      implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewEvidenceOnly: manifest.a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview?.sandboxSmokePrReviewEvidenceOnly,
+      implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewSandboxCreatedByVerifier: manifest.a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview?.sandboxCreatedByVerifier,
+      implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewCodeExecutedByVerifier: manifest.a4ImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview?.e2bCodeExecutedByVerifier,
+    },
+  };
+}
+
 function print(result, options) {
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -24321,6 +24818,76 @@ function commandImplementationProductionRunnerImplementationAdmissionE2bSandboxS
   return result;
 }
 
+function commandImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewCheck(options) {
+  try {
+    approvalConstraintsFromOptions(options);
+  } catch (error) {
+    throw new Error(String(error instanceof Error ? error.message : error).replace('--packet is required', '--packet is required for implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review-check'));
+  }
+  if (!options.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr) {
+    throw new Error('--implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr is required for implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review-check');
+  }
+  if (!options.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt) {
+    throw new Error('--implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-receipt is required for implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review-check');
+  }
+  if (!options.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview) {
+    throw new Error('--implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review is required for implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review-check');
+  }
+
+  const sandboxSmokePrResult = commandImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrCheck({
+    ...options,
+    writeReceipt: false,
+  });
+  const manifest = readJson(resolveFromRoot(options.manifest));
+  const implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrPath = resolveFromRoot(options.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr);
+  const implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptPath = resolveFromRoot(options.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt);
+  const implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewPath = resolveFromRoot(options.implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview);
+  const implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr = readJson(implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrPath);
+  const implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt = readJson(implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptPath);
+  const implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview = readJson(implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewPath);
+  const manifestValidation = validateManifest(manifest);
+  const constraints = approvalConstraintsFromOptions(options);
+  const implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptErrors = validateImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt(
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr,
+    sandboxSmokePrResult,
+    {
+      implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrPath,
+    },
+    constraints,
+  );
+  const implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewErrors = validateImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview(
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt,
+    manifest,
+    {
+      implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrPath,
+      implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptPath,
+    },
+    constraints,
+  );
+  const result = buildImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewReceipt({
+    manifest,
+    manifestValidation,
+    sandboxSmokePrResult,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePr,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrPath,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceipt,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptPath,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReview,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewPath,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReceiptErrors,
+    implementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewErrors,
+    constraints,
+    options,
+  });
+
+  if (options.writeReceipt) {
+    result.receiptPath = writeReceipt(options, result);
+  }
+  return result;
+}
+
 function commandTrialCheck(options) {
   const manifest = readJson(resolveFromRoot(options.manifest));
   const profilePath = resolveFromRoot(options.profile);
@@ -24405,6 +24972,7 @@ function usage() {
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-e2b-readiness-check <same chain arguments as implementation-production-runner-implementation-admission-final-review-check> --implementation-production-runner-implementation-admission-final-review-receipt <implementation-production-runner-implementation-admission-final-review-receipt.json> --implementation-production-runner-implementation-admission-e2b-readiness <implementation-production-runner-implementation-admission-e2b-readiness.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-e2b-promotion-decision-check <same chain arguments as implementation-production-runner-implementation-admission-e2b-readiness-check> --implementation-production-runner-implementation-admission-e2b-readiness-receipt <implementation-production-runner-implementation-admission-e2b-readiness-receipt.json> --implementation-production-runner-implementation-admission-e2b-promotion-decision <implementation-production-runner-implementation-admission-e2b-promotion-decision.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-check <same chain arguments as implementation-production-runner-implementation-admission-e2b-promotion-decision-check> --implementation-production-runner-implementation-admission-e2b-promotion-decision-receipt <implementation-production-runner-implementation-admission-e2b-promotion-decision-receipt.json> --implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr <implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--manifest <path>] [--json]
+  node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review-check <same chain arguments as implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-check> --implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-receipt <implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-receipt.json> --implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review <implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review.json> --expected-issue <CRE-123> --expected-target <target> --expected-action <action> [--manifest <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs trial-check [--profile <path>] [--trial-receipt <path>] [--json]
   node scripts/operator-agent-omnigent-adapter.mjs print [--manifest <path>] [--json]
 `);
@@ -24469,6 +25037,7 @@ async function main() {
   else if (options.command === 'implementation-production-runner-implementation-admission-e2b-readiness-check') result = commandImplementationProductionRunnerImplementationAdmissionE2bReadinessCheck(options);
   else if (options.command === 'implementation-production-runner-implementation-admission-e2b-promotion-decision-check') result = commandImplementationProductionRunnerImplementationAdmissionE2bPromotionDecisionCheck(options);
   else if (options.command === 'implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-check') result = commandImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrCheck(options);
+  else if (options.command === 'implementation-production-runner-implementation-admission-e2b-sandbox-smoke-pr-review-check') result = commandImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewCheck(options);
   else if (options.command === 'trial-check') result = commandTrialCheck(options);
   else if (options.command === 'print') result = commandPrint(options);
   else throw new Error(`Unknown command: ${options.command}`);
@@ -24529,6 +25098,7 @@ export {
   commandImplementationProductionRunnerImplementationAdmissionE2bReadinessCheck,
   commandImplementationProductionRunnerImplementationAdmissionE2bPromotionDecisionCheck,
   commandImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrCheck,
+  commandImplementationProductionRunnerImplementationAdmissionE2bSandboxSmokePrReviewCheck,
   commandExecutorProofCheck,
   commandExecutionCommandCheck,
   commandExecutionAuthorizationCheck,
