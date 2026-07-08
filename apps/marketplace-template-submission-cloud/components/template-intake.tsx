@@ -391,7 +391,8 @@ function validationFailureStatus(
 
 type FeedbackAction = {
   label: string;
-  onClick: () => void;
+  href?: string;
+  onClick?: () => void;
 };
 
 type TurnstileStep = 'creator' | 'template';
@@ -844,13 +845,24 @@ function FieldFeedback({
       {action ? (
         <>
           {' '}
-          <button
-            type="button"
-            className="submission-inline-action submission-field-feedback-action"
-            onClick={action.onClick}
-          >
-            {action.label}
-          </button>
+          {action.href ? (
+            <a
+              className="submission-inline-action submission-field-feedback-action"
+              href={action.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {action.label}
+            </a>
+          ) : (
+            <button
+              type="button"
+              className="submission-inline-action submission-field-feedback-action"
+              onClick={action.onClick}
+            >
+              {action.label}
+            </button>
+          )}
         </>
       ) : null}
     </div>
@@ -858,11 +870,13 @@ function FieldFeedback({
 }
 
 function ValidatorAppRecoveryPanel({
+  actionHref,
   actionLabel,
   onAction
 }: {
+  actionHref: string;
   actionLabel: string;
-  onAction: () => void;
+  onAction?: () => void;
 }) {
   return (
     <div className="submission-validator-callout" role="alert">
@@ -882,13 +896,15 @@ function ValidatorAppRecoveryPanel({
         <li>Publish the site after fixes.</li>
         <li>Return here and validate the template again.</li>
       </ol>
-      <button
+      <a
         className="button-sp submission-validator-callout-action"
-        type="button"
+        href={actionHref}
+        target="_blank"
+        rel="noopener noreferrer"
         onClick={onAction}
       >
         {actionLabel}
-      </button>
+      </a>
     </div>
   );
 }
@@ -1664,7 +1680,7 @@ export function TemplateIntake() {
 
     return {
       label: getValidatorAppActionLabel(validatorAppActionUrl),
-      onClick: () => window.open(validatorAppActionUrl, '_blank', 'noopener,noreferrer')
+      href: validatorAppActionUrl
     };
   }
 
@@ -3333,8 +3349,9 @@ export function TemplateIntake() {
                       />
                     </InlineActionField>
 
-                    {validatorAppAction ? (
+                    {validatorAppAction?.href ? (
                       <ValidatorAppRecoveryPanel
+                        actionHref={validatorAppAction.href}
                         actionLabel={validatorAppAction.label}
                         onAction={validatorAppAction.onClick}
                       />
