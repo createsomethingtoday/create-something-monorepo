@@ -264,7 +264,7 @@
 		min-height: 100vh;
 		background: var(--color-bg-pure, #000000);
 		color: var(--color-fg-primary, #ffffff);
-		font-family: var(--font-sans, 'Stack Sans Notch', system-ui, sans-serif);
+		font-family: var(--font-sans, 'ABC Diatype', 'Stack Sans Notch', system-ui, sans-serif);
 	}
 
 	/* Header */
@@ -541,7 +541,7 @@
 	}
 
 	.amount {
-		font-family: var(--font-mono, 'JetBrains Mono', monospace);
+		font-family: var(--font-mono, 'ABC Diatype Mono', 'JetBrains Mono', monospace);
 		text-align: right;
 	}
 
@@ -586,7 +586,7 @@
 	}
 
 	.member-bookings {
-		font-family: var(--font-mono, 'JetBrains Mono', monospace);
+		font-family: var(--font-mono, 'ABC Diatype Mono', 'JetBrains Mono', monospace);
 		font-size: var(--text-body-sm, 0.875rem);
 		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
 	}
