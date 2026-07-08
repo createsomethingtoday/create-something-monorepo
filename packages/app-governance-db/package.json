@@ -4,6 +4,7 @@
   "description": "App Governance & Transparency database layer — Cloudflare D1 canonical store with MCP boundary for agent-mediated Slack sync, categorization, and notifications",
   "type": "module",
   "scripts": {
+    "test": "node --test test/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "pnpm run typecheck"
   },

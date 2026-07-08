@@ -82,6 +82,66 @@ async function queueNotifications(
   return queued;
 }
 
+function safeParseObject(value: string | null): Record<string, unknown> {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+interface AppChangeDiff {
+  [field: string]: { from: unknown; to: unknown };
+}
+
+interface AppEndpointReceiptRow {
+  id: number;
+  requested_patch_json: string | null;
+  after_json: string | null;
+}
+
+function endpointSnapshotValue(snapshot: Record<string, unknown>, field: string): unknown {
+  if (Object.prototype.hasOwnProperty.call(snapshot, field)) return snapshot[field];
+  const mrp = snapshot.mrp;
+  if (mrp && typeof mrp === 'object' && !Array.isArray(mrp) && Object.prototype.hasOwnProperty.call(mrp, field)) {
+    return (mrp as Record<string, unknown>)[field];
+  }
+  return undefined;
+}
+
+function endpointValuesEqual(left: unknown, right: unknown): boolean {
+  if (left === undefined || right === undefined) return false;
+  return String(left).trim().toLowerCase() === String(right).trim().toLowerCase();
+}
+
+function endpointReceiptMatchesDiff(receipt: AppEndpointReceiptRow, diff: AppChangeDiff): boolean {
+  const requested = safeParseObject(receipt.requested_patch_json);
+  const after = safeParseObject(receipt.after_json);
+  return Object.entries(diff).every(([field, change]) => {
+    const requestedValue = endpointSnapshotValue(requested, field);
+    const afterValue = endpointSnapshotValue(after, field);
+    return endpointValuesEqual(requestedValue, change.to) || endpointValuesEqual(afterValue, change.to);
+  });
+}
+
+async function findExpectedAppEndpointReceipt(db: D1Database, appSlug: string, diff: AppChangeDiff): Promise<AppEndpointReceiptRow | null> {
+  const result = await db
+    .prepare(
+      `SELECT id, requested_patch_json, after_json
+       FROM app_admin_endpoint_receipts
+       WHERE app_slug = ?
+         AND status IN ('approved', 'succeeded')
+         AND (expected_until IS NULL OR expected_until > datetime('now'))
+       ORDER BY created_at DESC
+       LIMIT 10`,
+    )
+    .bind(appSlug)
+    .all<AppEndpointReceiptRow>();
+  return result.results.find((receipt) => endpointReceiptMatchesDiff(receipt, diff)) ?? null;
+}
+
 const FINDING_STATUSES = ['flagged', 'in_progress', 'needs_decision', 'shipped', 'parked'] as const;
 const TRIAGE_STATES = ['new', 'categorized', 'linked', 'ignored'] as const;
 const NOTIFICATION_STATUSES = ['queued', 'sent', 'skipped', 'failed'] as const;
@@ -547,6 +607,13 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
             client_id: z.string().optional(),
             app_id: z.string().optional(),
             workspace_id: z.string().optional(),
+            mrp_id: z.string().optional(),
+            mrp_resource_type: z.string().optional(),
+            mrp_status: z.string().optional(),
+            mrp_visibility: z.string().optional(),
+            mrp_update_supported: z.boolean().optional(),
+            mrp_verified_at: z.string().optional(),
+            mrp_update_error: z.string().optional(),
             visibility: z.string().optional().describe('PUBLIC | PRIVATE'),
             review_status: z.string().optional().describe('APPROVED | PENDING | DENIED | ...'),
             categories: z.array(z.string()).optional(),
@@ -563,8 +630,10 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
       let changed = 0;
       let unchanged = 0;
       const drift: Array<{ slug: string; changes: Record<string, { from: unknown; to: unknown }> }> = [];
+      const expectedDrift: Array<{ slug: string; receipt_id: number; changes: Record<string, { from: unknown; to: unknown }> }> = [];
 
       for (const app of apps) {
+        const mrpUpdateSupported = app.mrp_update_supported === undefined ? null : app.mrp_update_supported ? 1 : 0;
         const existing = await db
           .prepare('SELECT slug, name, client_id, visibility, review_status, workspace_id FROM apps WHERE slug = ?')
           .bind(app.slug)
@@ -573,8 +642,13 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
         if (!existing) {
           await db
             .prepare(
-              `INSERT INTO apps (slug, name, client_id, app_id, workspace_id, visibility, review_status, categories, detail_url, payload_json)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              `INSERT INTO apps (
+                 slug, name, client_id, app_id, workspace_id,
+                 visibility, review_status, categories, detail_url, payload_json,
+                 mrp_id, mrp_resource_type, mrp_status, mrp_visibility,
+                 mrp_update_supported, mrp_verified_at, mrp_update_error
+               )
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             )
             .bind(
               app.slug,
@@ -587,6 +661,13 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
               app.categories ? JSON.stringify(app.categories) : null,
               app.detail_url ?? null,
               app.payload_json ?? null,
+              app.mrp_id ?? null,
+              app.mrp_resource_type ?? null,
+              app.mrp_status ?? null,
+              app.mrp_visibility ?? null,
+              mrpUpdateSupported,
+              app.mrp_verified_at ?? null,
+              app.mrp_update_error ?? null,
             )
             .run();
           created += 1;
@@ -613,6 +694,13 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
                categories = COALESCE(?, categories),
                detail_url = COALESCE(?, detail_url),
                payload_json = COALESCE(?, payload_json),
+               mrp_id = COALESCE(?, mrp_id),
+               mrp_resource_type = COALESCE(?, mrp_resource_type),
+               mrp_status = COALESCE(?, mrp_status),
+               mrp_visibility = COALESCE(?, mrp_visibility),
+               mrp_update_supported = COALESCE(?, mrp_update_supported),
+               mrp_verified_at = COALESCE(?, mrp_verified_at),
+               mrp_update_error = COALESCE(?, mrp_update_error),
                last_seen_at = datetime('now'),
                last_changed_at = CASE WHEN ? THEN datetime('now') ELSE last_changed_at END
              WHERE slug = ?`,
@@ -627,6 +715,13 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
             app.categories ? JSON.stringify(app.categories) : null,
             app.detail_url ?? null,
             app.payload_json ?? null,
+            app.mrp_id ?? null,
+            app.mrp_resource_type ?? null,
+            app.mrp_status ?? null,
+            app.mrp_visibility ?? null,
+            mrpUpdateSupported,
+            app.mrp_verified_at ?? null,
+            app.mrp_update_error ?? null,
             Object.keys(diff).length ? 1 : 0,
             app.slug,
           )
@@ -634,8 +729,14 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
 
         if (Object.keys(diff).length) {
           changed += 1;
-          drift.push({ slug: app.slug, changes: diff });
-          await logEvent(db, synced_by, 'app_changed', 'app', app.slug, diff);
+          const expectedReceipt = await findExpectedAppEndpointReceipt(db, app.slug, diff);
+          if (expectedReceipt) {
+            expectedDrift.push({ slug: app.slug, receipt_id: expectedReceipt.id, changes: diff });
+            await logEvent(db, synced_by, 'app_expected_change', 'app', app.slug, { receipt_id: expectedReceipt.id, changes: diff });
+          } else {
+            drift.push({ slug: app.slug, changes: diff });
+            await logEvent(db, synced_by, 'app_changed', 'app', app.slug, diff);
+          }
         } else {
           unchanged += 1;
         }
@@ -661,9 +762,183 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
         )
         .bind(new Date().toISOString(), synced_by)
         .run();
-      await logEvent(db, synced_by, 'record_apps', 'source', 'webflow.com/apps', { received: apps.length, created, changed, unchanged });
+      await logEvent(db, synced_by, 'record_apps', 'source', 'webflow.com/apps', { received: apps.length, created, changed, unchanged, expected: expectedDrift.length });
 
-      return json({ ok: true, received: apps.length, created, changed, unchanged, drift });
+      return json({ ok: true, received: apps.length, created, changed, unchanged, expected_drift: expectedDrift, drift });
+    },
+  );
+
+  server.tool(
+    'governance_record_app_endpoint_access',
+    'Record Webflow Admin endpoint capability/readback state and optional operator-approved write receipt for an app or unsupported template without storing secrets.',
+    {
+      entity_type: z.enum(['app', 'template', 'library', 'other']).default('app'),
+      entity_key: z.string().optional().describe('Stable entity key. Defaults to app_slug, mrp_id, app_id, or client_id.'),
+      app_slug: z.string().optional(),
+      app_id: z.string().optional(),
+      client_id: z.string().optional(),
+      workspace_id: z.string().optional(),
+      mrp_id: z.string().optional(),
+      resource_type: z.string().optional(),
+      resource_id: z.string().optional(),
+      endpoint_method: z.string().default('PUT'),
+      endpoint_path: z.string().default('/admin/api/mrp/airtable'),
+      supports_noop_read: z.boolean().default(false),
+      supports_write: z.boolean().default(false),
+      http_status: z.number().int().optional(),
+      status: z.enum(['verified', 'unsupported', 'error', 'unknown']).default('unknown'),
+      unsupported_reason: z.string().optional(),
+      error: z.string().optional(),
+      response_summary_json: z.string().optional(),
+      verified_at: z.string().optional(),
+      receipt: z
+        .object({
+          operation: z.enum(['noop_read', 'update', 'unsupported_probe']).default('noop_read'),
+          status: z.enum(['requested', 'approved', 'succeeded', 'failed', 'unsupported']).default('succeeded'),
+          http_status: z.number().int().optional(),
+          requested_patch_json: z.string().optional(),
+          before_json: z.string().optional(),
+          after_json: z.string().optional(),
+          response_summary_json: z.string().optional(),
+          error: z.string().optional(),
+          expected_until: z.string().optional(),
+        })
+        .optional(),
+      recorded_by: z.string().default('app-governance'),
+    },
+    async (input) => {
+      const db = getDb();
+      const entityKey = input.entity_key ?? input.app_slug ?? input.mrp_id ?? input.app_id ?? input.client_id;
+      if (!entityKey) return json({ ok: false, error: 'entity_key, app_slug, mrp_id, app_id, or client_id is required' });
+      const endpointMethod = input.endpoint_method ?? 'PUT';
+      const endpointPath = input.endpoint_path ?? '/admin/api/mrp/airtable';
+
+      if (input.app_slug) {
+        await db
+          .prepare(
+            `UPDATE apps SET
+               app_id = COALESCE(?, app_id),
+               client_id = COALESCE(?, client_id),
+               workspace_id = COALESCE(?, workspace_id),
+               mrp_id = COALESCE(?, mrp_id),
+               mrp_resource_type = COALESCE(?, mrp_resource_type),
+               mrp_update_supported = COALESCE(?, mrp_update_supported),
+               mrp_verified_at = COALESCE(?, mrp_verified_at),
+               mrp_update_error = COALESCE(?, mrp_update_error),
+               last_seen_at = datetime('now')
+             WHERE slug = ?`,
+          )
+          .bind(
+            input.app_id ?? null,
+            input.client_id ?? null,
+            input.workspace_id ?? null,
+            input.mrp_id ?? null,
+            input.resource_type ?? null,
+            input.supports_write ? 1 : input.status === 'unsupported' ? 0 : null,
+            input.verified_at ?? null,
+            input.error ?? input.unsupported_reason ?? null,
+            input.app_slug,
+          )
+          .run();
+      }
+
+      await db
+        .prepare(
+          `INSERT INTO app_admin_endpoint_capabilities (
+             entity_type, entity_key, app_slug, app_id, client_id, workspace_id,
+             mrp_id, resource_type, resource_id, endpoint_method, endpoint_path,
+             supports_noop_read, supports_write, http_status, status,
+             unsupported_reason, error, response_summary_json, verified_at, updated_at
+           )
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+           ON CONFLICT (entity_type, entity_key, endpoint_method, endpoint_path)
+           DO UPDATE SET
+             app_slug = COALESCE(excluded.app_slug, app_admin_endpoint_capabilities.app_slug),
+             app_id = COALESCE(excluded.app_id, app_admin_endpoint_capabilities.app_id),
+             client_id = COALESCE(excluded.client_id, app_admin_endpoint_capabilities.client_id),
+             workspace_id = COALESCE(excluded.workspace_id, app_admin_endpoint_capabilities.workspace_id),
+             mrp_id = COALESCE(excluded.mrp_id, app_admin_endpoint_capabilities.mrp_id),
+             resource_type = COALESCE(excluded.resource_type, app_admin_endpoint_capabilities.resource_type),
+             resource_id = COALESCE(excluded.resource_id, app_admin_endpoint_capabilities.resource_id),
+             supports_noop_read = excluded.supports_noop_read,
+             supports_write = excluded.supports_write,
+             http_status = COALESCE(excluded.http_status, app_admin_endpoint_capabilities.http_status),
+             status = excluded.status,
+             unsupported_reason = COALESCE(excluded.unsupported_reason, app_admin_endpoint_capabilities.unsupported_reason),
+             error = COALESCE(excluded.error, app_admin_endpoint_capabilities.error),
+             response_summary_json = COALESCE(excluded.response_summary_json, app_admin_endpoint_capabilities.response_summary_json),
+             verified_at = COALESCE(excluded.verified_at, app_admin_endpoint_capabilities.verified_at),
+             updated_at = datetime('now')`,
+        )
+        .bind(
+          input.entity_type,
+          entityKey,
+          input.app_slug ?? null,
+          input.app_id ?? null,
+          input.client_id ?? null,
+          input.workspace_id ?? null,
+          input.mrp_id ?? null,
+          input.resource_type ?? null,
+          input.resource_id ?? null,
+          endpointMethod,
+          endpointPath,
+          input.supports_noop_read ? 1 : 0,
+          input.supports_write ? 1 : 0,
+          input.http_status ?? null,
+          input.status,
+          input.unsupported_reason ?? null,
+          input.error ?? null,
+          input.response_summary_json ?? null,
+          input.verified_at ?? null,
+        )
+        .run();
+
+      let receiptId: number | null = null;
+      if (input.receipt) {
+        const receipt = input.receipt;
+        const receiptResult = await db
+          .prepare(
+            `INSERT INTO app_admin_endpoint_receipts (
+               app_slug, app_id, client_id, workspace_id, mrp_id,
+               endpoint_method, endpoint_path, operation, status, http_status,
+               requested_patch_json, before_json, after_json, response_summary_json,
+               error, expected_until, actor
+             )
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .bind(
+            input.app_slug ?? null,
+            input.app_id ?? null,
+            input.client_id ?? null,
+            input.workspace_id ?? null,
+            input.mrp_id ?? null,
+            endpointMethod,
+            endpointPath,
+            receipt.operation ?? 'noop_read',
+            receipt.status ?? 'succeeded',
+            receipt.http_status ?? input.http_status ?? null,
+            receipt.requested_patch_json ?? null,
+            receipt.before_json ?? null,
+            receipt.after_json ?? null,
+            receipt.response_summary_json ?? input.response_summary_json ?? null,
+            receipt.error ?? input.error ?? null,
+            receipt.expected_until ?? null,
+            input.recorded_by,
+          )
+          .run();
+        receiptId = Number(receiptResult.meta?.last_row_id ?? 0) || null;
+      }
+
+      await logEvent(db, input.recorded_by, 'record_app_endpoint_access', input.entity_type, entityKey, {
+        app_slug: input.app_slug ?? null,
+        mrp_id: input.mrp_id ?? null,
+        endpoint_path: endpointPath,
+        status: input.status,
+        supports_write: input.supports_write,
+        receipt_id: receiptId,
+      });
+
+      return json({ ok: true, entity_type: input.entity_type, entity_key: entityKey, receipt_id: receiptId });
     },
   );
 
@@ -674,12 +949,15 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
       visibility: z.string().optional(),
       review_status: z.string().optional(),
       client_id: z.string().optional(),
+      app_id: z.string().optional(),
+      mrp_id: z.string().optional(),
       search: z.string().optional(),
       changed_since: z.string().optional().describe('ISO date — only apps with last_changed_at after this'),
       limit: z.number().int().min(1).max(500).default(100),
     },
-    async ({ visibility, review_status, client_id, search, changed_since, limit }) => {
+    async ({ visibility, review_status, client_id, app_id, mrp_id, search, changed_since, limit }) => {
       const db = getDb();
+      const resolvedLimit = limit ?? 100;
       const where: string[] = [];
       const params: unknown[] = [];
       if (visibility) {
@@ -694,16 +972,24 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
         where.push('client_id = ?');
         params.push(client_id);
       }
+      if (app_id) {
+        where.push('app_id = ?');
+        params.push(app_id);
+      }
+      if (mrp_id) {
+        where.push('mrp_id = ?');
+        params.push(mrp_id);
+      }
       if (search) {
-        where.push('(name LIKE ? OR slug LIKE ?)');
-        params.push(`%${search}%`, `%${search}%`);
+        where.push('(name LIKE ? OR slug LIKE ? OR client_id = ? OR app_id = ? OR workspace_id = ? OR mrp_id = ? OR client_id LIKE ? OR app_id LIKE ? OR workspace_id LIKE ? OR mrp_id LIKE ?)');
+        params.push(`%${search}%`, `%${search}%`, search, search, search, search, `${search}%`, `${search}%`, `${search}%`, `${search}%`);
       }
       if (changed_since) {
         where.push('last_changed_at > ?');
         params.push(changed_since);
       }
       const sql = `SELECT * FROM apps ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY last_seen_at DESC LIMIT ?`;
-      params.push(limit);
+      params.push(resolvedLimit);
       const result = await db.prepare(sql).bind(...params).all();
       return json(result.results);
     },
