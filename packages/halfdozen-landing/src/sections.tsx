@@ -49,10 +49,16 @@ export function HeroSection({
       <HalfDozenHeader />
       <div className="hd-hero__headline">
         <h1>
-          <span>Cut the Noise</span>
-          <span>Make it Count</span>
+          <span>
+            <span>Cut the Noise</span>
+          </span>
+          <span>
+            <span>Make it Count</span>
+          </span>
         </h1>
-        <img className="hd-hero__card" src={heroCard} alt="Half Dozen live event system visual" />
+        <span className="hd-hero__card">
+          <img src={heroCard} alt="Half Dozen live event system visual" />
+        </span>
       </div>
       <div className="hd-hero__meta">
         <p>{eyebrow}</p>
@@ -71,7 +77,9 @@ export function HeroSection({
           </div>
         </div>
       </div>
-      <img className="hd-hero__photo" src={eventPhoto} alt="DJ performing at a live event" />
+      <span className="hd-hero__photo-frame">
+        <img className="hd-hero__photo" src={eventPhoto} alt="DJ performing at a live event" />
+      </span>
     </section>
   );
 }
@@ -115,6 +123,14 @@ export function DetailsSection() {
         <p>{featuredService.summary}</p>
         <h2>{featuredService.title}</h2>
       </article>
+      <div className="hd-service-rail" aria-label="Service system">
+        {services.map((service) => (
+          <span key={service.number}>
+            <strong>{service.number}</strong>
+            {service.title}
+          </span>
+        ))}
+      </div>
     </section>
   );
 }
@@ -132,10 +148,14 @@ export function ContentCtaSection() {
         <div className="hd-feed-list">
           {keepUpItems.map((item, index) => (
             <a className="hd-feed-item" href="#contact" key={item.title}>
-              <span className={`hd-feed-thumb hd-feed-thumb--${index + 1}`} />
-              <span>
+              <span className={`hd-feed-thumb hd-feed-thumb--${index + 1}`}>
+                <img src={item.image} alt="" loading="lazy" aria-hidden="true" />
+                <span>{item.type}</span>
+              </span>
+              <span className="hd-feed-copy">
                 <small>{item.type}</small>
                 <strong>{item.title}</strong>
+                <em>{item.summary}</em>
               </span>
             </a>
           ))}

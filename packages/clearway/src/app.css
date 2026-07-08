@@ -24,8 +24,8 @@
 	--color-focus: rgba(255, 255, 255, 0.5);
 
 	/* Typography */
-	--font-sans: 'Stack Sans Notch', system-ui, -apple-system, sans-serif;
-	--font-mono: 'JetBrains Mono', monospace;
+	--font-sans: 'ABC Diatype', 'Stack Sans Notch', system-ui, -apple-system, sans-serif;
+	--font-mono: 'ABC Diatype Mono', 'JetBrains Mono', monospace;
 	--text-h1: clamp(3.5rem, 9vw, 7rem);
 	--text-h2: clamp(2rem, 5vw, 3rem);
 	--text-h3: clamp(1.25rem, 2vw, 1.5rem);

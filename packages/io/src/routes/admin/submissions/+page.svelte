@@ -1,22 +1,55 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
+	import { fetchAdminJson, type AdminRequestError } from '$lib/admin/client';
 
-	let submissions: any[] = [];
+	type SubmissionStatus =
+		| 'unread'
+		| 'new'
+		| 'read'
+		| 'archived'
+		| 'in_progress'
+		| 'escalated'
+		| 'responded';
+
+	interface SubmissionRecord {
+		id: string;
+		name?: string;
+		email?: string;
+		company?: string;
+		message?: string;
+		status?: SubmissionStatus | string | null;
+		submitted_at?: string;
+		created_at?: string;
+	}
+
+	let submissions: SubmissionRecord[] = [];
 	let loading = true;
 	let filterStatus = 'all';
-	let selectedSubmission: any = null;
+	let selectedSubmission: SubmissionRecord | null = null;
+	let loadError: AdminRequestError | null = null;
+
+	const statusFilters = ['all', 'unread', 'in_progress', 'escalated', 'responded', 'read', 'archived'];
 
 	onMount(async () => {
+		const requestedFilter = $page.url.searchParams.get('filter');
+		if (requestedFilter && statusFilters.includes(requestedFilter)) {
+			filterStatus = requestedFilter;
+		}
 		await loadSubmissions();
 	});
 
 	async function loadSubmissions() {
 		loading = true;
+		loadError = null;
 		try {
-			const response = await fetch('/api/admin/submissions');
-			if (response.ok) {
-				submissions = await response.json();
+			const result = await fetchAdminJson<SubmissionRecord[]>('/api/admin/submissions');
+			if (result.ok) {
+				submissions = result.data;
+			} else {
+				loadError = result.error;
+				submissions = [];
 			}
 		} catch (error) {
 			console.error('Failed to load submissions:', error);
@@ -27,7 +60,7 @@
 
 	async function updateStatus(submissionId: string, newStatus: string) {
 		try {
-			const response = await fetch('/api/admin/submissions', {
+			const result = await fetchAdminJson<{ success: boolean }>('/api/admin/submissions', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -36,9 +69,11 @@
 				})
 			});
 
-			if (response.ok) {
+			if (result.ok) {
 				await loadSubmissions();
 				selectedSubmission = null;
+			} else {
+				loadError = result.error;
 			}
 		} catch (error) {
 			console.error('Failed to update status:', error);
@@ -49,27 +84,69 @@
 		if (!confirm('Are you sure you want to delete this submission?')) return;
 
 		try {
-			const response = await fetch('/api/admin/submissions', {
+			const result = await fetchAdminJson<{ success: boolean }>('/api/admin/submissions', {
 				method: 'DELETE',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ id: submissionId })
 			});
 
-			if (response.ok) {
+			if (result.ok) {
 				await loadSubmissions();
 				selectedSubmission = null;
+			} else {
+				loadError = result.error;
 			}
 		} catch (error) {
 			console.error('Failed to delete submission:', error);
 		}
 	}
 
+	function updateSelectedStatus(newStatus: string) {
+		if (!selectedSubmission) return;
+		updateStatus(selectedSubmission.id, newStatus);
+	}
+
+	function deleteSelectedSubmission() {
+		if (!selectedSubmission) return;
+		deleteSubmission(selectedSubmission.id);
+	}
+
 	$: filteredSubmissions = submissions.filter((sub) => {
 		if (filterStatus === 'all') return true;
-		return sub.status === filterStatus;
+		return normalizeStatus(sub.status) === filterStatus;
 	});
 
-	$: unreadCount = submissions.filter((s) => s.status === 'unread').length;
+	$: unreadCount = submissions.filter((s) => normalizeStatus(s.status) === 'unread').length;
+
+	function normalizeStatus(status: SubmissionRecord['status']) {
+		if (!status || status === 'new') return 'unread';
+		return status;
+	}
+
+	function statusLabel(status: string) {
+		return status.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+	}
+
+	function formatDate(value?: string) {
+		if (!value) return 'Unknown date';
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return 'Unknown date';
+		return date.toLocaleDateString();
+	}
+
+	function formatDateTime(value?: string) {
+		if (!value) return 'Unknown date';
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return 'Unknown date';
+		return date.toLocaleString();
+	}
+
+	function errorTitle(error: AdminRequestError) {
+		if (error.kind === 'unauthorized') return 'Sign in required';
+		if (error.kind === 'forbidden') return 'Admin access required';
+		if (error.kind === 'unavailable') return 'Admin data unavailable';
+		return 'Unable to load submissions';
+	}
 </script>
 
 <SEO
@@ -95,12 +172,12 @@
 
 	<!-- Filter Tabs -->
 	<div class="tabs">
-		{#each ['all', 'unread', 'read', 'archived'] as status}
+		{#each statusFilters as status}
 			<button
 				onclick={() => (filterStatus = status)}
 				class="tab {filterStatus === status ? 'tab--active' : ''}"
 			>
-				{status.charAt(0).toUpperCase() + status.slice(1)}
+				{statusLabel(status)}
 				{#if status === 'unread' && unreadCount > 0}
 					<span class="tab-badge">{unreadCount}</span>
 				{/if}
@@ -119,10 +196,15 @@
 						<div class="skeleton-text"></div>
 					</div>
 				{/each}
+			{:else if loadError}
+				<div class="empty-state error-state">
+					<strong>{errorTitle(loadError)}</strong>
+					<span>{loadError.message}</span>
+				</div>
 			{:else if filteredSubmissions.length === 0}
 				<div class="empty-state">
 					{#if filterStatus !== 'all'}
-						No {filterStatus} submissions.
+						No {statusLabel(filterStatus).toLowerCase()} submissions.
 					{:else}
 						No submissions yet.
 					{/if}
@@ -135,13 +217,13 @@
 					>
 						<div class="flex items-start justify-between mb-2">
 							<div class="flex items-center gap-2">
-								<h3 class="submission-name">{submission.name}</h3>
-								{#if submission.status === 'unread'}
+								<h3 class="submission-name">{submission.name || 'Unnamed submission'}</h3>
+								{#if normalizeStatus(submission.status) === 'unread'}
 									<span class="unread-dot"></span>
 								{/if}
 							</div>
 							<span class="submission-date">
-								{new Date(submission.submitted_at || submission.created_at).toLocaleDateString()}
+								{formatDate(submission.submitted_at || submission.created_at)}
 							</span>
 						</div>
 						<p class="submission-email">{submission.email}</p>
@@ -157,7 +239,7 @@
 				<div class="detail-card">
 					<div class="flex items-start justify-between">
 						<div>
-							<h3 class="detail-title">{selectedSubmission.name}</h3>
+							<h3 class="detail-title">{selectedSubmission.name || 'Unnamed submission'}</h3>
 							<a
 								href="mailto:{selectedSubmission.email}"
 								class="detail-link"
@@ -187,31 +269,31 @@
 					</div>
 
 					<div class="flex items-center gap-2">
-						<span class="meta-text">Received {new Date(selectedSubmission.submitted_at || selectedSubmission.created_at).toLocaleString()}</span>
+						<span class="meta-text">Received {formatDateTime(selectedSubmission.submitted_at || selectedSubmission.created_at)}</span>
 					</div>
 
 					<div class="actions-section">
 						<div class="actions-label">Actions</div>
 						<div class="flex flex-wrap gap-2">
-							{#if selectedSubmission.status !== 'read'}
+							{#if normalizeStatus(selectedSubmission.status) !== 'read'}
 								<button
-									onclick={() => updateStatus(selectedSubmission.id, 'read')}
+									onclick={() => updateSelectedStatus('read')}
 									class="action-btn"
 								>
 									Mark as Read
 								</button>
 							{/if}
-							{#if selectedSubmission.status !== 'archived'}
+							{#if normalizeStatus(selectedSubmission.status) !== 'archived'}
 								<button
-									onclick={() => updateStatus(selectedSubmission.id, 'archived')}
+									onclick={() => updateSelectedStatus('archived')}
 									class="action-btn"
 								>
 									Archive
 								</button>
 							{/if}
-							{#if selectedSubmission.status === 'archived'}
+							{#if normalizeStatus(selectedSubmission.status) === 'archived'}
 								<button
-									onclick={() => updateStatus(selectedSubmission.id, 'unread')}
+									onclick={() => updateSelectedStatus('unread')}
 									class="action-btn"
 								>
 									Unarchive
@@ -224,7 +306,7 @@
 								Reply via Email
 							</a>
 							<button
-								onclick={() => deleteSubmission(selectedSubmission.id)}
+								onclick={deleteSelectedSubmission}
 								class="action-btn action-btn--danger ml-auto"
 							>
 								Delete
@@ -253,13 +335,13 @@
 			</div>
 			<div class="stat-item">
 				<div class="stat-value">
-					{submissions.filter((s) => s.status === 'read').length}
+					{submissions.filter((s) => normalizeStatus(s.status) === 'read').length}
 				</div>
 				<div class="stat-label">Read</div>
 			</div>
 			<div class="stat-item">
 				<div class="stat-value">
-					{submissions.filter((s) => s.status === 'archived').length}
+					{submissions.filter((s) => normalizeStatus(s.status) === 'archived').length}
 				</div>
 				<div class="stat-label">Archived</div>
 			</div>
@@ -365,6 +447,13 @@
 		text-align: center;
 		padding: var(--space-2xl);
 		color: var(--color-fg-tertiary);
+	}
+
+	.error-state {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+		color: var(--color-error);
 	}
 
 	/* Submission Cards */

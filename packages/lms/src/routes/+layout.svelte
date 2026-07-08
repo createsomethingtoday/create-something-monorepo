@@ -126,13 +126,7 @@
 </script>
 
 <svelte:head>
-  <!-- Fonts - Must be in head for performance -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&family=JetBrains+Mono:wght@400;500;600&display=swap"
-    rel="stylesheet"
-  />
+  <!-- Canon typography is loaded by @create-something/canon styles. -->
 </svelte:head>
 
 <LayoutSEO property="lms" />

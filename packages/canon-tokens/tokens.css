@@ -306,9 +306,9 @@
      ========================================================================== */
 
   /* Font families */
-  --font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
-  --font-serif: Georgia, "Times New Roman", serif;
+  --font-sans: 'ABC Diatype', 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'ABC Diatype Mono', "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+  --font-serif: 'Martina Plantijn', Georgia, "Times New Roman", serif;
 
   /* Font weights */
   --font-light: 300;

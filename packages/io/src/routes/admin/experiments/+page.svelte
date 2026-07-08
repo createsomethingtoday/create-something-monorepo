@@ -1,12 +1,25 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
+	import { fetchAdminJson, type AdminRequestError } from '$lib/admin/client';
 
-	let experiments: any[] = [];
+	interface ExperimentRecord {
+		id: string;
+		title?: string;
+		description?: string;
+		category?: string;
+		url?: string;
+		featured?: boolean | number;
+		created_at?: string;
+		execution_count?: number;
+	}
+
+	let experiments: ExperimentRecord[] = [];
 	let loading = true;
 	let filterCategory = 'all';
 	let searchQuery = '';
 	let bulkTagging = false;
+	let loadError: AdminRequestError | null = null;
 
 	const categories = ['all', 'design', 'engineering', 'research', 'product'];
 
@@ -16,10 +29,14 @@
 
 	async function loadExperiments() {
 		loading = true;
+		loadError = null;
 		try {
-			const response = await fetch('/api/admin/experiments');
-			if (response.ok) {
-				experiments = await response.json();
+			const result = await fetchAdminJson<ExperimentRecord[]>('/api/admin/experiments');
+			if (result.ok) {
+				experiments = result.data;
+			} else {
+				loadError = result.error;
+				experiments = [];
 			}
 		} catch (error) {
 			console.error('Failed to load experiments:', error);
@@ -35,16 +52,16 @@
 
 		bulkTagging = true;
 		try {
-			const response = await fetch('/api/admin/bulk-tag', {
+			const result = await fetchAdminJson<{ message?: string }>('/api/admin/bulk-tag', {
 				method: 'POST'
 			});
 
-			if (response.ok) {
-				const result = (await response.json()) as { message?: string };
-				alert(result.message);
+			if (result.ok) {
+				alert(result.data.message);
 				await loadExperiments();
 			} else {
-				alert('Failed to apply bulk tags');
+				loadError = result.error;
+				alert(result.error.message);
 			}
 		} catch (error) {
 			console.error('Failed to bulk tag:', error);
@@ -54,19 +71,21 @@
 		}
 	}
 
-	async function toggleFeature(experimentId: string, currentStatus: boolean) {
+	async function toggleFeature(experimentId: string, currentStatus: boolean | number | undefined) {
 		try {
-			const response = await fetch('/api/admin/experiments', {
+			const result = await fetchAdminJson<{ success: boolean }>('/api/admin/experiments', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					id: experimentId,
-					featured: !currentStatus
+					featured: !Boolean(currentStatus)
 				})
 			});
 
-			if (response.ok) {
+			if (result.ok) {
 				await loadExperiments();
+			} else {
+				loadError = result.error;
 			}
 		} catch (error) {
 			console.error('Failed to toggle feature:', error);
@@ -77,14 +96,16 @@
 		if (!confirm('Are you sure you want to delete this experiment?')) return;
 
 		try {
-			const response = await fetch('/api/admin/experiments', {
+			const result = await fetchAdminJson<{ success: boolean }>('/api/admin/experiments', {
 				method: 'DELETE',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ id: experimentId })
 			});
 
-			if (response.ok) {
+			if (result.ok) {
 				await loadExperiments();
+			} else {
+				loadError = result.error;
 			}
 		} catch (error) {
 			console.error('Failed to delete experiment:', error);
@@ -99,6 +120,13 @@
 			exp.description?.toLowerCase().includes(searchQuery.toLowerCase());
 		return matchesCategory && matchesSearch;
 	});
+
+	function errorTitle(error: AdminRequestError) {
+		if (error.kind === 'unauthorized') return 'Sign in required';
+		if (error.kind === 'forbidden') return 'Admin access required';
+		if (error.kind === 'unavailable') return 'Experiment data unavailable';
+		return 'Unable to load experiments';
+	}
 </script>
 
 <SEO
@@ -159,6 +187,11 @@
 					<div class="skeleton-text"></div>
 				</div>
 			{/each}
+		</div>
+	{:else if loadError}
+		<div class="empty-state error-state">
+			<strong>{errorTitle(loadError)}</strong>
+			<span>{loadError.message}</span>
 		</div>
 	{:else if filteredExperiments.length === 0}
 		<div class="empty-state">
@@ -363,6 +396,13 @@
 		text-align: center;
 		padding: var(--space-2xl);
 		color: var(--color-fg-tertiary);
+	}
+
+	.error-state {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+		color: var(--color-error);
 	}
 
 	/* Experiment Cards */

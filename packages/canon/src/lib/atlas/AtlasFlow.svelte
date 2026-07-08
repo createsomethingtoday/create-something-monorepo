@@ -135,7 +135,7 @@
 				color
 			},
 			style: `stroke: ${color}; stroke-width: ${edgeFocused ? 1.8 : 1.35}; opacity: ${opacity};`,
-			labelStyle: `fill: #6f6f67; font-size: 11px; font-weight: 600; paint-order: stroke; stroke: #fbfbf8; stroke-width: 7px; opacity: ${opacity};`
+			labelStyle: `fill: #6f6f67; font-family: var(--font-topology-label, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace)); font-size: var(--text-topology-label, 0.72rem); font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: var(--tracking-topology-label, 0); line-height: var(--leading-topology-label, 1.2); paint-order: stroke; stroke: #fbfbf8; stroke-width: 7px; opacity: ${opacity};`
 		};
 	}) satisfies Edge[];
 

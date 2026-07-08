@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        mono: ['JetBrains Mono', 'SF Mono', 'Fira Code', 'monospace'],
+        mono: ['ABC Diatype Mono', 'JetBrains Mono', 'SF Mono', 'Fira Code', 'monospace'],
       },
     },
   },

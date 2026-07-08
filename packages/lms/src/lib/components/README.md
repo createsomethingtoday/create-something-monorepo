@@ -181,7 +181,7 @@ All components follow **Canon CSS** patterns:
 --text-body: 1rem
 --text-body-sm: 0.875rem
 --text-caption: 0.75rem
---font-mono: 'JetBrains Mono', 'SF Mono', monospace
+--font-mono: 'ABC Diatype Mono', 'JetBrains Mono', 'SF Mono', monospace
 ```
 
 ---

@@ -262,7 +262,7 @@ const booking = await fetch(
 	}
 
 	code {
-		font-family: var(--font-mono, 'JetBrains Mono', monospace);
+		font-family: var(--font-mono, 'ABC Diatype Mono', 'JetBrains Mono', monospace);
 		font-size: 0.85rem;
 		color: var(--color-fg-primary, #fff);
 	}

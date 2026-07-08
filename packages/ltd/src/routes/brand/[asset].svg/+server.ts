@@ -15,6 +15,19 @@ const CUBE_OPACITY = {
 	right: 0.3
 };
 
+const WORDMARK_DEFS = `<defs>
+    <style>
+      @font-face {
+        font-family: 'Wordmark';
+        src:
+          url('https://ona.com/fonts/ABCDiatype-Bold.woff2') format('woff2'),
+          url('https://ona.com/fonts/ABCDiatype-Bold.woff') format('woff');
+        font-weight: 700;
+      }
+      .wm { font-family: 'Wordmark', 'ABC Diatype', system-ui, sans-serif; font-weight: 700; letter-spacing: 0; }
+    </style>
+  </defs>`;
+
 // Wordmark as paths - "CREATE SOMETHING" in geometric sans-serif
 // Each letter is defined at a base size, then scaled/positioned
 const WORDMARK_PATHS = {
@@ -90,46 +103,19 @@ const assets: Record<string, (params: { light?: boolean }) => string> = {
 
 	// Wordmark white (for dark backgrounds) - text with embedded font
 	'wordmark-white': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 32">
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'Wordmark';
-        src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hiJ-Ek-_EeA.woff2') format('woff2');
-        font-weight: 600;
-      }
-      .wm { font-family: 'Wordmark', 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: -0.02em; }
-    </style>
-  </defs>
+  ${WORDMARK_DEFS}
   <text x="0" y="24" class="wm" fill="#FFFFFF" font-size="26">CREATE SOMETHING</text>
 </svg>`,
 
 	// Wordmark black (for light backgrounds)
 	'wordmark-black': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 32">
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'Wordmark';
-        src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hiJ-Ek-_EeA.woff2') format('woff2');
-        font-weight: 600;
-      }
-      .wm { font-family: 'Wordmark', 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: -0.02em; }
-    </style>
-  </defs>
+  ${WORDMARK_DEFS}
   <text x="0" y="24" class="wm" fill="#000000" font-size="26">CREATE SOMETHING</text>
 </svg>`,
 
 	// Horizontal lockup light (for dark backgrounds)
 	'lockup-horizontal-light': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 40">
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'Wordmark';
-        src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hiJ-Ek-_EeA.woff2') format('woff2');
-        font-weight: 600;
-      }
-      .wm { font-family: 'Wordmark', 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: -0.02em; }
-    </style>
-  </defs>
+  ${WORDMARK_DEFS}
   <g transform="translate(4, 4) scale(1)">
     <path d="${CUBE_PATHS.top}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.top}"/>
     <path d="${CUBE_PATHS.left}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.left}"/>
@@ -140,16 +126,7 @@ const assets: Record<string, (params: { light?: boolean }) => string> = {
 
 	// Horizontal lockup dark (for light backgrounds)
 	'lockup-horizontal-dark': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 40">
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'Wordmark';
-        src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hiJ-Ek-_EeA.woff2') format('woff2');
-        font-weight: 600;
-      }
-      .wm { font-family: 'Wordmark', 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: -0.02em; }
-    </style>
-  </defs>
+  ${WORDMARK_DEFS}
   <g transform="translate(4, 4) scale(1)">
     <path d="${CUBE_PATHS.top}" fill="#000000" fill-opacity="${CUBE_OPACITY.top}"/>
     <path d="${CUBE_PATHS.left}" fill="#000000" fill-opacity="${CUBE_OPACITY.left}"/>
@@ -160,16 +137,7 @@ const assets: Record<string, (params: { light?: boolean }) => string> = {
 
 	// Stacked lockup light (for dark backgrounds)
 	'lockup-stacked-light': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90">
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'Wordmark';
-        src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hiJ-Ek-_EeA.woff2') format('woff2');
-        font-weight: 600;
-      }
-      .wm { font-family: 'Wordmark', 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: -0.02em; }
-    </style>
-  </defs>
+  ${WORDMARK_DEFS}
   <g transform="translate(64, 4) scale(1)">
     <path d="${CUBE_PATHS.top}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.top}"/>
     <path d="${CUBE_PATHS.left}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.left}"/>
@@ -181,16 +149,7 @@ const assets: Record<string, (params: { light?: boolean }) => string> = {
 
 	// Stacked lockup dark (for light backgrounds)
 	'lockup-stacked-dark': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90">
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'Wordmark';
-        src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hiJ-Ek-_EeA.woff2') format('woff2');
-        font-weight: 600;
-      }
-      .wm { font-family: 'Wordmark', 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: -0.02em; }
-    </style>
-  </defs>
+  ${WORDMARK_DEFS}
   <g transform="translate(64, 4) scale(1)">
     <path d="${CUBE_PATHS.top}" fill="#000000" fill-opacity="${CUBE_OPACITY.top}"/>
     <path d="${CUBE_PATHS.left}" fill="#000000" fill-opacity="${CUBE_OPACITY.left}"/>

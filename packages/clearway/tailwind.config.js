@@ -4,8 +4,8 @@ export default {
 	theme: {
 		extend: {
 			fontFamily: {
-				sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-				mono: ['JetBrains Mono', 'monospace']
+				sans: ['ABC Diatype', 'Stack Sans Notch', 'system-ui', '-apple-system', 'sans-serif'],
+				mono: ['ABC Diatype Mono', 'JetBrains Mono', 'monospace']
 			}
 		}
 	},

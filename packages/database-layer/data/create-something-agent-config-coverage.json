@@ -1,0 +1,2472 @@
+{
+  "id": "substrate:create-something:agent-config-coverage:dify-mcp",
+  "generatedAt": "2026-07-08T03:41:11.620Z",
+  "topologyId": "substrate:create-something:topology:internal",
+  "atlasCanvasId": "create-something-internal-operating-topology",
+  "records": [
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-aaron-hub-json",
+      "configPath": "config/dify-agents/aaron-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "AARON HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.4",
+      "sourceDslPath": "config/dify-agents/aaron-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "aaron_hub",
+          "displayName": "AARON HUB",
+          "transport": "http",
+          "url": "https://aaron-outerfields.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "AARON HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-aaron-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/aaron-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "type": "proof",
+        "summary": "AARON HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/aaron-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for AARON HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/aaron-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-abundance-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-abundance-hub-json",
+      "configPath": "config/dify-agents/abundance-hub.json",
+      "kind": "dify_agent",
+      "status": "published",
+      "owner": "CREATE SOMETHING",
+      "title": "ABUNDANCE HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.4",
+      "sourceDslPath": "config/dify-agents/abundance-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "abundance-jobs",
+          "displayName": "ABUNDANCE JOBS",
+          "transport": "http",
+          "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 4,
+      "writeToolCount": 1,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "evalStatus": "passed: 100%",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-abundance-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "ABUNDANCE HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-abundance-hub-json",
+        "relationCount": 8,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-abundance-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/abundance-hub.json is bound as a Dify agent config with 1 server refs and 4 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-abundance-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-abundance-hub-json",
+        "type": "proof",
+        "summary": "ABUNDANCE HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/abundance-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-abundance-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-abundance-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for ABUNDANCE HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/abundance-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-bettermode-marketplace-creator-agent-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-bettermode-marketplace-creator-agent-json",
+      "configPath": "config/dify-agents/bettermode-marketplace-creator-agent.json",
+      "kind": "dify_agent",
+      "status": "draft_pending_studio_import",
+      "owner": "CREATE SOMETHING",
+      "title": "Bettermode Marketplace Creator Agent",
+      "model": "gpt-5.4",
+      "serverRefs": [
+        {
+          "serverId": "bettermode-creator",
+          "displayName": "Bettermode Creator",
+          "transport": "http",
+          "url": "https://bettermode-creator.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 4,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-bettermode-marketplace-creator-agent-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "Bettermode Marketplace Creator Agent",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-bettermode-marketplace-creator-agent-json",
+        "relationCount": 8,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-bettermode-marketplace-creator-agent-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/bettermode-marketplace-creator-agent.json is bound as a Dify agent config with 1 server refs and 4 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-bettermode-marketplace-creator-agent-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-bettermode-marketplace-creator-agent-json",
+        "type": "proof",
+        "summary": "Bettermode Marketplace Creator Agent has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/bettermode-marketplace-creator-agent.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-bettermode-marketplace-creator-agent-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-bettermode-marketplace-creator-agent-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Bettermode Marketplace Creator Agent",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/bettermode-marketplace-creator-agent.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-blondish-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-blondish-hub-json",
+      "configPath": "config/dify-agents/blondish-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "BLOND:ISH HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.4",
+      "sourceDslPath": "config/dify-agents/blondish-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "blondish_hub",
+          "displayName": "BLOND:ISH HUB",
+          "transport": "http",
+          "url": "https://blondish.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-blondish-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "BLOND:ISH HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-blondish-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-blondish-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/blondish-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-blondish-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-blondish-hub-json",
+        "type": "proof",
+        "summary": "BLOND:ISH HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/blondish-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-blondish-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-blondish-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for BLOND:ISH HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/blondish-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-c3-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-c3-hub-json",
+      "configPath": "config/dify-agents/c3-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "C3 HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.4",
+      "sourceDslPath": "config/dify-agents/c3-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "c3_hub",
+          "displayName": "C3 HUB",
+          "transport": "http",
+          "url": "https://c3denver.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-c3-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "C3 HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-c3-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-c3-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/c3-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-c3-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-c3-hub-json",
+        "type": "proof",
+        "summary": "C3 HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/c3-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-c3-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-c3-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for C3 HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/c3-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-create-something-guide-agent-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-create-something-guide-agent-json",
+      "configPath": "config/dify-agents/create-something-guide-agent.json",
+      "kind": "dify_agent",
+      "status": "published_public",
+      "owner": "CREATE SOMETHING",
+      "title": "CREATE SOMETHING Guide Agent",
+      "model": "workspace-approved public model",
+      "sourceDslPath": "config/dify-agents/create-something-guide-agent.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "create-something",
+          "displayName": "CREATE SOMETHING Content MCP",
+          "transport": "http",
+          "url": "https://mcp.createsomething.ltd/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "create-something"
+        },
+        {
+          "serverId": "playbook",
+          "displayName": "Playbook MCP",
+          "transport": "http",
+          "url": "https://playbook.mcp.createsomething.ltd/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "playbook"
+        },
+        {
+          "serverId": "three-tier-framework",
+          "displayName": "Three-Tier Framework MCP",
+          "transport": "http",
+          "url": "https://framework.mcp.createsomething.agency/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "three-tier-framework"
+        }
+      ],
+      "toolCount": 18,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-create-something-guide-agent-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "CREATE SOMETHING Guide Agent",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-create-something-guide-agent-json",
+        "relationCount": 25,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-create-something-guide-agent-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/create-something-guide-agent.json is bound as a Dify agent config with 6 server refs and 18 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-create-something-guide-agent-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-create-something-guide-agent-json",
+        "type": "proof",
+        "summary": "CREATE SOMETHING Guide Agent has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/create-something-guide-agent.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-create-something-guide-agent-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-create-something-guide-agent-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for CREATE SOMETHING Guide Agent",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/create-something-guide-agent.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-eric-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-eric-hub-json",
+      "configPath": "config/dify-agents/eric-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "ERIC HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.5",
+      "sourceDslPath": "config/dify-agents/eric-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "eric_hub",
+          "displayName": "ERIC HUB",
+          "transport": "http",
+          "url": "https://wf-template-review-eric.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-eric-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "ERIC HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-eric-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-eric-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/eric-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-eric-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-eric-hub-json",
+        "type": "proof",
+        "summary": "ERIC HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/eric-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-eric-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-eric-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for ERIC HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/eric-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-mariana-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-mariana-hub-json",
+      "configPath": "config/dify-agents/mariana-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "MARIANA HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.5",
+      "sourceDslPath": "config/dify-agents/mariana-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "mariana_hub",
+          "displayName": "MARIANA HUB",
+          "transport": "http",
+          "url": "https://wf-template-review-mariana.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-mariana-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "MARIANA HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-mariana-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-mariana-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/mariana-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-mariana-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-mariana-hub-json",
+        "type": "proof",
+        "summary": "MARIANA HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/mariana-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-mariana-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-mariana-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for MARIANA HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/mariana-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-morgan-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-morgan-hub-json",
+      "configPath": "config/dify-agents/morgan-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "MORGAN HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.4",
+      "sourceDslPath": "config/dify-agents/morgan-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "morgan_hub",
+          "displayName": "MORGAN HUB",
+          "transport": "http",
+          "url": "https://morgan-young-c3-management.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-morgan-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "MORGAN HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-morgan-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-morgan-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/morgan-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-morgan-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-morgan-hub-json",
+        "type": "proof",
+        "summary": "MORGAN HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/morgan-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-morgan-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-morgan-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for MORGAN HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/morgan-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-natalia-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-natalia-hub-json",
+      "configPath": "config/dify-agents/natalia-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "NATALIA HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.5",
+      "sourceDslPath": "config/dify-agents/natalia-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "natalia_hub",
+          "displayName": "NATALIA HUB",
+          "transport": "http",
+          "url": "https://wf-template-review-natalia.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-natalia-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "NATALIA HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-natalia-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-natalia-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/natalia-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-natalia-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-natalia-hub-json",
+        "type": "proof",
+        "summary": "NATALIA HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/natalia-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-natalia-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-natalia-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for NATALIA HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/natalia-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-pablo-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-pablo-hub-json",
+      "configPath": "config/dify-agents/pablo-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "PABLO HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.4",
+      "sourceDslPath": "config/dify-agents/pablo-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "pablo_hub",
+          "displayName": "PABLO HUB",
+          "transport": "http",
+          "url": "https://wf-app-review-pablo.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-pablo-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "PABLO HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-pablo-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-pablo-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/pablo-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-pablo-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-pablo-hub-json",
+        "type": "proof",
+        "summary": "PABLO HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/pablo-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-pablo-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-pablo-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for PABLO HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/pablo-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-shea-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-shea-hub-json",
+      "configPath": "config/dify-agents/shea-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "SHEA HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.4",
+      "sourceDslPath": "config/dify-agents/shea-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "shea_hub",
+          "displayName": "SHEA HUB",
+          "transport": "http",
+          "url": "https://wf-app-review-shea.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-shea-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "SHEA HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-shea-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-shea-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/shea-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-shea-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-shea-hub-json",
+        "type": "proof",
+        "summary": "SHEA HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/shea-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-shea-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-shea-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for SHEA HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/shea-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-template-review-hub-json",
+      "configPath": "config/dify-agents/template-review-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "TEMPLATE REVIEW HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.5",
+      "sourceDslPath": "config/dify-agents/template-review-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "template-review",
+          "displayName": "TEMPLATE REVIEW",
+          "transport": "http",
+          "url": "https://wf-template-review.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "TEMPLATE REVIEW HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-template-review-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/template-review-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+        "type": "proof",
+        "summary": "TEMPLATE REVIEW HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/template-review-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for TEMPLATE REVIEW HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/template-review-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-vicki-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-vicki-hub-json",
+      "configPath": "config/dify-agents/vicki-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "VICKI HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.5",
+      "sourceDslPath": "config/dify-agents/vicki-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "vicki_hub",
+          "displayName": "VICKI HUB",
+          "transport": "http",
+          "url": "https://wf-template-review-vicki.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-vicki-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "VICKI HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-vicki-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-vicki-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/vicki-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-vicki-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-vicki-hub-json",
+        "type": "proof",
+        "summary": "VICKI HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/vicki-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-vicki-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-vicki-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for VICKI HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/vicki-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-viv-hub-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-viv-hub-json",
+      "configPath": "config/dify-agents/viv-hub.json",
+      "kind": "dify_agent",
+      "status": "imported",
+      "owner": "CREATE SOMETHING",
+      "title": "VIV HUB",
+      "mode": "agent-chat",
+      "model": "gpt-5.4",
+      "sourceDslPath": "config/dify-agents/viv-hub.dify.yml",
+      "serverRefs": [
+        {
+          "serverId": "viv_hub",
+          "displayName": "VIV HUB",
+          "transport": "http",
+          "url": "https://viv-blondish.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 17,
+      "writeToolCount": 6,
+      "secretRefCount": 2,
+      "smokeStatus": "passed",
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-viv-hub-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "VIV HUB",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-viv-hub-json",
+        "relationCount": 21,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-viv-hub-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/viv-hub.json is bound as a Dify agent config with 1 server refs and 17 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-viv-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-viv-hub-json",
+        "type": "proof",
+        "summary": "VIV HUB has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/viv-hub.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-viv-hub-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-viv-hub-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for VIV HUB",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/viv-hub.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
+      "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-youtube-transcript-notion-agent-json",
+      "configPath": "config/dify-agents/youtube-transcript-notion-agent.json",
+      "kind": "dify_agent",
+      "status": "published_and_eval_covered",
+      "owner": "CREATE SOMETHING",
+      "title": "YouTube Transcript Notion Agent",
+      "model": "gpt-5.4",
+      "serverRefs": [
+        {
+          "serverId": "yt-transcript-notion",
+          "displayName": "YouTube Transcript + Notion MCP",
+          "transport": "http",
+          "url": "https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 6,
+      "writeToolCount": 2,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "agent",
+        "title": "YouTube Transcript Notion Agent",
+        "owner": "CREATE SOMETHING",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_agent-config_config-dify-agents-youtube-transcript-notion-agent-json",
+        "relationCount": 10,
+        "receiptId": "receipt:substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-agents/youtube-transcript-notion-agent.json is bound as a Dify agent config with 1 server refs and 6 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
+        "type": "proof",
+        "summary": "YouTube Transcript Notion Agent has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-agents/youtube-transcript-notion-agent.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
+        "recordId": "substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for YouTube Transcript Notion Agent",
+        "owner": "CREATE SOMETHING",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-agents/youtube-transcript-notion-agent.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-cs-telemetry-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-cs-telemetry-json",
+      "configPath": "config/dify-mcp-intake/cs-telemetry.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Cs Telemetry",
+      "serverRefs": [
+        {
+          "displayName": "Cs Telemetry",
+          "transport": "http",
+          "url": "https://cs-telemetry-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "cs-telemetry",
+          "transport": "http",
+          "url": "https://cs-telemetry-mcp.createsomething.workers.dev/mcp"
+        },
+        {
+          "serverId": "cs-telemetry",
+          "displayName": "Cs Telemetry",
+          "transport": "http",
+          "url": "https://cs-telemetry-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 10,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-cs-telemetry-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Cs Telemetry",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-cs-telemetry-json",
+        "relationCount": 16,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-cs-telemetry-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/cs-telemetry.json is bound as a Dify MCP intake config with 3 server refs and 10 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-cs-telemetry-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-cs-telemetry-json",
+        "type": "proof",
+        "summary": "Cs Telemetry has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/cs-telemetry.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-cs-telemetry-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-cs-telemetry-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Cs Telemetry",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/cs-telemetry.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-notion-mcp-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-gmail-notion-mcp-json",
+      "configPath": "config/dify-mcp-intake/gmail-notion-mcp.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Gmail Notion Mcp",
+      "serverRefs": [
+        {
+          "displayName": "Gmail Notion Mcp",
+          "transport": "http",
+          "url": "https://gmail-notion-mcp.createsomething.workers.dev/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "gmail-notion-mcp",
+          "transport": "http",
+          "url": "https://gmail-notion-mcp.createsomething.workers.dev/mcp"
+        },
+        {
+          "serverId": "gmail-notion-mcp",
+          "displayName": "Gmail Notion Mcp",
+          "transport": "http",
+          "url": "https://gmail-notion-mcp.createsomething.workers.dev/mcp",
+          "authType": "none"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-notion-mcp-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Gmail Notion Mcp",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-gmail-notion-mcp-json",
+        "relationCount": 4,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-notion-mcp-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/gmail-notion-mcp.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-notion-mcp-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-notion-mcp-json",
+        "type": "proof",
+        "summary": "Gmail Notion Mcp has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/gmail-notion-mcp.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-notion-mcp-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-notion-mcp-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Gmail Notion Mcp",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/gmail-notion-mcp.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-sync-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-gmail-sync-json",
+      "configPath": "config/dify-mcp-intake/gmail-sync.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Gmail Sync",
+      "serverRefs": [
+        {
+          "displayName": "Gmail Sync",
+          "transport": "http",
+          "url": "https://gmail.mcp.workway.co/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "gmail-sync",
+          "displayName": "Gmail Sync",
+          "transport": "http",
+          "url": "https://gmail.mcp.workway.co/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "halfdozen-gmail-sync-danny",
+          "transport": "http",
+          "url": "https://gmail.mcp.workway.co/mcp"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-sync-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Gmail Sync",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-gmail-sync-json",
+        "relationCount": 6,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-sync-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/gmail-sync.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-sync-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-sync-json",
+        "type": "proof",
+        "summary": "Gmail Sync has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/gmail-sync.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-sync-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-gmail-sync-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Gmail Sync",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/gmail-sync.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-fillip-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-halfdozen-gmail-sync-fillip-json",
+      "configPath": "config/dify-mcp-intake/halfdozen-gmail-sync-fillip.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Halfdozen Gmail Sync Fillip",
+      "serverRefs": [
+        {
+          "displayName": "Halfdozen Gmail Sync Fillip",
+          "transport": "http",
+          "url": "https://fillip-gmail.mcp.workway.co/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "halfdozen-gmail-sync-fillip",
+          "transport": "http",
+          "url": "https://fillip-gmail.mcp.workway.co/mcp"
+        },
+        {
+          "serverId": "halfdozen-gmail-sync-fillip",
+          "displayName": "Halfdozen Gmail Sync Fillip",
+          "transport": "http",
+          "url": "https://fillip-gmail.mcp.workway.co/mcp",
+          "authType": "none"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-fillip-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Halfdozen Gmail Sync Fillip",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-halfdozen-gmail-sync-fillip-json",
+        "relationCount": 4,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-fillip-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/halfdozen-gmail-sync-fillip.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-fillip-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-fillip-json",
+        "type": "proof",
+        "summary": "Halfdozen Gmail Sync Fillip has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/halfdozen-gmail-sync-fillip.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-fillip-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-fillip-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Halfdozen Gmail Sync Fillip",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/halfdozen-gmail-sync-fillip.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-leah-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-halfdozen-gmail-sync-leah-json",
+      "configPath": "config/dify-mcp-intake/halfdozen-gmail-sync-leah.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Halfdozen Gmail Sync Leah",
+      "serverRefs": [
+        {
+          "displayName": "Halfdozen Gmail Sync Leah",
+          "transport": "http",
+          "url": "https://leah-gmail.mcp.workway.co/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "halfdozen-gmail-sync-leah",
+          "transport": "http",
+          "url": "https://leah-gmail.mcp.workway.co/mcp"
+        },
+        {
+          "serverId": "halfdozen-gmail-sync-leah",
+          "displayName": "Halfdozen Gmail Sync Leah",
+          "transport": "http",
+          "url": "https://leah-gmail.mcp.workway.co/mcp",
+          "authType": "none"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-leah-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Halfdozen Gmail Sync Leah",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-halfdozen-gmail-sync-leah-json",
+        "relationCount": 4,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-leah-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/halfdozen-gmail-sync-leah.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-leah-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-leah-json",
+        "type": "proof",
+        "summary": "Halfdozen Gmail Sync Leah has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/halfdozen-gmail-sync-leah.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-leah-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-gmail-sync-leah-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Halfdozen Gmail Sync Leah",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/halfdozen-gmail-sync-leah.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-telemetry-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-halfdozen-telemetry-json",
+      "configPath": "config/dify-mcp-intake/halfdozen-telemetry.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Halfdozen Telemetry",
+      "serverRefs": [
+        {
+          "displayName": "Halfdozen Telemetry",
+          "transport": "http",
+          "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "halfdozen-telemetry",
+          "transport": "http",
+          "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp"
+        },
+        {
+          "serverId": "halfdozen-telemetry",
+          "displayName": "Halfdozen Telemetry",
+          "transport": "http",
+          "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp",
+          "authType": "none"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-telemetry-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Halfdozen Telemetry",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-halfdozen-telemetry-json",
+        "relationCount": 4,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-telemetry-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/halfdozen-telemetry.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-telemetry-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-telemetry-json",
+        "type": "proof",
+        "summary": "Halfdozen Telemetry has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/halfdozen-telemetry.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-telemetry-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-halfdozen-telemetry-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Halfdozen Telemetry",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/halfdozen-telemetry.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-meetings-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-meetings-json",
+      "configPath": "config/dify-mcp-intake/meetings.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Meetings",
+      "serverRefs": [
+        {
+          "serverId": "meetings",
+          "transport": "http",
+          "url": "https://meetings-mcp.createsomething.workers.dev/mcp"
+        },
+        {
+          "serverId": "meetings",
+          "displayName": "Meetings",
+          "transport": "http",
+          "url": "https://meetings-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "displayName": "Meetings",
+          "transport": "http",
+          "url": "https://meetings-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-meetings-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Meetings",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-meetings-json",
+        "relationCount": 6,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-meetings-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/meetings.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-meetings-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-meetings-json",
+        "type": "proof",
+        "summary": "Meetings has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/meetings.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-meetings-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-meetings-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Meetings",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/meetings.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-blondish-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-notion-halfdozen-blondish-json",
+      "configPath": "config/dify-mcp-intake/notion-halfdozen-blondish.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Notion Halfdozen Blondish",
+      "serverRefs": [
+        {
+          "displayName": "Notion Halfdozen Blondish",
+          "transport": "http",
+          "url": "https://blondish-notion.mcp.workway.co/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "notion-halfdozen-blondish",
+          "transport": "http",
+          "url": "https://blondish-notion.mcp.workway.co/mcp"
+        },
+        {
+          "serverId": "notion-halfdozen-blondish",
+          "displayName": "Notion Halfdozen Blondish",
+          "transport": "http",
+          "url": "https://blondish-notion.mcp.workway.co/mcp",
+          "authType": "none"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-blondish-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Notion Halfdozen Blondish",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-notion-halfdozen-blondish-json",
+        "relationCount": 4,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-blondish-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/notion-halfdozen-blondish.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-blondish-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-blondish-json",
+        "type": "proof",
+        "summary": "Notion Halfdozen Blondish has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/notion-halfdozen-blondish.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-blondish-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-blondish-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Notion Halfdozen Blondish",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/notion-halfdozen-blondish.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-c3-management-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-notion-halfdozen-c3-management-json",
+      "configPath": "config/dify-mcp-intake/notion-halfdozen-c3-management.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Notion Halfdozen C3 Management",
+      "serverRefs": [
+        {
+          "displayName": "Notion Halfdozen C3 Management",
+          "transport": "http",
+          "url": "https://c3-management-notion.mcp.workway.co/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "notion-halfdozen-c3-management",
+          "transport": "http",
+          "url": "https://c3-management-notion.mcp.workway.co/mcp"
+        },
+        {
+          "serverId": "notion-halfdozen-c3-management",
+          "displayName": "Notion Halfdozen C3 Management",
+          "transport": "http",
+          "url": "https://c3-management-notion.mcp.workway.co/mcp",
+          "authType": "none"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-c3-management-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Notion Halfdozen C3 Management",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-notion-halfdozen-c3-management-json",
+        "relationCount": 4,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-c3-management-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/notion-halfdozen-c3-management.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-c3-management-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-c3-management-json",
+        "type": "proof",
+        "summary": "Notion Halfdozen C3 Management has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/notion-halfdozen-c3-management.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-c3-management-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-c3-management-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Notion Halfdozen C3 Management",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/notion-halfdozen-c3-management.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-create-something-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-notion-halfdozen-create-something-json",
+      "configPath": "config/dify-mcp-intake/notion-halfdozen-create-something.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Notion Halfdozen Create Something",
+      "serverRefs": [
+        {
+          "displayName": "Notion Halfdozen Create Something",
+          "transport": "http",
+          "url": "https://createsomething-notion.mcp.workway.co/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "notion-halfdozen-create-something",
+          "transport": "http",
+          "url": "https://createsomething-notion.mcp.workway.co/mcp"
+        },
+        {
+          "serverId": "notion-halfdozen-create-something",
+          "displayName": "Notion Halfdozen Create Something",
+          "transport": "http",
+          "url": "https://createsomething-notion.mcp.workway.co/mcp",
+          "authType": "none"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-create-something-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Notion Halfdozen Create Something",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-notion-halfdozen-create-something-json",
+        "relationCount": 4,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-create-something-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/notion-halfdozen-create-something.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-create-something-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-create-something-json",
+        "type": "proof",
+        "summary": "Notion Halfdozen Create Something has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/notion-halfdozen-create-something.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-create-something-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-halfdozen-create-something-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Notion Halfdozen Create Something",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/notion-halfdozen-create-something.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-sync-mcp-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-notion-sync-mcp-json",
+      "configPath": "config/dify-mcp-intake/notion-sync-mcp.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Notion Sync Mcp",
+      "serverRefs": [
+        {
+          "displayName": "Notion Sync Mcp",
+          "transport": "http",
+          "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "notion-sync-mcp",
+          "transport": "http",
+          "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp"
+        },
+        {
+          "serverId": "notion-sync-mcp",
+          "displayName": "Notion Sync Mcp",
+          "transport": "http",
+          "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp",
+          "authType": "none"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-sync-mcp-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Notion Sync Mcp",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-notion-sync-mcp-json",
+        "relationCount": 4,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-sync-mcp-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/notion-sync-mcp.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-sync-mcp-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-sync-mcp-json",
+        "type": "proof",
+        "summary": "Notion Sync Mcp has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/notion-sync-mcp.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-notion-sync-mcp-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-notion-sync-mcp-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Notion Sync Mcp",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/notion-sync-mcp.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-outerfields-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-outerfields-json",
+      "configPath": "config/dify-mcp-intake/outerfields.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Outerfields PCN",
+      "serverRefs": [
+        {
+          "serverId": "outerfields",
+          "displayName": "Outerfields PCN",
+          "transport": "http",
+          "url": "https://outerfields.mcp.createsomething.agency/mcp",
+          "authType": "none"
+        },
+        {
+          "displayName": "Outerfields PCN",
+          "transport": "http",
+          "url": "https://outerfields.mcp.createsomething.agency/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "outerfields-pcn",
+          "transport": "http",
+          "url": "https://outerfields.mcp.createsomething.agency/mcp"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-outerfields-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Outerfields PCN",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-outerfields-json",
+        "relationCount": 4,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-outerfields-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/outerfields.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-outerfields-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-outerfields-json",
+        "type": "proof",
+        "summary": "Outerfields PCN has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/outerfields.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-outerfields-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-outerfields-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Outerfields PCN",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/outerfields.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-quickbooks-notion-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-quickbooks-notion-json",
+      "configPath": "config/dify-mcp-intake/quickbooks-notion.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "QuickBooks Notion Sync",
+      "serverRefs": [
+        {
+          "displayName": "QuickBooks Notion Sync",
+          "transport": "http",
+          "url": "https://quickbooks.mcp.workway.co/mcp",
+          "authType": "oauth"
+        },
+        {
+          "serverId": "quickbooks-notion",
+          "displayName": "QuickBooks Notion Sync",
+          "transport": "http",
+          "url": "https://quickbooks.mcp.workway.co/mcp",
+          "authType": "oauth"
+        },
+        {
+          "serverId": "quickbooks-notion-mcp-server",
+          "transport": "http",
+          "url": "https://quickbooks.mcp.workway.co/mcp"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-quickbooks-notion-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "QuickBooks Notion Sync",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-quickbooks-notion-json",
+        "relationCount": 6,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-quickbooks-notion-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/quickbooks-notion.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-quickbooks-notion-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-quickbooks-notion-json",
+        "type": "proof",
+        "summary": "QuickBooks Notion Sync has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/quickbooks-notion.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-quickbooks-notion-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-quickbooks-notion-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for QuickBooks Notion Sync",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/quickbooks-notion.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-schedule-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-schedule-json",
+      "configPath": "config/dify-mcp-intake/schedule.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Schedule",
+      "serverRefs": [
+        {
+          "serverId": "schedule",
+          "displayName": "Schedule",
+          "transport": "http",
+          "url": "https://schedule.mcp.createsomething.agency/mcp",
+          "authType": "none"
+        },
+        {
+          "displayName": "Schedule",
+          "transport": "http",
+          "url": "https://schedule.mcp.createsomething.agency/mcp",
+          "authType": "none"
+        },
+        {
+          "serverId": "schedule-mcp",
+          "transport": "http",
+          "url": "https://schedule.mcp.createsomething.agency/mcp"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 0,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-schedule-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Schedule",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-schedule-json",
+        "relationCount": 4,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-schedule-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/schedule.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-schedule-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-schedule-json",
+        "type": "proof",
+        "summary": "Schedule has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/schedule.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-schedule-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-schedule-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Schedule",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/schedule.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-slack-create-something-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-slack-create-something-json",
+      "configPath": "config/dify-mcp-intake/slack-create-something.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Slack Create Something",
+      "serverRefs": [
+        {
+          "displayName": "Slack Create Something",
+          "transport": "http",
+          "url": "https://mcp.slack.com/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "slack-create-something",
+          "transport": "http",
+          "url": "https://mcp.slack.com/mcp"
+        },
+        {
+          "serverId": "slack-create-something",
+          "displayName": "Slack Create Something",
+          "transport": "http",
+          "url": "https://mcp.slack.com/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-slack-create-something-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Slack Create Something",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-slack-create-something-json",
+        "relationCount": 6,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-slack-create-something-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/slack-create-something.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-slack-create-something-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-slack-create-something-json",
+        "type": "proof",
+        "summary": "Slack Create Something has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/slack-create-something.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-slack-create-something-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-slack-create-something-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Slack Create Something",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/slack-create-something.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-spotify-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-spotify-json",
+      "configPath": "config/dify-mcp-intake/spotify.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Spotify",
+      "serverRefs": [
+        {
+          "serverId": "spotify",
+          "displayName": "Spotify",
+          "transport": "http",
+          "url": "https://spotify-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "displayName": "Spotify",
+          "transport": "http",
+          "url": "https://spotify-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "spotify-mcp",
+          "transport": "http",
+          "url": "https://spotify-mcp.createsomething.workers.dev/mcp"
+        }
+      ],
+      "toolCount": 29,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-spotify-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Spotify",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-spotify-json",
+        "relationCount": 35,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-spotify-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/spotify.json is bound as a Dify MCP intake config with 3 server refs and 29 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-spotify-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-spotify-json",
+        "type": "proof",
+        "summary": "Spotify has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/spotify.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-spotify-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-spotify-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Spotify",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/spotify.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-substrate-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-substrate-json",
+      "configPath": "config/dify-mcp-intake/substrate.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Substrate",
+      "serverRefs": [
+        {
+          "serverId": "substrate",
+          "displayName": "Substrate",
+          "transport": "http",
+          "url": "https://substrate.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        },
+        {
+          "displayName": "Substrate",
+          "transport": "http",
+          "url": "https://substrate.mcp.createsomething.agency/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "substrate-mcp",
+          "transport": "http",
+          "url": "https://substrate.mcp.createsomething.agency/mcp"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-substrate-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Substrate",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-substrate-json",
+        "relationCount": 6,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-substrate-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/substrate.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-substrate-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-substrate-json",
+        "type": "proof",
+        "summary": "Substrate has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/substrate.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-substrate-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-substrate-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Substrate",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/substrate.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-app-review-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-webflow-app-review-json",
+      "configPath": "config/dify-mcp-intake/webflow-app-review.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Webflow App Review",
+      "serverRefs": [
+        {
+          "displayName": "Webflow App Review",
+          "transport": "http",
+          "url": "https://webflow-app-review-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "webflow-app-review",
+          "displayName": "Webflow App Review",
+          "transport": "http",
+          "url": "https://webflow-app-review-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "webflow-app-review-mcp",
+          "transport": "http",
+          "url": "https://webflow-app-review-mcp.createsomething.workers.dev/mcp"
+        }
+      ],
+      "toolCount": 24,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-app-review-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Webflow App Review",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-webflow-app-review-json",
+        "relationCount": 30,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-app-review-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/webflow-app-review.json is bound as a Dify MCP intake config with 3 server refs and 24 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-app-review-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-app-review-json",
+        "type": "proof",
+        "summary": "Webflow App Review has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/webflow-app-review.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-app-review-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-app-review-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Webflow App Review",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/webflow-app-review.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-local-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-webflow-local-json",
+      "configPath": "config/dify-mcp-intake/webflow-local.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Webflow Local",
+      "serverRefs": [
+        {
+          "displayName": "Webflow Local",
+          "transport": "http",
+          "url": "https://webflow-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "webflow-local",
+          "transport": "http",
+          "url": "https://webflow-mcp.createsomething.workers.dev/mcp"
+        },
+        {
+          "serverId": "webflow-local",
+          "displayName": "Webflow Local",
+          "transport": "http",
+          "url": "https://webflow-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 10,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-local-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Webflow Local",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-webflow-local-json",
+        "relationCount": 16,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-local-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/webflow-local.json is bound as a Dify MCP intake config with 3 server refs and 10 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-local-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-local-json",
+        "type": "proof",
+        "summary": "Webflow Local has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/webflow-local.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-local-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-local-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Webflow Local",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/webflow-local.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-reviewer-exceptions-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-webflow-reviewer-exceptions-json",
+      "configPath": "config/dify-mcp-intake/webflow-reviewer-exceptions.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Webflow Reviewer Exceptions",
+      "serverRefs": [
+        {
+          "displayName": "Webflow Reviewer Exceptions",
+          "transport": "http",
+          "url": "https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "webflow-reviewer-exceptions",
+          "displayName": "Webflow Reviewer Exceptions",
+          "transport": "http",
+          "url": "https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "webflow-reviewer-exceptions-mcp",
+          "transport": "http",
+          "url": "https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp"
+        }
+      ],
+      "toolCount": 7,
+      "writeToolCount": 0,
+      "secretRefCount": 3,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-reviewer-exceptions-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Webflow Reviewer Exceptions",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-webflow-reviewer-exceptions-json",
+        "relationCount": 14,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-reviewer-exceptions-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/webflow-reviewer-exceptions.json is bound as a Dify MCP intake config with 3 server refs and 7 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-reviewer-exceptions-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-reviewer-exceptions-json",
+        "type": "proof",
+        "summary": "Webflow Reviewer Exceptions has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/webflow-reviewer-exceptions.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-reviewer-exceptions-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-reviewer-exceptions-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Webflow Reviewer Exceptions",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/webflow-reviewer-exceptions.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-template-review-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-webflow-template-review-json",
+      "configPath": "config/dify-mcp-intake/webflow-template-review.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Webflow Template Review",
+      "serverRefs": [
+        {
+          "displayName": "Webflow Template Review",
+          "transport": "http",
+          "url": "https://webflow-template-review-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "webflow-template-review",
+          "displayName": "Webflow Template Review",
+          "transport": "http",
+          "url": "https://webflow-template-review-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "webflow-template-review-mcp",
+          "transport": "http",
+          "url": "https://webflow-template-review-mcp.createsomething.workers.dev/mcp"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-template-review-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Webflow Template Review",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-webflow-template-review-json",
+        "relationCount": 6,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-template-review-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/webflow-template-review.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-template-review-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-template-review-json",
+        "type": "proof",
+        "summary": "Webflow Template Review has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/webflow-template-review.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-template-review-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-template-review-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Webflow Template Review",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/webflow-template-review.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-zendesk-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-webflow-zendesk-json",
+      "configPath": "config/dify-mcp-intake/webflow-zendesk.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Webflow Zendesk",
+      "serverRefs": [
+        {
+          "displayName": "Webflow Zendesk",
+          "transport": "http",
+          "url": "https://zendesk-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "webflow-zendesk",
+          "displayName": "Webflow Zendesk",
+          "transport": "http",
+          "url": "https://zendesk-mcp.createsomething.workers.dev/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "zendesk-mcp",
+          "transport": "http",
+          "url": "https://zendesk-mcp.createsomething.workers.dev/mcp"
+        }
+      ],
+      "toolCount": 10,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-zendesk-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Webflow Zendesk",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-webflow-zendesk-json",
+        "relationCount": 16,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-zendesk-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/webflow-zendesk.json is bound as a Dify MCP intake config with 3 server refs and 10 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-zendesk-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-zendesk-json",
+        "type": "proof",
+        "summary": "Webflow Zendesk has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/webflow-zendesk.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-zendesk-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-zendesk-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Webflow Zendesk",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/webflow-zendesk.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-youtube-sync-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-youtube-sync-json",
+      "configPath": "config/dify-mcp-intake/youtube-sync.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "YouTube Sync",
+      "serverRefs": [
+        {
+          "serverId": "half-dozen-youtube-sync",
+          "transport": "http",
+          "url": "https://youtube.mcp.workway.co/mcp"
+        },
+        {
+          "displayName": "YouTube Sync",
+          "transport": "http",
+          "url": "https://youtube.mcp.workway.co/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "youtube-sync",
+          "displayName": "YouTube Sync",
+          "transport": "http",
+          "url": "https://youtube.mcp.workway.co/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-youtube-sync-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "YouTube Sync",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-youtube-sync-json",
+        "relationCount": 6,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-youtube-sync-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/youtube-sync.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-youtube-sync-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-youtube-sync-json",
+        "type": "proof",
+        "summary": "YouTube Sync has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/youtube-sync.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-youtube-sync-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-youtube-sync-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for YouTube Sync",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/youtube-sync.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    },
+    {
+      "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-zoom-sync-json",
+      "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-zoom-sync-json",
+      "configPath": "config/dify-mcp-intake/zoom-sync.json",
+      "kind": "dify_mcp_intake",
+      "status": "pending-dify-studio-registration",
+      "owner": "create-something",
+      "title": "Zoom Sync",
+      "serverRefs": [
+        {
+          "serverId": "halfdozen-zoom-sync",
+          "transport": "http",
+          "url": "https://zoom.mcp.workway.co/mcp"
+        },
+        {
+          "displayName": "Zoom Sync",
+          "transport": "http",
+          "url": "https://zoom.mcp.workway.co/mcp",
+          "authType": "bearer"
+        },
+        {
+          "serverId": "zoom-sync",
+          "displayName": "Zoom Sync",
+          "transport": "http",
+          "url": "https://zoom.mcp.workway.co/mcp",
+          "authType": "bearer"
+        }
+      ],
+      "toolCount": 0,
+      "writeToolCount": 0,
+      "secretRefCount": 2,
+      "sourceRecord": {
+        "id": "substrate:create-something:mcp-config:config-dify-mcp-intake-zoom-sync-json",
+        "source": "CREATE SOMETHING Dify/MCP config coverage",
+        "sourceType": "config",
+        "title": "Zoom Sync",
+        "owner": "create-something",
+        "status": "ready",
+        "bindingHealth": "bound",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_mcp-config_config-dify-mcp-intake-zoom-sync-json",
+        "relationCount": 6,
+        "receiptId": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-zoom-sync-json",
+        "updatedAt": "2026-07-08T03:41:11.620Z",
+        "summary": "config/dify-mcp-intake/zoom-sync.json is bound as a Dify MCP intake config with 3 server refs and 0 tools."
+      },
+      "receipt": {
+        "id": "receipt:substrate:create-something:mcp-config:config-dify-mcp-intake-zoom-sync-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-zoom-sync-json",
+        "type": "proof",
+        "summary": "Zoom Sync has first-class Dify/MCP config coverage.",
+        "evidence": "config/dify-mcp-intake/zoom-sync.json was parsed into Dify/MCP config coverage at 2026-07-08T03:41:11.620Z.",
+        "createdAt": "2026-07-08T03:41:11.620Z"
+      },
+      "reviewAction": {
+        "id": "action:agent-config-review:substrate:create-something:mcp-config:config-dify-mcp-intake-zoom-sync-json",
+        "recordId": "substrate:create-something:mcp-config:config-dify-mcp-intake-zoom-sync-json",
+        "state": "wait",
+        "title": "Review Dify/MCP config coverage for Zoom Sync",
+        "owner": "create-something",
+        "policy": "Dify/MCP config review before external writes",
+        "detail": "config/dify-mcp-intake/zoom-sync.json is mapped as Substrate config state. Review server refs, tool risk, auth references, smoke evidence, and eval status before mutating Dify Studio or MCP hub configuration."
+      }
+    }
+  ]
+}
