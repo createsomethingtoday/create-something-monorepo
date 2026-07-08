@@ -145,7 +145,7 @@ export function createElements(stripe: any, clientSecret: string, theme: 'light'
 			colorBackground: theme === 'dark' ? '#1a1a1a' : '#ffffff',
 			colorText: theme === 'dark' ? '#ffffff' : '#000000',
 			colorDanger: '#d44d4d',
-			fontFamily: 'Stack Sans Notch, system-ui, sans-serif',
+			fontFamily: 'ABC Diatype, Stack Sans Notch, system-ui, sans-serif',
 			spacingUnit: '4px',
 			borderRadius: '8px'
 		},

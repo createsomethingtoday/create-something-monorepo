@@ -341,7 +341,7 @@
 		min-height: 100vh;
 		background: var(--color-bg-pure, #000000);
 		color: var(--color-fg-primary, #ffffff);
-		font-family: var(--font-sans, 'Stack Sans Notch', system-ui, sans-serif);
+		font-family: var(--font-sans, 'ABC Diatype', 'Stack Sans Notch', system-ui, sans-serif);
 	}
 
 	/* Header */

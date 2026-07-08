@@ -186,12 +186,12 @@
     <h2 class="section-title">Typography</h2>
     <div class="typography-grid">
       <div class="type-card">
-        <span class="type-sample sans">Stack Sans Notch</span>
-        <span class="type-meta">Primary · Weight 600 · Tight tracking</span>
+        <span class="type-sample sans">ABC Diatype</span>
+        <span class="type-meta">Primary · Interface and body text</span>
       </div>
       <div class="type-card">
-        <span class="type-sample mono">JetBrains Mono</span>
-        <span class="type-meta">Code · Technical content</span>
+        <span class="type-sample mono">ABC Diatype Mono</span>
+        <span class="type-meta">Records · Topology labels · Code-adjacent UI</span>
       </div>
     </div>
   </section>

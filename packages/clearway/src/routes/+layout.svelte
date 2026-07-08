@@ -9,12 +9,7 @@
 </script>
 
 <svelte:head>
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link
-		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-		rel="stylesheet"
-	/>
+	<!-- Canon typography is loaded by @create-something/canon styles. -->
 </svelte:head>
 
 {@render children?.()}

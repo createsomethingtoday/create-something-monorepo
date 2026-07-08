@@ -78,7 +78,7 @@ All components follow the **"Tailwind for structure, Canon for aesthetics"** pat
 
 ### 2. CodeEditor
 - Auto-syncing line numbers
-- Monospace font (JetBrains Mono, SF Mono)
+- Monospace font (ABC Diatype Mono, JetBrains Mono, SF Mono)
 - Dark theme matching Canon
 - Resizable textarea
 - Tab key support
