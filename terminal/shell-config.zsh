@@ -89,7 +89,7 @@ alias td='cd "$HOME/Desktop/To Do"'
 # Claude Code
 # ─────────────────────────────────────────────────────────────
 
-alias cc='claude --dangerously-skip-permissions'
+alias cc='cd "$HOME/Code/create-something-monorepo" && claude --dangerously-skip-permissions'
 
 # ─────────────────────────────────────────────────────────────
 # Minimal Prompt
