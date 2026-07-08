@@ -7,9 +7,9 @@
 
 - Source thesis: `docs/CREATE_SOMETHING_SYSTEMS_THESIS.md`
 - Claim set updated: 2026-06-25
-- Total claims: 6
+- Total claims: 7
 - supported: 4
-- partial: 2
+- partial: 3
 
 ## How To Read This
 
@@ -63,6 +63,40 @@ Falsification tests:
 Open questions:
 
 - Which flagship case should become the first fully evidenced public defense?
+
+### The governed loop is the unit of production reliability.
+
+- id: `thesis.governed-loop-reliability-system`
+- status: `partial`
+- tier: `database`, `automation`, `judgment`
+
+Agent-assisted production work becomes dependable when the worker operates inside a loop with durable state, explicit policy, isolated execution, focused validation, eval evidence, proof receipts, and a visible next decision.
+
+Burden of proof:
+
+- The loop model is documented as a repo operating model.
+- The repo contains executable checks for loop readiness, skill behavior, policy artifacts, and executor eval cases.
+- A paper or experiment plan states how to compare loop-backed execution against prompt-only execution.
+
+Evidence:
+
+- `supports` `file` `docs/guides/LOOPS_ABOVE_AGENTS.md` - Canonical loop operating model and evidence contract. Anchors: `A CREATE SOMETHING loop is a repeatable operating circuit with seven parts`; `Every loop run should leave a compact receipt`
+- `supports` `file` `docs/guides/CODING_AGENT_HARNESS_PATTERN.md` - Repo-local harness engineering pattern. Anchors: `Turn a coding agent from a one-shot assistant into a repeatable worker`; `In this repo, harness engineering is the combination of`
+- `supports` `file` `packages/io/content/papers/governed-loop-reliability-system.md` - Public-facing codification and first experiment design. Anchors: `The reliable unit is not the agent.`; `Does a CREATE SOMETHING loop-backed agent process improve verified completion`
+- `tests` `command` `pnpm agent:solo-loop:check` - Verifies the solo-loop control files, legibility, policy, and unit-test gates.
+- `tests` `command` `pnpm agent:skills:test` - Verifies repo-owned skills retain behavioral contracts.
+- `tests` `command` `pnpm braintrust:eval:mcp:list` - Verifies MCP eval cases are discoverable without sending logs.
+
+Falsification tests:
+
+- Prompt-only agent execution produces equal or better verified completion, evidence completeness, scope control, and safety behavior on the same bounded task set.
+- Loop receipts do not improve review, handoff, resume, rollback, or next decision quality.
+- Policy artifacts, eval outputs, and proof receipts exist but do not change publish, hold, rollback, split, or stop decisions.
+
+Open questions:
+
+- Which 6-10 bounded task corpus should become the first comparative loop benchmark?
+- What minimum improvement justifies the overhead of the loop-backed condition?
 
 ### MCP creation is the durable capability boundary.
 

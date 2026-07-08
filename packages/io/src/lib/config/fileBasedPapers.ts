@@ -64,6 +64,49 @@ const fileBasedPaperMetadata: FileBasedPaper[] = [
 `
 	},
 	{
+		id: 'paper-governed-loop-reliability-system',
+		slug: 'governed-loop-reliability-system',
+		title: 'From Agents to Governed Loops',
+		description:
+			'Reliability infrastructure for delegated work control. A CREATE SOMETHING paper codifying the tests, evals, policy artifacts, worktree isolation, loop receipts, and experiment design that make agent-assisted production work dependable.',
+		excerpt_short: 'Reliability comes from the governed loop around the agent',
+		excerpt_long:
+			'This paper codifies the CREATE SOMETHING reliability system: durable state, explicit policy, isolated execution, focused validation, eval evidence, proof receipts, and a next decision. It defines a falsifiable experiment comparing prompt-only agent execution against loop-backed execution on verified completion, evidence completeness, scope control, and safety behavior.',
+		category: 'Research',
+		tags: [
+			'Governed Loops',
+			'Delegated Work Control',
+			'Policy OS',
+			'Agent Reliability',
+			'Eval Evidence',
+			'Proof Surface',
+			'Linear',
+			'Worktrees',
+			'Three-Tier Framework'
+		],
+		created_at: '2026-07-06T13:50:00Z',
+		updated_at: '2026-07-06T13:50:00Z',
+		reading_time_minutes: 14,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'policy-as-artifact',
+			'verification-first',
+			'agent-governance'
+		],
+		route: '/papers/governed-loop-reliability-system',
+		ascii_art: `
+╭──────────────────────────────────────────────────────────────╮
+│ SIGNAL → CONTEXT → POLICY → EXECUTOR → VERIFY → PROOF       │
+│ durable   scoped    bounded   isolated   checked  receipt    │
+│                                                              │
+│ The agent is replaceable. The governed loop is the product.  │
+╰──────────────────────────────────────────────────────────────╯
+`
+	},
+	{
 		id: 'paper-proof-surface',
 		slug: 'proof-surface',
 		title: 'The Proof Surface',
@@ -560,6 +603,47 @@ const fileBasedPaperVisuals = {
 			'evidence receipt that either promotes, retries, or stops the loop'
 		],
 		alt: 'Abstract CREATE SOMETHING agent loop showing Linear, Symphony, worktree isolation, checks, and evidence receipts.'
+	}),
+	'paper-governed-loop-reliability-system': defineArtifactVisuals({
+		kind: 'flow',
+		title: 'Reliability comes from the governed loop around the agent.',
+		caption:
+			'Signal, context, policy, execution, verification, proof, and next decision become one production reliability system.',
+		nodes: [
+			{
+				label: 'Signal',
+				detail: 'Linear, tests, logs, or docs drift identify work.',
+				icon: 'document',
+				tone: 'neutral'
+			},
+			{
+				label: 'Policy',
+				detail: 'Artifacts define what may run, wait, or stop.',
+				icon: 'warning',
+				tone: 'wait'
+			},
+			{
+				label: 'Verify',
+				detail: 'Checks and evals prove the result.',
+				icon: 'check',
+				tone: 'run'
+			},
+			{
+				label: 'Proof',
+				detail: 'Receipts preserve the next decision.',
+				icon: 'share',
+				tone: 'receipt'
+			}
+		],
+		subject:
+			'A governed agent loop where durable signals, policy boundaries, isolated execution, validation gates, and proof receipts form a reliability system.',
+		motifs: [
+			'seven-part loop from signal through next decision',
+			'agent shown as a replaceable executor inside the loop',
+			'policy artifact boundary around execution',
+			'eval and proof receipts feeding review or promotion'
+		],
+		alt: 'Abstract governed loop showing signal, policy, verification, and proof around a replaceable agent executor.'
 	}),
 	'paper-proof-surface': defineArtifactVisuals({
 		kind: 'state-strip',
