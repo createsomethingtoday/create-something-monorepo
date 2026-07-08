@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { fetchAdminJson, type AdminRequestError } from '$lib/admin/client';
 
 	interface TagRecord {
 		id: string;
@@ -27,6 +28,7 @@
 	let experiment: ExperimentRecord | null = null;
 	let loading = true;
 	let saving = false;
+	let loadError: AdminRequestError | null = null;
 
 	// Form fields
 	let title = '';
@@ -46,9 +48,9 @@
 
 	async function loadTags() {
 		try {
-			const response = await fetch('/api/admin/tags');
-			if (response.ok) {
-				allTags = (await response.json()) as TagRecord[];
+			const result = await fetchAdminJson<TagRecord[]>('/api/admin/tags');
+			if (result.ok) {
+				allTags = result.data;
 			}
 		} catch (error) {
 			console.error('Failed to load tags:', error);
@@ -57,31 +59,45 @@
 
 	async function loadExperiment() {
 		loading = true;
+		loadError = null;
+		const experimentId = $page.params.id;
+		if (!experimentId) {
+			loadError = {
+				kind: 'error',
+				status: 0,
+				message: 'Missing experiment id'
+			};
+			experiment = null;
+			loading = false;
+			return;
+		}
+
 		try {
-			const response = await fetch('/api/admin/experiments');
-			if (response.ok) {
-				const experiments = (await response.json()) as ExperimentRecord[];
-				experiment = experiments.find((e) => e.id === $page.params.id) ?? null;
+			const result = await fetchAdminJson<ExperimentRecord>(
+				`/api/admin/experiments?id=${encodeURIComponent(experimentId)}`
+			);
 
-				if (experiment) {
-					title = experiment.title || '';
-					description = experiment.description || experiment.excerpt || '';
-					content = experiment.content || '';
-					category = experiment.category || '';
-					featured = !!experiment.featured;
-					published = !!experiment.published;
+			if (!result.ok) {
+				loadError = result.error;
+				experiment = null;
+				return;
+			}
 
-					// Load tags for this experiment
-					const tagsResponse = await fetch('/api/admin/tags', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ paper_id: experiment.id })
-					});
-					if (tagsResponse.ok) {
-						const experimentTags = (await tagsResponse.json()) as TagRecord[];
-						selectedTagIds = experimentTags.map((t) => t.id);
-					}
-				}
+			experiment = result.data;
+			title = experiment.title || '';
+			description = experiment.description || experiment.excerpt || '';
+			content = experiment.content || '';
+			category = experiment.category || '';
+			featured = !!experiment.featured;
+			published = !!experiment.published;
+
+			const tagsResult = await fetchAdminJson<TagRecord[]>('/api/admin/tags', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ paper_id: experiment.id })
+			});
+			if (tagsResult.ok) {
+				selectedTagIds = tagsResult.data.map((t) => t.id);
 			}
 		} catch (error) {
 			console.error('Failed to load experiment:', error);
@@ -91,14 +107,19 @@
 	}
 
 	async function saveExperiment() {
+		if (!experiment) {
+			alert('Experiment not loaded');
+			return;
+		}
+
 		saving = true;
 		try {
 			// Update experiment details
-			const response = await fetch('/api/admin/experiments', {
+			const response = await fetchAdminJson<{ success: boolean }>('/api/admin/experiments', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					id: $page.params.id,
+					id: experiment.id,
 					title,
 					description,
 					content,
@@ -109,22 +130,22 @@
 			});
 
 			if (!response.ok) {
-				alert('Failed to save experiment');
+				alert(response.error.message);
 				return;
 			}
 
 			// Update tags
-			const tagsResponse = await fetch('/api/admin/tags', {
+			const tagsResponse = await fetchAdminJson<{ success: boolean }>('/api/admin/tags', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					paper_id: $page.params.id,
+					paper_id: experiment.id,
 					tag_ids: selectedTagIds
 				})
 			});
 
 			if (!tagsResponse.ok) {
-				alert('Failed to save tags');
+				alert(tagsResponse.error.message);
 				return;
 			}
 
@@ -143,6 +164,18 @@
 		} else {
 			selectedTagIds = [...selectedTagIds, tagId];
 		}
+	}
+
+	function errorTitle(error: AdminRequestError | null) {
+		if (!error) return 'Experiment not found';
+		if (error.kind === 'unauthorized') return 'Sign in required';
+		if (error.kind === 'forbidden') return 'Admin access required';
+		if (error.kind === 'unavailable') return 'Experiment data unavailable';
+		return error.status === 404 ? 'Experiment not found' : 'Unable to load experiment';
+	}
+
+	function errorMessage(error: AdminRequestError | null) {
+		return error?.message || 'The requested experiment is not available in the admin experiment collection.';
 	}
 </script>
 
@@ -168,7 +201,8 @@
 		</div>
 	{:else if !experiment}
 		<div class="error-state">
-			<div class="error-text">Experiment not found</div>
+			<div class="error-title">{errorTitle(loadError)}</div>
+			<div class="error-text">{errorMessage(loadError)}</div>
 			<a href="/admin/experiments" class="error-link">
 				← Back to Experiments
 			</a>
@@ -365,6 +399,12 @@
 		padding: var(--space-2xl);
 		border-radius: var(--radius-lg);
 		text-align: center;
+	}
+
+	.error-title {
+		color: var(--color-fg-primary);
+		font-weight: 600;
+		margin-bottom: var(--space-xs);
 	}
 
 	.error-text {

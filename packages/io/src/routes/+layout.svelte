@@ -117,57 +117,61 @@
 
 <Analytics property="io" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
-<!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch
-	currentProperty="io"
-	localItems={quickAccessItems}
-	showMobileButton={!$page.url.pathname.startsWith('/papers') &&
-		!$page.url.pathname.startsWith('/experiments')}
-/>
-
-<div class="layout-root property-performance">
-	<Navigation
-		logo="CREATE SOMETHING"
-		links={navLinks}
-		currentPath={$page.url.pathname}
-		fixed={true}
-		ctaLabel="Contact"
-		ctaHref="/contact"
-		user={data.user}
-		onLogout={handleLogout}
-		showLogin={true}
-		loginHref="/login"
-		accountHref="/account"
-		visualStyle="clear"
+{#if $page.url.pathname.startsWith('/admin')}
+	{@render children()}
+{:else}
+	<!-- Unified Search - Cmd/Ctrl+K to open -->
+	<UnifiedSearch
+		currentProperty="io"
+		localItems={quickAccessItems}
+		showMobileButton={!$page.url.pathname.startsWith('/papers') &&
+			!$page.url.pathname.startsWith('/experiments')}
 	/>
 
-	<!-- Add top padding to account for fixed navigation -->
-	<main id="main-content" class="main-content">
-		{@render children()}
-	</main>
+	<div class="layout-root property-performance">
+		<Navigation
+			logo="CREATE SOMETHING"
+			links={navLinks}
+			currentPath={$page.url.pathname}
+			fixed={true}
+			ctaLabel="Contact"
+			ctaHref="/contact"
+			user={data.user}
+			onLogout={handleLogout}
+			showLogin={true}
+			loginHref="/login"
+			accountHref="/account"
+			visualStyle="clear"
+		/>
 
-	<Footer
-		mode="io"
-		showNewsletter={true}
-		turnstileSiteKey={data.turnstileSiteKey}
-		newsletterTitle="Get the monthly research digest"
-		newsletterDescription="Papers, experiments, and patterns—delivered."
-		aboutText="Systematic evaluation of AI-native development through tracked experiments. Real data from building with Claude Code and Cloudflare."
-		quickLinks={[
-			{ label: 'Experiments', href: '/experiments' },
-			{ label: 'Methodology', href: '/methodology' },
-			{ label: 'Categories', href: '/categories' },
-			{ label: 'About', href: '/about' },
-			{ label: 'Contact', href: '/contact' }
-		]}
-		showSocial={true}
-		isAuthenticated={!!data.user}
-		visualStyle="clear"
-	/>
+		<!-- Add top padding to account for fixed navigation -->
+		<main id="main-content" class="main-content">
+			{@render children()}
+		</main>
 
-	<!-- Mode of Being Indicator - Hermeneutic Circle Position -->
-	<ModeIndicator current="io" />
-</div>
+		<Footer
+			mode="io"
+			showNewsletter={true}
+			turnstileSiteKey={data.turnstileSiteKey}
+			newsletterTitle="Get the monthly research digest"
+			newsletterDescription="Papers, experiments, and patterns—delivered."
+			aboutText="Systematic evaluation of AI-native development through tracked experiments. Real data from building with Claude Code and Cloudflare."
+			quickLinks={[
+				{ label: 'Experiments', href: '/experiments' },
+				{ label: 'Methodology', href: '/methodology' },
+				{ label: 'Categories', href: '/categories' },
+				{ label: 'About', href: '/about' },
+				{ label: 'Contact', href: '/contact' }
+			]}
+			showSocial={true}
+			isAuthenticated={!!data.user}
+			visualStyle="clear"
+		/>
+
+		<!-- Mode of Being Indicator - Hermeneutic Circle Position -->
+		<ModeIndicator current="io" />
+	</div>
+{/if}
 
 <style>
 	.layout-root {

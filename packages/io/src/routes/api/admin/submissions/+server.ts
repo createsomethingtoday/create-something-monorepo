@@ -4,8 +4,10 @@ import { adminDelete, adminList } from '$lib/admin/index.js';
 
 interface SubmissionRequest {
 	id?: string;
-	status?: 'unread' | 'read' | 'archived';
+	status?: 'unread' | 'read' | 'archived' | 'in_progress' | 'escalated' | 'responded';
 }
+
+const ALLOWED_STATUSES = ['unread', 'read', 'archived', 'in_progress', 'escalated', 'responded'];
 
 export const GET: RequestHandler = async ({ platform }) => {
 	const db = platform?.env?.DB;
@@ -36,7 +38,7 @@ export const PATCH: RequestHandler = async ({ request, platform }) => {
 			return json({ error: 'Submission ID and status required' }, { status: 400 });
 		}
 
-		if (!['unread', 'read', 'archived'].includes(status)) {
+		if (!ALLOWED_STATUSES.includes(status)) {
 			return json({ error: 'Invalid status' }, { status: 400 });
 		}
 

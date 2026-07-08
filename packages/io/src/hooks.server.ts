@@ -11,6 +11,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const isUserApiRoute = event.url.pathname.startsWith('/api/user');
 	const isLoginPage = event.url.pathname === '/admin/login';
 	const isAuthApi = event.url.pathname.startsWith('/api/auth');
+	const adminLoginUrl = `/admin/login?next=${encodeURIComponent(
+		event.url.pathname + event.url.search
+	)}`;
 
 	// Set locals.user for user API routes (analytics, preferences, etc.)
 	if (isUserApiRoute) {
@@ -48,7 +51,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					headers: { 'Content-Type': 'application/json' }
 				});
 			}
-			throw redirect(303, '/admin/login');
+			throw redirect(303, adminLoginUrl);
 		}
 
 		// Verify admin role in local D1 database
@@ -60,7 +63,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					headers: { 'Content-Type': 'application/json' }
 				});
 			}
-			throw redirect(303, '/admin/login');
+			throw redirect(303, adminLoginUrl);
 		}
 
 		const adminUser = await db
@@ -76,7 +79,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					headers: { 'Content-Type': 'application/json' }
 				});
 			}
-			throw redirect(303, '/admin/login');
+			throw redirect(303, adminLoginUrl);
 		}
 
 		// Add user to locals for use in routes

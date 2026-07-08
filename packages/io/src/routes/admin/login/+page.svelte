@@ -1,10 +1,19 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
+	import { page } from '$app/stores';
 
 	let email = '';
 	let password = '';
 	let loading = false;
 	let error = '';
+
+	function getNextPath() {
+		const next = $page.url.searchParams.get('next');
+		if (!next || !next.startsWith('/admin') || next.startsWith('//')) {
+			return '/admin';
+		}
+		return next;
+	}
 
 	async function handleLogin() {
 		if (!email || !password) {
@@ -23,8 +32,7 @@
 			});
 
 			if (response.ok) {
-				// Redirect to admin dashboard
-				window.location.href = '/admin';
+				window.location.href = getNextPath();
 			} else {
 				const result = (await response.json()) as { error?: string };
 				error = result.error || 'Invalid credentials';
