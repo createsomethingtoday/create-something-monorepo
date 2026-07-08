@@ -21,39 +21,43 @@
 	}
 </script>
 
-<div class="admin-layout">
-	<!-- Admin Navigation -->
-	<nav class="admin-nav">
-		<div class="max-w-7xl mx-auto px-6">
-			<div class="flex items-center justify-between">
-				<div class="flex gap-6">
-					{#each navItems as item}
-						<a
-							href={item.href}
-							class="nav-link {$page.url.pathname === item.href ? 'active' : ''}"
+{#if $page.url.pathname === '/admin/login'}
+	<slot />
+{:else}
+	<div class="admin-layout">
+		<!-- Admin Navigation -->
+		<nav class="admin-nav">
+			<div class="max-w-7xl mx-auto px-6">
+				<div class="flex items-center justify-between">
+					<div class="flex gap-6">
+						{#each navItems as item}
+							<a
+								href={item.href}
+								class="nav-link {$page.url.pathname === item.href ? 'active' : ''}"
+							>
+								{item.label}
+							</a>
+						{/each}
+					</div>
+					<div class="flex items-center gap-4">
+						<a href="/" class="utility-link">← Back to Site</a>
+						<button
+							onclick={logout}
+							class="utility-link"
 						>
-							{item.label}
-						</a>
-					{/each}
-				</div>
-				<div class="flex items-center gap-4">
-					<a href="/" class="utility-link">← Back to Site</a>
-					<button
-						onclick={logout}
-						class="utility-link"
-					>
-						Logout
-					</button>
+							Logout
+						</button>
+					</div>
 				</div>
 			</div>
-		</div>
-	</nav>
+		</nav>
 
-	<!-- Admin Content -->
-	<main id="main-content" class="admin-content" tabindex="-1">
-		<slot />
-	</main>
-</div>
+		<!-- Admin Content -->
+		<main id="main-content" class="admin-content" tabindex="-1">
+			<slot />
+		</main>
+	</div>
+{/if}
 
 <style>
 	:global(body) {
