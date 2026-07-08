@@ -1,0 +1,469 @@
+{
+  "id": "substrate:create-something:client-overlay-coverage",
+  "generatedAt": "2026-07-07T23:42:24.144Z",
+  "topologyId": "substrate:create-something:topology:internal",
+  "atlasCanvasId": "create-something-internal-operating-topology",
+  "overlays": [
+    {
+      "clientSlug": "cato-supply-insights-review",
+      "recordId": "substrate:create-something:client-overlay:cato-supply-insights-review",
+      "atlasCanvasId": "create-something-internal-operating-topology:cato-supply-insights-review",
+      "title": "Cato Supply Insights Review Atlas/Substrate overlay",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "packages": [
+        {
+          "recordId": "substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "atlasNodeId": "atlas_create-something_package_create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "packageName": "@create-something/cato-supply-insights-review",
+          "path": "packages/agency/clients/cato-supply-insights-review",
+          "tier": "Judgment",
+          "runtime": "cloudflare, node",
+          "summary": "# Cato Supply Insights Review",
+          "commands": [
+            "check",
+            "deploy:preview",
+            "deploy:review",
+            "dev"
+          ],
+          "docs": [
+            "packages/agency/clients/cato-supply-insights-review/docs/cato-additional-page-updates-sop-proposal-2026-05-27.md",
+            "packages/agency/clients/cato-supply-insights-review/docs/cato-linkedin-content-capture-checklist-2026-05-27.md",
+            "packages/agency/clients/cato-supply-insights-review/docs/code-components-handoff-2026-05-24.md",
+            "packages/agency/clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-16.md",
+            "packages/agency/clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-24.md",
+            "packages/agency/clients/cato-supply-insights-review/docs/webflow-port-notes-2026-05-16.md",
+            "packages/agency/clients/cato-supply-insights-review/README.md"
+          ],
+          "workerConfigs": [
+            "packages/agency/clients/cato-supply-insights-review/wrangler.toml"
+          ]
+        }
+      ],
+      "atlasNodes": [
+        {
+          "id": "atlas_create-something_package_create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "recordId": "substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "label": "@create-something/cato-supply-insights-review",
+          "kind": "system",
+          "path": "packages/agency/clients/cato-supply-insights-review"
+        }
+      ],
+      "substrateRecords": [
+        {
+          "id": "substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "source": "CREATE SOMETHING client overlay coverage",
+          "sourceType": "client",
+          "title": "@create-something/cato-supply-insights-review",
+          "owner": "CREATE SOMETHING",
+          "status": "ready",
+          "bindingHealth": "bound",
+          "atlasCanvasId": "create-something-internal-operating-topology:cato-supply-insights-review",
+          "atlasNodeId": "atlas_create-something_package_create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "relationCount": 9,
+          "receiptId": "receipt:substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "updatedAt": "2026-07-07T23:42:24.144Z",
+          "summary": "# Cato Supply Insights Review"
+        }
+      ],
+      "receipts": [
+        {
+          "id": "receipt:substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "recordId": "substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "type": "proof",
+          "summary": "@create-something/cato-supply-insights-review has first-class client overlay coverage.",
+          "evidence": "packages/agency/clients/cato-supply-insights-review was bound into create-something-internal-operating-topology:cato-supply-insights-review at 2026-07-07T23:42:24.144Z.",
+          "createdAt": "2026-07-07T23:42:24.144Z"
+        }
+      ],
+      "nextActions": [
+        {
+          "id": "action:client-overlay-review:substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "recordId": "substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
+          "state": "wait",
+          "title": "Review @create-something/cato-supply-insights-review Atlas/Substrate overlay",
+          "owner": "CREATE SOMETHING",
+          "policy": "Client overlay review before external writes",
+          "detail": "packages/agency/clients/cato-supply-insights-review is mapped as a client overlay. Review workflow, agent, MCP, database, proof, and runtime bindings before mutating client systems."
+        }
+      ]
+    },
+    {
+      "clientSlug": "jandjhomehealth",
+      "recordId": "substrate:create-something:client-overlay:jandjhomehealth",
+      "atlasCanvasId": "create-something-internal-operating-topology:jandjhomehealth",
+      "title": "Jandjhomehealth Atlas/Substrate overlay",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "packages": [
+        {
+          "recordId": "substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "atlasNodeId": "atlas_create-something_package_create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "packageName": "@create-something/jandjhomehealth",
+          "path": "packages/agency/clients/jandjhomehealth",
+          "tier": "Mixed",
+          "runtime": "cloudflare, node",
+          "summary": "# J&J Home Health Contact Capture",
+          "commands": [
+            "build",
+            "check",
+            "check:watch",
+            "deploy",
+            "deploy:contact-capture",
+            "dev",
+            "migrate",
+            "migrate:list",
+            "preview",
+            "types"
+          ],
+          "docs": [
+            "packages/agency/clients/jandjhomehealth/README.md"
+          ],
+          "workerConfigs": [
+            "packages/agency/clients/jandjhomehealth/wrangler.toml"
+          ]
+        }
+      ],
+      "atlasNodes": [
+        {
+          "id": "atlas_create-something_package_create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "recordId": "substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "label": "@create-something/jandjhomehealth",
+          "kind": "system",
+          "path": "packages/agency/clients/jandjhomehealth"
+        }
+      ],
+      "substrateRecords": [
+        {
+          "id": "substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "source": "CREATE SOMETHING client overlay coverage",
+          "sourceType": "client",
+          "title": "@create-something/jandjhomehealth",
+          "owner": "CREATE SOMETHING",
+          "status": "ready",
+          "bindingHealth": "bound",
+          "atlasCanvasId": "create-something-internal-operating-topology:jandjhomehealth",
+          "atlasNodeId": "atlas_create-something_package_create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "relationCount": 3,
+          "receiptId": "receipt:substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "updatedAt": "2026-07-07T23:42:24.144Z",
+          "summary": "# J&J Home Health Contact Capture"
+        }
+      ],
+      "receipts": [
+        {
+          "id": "receipt:substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "recordId": "substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "type": "proof",
+          "summary": "@create-something/jandjhomehealth has first-class client overlay coverage.",
+          "evidence": "packages/agency/clients/jandjhomehealth was bound into create-something-internal-operating-topology:jandjhomehealth at 2026-07-07T23:42:24.144Z.",
+          "createdAt": "2026-07-07T23:42:24.144Z"
+        }
+      ],
+      "nextActions": [
+        {
+          "id": "action:client-overlay-review:substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "recordId": "substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+          "state": "wait",
+          "title": "Review @create-something/jandjhomehealth Atlas/Substrate overlay",
+          "owner": "CREATE SOMETHING",
+          "policy": "Client overlay review before external writes",
+          "detail": "packages/agency/clients/jandjhomehealth is mapped as a client overlay. Review workflow, agent, MCP, database, proof, and runtime bindings before mutating client systems."
+        }
+      ]
+    },
+    {
+      "clientSlug": "outerfields",
+      "recordId": "substrate:create-something:client-overlay:outerfields",
+      "atlasCanvasId": "create-something-internal-operating-topology:outerfields",
+      "title": "Outerfields Atlas/Substrate overlay",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "packages": [
+        {
+          "recordId": "substrate:create-something:package:outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "atlasNodeId": "atlas_create-something_package_outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "packageName": "@outerfields/pcn-mcp-remote",
+          "path": "packages/agency/clients/outerfields/mcp-remote",
+          "tier": "Automation",
+          "runtime": "cloudflare, node",
+          "summary": "Remote MCP server for OUTERFIELDS Premium Content Network - stateless Streamable HTTP on Cloudflare Workers",
+          "commands": [
+            "deploy",
+            "dev"
+          ],
+          "docs": [
+            "packages/agency/clients/outerfields/mcp-remote/DEPLOYMENT.md",
+            "packages/agency/clients/outerfields/mcp-remote/README.md"
+          ],
+          "workerConfigs": [
+            "packages/agency/clients/outerfields/mcp-remote/wrangler.toml"
+          ]
+        },
+        {
+          "recordId": "substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "atlasNodeId": "atlas_create-something_package_outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "packageName": "@outerfields/pcn-tools",
+          "path": "packages/agency/clients/outerfields/mcp-server",
+          "tier": "Automation",
+          "runtime": "node",
+          "summary": "MCP server for OUTERFIELDS Premium Content Network - AI-native platform exploration and guidance",
+          "commands": [
+            "build",
+            "dev",
+            "prepublishOnly"
+          ],
+          "docs": [
+            "packages/agency/clients/outerfields/mcp-server/CLIENT_SETUP.md",
+            "packages/agency/clients/outerfields/mcp-server/DEPLOYMENT.md",
+            "packages/agency/clients/outerfields/mcp-server/README.md"
+          ],
+          "workerConfigs": []
+        },
+        {
+          "recordId": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+          "atlasNodeId": "atlas_create-something_package_create-something-outerfields-packages-agency-clients-outerfields",
+          "packageName": "@create-something/outerfields",
+          "path": "packages/agency/clients/outerfields",
+          "tier": "Mixed",
+          "runtime": "cloudflare, node",
+          "summary": "# OUTERFIELDS PCN - Remote MCP Server",
+          "commands": [
+            "build",
+            "check",
+            "check:watch",
+            "db:shell",
+            "deploy",
+            "deploy:preview",
+            "dev",
+            "migrate",
+            "migrate:list",
+            "preview",
+            "test",
+            "types"
+          ],
+          "docs": [
+            "packages/agency/clients/outerfields/.rules/content-gaps.md",
+            "packages/agency/clients/outerfields/.rules/error-prevention.md",
+            "packages/agency/clients/outerfields/.rules/ux-patterns.md",
+            "packages/agency/clients/outerfields/DEPLOYMENT.md",
+            "packages/agency/clients/outerfields/INVESTIGATION-VIDEO-ARCHITECTURE.md",
+            "packages/agency/clients/outerfields/mcp-remote/DEPLOYMENT.md",
+            "packages/agency/clients/outerfields/mcp-remote/README.md",
+            "packages/agency/clients/outerfields/mcp-server/CLIENT_SETUP.md",
+            "packages/agency/clients/outerfields/mcp-server/DEPLOYMENT.md",
+            "packages/agency/clients/outerfields/mcp-server/README.md",
+            "packages/agency/clients/outerfields/src/lib/email/README.md",
+            "packages/agency/clients/outerfields/src/routes/presentations/README.md"
+          ],
+          "workerConfigs": [
+            "packages/agency/clients/outerfields/wrangler.toml",
+            "packages/agency/clients/outerfields/wrangler.jsonc"
+          ]
+        }
+      ],
+      "atlasNodes": [
+        {
+          "id": "atlas_create-something_package_outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "recordId": "substrate:create-something:package:outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "label": "@outerfields/pcn-mcp-remote",
+          "kind": "ai",
+          "path": "packages/agency/clients/outerfields/mcp-remote"
+        },
+        {
+          "id": "atlas_create-something_package_outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "recordId": "substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "label": "@outerfields/pcn-tools",
+          "kind": "ai",
+          "path": "packages/agency/clients/outerfields/mcp-server"
+        },
+        {
+          "id": "atlas_create-something_package_create-something-outerfields-packages-agency-clients-outerfields",
+          "recordId": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+          "label": "@create-something/outerfields",
+          "kind": "system",
+          "path": "packages/agency/clients/outerfields"
+        }
+      ],
+      "substrateRecords": [
+        {
+          "id": "substrate:create-something:package:outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "source": "CREATE SOMETHING client overlay coverage",
+          "sourceType": "client",
+          "title": "@outerfields/pcn-mcp-remote",
+          "owner": "CREATE SOMETHING",
+          "status": "ready",
+          "bindingHealth": "bound",
+          "atlasCanvasId": "create-something-internal-operating-topology:outerfields",
+          "atlasNodeId": "atlas_create-something_package_outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "relationCount": 4,
+          "receiptId": "receipt:substrate:create-something:package:outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "updatedAt": "2026-07-07T23:42:24.144Z",
+          "summary": "Remote MCP server for OUTERFIELDS Premium Content Network - stateless Streamable HTTP on Cloudflare Workers"
+        },
+        {
+          "id": "substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "source": "CREATE SOMETHING client overlay coverage",
+          "sourceType": "client",
+          "title": "@outerfields/pcn-tools",
+          "owner": "CREATE SOMETHING",
+          "status": "ready",
+          "bindingHealth": "bound",
+          "atlasCanvasId": "create-something-internal-operating-topology:outerfields",
+          "atlasNodeId": "atlas_create-something_package_outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "relationCount": 4,
+          "receiptId": "receipt:substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "updatedAt": "2026-07-07T23:42:24.144Z",
+          "summary": "MCP server for OUTERFIELDS Premium Content Network - AI-native platform exploration and guidance"
+        },
+        {
+          "id": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+          "source": "CREATE SOMETHING client overlay coverage",
+          "sourceType": "client",
+          "title": "@create-something/outerfields",
+          "owner": "CREATE SOMETHING",
+          "status": "ready",
+          "bindingHealth": "bound",
+          "atlasCanvasId": "create-something-internal-operating-topology:outerfields",
+          "atlasNodeId": "atlas_create-something_package_create-something-outerfields-packages-agency-clients-outerfields",
+          "relationCount": 15,
+          "receiptId": "receipt:substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+          "updatedAt": "2026-07-07T23:42:24.144Z",
+          "summary": "# OUTERFIELDS PCN - Remote MCP Server"
+        }
+      ],
+      "receipts": [
+        {
+          "id": "receipt:substrate:create-something:package:outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "recordId": "substrate:create-something:package:outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "type": "proof",
+          "summary": "@outerfields/pcn-mcp-remote has first-class client overlay coverage.",
+          "evidence": "packages/agency/clients/outerfields/mcp-remote was bound into create-something-internal-operating-topology:outerfields at 2026-07-07T23:42:24.144Z.",
+          "createdAt": "2026-07-07T23:42:24.144Z"
+        },
+        {
+          "id": "receipt:substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "recordId": "substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "type": "proof",
+          "summary": "@outerfields/pcn-tools has first-class client overlay coverage.",
+          "evidence": "packages/agency/clients/outerfields/mcp-server was bound into create-something-internal-operating-topology:outerfields at 2026-07-07T23:42:24.144Z.",
+          "createdAt": "2026-07-07T23:42:24.144Z"
+        },
+        {
+          "id": "receipt:substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+          "recordId": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+          "type": "proof",
+          "summary": "@create-something/outerfields has first-class client overlay coverage.",
+          "evidence": "packages/agency/clients/outerfields was bound into create-something-internal-operating-topology:outerfields at 2026-07-07T23:42:24.144Z.",
+          "createdAt": "2026-07-07T23:42:24.144Z"
+        }
+      ],
+      "nextActions": [
+        {
+          "id": "action:client-overlay-review:substrate:create-something:package:outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "recordId": "substrate:create-something:package:outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
+          "state": "wait",
+          "title": "Review @outerfields/pcn-mcp-remote Atlas/Substrate overlay",
+          "owner": "CREATE SOMETHING",
+          "policy": "Client overlay review before external writes",
+          "detail": "packages/agency/clients/outerfields/mcp-remote is mapped as a client overlay. Review workflow, agent, MCP, database, proof, and runtime bindings before mutating client systems."
+        },
+        {
+          "id": "action:client-overlay-review:substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "recordId": "substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
+          "state": "wait",
+          "title": "Review @outerfields/pcn-tools Atlas/Substrate overlay",
+          "owner": "CREATE SOMETHING",
+          "policy": "Client overlay review before external writes",
+          "detail": "packages/agency/clients/outerfields/mcp-server is mapped as a client overlay. Review workflow, agent, MCP, database, proof, and runtime bindings before mutating client systems."
+        },
+        {
+          "id": "action:client-overlay-review:substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+          "recordId": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+          "state": "wait",
+          "title": "Review @create-something/outerfields Atlas/Substrate overlay",
+          "owner": "CREATE SOMETHING",
+          "policy": "Client overlay review before external writes",
+          "detail": "packages/agency/clients/outerfields is mapped as a client overlay. Review workflow, agent, MCP, database, proof, and runtime bindings before mutating client systems."
+        }
+      ]
+    },
+    {
+      "clientSlug": "the-stack",
+      "recordId": "substrate:create-something:client-overlay:the-stack",
+      "atlasCanvasId": "create-something-internal-operating-topology:the-stack",
+      "title": "The Stack Atlas/Substrate overlay",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "packages": [
+        {
+          "recordId": "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+          "atlasNodeId": "atlas_create-something_package_create-something-the-stack-packages-agency-clients-the-stack",
+          "packageName": "@create-something/the-stack",
+          "path": "packages/agency/clients/the-stack",
+          "tier": "Mixed",
+          "runtime": "cloudflare, node",
+          "summary": "Managed client package at packages/agency/clients/the-stack.",
+          "commands": [
+            "build",
+            "check",
+            "check:watch",
+            "dev",
+            "preview"
+          ],
+          "docs": [],
+          "workerConfigs": [
+            "packages/agency/clients/the-stack/wrangler.jsonc"
+          ]
+        }
+      ],
+      "atlasNodes": [
+        {
+          "id": "atlas_create-something_package_create-something-the-stack-packages-agency-clients-the-stack",
+          "recordId": "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+          "label": "@create-something/the-stack",
+          "kind": "system",
+          "path": "packages/agency/clients/the-stack"
+        }
+      ],
+      "substrateRecords": [
+        {
+          "id": "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+          "source": "CREATE SOMETHING client overlay coverage",
+          "sourceType": "client",
+          "title": "@create-something/the-stack",
+          "owner": "CREATE SOMETHING",
+          "status": "ready",
+          "bindingHealth": "bound",
+          "atlasCanvasId": "create-something-internal-operating-topology:the-stack",
+          "atlasNodeId": "atlas_create-something_package_create-something-the-stack-packages-agency-clients-the-stack",
+          "relationCount": 2,
+          "receiptId": "receipt:substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+          "updatedAt": "2026-07-07T23:42:24.144Z",
+          "summary": "Managed client package at packages/agency/clients/the-stack."
+        }
+      ],
+      "receipts": [
+        {
+          "id": "receipt:substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+          "recordId": "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+          "type": "proof",
+          "summary": "@create-something/the-stack has first-class client overlay coverage.",
+          "evidence": "packages/agency/clients/the-stack was bound into create-something-internal-operating-topology:the-stack at 2026-07-07T23:42:24.144Z.",
+          "createdAt": "2026-07-07T23:42:24.144Z"
+        }
+      ],
+      "nextActions": [
+        {
+          "id": "action:client-overlay-review:substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+          "recordId": "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+          "state": "wait",
+          "title": "Review @create-something/the-stack Atlas/Substrate overlay",
+          "owner": "CREATE SOMETHING",
+          "policy": "Client overlay review before external writes",
+          "detail": "packages/agency/clients/the-stack is mapped as a client overlay. Review workflow, agent, MCP, database, proof, and runtime bindings before mutating client systems."
+        }
+      ]
+    }
+  ]
+}
