@@ -48,7 +48,16 @@ describe('Canon token artifact parity', () => {
       '--text-body',
       '--text-body-sm',
       '--text-caption',
-      '--text-overline'
+      '--text-overline',
+      '--text-record',
+      '--text-record-meta',
+      '--text-operator-label',
+      '--text-topology-label',
+      '--font-interface',
+      '--font-record',
+      '--font-topology-label',
+      '--tracking-topology-label',
+      '--leading-topology-label'
     ] as const;
 
     for (const token of typographyTokens) {

@@ -207,9 +207,10 @@
 	.atlas-story__ledger-summary span,
 	.atlas-story__score span {
 		color: var(--color-clear-grey, #636363);
-		font-size: 0.72rem;
+		font-family: var(--font-topology-label, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
+		font-size: var(--text-operator-label, 0.72rem);
 		font-weight: 800;
-		letter-spacing: 0.08em;
+		letter-spacing: var(--tracking-operator-label, 0);
 		text-transform: uppercase;
 	}
 
@@ -310,13 +311,15 @@
 
 	.atlas-story__score strong {
 		color: var(--color-clear-onyx, #0a0e19);
+		font-family: var(--font-record, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
 		font-size: 1.25rem;
+		font-variant-numeric: tabular-nums;
 		line-height: 1;
 	}
 
 	.atlas-story__score small {
 		color: var(--color-clear-grey, #636363);
-		font-size: 0.78rem;
+		font-size: var(--text-record-meta, 0.833rem);
 		font-weight: 700;
 	}
 
@@ -365,7 +368,8 @@
 		border-radius: 999px;
 		background: var(--color-clear-porcelain, #f9f9f9);
 		color: var(--color-clear-grey, #636363);
-		font-size: 0.68rem;
+		font-family: var(--font-record, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
+		font-size: var(--text-record-meta, 0.833rem);
 		font-weight: 700;
 		padding: 0.22rem 0.45rem;
 	}
@@ -403,13 +407,15 @@
 
 	.atlas-story__ledger-summary strong {
 		color: var(--color-clear-onyx, #0a0e19);
+		font-family: var(--font-record, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
 		font-size: 1.42rem;
+		font-variant-numeric: tabular-nums;
 		line-height: 1;
 	}
 
 	.atlas-story__ledger-summary small {
 		color: var(--color-clear-grey, #636363);
-		font-size: 0.78rem;
+		font-size: var(--text-record-meta, 0.833rem);
 		font-weight: 700;
 	}
 
@@ -473,7 +479,9 @@
 		border-radius: 999px;
 		background: #fafafa;
 		color: #5f5f59;
-		font-size: 0.66rem;
+		font-family: var(--font-record, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
+		font-size: var(--text-record-meta, 0.833rem);
+		font-variant-numeric: tabular-nums;
 		font-weight: 800;
 		line-height: 1;
 	}
@@ -486,7 +494,7 @@
 
 	.atlas-story__ledger-copy strong {
 		color: var(--color-clear-onyx, #0a0e19);
-		font-size: 0.88rem;
+		font-size: var(--text-record, 0.913rem);
 		letter-spacing: 0;
 		line-height: 1.16;
 	}
@@ -494,7 +502,7 @@
 	.atlas-story__ledger-row small {
 		grid-column: 2;
 		color: #777770;
-		font-size: 0.66rem;
+		font-size: var(--text-record-meta, 0.833rem);
 		font-weight: 700;
 		line-height: 1.18;
 	}
