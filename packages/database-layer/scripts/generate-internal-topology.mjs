@@ -346,6 +346,134 @@ function makeEdge(source, target, relation, evidence) {
   return { id: edgeId(source, target, relation), source, target, relation, evidence };
 }
 
+const tokenStopwords = new Set([
+  'and',
+  'app',
+  'apps',
+  'create',
+  'creating',
+  'doc',
+  'docs',
+  'guide',
+  'guides',
+  'json',
+  'markdown',
+  'mixed',
+  'package',
+  'packages',
+  'policy',
+  'readme',
+  'something',
+  'surface',
+  'the',
+  'v1'
+]);
+
+const knowledgeFallbackPackageNames = {
+  doc: [
+    '@create-something/database-layer',
+    '@create-something/substrate-mcp',
+    '@create-something/interaction-atlas-mcp',
+    '@create-something/agency',
+    '@create-something/io'
+  ],
+  guide: [
+    '@create-something/interaction-atlas-mcp',
+    '@create-something/database-layer',
+    '@create-something/substrate-mcp',
+    '@create-something/agency',
+    '@create-something/io'
+  ],
+  policy: [
+    '@create-something/mcp-authz',
+    '@create-something/pi-policy-os',
+    '@create-something/canon',
+    '@create-something/database-layer',
+    '@create-something/substrate-mcp'
+  ]
+};
+
+function hashText(value) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+}
+
+function tokensForNode(node) {
+  const text = [
+    node.title,
+    node.path,
+    node.surface,
+    node.tier,
+    node.summary,
+    node.packageName,
+    ...(node.tags ?? [])
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return new Set(
+    text
+      .match(/[a-z0-9]+/g)
+      ?.filter((token) => token.length > 2 && !tokenStopwords.has(token)) ?? []
+  );
+}
+
+function scoreKnowledgeTarget(knowledgeTokens, target, targetTokens) {
+  let score = 0;
+  for (const token of knowledgeTokens) {
+    if (targetTokens.has(token)) score += 1;
+  }
+  if (knowledgeTokens.has('mcp') && target.surface === 'mcp') score += 3;
+  if (knowledgeTokens.has('agent') && target.surface === 'agent') score += 3;
+  if (knowledgeTokens.has('worker') && target.surface === 'worker') score += 2;
+  if (knowledgeTokens.has('cloudflare') && target.runtime?.includes('cloudflare')) score += 2;
+  if (knowledgeTokens.has('atlas') && target.packageName === '@create-something/interaction-atlas-mcp') score += 4;
+  if (knowledgeTokens.has('substrate') && target.packageName === '@create-something/substrate-mcp') score += 4;
+  if (knowledgeTokens.has('database') && target.packageName === '@create-something/database-layer') score += 4;
+  if (knowledgeTokens.has('canon') && target.packageName === '@create-something/canon') score += 4;
+  if (knowledgeTokens.has('auth') && target.packageName === '@create-something/mcp-authz') score += 3;
+  return score;
+}
+
+function fallbackKnowledgeTarget(doc, fallbackTargets, targetCandidates) {
+  const preferredTargets = (knowledgeFallbackPackageNames[doc.surface] ?? [])
+    .map((packageName) => fallbackTargets.get(packageName))
+    .filter(Boolean);
+  const targets = preferredTargets.length > 0 ? preferredTargets : targetCandidates;
+  return targets[hashText(doc.path) % targets.length];
+}
+
+function operationalKnowledgeEdges(docNodes, targetCandidates, fallbackTargets) {
+  const indexedTargets = targetCandidates.map((node) => ({
+    node,
+    tokens: tokensForNode(node)
+  }));
+
+  return docNodes.map((doc) => {
+    const docTokens = tokensForNode(doc);
+    const scoredTargets = indexedTargets
+      .map((target) => ({
+        ...target,
+        score: scoreKnowledgeTarget(docTokens, target.node, target.tokens)
+      }))
+      .filter((target) => target.score > 0)
+      .sort((a, b) => b.score - a.score || a.node.path.localeCompare(b.node.path));
+    const target = scoredTargets[0]?.score >= 2
+      ? scoredTargets[0].node
+      : fallbackKnowledgeTarget(doc, fallbackTargets, targetCandidates);
+    const relation = doc.surface === 'policy' ? 'governs' : 'documents';
+    const evidence = scoredTargets[0]?.score >= 2
+      ? `${doc.path} ${relation} ${target.path} through matching topology terms.`
+      : `${doc.path} ${relation} ${target.path} through the stable ${doc.surface} platform anchor.`;
+
+    return makeEdge(doc.id, target.id, relation, evidence);
+  });
+}
+
 function buildTopology() {
   const packageEntries = collectPackageNodes();
   const packageNodes = packageEntries.map(({ node }) => node);
@@ -369,6 +497,9 @@ function buildTopology() {
   const nodeByPath = new Map(nodes.map((node) => [node.path, node]));
   const nodeByPackageName = new Map(
     packageNodes.filter((node) => node.packageName).map((node) => [node.packageName, node])
+  );
+  const operationalKnowledgeTargets = nodes.filter(
+    (node) => !['repo', 'doc', 'guide', 'policy'].includes(node.surface)
   );
   const edges = [];
 
@@ -413,6 +544,8 @@ function buildTopology() {
     if (doc.surface === 'policy') edges.push(makeEdge(doc.id, rootNodeId, 'governs', `${doc.path} is a policy artifact.`));
     if (doc.surface === 'guide') edges.push(makeEdge(doc.id, rootNodeId, 'documents', `${doc.path} is an operating guide.`));
   }
+
+  edges.push(...operationalKnowledgeEdges(docNodes, operationalKnowledgeTargets, nodeByPackageName));
 
   const databaseLayer = nodeByPackageName.get('@create-something/database-layer');
   const substrate = nodeByPackageName.get('@create-something/substrate-mcp');

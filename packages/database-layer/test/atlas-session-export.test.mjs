@@ -10,8 +10,10 @@ const sessionPath = path.join(
   'data',
   'create-something-internal-operating-topology.atlas-session.json'
 );
+const diagnosticsPath = path.join(packageRoot, 'data', 'create-something-topology-diagnostics.json');
 const topology = JSON.parse(fs.readFileSync(topologyPath, 'utf8'));
 const session = JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
+const diagnostics = JSON.parse(fs.readFileSync(diagnosticsPath, 'utf8'));
 
 test('internal topology exports an Atlas Studio session artifact', () => {
   assert.equal(session.version, 1);
@@ -87,8 +89,8 @@ test('Atlas Studio session surfaces topology diagnostics for business review', (
   assert.ok(diagnosticsObservation.text.includes('0 hard gaps'));
   assert.ok(diagnosticsObservation.text.includes('6 review signals'));
   assert.ok(diagnosticsStep);
-  assert.ok(diagnosticsStep.summary.includes('Automation has 237'));
-  assert.ok(diagnosticsStep.summary.includes('Database has 21'));
+  assert.ok(diagnosticsStep.summary.includes(`Automation has ${diagnostics.summary.tierCounts.Automation}`));
+  assert.ok(diagnosticsStep.summary.includes(`Database has ${diagnostics.summary.tierCounts.Database}`));
   assert.ok(diagnosticsStep.proof.includes('0 hard gaps'));
   assert.ok(session.story.callouts.some((callout) => callout.id.startsWith('diagnostic_callout_')));
 });

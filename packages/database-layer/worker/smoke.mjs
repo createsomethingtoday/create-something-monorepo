@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
 import worker from './index.mjs';
+import { databaseLayerWorkerState } from './generated-state.mjs';
 
 const readResponse = await worker.fetch(
   new Request('https://database-layer.local/api/substrate/operating-slices', {
@@ -33,7 +34,7 @@ const resourcesResponse = await worker.fetch(
 );
 assert.equal(resourcesResponse.status, 200);
 const resourcesBody = await resourcesResponse.json();
-assert.equal(resourcesBody.resources.length, 487);
+assert.equal(resourcesBody.resources.length, databaseLayerWorkerState.managementSurface.resources.length);
 
 const diagnosticsResponse = await worker.fetch(
   new Request('https://database-layer.local/api/substrate/topology/internal/diagnostics', {
@@ -52,7 +53,7 @@ const topologyRecordsResponse = await worker.fetch(
 );
 assert.equal(topologyRecordsResponse.status, 200);
 const topologyRecordsBody = await topologyRecordsResponse.json();
-assert.equal(topologyRecordsBody.records.length, 439);
+assert.equal(topologyRecordsBody.records.length, databaseLayerWorkerState.topology.nodes.length);
 
 const rootRecord = topologyRecordsBody.records.find(
   (record) => record.id === 'substrate:create-something:root'

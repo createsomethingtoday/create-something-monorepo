@@ -3,7 +3,7 @@ export const databaseLayerWorkerState =
 {
   "managementSurface": {
     "id": "substrate:create-something:management-surface:internal",
-    "generatedAt": "2026-07-07T23:42:25.665Z",
+    "generatedAt": "2026-07-08T03:41:14.535Z",
     "topologyId": "substrate:create-something:topology:internal",
     "atlasCanvasId": "create-something-internal-operating-topology",
     "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -387,20 +387,6 @@ export const databaseLayerWorkerState =
         "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
       },
       {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-app-governance-dashboard-packages-app-governance-db-dashboard",
-        "kind": "topology_record",
-        "title": "app-governance-dashboard",
-        "recordId": "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-app-governance-dashboard-packages-app-governance-db-dashboard",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-app-governance-dashboard-packages-app-governance-db-dashboard",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
         "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
         "kind": "topology_record",
         "title": "@create-something/app-governance-db",
@@ -422,20 +408,6 @@ export const databaseLayerWorkerState =
         "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
         "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-app-governance-db-worker-packages-app-governance-db-worker",
         "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-app-governance-db-worker-packages-app-governance-db-worker",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-app-governance-desktop-packages-app-governance-desktop",
-        "kind": "topology_record",
-        "title": "app-governance-desktop",
-        "recordId": "substrate:create-something:package:app-governance-desktop-packages-app-governance-desktop",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-app-governance-desktop-packages-app-governance-desktop",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-app-governance-desktop-packages-app-governance-desktop",
         "agentCommand": "databaseLayer.topology.records.get",
         "access": [
           "read"
@@ -1038,6 +1010,20 @@ export const databaseLayerWorkerState =
         "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
         "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-halfdozen-gmail-sync-worker-packages-halfdozen-gmail-sync-worker",
         "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-halfdozen-gmail-sync-worker-packages-halfdozen-gmail-sync-worker",
+        "agentCommand": "databaseLayer.topology.records.get",
+        "access": [
+          "read"
+        ],
+        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+      },
+      {
+        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-halfdozen-landing-packages-halfdozen-landing",
+        "kind": "topology_record",
+        "title": "@create-something/halfdozen-landing",
+        "recordId": "substrate:create-something:package:create-something-halfdozen-landing-packages-halfdozen-landing",
+        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-halfdozen-landing-packages-halfdozen-landing",
+        "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-halfdozen-landing-packages-halfdozen-landing",
         "agentCommand": "databaseLayer.topology.records.get",
         "access": [
           "read"
@@ -2851,20 +2837,6 @@ export const databaseLayerWorkerState =
         "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
       },
       {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-app-governance-db-dashboard-wrangler-toml",
-        "kind": "topology_record",
-        "title": "packages/app-governance-db/dashboard/wrangler.toml",
-        "recordId": "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-app-governance-db-dashboard-wrangler-toml",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-app-governance-db-dashboard-wrangler-toml",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
         "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-app-governance-db-worker-wrangler-toml",
         "kind": "topology_record",
         "title": "app-governance-db worker",
@@ -4041,20 +4013,6 @@ export const databaseLayerWorkerState =
         "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
       },
       {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-doc-docs-create-something-database-layer-md",
-        "kind": "topology_record",
-        "title": "CREATE_SOMETHING_DATABASE_LAYER.md",
-        "recordId": "substrate:create-something:doc:docs-create-something-database-layer-md",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-doc-docs-create-something-database-layer-md",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-doc-docs-create-something-database-layer-md",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
         "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-doc-docs-canon-database-layer-design-md",
         "kind": "topology_record",
         "title": "CANON_DATABASE_LAYER_DESIGN.md",
@@ -4636,34 +4594,6 @@ export const databaseLayerWorkerState =
         "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
         "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-mcp-session-self-service-v1-md",
         "mcpUri": "substrate://topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-mcp-session-self-service-v1-md",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-policy-docs-policies-v1-policy-operator-agent-production-lab-v1-json",
-        "kind": "topology_record",
-        "title": "policy.operator-agent-production-lab.v1.json",
-        "recordId": "substrate:create-something:policy:docs-policies-v1-policy-operator-agent-production-lab-v1-json",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-operator-agent-production-lab-v1-json",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-operator-agent-production-lab-v1-json",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-policy-docs-policies-v1-policy-operator-agent-production-lab-v1-md",
-        "kind": "topology_record",
-        "title": "policy.operator-agent-production-lab.v1.md",
-        "recordId": "substrate:create-something:policy:docs-policies-v1-policy-operator-agent-production-lab-v1-md",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-operator-agent-production-lab-v1-md",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-operator-agent-production-lab-v1-md",
         "agentCommand": "databaseLayer.topology.records.get",
         "access": [
           "read"
@@ -5399,62 +5329,6 @@ export const databaseLayerWorkerState =
         "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
       },
       {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-open-weight-agent-executor-eval-md",
-        "kind": "topology_record",
-        "title": "OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md",
-        "recordId": "substrate:create-something:guide:docs-guides-open-weight-agent-executor-eval-md",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-open-weight-agent-executor-eval-md",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-open-weight-agent-executor-eval-md",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-operator-agent-external-pattern-matrix-md",
-        "kind": "topology_record",
-        "title": "OPERATOR_AGENT_EXTERNAL_PATTERN_MATRIX.md",
-        "recordId": "substrate:create-something:guide:docs-guides-operator-agent-external-pattern-matrix-md",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-operator-agent-external-pattern-matrix-md",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-operator-agent-external-pattern-matrix-md",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-operator-agent-public-access-md",
-        "kind": "topology_record",
-        "title": "OPERATOR_AGENT_PUBLIC_ACCESS.md",
-        "recordId": "substrate:create-something:guide:docs-guides-operator-agent-public-access-md",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-operator-agent-public-access-md",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-operator-agent-public-access-md",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-operator-agent-system-md",
-        "kind": "topology_record",
-        "title": "OPERATOR_AGENT_SYSTEM.md",
-        "recordId": "substrate:create-something:guide:docs-guides-operator-agent-system-md",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-operator-agent-system-md",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-operator-agent-system-md",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
         "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md",
         "kind": "topology_record",
         "title": "PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md",
@@ -5560,20 +5434,6 @@ export const databaseLayerWorkerState =
         "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
         "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-steel-cli-md",
         "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-steel-cli-md",
-        "agentCommand": "databaseLayer.topology.records.get",
-        "access": [
-          "read"
-        ],
-        "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-      },
-      {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-substrate-topology-operator-contract-md",
-        "kind": "topology_record",
-        "title": "SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
-        "recordId": "substrate:create-something:guide:docs-guides-substrate-topology-operator-contract-md",
-        "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-substrate-topology-operator-contract-md",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-substrate-topology-operator-contract-md",
         "agentCommand": "databaseLayer.topology.records.get",
         "access": [
           "read"
@@ -6273,37 +6133,6 @@ export const databaseLayerWorkerState =
         "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
       },
       {
-        "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
-        "kind": "slice",
-        "title": "Mixed guide Atlas coverage",
-        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
-        "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
-        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
-        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
-        "agentCommand": "databaseLayer.operatingSlices.get",
-        "access": [
-          "read",
-          "propose"
-        ],
-        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-      },
-      {
-        "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
-        "kind": "readiness",
-        "title": "Mixed guide Atlas coverage readiness",
-        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
-        "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
-        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide/readiness",
-        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide/readiness",
-        "agentCommand": "databaseLayer.operatingSlices.readiness",
-        "access": [
-          "read",
-          "approve",
-          "receipt"
-        ],
-        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-      },
-      {
         "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-automation-mcp",
         "kind": "slice",
         "title": "Automation MCP Atlas coverage",
@@ -6326,6 +6155,37 @@ export const databaseLayerWorkerState =
         "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
         "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-automation-mcp/readiness",
         "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-automation-mcp/readiness",
+        "agentCommand": "databaseLayer.operatingSlices.readiness",
+        "access": [
+          "read",
+          "approve",
+          "receipt"
+        ],
+        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+      },
+      {
+        "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
+        "kind": "slice",
+        "title": "Mixed guide Atlas coverage",
+        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
+        "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
+        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
+        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
+        "agentCommand": "databaseLayer.operatingSlices.get",
+        "access": [
+          "read",
+          "propose"
+        ],
+        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+      },
+      {
+        "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
+        "kind": "readiness",
+        "title": "Mixed guide Atlas coverage readiness",
+        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
+        "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
+        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide/readiness",
+        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide/readiness",
         "agentCommand": "databaseLayer.operatingSlices.readiness",
         "access": [
           "read",
@@ -6428,37 +6288,6 @@ export const databaseLayerWorkerState =
         "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
       },
       {
-        "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
-        "kind": "slice",
-        "title": "Judgment package Atlas coverage",
-        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
-        "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
-        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
-        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
-        "agentCommand": "databaseLayer.operatingSlices.get",
-        "access": [
-          "read",
-          "propose"
-        ],
-        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-      },
-      {
-        "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
-        "kind": "readiness",
-        "title": "Judgment package Atlas coverage readiness",
-        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
-        "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
-        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package/readiness",
-        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package/readiness",
-        "agentCommand": "databaseLayer.operatingSlices.readiness",
-        "access": [
-          "read",
-          "approve",
-          "receipt"
-        ],
-        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-      },
-      {
         "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
         "kind": "slice",
         "title": "Judgment MCP Atlas coverage",
@@ -6481,6 +6310,37 @@ export const databaseLayerWorkerState =
         "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
         "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp/readiness",
         "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp/readiness",
+        "agentCommand": "databaseLayer.operatingSlices.readiness",
+        "access": [
+          "read",
+          "approve",
+          "receipt"
+        ],
+        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+      },
+      {
+        "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+        "kind": "slice",
+        "title": "Judgment package Atlas coverage",
+        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+        "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
+        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+        "agentCommand": "databaseLayer.operatingSlices.get",
+        "access": [
+          "read",
+          "propose"
+        ],
+        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+      },
+      {
+        "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+        "kind": "readiness",
+        "title": "Judgment package Atlas coverage readiness",
+        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+        "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
+        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package/readiness",
+        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package/readiness",
         "agentCommand": "databaseLayer.operatingSlices.readiness",
         "access": [
           "read",
@@ -6614,6 +6474,37 @@ export const databaseLayerWorkerState =
         "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
       },
       {
+        "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package",
+        "kind": "slice",
+        "title": "Database package Atlas coverage",
+        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
+        "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
+        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package",
+        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package",
+        "agentCommand": "databaseLayer.operatingSlices.get",
+        "access": [
+          "read",
+          "propose"
+        ],
+        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+      },
+      {
+        "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package",
+        "kind": "readiness",
+        "title": "Database package Atlas coverage readiness",
+        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
+        "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
+        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package/readiness",
+        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package/readiness",
+        "agentCommand": "databaseLayer.operatingSlices.readiness",
+        "access": [
+          "read",
+          "approve",
+          "receipt"
+        ],
+        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+      },
+      {
         "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-doc",
         "kind": "slice",
         "title": "Mixed doc Atlas coverage",
@@ -6729,37 +6620,6 @@ export const databaseLayerWorkerState =
         "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
         "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-client/readiness",
         "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-client/readiness",
-        "agentCommand": "databaseLayer.operatingSlices.readiness",
-        "access": [
-          "read",
-          "approve",
-          "receipt"
-        ],
-        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-      },
-      {
-        "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package",
-        "kind": "slice",
-        "title": "Database package Atlas coverage",
-        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
-        "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
-        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package",
-        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package",
-        "agentCommand": "databaseLayer.operatingSlices.get",
-        "access": [
-          "read",
-          "propose"
-        ],
-        "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-      },
-      {
-        "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package",
-        "kind": "readiness",
-        "title": "Database package Atlas coverage readiness",
-        "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
-        "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
-        "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package/readiness",
-        "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-package/readiness",
         "agentCommand": "databaseLayer.operatingSlices.readiness",
         "access": [
           "read",
@@ -7019,7 +6879,7 @@ export const databaseLayerWorkerState =
   },
   "operatingSliceReview": {
     "id": "substrate:create-something:operating-slice-review:internal",
-    "generatedAt": "2026-07-07T23:42:25.060Z",
+    "generatedAt": "2026-07-08T03:41:12.774Z",
     "topologyId": "substrate:create-something:topology:internal",
     "atlasCanvasId": "create-something-internal-operating-topology",
     "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -7050,7 +6910,6 @@ export const databaseLayerWorkerState =
           "substrate:create-something:worker:packages-agency-wrangler-jsonc",
           "substrate:create-something:package:create-something-airtable-primary-tags-worker-packages-airtable-primary-tags-worker",
           "substrate:create-something:worker:packages-airtable-primary-tags-worker-wrangler-jsonc",
-          "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
           "substrate:create-something:worker:packages-app-governance-db-worker-wrangler-toml",
           "substrate:create-something:worker:packages-bettermode-creator-mcp-worker-wrangler-toml",
           "substrate:create-something:worker:packages-calm-operator-ink-bridge-wrangler-toml",
@@ -7159,7 +7018,7 @@ export const databaseLayerWorkerState =
         "owner": "CREATE SOMETHING",
         "tier": "Automation",
         "surface": "worker",
-        "nodeCount": 123,
+        "nodeCount": 122,
         "evidence": [
           "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
           "apps/marketplace-template-submission-cloud/wrangler.json",
@@ -7228,8 +7087,6 @@ export const databaseLayerWorkerState =
           "substrate:create-something:policy:docs-policies-v1-policy-mcp-oauth-password-governance-v1-md",
           "substrate:create-something:policy:docs-policies-v1-policy-mcp-session-self-service-v1-json",
           "substrate:create-something:policy:docs-policies-v1-policy-mcp-session-self-service-v1-md",
-          "substrate:create-something:policy:docs-policies-v1-policy-operator-agent-production-lab-v1-json",
-          "substrate:create-something:policy:docs-policies-v1-policy-operator-agent-production-lab-v1-md",
           "substrate:create-something:policy:docs-policies-v1-policy-paper-experiment-release-gate-v1-json",
           "substrate:create-something:policy:docs-policies-v1-policy-paper-experiment-release-gate-v1-md",
           "substrate:create-something:policy:docs-policies-v1-policy-partner-auth-governance-v1-json",
@@ -7250,7 +7107,7 @@ export const databaseLayerWorkerState =
         "owner": "CREATE SOMETHING",
         "tier": "Judgment",
         "surface": "policy",
-        "nodeCount": 56,
+        "nodeCount": 54,
         "evidence": [
           "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
           "docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
@@ -7264,95 +7121,6 @@ export const databaseLayerWorkerState =
           "docs/policies/README.md",
           "docs/policies/v1/policy.account-role-boundaries.v1.json",
           "docs/policies/v1/policy.account-role-boundaries.v1.md"
-        ],
-        "validationCommands": [
-          "pnpm --filter @create-something/database-layer atlas-coverage:generate",
-          "pnpm --filter @create-something/database-layer test"
-        ],
-        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-        "nextAction": "Review the mapped knowledge lane, attach it to owning workflows, and promote approved policy/guide references into operator runbooks."
-      },
-      {
-        "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
-        "title": "Mixed guide Atlas coverage",
-        "status": "review_ready",
-        "atlasCoverageGroupIds": [
-          "substrate:create-something:atlas-coverage-group:knowledge-surface-mixed-guide"
-        ],
-        "recordIds": [
-          "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
-          "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
-          "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-          "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-          "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-          "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
-          "substrate:create-something:guide:docs-guides-agent-legibility-contract-md",
-          "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
-          "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
-          "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
-          "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
-          "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
-          "substrate:create-something:guide:docs-guides-coding-agent-harness-pattern-md",
-          "substrate:create-something:guide:docs-guides-component-guide-md",
-          "substrate:create-something:guide:docs-guides-dify-bettermode-creator-agent-md",
-          "substrate:create-something:guide:docs-guides-dify-first-agent-control-plane-md",
-          "substrate:create-something:guide:docs-guides-dify-partner-affiliate-operating-runbook-md",
-          "substrate:create-something:guide:docs-guides-dify-policy-os-template-pack-md",
-          "substrate:create-something:guide:docs-guides-dify-workspace-inventory-md",
-          "substrate:create-something:guide:docs-guides-dify-youtube-transcript-notion-agent-md",
-          "substrate:create-something:guide:docs-guides-examples-md",
-          "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
-          "substrate:create-something:guide:docs-guides-git-light-agent-delivery-workflow-md",
-          "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
-          "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
-          "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
-          "substrate:create-something:guide:docs-guides-loops-above-agents-md",
-          "substrate:create-something:guide:docs-guides-mcp-apps-integration-md",
-          "substrate:create-something:guide:docs-guides-mcp-dui-organization-md",
-          "substrate:create-something:guide:docs-guides-mcp-registry-workflow-md",
-          "substrate:create-something:guide:docs-guides-migration-guide-md",
-          "substrate:create-something:guide:docs-guides-monorepo-delivery-updates-md",
-          "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
-          "substrate:create-something:guide:docs-guides-notion-workers-and-cli-2026-md",
-          "substrate:create-something:guide:docs-guides-observability-setup-md",
-          "substrate:create-something:guide:docs-guides-ona-core-rollout-md",
-          "substrate:create-something:guide:docs-guides-open-weight-agent-executor-eval-md",
-          "substrate:create-something:guide:docs-guides-operator-agent-external-pattern-matrix-md",
-          "substrate:create-something:guide:docs-guides-operator-agent-public-access-md",
-          "substrate:create-something:guide:docs-guides-operator-agent-system-md",
-          "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
-          "substrate:create-something:guide:docs-guides-policy-os-gating-deploy-checklist-2026-03-09-md",
-          "substrate:create-something:guide:docs-guides-policy-os-live-verification-runbook-2026-03-09-md",
-          "substrate:create-something:guide:docs-guides-recurring-cleanup-loops-md",
-          "substrate:create-something:guide:docs-guides-seo-md",
-          "substrate:create-something:guide:docs-guides-skills-md",
-          "substrate:create-something:guide:docs-guides-solo-operator-agent-loop-md",
-          "substrate:create-something:guide:docs-guides-steel-cli-md",
-          "substrate:create-something:guide:docs-guides-substrate-topology-operator-contract-md",
-          "substrate:create-something:guide:docs-guides-ui-preview-system-md",
-          "substrate:create-something:guide:docs-guides-understanding-template-md",
-          "substrate:create-something:guide:docs-guides-webflow-code-components-control-plane-md",
-          "substrate:create-something:guide:docs-guides-webflow-export-first-agent-workflow-md",
-          "substrate:create-something:guide:docs-guides-webflow-template-review-dify-agent-manual-md"
-        ],
-        "owner": "CREATE SOMETHING",
-        "tier": "Mixed",
-        "surface": "guide",
-        "nodeCount": 54,
-        "evidence": [
-          "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
-          "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
-          "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-          "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-          "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-          "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md",
-          "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
-          "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
-          "docs/guides/ARENA_TASTE_INTEGRATION.md",
-          "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
-          "docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md",
-          "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md"
         ],
         "validationCommands": [
           "pnpm --filter @create-something/database-layer atlas-coverage:generate",
@@ -7448,6 +7216,90 @@ export const databaseLayerWorkerState =
         "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
         "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
         "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
+      },
+      {
+        "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
+        "title": "Mixed guide Atlas coverage",
+        "status": "review_ready",
+        "atlasCoverageGroupIds": [
+          "substrate:create-something:atlas-coverage-group:knowledge-surface-mixed-guide"
+        ],
+        "recordIds": [
+          "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
+          "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
+          "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
+          "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
+          "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
+          "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
+          "substrate:create-something:guide:docs-guides-agent-legibility-contract-md",
+          "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
+          "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
+          "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
+          "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
+          "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
+          "substrate:create-something:guide:docs-guides-coding-agent-harness-pattern-md",
+          "substrate:create-something:guide:docs-guides-component-guide-md",
+          "substrate:create-something:guide:docs-guides-dify-bettermode-creator-agent-md",
+          "substrate:create-something:guide:docs-guides-dify-first-agent-control-plane-md",
+          "substrate:create-something:guide:docs-guides-dify-partner-affiliate-operating-runbook-md",
+          "substrate:create-something:guide:docs-guides-dify-policy-os-template-pack-md",
+          "substrate:create-something:guide:docs-guides-dify-workspace-inventory-md",
+          "substrate:create-something:guide:docs-guides-dify-youtube-transcript-notion-agent-md",
+          "substrate:create-something:guide:docs-guides-examples-md",
+          "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
+          "substrate:create-something:guide:docs-guides-git-light-agent-delivery-workflow-md",
+          "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
+          "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
+          "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
+          "substrate:create-something:guide:docs-guides-loops-above-agents-md",
+          "substrate:create-something:guide:docs-guides-mcp-apps-integration-md",
+          "substrate:create-something:guide:docs-guides-mcp-dui-organization-md",
+          "substrate:create-something:guide:docs-guides-mcp-registry-workflow-md",
+          "substrate:create-something:guide:docs-guides-migration-guide-md",
+          "substrate:create-something:guide:docs-guides-monorepo-delivery-updates-md",
+          "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
+          "substrate:create-something:guide:docs-guides-notion-workers-and-cli-2026-md",
+          "substrate:create-something:guide:docs-guides-observability-setup-md",
+          "substrate:create-something:guide:docs-guides-ona-core-rollout-md",
+          "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
+          "substrate:create-something:guide:docs-guides-policy-os-gating-deploy-checklist-2026-03-09-md",
+          "substrate:create-something:guide:docs-guides-policy-os-live-verification-runbook-2026-03-09-md",
+          "substrate:create-something:guide:docs-guides-recurring-cleanup-loops-md",
+          "substrate:create-something:guide:docs-guides-seo-md",
+          "substrate:create-something:guide:docs-guides-skills-md",
+          "substrate:create-something:guide:docs-guides-solo-operator-agent-loop-md",
+          "substrate:create-something:guide:docs-guides-steel-cli-md",
+          "substrate:create-something:guide:docs-guides-ui-preview-system-md",
+          "substrate:create-something:guide:docs-guides-understanding-template-md",
+          "substrate:create-something:guide:docs-guides-webflow-code-components-control-plane-md",
+          "substrate:create-something:guide:docs-guides-webflow-export-first-agent-workflow-md",
+          "substrate:create-something:guide:docs-guides-webflow-template-review-dify-agent-manual-md"
+        ],
+        "owner": "CREATE SOMETHING",
+        "tier": "Mixed",
+        "surface": "guide",
+        "nodeCount": 49,
+        "evidence": [
+          "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
+          "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
+          "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
+          "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
+          "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
+          "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md",
+          "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
+          "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
+          "docs/guides/ARENA_TASTE_INTEGRATION.md",
+          "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
+          "docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md",
+          "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md"
+        ],
+        "validationCommands": [
+          "pnpm --filter @create-something/database-layer atlas-coverage:generate",
+          "pnpm --filter @create-something/database-layer test"
+        ],
+        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+        "nextAction": "Review the mapped knowledge lane, attach it to owning workflows, and promote approved policy/guide references into operator runbooks."
       },
       {
         "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-agent",
@@ -7575,7 +7427,6 @@ export const databaseLayerWorkerState =
           "substrate:create-something:atlas-coverage-group:package-surface-mixed-package"
         ],
         "recordIds": [
-          "substrate:create-something:package:app-governance-desktop-packages-app-governance-desktop",
           "substrate:create-something:package:create-something-ascii-renderer-packages-ascii-renderer",
           "substrate:create-something:package:create-something-bundle-scanner-packages-bundle-scanner",
           "substrate:create-something:package:create-something-bundle-scanner-core-packages-bundle-scanner-core",
@@ -7595,9 +7446,8 @@ export const databaseLayerWorkerState =
         "owner": "CREATE SOMETHING",
         "tier": "Mixed",
         "surface": "package",
-        "nodeCount": 16,
+        "nodeCount": 15,
         "evidence": [
-          "packages/app-governance-desktop",
           "packages/ascii-renderer",
           "packages/bundle-scanner",
           "packages/bundle-scanner-core",
@@ -7608,53 +7458,8 @@ export const databaseLayerWorkerState =
           "packages/simulation",
           "packages/spritz",
           "packages/tools/pencil-balance",
-          "packages/webflow-apps-admin"
-        ],
-        "validationCommands": [
-          "pnpm --filter @create-something/database-layer test"
-        ],
-        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-        "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
-      },
-      {
-        "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
-        "title": "Judgment package Atlas coverage",
-        "status": "review_ready",
-        "atlasCoverageGroupIds": [
-          "substrate:create-something:atlas-coverage-group:judgment-surface-judgment-package"
-        ],
-        "recordIds": [
-          "substrate:create-something:package:create-something-components-archive-components-deprecated",
-          "substrate:create-something:package:create-something-canon-packages-canon",
-          "substrate:create-something:package:createsomething-canon-tokens-packages-canon-tokens",
-          "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
-          "substrate:create-something:package:create-something-dotfiles-packages-dotfiles",
-          "substrate:create-something:package:create-something-eslint-plugin-canon-packages-eslint-plugin-canon",
-          "substrate:create-something:package:create-something-judgment-layer-packages-judgment-layer",
-          "substrate:create-something:package:create-something-motion-studio-packages-motion-studio",
-          "substrate:create-something:package:create-something-policy-os-engine-packages-policy-os-engine",
-          "substrate:create-something:package:create-something-render-pipeline-packages-render-pipeline",
-          "substrate:create-something:package:createsomething-triad-audit-packages-triad-audit",
-          "substrate:create-something:package:create-something-webflow-components-packages-webflow-components"
-        ],
-        "owner": "CREATE SOMETHING",
-        "tier": "Judgment",
-        "surface": "package",
-        "nodeCount": 12,
-        "evidence": [
-          ".archive/components-deprecated",
-          "packages/canon",
-          "packages/canon-tokens",
-          "packages/delivery-schema",
-          "packages/dotfiles",
-          "packages/eslint-plugin-canon",
-          "packages/judgment-layer",
-          "packages/motion-studio",
-          "packages/policy-os-engine",
-          "packages/render-pipeline",
-          "packages/triad-audit",
-          "packages/webflow-components"
+          "packages/webflow-apps-admin",
+          "packages/webflow-dashboard-core"
         ],
         "validationCommands": [
           "pnpm --filter @create-something/database-layer test"
@@ -7709,6 +7514,48 @@ export const databaseLayerWorkerState =
         "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
       },
       {
+        "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+        "title": "Judgment package Atlas coverage",
+        "status": "review_ready",
+        "atlasCoverageGroupIds": [
+          "substrate:create-something:atlas-coverage-group:judgment-surface-judgment-package"
+        ],
+        "recordIds": [
+          "substrate:create-something:package:create-something-components-archive-components-deprecated",
+          "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
+          "substrate:create-something:package:create-something-dotfiles-packages-dotfiles",
+          "substrate:create-something:package:create-something-eslint-plugin-canon-packages-eslint-plugin-canon",
+          "substrate:create-something:package:create-something-judgment-layer-packages-judgment-layer",
+          "substrate:create-something:package:create-something-motion-studio-packages-motion-studio",
+          "substrate:create-something:package:create-something-policy-os-engine-packages-policy-os-engine",
+          "substrate:create-something:package:create-something-render-pipeline-packages-render-pipeline",
+          "substrate:create-something:package:createsomething-triad-audit-packages-triad-audit",
+          "substrate:create-something:package:create-something-webflow-components-packages-webflow-components"
+        ],
+        "owner": "CREATE SOMETHING",
+        "tier": "Judgment",
+        "surface": "package",
+        "nodeCount": 10,
+        "evidence": [
+          ".archive/components-deprecated",
+          "packages/delivery-schema",
+          "packages/dotfiles",
+          "packages/eslint-plugin-canon",
+          "packages/judgment-layer",
+          "packages/motion-studio",
+          "packages/policy-os-engine",
+          "packages/render-pipeline",
+          "packages/triad-audit",
+          "packages/webflow-components"
+        ],
+        "validationCommands": [
+          "pnpm --filter @create-something/database-layer test"
+        ],
+        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+        "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
+      },
+      {
         "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-worker",
         "title": "Judgment worker Atlas coverage",
         "status": "review_ready",
@@ -7716,7 +7563,6 @@ export const databaseLayerWorkerState =
           "substrate:create-something:atlas-coverage-group:automation-surface-judgment-worker"
         ],
         "recordIds": [
-          "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
           "substrate:create-something:package:create-something-clearway-packages-clearway",
           "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
           "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
@@ -7731,9 +7577,8 @@ export const databaseLayerWorkerState =
         "owner": "CREATE SOMETHING",
         "tier": "Judgment",
         "surface": "worker",
-        "nodeCount": 11,
+        "nodeCount": 10,
         "evidence": [
-          "packages/app-governance-db/dashboard",
           "packages/clearway",
           "packages/concierge-chat",
           "packages/identity-worker",
@@ -7874,6 +7719,39 @@ export const databaseLayerWorkerState =
         "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation."
       },
       {
+        "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
+        "title": "Database package Atlas coverage",
+        "status": "review_ready",
+        "atlasCoverageGroupIds": [
+          "substrate:create-something:atlas-coverage-group:database-surface-database-package"
+        ],
+        "recordIds": [
+          "substrate:create-something:package:create-something-monorepo",
+          "substrate:create-something:package:create-something-canon-packages-canon",
+          "substrate:create-something:package:createsomething-canon-tokens-packages-canon-tokens",
+          "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+          "substrate:create-something:package:create-something-halfdozen-landing-packages-halfdozen-landing",
+          "substrate:create-something:package:create-something-notion-tools-packages-notion-tools"
+        ],
+        "owner": "CREATE SOMETHING",
+        "tier": "Database",
+        "surface": "package",
+        "nodeCount": 6,
+        "evidence": [
+          "packages/canon",
+          "packages/canon-tokens",
+          "packages/database-layer",
+          "packages/halfdozen-landing",
+          "packages/notion-tools"
+        ],
+        "validationCommands": [
+          "pnpm --filter @create-something/database-layer test"
+        ],
+        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+        "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
+      },
+      {
         "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-doc",
         "title": "Mixed doc Atlas coverage",
         "status": "review_ready",
@@ -7882,7 +7760,6 @@ export const databaseLayerWorkerState =
         ],
         "recordIds": [
           "substrate:create-something:doc:docs-canon-database-layer-design-md",
-          "substrate:create-something:doc:docs-create-something-database-layer-md",
           "substrate:create-something:doc:docs-mcp-first-thesis-md",
           "substrate:create-something:doc:docs-mcp-hub-control-plane-md",
           "substrate:create-something:doc:docs-readme-md",
@@ -7891,10 +7768,9 @@ export const databaseLayerWorkerState =
         "owner": "CREATE SOMETHING",
         "tier": "Mixed",
         "surface": "doc",
-        "nodeCount": 6,
+        "nodeCount": 5,
         "evidence": [
           "docs/CANON_DATABASE_LAYER_DESIGN.md",
-          "docs/CREATE_SOMETHING_DATABASE_LAYER.md",
           "docs/MCP_FIRST_THESIS.md",
           "docs/MCP_HUB_CONTROL_PLANE.md",
           "docs/README.md",
@@ -7996,33 +7872,6 @@ export const databaseLayerWorkerState =
         "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
         "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
         "nextAction": "Review client overlay boundaries and promote approved slices into client-specific Atlas sessions."
-      },
-      {
-        "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
-        "title": "Database package Atlas coverage",
-        "status": "review_ready",
-        "atlasCoverageGroupIds": [
-          "substrate:create-something:atlas-coverage-group:database-surface-database-package"
-        ],
-        "recordIds": [
-          "substrate:create-something:package:create-something-monorepo",
-          "substrate:create-something:package:create-something-database-layer-packages-database-layer",
-          "substrate:create-something:package:create-something-notion-tools-packages-notion-tools"
-        ],
-        "owner": "CREATE SOMETHING",
-        "tier": "Database",
-        "surface": "package",
-        "nodeCount": 3,
-        "evidence": [
-          "packages/database-layer",
-          "packages/notion-tools"
-        ],
-        "validationCommands": [
-          "pnpm --filter @create-something/database-layer test"
-        ],
-        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-        "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
       },
       {
         "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-agent",
@@ -8136,7 +7985,7 @@ export const databaseLayerWorkerState =
   },
   "operatingSliceReadiness": {
     "id": "substrate:create-something:operating-slice-readiness:internal",
-    "generatedAt": "2026-07-07T23:42:25.104Z",
+    "generatedAt": "2026-07-08T03:41:12.871Z",
     "topologyId": "substrate:create-something:topology:internal",
     "atlasCanvasId": "create-something-internal-operating-topology",
     "sourceReviewId": "substrate:create-something:operating-slice-review:internal",
@@ -8149,20 +7998,20 @@ export const databaseLayerWorkerState =
         "tier": "Automation",
         "surface": "worker",
         "owner": "CREATE SOMETHING",
-        "recordCount": 123,
-        "mappedRecordCount": 123,
+        "recordCount": 122,
+        "mappedRecordCount": 122,
         "missingRecordIds": [],
         "gates": [
           {
             "id": "topology_records_exist",
             "status": "pass",
-            "summary": "123/123 slice records exist in the internal topology.",
+            "summary": "122/122 slice records exist in the internal topology.",
             "evidence": "packages/database-layer/data/create-something-internal-topology.json"
           },
           {
             "id": "topology_records_mapped",
             "status": "pass",
-            "summary": "123/123 slice records are mapped.",
+            "summary": "122/122 slice records are mapped.",
             "evidence": "packages/database-layer/data/create-something-internal-topology.json"
           },
           {
@@ -8186,7 +8035,7 @@ export const databaseLayerWorkerState =
           {
             "id": "cloudflare_runtime_configs_joined",
             "status": "pass",
-            "summary": "99/99 Wrangler config node(s) join to runtime binding coverage.",
+            "summary": "98/98 Wrangler config node(s) join to runtime binding coverage.",
             "evidence": "packages/database-layer/data/create-something-runtime-binding-coverage.json"
           },
           {
@@ -8205,22 +8054,22 @@ export const databaseLayerWorkerState =
         "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation.",
         "workerRuntime": {
           "runtime": "cloudflare",
-          "runtimeConfigRecords": 99,
+          "runtimeConfigRecords": 98,
           "workerPackageRecords": 24,
-          "bindingRefs": 465,
-          "routeRefs": 21,
+          "bindingRefs": 459,
+          "routeRefs": 20,
           "bindingKinds": {
-            "assets": 6,
-            "d1": 80,
+            "assets": 5,
+            "d1": 78,
             "durable_object": 38,
             "kv": 35,
             "queue": 16,
             "r2": 21,
-            "route": 21,
-            "var": 246,
+            "route": 20,
+            "var": 244,
             "vectorize": 2
           },
-          "workersWithD1": 68,
+          "workersWithD1": 66,
           "workersWithDurableObjects": 36,
           "workersWithQueues": 10,
           "workersWithR2": 21,
@@ -8234,57 +8083,6 @@ export const databaseLayerWorkerState =
         "productionStatus": "approval_required",
         "tier": "Judgment",
         "surface": "policy",
-        "owner": "CREATE SOMETHING",
-        "recordCount": 56,
-        "mappedRecordCount": 56,
-        "missingRecordIds": [],
-        "gates": [
-          {
-            "id": "topology_records_exist",
-            "status": "pass",
-            "summary": "56/56 slice records exist in the internal topology.",
-            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-          },
-          {
-            "id": "topology_records_mapped",
-            "status": "pass",
-            "summary": "56/56 slice records are mapped.",
-            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-          },
-          {
-            "id": "validation_commands_declared",
-            "status": "pass",
-            "summary": "2 validation command(s) are attached to the slice.",
-            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-          },
-          {
-            "id": "evidence_paths_declared",
-            "status": "pass",
-            "summary": "12 evidence path(s) are attached to the slice.",
-            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-          },
-          {
-            "id": "approval_boundary_declared",
-            "status": "pass",
-            "summary": "Production mutation remains approval-gated.",
-            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-          }
-        ],
-        "validationCommands": [
-          "pnpm --filter @create-something/database-layer atlas-coverage:generate",
-          "pnpm --filter @create-something/database-layer test"
-        ],
-        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-        "nextAction": "Review the mapped knowledge lane, attach it to owning workflows, and promote approved policy/guide references into operator runbooks."
-      },
-      {
-        "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
-        "title": "Mixed guide Atlas coverage",
-        "status": "review_ready",
-        "productionStatus": "approval_required",
-        "tier": "Mixed",
-        "surface": "guide",
         "owner": "CREATE SOMETHING",
         "recordCount": 54,
         "mappedRecordCount": 54,
@@ -8379,6 +8177,57 @@ export const databaseLayerWorkerState =
         "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
         "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
         "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
+      },
+      {
+        "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
+        "title": "Mixed guide Atlas coverage",
+        "status": "review_ready",
+        "productionStatus": "approval_required",
+        "tier": "Mixed",
+        "surface": "guide",
+        "owner": "CREATE SOMETHING",
+        "recordCount": 49,
+        "mappedRecordCount": 49,
+        "missingRecordIds": [],
+        "gates": [
+          {
+            "id": "topology_records_exist",
+            "status": "pass",
+            "summary": "49/49 slice records exist in the internal topology.",
+            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+          },
+          {
+            "id": "topology_records_mapped",
+            "status": "pass",
+            "summary": "49/49 slice records are mapped.",
+            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+          },
+          {
+            "id": "validation_commands_declared",
+            "status": "pass",
+            "summary": "2 validation command(s) are attached to the slice.",
+            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+          },
+          {
+            "id": "evidence_paths_declared",
+            "status": "pass",
+            "summary": "12 evidence path(s) are attached to the slice.",
+            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+          },
+          {
+            "id": "approval_boundary_declared",
+            "status": "pass",
+            "summary": "Production mutation remains approval-gated.",
+            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+          }
+        ],
+        "validationCommands": [
+          "pnpm --filter @create-something/database-layer atlas-coverage:generate",
+          "pnpm --filter @create-something/database-layer test"
+        ],
+        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+        "nextAction": "Review the mapped knowledge lane, attach it to owning workflows, and promote approved policy/guide references into operator runbooks."
       },
       {
         "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-agent",
@@ -8490,70 +8339,20 @@ export const databaseLayerWorkerState =
         "tier": "Mixed",
         "surface": "package",
         "owner": "CREATE SOMETHING",
-        "recordCount": 16,
-        "mappedRecordCount": 16,
+        "recordCount": 15,
+        "mappedRecordCount": 15,
         "missingRecordIds": [],
         "gates": [
           {
             "id": "topology_records_exist",
             "status": "pass",
-            "summary": "16/16 slice records exist in the internal topology.",
+            "summary": "15/15 slice records exist in the internal topology.",
             "evidence": "packages/database-layer/data/create-something-internal-topology.json"
           },
           {
             "id": "topology_records_mapped",
             "status": "pass",
-            "summary": "16/16 slice records are mapped.",
-            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-          },
-          {
-            "id": "validation_commands_declared",
-            "status": "pass",
-            "summary": "1 validation command(s) are attached to the slice.",
-            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-          },
-          {
-            "id": "evidence_paths_declared",
-            "status": "pass",
-            "summary": "12 evidence path(s) are attached to the slice.",
-            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-          },
-          {
-            "id": "approval_boundary_declared",
-            "status": "pass",
-            "summary": "Production mutation remains approval-gated.",
-            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-          }
-        ],
-        "validationCommands": [
-          "pnpm --filter @create-something/database-layer test"
-        ],
-        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-        "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
-      },
-      {
-        "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
-        "title": "Judgment package Atlas coverage",
-        "status": "review_ready",
-        "productionStatus": "approval_required",
-        "tier": "Judgment",
-        "surface": "package",
-        "owner": "CREATE SOMETHING",
-        "recordCount": 12,
-        "mappedRecordCount": 12,
-        "missingRecordIds": [],
-        "gates": [
-          {
-            "id": "topology_records_exist",
-            "status": "pass",
-            "summary": "12/12 slice records exist in the internal topology.",
-            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-          },
-          {
-            "id": "topology_records_mapped",
-            "status": "pass",
-            "summary": "12/12 slice records are mapped.",
+            "summary": "15/15 slice records are mapped.",
             "evidence": "packages/database-layer/data/create-something-internal-topology.json"
           },
           {
@@ -8634,6 +8433,56 @@ export const databaseLayerWorkerState =
         "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
       },
       {
+        "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+        "title": "Judgment package Atlas coverage",
+        "status": "review_ready",
+        "productionStatus": "approval_required",
+        "tier": "Judgment",
+        "surface": "package",
+        "owner": "CREATE SOMETHING",
+        "recordCount": 10,
+        "mappedRecordCount": 10,
+        "missingRecordIds": [],
+        "gates": [
+          {
+            "id": "topology_records_exist",
+            "status": "pass",
+            "summary": "10/10 slice records exist in the internal topology.",
+            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+          },
+          {
+            "id": "topology_records_mapped",
+            "status": "pass",
+            "summary": "10/10 slice records are mapped.",
+            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+          },
+          {
+            "id": "validation_commands_declared",
+            "status": "pass",
+            "summary": "1 validation command(s) are attached to the slice.",
+            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+          },
+          {
+            "id": "evidence_paths_declared",
+            "status": "pass",
+            "summary": "10 evidence path(s) are attached to the slice.",
+            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+          },
+          {
+            "id": "approval_boundary_declared",
+            "status": "pass",
+            "summary": "Production mutation remains approval-gated.",
+            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+          }
+        ],
+        "validationCommands": [
+          "pnpm --filter @create-something/database-layer test"
+        ],
+        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+        "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
+      },
+      {
         "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-worker",
         "title": "Judgment worker Atlas coverage",
         "status": "review_ready",
@@ -8641,20 +8490,20 @@ export const databaseLayerWorkerState =
         "tier": "Judgment",
         "surface": "worker",
         "owner": "CREATE SOMETHING",
-        "recordCount": 11,
-        "mappedRecordCount": 11,
+        "recordCount": 10,
+        "mappedRecordCount": 10,
         "missingRecordIds": [],
         "gates": [
           {
             "id": "topology_records_exist",
             "status": "pass",
-            "summary": "11/11 slice records exist in the internal topology.",
+            "summary": "10/10 slice records exist in the internal topology.",
             "evidence": "packages/database-layer/data/create-something-internal-topology.json"
           },
           {
             "id": "topology_records_mapped",
             "status": "pass",
-            "summary": "11/11 slice records are mapped.",
+            "summary": "10/10 slice records are mapped.",
             "evidence": "packages/database-layer/data/create-something-internal-topology.json"
           },
           {
@@ -8666,7 +8515,7 @@ export const databaseLayerWorkerState =
           {
             "id": "evidence_paths_declared",
             "status": "pass",
-            "summary": "11 evidence path(s) are attached to the slice.",
+            "summary": "10 evidence path(s) are attached to the slice.",
             "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
           },
           {
@@ -8698,7 +8547,7 @@ export const databaseLayerWorkerState =
         "workerRuntime": {
           "runtime": "cloudflare",
           "runtimeConfigRecords": 0,
-          "workerPackageRecords": 11,
+          "workerPackageRecords": 10,
           "bindingRefs": 0,
           "routeRefs": 0,
           "bindingKinds": {},
@@ -8887,12 +8736,12 @@ export const databaseLayerWorkerState =
         }
       },
       {
-        "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-doc",
-        "title": "Mixed doc Atlas coverage",
+        "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
+        "title": "Database package Atlas coverage",
         "status": "review_ready",
         "productionStatus": "approval_required",
-        "tier": "Mixed",
-        "surface": "doc",
+        "tier": "Database",
+        "surface": "package",
         "owner": "CREATE SOMETHING",
         "recordCount": 6,
         "mappedRecordCount": 6,
@@ -8913,13 +8762,63 @@ export const databaseLayerWorkerState =
           {
             "id": "validation_commands_declared",
             "status": "pass",
+            "summary": "1 validation command(s) are attached to the slice.",
+            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+          },
+          {
+            "id": "evidence_paths_declared",
+            "status": "pass",
+            "summary": "5 evidence path(s) are attached to the slice.",
+            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+          },
+          {
+            "id": "approval_boundary_declared",
+            "status": "pass",
+            "summary": "Production mutation remains approval-gated.",
+            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+          }
+        ],
+        "validationCommands": [
+          "pnpm --filter @create-something/database-layer test"
+        ],
+        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+        "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
+      },
+      {
+        "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-doc",
+        "title": "Mixed doc Atlas coverage",
+        "status": "review_ready",
+        "productionStatus": "approval_required",
+        "tier": "Mixed",
+        "surface": "doc",
+        "owner": "CREATE SOMETHING",
+        "recordCount": 5,
+        "mappedRecordCount": 5,
+        "missingRecordIds": [],
+        "gates": [
+          {
+            "id": "topology_records_exist",
+            "status": "pass",
+            "summary": "5/5 slice records exist in the internal topology.",
+            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+          },
+          {
+            "id": "topology_records_mapped",
+            "status": "pass",
+            "summary": "5/5 slice records are mapped.",
+            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+          },
+          {
+            "id": "validation_commands_declared",
+            "status": "pass",
             "summary": "2 validation command(s) are attached to the slice.",
             "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
           },
           {
             "id": "evidence_paths_declared",
             "status": "pass",
-            "summary": "6 evidence path(s) are attached to the slice.",
+            "summary": "5 evidence path(s) are attached to the slice.",
             "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
           },
           {
@@ -9112,56 +9011,6 @@ export const databaseLayerWorkerState =
         "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
         "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
         "nextAction": "Review client overlay boundaries and promote approved slices into client-specific Atlas sessions."
-      },
-      {
-        "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
-        "title": "Database package Atlas coverage",
-        "status": "review_ready",
-        "productionStatus": "approval_required",
-        "tier": "Database",
-        "surface": "package",
-        "owner": "CREATE SOMETHING",
-        "recordCount": 3,
-        "mappedRecordCount": 3,
-        "missingRecordIds": [],
-        "gates": [
-          {
-            "id": "topology_records_exist",
-            "status": "pass",
-            "summary": "3/3 slice records exist in the internal topology.",
-            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-          },
-          {
-            "id": "topology_records_mapped",
-            "status": "pass",
-            "summary": "3/3 slice records are mapped.",
-            "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-          },
-          {
-            "id": "validation_commands_declared",
-            "status": "pass",
-            "summary": "1 validation command(s) are attached to the slice.",
-            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-          },
-          {
-            "id": "evidence_paths_declared",
-            "status": "pass",
-            "summary": "2 evidence path(s) are attached to the slice.",
-            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-          },
-          {
-            "id": "approval_boundary_declared",
-            "status": "pass",
-            "summary": "Production mutation remains approval-gated.",
-            "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-          }
-        ],
-        "validationCommands": [
-          "pnpm --filter @create-something/database-layer test"
-        ],
-        "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-        "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-        "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
       },
       {
         "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-agent",
@@ -9373,14 +9222,14 @@ export const databaseLayerWorkerState =
     "atlasCanvasId": "create-something-internal-operating-topology",
     "rootNodeId": "substrate:create-something:root",
     "coverage": {
-      "generatedAt": "2026-07-07T23:42:24.883Z",
+      "generatedAt": "2026-07-08T03:41:12.397Z",
       "rootPath": ".",
-      "packageCount": 183,
+      "packageCount": 182,
       "appCount": 6,
-      "workerCount": 99,
+      "workerCount": 98,
       "clientOverlayCount": 6,
-      "policyCount": 56,
-      "guideCount": 54,
+      "policyCount": 54,
+      "guideCount": 49,
       "configCount": 40
     },
     "nodes": [
@@ -9816,23 +9665,6 @@ export const databaseLayerWorkerState =
         "runtime": "cloudflare, node"
       },
       {
-        "id": "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
-        "atlasNodeId": "atlas_create-something_package_app-governance-dashboard-packages-app-governance-db-dashboard",
-        "title": "app-governance-dashboard",
-        "path": "packages/app-governance-db/dashboard",
-        "tier": "Judgment",
-        "surface": "worker",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "Workspace package at packages/app-governance-db/dashboard.",
-        "tags": [
-          "package",
-          "worker"
-        ],
-        "packageName": "app-governance-dashboard",
-        "runtime": "cloudflare, node"
-      },
-      {
         "id": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
         "atlasNodeId": "atlas_create-something_package_create-something-app-governance-db-packages-app-governance-db",
         "title": "@create-something/app-governance-db",
@@ -9871,23 +9703,6 @@ export const databaseLayerWorkerState =
         ],
         "packageName": "app-governance-db-worker",
         "runtime": "cloudflare, node"
-      },
-      {
-        "id": "substrate:create-something:package:app-governance-desktop-packages-app-governance-desktop",
-        "atlasNodeId": "atlas_create-something_package_app-governance-desktop-packages-app-governance-desktop",
-        "title": "app-governance-desktop",
-        "path": "packages/app-governance-desktop",
-        "tier": "Mixed",
-        "surface": "package",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "Tauri operator shell for the app-governance surfaces (Phase 2)",
-        "tags": [
-          "package",
-          "package"
-        ],
-        "packageName": "app-governance-desktop",
-        "runtime": "tauri, node"
       },
       {
         "id": "substrate:create-something:package:create-something-ascii-renderer-packages-ascii-renderer",
@@ -10031,7 +9846,7 @@ export const databaseLayerWorkerState =
         "atlasNodeId": "atlas_create-something_package_createsomething-canon-tokens-packages-canon-tokens",
         "title": "@createsomething/canon-tokens",
         "path": "packages/canon-tokens",
-        "tier": "Judgment",
+        "tier": "Database",
         "surface": "package",
         "owner": "CREATE SOMETHING <hello@createsomething.io>",
         "status": "mapped",
@@ -10063,7 +9878,8 @@ export const databaseLayerWorkerState =
           "svelte",
           "angular",
           "tailwind",
-          "framework-agnostic"
+          "framework-agnostic",
+          "database"
         ],
         "packageName": "@createsomething/canon-tokens",
         "runtime": "node"
@@ -10073,7 +9889,7 @@ export const databaseLayerWorkerState =
         "atlasNodeId": "atlas_create-something_package_create-something-canon-packages-canon",
         "title": "@create-something/canon",
         "path": "packages/canon",
-        "tier": "Judgment",
+        "tier": "Database",
         "surface": "package",
         "owner": "CREATE SOMETHING",
         "status": "mapped",
@@ -10087,7 +9903,8 @@ export const databaseLayerWorkerState =
           "canon",
           "create-something",
           "dieter-rams",
-          "minimalism"
+          "minimalism",
+          "database"
         ],
         "packageName": "@create-something/canon",
         "runtime": "node"
@@ -10776,6 +10593,23 @@ export const databaseLayerWorkerState =
         ],
         "packageName": "halfdozen-gmail-sync-worker",
         "runtime": "cloudflare, node"
+      },
+      {
+        "id": "substrate:create-something:package:create-something-halfdozen-landing-packages-halfdozen-landing",
+        "atlasNodeId": "atlas_create-something_package_create-something-halfdozen-landing-packages-halfdozen-landing",
+        "title": "@create-something/halfdozen-landing",
+        "path": "packages/halfdozen-landing",
+        "tier": "Database",
+        "surface": "package",
+        "owner": "CREATE SOMETHING",
+        "status": "mapped",
+        "summary": "Half Dozen landing page built from Figma with Webflow Code Component-ready React sections.",
+        "tags": [
+          "package",
+          "package"
+        ],
+        "packageName": "@create-something/halfdozen-landing",
+        "runtime": "node"
       },
       {
         "id": "substrate:create-something:package:create-something-halfdozen-notion-mcp-packages-halfdozen-notion-mcp",
@@ -12172,7 +12006,7 @@ export const databaseLayerWorkerState =
         "surface": "mcp",
         "owner": "CREATE SOMETHING <hello@createsomething.agency>",
         "status": "mapped",
-        "summary": "Substrate — the first-class CREATE SOMETHING database-layer runtime direction: Cloudflare records, API/MCP access, Atlas topology, receipts, and fast operator UI.",
+        "summary": "Substrate — the agent-native data layer. Replaces Notion with MCP-managed workspaces where teams interact through agents, not UI.",
         "tags": [
           "package",
           "mcp",
@@ -13260,23 +13094,6 @@ export const databaseLayerWorkerState =
         "owner": "CREATE SOMETHING",
         "status": "mapped",
         "summary": "Cloudflare runtime configuration at packages/airtable-primary-tags-worker/wrangler.jsonc.",
-        "tags": [
-          "worker",
-          "cloudflare",
-          "runtime"
-        ],
-        "runtime": "cloudflare"
-      },
-      {
-        "id": "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-        "atlasNodeId": "atlas_create-something_worker_packages-app-governance-db-dashboard-wrangler-toml",
-        "title": "packages/app-governance-db/dashboard/wrangler.toml",
-        "path": "packages/app-governance-db/dashboard/wrangler.toml",
-        "tier": "Automation",
-        "surface": "worker",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "Cloudflare runtime configuration at packages/app-governance-db/dashboard/wrangler.toml.",
         "tags": [
           "worker",
           "cloudflare",
@@ -14711,21 +14528,6 @@ export const databaseLayerWorkerState =
         ]
       },
       {
-        "id": "substrate:create-something:doc:docs-create-something-database-layer-md",
-        "atlasNodeId": "atlas_create-something_doc_docs-create-something-database-layer-md",
-        "title": "CREATE_SOMETHING_DATABASE_LAYER.md",
-        "path": "docs/CREATE_SOMETHING_DATABASE_LAYER.md",
-        "tier": "Mixed",
-        "surface": "doc",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "doc artifact in the CREATE SOMETHING operating topology.",
-        "tags": [
-          "doc",
-          "documentation"
-        ]
-      },
-      {
         "id": "substrate:create-something:doc:docs-canon-database-layer-design-md",
         "atlasNodeId": "atlas_create-something_doc_docs-canon-database-layer-design-md",
         "title": "CANON_DATABASE_LAYER_DESIGN.md",
@@ -15345,36 +15147,6 @@ export const databaseLayerWorkerState =
         "atlasNodeId": "atlas_create-something_policy_docs-policies-v1-policy-mcp-session-self-service-v1-md",
         "title": "policy.mcp-session-self-service.v1.md",
         "path": "docs/policies/v1/policy.mcp-session-self-service.v1.md",
-        "tier": "Judgment",
-        "surface": "policy",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "policy artifact in the CREATE SOMETHING operating topology.",
-        "tags": [
-          "policy",
-          "documentation"
-        ]
-      },
-      {
-        "id": "substrate:create-something:policy:docs-policies-v1-policy-operator-agent-production-lab-v1-json",
-        "atlasNodeId": "atlas_create-something_policy_docs-policies-v1-policy-operator-agent-production-lab-v1-json",
-        "title": "policy.operator-agent-production-lab.v1.json",
-        "path": "docs/policies/v1/policy.operator-agent-production-lab.v1.json",
-        "tier": "Judgment",
-        "surface": "policy",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "policy artifact in the CREATE SOMETHING operating topology.",
-        "tags": [
-          "policy",
-          "documentation"
-        ]
-      },
-      {
-        "id": "substrate:create-something:policy:docs-policies-v1-policy-operator-agent-production-lab-v1-md",
-        "atlasNodeId": "atlas_create-something_policy_docs-policies-v1-policy-operator-agent-production-lab-v1-md",
-        "title": "policy.operator-agent-production-lab.v1.md",
-        "path": "docs/policies/v1/policy.operator-agent-production-lab.v1.md",
         "tier": "Judgment",
         "surface": "policy",
         "owner": "CREATE SOMETHING",
@@ -16166,66 +15938,6 @@ export const databaseLayerWorkerState =
         ]
       },
       {
-        "id": "substrate:create-something:guide:docs-guides-open-weight-agent-executor-eval-md",
-        "atlasNodeId": "atlas_create-something_guide_docs-guides-open-weight-agent-executor-eval-md",
-        "title": "OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md",
-        "path": "docs/guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md",
-        "tier": "Mixed",
-        "surface": "guide",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "guide artifact in the CREATE SOMETHING operating topology.",
-        "tags": [
-          "guide",
-          "documentation"
-        ]
-      },
-      {
-        "id": "substrate:create-something:guide:docs-guides-operator-agent-external-pattern-matrix-md",
-        "atlasNodeId": "atlas_create-something_guide_docs-guides-operator-agent-external-pattern-matrix-md",
-        "title": "OPERATOR_AGENT_EXTERNAL_PATTERN_MATRIX.md",
-        "path": "docs/guides/OPERATOR_AGENT_EXTERNAL_PATTERN_MATRIX.md",
-        "tier": "Mixed",
-        "surface": "guide",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "guide artifact in the CREATE SOMETHING operating topology.",
-        "tags": [
-          "guide",
-          "documentation"
-        ]
-      },
-      {
-        "id": "substrate:create-something:guide:docs-guides-operator-agent-public-access-md",
-        "atlasNodeId": "atlas_create-something_guide_docs-guides-operator-agent-public-access-md",
-        "title": "OPERATOR_AGENT_PUBLIC_ACCESS.md",
-        "path": "docs/guides/OPERATOR_AGENT_PUBLIC_ACCESS.md",
-        "tier": "Mixed",
-        "surface": "guide",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "guide artifact in the CREATE SOMETHING operating topology.",
-        "tags": [
-          "guide",
-          "documentation"
-        ]
-      },
-      {
-        "id": "substrate:create-something:guide:docs-guides-operator-agent-system-md",
-        "atlasNodeId": "atlas_create-something_guide_docs-guides-operator-agent-system-md",
-        "title": "OPERATOR_AGENT_SYSTEM.md",
-        "path": "docs/guides/OPERATOR_AGENT_SYSTEM.md",
-        "tier": "Mixed",
-        "surface": "guide",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "guide artifact in the CREATE SOMETHING operating topology.",
-        "tags": [
-          "guide",
-          "documentation"
-        ]
-      },
-      {
         "id": "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
         "atlasNodeId": "atlas_create-something_guide_docs-guides-playbook-library-research-2026-02-18-md",
         "title": "PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md",
@@ -16335,21 +16047,6 @@ export const databaseLayerWorkerState =
         "atlasNodeId": "atlas_create-something_guide_docs-guides-steel-cli-md",
         "title": "STEEL_CLI.md",
         "path": "docs/guides/STEEL_CLI.md",
-        "tier": "Mixed",
-        "surface": "guide",
-        "owner": "CREATE SOMETHING",
-        "status": "mapped",
-        "summary": "guide artifact in the CREATE SOMETHING operating topology.",
-        "tags": [
-          "guide",
-          "documentation"
-        ]
-      },
-      {
-        "id": "substrate:create-something:guide:docs-guides-substrate-topology-operator-contract-md",
-        "atlasNodeId": "atlas_create-something_guide_docs-guides-substrate-topology-operator-contract-md",
-        "title": "SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
-        "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
         "tier": "Mixed",
         "surface": "guide",
         "owner": "CREATE SOMETHING",
@@ -17232,13 +16929,6 @@ export const databaseLayerWorkerState =
         "evidence": "packages/airtable-primary-tags-worker is present in the repo scan."
       },
       {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-app-governance-dashboard-packages-app-governance-db-dashboard",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
-        "relation": "contains",
-        "evidence": "packages/app-governance-db/dashboard is present in the repo scan."
-      },
-      {
         "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
         "source": "substrate:create-something:root",
         "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
@@ -17251,13 +16941,6 @@ export const databaseLayerWorkerState =
         "target": "substrate:create-something:package:app-governance-db-worker-packages-app-governance-db-worker",
         "relation": "contains",
         "evidence": "packages/app-governance-db/worker is present in the repo scan."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-app-governance-desktop-packages-app-governance-desktop",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:package:app-governance-desktop-packages-app-governance-desktop",
-        "relation": "contains",
-        "evidence": "packages/app-governance-desktop is present in the repo scan."
       },
       {
         "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-ascii-renderer-packages-ascii-renderer",
@@ -17559,6 +17242,13 @@ export const databaseLayerWorkerState =
         "target": "substrate:create-something:package:halfdozen-gmail-sync-worker-packages-halfdozen-gmail-sync-worker",
         "relation": "contains",
         "evidence": "packages/halfdozen-gmail-sync/worker is present in the repo scan."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-halfdozen-landing-packages-halfdozen-landing",
+        "source": "substrate:create-something:root",
+        "target": "substrate:create-something:package:create-something-halfdozen-landing-packages-halfdozen-landing",
+        "relation": "contains",
+        "evidence": "packages/halfdozen-landing is present in the repo scan."
       },
       {
         "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-halfdozen-notion-mcp-packages-halfdozen-notion-mcp",
@@ -18464,13 +18154,6 @@ export const databaseLayerWorkerState =
         "evidence": "packages/airtable-primary-tags-worker/wrangler.jsonc is present in the repo scan."
       },
       {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-app-governance-db-dashboard-wrangler-toml",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-        "relation": "contains",
-        "evidence": "packages/app-governance-db/dashboard/wrangler.toml is present in the repo scan."
-      },
-      {
         "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-app-governance-db-worker-wrangler-toml",
         "source": "substrate:create-something:root",
         "target": "substrate:create-something:worker:packages-app-governance-db-worker-wrangler-toml",
@@ -19059,13 +18742,6 @@ export const databaseLayerWorkerState =
         "evidence": "docs/README.md is present in the repo scan."
       },
       {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-doc-docs-create-something-database-layer-md",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:doc:docs-create-something-database-layer-md",
-        "relation": "contains",
-        "evidence": "docs/CREATE_SOMETHING_DATABASE_LAYER.md is present in the repo scan."
-      },
-      {
         "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-doc-docs-canon-database-layer-design-md",
         "source": "substrate:create-something:root",
         "target": "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -19358,20 +19034,6 @@ export const databaseLayerWorkerState =
         "target": "substrate:create-something:policy:docs-policies-v1-policy-mcp-session-self-service-v1-md",
         "relation": "contains",
         "evidence": "docs/policies/v1/policy.mcp-session-self-service.v1.md is present in the repo scan."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-policy-docs-policies-v1-policy-operator-agent-production-lab-v1-json",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:policy:docs-policies-v1-policy-operator-agent-production-lab-v1-json",
-        "relation": "contains",
-        "evidence": "docs/policies/v1/policy.operator-agent-production-lab.v1.json is present in the repo scan."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-policy-docs-policies-v1-policy-operator-agent-production-lab-v1-md",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:policy:docs-policies-v1-policy-operator-agent-production-lab-v1-md",
-        "relation": "contains",
-        "evidence": "docs/policies/v1/policy.operator-agent-production-lab.v1.md is present in the repo scan."
       },
       {
         "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-policy-docs-policies-v1-policy-paper-experiment-release-gate-v1-json",
@@ -19738,34 +19400,6 @@ export const databaseLayerWorkerState =
         "evidence": "docs/guides/ONA_CORE_ROLLOUT.md is present in the repo scan."
       },
       {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-open-weight-agent-executor-eval-md",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:guide:docs-guides-open-weight-agent-executor-eval-md",
-        "relation": "contains",
-        "evidence": "docs/guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md is present in the repo scan."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-operator-agent-external-pattern-matrix-md",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:guide:docs-guides-operator-agent-external-pattern-matrix-md",
-        "relation": "contains",
-        "evidence": "docs/guides/OPERATOR_AGENT_EXTERNAL_PATTERN_MATRIX.md is present in the repo scan."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-operator-agent-public-access-md",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:guide:docs-guides-operator-agent-public-access-md",
-        "relation": "contains",
-        "evidence": "docs/guides/OPERATOR_AGENT_PUBLIC_ACCESS.md is present in the repo scan."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-operator-agent-system-md",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:guide:docs-guides-operator-agent-system-md",
-        "relation": "contains",
-        "evidence": "docs/guides/OPERATOR_AGENT_SYSTEM.md is present in the repo scan."
-      },
-      {
         "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md",
         "source": "substrate:create-something:root",
         "target": "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
@@ -19820,13 +19454,6 @@ export const databaseLayerWorkerState =
         "target": "substrate:create-something:guide:docs-guides-steel-cli-md",
         "relation": "contains",
         "evidence": "docs/guides/STEEL_CLI.md is present in the repo scan."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-substrate-topology-operator-contract-md",
-        "source": "substrate:create-something:root",
-        "target": "substrate:create-something:guide:docs-guides-substrate-topology-operator-contract-md",
-        "relation": "contains",
-        "evidence": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md is present in the repo scan."
       },
       {
         "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-ui-preview-system-md",
@@ -20291,13 +19918,6 @@ export const databaseLayerWorkerState =
         "evidence": "@create-something/agency declares @create-something/canon."
       },
       {
-        "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-database-layer-packages-database-layer",
-        "source": "substrate:create-something:package:create-something-agency-packages-agency",
-        "target": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
-        "relation": "depends_on",
-        "evidence": "@create-something/agency declares @create-something/database-layer."
-      },
-      {
         "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-delivery-schema-packages-delivery-schema",
         "source": "substrate:create-something:package:create-something-agency-packages-agency",
         "target": "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
@@ -20333,32 +19953,11 @@ export const databaseLayerWorkerState =
         "evidence": "wrangler.toml configures runtime for packages/agency/workers/social-poster."
       },
       {
-        "id": "substrate:create-something:edge:substrate-create-something-package-app-governance-dashboard-packages-app-governance-db-dashboard-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
-        "source": "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
-        "target": "substrate:create-something:package:create-something-canon-packages-canon",
-        "relation": "depends_on",
-        "evidence": "app-governance-dashboard declares @create-something/canon."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-package-app-governance-dashboard-packages-app-governance-db-dashboard-runs-substrate-create-something-worker-packages-app-governance-db-dashboard-wrangler-toml",
-        "source": "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
-        "target": "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-        "relation": "runs",
-        "evidence": "wrangler.toml configures runtime for packages/app-governance-db/dashboard."
-      },
-      {
         "id": "substrate:create-something:edge:substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db-runs-substrate-create-something-worker-packages-app-governance-db-worker-wrangler-toml",
         "source": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
         "target": "substrate:create-something:worker:packages-app-governance-db-worker-wrangler-toml",
         "relation": "runs",
         "evidence": "worker/wrangler.toml configures runtime for packages/app-governance-db."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db-runs-substrate-create-something-worker-packages-app-governance-db-dashboard-wrangler-toml",
-        "source": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
-        "target": "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-        "relation": "runs",
-        "evidence": "dashboard/wrangler.toml configures runtime for packages/app-governance-db."
       },
       {
         "id": "substrate:create-something:edge:substrate-create-something-package-app-governance-db-worker-packages-app-governance-db-worker-runs-substrate-create-something-worker-packages-app-governance-db-worker-wrangler-toml",
@@ -20501,6 +20100,13 @@ export const databaseLayerWorkerState =
         "evidence": "wrangler.toml configures runtime for packages/concierge-chat."
       },
       {
+        "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mcp-packages-create-something-mcp-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+        "source": "substrate:create-something:package:create-something-mcp-packages-create-something-mcp",
+        "target": "substrate:create-something:package:create-something-canon-packages-canon",
+        "relation": "depends_on",
+        "evidence": "@create-something/mcp declares @create-something/canon."
+      },
+      {
         "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mcp-packages-create-something-mcp-depends-on-substrate-create-something-package-create-something-playbook-mcp-packages-playbook-mcp",
         "source": "substrate:create-something:package:create-something-mcp-packages-create-something-mcp",
         "target": "substrate:create-something:package:create-something-playbook-mcp-packages-playbook-mcp",
@@ -20583,6 +20189,13 @@ export const databaseLayerWorkerState =
         "target": "substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
         "relation": "runs",
         "evidence": "wrangler.toml configures runtime for packages/database-layer/worker."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-package-create-something-eslint-plugin-canon-packages-eslint-plugin-canon-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+        "source": "substrate:create-something:package:create-something-eslint-plugin-canon-packages-eslint-plugin-canon",
+        "target": "substrate:create-something:package:create-something-canon-packages-canon",
+        "relation": "depends_on",
+        "evidence": "@create-something/eslint-plugin-canon declares @create-something/canon."
       },
       {
         "id": "substrate:create-something:edge:substrate-create-something-package-create-something-gmail-notion-mcp-packages-gmail-notion-mcp-runs-substrate-create-something-worker-packages-gmail-notion-mcp-worker-wrangler-toml",
@@ -22006,20 +21619,6 @@ export const databaseLayerWorkerState =
         "evidence": "docs/policies/v1/policy.mcp-session-self-service.v1.md is a policy artifact."
       },
       {
-        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-operator-agent-production-lab-v1-json-governs-substrate-create-something-root",
-        "source": "substrate:create-something:policy:docs-policies-v1-policy-operator-agent-production-lab-v1-json",
-        "target": "substrate:create-something:root",
-        "relation": "governs",
-        "evidence": "docs/policies/v1/policy.operator-agent-production-lab.v1.json is a policy artifact."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-operator-agent-production-lab-v1-md-governs-substrate-create-something-root",
-        "source": "substrate:create-something:policy:docs-policies-v1-policy-operator-agent-production-lab-v1-md",
-        "target": "substrate:create-something:root",
-        "relation": "governs",
-        "evidence": "docs/policies/v1/policy.operator-agent-production-lab.v1.md is a policy artifact."
-      },
-      {
         "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-paper-experiment-release-gate-v1-json-governs-substrate-create-something-root",
         "source": "substrate:create-something:policy:docs-policies-v1-policy-paper-experiment-release-gate-v1-json",
         "target": "substrate:create-something:root",
@@ -22384,34 +21983,6 @@ export const databaseLayerWorkerState =
         "evidence": "docs/guides/ONA_CORE_ROLLOUT.md is an operating guide."
       },
       {
-        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-open-weight-agent-executor-eval-md-documents-substrate-create-something-root",
-        "source": "substrate:create-something:guide:docs-guides-open-weight-agent-executor-eval-md",
-        "target": "substrate:create-something:root",
-        "relation": "documents",
-        "evidence": "docs/guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md is an operating guide."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-operator-agent-external-pattern-matrix-md-documents-substrate-create-something-root",
-        "source": "substrate:create-something:guide:docs-guides-operator-agent-external-pattern-matrix-md",
-        "target": "substrate:create-something:root",
-        "relation": "documents",
-        "evidence": "docs/guides/OPERATOR_AGENT_EXTERNAL_PATTERN_MATRIX.md is an operating guide."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-operator-agent-public-access-md-documents-substrate-create-something-root",
-        "source": "substrate:create-something:guide:docs-guides-operator-agent-public-access-md",
-        "target": "substrate:create-something:root",
-        "relation": "documents",
-        "evidence": "docs/guides/OPERATOR_AGENT_PUBLIC_ACCESS.md is an operating guide."
-      },
-      {
-        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-operator-agent-system-md-documents-substrate-create-something-root",
-        "source": "substrate:create-something:guide:docs-guides-operator-agent-system-md",
-        "target": "substrate:create-something:root",
-        "relation": "documents",
-        "evidence": "docs/guides/OPERATOR_AGENT_SYSTEM.md is an operating guide."
-      },
-      {
         "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-root",
         "source": "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
         "target": "substrate:create-something:root",
@@ -22468,13 +22039,6 @@ export const databaseLayerWorkerState =
         "evidence": "docs/guides/STEEL_CLI.md is an operating guide."
       },
       {
-        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-substrate-topology-operator-contract-md-documents-substrate-create-something-root",
-        "source": "substrate:create-something:guide:docs-guides-substrate-topology-operator-contract-md",
-        "target": "substrate:create-something:root",
-        "relation": "documents",
-        "evidence": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md is an operating guide."
-      },
-      {
         "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ui-preview-system-md-documents-substrate-create-something-root",
         "source": "substrate:create-something:guide:docs-guides-ui-preview-system-md",
         "target": "substrate:create-something:root",
@@ -22508,6 +22072,762 @@ export const databaseLayerWorkerState =
         "target": "substrate:create-something:root",
         "relation": "documents",
         "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md is an operating guide."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-doc-docs-readme-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "source": "substrate:create-something:doc:docs-readme-md",
+        "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "relation": "documents",
+        "evidence": "docs/README.md documents packages/interaction-atlas-mcp through the stable doc platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-doc-docs-canon-database-layer-design-md-documents-substrate-create-something-package-create-something-canon-packages-canon",
+        "source": "substrate:create-something:doc:docs-canon-database-layer-design-md",
+        "target": "substrate:create-something:package:create-something-canon-packages-canon",
+        "relation": "documents",
+        "evidence": "docs/CANON_DATABASE_LAYER_DESIGN.md documents packages/canon through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-doc-docs-three-tier-framework-md-documents-substrate-create-something-package-create-something-mcp-packages-create-something-mcp",
+        "source": "substrate:create-something:doc:docs-three-tier-framework-md",
+        "target": "substrate:create-something:package:create-something-mcp-packages-create-something-mcp",
+        "relation": "documents",
+        "evidence": "docs/THREE_TIER_FRAMEWORK.md documents packages/create-something-mcp through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-doc-docs-mcp-first-thesis-md-documents-substrate-create-something-package-create-something-pi-policy-os-packages-pi-policy-os",
+        "source": "substrate:create-something:doc:docs-mcp-first-thesis-md",
+        "target": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
+        "relation": "documents",
+        "evidence": "docs/MCP_FIRST_THESIS.md documents packages/pi-policy-os through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-doc-docs-mcp-hub-control-plane-md-documents-substrate-create-something-package-create-something-cs-mcp-hub-packages-cs-mcp-hub",
+        "source": "substrate:create-something:doc:docs-mcp-hub-control-plane-md",
+        "target": "substrate:create-something:package:create-something-cs-mcp-hub-packages-cs-mcp-hub",
+        "relation": "documents",
+        "evidence": "docs/MCP_HUB_CONTROL_PLANE.md documents packages/cs-mcp-hub through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-hub-route-authorization-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-hub-route-authorization-v1-json",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "governs",
+        "evidence": "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-judgment-baseline-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-judgment-baseline-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/generated/fallback/policy.judgment-baseline.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-mcp-credential-delivery-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-credential-delivery-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-mcp-session-self-service-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-session-self-service-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/generated/fallback/policy.mcp-session-self-service.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-partner-auth-governance-v1-json-governs-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
+        "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-partner-auth-governance-v1-json",
+        "target": "substrate:create-something:package:create-something-mcp-authz-packages-mcp-authz",
+        "relation": "governs",
+        "evidence": "docs/policies/generated/fallback/policy.partner-auth-governance.v1.json governs packages/mcp-authz through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-service-tier-entitlement-v1-json-governs-substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+        "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-service-tier-entitlement-v1-json",
+        "target": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+        "relation": "governs",
+        "evidence": "docs/policies/generated/fallback/policy.service-tier-entitlement.v1.json governs packages/halfdozen-zoom-sync through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-user-bearer-token-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-user-bearer-token-governance-v1-json",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/generated/fallback/policy.user-bearer-token-governance.v1.json governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-mcp-authz-manifests-v1-json-governs-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
+        "source": "substrate:create-something:policy:docs-policies-generated-mcp-authz-manifests-v1-json",
+        "target": "substrate:create-something:package:create-something-mcp-authz-packages-mcp-authz",
+        "relation": "governs",
+        "evidence": "docs/policies/generated/mcp-authz-manifests.v1.json governs packages/mcp-authz through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-readme-md-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-readme-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/README.md governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-account-role-boundaries-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-account-role-boundaries-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.account-role-boundaries.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-account-role-boundaries-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-account-role-boundaries-v1-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.account-role-boundaries.v1.md governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-auth0-subject-rebind-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-auth0-subject-rebind-governance-v1-json",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.auth0-subject-rebind-governance.v1.json governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-auth0-subject-rebind-governance-v1-md-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-auth0-subject-rebind-governance-v1-md",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.auth0-subject-rebind-governance.v1.md governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-client-hub-user-experience-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-client-hub-user-experience-v1-json",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.client-hub-user-experience.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-client-hub-user-experience-v1-md-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-client-hub-user-experience-v1-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.client-hub-user-experience.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-cross-workspace-sync-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-cross-workspace-sync-governance-v1-json",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.cross-workspace-sync-governance.v1.json governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-cross-workspace-sync-governance-v1-md-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-cross-workspace-sync-governance-v1-md",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.cross-workspace-sync-governance.v1.md governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-engine-rollout-gates-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-engine-rollout-gates-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.engine-rollout-gates.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-engine-rollout-gates-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-engine-rollout-gates-v1-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.engine-rollout-gates.v1.md governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-git-light-agent-delivery-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-git-light-agent-delivery-v1-json",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.git-light-agent-delivery.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-git-light-agent-delivery-v1-md-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-git-light-agent-delivery-v1-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.git-light-agent-delivery.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-global-access-kill-switch-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-global-access-kill-switch-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.global-access-kill-switch.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-global-access-kill-switch-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-global-access-kill-switch-v1-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.global-access-kill-switch.v1.md governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-hub-route-authorization-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-hub-route-authorization-v1-json",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.hub-route-authorization.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-hub-route-authorization-v1-md-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-hub-route-authorization-v1-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.hub-route-authorization.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-integration-selection-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-integration-selection-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.integration-selection.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-integration-selection-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-integration-selection-v1-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.integration-selection.v1.md governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-judgment-baseline-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-judgment-baseline-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.judgment-baseline.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-judgment-baseline-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-judgment-baseline-v1-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.judgment-baseline.v1.md governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-legacy-compat-sunset-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-legacy-compat-sunset-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.legacy-compat-sunset.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-legacy-compat-sunset-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-legacy-compat-sunset-v1-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.legacy-compat-sunset.v1.md governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-mcp-credential-delivery-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-mcp-credential-delivery-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.mcp-credential-delivery.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-mcp-credential-delivery-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-mcp-credential-delivery-v1-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.mcp-credential-delivery.v1.md governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-mcp-oauth-password-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-mcp-oauth-password-governance-v1-json",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.mcp-oauth-password-governance.v1.json governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-mcp-oauth-password-governance-v1-md-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-mcp-oauth-password-governance-v1-md",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.mcp-oauth-password-governance.v1.md governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-mcp-session-self-service-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-mcp-session-self-service-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.mcp-session-self-service.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-mcp-session-self-service-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-mcp-session-self-service-v1-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.mcp-session-self-service.v1.md governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-paper-experiment-release-gate-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-paper-experiment-release-gate-v1-json",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.paper-experiment-release-gate.v1.json governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-paper-experiment-release-gate-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-paper-experiment-release-gate-v1-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.paper-experiment-release-gate.v1.md governs packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-partner-auth-governance-v1-json-governs-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-partner-auth-governance-v1-json",
+        "target": "substrate:create-something:package:create-something-mcp-authz-packages-mcp-authz",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.partner-auth-governance.v1.json governs packages/mcp-authz through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-partner-auth-governance-v1-md-governs-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-partner-auth-governance-v1-md",
+        "target": "substrate:create-something:package:create-something-mcp-authz-packages-mcp-authz",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.partner-auth-governance.v1.md governs packages/mcp-authz through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-policy-lifecycle-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-policy-lifecycle-governance-v1-json",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.policy-lifecycle-governance.v1.json governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-policy-lifecycle-governance-v1-md-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-policy-lifecycle-governance-v1-md",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.policy-lifecycle-governance.v1.md governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-progressive-profile-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-progressive-profile-governance-v1-json",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.progressive-profile-governance.v1.json governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-progressive-profile-governance-v1-md-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-progressive-profile-governance-v1-md",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.progressive-profile-governance.v1.md governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-prospect-hub-onboarding-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-prospect-hub-onboarding-v1-json",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.prospect-hub-onboarding.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-prospect-hub-onboarding-v1-md-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-prospect-hub-onboarding-v1-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.prospect-hub-onboarding.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-service-tier-entitlement-v1-json-governs-substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-service-tier-entitlement-v1-json",
+        "target": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.service-tier-entitlement.v1.json governs packages/halfdozen-zoom-sync through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-service-tier-entitlement-v1-md-governs-substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-service-tier-entitlement-v1-md",
+        "target": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.service-tier-entitlement.v1.md governs packages/halfdozen-zoom-sync through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-tenant-tool-exposure-v1-json-governs-substrate-create-something-package-create-something-concierge-chat-packages-concierge-chat",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-tenant-tool-exposure-v1-json",
+        "target": "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.tenant-tool-exposure.v1.json governs packages/concierge-chat through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-tenant-tool-exposure-v1-md-governs-substrate-create-something-package-create-something-concierge-chat-packages-concierge-chat",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-tenant-tool-exposure-v1-md",
+        "target": "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.tenant-tool-exposure.v1.md governs packages/concierge-chat through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-user-bearer-token-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-user-bearer-token-governance-v1-json",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.user-bearer-token-governance.v1.json governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-user-bearer-token-governance-v1-md-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:policy:docs-policies-v1-policy-user-bearer-token-governance-v1-md",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "governs",
+        "evidence": "docs/policies/v1/policy.user-bearer-token-governance.v1.md governs packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-article-image-workflow-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+        "source": "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
+        "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md documents packages/substrate-mcp through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-governance-products-operations-runbook-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+        "source": "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
+        "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md documents packages/substrate-mcp through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-marketing-page-portfolio-rdoc-md-documents-substrate-create-something-package-create-something-agency-packages-agency",
+        "source": "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
+        "target": "substrate:create-something:package:create-something-agency-packages-agency",
+        "relation": "documents",
+        "evidence": "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md documents packages/agency through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-ops-pm-agent-notion-review-2026-md-documents-substrate-create-something-agent-config-config-dify-agents-template-review-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md documents config/dify-agents/template-review-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-service-tier-migration-runbook-2026-03-09-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+        "source": "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
+        "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md documents packages/substrate-mcp through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-workflow-intent-article-workflow-md-documents-substrate-create-something-package-create-something-database-layer-packages-database-layer",
+        "source": "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
+        "target": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+        "relation": "documents",
+        "evidence": "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md documents packages/database-layer through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agent-legibility-contract-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-agent-legibility-contract-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/AGENT_LEGIBILITY_CONTRACT.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-antigravity-mcp-enablement-md-documents-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "documents",
+        "evidence": "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md documents packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-arena-taste-integration-md-documents-substrate-create-something-package-create-something-database-layer-packages-database-layer",
+        "source": "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
+        "target": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+        "relation": "documents",
+        "evidence": "docs/guides/ARENA_TASTE_INTEGRATION.md documents packages/database-layer through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-atlas-linear-integration-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "source": "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
+        "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/ATLAS_LINEAR_INTEGRATION.md documents packages/interaction-atlas-mcp through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md-documents-substrate-create-something-package-create-something-community-mcp-packages-community-mcp",
+        "source": "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
+        "target": "substrate:create-something:package:create-something-community-mcp-packages-community-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md documents packages/community-mcp through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-cloudflare-bot-access-hardening-md-documents-substrate-create-something-app-create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent",
+        "source": "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
+        "target": "substrate:create-something:app:create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent",
+        "relation": "documents",
+        "evidence": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md documents apps/bettermode-marketplace-creator-agent through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-coding-agent-harness-pattern-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-coding-agent-harness-pattern-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/CODING_AGENT_HARNESS_PATTERN.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-component-guide-md-documents-substrate-create-something-package-create-something-spritz-packages-spritz",
+        "source": "substrate:create-something:guide:docs-guides-component-guide-md",
+        "target": "substrate:create-something:package:create-something-spritz-packages-spritz",
+        "relation": "documents",
+        "evidence": "docs/guides/COMPONENT_GUIDE.md documents packages/spritz through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-bettermode-creator-agent-md-documents-substrate-create-something-agent-config-config-dify-agents-bettermode-marketplace-creator-agent-json",
+        "source": "substrate:create-something:guide:docs-guides-dify-bettermode-creator-agent-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-bettermode-marketplace-creator-agent-json",
+        "relation": "documents",
+        "evidence": "docs/guides/DIFY_BETTERMODE_CREATOR_AGENT.md documents config/dify-agents/bettermode-marketplace-creator-agent.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-first-agent-control-plane-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-dify-first-agent-control-plane-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/DIFY_FIRST_AGENT_CONTROL_PLANE.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-partner-affiliate-operating-runbook-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-dify-partner-affiliate-operating-runbook-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/DIFY_PARTNER_AFFILIATE_OPERATING_RUNBOOK.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-policy-os-template-pack-md-documents-substrate-create-something-agent-config-config-dify-agents-template-review-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-dify-policy-os-template-pack-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/DIFY_POLICY_OS_TEMPLATE_PACK.md documents config/dify-agents/template-review-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-workspace-inventory-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-dify-workspace-inventory-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/DIFY_WORKSPACE_INVENTORY.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-youtube-transcript-notion-agent-md-documents-substrate-create-something-agent-config-config-dify-agents-youtube-transcript-notion-agent-json",
+        "source": "substrate:create-something:guide:docs-guides-dify-youtube-transcript-notion-agent-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
+        "relation": "documents",
+        "evidence": "docs/guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md documents config/dify-agents/youtube-transcript-notion-agent.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-examples-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "source": "substrate:create-something:guide:docs-guides-examples-md",
+        "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/EXAMPLES.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-g2-cloudflare-codex-access-md-documents-substrate-create-something-app-create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent",
+        "source": "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
+        "target": "substrate:create-something:app:create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent",
+        "relation": "documents",
+        "evidence": "docs/guides/G2_CLOUDFLARE_CODEX_ACCESS.md documents apps/bettermode-marketplace-creator-agent through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-git-light-agent-delivery-workflow-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-git-light-agent-delivery-workflow-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hermes-agent-loop-evaluation-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/HERMES_AGENT_LOOP_EVALUATION.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md-documents-substrate-create-something-package-create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",
+        "source": "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
+        "target": "substrate:create-something:package:create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/HYDRA_DB_GOVERNED_RECALL.md documents packages/hydra-db-recall-mcp through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-judgment-layer-dogfood-playbook-md-documents-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+        "source": "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
+        "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+        "relation": "documents",
+        "evidence": "docs/guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md documents packages/app-governance-db through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-loops-above-agents-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-loops-above-agents-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/LOOPS_ABOVE_AGENTS.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-mcp-apps-integration-md-documents-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:guide:docs-guides-mcp-apps-integration-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "documents",
+        "evidence": "docs/guides/MCP_APPS_INTEGRATION.md documents packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-mcp-dui-organization-md-documents-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:guide:docs-guides-mcp-dui-organization-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "documents",
+        "evidence": "docs/guides/MCP_DUI_ORGANIZATION.md documents packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-mcp-registry-workflow-md-documents-substrate-create-something-package-create-something-composio-toolkit-mcp-packages-composio-toolkit-mcp",
+        "source": "substrate:create-something:guide:docs-guides-mcp-registry-workflow-md",
+        "target": "substrate:create-something:package:create-something-composio-toolkit-mcp-packages-composio-toolkit-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/MCP_REGISTRY_WORKFLOW.md documents packages/composio-toolkit-mcp through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-migration-guide-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+        "source": "substrate:create-something:guide:docs-guides-migration-guide-md",
+        "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/MIGRATION_GUIDE.md documents packages/substrate-mcp through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-monorepo-delivery-updates-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "source": "substrate:create-something:guide:docs-guides-monorepo-delivery-updates-md",
+        "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/MONOREPO_DELIVERY_UPDATES.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-api-compatibility-audit-2026-md-documents-substrate-create-something-agent-config-config-dify-agents-youtube-transcript-notion-agent-json",
+        "source": "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
+        "relation": "documents",
+        "evidence": "docs/guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md documents config/dify-agents/youtube-transcript-notion-agent.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-workers-and-cli-2026-md-documents-substrate-create-something-agent-config-config-dify-agents-youtube-transcript-notion-agent-json",
+        "source": "substrate:create-something:guide:docs-guides-notion-workers-and-cli-2026-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
+        "relation": "documents",
+        "evidence": "docs/guides/NOTION_WORKERS_AND_CLI_2026.md documents config/dify-agents/youtube-transcript-notion-agent.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-observability-setup-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "source": "substrate:create-something:guide:docs-guides-observability-setup-md",
+        "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/OBSERVABILITY_SETUP.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ona-core-rollout-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "source": "substrate:create-something:guide:docs-guides-ona-core-rollout-md",
+        "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/ONA_CORE_ROLLOUT.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "documents",
+        "evidence": "docs/guides/PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md documents packages/io through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-policy-os-gating-deploy-checklist-2026-03-09-md-documents-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:guide:docs-guides-policy-os-gating-deploy-checklist-2026-03-09-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "documents",
+        "evidence": "docs/guides/POLICY_OS_GATING_DEPLOY_CHECKLIST_2026-03-09.md documents packages/io through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-policy-os-live-verification-runbook-2026-03-09-md-documents-substrate-create-something-package-create-something-database-layer-packages-database-layer",
+        "source": "substrate:create-something:guide:docs-guides-policy-os-live-verification-runbook-2026-03-09-md",
+        "target": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+        "relation": "documents",
+        "evidence": "docs/guides/POLICY_OS_LIVE_VERIFICATION_RUNBOOK_2026-03-09.md documents packages/database-layer through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-recurring-cleanup-loops-md-documents-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:guide:docs-guides-recurring-cleanup-loops-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "documents",
+        "evidence": "docs/guides/RECURRING_CLEANUP_LOOPS.md documents packages/io through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-seo-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "source": "substrate:create-something:guide:docs-guides-seo-md",
+        "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/seo.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-skills-md-documents-substrate-create-something-package-create-something-io-packages-io",
+        "source": "substrate:create-something:guide:docs-guides-skills-md",
+        "target": "substrate:create-something:package:create-something-io-packages-io",
+        "relation": "documents",
+        "evidence": "docs/guides/SKILLS.md documents packages/io through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-solo-operator-agent-loop-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-solo-operator-agent-loop-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/SOLO_OPERATOR_AGENT_LOOP.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-steel-cli-md-documents-substrate-create-something-package-create-something-agency-packages-agency",
+        "source": "substrate:create-something:guide:docs-guides-steel-cli-md",
+        "target": "substrate:create-something:package:create-something-agency-packages-agency",
+        "relation": "documents",
+        "evidence": "docs/guides/STEEL_CLI.md documents packages/agency through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ui-preview-system-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "source": "substrate:create-something:guide:docs-guides-ui-preview-system-md",
+        "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+        "relation": "documents",
+        "evidence": "docs/guides/UI_PREVIEW_SYSTEM.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-understanding-template-md-documents-substrate-create-something-agent-config-config-dify-agents-template-review-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-understanding-template-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/UNDERSTANDING_TEMPLATE.md documents config/dify-agents/template-review-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-code-components-control-plane-md-documents-substrate-create-something-package-create-something-bundle-scanner-packages-bundle-scanner",
+        "source": "substrate:create-something:guide:docs-guides-webflow-code-components-control-plane-md",
+        "target": "substrate:create-something:package:create-something-bundle-scanner-packages-bundle-scanner",
+        "relation": "documents",
+        "evidence": "docs/guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md documents packages/bundle-scanner through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-export-first-agent-workflow-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-webflow-export-first-agent-workflow-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/WEBFLOW_EXPORT_FIRST_AGENT_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+      },
+      {
+        "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-template-review-dify-agent-manual-md-documents-substrate-create-something-agent-config-config-dify-agents-template-review-hub-json",
+        "source": "substrate:create-something:guide:docs-guides-webflow-template-review-dify-agent-manual-md",
+        "target": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
+        "relation": "documents",
+        "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md documents config/dify-agents/template-review-hub.json through matching topology terms."
       },
       {
         "id": "substrate:create-something:edge:substrate-create-something-package-create-something-database-layer-packages-database-layer-documents-substrate-create-something-root",
@@ -53904,7 +54224,7 @@ export const databaseLayerWorkerState =
   },
   "runtimeBindingCoverage": {
     "id": "substrate:create-something:runtime-binding-coverage:cloudflare",
-    "generatedAt": "2026-07-07T23:42:24.256Z",
+    "generatedAt": "2026-07-08T03:41:10.905Z",
     "topologyId": "substrate:create-something:topology:internal",
     "atlasCanvasId": "create-something-internal-operating-topology",
     "runtime": "cloudflare",
@@ -54014,7 +54334,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
           "relationCount": 21,
           "receiptId": "receipt:substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "apps/bettermode-marketplace-creator-agent/wrangler.jsonc is bound as a Cloudflare runtime config with 20 binding refs (d1, var)."
         },
         "receipt": {
@@ -54022,8 +54342,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
           "type": "proof",
           "summary": "bettermode-marketplace-creator-agent has first-class Substrate runtime binding coverage.",
-          "evidence": "apps/bettermode-marketplace-creator-agent/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "apps/bettermode-marketplace-creator-agent/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
@@ -54051,11 +54371,6 @@ export const databaseLayerWorkerState =
             "target": ".open-next/assets"
           },
           {
-            "kind": "d1",
-            "name": "DB",
-            "target": "marketplace-template-submission-cloud"
-          },
-          {
             "kind": "var",
             "name": "ENVIRONMENT"
           }
@@ -54071,18 +54386,18 @@ export const databaseLayerWorkerState =
           "bindingHealth": "bound",
           "atlasCanvasId": "create-something-internal-operating-topology",
           "atlasNodeId": "atlas_create-something_worker_apps-marketplace-template-submission-cloud-wrangler-json",
-          "relationCount": 4,
+          "relationCount": 3,
           "receiptId": "receipt:substrate:create-something:worker:apps-marketplace-template-submission-cloud-wrangler-json",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
-          "summary": "apps/marketplace-template-submission-cloud/wrangler.json is bound as a Cloudflare runtime config with 3 binding refs (assets, d1, var)."
+          "updatedAt": "2026-07-08T03:41:10.905Z",
+          "summary": "apps/marketplace-template-submission-cloud/wrangler.json is bound as a Cloudflare runtime config with 2 binding refs (assets, var)."
         },
         "receipt": {
           "id": "receipt:substrate:create-something:worker:apps-marketplace-template-submission-cloud-wrangler-json",
           "recordId": "substrate:create-something:worker:apps-marketplace-template-submission-cloud-wrangler-json",
           "type": "proof",
           "summary": "marketplace-template-submission-cloud has first-class Substrate runtime binding coverage.",
-          "evidence": "apps/marketplace-template-submission-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "apps/marketplace-template-submission-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:apps-marketplace-template-submission-cloud-wrangler-json",
@@ -54142,7 +54457,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_apps-webflow-dashboard-cloud-wrangler-json",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:apps-webflow-dashboard-cloud-wrangler-json",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "apps/webflow-dashboard-cloud/wrangler.json is bound as a Cloudflare runtime config with 5 binding refs (assets, d1, kv, r2, var)."
         },
         "receipt": {
@@ -54150,8 +54465,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:apps-webflow-dashboard-cloud-wrangler-json",
           "type": "proof",
           "summary": "webflow-dashboard-cloud has first-class Substrate runtime binding coverage.",
-          "evidence": "apps/webflow-dashboard-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "apps/webflow-dashboard-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:apps-webflow-dashboard-cloud-wrangler-json",
@@ -54208,7 +54523,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_apps-webflow-marketplace-category-cloud-wrangler-json",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:apps-webflow-marketplace-category-cloud-wrangler-json",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "apps/webflow-marketplace-category-cloud/wrangler.json is bound as a Cloudflare runtime config with 5 binding refs (assets, var)."
         },
         "receipt": {
@@ -54216,8 +54531,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:apps-webflow-marketplace-category-cloud-wrangler-json",
           "type": "proof",
           "summary": "webflow-marketplace-category-cloud has first-class Substrate runtime binding coverage.",
-          "evidence": "apps/webflow-marketplace-category-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "apps/webflow-marketplace-category-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:apps-webflow-marketplace-category-cloud-wrangler-json",
@@ -54280,7 +54595,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-abundance-jobs-mcp-worker-wrangler-toml",
           "relationCount": 7,
           "receiptId": "receipt:substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/abundance-jobs-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 6 binding refs (d1, durable_object, var)."
         },
         "receipt": {
@@ -54288,8 +54603,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "abundance-jobs-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/abundance-jobs-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/abundance-jobs-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
@@ -54324,7 +54639,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-cato-supply-insights-review-wrangler-toml",
           "relationCount": 1,
           "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-cato-supply-insights-review-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/agency/clients/cato-supply-insights-review/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
         },
         "receipt": {
@@ -54332,8 +54647,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-agency-clients-cato-supply-insights-review-wrangler-toml",
           "type": "proof",
           "summary": "cato-supply-insights-review has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/agency/clients/cato-supply-insights-review/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/agency/clients/cato-supply-insights-review/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-cato-supply-insights-review-wrangler-toml",
@@ -54382,7 +54697,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-jandjhomehealth-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-jandjhomehealth-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/agency/clients/jandjhomehealth/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, var)."
         },
         "receipt": {
@@ -54390,8 +54705,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-agency-clients-jandjhomehealth-wrangler-toml",
           "type": "proof",
           "summary": "jandjhomehealth has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/agency/clients/jandjhomehealth/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/agency/clients/jandjhomehealth/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-jandjhomehealth-wrangler-toml",
@@ -54438,7 +54753,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-outerfields-mcp-remote-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-outerfields-mcp-remote-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/agency/clients/outerfields/mcp-remote/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, route)."
         },
         "receipt": {
@@ -54446,8 +54761,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-agency-clients-outerfields-mcp-remote-wrangler-toml",
           "type": "proof",
           "summary": "outerfields-pcn-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/agency/clients/outerfields/mcp-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/agency/clients/outerfields/mcp-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-outerfields-mcp-remote-wrangler-toml",
@@ -54507,7 +54822,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-outerfields-wrangler-jsonc",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/agency/clients/outerfields/wrangler.jsonc is bound as a Cloudflare runtime config with 5 binding refs (d1, kv, r2, var)."
         },
         "receipt": {
@@ -54515,8 +54830,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-jsonc",
           "type": "proof",
           "summary": "outerfields-pcn has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/agency/clients/outerfields/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/agency/clients/outerfields/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-jsonc",
@@ -54576,7 +54891,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-outerfields-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/agency/clients/outerfields/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, kv, r2, var)."
         },
         "receipt": {
@@ -54584,8 +54899,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-toml",
           "type": "proof",
           "summary": "outerfields-pcn has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/agency/clients/outerfields/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/agency/clients/outerfields/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-toml",
@@ -54620,7 +54935,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-the-stack-wrangler-jsonc",
           "relationCount": 1,
           "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-the-stack-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/agency/clients/the-stack/wrangler.jsonc is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
         },
         "receipt": {
@@ -54628,8 +54943,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-agency-clients-the-stack-wrangler-jsonc",
           "type": "proof",
           "summary": "the-stack-client has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/agency/clients/the-stack/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/agency/clients/the-stack/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-the-stack-wrangler-jsonc",
@@ -54675,7 +54990,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-agency-workers-dental-agent-router-wrangler-toml",
           "relationCount": 3,
           "receiptId": "receipt:substrate:create-something:worker:packages-agency-workers-dental-agent-router-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/agency/workers/dental-agent-router/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, kv)."
         },
         "receipt": {
@@ -54683,8 +54998,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-agency-workers-dental-agent-router-wrangler-toml",
           "type": "proof",
           "summary": "dental-agent-router has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/agency/workers/dental-agent-router/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/agency/workers/dental-agent-router/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-workers-dental-agent-router-wrangler-toml",
@@ -54744,7 +55059,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-agency-workers-social-poster-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-agency-workers-social-poster-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/agency/workers/social-poster/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, kv, queue, var)."
         },
         "receipt": {
@@ -54752,8 +55067,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-agency-workers-social-poster-wrangler-toml",
           "type": "proof",
           "summary": "social-poster has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/agency/workers/social-poster/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/agency/workers/social-poster/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-workers-social-poster-wrangler-toml",
@@ -54833,7 +55148,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-agency-wrangler-jsonc",
           "relationCount": 11,
           "receiptId": "receipt:substrate:create-something:worker:packages-agency-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/agency/wrangler.jsonc is bound as a Cloudflare runtime config with 10 binding refs (d1, kv, r2, var)."
         },
         "receipt": {
@@ -54841,8 +55156,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-agency-wrangler-jsonc",
           "type": "proof",
           "summary": "create-something-agency has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/agency/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/agency/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-wrangler-jsonc",
@@ -54906,7 +55221,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-airtable-primary-tags-worker-wrangler-jsonc",
           "relationCount": 8,
           "receiptId": "receipt:substrate:create-something:worker:packages-airtable-primary-tags-worker-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/airtable-primary-tags-worker/wrangler.jsonc is bound as a Cloudflare runtime config with 7 binding refs (var)."
         },
         "receipt": {
@@ -54914,8 +55229,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-airtable-primary-tags-worker-wrangler-jsonc",
           "type": "proof",
           "summary": "airtable-primary-tags has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/airtable-primary-tags-worker/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/airtable-primary-tags-worker/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-airtable-primary-tags-worker-wrangler-jsonc",
@@ -54925,67 +55240,6 @@ export const databaseLayerWorkerState =
           "owner": "CREATE SOMETHING",
           "policy": "Runtime binding review before external writes",
           "detail": "packages/airtable-primary-tags-worker/wrangler.jsonc is mapped as Substrate runtime state. Review routes, D1, Durable Object, KV, R2, queue, asset, variable, and migration expectations before mutating Cloudflare."
-        }
-      },
-      {
-        "recordId": "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-        "atlasNodeId": "atlas_create-something_worker_packages-app-governance-db-dashboard-wrangler-toml",
-        "configPath": "packages/app-governance-db/dashboard/wrangler.toml",
-        "packagePath": "packages/app-governance-db/dashboard",
-        "name": "app-governance-dashboard",
-        "main": ".svelte-kit/cloudflare/_worker.js",
-        "compatibilityDate": "2025-01-01",
-        "format": "toml",
-        "bindings": [
-          {
-            "kind": "assets",
-            "name": "ASSETS",
-            "target": ".svelte-kit/cloudflare"
-          },
-          {
-            "kind": "d1",
-            "name": "DB",
-            "target": "app-governance-db"
-          },
-          {
-            "kind": "route",
-            "name": "app-governance-dash.createsomething.agency"
-          }
-        ],
-        "routes": [
-          "app-governance-dash.createsomething.agency"
-        ],
-        "sourceRecord": {
-          "id": "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-          "source": "CREATE SOMETHING Cloudflare runtime binding coverage",
-          "sourceType": "worker",
-          "title": "app-governance-dashboard",
-          "owner": "CREATE SOMETHING",
-          "status": "ready",
-          "bindingHealth": "bound",
-          "atlasCanvasId": "create-something-internal-operating-topology",
-          "atlasNodeId": "atlas_create-something_worker_packages-app-governance-db-dashboard-wrangler-toml",
-          "relationCount": 5,
-          "receiptId": "receipt:substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
-          "summary": "packages/app-governance-db/dashboard/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (assets, d1, route)."
-        },
-        "receipt": {
-          "id": "receipt:substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-          "recordId": "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-          "type": "proof",
-          "summary": "app-governance-dashboard has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/app-governance-db/dashboard/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
-        },
-        "reviewAction": {
-          "id": "action:runtime-binding-review:substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-          "recordId": "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-          "state": "wait",
-          "title": "Review Cloudflare runtime binding for app-governance-dashboard",
-          "owner": "CREATE SOMETHING",
-          "policy": "Runtime binding review before external writes",
-          "detail": "packages/app-governance-db/dashboard/wrangler.toml is mapped as Substrate runtime state. Review routes, D1, Durable Object, KV, R2, queue, asset, variable, and migration expectations before mutating Cloudflare."
         }
       },
       {
@@ -55033,7 +55287,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-app-governance-db-worker-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-app-governance-db-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/app-governance-db/worker/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, durable_object, route)."
         },
         "receipt": {
@@ -55041,8 +55295,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-app-governance-db-worker-wrangler-toml",
           "type": "proof",
           "summary": "app-governance-db has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/app-governance-db/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/app-governance-db/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-app-governance-db-worker-wrangler-toml",
@@ -55143,7 +55397,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-bettermode-creator-mcp-worker-wrangler-toml",
           "relationCount": 17,
           "receiptId": "receipt:substrate:create-something:worker:packages-bettermode-creator-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/bettermode-creator-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 15 binding refs (d1, durable_object, route, var)."
         },
         "receipt": {
@@ -55151,8 +55405,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-bettermode-creator-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "bettermode-creator-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/bettermode-creator-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/bettermode-creator-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-bettermode-creator-mcp-worker-wrangler-toml",
@@ -55239,7 +55493,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-calm-operator-ink-bridge-wrangler-toml",
           "relationCount": 14,
           "receiptId": "receipt:substrate:create-something:worker:packages-calm-operator-ink-bridge-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/calm-operator-ink-bridge/wrangler.toml is bound as a Cloudflare runtime config with 12 binding refs (durable_object, route, var)."
         },
         "receipt": {
@@ -55247,8 +55501,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-calm-operator-ink-bridge-wrangler-toml",
           "type": "proof",
           "summary": "calm-operator-ink-bridge has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/calm-operator-ink-bridge/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/calm-operator-ink-bridge/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-calm-operator-ink-bridge-wrangler-toml",
@@ -55292,10 +55546,6 @@ export const databaseLayerWorkerState =
           },
           {
             "kind": "var",
-            "name": "AIRTABLE_LIBRARY_ASSET_TYPE"
-          },
-          {
-            "kind": "var",
             "name": "AIRTABLE_TABLE_ID"
           },
           {
@@ -55320,18 +55570,18 @@ export const databaseLayerWorkerState =
           "bindingHealth": "bound",
           "atlasCanvasId": "create-something-internal-operating-topology",
           "atlasNodeId": "atlas_create-something_worker_packages-check-asset-name-worker-wrangler-toml",
-          "relationCount": 11,
+          "relationCount": 10,
           "receiptId": "receipt:substrate:create-something:worker:packages-check-asset-name-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
-          "summary": "packages/check-asset-name-worker/wrangler.toml is bound as a Cloudflare runtime config with 9 binding refs (route, var)."
+          "updatedAt": "2026-07-08T03:41:10.905Z",
+          "summary": "packages/check-asset-name-worker/wrangler.toml is bound as a Cloudflare runtime config with 8 binding refs (route, var)."
         },
         "receipt": {
           "id": "receipt:substrate:create-something:worker:packages-check-asset-name-worker-wrangler-toml",
           "recordId": "substrate:create-something:worker:packages-check-asset-name-worker-wrangler-toml",
           "type": "proof",
           "summary": "check-asset-name has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/check-asset-name-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/check-asset-name-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-check-asset-name-worker-wrangler-toml",
@@ -55377,7 +55627,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-clearway-workers-notifier-wrangler-toml",
           "relationCount": 3,
           "receiptId": "receipt:substrate:create-something:worker:packages-clearway-workers-notifier-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/clearway/workers/notifier/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, queue)."
         },
         "receipt": {
@@ -55385,8 +55635,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-clearway-workers-notifier-wrangler-toml",
           "type": "proof",
           "summary": "court-reserve-notifier has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/clearway/workers/notifier/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/clearway/workers/notifier/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-clearway-workers-notifier-wrangler-toml",
@@ -55437,7 +55687,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-clearway-workers-realtime-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-clearway-workers-realtime-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/clearway/workers/realtime/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, durable_object, queue)."
         },
         "receipt": {
@@ -55445,8 +55695,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-clearway-workers-realtime-wrangler-toml",
           "type": "proof",
           "summary": "court-reserve-realtime has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/clearway/workers/realtime/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/clearway/workers/realtime/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-clearway-workers-realtime-wrangler-toml",
@@ -55497,7 +55747,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-clearway-workers-router-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-clearway-workers-router-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/clearway/workers/router/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, kv, r2)."
         },
         "receipt": {
@@ -55505,8 +55755,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-clearway-workers-router-wrangler-toml",
           "type": "proof",
           "summary": "court-reserve-router has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/clearway/workers/router/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/clearway/workers/router/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-clearway-workers-router-wrangler-toml",
@@ -55582,7 +55832,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-clearway-wrangler-toml",
           "relationCount": 10,
           "receiptId": "receipt:substrate:create-something:worker:packages-clearway-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/clearway/wrangler.toml is bound as a Cloudflare runtime config with 9 binding refs (d1, kv, r2, var)."
         },
         "receipt": {
@@ -55590,8 +55840,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-clearway-wrangler-toml",
           "type": "proof",
           "summary": "clearway has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/clearway/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/clearway/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-clearway-wrangler-toml",
@@ -55665,7 +55915,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-codebase-vector-database-wrangler-toml",
           "relationCount": 10,
           "receiptId": "receipt:substrate:create-something:worker:packages-codebase-vector-database-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/codebase-vector-database/wrangler.toml is bound as a Cloudflare runtime config with 9 binding refs (d1, var, vectorize)."
         },
         "receipt": {
@@ -55673,8 +55923,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-codebase-vector-database-wrangler-toml",
           "type": "proof",
           "summary": "codebase-vector-database has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/codebase-vector-database/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/codebase-vector-database/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-codebase-vector-database-wrangler-toml",
@@ -55709,7 +55959,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-composio-toolkit-mcp-wrangler-toml",
           "relationCount": 1,
           "receiptId": "receipt:substrate:create-something:worker:packages-composio-toolkit-mcp-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/composio-toolkit-mcp/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
         },
         "receipt": {
@@ -55717,8 +55967,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-composio-toolkit-mcp-wrangler-toml",
           "type": "proof",
           "summary": "composio-toolkit-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/composio-toolkit-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/composio-toolkit-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-composio-toolkit-mcp-wrangler-toml",
@@ -55789,7 +56039,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-concierge-chat-wrangler-toml",
           "relationCount": 9,
           "receiptId": "receipt:substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/concierge-chat/wrangler.toml is bound as a Cloudflare runtime config with 8 binding refs (d1, r2, var)."
         },
         "receipt": {
@@ -55797,8 +56047,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
           "type": "proof",
           "summary": "abundance-concierge-chat has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/concierge-chat/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/concierge-chat/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
@@ -55850,7 +56100,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-create-something-mcp-worker-wrangler-toml",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-create-something-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/create-something-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, durable_object, route)."
         },
         "receipt": {
@@ -55858,8 +56108,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-create-something-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "create-something-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/create-something-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/create-something-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-create-something-mcp-worker-wrangler-toml",
@@ -55905,7 +56155,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-cs-mcp-hub-notion-bridge-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-cs-mcp-hub-notion-bridge-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/cs-mcp-hub-notion-bridge/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (route, var)."
         },
         "receipt": {
@@ -55913,8 +56163,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-cs-mcp-hub-notion-bridge-wrangler-toml",
           "type": "proof",
           "summary": "cs-mcp-hub-notion-bridge has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/cs-mcp-hub-notion-bridge/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/cs-mcp-hub-notion-bridge/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-cs-mcp-hub-notion-bridge-wrangler-toml",
@@ -55980,7 +56230,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-cs-mcp-hub-remote-wrangler-toml",
           "relationCount": 8,
           "receiptId": "receipt:substrate:create-something:worker:packages-cs-mcp-hub-remote-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/cs-mcp-hub-remote/wrangler.toml is bound as a Cloudflare runtime config with 7 binding refs (d1, kv, var)."
         },
         "receipt": {
@@ -55988,8 +56238,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-cs-mcp-hub-remote-wrangler-toml",
           "type": "proof",
           "summary": "cs-mcp-hub-remote has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/cs-mcp-hub-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/cs-mcp-hub-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-cs-mcp-hub-remote-wrangler-toml",
@@ -56048,7 +56298,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-cs-telemetry-mcp-worker-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-cs-telemetry-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/cs-telemetry-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, var)."
         },
         "receipt": {
@@ -56056,8 +56306,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-cs-telemetry-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "cs-telemetry-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/cs-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/cs-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-cs-telemetry-mcp-worker-wrangler-toml",
@@ -56097,7 +56347,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-database-layer-worker-wrangler-toml",
           "relationCount": 2,
           "receiptId": "receipt:substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/database-layer/worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
         },
         "receipt": {
@@ -56105,8 +56355,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
           "type": "proof",
           "summary": "create-something-database-layer has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/database-layer/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/database-layer/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
@@ -56152,7 +56402,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-gmail-notion-mcp-worker-wrangler-toml",
           "relationCount": 3,
           "receiptId": "receipt:substrate:create-something:worker:packages-gmail-notion-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/gmail-notion-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, durable_object)."
         },
         "receipt": {
@@ -56160,8 +56410,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-gmail-notion-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "gmail-notion-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/gmail-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/gmail-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-gmail-notion-mcp-worker-wrangler-toml",
@@ -56201,7 +56451,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-gsap-validation-worker-wrangler-toml",
           "relationCount": 2,
           "receiptId": "receipt:substrate:create-something:worker:packages-gsap-validation-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/gsap-validation-worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
         },
         "receipt": {
@@ -56209,8 +56459,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-gsap-validation-worker-wrangler-toml",
           "type": "proof",
           "summary": "gsap-validation-worker has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/gsap-validation-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/gsap-validation-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-gsap-validation-worker-wrangler-toml",
@@ -56262,7 +56512,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-half-dozen-youtube-sync-worker-wrangler-toml",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-half-dozen-youtube-sync-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/half-dozen-youtube-sync/worker/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, durable_object, route)."
         },
         "receipt": {
@@ -56270,8 +56520,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-half-dozen-youtube-sync-worker-wrangler-toml",
           "type": "proof",
           "summary": "halfdozen-youtube-sync-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/half-dozen-youtube-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/half-dozen-youtube-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-half-dozen-youtube-sync-worker-wrangler-toml",
@@ -56317,7 +56567,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-agent-analyzer-telemetry-mcp-worker-wrangler-toml",
           "relationCount": 3,
           "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-agent-analyzer-telemetry-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, durable_object)."
         },
         "receipt": {
@@ -56325,8 +56575,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-halfdozen-agent-analyzer-telemetry-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "halfdozen-agent-analyzer-telemetry-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-agent-analyzer-telemetry-mcp-worker-wrangler-toml",
@@ -56407,7 +56657,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-blondish-sync-mcp-wrangler-toml",
           "relationCount": 12,
           "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-blondish-sync-mcp-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/halfdozen-blondish-sync-mcp/wrangler.toml is bound as a Cloudflare runtime config with 11 binding refs (durable_object, var)."
         },
         "receipt": {
@@ -56415,8 +56665,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-halfdozen-blondish-sync-mcp-wrangler-toml",
           "type": "proof",
           "summary": "halfdozen-blondish-sync-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/halfdozen-blondish-sync-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/halfdozen-blondish-sync-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-blondish-sync-mcp-wrangler-toml",
@@ -56516,7 +56766,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-dm-mcp-worker-wrangler-toml",
           "relationCount": 17,
           "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-dm-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/halfdozen-dm-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 15 binding refs (d1, durable_object, route, var)."
         },
         "receipt": {
@@ -56524,8 +56774,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-halfdozen-dm-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "halfdozen-dm-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/halfdozen-dm-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/halfdozen-dm-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-dm-mcp-worker-wrangler-toml",
@@ -56590,7 +56840,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-gmail-sync-worker-wrangler-toml",
           "relationCount": 8,
           "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-gmail-sync-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/halfdozen-gmail-sync/worker/wrangler.toml is bound as a Cloudflare runtime config with 6 binding refs (d1, durable_object, kv, route, var)."
         },
         "receipt": {
@@ -56598,8 +56848,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-halfdozen-gmail-sync-worker-wrangler-toml",
           "type": "proof",
           "summary": "halfdozen-gmail-sync-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/halfdozen-gmail-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/halfdozen-gmail-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-gmail-sync-worker-wrangler-toml",
@@ -56655,7 +56905,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-notion-mcp-worker-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-notion-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/halfdozen-notion-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, durable_object, route, var)."
         },
         "receipt": {
@@ -56663,8 +56913,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-halfdozen-notion-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "halfdozen-notion-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/halfdozen-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/halfdozen-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-notion-mcp-worker-wrangler-toml",
@@ -56759,7 +57009,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-operator-notion-mcp-worker-wrangler-toml",
           "relationCount": 15,
           "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-operator-notion-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/halfdozen-operator-notion-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 14 binding refs (d1, durable_object, var)."
         },
         "receipt": {
@@ -56767,8 +57017,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-halfdozen-operator-notion-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "halfdozen-operator-notion-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/halfdozen-operator-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/halfdozen-operator-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-operator-notion-mcp-worker-wrangler-toml",
@@ -56814,7 +57064,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-telemetry-mcp-worker-wrangler-toml",
           "relationCount": 3,
           "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-telemetry-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/halfdozen-telemetry-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, durable_object)."
         },
         "receipt": {
@@ -56822,8 +57072,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-halfdozen-telemetry-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "halfdozen-telemetry-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/halfdozen-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/halfdozen-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-telemetry-mcp-worker-wrangler-toml",
@@ -56885,7 +57135,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-zoom-sync-worker-wrangler-toml",
           "relationCount": 7,
           "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/halfdozen-zoom-sync/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, kv, route)."
         },
         "receipt": {
@@ -56893,8 +57143,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
           "type": "proof",
           "summary": "halfdozen-zoom-sync-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/halfdozen-zoom-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/halfdozen-zoom-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
@@ -56977,7 +57227,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-zoom-transcript-sync-wrangler-toml",
           "relationCount": 12,
           "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-zoom-transcript-sync-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/halfdozen-zoom-transcript-sync/wrangler.toml is bound as a Cloudflare runtime config with 11 binding refs (d1, queue, var)."
         },
         "receipt": {
@@ -56985,8 +57235,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-halfdozen-zoom-transcript-sync-wrangler-toml",
           "type": "proof",
           "summary": "halfdozen-zoom-transcript-sync has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/halfdozen-zoom-transcript-sync/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/halfdozen-zoom-transcript-sync/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-zoom-transcript-sync-wrangler-toml",
@@ -57056,7 +57306,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-hydra-db-recall-mcp-worker-wrangler-toml",
           "relationCount": 9,
           "receiptId": "receipt:substrate:create-something:worker:packages-hydra-db-recall-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/hydra-db-recall-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 8 binding refs (d1, durable_object, var)."
         },
         "receipt": {
@@ -57064,8 +57314,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-hydra-db-recall-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "hydra-db-recall-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/hydra-db-recall-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/hydra-db-recall-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-hydra-db-recall-mcp-worker-wrangler-toml",
@@ -57123,7 +57373,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-identity-worker-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-identity-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/identity-worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, r2, var)."
         },
         "receipt": {
@@ -57131,8 +57381,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-identity-worker-wrangler-toml",
           "type": "proof",
           "summary": "identity-worker has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/identity-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/identity-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-identity-worker-wrangler-toml",
@@ -57173,7 +57423,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-interaction-atlas-mcp-worker-wrangler-toml",
           "relationCount": 2,
           "receiptId": "receipt:substrate:create-something:worker:packages-interaction-atlas-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/interaction-atlas-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (d1)."
         },
         "receipt": {
@@ -57181,8 +57431,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-interaction-atlas-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "interaction-atlas-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/interaction-atlas-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/interaction-atlas-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-interaction-atlas-mcp-worker-wrangler-toml",
@@ -57226,7 +57476,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-io-workers-bundle-scanner-api-wrangler-toml",
           "relationCount": 3,
           "receiptId": "receipt:substrate:create-something:worker:packages-io-workers-bundle-scanner-api-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/io/workers/bundle-scanner-api/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (var)."
         },
         "receipt": {
@@ -57234,8 +57484,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-io-workers-bundle-scanner-api-wrangler-toml",
           "type": "proof",
           "summary": "bundle-scanner-api has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/io/workers/bundle-scanner-api/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/io/workers/bundle-scanner-api/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-io-workers-bundle-scanner-api-wrangler-toml",
@@ -57268,10 +57518,6 @@ export const databaseLayerWorkerState =
           {
             "kind": "var",
             "name": "ENVIRONMENT"
-          },
-          {
-            "kind": "var",
-            "name": "LIBRARY_ASSET_TYPE"
           }
         ],
         "routes": [],
@@ -57285,18 +57531,18 @@ export const databaseLayerWorkerState =
           "bindingHealth": "bound",
           "atlasCanvasId": "create-something-internal-operating-topology",
           "atlasNodeId": "atlas_create-something_worker_packages-io-workers-webflow-validation-wrangler-toml",
-          "relationCount": 5,
+          "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-io-workers-webflow-validation-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
-          "summary": "packages/io/workers/webflow-validation/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (var)."
+          "updatedAt": "2026-07-08T03:41:10.905Z",
+          "summary": "packages/io/workers/webflow-validation/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (var)."
         },
         "receipt": {
           "id": "receipt:substrate:create-something:worker:packages-io-workers-webflow-validation-wrangler-toml",
           "recordId": "substrate:create-something:worker:packages-io-workers-webflow-validation-wrangler-toml",
           "type": "proof",
           "summary": "webflow-validation has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/io/workers/webflow-validation/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/io/workers/webflow-validation/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-io-workers-webflow-validation-wrangler-toml",
@@ -57364,7 +57610,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-io-wrangler-jsonc",
           "relationCount": 8,
           "receiptId": "receipt:substrate:create-something:worker:packages-io-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/io/wrangler.jsonc is bound as a Cloudflare runtime config with 7 binding refs (d1, kv, r2, var)."
         },
         "receipt": {
@@ -57372,8 +57618,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-io-wrangler-jsonc",
           "type": "proof",
           "summary": "create-something-io has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/io/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/io/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-io-wrangler-jsonc",
@@ -57408,7 +57654,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-landing-page-filter-wrangler-toml",
           "relationCount": 1,
           "receiptId": "receipt:substrate:create-something:worker:packages-landing-page-filter-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/landing-page-filter/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
         },
         "receipt": {
@@ -57416,8 +57662,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-landing-page-filter-wrangler-toml",
           "type": "proof",
           "summary": "landing-page-filter has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/landing-page-filter/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/landing-page-filter/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-landing-page-filter-wrangler-toml",
@@ -57471,7 +57717,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-lms-wrangler-toml",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-lms-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/lms/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, kv, var)."
         },
         "receipt": {
@@ -57479,8 +57725,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-lms-wrangler-toml",
           "type": "proof",
           "summary": "createsomething-lms has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/lms/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/lms/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-lms-wrangler-toml",
@@ -57532,7 +57778,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-loom-mcp-remote-wrangler-toml",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-loom-mcp-remote-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/loom-mcp-remote/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, route)."
         },
         "receipt": {
@@ -57540,8 +57786,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-loom-mcp-remote-wrangler-toml",
           "type": "proof",
           "summary": "loom-mcp-remote has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/loom-mcp-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/loom-mcp-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-loom-mcp-remote-wrangler-toml",
@@ -57581,7 +57827,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-ltd-workers-arena-curator-wrangler-toml",
           "relationCount": 2,
           "receiptId": "receipt:substrate:create-something:worker:packages-ltd-workers-arena-curator-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/ltd/workers/arena-curator/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
         },
         "receipt": {
@@ -57589,8 +57835,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-ltd-workers-arena-curator-wrangler-toml",
           "type": "proof",
           "summary": "arena-curator has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/ltd/workers/arena-curator/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/ltd/workers/arena-curator/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-ltd-workers-arena-curator-wrangler-toml",
@@ -57625,7 +57871,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-ltd-workers-arena-sync-wrangler-toml",
           "relationCount": 1,
           "receiptId": "receipt:substrate:create-something:worker:packages-ltd-workers-arena-sync-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/ltd/workers/arena-sync/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
         },
         "receipt": {
@@ -57633,8 +57879,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-ltd-workers-arena-sync-wrangler-toml",
           "type": "proof",
           "summary": "arena-sync has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/ltd/workers/arena-sync/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/ltd/workers/arena-sync/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-ltd-workers-arena-sync-wrangler-toml",
@@ -57689,7 +57935,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-ltd-wrangler-jsonc",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-ltd-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/ltd/wrangler.jsonc is bound as a Cloudflare runtime config with 4 binding refs (d1, kv, var)."
         },
         "receipt": {
@@ -57697,8 +57943,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-ltd-wrangler-jsonc",
           "type": "proof",
           "summary": "createsomething-ltd has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/ltd/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/ltd/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-ltd-wrangler-jsonc",
@@ -57748,7 +57994,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-maverick-admin-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/maverick-admin/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, kv, r2)."
         },
         "receipt": {
@@ -57756,8 +58002,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
           "type": "proof",
           "summary": "maverick-admin has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/maverick-admin/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/maverick-admin/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
@@ -57817,7 +58063,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-maverick-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-maverick-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/maverick/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, kv, r2, var)."
         },
         "receipt": {
@@ -57825,8 +58071,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-maverick-wrangler-toml",
           "type": "proof",
           "summary": "maverick-x has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/maverick/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/maverick/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-maverick-wrangler-toml",
@@ -57872,7 +58118,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-meetings-mcp-worker-wrangler-toml",
           "relationCount": 3,
           "receiptId": "receipt:substrate:create-something:worker:packages-meetings-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/meetings-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, durable_object)."
         },
         "receipt": {
@@ -57880,8 +58126,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-meetings-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "meetings-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/meetings-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/meetings-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-meetings-mcp-worker-wrangler-toml",
@@ -57941,7 +58187,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-meetings-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-meetings-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/meetings/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, queue, r2, var)."
         },
         "receipt": {
@@ -57949,8 +58195,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-meetings-wrangler-toml",
           "type": "proof",
           "summary": "create-something-meetings has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/meetings/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/meetings/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-meetings-wrangler-toml",
@@ -58000,7 +58246,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-notion-agent-workers-scheduler-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-notion-agent-workers-scheduler-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/notion-agent/workers/scheduler/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, kv, var)."
         },
         "receipt": {
@@ -58008,8 +58254,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-notion-agent-workers-scheduler-wrangler-toml",
           "type": "proof",
           "summary": "notion-agent-scheduler has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/notion-agent/workers/scheduler/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/notion-agent/workers/scheduler/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-notion-agent-workers-scheduler-wrangler-toml",
@@ -58063,7 +58309,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-notion-agent-wrangler-toml",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-notion-agent-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/notion-agent/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, kv, var)."
         },
         "receipt": {
@@ -58071,8 +58317,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-notion-agent-wrangler-toml",
           "type": "proof",
           "summary": "notion-agent has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/notion-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/notion-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-notion-agent-wrangler-toml",
@@ -58113,7 +58359,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-notion-sync-mcp-worker-wrangler-toml",
           "relationCount": 2,
           "receiptId": "receipt:substrate:create-something:worker:packages-notion-sync-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/notion-sync-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (d1)."
         },
         "receipt": {
@@ -58121,8 +58367,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-notion-sync-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "notion-sync-mcp-worker has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/notion-sync-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/notion-sync-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-notion-sync-mcp-worker-wrangler-toml",
@@ -58174,7 +58420,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-ona-agents-wrangler-toml",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-ona-agents-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/ona-agents/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (var)."
         },
         "receipt": {
@@ -58182,8 +58428,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-ona-agents-wrangler-toml",
           "type": "proof",
           "summary": "ona-agent-chat has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/ona-agents/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/ona-agents/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-ona-agents-wrangler-toml",
@@ -58283,7 +58529,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-playbook-mcp-worker-wrangler-toml",
           "relationCount": 17,
           "receiptId": "receipt:substrate:create-something:worker:packages-playbook-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/playbook-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 15 binding refs (d1, durable_object, route, var)."
         },
         "receipt": {
@@ -58291,8 +58537,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-playbook-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "playbook-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/playbook-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/playbook-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-playbook-mcp-worker-wrangler-toml",
@@ -58347,7 +58593,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-quickbooks-notion-mcp-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-quickbooks-notion-mcp-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/quickbooks-notion-mcp/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (kv, route, var)."
         },
         "receipt": {
@@ -58355,8 +58601,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-quickbooks-notion-mcp-wrangler-toml",
           "type": "proof",
           "summary": "quickbooks-notion-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/quickbooks-notion-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/quickbooks-notion-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-quickbooks-notion-mcp-wrangler-toml",
@@ -58407,7 +58653,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-relay-wrangler-jsonc",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-relay-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/relay/wrangler.jsonc is bound as a Cloudflare runtime config with 3 binding refs (assets, durable_object, r2)."
         },
         "receipt": {
@@ -58415,8 +58661,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-relay-wrangler-jsonc",
           "type": "proof",
           "summary": "relay has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/relay/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/relay/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-relay-wrangler-jsonc",
@@ -58466,7 +58712,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-scanner-worker-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-scanner-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/scanner-worker/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, kv, var)."
         },
         "receipt": {
@@ -58474,8 +58720,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-scanner-worker-wrangler-toml",
           "type": "proof",
           "summary": "scanner-worker has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/scanner-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/scanner-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-scanner-worker-wrangler-toml",
@@ -58532,7 +58778,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-schedule-mcp-worker-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-schedule-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/schedule-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, durable_object, route)."
         },
         "receipt": {
@@ -58540,8 +58786,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-schedule-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "schedule-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/schedule-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/schedule-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-schedule-mcp-worker-wrangler-toml",
@@ -58592,7 +58838,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-schedule-mcp-workers-notifier-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-schedule-mcp-workers-notifier-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/schedule-mcp/workers/notifier/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, queue)."
         },
         "receipt": {
@@ -58600,8 +58846,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-schedule-mcp-workers-notifier-wrangler-toml",
           "type": "proof",
           "summary": "schedule-notifier has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/schedule-mcp/workers/notifier/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/schedule-mcp/workers/notifier/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-schedule-mcp-workers-notifier-wrangler-toml",
@@ -58671,7 +58917,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-search-wrangler-toml",
           "relationCount": 8,
           "receiptId": "receipt:substrate:create-something:worker:packages-search-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/search/wrangler.toml is bound as a Cloudflare runtime config with 7 binding refs (d1, kv, var, vectorize)."
         },
         "receipt": {
@@ -58679,8 +58925,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-search-wrangler-toml",
           "type": "proof",
           "summary": "unified-search has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/search/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/search/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-search-wrangler-toml",
@@ -58751,7 +58997,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-social-agent-wrangler-toml",
           "relationCount": 9,
           "receiptId": "receipt:substrate:create-something:worker:packages-social-agent-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/social-agent/wrangler.toml is bound as a Cloudflare runtime config with 8 binding refs (d1, kv, queue, var)."
         },
         "receipt": {
@@ -58759,8 +59005,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-social-agent-wrangler-toml",
           "type": "proof",
           "summary": "social-agent has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/social-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/social-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-social-agent-wrangler-toml",
@@ -58821,7 +59067,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-space-workers-agentic-executor-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-space-workers-agentic-executor-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/space/workers/agentic-executor/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, queue, r2)."
         },
         "receipt": {
@@ -58829,8 +59075,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-space-workers-agentic-executor-wrangler-toml",
           "type": "proof",
           "summary": "agentic-executor has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/space/workers/agentic-executor/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/space/workers/agentic-executor/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-space-workers-agentic-executor-wrangler-toml",
@@ -58870,7 +59116,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-space-workers-motion-extractor-wrangler-toml",
           "relationCount": 2,
           "receiptId": "receipt:substrate:create-something:worker:packages-space-workers-motion-extractor-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/space/workers/motion-extractor/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
         },
         "receipt": {
@@ -58878,8 +59124,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-space-workers-motion-extractor-wrangler-toml",
           "type": "proof",
           "summary": "motion-extractor has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/space/workers/motion-extractor/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/space/workers/motion-extractor/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-space-workers-motion-extractor-wrangler-toml",
@@ -58945,7 +59191,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-space-workers-nba-proxy-wrangler-toml",
           "relationCount": 8,
           "receiptId": "receipt:substrate:create-something:worker:packages-space-workers-nba-proxy-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/space/workers/nba-proxy/wrangler.toml is bound as a Cloudflare runtime config with 7 binding refs (d1, kv, var)."
         },
         "receipt": {
@@ -58953,8 +59199,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-space-workers-nba-proxy-wrangler-toml",
           "type": "proof",
           "summary": "nba-proxy has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/space/workers/nba-proxy/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/space/workers/nba-proxy/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-space-workers-nba-proxy-wrangler-toml",
@@ -59027,7 +59273,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-space-wrangler-jsonc",
           "relationCount": 9,
           "receiptId": "receipt:substrate:create-something:worker:packages-space-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/space/wrangler.jsonc is bound as a Cloudflare runtime config with 8 binding refs (d1, kv, r2, var)."
         },
         "receipt": {
@@ -59035,8 +59281,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-space-wrangler-jsonc",
           "type": "proof",
           "summary": "create-something-space has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/space/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/space/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-space-wrangler-jsonc",
@@ -59094,7 +59340,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-spotify-mcp-worker-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-spotify-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/spotify-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, var)."
         },
         "receipt": {
@@ -59102,8 +59348,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-spotify-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "spotify-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/spotify-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/spotify-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-spotify-mcp-worker-wrangler-toml",
@@ -59170,7 +59416,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-substrate-mcp-worker-wrangler-toml",
           "relationCount": 8,
           "receiptId": "receipt:substrate:create-something:worker:packages-substrate-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/substrate-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 6 binding refs (d1, durable_object, r2, route)."
         },
         "receipt": {
@@ -59178,8 +59424,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-substrate-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "substrate-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/substrate-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/substrate-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-substrate-mcp-worker-wrangler-toml",
@@ -59226,7 +59472,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-template-form-uploads-worker-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-template-form-uploads-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/template-form-uploads-worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (r2, route)."
         },
         "receipt": {
@@ -59234,8 +59480,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-template-form-uploads-worker-wrangler-toml",
           "type": "proof",
           "summary": "template-form-uploads has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/template-form-uploads-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/template-form-uploads-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-template-form-uploads-worker-wrangler-toml",
@@ -59280,7 +59526,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-tend-wrangler-toml",
           "relationCount": 3,
           "receiptId": "receipt:substrate:create-something:worker:packages-tend-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/tend/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, var)."
         },
         "receipt": {
@@ -59288,8 +59534,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-tend-wrangler-toml",
           "type": "proof",
           "summary": "tend has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/tend/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/tend/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-tend-wrangler-toml",
@@ -59341,7 +59587,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-three-tier-framework-mcp-worker-wrangler-toml",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-three-tier-framework-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/three-tier-framework-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, durable_object, route)."
         },
         "receipt": {
@@ -59349,8 +59595,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-three-tier-framework-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "three-tier-framework-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/three-tier-framework-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/three-tier-framework-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-three-tier-framework-mcp-worker-wrangler-toml",
@@ -59408,7 +59654,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-app-review-mcp-worker-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-app-review-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, var)."
         },
         "receipt": {
@@ -59416,8 +59662,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "webflow-app-review-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-app-review-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-app-review-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
@@ -59451,7 +59697,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-apps-admin-dashboard-wrangler-toml",
           "relationCount": 1,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-apps-admin/dashboard/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
         },
         "receipt": {
@@ -59459,8 +59705,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
           "type": "proof",
           "summary": "webflow-apps-audit has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-apps-admin/dashboard/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-apps-admin/dashboard/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
@@ -59500,7 +59746,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
           "relationCount": 2,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-apps-admin/workers/audit-agent/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
         },
         "receipt": {
@@ -59508,8 +59754,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
           "type": "proof",
           "summary": "webflow-apps-audit-agent has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-apps-admin/workers/audit-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-apps-admin/workers/audit-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
@@ -59549,7 +59795,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-automation-worker-wrangler-toml",
           "relationCount": 2,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-automation-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-automation/worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
         },
         "receipt": {
@@ -59557,8 +59803,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-automation-worker-wrangler-toml",
           "type": "proof",
           "summary": "webflow-onboarding-sync has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-automation/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-automation/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-automation-worker-wrangler-toml",
@@ -59613,7 +59859,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-dashboard-wrangler-jsonc",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-dashboard/wrangler.jsonc is bound as a Cloudflare runtime config with 4 binding refs (d1, kv, r2, var)."
         },
         "receipt": {
@@ -59621,8 +59867,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
           "type": "proof",
           "summary": "webflow-dashboard has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-dashboard/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-dashboard/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
@@ -59662,7 +59908,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-mcp-worker-wrangler-toml",
           "relationCount": 2,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
         },
         "receipt": {
@@ -59670,8 +59916,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "webflow-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
@@ -59732,7 +59978,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-review-workers-orchestrator-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-review/workers/orchestrator/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, kv, queue, r2)."
         },
         "receipt": {
@@ -59740,8 +59986,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
           "type": "proof",
           "summary": "webflow-review-orchestrator has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-review/workers/orchestrator/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-review/workers/orchestrator/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
@@ -59792,7 +60038,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-review-workers-queue-consumer-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-review-workers-queue-consumer-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-review/workers/queue-consumer/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, queue, r2)."
         },
         "receipt": {
@@ -59800,8 +60046,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-review-workers-queue-consumer-wrangler-toml",
           "type": "proof",
           "summary": "webflow-review-queue-consumer has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-review/workers/queue-consumer/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-review/workers/queue-consumer/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-review-workers-queue-consumer-wrangler-toml",
@@ -59859,7 +60105,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-reviewer-exceptions-mcp-worker-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-reviewer-exceptions-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-reviewer-exceptions-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, var)."
         },
         "receipt": {
@@ -59867,8 +60113,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-reviewer-exceptions-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "webflow-reviewer-exceptions-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-reviewer-exceptions-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-reviewer-exceptions-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-reviewer-exceptions-mcp-worker-wrangler-toml",
@@ -59917,7 +60163,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-site-analyzer-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (durable_object, var)."
         },
         "receipt": {
@@ -59925,8 +60171,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "webflow-site-analyzer-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-site-analyzer-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-site-analyzer-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
@@ -59975,7 +60221,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-site-analyzer-mcp/workers/remote/wrangler.jsonc is bound as a Cloudflare runtime config with 3 binding refs (durable_object, var)."
         },
         "receipt": {
@@ -59983,8 +60229,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
           "type": "proof",
           "summary": "webflow-site-analyzer-mcp-remote has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-site-analyzer-mcp/workers/remote/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-site-analyzer-mcp/workers/remote/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
@@ -60035,7 +60281,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-site-analyzer-mcp-wrangler-toml",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-site-analyzer-mcp/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (durable_object, route, var)."
         },
         "receipt": {
@@ -60043,8 +60289,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-site-analyzer-mcp-wrangler-toml",
           "type": "proof",
           "summary": "webflow-site-analyzer-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-site-analyzer-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-site-analyzer-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-wrangler-toml",
@@ -60105,7 +60351,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
           "relationCount": 7,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-template-analyzer/cloudflare/wrangler.jsonc is bound as a Cloudflare runtime config with 6 binding refs (durable_object, var)."
         },
         "receipt": {
@@ -60113,8 +60359,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
           "type": "proof",
           "summary": "webflow-template-analyzer has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-template-analyzer/cloudflare/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-template-analyzer/cloudflare/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
@@ -60172,7 +60418,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-review-mcp-worker-wrangler-toml",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-template-review-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-template-review-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, var)."
         },
         "receipt": {
@@ -60180,8 +60426,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-template-review-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "webflow-template-review-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-template-review-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-template-review-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-template-review-mcp-worker-wrangler-toml",
@@ -60266,7 +60512,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-search-wrangler-toml",
           "relationCount": 13,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-template-search-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-template-search/wrangler.toml is bound as a Cloudflare runtime config with 12 binding refs (d1, var)."
         },
         "receipt": {
@@ -60274,8 +60520,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-template-search-wrangler-toml",
           "type": "proof",
           "summary": "webflow-template-search has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-template-search/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-template-search/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-template-search-wrangler-toml",
@@ -60326,7 +60572,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-validation-worker-wrangler-jsonc",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:worker:packages-webflow-template-validation-worker-wrangler-jsonc",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/webflow-template-validation/worker/wrangler.jsonc is bound as a Cloudflare runtime config with 3 binding refs (assets, durable_object, r2)."
         },
         "receipt": {
@@ -60334,8 +60580,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-webflow-template-validation-worker-wrangler-jsonc",
           "type": "proof",
           "summary": "validation-worker has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/webflow-template-validation/worker/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/webflow-template-validation/worker/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-template-validation-worker-wrangler-jsonc",
@@ -60370,7 +60616,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-wf-search-category-wrangler-toml",
           "relationCount": 1,
           "receiptId": "receipt:substrate:create-something:worker:packages-wf-search-category-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/wf-search-category/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
         },
         "receipt": {
@@ -60378,8 +60624,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-wf-search-category-wrangler-toml",
           "type": "proof",
           "summary": "wf-search-category has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/wf-search-category/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/wf-search-category/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-wf-search-category-wrangler-toml",
@@ -60433,7 +60679,7 @@ export const databaseLayerWorkerState =
           "atlasNodeId": "atlas_create-something_worker_packages-zendesk-mcp-worker-wrangler-toml",
           "relationCount": 5,
           "receiptId": "receipt:substrate:create-something:worker:packages-zendesk-mcp-worker-wrangler-toml",
-          "updatedAt": "2026-07-07T23:42:24.256Z",
+          "updatedAt": "2026-07-08T03:41:10.905Z",
           "summary": "packages/zendesk-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, durable_object, var)."
         },
         "receipt": {
@@ -60441,8 +60687,8 @@ export const databaseLayerWorkerState =
           "recordId": "substrate:create-something:worker:packages-zendesk-mcp-worker-wrangler-toml",
           "type": "proof",
           "summary": "zendesk-mcp has first-class Substrate runtime binding coverage.",
-          "evidence": "packages/zendesk-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-07T23:42:24.256Z.",
-          "createdAt": "2026-07-07T23:42:24.256Z"
+          "evidence": "packages/zendesk-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-07-08T03:41:10.905Z.",
+          "createdAt": "2026-07-08T03:41:10.905Z"
         },
         "reviewAction": {
           "id": "action:runtime-binding-review:substrate:create-something:worker:packages-zendesk-mcp-worker-wrangler-toml",
@@ -60460,12 +60706,12 @@ export const databaseLayerWorkerState =
     "id": "substrate:create-something:topology-diagnostics:internal",
     "topologyId": "substrate:create-something:topology:internal",
     "atlasCanvasId": "create-something-internal-operating-topology",
-    "generatedAt": "2026-07-07T23:42:24.883Z",
+    "generatedAt": "2026-07-08T03:41:12.397Z",
     "summary": {
       "valueState": "connected_map_with_review_signals",
-      "nodes": 439,
-      "edges": 779,
-      "mapped": 439,
+      "nodes": 429,
+      "edges": 868,
+      "mapped": 429,
       "hardGapCount": 0,
       "reviewSignalCount": 6,
       "exactDuplicatePathCount": 0,
@@ -60476,18 +60722,18 @@ export const databaseLayerWorkerState =
         "app": 6,
         "mcp": 72,
         "client": 6,
-        "worker": 146,
+        "worker": 144,
         "agent": 28,
-        "doc": 6,
-        "policy": 56,
-        "guide": 54,
+        "doc": 5,
+        "policy": 54,
+        "guide": 49,
         "config": 24
       },
       "tierCounts": {
-        "Mixed": 88,
-        "Judgment": 93,
-        "Automation": 237,
-        "Database": 21
+        "Mixed": 81,
+        "Judgment": 88,
+        "Automation": 236,
+        "Database": 24
       }
     },
     "signals": [
@@ -60518,11 +60764,11 @@ export const databaseLayerWorkerState =
         "classification": "review_signal",
         "severity": "review",
         "title": "Automation and Database balance",
-        "summary": "Automation has 237 record(s); Database has 21 record(s). This is a business-shape review signal, not a hard gap.",
+        "summary": "Automation has 236 record(s); Database has 24 record(s). This is a business-shape review signal, not a hard gap.",
         "evidence": [
-          "Automation=237",
-          "Database=21",
-          "Total nodes=439"
+          "Automation=236",
+          "Database=24",
+          "Total nodes=429"
         ],
         "nodeIds": [],
         "paths": [],
@@ -60533,22 +60779,21 @@ export const databaseLayerWorkerState =
         "classification": "review_signal",
         "severity": "review",
         "title": "Worker surface concentration",
-        "summary": "146 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+        "summary": "144 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
         "evidence": [
           "worker: packages/agency",
           "worker: packages/agency/workers/social-poster",
           "worker: packages/airtable-primary-tags-worker",
-          "worker: packages/app-governance-db/dashboard",
           "worker: packages/app-governance-db/worker",
           "worker: packages/calm-operator-ink-bridge",
           "worker: packages/check-asset-name-worker",
-          "worker: packages/clearway"
+          "worker: packages/clearway",
+          "worker: packages/clearway/workers/notifier"
         ],
         "nodeIds": [
           "substrate:create-something:package:create-something-agency-packages-agency",
           "substrate:create-something:package:social-poster-worker-packages-agency-workers-social-poster",
           "substrate:create-something:package:create-something-airtable-primary-tags-worker-packages-airtable-primary-tags-worker",
-          "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
           "substrate:create-something:package:app-governance-db-worker-packages-app-governance-db-worker",
           "substrate:create-something:package:create-something-calm-operator-ink-bridge-packages-calm-operator-ink-bridge",
           "substrate:create-something:package:create-something-check-asset-name-worker-packages-check-asset-name-worker",
@@ -60568,13 +60813,13 @@ export const databaseLayerWorkerState =
           "substrate:create-something:package:create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api",
           "substrate:create-something:package:create-something-webflow-validation-packages-io-workers-webflow-validation",
           "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter",
-          "substrate:create-something:package:create-something-lms-packages-lms"
+          "substrate:create-something:package:create-something-lms-packages-lms",
+          "substrate:create-something:package:create-something-ltd-packages-ltd"
         ],
         "paths": [
           "packages/agency",
           "packages/agency/workers/social-poster",
           "packages/airtable-primary-tags-worker",
-          "packages/app-governance-db/dashboard",
           "packages/app-governance-db/worker",
           "packages/calm-operator-ink-bridge",
           "packages/check-asset-name-worker",
@@ -60594,7 +60839,8 @@ export const databaseLayerWorkerState =
           "packages/io/workers/bundle-scanner-api",
           "packages/io/workers/webflow-validation",
           "packages/landing-page-filter",
-          "packages/lms"
+          "packages/lms",
+          "packages/ltd"
         ],
         "nextAction": "Review worker records through runtime binding coverage before promoting execution claims."
       },
@@ -60603,19 +60849,18 @@ export const databaseLayerWorkerState =
         "classification": "review_signal",
         "severity": "review",
         "title": "worker surface review",
-        "summary": "146 record(s) are classified as worker.",
+        "summary": "144 record(s) are classified as worker.",
         "evidence": [
           "@create-something/agency: packages/agency",
           "social-poster-worker: packages/agency/workers/social-poster",
           "@create-something/airtable-primary-tags-worker: packages/airtable-primary-tags-worker",
-          "app-governance-dashboard: packages/app-governance-db/dashboard",
-          "app-governance-db-worker: packages/app-governance-db/worker"
+          "app-governance-db-worker: packages/app-governance-db/worker",
+          "@create-something/calm-operator-ink-bridge: packages/calm-operator-ink-bridge"
         ],
         "nodeIds": [
           "substrate:create-something:package:create-something-agency-packages-agency",
           "substrate:create-something:package:social-poster-worker-packages-agency-workers-social-poster",
           "substrate:create-something:package:create-something-airtable-primary-tags-worker-packages-airtable-primary-tags-worker",
-          "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
           "substrate:create-something:package:app-governance-db-worker-packages-app-governance-db-worker",
           "substrate:create-something:package:create-something-calm-operator-ink-bridge-packages-calm-operator-ink-bridge",
           "substrate:create-something:package:create-something-check-asset-name-worker-packages-check-asset-name-worker",
@@ -60623,13 +60868,13 @@ export const databaseLayerWorkerState =
           "substrate:create-something:package:court-reserve-notifier-worker-packages-clearway-workers-notifier",
           "substrate:create-something:package:court-reserve-realtime-worker-packages-clearway-workers-realtime",
           "substrate:create-something:package:create-something-court-reserve-router-packages-clearway-workers-router",
-          "substrate:create-something:package:create-something-codebase-vector-database-packages-codebase-vector-database"
+          "substrate:create-something:package:create-something-codebase-vector-database-packages-codebase-vector-database",
+          "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat"
         ],
         "paths": [
           "packages/agency",
           "packages/agency/workers/social-poster",
           "packages/airtable-primary-tags-worker",
-          "packages/app-governance-db/dashboard",
           "packages/app-governance-db/worker",
           "packages/calm-operator-ink-bridge",
           "packages/check-asset-name-worker",
@@ -60637,7 +60882,8 @@ export const databaseLayerWorkerState =
           "packages/clearway/workers/notifier",
           "packages/clearway/workers/realtime",
           "packages/clearway/workers/router",
-          "packages/codebase-vector-database"
+          "packages/codebase-vector-database",
+          "packages/concierge-chat"
         ],
         "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
       },
@@ -60689,7 +60935,7 @@ export const databaseLayerWorkerState =
         "classification": "review_signal",
         "severity": "review",
         "title": "policy surface review",
-        "summary": "56 record(s) are classified as policy.",
+        "summary": "54 record(s) are classified as policy.",
         "evidence": [
           "policy.hub-route-authorization.v1.json: docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
           "policy.judgment-baseline.v1.json: docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
@@ -60732,7 +60978,7 @@ export const databaseLayerWorkerState =
         "classification": "review_signal",
         "severity": "review",
         "title": "guide surface review",
-        "summary": "54 record(s) are classified as guide.",
+        "summary": "49 record(s) are classified as guide.",
         "evidence": [
           "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
           "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
