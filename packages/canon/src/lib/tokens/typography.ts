@@ -14,7 +14,12 @@ export const typography = {
 	family: {
 		sans: '"ABC Diatype", "Stack Sans Notch", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 		mono: '"ABC Diatype Mono", "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace',
-		serif: '"Martina Plantijn", Georgia, "Times New Roman", serif'
+		serif: '"Martina Plantijn", Georgia, "Times New Roman", serif',
+		interface: 'var(--font-sans)',
+		prose: 'var(--font-sans)',
+		record: 'var(--font-mono)',
+		'topology-label': 'var(--font-mono)',
+		code: 'var(--font-mono)'
 	},
 
 	// Font weights
@@ -67,7 +72,13 @@ export const typography = {
 
 		// Utility sizes
 		caption: '0.833rem', // 1/1.2
-		overline: '0.618rem' // 1/φ
+		overline: '0.618rem', // 1/φ
+
+		// Role sizes
+		record: 'var(--text-body-sm)',
+		'record-meta': 'var(--text-caption)',
+		'operator-label': '0.72rem',
+		'topology-label': '0.72rem'
 	}
 } as const;
 
@@ -85,6 +96,11 @@ export const typographyVars = {
 	'--font-sans': typography.family.sans,
 	'--font-mono': typography.family.mono,
 	'--font-serif': typography.family.serif,
+	'--font-interface': typography.family.interface,
+	'--font-prose': typography.family.prose,
+	'--font-record': typography.family.record,
+	'--font-topology-label': typography.family['topology-label'],
+	'--font-code': typography.family.code,
 
 	// Weights
 	'--font-regular': typography.weight.regular,
@@ -106,6 +122,9 @@ export const typographyVars = {
 	'--tracking-wide': typography.tracking.wide,
 	'--tracking-wider': typography.tracking.wider,
 	'--tracking-widest': typography.tracking.widest,
+	'--tracking-record': typography.tracking.normal,
+	'--tracking-operator-label': typography.tracking.normal,
+	'--tracking-topology-label': typography.tracking.normal,
 
 	// Type scale
 	'--text-display-xl': typography.scale['display-xl'],
@@ -120,7 +139,15 @@ export const typographyVars = {
 	'--text-body': typography.scale.body,
 	'--text-body-sm': typography.scale['body-sm'],
 	'--text-caption': typography.scale.caption,
-	'--text-overline': typography.scale.overline
+	'--text-overline': typography.scale.overline,
+	'--text-record': typography.scale.record,
+	'--text-record-meta': typography.scale['record-meta'],
+	'--text-operator-label': typography.scale['operator-label'],
+	'--text-topology-label': typography.scale['topology-label'],
+
+	// Role line heights
+	'--leading-record': '1.35',
+	'--leading-topology-label': '1.2'
 } as const;
 
 /**

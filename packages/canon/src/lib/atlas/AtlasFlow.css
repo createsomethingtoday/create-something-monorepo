@@ -5,15 +5,16 @@
 	height: 100%;
 	min-height: 31rem;
 	background-color: #fbfbf8;
-	font-family:
-		ABCDiatype,
-		Inter,
+	font-family: var(
+		--font-interface,
+		'ABC Diatype',
 		ui-sans-serif,
 		system-ui,
 		-apple-system,
 		BlinkMacSystemFont,
 		"Segoe UI",
-		sans-serif;
+		sans-serif
+	);
 }
 
 .public-atlas-flow .svelte-flow,
@@ -53,8 +54,12 @@
 
 .public-atlas-flow .svelte-flow__edge-text {
 	fill: #6f6f67;
-	font-size: 11px;
+	font-family: var(--font-topology-label, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
+	font-size: var(--text-topology-label, 0.72rem);
+	font-variant-numeric: tabular-nums;
 	font-weight: 600;
+	letter-spacing: var(--tracking-topology-label, 0);
+	line-height: var(--leading-topology-label, 1.2);
 	paint-order: stroke;
 	stroke: #fbfbf8;
 	stroke-linecap: round;
@@ -87,8 +92,9 @@
 	border-radius: 999px;
 	background: rgba(255, 255, 255, 0.86);
 	color: #0a0e19;
-	font-size: 0.82rem;
+	font-size: var(--text-record-meta, 0.833rem);
 	font-weight: 700;
+	letter-spacing: var(--tracking-record, 0);
 	padding: 0.55rem 0.75rem;
 	backdrop-filter: blur(8px);
 	box-shadow: 0 14px 32px rgba(10, 14, 25, 0.06);
@@ -96,7 +102,9 @@
 
 .public-atlas-kicker small {
 	color: #74746c;
-	font-size: 0.78rem;
+	font-family: var(--font-record, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
+	font-size: var(--text-record-meta, 0.833rem);
+	font-variant-numeric: tabular-nums;
 	font-weight: 500;
 }
 
@@ -118,8 +126,10 @@
 .public-atlas-legend span {
 	border: 1px solid transparent;
 	border-radius: 6px;
-	font-size: 0.72rem;
+	font-family: var(--font-topology-label, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
+	font-size: var(--text-operator-label, 0.72rem);
 	font-weight: 700;
+	letter-spacing: var(--tracking-operator-label, 0);
 	padding: 0.35rem 0.55rem;
 	text-transform: uppercase;
 }
@@ -215,9 +225,10 @@
 
 .public-atlas-flow-node .kind {
 	color: #777770;
-	font-size: 0.64rem;
+	font-family: var(--font-topology-label, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
+	font-size: var(--text-topology-label, 0.72rem);
 	font-weight: 800;
-	letter-spacing: 0.08em;
+	letter-spacing: var(--tracking-topology-label, 0);
 	text-transform: uppercase;
 }
 
@@ -225,8 +236,10 @@
 	border-radius: 999px;
 	background: rgba(10, 14, 25, 0.05);
 	color: #6d6d66;
-	font-size: 0.66rem;
+	font-family: var(--font-topology-label, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
+	font-size: var(--text-topology-label, 0.72rem);
 	font-weight: 800;
+	letter-spacing: var(--tracking-topology-label, 0);
 	padding: 0.22rem 0.45rem;
 	text-transform: uppercase;
 }
@@ -248,20 +261,21 @@
 
 .public-atlas-flow-node strong {
 	display: block;
-	font-size: 0.9rem;
+	font-size: var(--text-record, 0.913rem);
 	line-height: 1.12;
 }
 
 .public-atlas-flow-node .owner {
 	color: #707068;
-	font-size: 0.72rem;
+	font-family: var(--font-record, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
+	font-size: var(--text-record-meta, 0.833rem);
 	font-weight: 700;
 }
 
 .public-atlas-flow-node small {
 	color: #696963;
-	font-size: 0.72rem;
-	line-height: 1.25;
+	font-size: var(--text-record-meta, 0.833rem);
+	line-height: var(--leading-record, 1.35);
 }
 
 .public-atlas-flow-node .public-atlas-flow-handle {
