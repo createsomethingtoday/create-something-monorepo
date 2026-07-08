@@ -2317,6 +2317,47 @@ mutation claims, verifier-side runner admission claims, runner enablement
 claims, leaked raw artifacts, and any verifier process/command/write marker.
 `authority.a4Execution` remains blocked in this verifier branch.
 
+After execution approval passes, validate the runner preflight packet for the
+future bounded sandbox-smoke execution:
+
+```bash
+node scripts/operator-agent-omnigent-adapter.mjs implementation-production-runner-implementation-admission-e2b-sandbox-smoke-runner-preflight-check \
+  <same chain arguments as implementation-production-runner-implementation-admission-e2b-sandbox-smoke-execution-approval-check> \
+  --implementation-production-runner-implementation-admission-e2b-sandbox-smoke-execution-approval-receipt <implementation-production-runner-implementation-admission-e2b-sandbox-smoke-execution-approval-receipt.json> \
+  --implementation-production-runner-implementation-admission-e2b-sandbox-smoke-runner-preflight <implementation-production-runner-implementation-admission-e2b-sandbox-smoke-runner-preflight.json> \
+  --expected-issue CRE-123 \
+  --expected-target <target> \
+  --expected-action <action> \
+  --json
+```
+
+The implementation production runner implementation admission E2B
+sandbox-smoke runner preflight packet proves an operator preflighted the
+future runner packet after explicit execution approval. It must bind to the
+execution approval artifact and receipt, carry
+`approve-e2b-sandbox-smoke-runner-preflight`, preflight identity, preflight
+timestamp, preflight scope, preflight checks, the approved sandbox-smoke
+execution intent, bounded command plan, credential-handling policy, artifact
+policy, fallback and rollback plans, no-verifier-execution evidence, and
+redaction policy.
+
+This gate validates runner preflight evidence only. It does not create E2B
+sandboxes, run E2B code or commands, upload or download files, create or
+mutate PRs, close or update Linear issues, admit runner code, apply the policy
+patch in this verifier branch, enable a runner, spawn a process, deploy, post
+updates, rotate secrets, expose raw artifacts, or mutate third-party systems.
+It can record that a future runner packet has passed preflight, but the
+verifier receipt must still report `processSpawned: false`,
+`executedCommands: []`, `runnerEnabled: false`, `executionReady: false`,
+`executionEnabled: false`, `executionApproved: false`, `wouldExecute: false`,
+and `writesPerformed: 0`. It rejects drifted execution approval receipts,
+missing preflight identity or timestamp, missing preflight checks, missing
+command plan, exposed credential values, raw artifact storage, verifier-side
+sandbox or E2B execution claims, verifier-side PR mutation claims,
+verifier-side runner admission claims, runner enablement claims, leaked raw
+artifacts, and any verifier process/command/write marker.
+`authority.a4Execution` remains blocked in this verifier branch.
+
 ## Regression Cadence
 
 Run the A3 proof check and deterministic heal test before any A4 packet work:
