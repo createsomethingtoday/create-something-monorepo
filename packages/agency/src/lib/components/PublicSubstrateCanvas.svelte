@@ -118,18 +118,20 @@
 <section class="public-substrate-canvas" data-public-substrate-canvas aria-labelledby="substrate-canvas-title">
 	<div class="public-substrate-canvas__chrome">
 		<div>
-			<p class="public-substrate-canvas__eyebrow">Live public canvas</p>
-			<h3 id="substrate-canvas-title">The operating graph is the experience.</h3>
+			<p class="public-substrate-canvas__eyebrow">Signal / Decision / Proof</p>
+			<h3 id="substrate-canvas-title">The canvas is the proof object.</h3>
 			<p>
-				This is not an illustrative abstraction. It is the shared canvas renderer over the public
-				CREATE SOMETHING operating projection: signals, Substrate, agents, judgment, stop
-				boundaries, delivery, and receipts.
+				The public site renders the same Substrate canvas kernel used by Atlas and Topology:
+				source records, agent lanes, approval stops, delivery paths, and receipts in one
+				inspectable operating surface.
 			</p>
 		</div>
 		<div class="public-substrate-canvas__meta" aria-label="Canvas metadata">
 			<span>{nodeCount} nodes</span>
 			<span>{edgeCount} edges</span>
-			<span class="public-substrate-canvas__backend">{renderBackend}</span>
+			<span class="public-substrate-canvas__backend" aria-label={`Renderer ${renderBackend}`}>
+				shared kernel
+			</span>
 		</div>
 	</div>
 
@@ -141,7 +143,7 @@
 			<p>{selectedDetail.body}</p>
 			<dl>
 				<div>
-					<dt>Status</dt>
+					<dt>State</dt>
 					<dd data-status={selectedDetail.status}>{selectedDetail.status}</dd>
 				</div>
 				<div>
@@ -149,13 +151,13 @@
 					<dd>{selectedDetail.proof}</dd>
 				</div>
 				<div>
-					<dt>Viewport</dt>
+					<dt>View</dt>
 					<dd>{Math.round(viewport.zoom * 100)}%</dd>
 				</div>
 			</dl>
 			<div class="public-substrate-canvas__actions">
 				<button type="button" on:click={requestFit}>Fit map</button>
-				<button type="button" on:click={() => focusNode('receipt_graph')}>Receipts</button>
+				<button type="button" on:click={() => focusNode('receipt_graph')}>Show receipts</button>
 			</div>
 		</aside>
 	</div>
@@ -165,7 +167,8 @@
 	.public-substrate-canvas {
 		border: 1px solid rgba(10, 14, 25, 0.12);
 		background:
-			linear-gradient(90deg, rgba(10, 14, 25, 0.045) 1px, transparent 1px) 0 0 / 3rem 3rem,
+			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
+			linear-gradient(180deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
 			linear-gradient(180deg, #fbfbf4 0%, #ffffff 100%);
 		box-shadow: 0 24px 60px rgba(10, 14, 25, 0.08);
 		color: var(--color-clear-onyx, #0a0e19);
@@ -179,7 +182,9 @@
 		align-items: start;
 		border-bottom: 1px solid rgba(10, 14, 25, 0.1);
 		padding: clamp(1.1rem, 2vw, 1.55rem);
-		background: rgba(255, 255, 255, 0.76);
+		background:
+			linear-gradient(90deg, rgba(10, 14, 25, 0.92) 0 0.22rem, transparent 0.22rem),
+			rgba(255, 255, 255, 0.82);
 	}
 
 	.public-substrate-canvas__eyebrow,
@@ -199,7 +204,7 @@
 	}
 
 	.public-substrate-canvas h3 {
-		max-width: 16ch;
+		max-width: 17ch;
 		font-size: clamp(1.65rem, 3vw, 2.45rem);
 		line-height: 1.02;
 	}
@@ -229,6 +234,10 @@
 		line-height: 1;
 	}
 
+	.public-substrate-canvas__backend {
+		color: rgba(10, 14, 25, 0.58);
+	}
+
 	.public-substrate-canvas__surface {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.28fr);
@@ -244,7 +253,9 @@
 		flex-direction: column;
 		gap: 0.92rem;
 		border-left: 1px solid rgba(10, 14, 25, 0.1);
-		background: rgba(255, 255, 255, 0.88);
+		background:
+			linear-gradient(180deg, rgba(10, 14, 25, 0.035) 0, transparent 12rem),
+			rgba(255, 255, 255, 0.9);
 		padding: clamp(1.1rem, 2vw, 1.55rem);
 	}
 
@@ -277,6 +288,7 @@
 		color: rgba(10, 14, 25, 0.48);
 		font-size: 0.72rem;
 		font-weight: 760;
+		letter-spacing: 0.04em;
 		text-transform: uppercase;
 	}
 
@@ -321,6 +333,11 @@
 	.public-substrate-canvas__actions button + button {
 		background: #fff;
 		color: #0a0e19;
+	}
+
+	.public-substrate-canvas__actions button:focus-visible {
+		outline: 2px solid rgba(10, 14, 25, 0.76);
+		outline-offset: 2px;
 	}
 
 	:global(.public-substrate-canvas .fast-topology-canvas) {
@@ -402,7 +419,7 @@
 		}
 
 		.public-substrate-canvas h3 {
-			max-width: 14ch;
+			max-width: 15ch;
 			font-size: clamp(1.38rem, 8vw, 1.95rem);
 		}
 

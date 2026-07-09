@@ -16,15 +16,15 @@ export const PUBLIC_SUBSTRATE_CANVAS_DETAILS: PublicSubstrateCanvasNodeDetail[] 
 	{
 		id: 'agency_canvas',
 		label: '.agency public canvas',
-		kicker: 'Visible surface',
+		kicker: 'Public proof surface',
 		status: 'run',
-		body: 'The public site renders the same canvas kernel used by Atlas, Substrate, and topology instead of showing a detached diagram.',
+		body: 'The public site renders the same canvas kernel used by Atlas, Substrate, and Topology so the visitor sees the operating surface, not a detached diagram.',
 		proof: 'shared renderer · public projection · no private client records'
 	},
 	{
 		id: 'signal_queue',
 		label: 'Signal queue',
-		kicker: 'Database',
+		kicker: 'Signal',
 		status: 'run',
 		body: 'Requests, changes, tool events, and client context enter as inspectable records before any automation runs.',
 		proof: 'record id · source · owner · timestamp'
@@ -40,7 +40,7 @@ export const PUBLIC_SUBSTRATE_CANVAS_DETAILS: PublicSubstrateCanvasNodeDetail[] 
 	{
 		id: 'agent_queue',
 		label: 'Agent work queue',
-		kicker: 'Automation',
+		kicker: 'Automation lane',
 		status: 'wait',
 		body: 'Agents receive bounded work from the graph with policy, context, and rollback expectations attached.',
 		proof: 'tool contract · policy pack · run receipt'
@@ -48,7 +48,7 @@ export const PUBLIC_SUBSTRATE_CANVAS_DETAILS: PublicSubstrateCanvasNodeDetail[] 
 	{
 		id: 'decision_gate',
 		label: 'Decision gate',
-		kicker: 'Judgment',
+		kicker: 'Decision',
 		status: 'wait',
 		body: 'Ambiguous, high-impact, or policy-sensitive steps pause for the right owner instead of being hidden in automation.',
 		proof: 'approval state · reviewer · reason'
@@ -56,7 +56,7 @@ export const PUBLIC_SUBSTRATE_CANVAS_DETAILS: PublicSubstrateCanvasNodeDetail[] 
 	{
 		id: 'stop_boundary',
 		label: 'Stop boundary',
-		kicker: 'Policy',
+		kicker: 'Stop condition',
 		status: 'stop',
 		body: 'The map names what agents cannot do: production writes, sensitive claims, client-impacting actions, or unclear authority without approval.',
 		proof: 'blocked state · escalation path · rollback note'
@@ -64,7 +64,7 @@ export const PUBLIC_SUBSTRATE_CANVAS_DETAILS: PublicSubstrateCanvasNodeDetail[] 
 	{
 		id: 'client_delivery',
 		label: 'Client delivery lane',
-		kicker: 'Outcome',
+		kicker: 'Delivery',
 		status: 'run',
 		body: 'Approved work moves through the delivery lane with receipts instead of disappearing into chat or a hidden script.',
 		proof: 'handoff · deployment · verification'
@@ -72,7 +72,7 @@ export const PUBLIC_SUBSTRATE_CANVAS_DETAILS: PublicSubstrateCanvasNodeDetail[] 
 	{
 		id: 'receipt_graph',
 		label: 'Receipt graph',
-		kicker: 'Trust',
+		kicker: 'Proof',
 		status: 'run',
 		body: 'Every meaningful action leaves evidence that can be reviewed by a client, a human operator, or a follow-up agent.',
 		proof: 'what changed · who/what acted · observed result'

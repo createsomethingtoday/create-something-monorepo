@@ -308,7 +308,10 @@ Implementation surface:
 - `src/lib/components/PublicSubstrateCanvas.svelte` mounts the shared
   `@create-something/canvas-kernel` renderer directly on `.agency` so the public
   proof object is a live canvas over the CREATE SOMETHING operating projection,
-  not a detached illustration.
+  not a detached illustration. Its visible language should follow the
+  Ona/UNA communication foundation: one clear operating claim, Signal /
+  Decision / Proof vocabulary, and implementation details hidden until they are
+  useful evidence.
 - `src/lib/atlas/public-substrate-canvas.ts` owns the public-safe operating
   projection for that live canvas: signal queue, Substrate graph, agent queue,
   decision gate, stop boundary, client delivery lane, receipt graph, and the
@@ -347,6 +350,10 @@ Renderer rule:
   `PublicSubstrateCanvas.svelte` mounts the shared `@create-something/canvas-kernel`
   renderer and shows a public projection of the real Substrate/Atlas/receipt
   operating model instead of a story-only abstraction.
+- The canvas chrome should read like a CREATE SOMETHING operating record, not a
+  renderer demo: expose nodes, edges, shared-kernel proof, selected state,
+  receipt, and view context; do not surface raw backend names such as WebGPU as
+  primary visitor copy.
 - Public canvas surfaces need data-level responsive projections when the graph
   shape changes by viewport. Do not rely on CSS alone to squeeze a wide desktop
   map into a phone; keep the same operating records and relationships, then
