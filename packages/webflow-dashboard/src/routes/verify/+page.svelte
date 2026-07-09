@@ -213,9 +213,7 @@
 		if (!currentUrl.searchParams.has('email')) return;
 
 		currentUrl.searchParams.delete('email');
-		setTimeout(() => {
-			replaceState(`${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`, $page.state);
-		}, 0);
+		replaceVisibleUrl(`${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
 	}
 
 	async function handleResendEmail() {
@@ -261,7 +259,13 @@
 		const currentUrl = new URL(window.location.href);
 		currentUrl.searchParams.delete('token');
 		currentUrl.searchParams.set('handoff', handoff);
-		replaceState(`${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`, $page.state);
+		replaceVisibleUrl(`${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+	}
+
+	function replaceVisibleUrl(path: string) {
+		setTimeout(() => {
+			replaceState(path, $page.state);
+		}, 0);
 	}
 
 	function showSessionRecovery() {
@@ -365,7 +369,6 @@
 		}
 
 		if (serverStatus === 'session-created') {
-			persistRecoveryUrl(data.handoffUrl);
 			await finalizeAuthenticatedSession(data.handoffUrl);
 			return;
 		}
