@@ -85,26 +85,34 @@
   ];
 
   const systemPlateNodes: ClearSystemPlateNode[] = [
-    { id: 'source', label: 'source', x: 14, y: 24, size: 3.5, tone: 'dark' },
-    { id: 'record', label: 'record', x: 29, y: 38, size: 7.5, tone: 'signal', active: true },
-    { id: 'policy', label: 'policy', x: 48, y: 25, size: 4.5, tone: 'warning' },
-    { id: 'topology', label: 'topology', x: 58, y: 48, size: 9, tone: 'dark' },
-    { id: 'atlas', label: 'atlas', x: 76, y: 34, size: 6.5, tone: 'success', active: true },
-    { id: 'agent', label: 'agent', x: 82, y: 62, size: 4.5, tone: 'signal' },
-    { id: 'receipt', label: 'receipt', x: 42, y: 66, size: 5.5, tone: 'success' },
-    { id: 'review', label: 'review', x: 21, y: 59, size: 4.5, tone: 'warning' }
+    { id: 'source', label: 'source', x: 16, y: 27, size: 3.2, tone: 'dark' },
+    { id: 'record', label: 'record', x: 31, y: 42, size: 6.4, tone: 'signal', active: true },
+    { id: 'policy', label: 'policy', x: 48, y: 29, size: 4.2, tone: 'warning' },
+    {
+      id: 'topology',
+      label: 'topology',
+      labelPosition: 'above',
+      x: 59,
+      y: 50,
+      size: 7.4,
+      tone: 'dark'
+    },
+    { id: 'atlas', label: 'atlas', x: 75, y: 38, size: 5.7, tone: 'success', active: true },
+    { id: 'agent', label: 'agent', x: 82, y: 58, size: 4.1, tone: 'signal' },
+    { id: 'receipt', label: 'receipt', x: 44, y: 63, size: 4.8, tone: 'success' },
+    { id: 'review', label: 'review', x: 24, y: 58, size: 4.1, tone: 'warning' }
   ];
 
   const systemPlateEdges: ClearSystemPlateEdge[] = [
-    { x1: 14, y1: 24, x2: 29, y2: 38 },
-    { x1: 29, y1: 38, x2: 48, y2: 25, tone: 'warning' },
-    { x1: 29, y1: 38, x2: 58, y2: 48, tone: 'signal' },
-    { x1: 58, y1: 48, x2: 76, y2: 34, tone: 'success' },
-    { x1: 76, y1: 34, x2: 82, y2: 62, tone: 'signal' },
-    { x1: 82, y1: 62, x2: 42, y2: 66 },
-    { x1: 42, y1: 66, x2: 21, y2: 59, tone: 'warning' },
-    { x1: 21, y1: 59, x2: 29, y2: 38 },
-    { x1: 58, y1: 48, x2: 42, y2: 66, tone: 'success' }
+    { x1: 16, y1: 27, x2: 31, y2: 42 },
+    { x1: 31, y1: 42, x2: 48, y2: 29, tone: 'warning' },
+    { x1: 31, y1: 42, x2: 59, y2: 50, tone: 'signal' },
+    { x1: 59, y1: 50, x2: 75, y2: 38, tone: 'success' },
+    { x1: 75, y1: 38, x2: 82, y2: 58, tone: 'signal' },
+    { x1: 82, y1: 58, x2: 44, y2: 63 },
+    { x1: 44, y1: 63, x2: 24, y2: 58, tone: 'warning' },
+    { x1: 24, y1: 58, x2: 31, y2: 42 },
+    { x1: 59, y1: 50, x2: 44, y2: 63, tone: 'success' }
   ];
 
   const systemPlatePanels: ClearSystemPlatePanel[] = [

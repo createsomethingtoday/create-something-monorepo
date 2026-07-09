@@ -19,6 +19,7 @@
 		y: number;
 		size?: number;
 		label?: string;
+		labelPosition?: 'left' | 'right' | 'above' | 'below';
 		tone?: ClearSystemPlateTone;
 		active?: boolean;
 	}
@@ -121,6 +122,63 @@
 
 	const visibleNodes = $derived(nodes.length ? nodes : defaultNodes);
 	const visibleEdges = $derived(edges.length ? edges : defaultEdges);
+
+	const graphParticles = [
+		[19, 34, 0.34],
+		[22, 37, 0.24],
+		[25, 32, 0.28],
+		[27, 45, 0.2],
+		[33, 28, 0.26],
+		[36, 34, 0.22],
+		[39, 40, 0.3],
+		[42, 32, 0.22],
+		[45, 46, 0.24],
+		[50, 38, 0.3],
+		[52, 52, 0.24],
+		[55, 42, 0.26],
+		[61, 36, 0.22],
+		[64, 44, 0.34],
+		[68, 39, 0.22],
+		[72, 47, 0.24],
+		[76, 52, 0.2],
+		[80, 42, 0.28],
+		[84, 55, 0.22],
+		[30, 55, 0.18],
+		[34, 60, 0.22],
+		[38, 57, 0.2],
+		[47, 61, 0.24],
+		[54, 63, 0.18],
+		[59, 58, 0.22],
+		[67, 60, 0.2],
+		[73, 64, 0.18]
+	] as const;
+
+	const edgePath = (edge: ClearSystemPlateEdge) => {
+		const dx = edge.x2 - edge.x1;
+		const dy = edge.y2 - edge.y1;
+		const length = Math.hypot(dx, dy) || 1;
+		const bend = Math.min(3.2, length * 0.08);
+		const midX = (edge.x1 + edge.x2) / 2 - (dy / length) * bend;
+		const midY = (edge.y1 + edge.y2) / 2 + (dx / length) * bend;
+		return `M ${edge.x1} ${edge.y1} Q ${midX.toFixed(2)} ${midY.toFixed(2)} ${edge.x2} ${edge.y2}`;
+	};
+
+	const nodeRadius = (node: ClearSystemPlateNode) => node.size ?? 4;
+	const labelWidth = (node: ClearSystemPlateNode) => Math.max(7.4, (node.label?.length ?? 0) * 1.12 + 3.2);
+	const labelX = (node: ClearSystemPlateNode) => {
+		const radius = nodeRadius(node);
+		const width = labelWidth(node);
+		if (node.labelPosition === 'left') return node.x - radius - width - 1.4;
+		if (node.labelPosition === 'above' || node.labelPosition === 'below') return node.x - width / 2;
+		if (node.labelPosition === 'right') return node.x + radius + 1.4;
+		return node.x > 72 ? node.x - radius - width - 1.4 : node.x + radius + 1.4;
+	};
+	const labelY = (node: ClearSystemPlateNode) => {
+		const radius = nodeRadius(node);
+		if (node.labelPosition === 'above') return node.y - radius - 5.2;
+		if (node.labelPosition === 'below') return node.y + radius + 1.1;
+		return node.y - radius - 1.7;
+	};
 </script>
 
 <section class="clear-system-plate" aria-label={ariaLabel}>
@@ -166,27 +224,57 @@
 					</pattern>
 				</defs>
 				<rect width="100" height="80" fill="url(#clear-system-plate-grid)" opacity="0.5" />
+				<rect class="clear-system-plate__viewport" x="11" y="18" width="78" height="51" rx="1.1" />
+				<path class="clear-system-plate__plane" d="M 13 60 C 30 52 47 51 61 57 S 81 63 88 55" />
+				<g class="clear-system-plate__particles" aria-hidden="true">
+					{#each graphParticles as particle}
+						<circle cx={particle[0]} cy={particle[1]} r={particle[2]} />
+					{/each}
+				</g>
 				{#each visibleEdges as edge}
-					<line
+					<path
 						class={`clear-system-plate__edge clear-system-plate__edge--${edge.tone ?? 'neutral'}`}
-						x1={edge.x1}
-						y1={edge.y1}
-						x2={edge.x2}
-						y2={edge.y2}
+						d={edgePath(edge)}
 					/>
 				{/each}
 				{#each visibleNodes as node}
+					{@const radius = nodeRadius(node)}
+					{#if node.active}
+						<circle class="clear-system-plate__node-halo" cx={node.x} cy={node.y} r={radius + 3.2} />
+						<rect
+							class="clear-system-plate__selection"
+							x={node.x - radius - 2.2}
+							y={node.y - radius - 2.2}
+							width={(radius + 2.2) * 2}
+							height={(radius + 2.2) * 2}
+							rx="1.2"
+						/>
+					{/if}
 					<circle
 						class={`clear-system-plate__node clear-system-plate__node--${node.tone ?? 'neutral'}`}
 						class:clear-system-plate__node--active={node.active}
 						cx={node.x}
 						cy={node.y}
-						r={node.size ?? 4}
+						r={radius}
 					/>
-					{#if node.label}
-						<text x={node.x + 3.8} y={node.y - 2.7}>{node.label}</text>
-					{/if}
+					<circle class="clear-system-plate__node-core" cx={node.x} cy={node.y} r={Math.max(0.55, radius * 0.16)} />
 				{/each}
+				<g class="clear-system-plate__labels">
+					{#each visibleNodes as node}
+					{#if node.label}
+						{@const chipX = labelX(node)}
+						{@const chipY = labelY(node)}
+						<g class="clear-system-plate__label">
+							<rect x={chipX} y={chipY} width={labelWidth(node)} height="4.4" rx="0.7" />
+							<text x={chipX + 1.6} y={chipY + 2.95}>{node.label}</text>
+						</g>
+					{/if}
+					{/each}
+				</g>
+				<g class="clear-system-plate__trace" aria-hidden="true">
+					<path d="M 13.5 70.5 H 31.5 L 35.2 67.2 H 51.5 L 55.8 70.5 H 86.5" />
+					<text x="14.2" y="67.8">query path // records -> topology -> canvas</text>
+				</g>
 			</svg>
 
 			{#if metrics.length}
@@ -431,21 +519,57 @@
 		color: rgb(10 14 25 / 0.42);
 	}
 
+	.clear-system-plate__viewport {
+		fill: rgb(255 255 255 / 0.24);
+		stroke: rgb(10 14 25 / 0.16);
+		stroke-width: 0.18;
+	}
+
+	.clear-system-plate__plane {
+		fill: none;
+		stroke: rgb(0 72 255 / 0.13);
+		stroke-width: 5.8;
+		stroke-linecap: round;
+	}
+
+	.clear-system-plate__particles circle {
+		fill: rgb(10 14 25 / 0.26);
+	}
+
 	.clear-system-plate__edge {
+		fill: none;
 		stroke: rgb(10 14 25 / 0.28);
-		stroke-width: 0.34;
+		stroke-width: 0.4;
+		stroke-linecap: round;
+		stroke-linejoin: round;
 	}
 
 	.clear-system-plate__edge--signal {
 		stroke: var(--color-clear-cobalt, #0048ff);
+		stroke-width: 0.48;
 	}
 
 	.clear-system-plate__edge--success {
 		stroke: #2d8f43;
+		stroke-width: 0.46;
 	}
 
 	.clear-system-plate__edge--warning {
 		stroke: #b07100;
+		stroke-width: 0.46;
+	}
+
+	.clear-system-plate__node-halo {
+		fill: rgb(0 72 255 / 0.06);
+		stroke: rgb(0 72 255 / 0.18);
+		stroke-width: 0.22;
+	}
+
+	.clear-system-plate__selection {
+		fill: none;
+		stroke: rgb(10 14 25 / 0.32);
+		stroke-width: 0.2;
+		stroke-dasharray: 1.1 0.9;
 	}
 
 	.clear-system-plate__node {
@@ -475,17 +599,44 @@
 
 	.clear-system-plate__node--active {
 		stroke: #ffffff;
-		stroke-width: 1.2;
-		filter: drop-shadow(0 0 0.18rem rgb(0 72 255 / 0.32));
+		stroke-width: 0.92;
+		filter: drop-shadow(0 0 0.14rem rgb(0 72 255 / 0.28));
+	}
+
+	.clear-system-plate__node-core {
+		fill: rgb(255 255 255 / 0.72);
+		pointer-events: none;
+	}
+
+	.clear-system-plate__label rect {
+		fill: rgb(255 255 255 / 0.76);
+		stroke: rgb(10 14 25 / 0.16);
+		stroke-width: 0.12;
 	}
 
 	.clear-system-plate text {
 		fill: var(--color-clear-grey, #636363);
 		font-family: var(--font-mono);
-		font-size: 2.3px;
+		font-size: 1.74px;
 		font-weight: 500;
 		letter-spacing: 0;
 		text-transform: uppercase;
+	}
+
+	.clear-system-plate__label text {
+		fill: rgb(10 14 25 / 0.62);
+		font-size: 1.62px;
+	}
+
+	.clear-system-plate__trace path {
+		fill: none;
+		stroke: rgb(10 14 25 / 0.2);
+		stroke-width: 0.24;
+	}
+
+	.clear-system-plate__trace text {
+		fill: rgb(10 14 25 / 0.46);
+		font-size: 1.35px;
 	}
 
 	.clear-system-plate__metrics {
