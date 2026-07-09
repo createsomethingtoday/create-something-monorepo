@@ -45,6 +45,8 @@ function sortClause(sort: TemplateSort, options: { textRankTieBreaker?: boolean 
       return `CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) ASC, COALESCE(d.popularity_score, 0) DESC, ${tieBreaker}`;
     case 'price_desc':
       return `CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) DESC, COALESCE(d.popularity_score, 0) DESC, ${tieBreaker}`;
+    case 'best_selling':
+      return `COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.popularity_score, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
     default:
       return `COALESCE(d.popularity_score, 0) DESC, COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
   }

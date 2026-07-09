@@ -59,6 +59,11 @@ export function normalizeSort(value: string | null | undefined): TemplateSort {
     case 'price_desc':
     case 'price-desc':
       return 'price_desc';
+    case 'best_selling':
+    case 'best-selling':
+    case 'best_sellers':
+    case 'best-sellers':
+      return 'best_selling';
     default:
       return 'popular';
   }

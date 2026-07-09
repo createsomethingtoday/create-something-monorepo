@@ -24,6 +24,7 @@ export function getClientScript(defaultMode = 'shadow'): string {
     if (value === 'approval-date-desc') return 'newest';
     if (value === 'price-asc') return 'price_asc';
     if (value === 'price-desc') return 'price_desc';
+    if (value === 'best-selling' || value === 'best_sellers' || value === 'best-sellers') return 'best_selling';
     return value || 'popular';
   }
 
