@@ -143,40 +143,40 @@ and proof panels unless a brand review explicitly approves the scene.
   {
     slug: "components/clear",
     section: "components",
-    title: "Clear Components",
+    title: "Performance Components",
     description: "Performance Lab communication primitives for mapped, governed, proof-bearing work.",
     content: `## What Ships Today
 
-- \`ClearPageSection\`: open page bands for claims, proof, actions, and asides
-- \`ClearPlatformHero\`: first-viewport product, system, or platform anchors
-- \`ClearProofStrip\`: compact evidence objects scanned together
-- \`ClearDecisionPanel\`: allow, review, block, or neutral decision states
-- \`ClearStateRows\`: explicit run, wait, stop, or handoff rows
-- \`ClearReceiptGrid\`: delivery evidence, artifacts, and validation receipts
-- \`ClearArtifactCard\`: one evidence object with status and link
-- \`ClearCtaBand\`: restrained next-action bands
-- \`ClearActionFooter\`: final page-level actions with proof and restraint
-- \`ClearCardGrid\`: repeated evidence cards without nested-card shells
-- \`ClearContentHighlights\`: compact highlights for claims, facts, and receipts
-- \`ClearErrorPage\`: plain-language failure state with recovery path
-- \`ClearLogoStrip\`: partner, proof, or trust marks with accessible labels
-- \`ClearMetadataRail\`: dense metadata, owners, receipts, and state facts
-- \`ClearPillarGrid\`: pillar summaries for proof-bearing systems
-- \`ClearQuoteMetricPanel\`: quote and metric pairings for validated claims
-- \`ClearSecurityPanel\`: trust, policy, and control evidence for sensitive surfaces
-- \`ClearUseCaseBand\`: use-case summaries tied to concrete next actions
-- \`ClearWorkflowMiniArtifact\`: compact artifact preview for workflow state
+- \`PerformancePageSection\`: open page bands for claims, proof, actions, and asides
+- \`PerformancePlatformHero\`: first-viewport product, system, or platform anchors
+- \`PerformanceProofStrip\`: compact evidence objects scanned together
+- \`PerformanceDecisionPanel\`: allow, review, block, or neutral decision states
+- \`PerformanceStateRows\`: explicit run, wait, stop, or handoff rows
+- \`PerformanceReceiptGrid\`: delivery evidence, artifacts, and validation receipts
+- \`PerformanceArtifactCard\`: one evidence object with status and link
+- \`PerformanceCtaBand\`: restrained next-action bands
+- \`PerformanceActionFooter\`: final page-level actions with proof and restraint
+- \`PerformanceCardGrid\`: repeated evidence cards without nested-card shells
+- \`PerformanceContentHighlights\`: compact highlights for claims, facts, and receipts
+- \`PerformanceErrorPage\`: plain-language failure state with recovery path
+- \`PerformanceLogoStrip\`: partner, proof, or trust marks with accessible labels
+- \`PerformanceMetadataRail\`: dense metadata, owners, receipts, and state facts
+- \`PerformancePillarGrid\`: pillar summaries for proof-bearing systems
+- \`PerformanceQuoteMetricPanel\`: quote and metric pairings for validated claims
+- \`PerformanceSecurityPanel\`: trust, policy, and control evidence for sensitive surfaces
+- \`PerformanceUseCaseBand\`: use-case summaries tied to concrete next actions
+- \`PerformanceWorkflowMiniArtifact\`: compact artifact preview for workflow state
 
-## When To Use Clear Components
+## When To Use Performance Components
 
-Use clear components when the page needs to show at least one operational answer:
+Use Performance components when the page needs to show at least one operational answer:
 
 1. What workflow or system has been mapped?
 2. What can run, what needs review, and what is blocked?
 3. Which policy, contract, receipt, or validation gate proves the claim?
 4. What should the buyer, operator, reviewer, system, or agent do next?
 
-Do not use clear components as generic light-themed decoration. If the surface does not carry
+Do not use Performance components as generic light-themed decoration. If the surface does not carry
 maps, trust boundaries, approval states, receipts, validation gates, or handoff evidence, use the
 standard Canon components instead.
 
@@ -184,10 +184,10 @@ standard Canon components instead.
 
 \`\`\`svelte
 <script lang="ts">
-  import { ClearDecisionPanel, ClearPageSection, ClearReceiptGrid } from '@create-something/canon';
+  import { PerformanceDecisionPanel, PerformancePageSection, PerformanceReceiptGrid } from '@create-something/canon';
 </script>
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   titleLevel="h1"
   eyebrow="Governed workflow"
@@ -195,7 +195,7 @@ standard Canon components instead.
   description="Name the object, approval rule, stop condition, and receipt before execution."
 />
 
-<ClearDecisionPanel
+<PerformanceDecisionPanel
   title="Show whether to run, review, or stop."
   items={[
     {
@@ -210,7 +210,7 @@ standard Canon components instead.
   ]}
 />
 
-<ClearReceiptGrid
+<PerformanceReceiptGrid
   receipts={[
     {
       title: 'Workflow map',
@@ -223,13 +223,13 @@ standard Canon components instead.
 
 ## Property Usage Notes
 
-On CREATE SOMETHING properties, use \`ClearLogoStrip\` only when the relationship behind each
-logo is true and labelable. Use \`ClearContentHighlights\`, \`ClearPillarGrid\`, \`ClearUseCaseBand\`,
-and \`ClearQuoteMetricPanel\` when a claim needs nearby proof or a concrete buyer/operator use case.
-Use \`ClearSecurityPanel\` when the page needs to show policy, access, control, or compliance
-evidence. Use \`ClearMetadataRail\` and \`ClearWorkflowMiniArtifact\` for dense operational state,
-owners, receipts, and handoff metadata. Use \`ClearErrorPage\` when failure recovery must be plain
-language, visible, and actionable. Use \`ClearActionFooter\` when the final action should remain
+On CREATE SOMETHING properties, use \`PerformanceLogoStrip\` only when the relationship behind each
+logo is true and labelable. Use \`PerformanceContentHighlights\`, \`PerformancePillarGrid\`, \`PerformanceUseCaseBand\`,
+and \`PerformanceQuoteMetricPanel\` when a claim needs nearby proof or a concrete buyer/operator use case.
+Use \`PerformanceSecurityPanel\` when the page needs to show policy, access, control, or compliance
+evidence. Use \`PerformanceMetadataRail\` and \`PerformanceWorkflowMiniArtifact\` for dense operational state,
+owners, receipts, and handoff metadata. Use \`PerformanceErrorPage\` when failure recovery must be plain
+language, visible, and actionable. Use \`PerformanceActionFooter\` when the final action should remain
 bounded to a named workflow, review, handoff, or governed surface.
 
 ## Copy Rules
@@ -241,6 +241,9 @@ bounded to a named workflow, review, handoff, or governed surface.
 - Use mono labels for short state, receipt, or identifier text.
 
 ## Related
+
+The \`/canon/components/clear\` route and \`component.clear-*\` registry IDs remain
+compatibility identifiers. New code imports \`Performance*\` names.
 
 - [Navigation](/canon/components/navigation)
 - [Colors](/canon/foundations/colors)
@@ -813,17 +816,17 @@ policies, approvals, and receipts connect across a workflow.
 />
 \`\`\`
 
-## Clear Communication Navigation
+## Performance Navigation
 
-\`Navigation\` and \`Footer\` both accept \`visualStyle?: 'classic' | 'clear'\`. The default is
-\`classic\` to preserve existing callers while the Performance Lab clear system rolls out.
+\`Navigation\` and \`Footer\` accept \`visualStyle?: 'classic' | 'performance' | 'clear'\`. Use
+\`performance\`; \`clear\` remains an input alias for downstream compatibility.
 
-Use \`clear\` when the page must serve a buyer or operator who needs immediate orientation before
-brand atmosphere. The clear style follows the Performance Lab communication layer: frosted light shell,
+Use \`performance\` when the page must serve a buyer or operator who needs immediate orientation before
+brand atmosphere. The style follows the Performance Lab layer: a light shell,
 compact readable links, crisp dividers, restrained active states, direct dark CTA, and no decorative
 navigation complexity.
 
-Clear navigation should route people into proof-bearing work, not generic brand exploration. Prefer
+Performance navigation should route people into proof-bearing work, not generic brand exploration. Prefer
 labels for maps, policies, systems, workflows, receipts, and contact paths. Keep the primary CTA
 bounded to a concrete next action such as mapping one workflow, reviewing a handoff, or opening a
 governed surface.
@@ -837,7 +840,7 @@ governed surface.
   fixed={true}
   ctaLabel="Map one workflow"
   ctaHref="/book"
-  visualStyle="clear"
+  visualStyle="performance"
 />
 
 <Footer
@@ -849,20 +852,20 @@ governed surface.
     href: '/book',
     description: 'Leave with the workflow, boundary, and proof path.'
   }}
-  visualStyle="clear"
+  visualStyle="performance"
 />
 \`\`\`
 
-## Clear Communication Primitives
+## Performance Primitives
 
-The clear navigation and footer are designed to pair with:
+The Performance navigation and footer are designed to pair with:
 
-- \`ClearPageSection\`: claim, proof, action, and split hero sections
-- \`ClearProofStrip\`: compact objects/actions/states/receipts proof
-- \`ClearStateRows\`: governed run/wait/stop rows
-- \`ClearDecisionPanel\`: selectable allow/review/block decision paths with evidence and receipts
-- \`ClearReceiptGrid\` and \`ClearArtifactCard\`: evidence and delivery receipts
-- \`ClearCtaBand\`: restrained final action band
+- \`PerformancePageSection\`: claim, proof, action, and split hero sections
+- \`PerformanceProofStrip\`: compact objects/actions/states/receipts proof
+- \`PerformanceStateRows\`: governed run/wait/stop rows
+- \`PerformanceDecisionPanel\`: selectable allow/review/block decision paths with evidence and receipts
+- \`PerformanceReceiptGrid\` and \`PerformanceArtifactCard\`: evidence and delivery receipts
+- \`PerformanceCtaBand\`: restrained final action band
 
 ## Breadcrumbs and Tabs
 
@@ -905,12 +908,12 @@ grouping, or keyboard-first navigation reduces friction.
 1. Keep the primary header focused on top-level choices.
 2. Use breadcrumbs when the user needs a clear sense of depth.
 3. Use tabs for peer content, not for hiding unrelated workflows.
-4. Use \`visualStyle="clear"\` for the new CREATE SOMETHING communication layer: plain-language
+4. Use \`visualStyle="performance"\` for the CREATE SOMETHING communication layer: plain-language
    orientation, visible proof, and a direct next action.
 
 ## Related
 
-- [Clear Components](/canon/components/clear)
+- [Performance Components](/canon/components/clear)
 - [Layout](/canon/foundations/layout)
 - [Content](/canon/guidelines/content)
 - [Responsive](/canon/guidelines/responsive)`
@@ -2705,17 +2708,17 @@ or handoff evidence.
 
 | Token | Value | Use |
 |-------|-------|-----|
-| \`--color-clear-porcelain\` | \`#f9f9f9\` | Page canvas |
-| \`--color-clear-porcelain-soft\` | \`#f2f2f2\` | Secondary bands and inactive states |
-| \`--color-clear-panel\` | \`#ffffff\` | Cards, panels, receipts |
-| \`--color-clear-onyx\` | \`#0a0e19\` | Primary text and dark CTAs |
-| \`--color-clear-grey\` | \`#636363\` | Secondary copy |
-| \`--color-clear-grey-quiet\` | \`#818181\` | Low-emphasis labels |
-| \`--color-clear-border\` | \`#e1e1e1\` | Hairline panel borders |
-| \`--color-clear-border-strong\` | \`#cecece\` | Focused panel borders |
-| \`--color-clear-ocean\` | \`#0048ff\` | System/action accent |
-| \`--color-clear-moss\` | \`#1e3c2c\` | Governed run/wait states |
-| \`--color-clear-stop\` | \`#c41e3a\` | Stop/block states |
+| \`--color-performance-paper\` | \`#f3f3f0\` | Page canvas |
+| \`--color-performance-court\` | \`#e6e6e0\` | Secondary bands and inactive states |
+| \`--color-performance-panel\` | \`#ffffff\` | Cards, panels, receipts |
+| \`--color-performance-ink\` | \`#090909\` | Primary text and dark CTAs |
+| \`--color-performance-muted\` | \`#5e6268\` | Secondary copy |
+| \`--color-performance-muted\` | \`#5e6268\` | Low-emphasis labels |
+| \`--color-performance-line\` | \`#d7d7d2\` | Hairline panel borders |
+| \`--color-performance-line-strong\` | \`#9c9c96\` | Focused panel borders |
+| \`--color-performance-signal\` | \`#0057b8\` | System/action accent |
+| \`--color-performance-growth\` | \`#007a4d\` | Governed run/wait states |
+| \`--color-performance-risk\` | \`#c62026\` | Stop/block states |
 
 Do not use the clear palette as generic decoration. A clear surface should answer at least one
 operational question: what is mapped, what can run, what needs review, what is blocked, or what

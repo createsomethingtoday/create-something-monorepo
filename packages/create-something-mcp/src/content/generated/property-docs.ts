@@ -23944,7 +23944,7 @@ Public readers need to test CREATE SOMETHING's workflow mapping method before a 
 ## Canon Reuse
 
 - Registry items: \`component.clear-page-section\`, \`component.clear-proof-strip\`, \`component.atlas-atlas-flow\`, \`component.atlas-atlas-story-canvas\`, \`adapter.atlas-graph-artifact\`, \`template.atlas-development-handoff\`, \`policy.signal-decision-proof\`.
-- Imported components: \`ClearPageSection\`, \`PublicAtlasCanvas\`, \`PublicAtlasStoryCanvas\`, \`PublicAtlasFlow\`.
+- Imported components: \`PerformancePageSection\`, \`PublicAtlasCanvas\`, \`PublicAtlasStoryCanvas\`, \`PublicAtlasFlow\`.
 - Token aliases: local overlay variables in \`theme.css\` and \`tokens.json\` point back to Canon color, radius, spacing, and focus tokens.
 
 ## Local Overlay
