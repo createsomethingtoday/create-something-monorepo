@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import WebflowLogo from '$lib/components/WebflowLogo.svelte';
 
@@ -8,6 +9,13 @@
   let emailError = $state<string | null>(null);
 
 	const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  $effect(() => {
+    const queryEmail = $page.url.searchParams.get('email')?.trim();
+    if (queryEmail && !email) {
+      email = queryEmail;
+    }
+  });
 
 	function validateEmail() {
 		if (!email.trim()) {

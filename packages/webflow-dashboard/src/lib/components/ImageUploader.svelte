@@ -11,6 +11,7 @@
 	} from '$lib/utils/upload-validation';
 	import { Upload, Loader2 } from 'lucide-svelte';
 	import { trackEvent } from '$lib/utils/analytics';
+	import { isSingleUploadInteractive } from '$lib/utils/uploader-interactions';
 
 	interface Props {
 		value?: string | null;
@@ -42,6 +43,7 @@
 	let error = $state<string | null>(null);
 	let uploadProgress = $state(0);
 	let fileInput: HTMLInputElement | undefined = $state();
+	const isInteractive = $derived(isSingleUploadInteractive({ disabled, isUploading }));
 
 	/**
 	 * Validate file on the client side before uploading.
@@ -184,7 +186,7 @@
 	function handleFileSelect(event: Event) {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		if (file) {
+		if (file && isInteractive) {
 			uploadFile(file);
 		}
 		// Reset input so same file can be selected again
@@ -193,7 +195,7 @@
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
-		if (!disabled) {
+		if (isInteractive) {
 			isDragOver = true;
 		}
 	}
@@ -206,7 +208,7 @@
 		event.preventDefault();
 		isDragOver = false;
 
-		if (disabled) return;
+		if (!isInteractive) return;
 
 		const file = event.dataTransfer?.files[0];
 		if (file) {
@@ -221,7 +223,7 @@
 	}
 
 	function handleClick() {
-		if (!disabled && !isUploading) {
+		if (isInteractive) {
 			fileInput?.click();
 		}
 	}
@@ -250,13 +252,13 @@
 			type="button"
 			class="dropzone"
 			class:drag-over={isDragOver}
-			class:disabled
+			class:disabled={!isInteractive}
 			class:uploading={isUploading}
 			ondragover={handleDragOver}
 			ondragleave={handleDragLeave}
 			ondrop={handleDrop}
 			onclick={handleClick}
-			disabled={disabled || isUploading}
+			aria-disabled={!isInteractive}
 		>
 		{#if isUploading}
 			<div class="upload-progress">

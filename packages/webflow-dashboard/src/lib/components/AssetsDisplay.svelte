@@ -2,6 +2,7 @@
   import {
     Badge,
     Button,
+    LinkButton,
     Card,
     CardContent,
     Table,
@@ -45,7 +46,6 @@
     assets: Asset[];
     errorMessage?: string | null;
     searchTerm?: string;
-    openingViewAssetId?: string | null;
     openingEditAssetId?: string | null;
     onSearch?: (term: string) => void;
     onView?: (id: string) => void;
@@ -59,7 +59,6 @@
     assets,
     errorMessage = null,
     searchTerm = '',
-    openingViewAssetId = null,
     openingEditAssetId = null,
     onSearch,
     onView,
@@ -255,10 +254,7 @@
   }
 
   function isActionLoading(asset: Asset, action: AssetActionDescriptor) {
-    return (
-      (action.handler === 'view' && openingViewAssetId === asset.id) ||
-      (action.handler === 'edit' && openingEditAssetId === asset.id)
-    );
+    return action.handler === 'edit' && openingEditAssetId === asset.id;
   }
 
   function getSortLabel() {
@@ -539,7 +535,6 @@
                           {asset}
                           {showPerformance}
                           isViewDisabled={openingEditAssetId !== null}
-                          isViewLoading={openingViewAssetId === asset.id}
                           isEditDisabled={openingEditAssetId !== null}
                           isEditLoading={openingEditAssetId === asset.id}
                           {onView}
@@ -650,17 +645,19 @@
 
                       <div class="mobile-actions">
                         {#if actionConfig.primary.handler === 'view'}
-                          <a
-                            class="mobile-action-link mobile-action-link-secondary"
+                          <LinkButton
                             href={getAssetDetailHref(asset.id)}
+                            size="sm"
+                            variant="default"
                             aria-disabled={isActionDisabled(actionConfig.primary)}
+                            tabindex={isActionDisabled(actionConfig.primary) ? -1 : undefined}
                             onmouseenter={() => preloadViewAction(asset, actionConfig.primary)}
                             onfocus={() => preloadViewAction(asset, actionConfig.primary)}
                             onclick={(event) =>
                               handleLinkedActionClick(event, asset, actionConfig.primary, 'primary')}
                           >
                             {actionConfig.primary.label}
-                          </a>
+                          </LinkButton>
                         {:else}
                         <Button
                           size="sm"
@@ -682,16 +679,18 @@
                         {/if}
                         {#each actionConfig.secondary as action}
                           {#if action.handler === 'view'}
-                            <a
-                              class="mobile-action-link mobile-action-link-outline"
+                            <LinkButton
                               href={getAssetDetailHref(asset.id)}
+                              size="sm"
+                              variant="outline"
                               aria-disabled={isActionDisabled(action)}
+                              tabindex={isActionDisabled(action) ? -1 : undefined}
                               onmouseenter={() => preloadViewAction(asset, action)}
                               onfocus={() => preloadViewAction(asset, action)}
                               onclick={(event) => handleLinkedActionClick(event, asset, action, 'secondary')}
                             >
                               {action.label}
-                            </a>
+                            </LinkButton>
                           {:else}
                           <Button
                             size="sm"
@@ -1257,49 +1256,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-xs);
-  }
-
-  .mobile-action-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    min-height: 2.15rem;
-    padding: 0.25rem 0.85rem;
-    border-radius: 0.75rem;
-    border: 1px solid var(--color-shell-border-default);
-    font-size: var(--text-caption);
-    font-weight: var(--font-medium);
-    color: var(--color-fg-primary);
-    text-decoration: none;
-    white-space: nowrap;
-    transition:
-      background-color var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      color var(--duration-micro) var(--ease-standard);
-  }
-
-  .mobile-action-link-secondary {
-    background: var(--color-bg-surface);
-  }
-
-  .mobile-action-link-outline {
-    background: transparent;
-  }
-
-  .mobile-action-link:hover {
-    background: var(--color-bg-subtle);
-    border-color: var(--color-shell-border-strong);
-  }
-
-  .mobile-action-link:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-focus) 22%, transparent);
-  }
-
-  .mobile-action-link[aria-disabled='true'] {
-    pointer-events: none;
-    opacity: 0.5;
   }
 
   .button-spinner {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
+	import { replaceState } from '$app/navigation';
+	import { onDestroy, onMount } from 'svelte';
 	import { CheckCircle2, Lock, XCircle } from 'lucide-svelte';
 	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
 
@@ -26,6 +27,11 @@
 		handoffUrl?: string;
 	}
 
+	interface ResendResponse {
+		error?: string;
+		retryAfter?: number;
+	}
+
 	type StorageAccessDocument = Document & {
 		hasStorageAccess?: () => Promise<boolean>;
 		requestStorageAccess?: () => Promise<void>;
@@ -33,6 +39,8 @@
 
 	type UIStatus = 'verifying' | 'success' | 'error' | 'blocked' | 'no-token' | 'action-required';
 	type ContinueMode = 'verify' | 'dashboard';
+	const VERIFY_EMAIL_STORAGE_KEY = 'webflow-dashboard:verify-email';
+	const RESEND_COOLDOWN_SECONDS = 30;
 
 	let { data } = $props<{ data: PageData }>();
 
@@ -54,6 +62,13 @@
 	let canRequestStorageAccess = $state(false);
 	let pendingToken = $state<string | null>(null);
 	let tokenInput = $state('');
+	let rememberedEmail = $state<string | null>(null);
+	let isResendingEmail = $state(false);
+	let resendMessage = $state<string | null>(null);
+	let resendError = $state<string | null>(null);
+	let resendCooldownSeconds = $state(0);
+	let resendCooldownTimer: ReturnType<typeof setInterval> | null = null;
+	const displayEmail = $derived(sentEmail || rememberedEmail);
 
 	$effect(() => {
 		status = getInitialStatus(serverStatus, serverError);
@@ -163,6 +178,78 @@
 		return fallbackUrl || '/login';
 	}
 
+	function getLoginRetryUrl(): string {
+		return displayEmail ? `/login?email=${encodeURIComponent(displayEmail)}` : '/login';
+	}
+
+	function clearResendCooldownTimer() {
+		if (!resendCooldownTimer) return;
+		clearInterval(resendCooldownTimer);
+		resendCooldownTimer = null;
+	}
+
+	function startResendCooldown(seconds = RESEND_COOLDOWN_SECONDS) {
+		clearResendCooldownTimer();
+		resendCooldownSeconds = Math.max(1, Math.ceil(seconds));
+		resendCooldownTimer = setInterval(() => {
+			resendCooldownSeconds = Math.max(0, resendCooldownSeconds - 1);
+			if (resendCooldownSeconds === 0) {
+				clearResendCooldownTimer();
+			}
+		}, 1000);
+	}
+
+	function persistEmailContext(email: string) {
+		rememberedEmail = email;
+		try {
+			window.sessionStorage.setItem(VERIFY_EMAIL_STORAGE_KEY, email);
+		} catch {
+			// Session storage is a convenience only; the page still works without it.
+		}
+	}
+
+	function removeEmailFromVisibleUrl() {
+		const currentUrl = new URL(window.location.href);
+		if (!currentUrl.searchParams.has('email')) return;
+
+		currentUrl.searchParams.delete('email');
+		setTimeout(() => {
+			replaceState(`${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`, $page.state);
+		}, 0);
+	}
+
+	async function handleResendEmail() {
+		if (!displayEmail || isResendingEmail || resendCooldownSeconds > 0) return;
+
+		isResendingEmail = true;
+		resendMessage = null;
+		resendError = null;
+
+		try {
+			const response = await fetch('/api/auth/login', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email: displayEmail })
+			});
+			const responseData = (await response.json().catch(() => ({}))) as ResendResponse;
+
+			if (!response.ok) {
+				if (responseData.retryAfter) {
+					startResendCooldown(responseData.retryAfter);
+				}
+				resendError = responseData.error || 'Could not send another sign-in email.';
+				return;
+			}
+
+			resendMessage = `We sent a fresh sign-in email to ${displayEmail}.`;
+			startResendCooldown();
+		} catch {
+			resendError = 'Could not send another sign-in email. Please try again.';
+		} finally {
+			isResendingEmail = false;
+		}
+	}
+
 	function persistRecoveryUrl(nextHandoffUrl?: string) {
 		if (!nextHandoffUrl) return;
 
@@ -174,11 +261,7 @@
 		const currentUrl = new URL(window.location.href);
 		currentUrl.searchParams.delete('token');
 		currentUrl.searchParams.set('handoff', handoff);
-		window.history.replaceState(
-			window.history.state,
-			'',
-			`${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`
-		);
+		replaceState(`${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`, $page.state);
 	}
 
 	function showSessionRecovery() {
@@ -267,6 +350,19 @@
 			isEmbedded && typeof (document as StorageAccessDocument).requestStorageAccess === 'function';
 
 		const token = $page.url.searchParams.get('token');
+		try {
+			const storedEmail = window.sessionStorage.getItem(VERIFY_EMAIL_STORAGE_KEY);
+			if (storedEmail) {
+				rememberedEmail = storedEmail;
+			}
+		} catch {
+			rememberedEmail = null;
+		}
+
+		if (sentEmail) {
+			persistEmailContext(sentEmail);
+			removeEmailFromVisibleUrl();
+		}
 
 		if (serverStatus === 'session-created') {
 			persistRecoveryUrl(data.handoffUrl);
@@ -305,6 +401,10 @@
 			await verifyToken(token);
 		}
 	}
+
+	onDestroy(() => {
+		clearResendCooldownTimer();
+	});
 </script>
 
 <svelte:head>
@@ -349,7 +449,7 @@
 						Open dashboard in a new tab
 					</a>
 				</div>
-				<a href="/login" class="retry-link">Try logging in again</a>
+				<a href={getLoginRetryUrl()} class="retry-link">Try logging in again</a>
 			</div>
 		{:else if status === 'action-required'}
 			<div class="status-message">
@@ -359,17 +459,17 @@
 				<button type="button" class="verify-button" onclick={handleActionRequired}>
 					{continueMode === 'verify' ? 'Continue in full page' : 'Open dashboard in full page'}
 				</button>
-				<a href="/login" class="retry-link">
+				<a href={getLoginRetryUrl()} class="retry-link">
 					{continueMode === 'verify' ? 'Request a new verification email' : 'Try logging in again'}
 				</a>
 			</div>
 		{:else if status === 'no-token'}
 			<div class="status-message">
-				{#if sentEmail}
+				{#if displayEmail}
 					<CheckCircle2 size={48} />
 					<h1>Check your inbox</h1>
 					<p class="subtitle">
-						We sent a sign-in email to <strong>{sentEmail}</strong>. Open the link in that
+						We sent a sign-in email to <strong>{displayEmail}</strong>. Open the link in that
 						email to continue.
 					</p>
 					<p class="manual-token-copy">Have a token instead? Paste it below.</p>
@@ -391,14 +491,38 @@
 						Verify
 					</button>
 				</form>
-				<a href="/login" class="retry-link">Request a new verification email</a>
+				{#if displayEmail}
+					<button
+						type="button"
+						class="resend-button"
+						onclick={handleResendEmail}
+						disabled={isResendingEmail || resendCooldownSeconds > 0}
+					>
+						{#if isResendingEmail}
+							Sending...
+						{:else if resendCooldownSeconds > 0}
+							Send again in {resendCooldownSeconds}s
+						{:else}
+							Send a new sign-in email
+						{/if}
+					</button>
+				{/if}
+				{#if resendMessage}
+					<p class="resend-message" role="status">{resendMessage}</p>
+				{/if}
+				{#if resendError}
+					<p class="resend-error" role="alert">{resendError}</p>
+				{/if}
+				<a href={getLoginRetryUrl()} class="retry-link">
+					{displayEmail ? 'Use a different email' : 'Request a new verification email'}
+				</a>
 			</div>
 		{:else}
 			<div class="status-message error">
 				<XCircle size={48} />
 				<h1>Verification failed</h1>
 				<p class="subtitle">{errorMessage}</p>
-				<a href="/login" class="retry-link">Try logging in again</a>
+				<a href={getLoginRetryUrl()} class="retry-link">Try logging in again</a>
 			</div>
 		{/if}
 	</div>
@@ -583,6 +707,54 @@
 	.verify-button--secondary:hover {
 		background: var(--color-info-muted);
 		color: #0055d4;
+	}
+
+	.resend-button {
+		width: 100%;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-sm);
+		margin-top: var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-shell-border-default);
+		border-radius: 999px;
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		cursor: pointer;
+		transition:
+			background-color var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.resend-button:hover:not(:disabled) {
+		background: var(--color-bg-subtle);
+		border-color: var(--color-shell-border-strong);
+	}
+
+	.resend-button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.resend-button:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-focus) 22%, transparent);
+	}
+
+	.resend-message,
+	.resend-error {
+		margin: 0;
+		font-size: var(--text-caption);
+	}
+
+	.resend-message {
+		color: var(--color-success);
+	}
+
+	.resend-error {
+		color: var(--color-error);
 	}
 
 	@media (max-width: 640px) {

@@ -194,7 +194,7 @@
             </span>
             Unlimited
           {:else}
-            {submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT} in 30 days
+            {submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT} in last 30 days
           {/if}
         </Badge>
       {/if}
@@ -345,7 +345,7 @@
               <p class="submission-summary">
                 <strong>{submissionData.publishedCount}</strong> published
                 <span aria-hidden="true">·</span>
-                <strong>{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}</strong> used in 30 days
+                <strong>{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}</strong> used in last 30 days
                 <span aria-hidden="true">·</span>
                 <strong>{submissionData.isWhitelisted ? '∞' : submissionData.remainingSubmissions}</strong>
                 remaining

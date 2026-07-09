@@ -7,6 +7,11 @@
 		validateMimeType,
 		getImageDimensions
 	} from '$lib/utils/upload-validation';
+	import {
+		canAcceptCarouselFiles,
+		getRemainingCarouselSlots,
+		hasUploadWork
+	} from '$lib/utils/uploader-interactions';
 	import { X, Upload } from 'lucide-svelte';
 
 	interface Props {
@@ -37,7 +42,23 @@
 
 	let uploadQueue = $state<UploadItem[]>([]);
 	let isDragOver = $state(false);
+	let isProcessingQueue = $state(false);
 	let fileInput: HTMLInputElement | undefined = $state();
+	const remainingSlots = $derived(
+		getRemainingCarouselSlots({
+			uploadedCount: value.length,
+			maxImages,
+			queue: uploadQueue
+		})
+	);
+	const canAcceptFiles = $derived(
+		canAcceptCarouselFiles({
+			disabled,
+			uploadedCount: value.length,
+			maxImages,
+			queue: uploadQueue
+		})
+	);
 
 	/**
 	 * Validate file on the client side before uploading.
@@ -146,13 +167,25 @@
 	 * Process upload queue in parallel batches
 	 */
 	async function processUploadQueue(): Promise<void> {
-		const concurrent = 3;
-		const pendingItems = uploadQueue.filter((i) => i.status === 'pending');
+		if (isProcessingQueue) return;
 
-		// Process in chunks of 3
-		for (let i = 0; i < pendingItems.length; i += concurrent) {
-			const chunk = pendingItems.slice(i, i + concurrent);
-			await Promise.all(chunk.map((item) => uploadSingleImage(item)));
+		isProcessingQueue = true;
+		const concurrent = 3;
+
+		try {
+			while (true) {
+				const pendingItems = uploadQueue.filter((i) => i.status === 'pending');
+				if (pendingItems.length === 0) break;
+
+				// Process in chunks of 3. New files queued during an active batch are picked up by
+				// the next loop pass instead of starting a competing processor.
+				for (let i = 0; i < pendingItems.length; i += concurrent) {
+					const chunk = pendingItems.slice(i, i + concurrent);
+					await Promise.all(chunk.map((item) => uploadSingleImage(item)));
+				}
+			}
+		} finally {
+			isProcessingQueue = false;
 		}
 
 		// Remove completed items after a delay
@@ -166,8 +199,12 @@
 	 */
 	async function handleMultipleFiles(files: File[]): Promise<void> {
 		// Validate count
-		if (value.length + files.length > maxImages) {
-			toast.error(`Maximum ${maxImages} images allowed`);
+		if (files.length > remainingSlots) {
+			toast.error(
+				remainingSlots > 0
+					? `You can add ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'}`
+					: `Maximum ${maxImages} images allowed`
+			);
 			return;
 		}
 
@@ -188,7 +225,7 @@
 	function handleFileSelect(event: Event) {
 		const input = event.target as HTMLInputElement;
 		const files = Array.from(input.files || []);
-		if (files.length > 0) {
+		if (files.length > 0 && canAcceptFiles) {
 			handleMultipleFiles(files);
 		}
 		// Reset input so same files can be selected again
@@ -197,7 +234,7 @@
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
-		if (!disabled && value.length < maxImages) {
+		if (canAcceptFiles) {
 			isDragOver = true;
 		}
 	}
@@ -210,7 +247,7 @@
 		event.preventDefault();
 		isDragOver = false;
 
-		if (disabled || value.length >= maxImages) return;
+		if (!canAcceptFiles) return;
 
 		const files = Array.from(event.dataTransfer?.files || []);
 		if (files.length > 0) {
@@ -225,17 +262,17 @@
 	}
 
 	function handleClick() {
-		if (!disabled && value.length < maxImages && !hasActiveUploads()) {
+		if (canAcceptFiles) {
 			fileInput?.click();
 		}
 	}
 
 	function hasActiveUploads() {
-		return uploadQueue.some((item) => item.status === 'pending' || item.status === 'uploading');
+		return hasUploadWork(uploadQueue);
 	}
 
 	function retryUpload(item: UploadItem) {
-		if (disabled || hasActiveUploads()) return;
+		if (disabled || isProcessingQueue) return;
 		item.status = 'pending';
 		item.progress = 0;
 		item.error = undefined;
@@ -323,12 +360,12 @@
 			type="button"
 			class="dropzone"
 			class:drag-over={isDragOver}
-			class:disabled
+			class:disabled={!canAcceptFiles}
 			ondragover={handleDragOver}
 			ondragleave={handleDragLeave}
 			ondrop={handleDrop}
 			onclick={handleClick}
-			disabled={disabled || hasActiveUploads()}
+			aria-disabled={!canAcceptFiles}
 		>
 		<Upload class="upload-icon" size={32} />
 		<p class="dropzone-text">

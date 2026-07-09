@@ -9,7 +9,6 @@
 		status: string;
 		actions?: AssetActionDescriptor[];
 		isViewDisabled?: boolean;
-		isViewLoading?: boolean;
 		isEditDisabled?: boolean;
 		isEditLoading?: boolean;
 		onView?: (id: string) => void;
@@ -23,7 +22,6 @@
 		status,
 		actions = [],
 		isViewDisabled = false,
-		isViewLoading = false,
 		isEditDisabled = false,
 		isEditLoading = false,
 		onView,
@@ -81,6 +79,15 @@
 		trackOverflowAction(label);
 		onView?.(assetId);
 		isOpen = false;
+	}
+
+	function handleViewKeydown(event: KeyboardEvent) {
+		if (event.key !== ' ') return;
+
+		event.preventDefault();
+		if (isViewDisabled) return;
+
+		(event.currentTarget as HTMLAnchorElement).click();
 	}
 
 	function preloadView() {
@@ -221,24 +228,16 @@
 				<a
 					href={assetHref}
 					class="dropdown-item"
-					class:dropdown-item-loading={isViewLoading}
 					aria-disabled={isViewDisabled}
 					tabindex={isViewDisabled ? -1 : undefined}
 					onmouseenter={preloadView}
 					onfocus={preloadView}
 					onclick={(event) => handleView(event, action.label.toLowerCase().replace(/\s+/g, '_'))}
+					onkeydown={handleViewKeydown}
 					role="menuitem"
 				>
-					{#if isViewLoading}
-						<LoaderCircle size={16} class="spinner" />
-					{:else}
-						<Eye size={16} />
-					{/if}
-					{#if isViewLoading}
-						Opening...
-					{:else}
-						{action.label}
-					{/if}
+					<Eye size={16} />
+					{action.label}
 				</a>
 			{:else}
 				<button
