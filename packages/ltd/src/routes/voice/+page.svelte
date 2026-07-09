@@ -166,6 +166,56 @@
   </div>
 </section>
 
+<!-- Platform Claims -->
+<section class="section-divider py-16 px-6">
+  <div class="max-w-3xl mx-auto">
+    <h2 class="mb-8">Platform Claims</h2>
+
+    <div class="space-y-6 recognition-description leading-relaxed">
+      <p class="recognition-intro">
+        Name the workflow first, then state the current platform choice without making the platform
+        the offer.
+      </p>
+
+      <div class="transformation-table my-8">
+        <table>
+          <thead>
+            <tr>
+              <th>Weak or misleading</th>
+              <th>Canonical</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="line-through">"Powered by the best AI"</td>
+              <td>"Built primarily with OpenAI Codex. Designed to outlast any model."</td>
+            </tr>
+            <tr>
+              <td class="line-through">"Model-agnostic"</td>
+              <td>"Model-opinionated in practice. Model-portable by design."</td>
+            </tr>
+            <tr>
+              <td class="line-through">"Official OpenAI partner" without authorization</td>
+              <td>"OpenAI is our primary reasoning and agent environment."</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Follow the platform statement with what the organization keeps: data, MCP contracts,
+        harnesses, skills, prompts, policy, evals, receipts, routing, fallback, and recovery. The
+        lab provides an instrument; the surrounding system carries the durable claim.
+      </p>
+      <p>
+        Use <a href="/canon/concepts/conviction-without-dependence"
+          >Conviction Without Dependence</a
+        > for the full language hierarchy, ownership boundary, and anti-patterns.
+      </p>
+    </div>
+  </div>
+</section>
+
 <!-- Recognition -->
 <section class="py-16 px-6 section-divider">
   <div class="max-w-3xl mx-auto">

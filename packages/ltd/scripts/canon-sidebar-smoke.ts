@@ -6,10 +6,13 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 
+import { canonNavigation, flattenNavigation } from '../src/lib/canon/navigation.js';
+
 const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(packageDir, '../..');
 const existingBaseUrl = process.env.CANON_SIDEBAR_SMOKE_URL?.replace(/\/$/, '');
 const chromePath = findChromePath();
+const expectedLinkCount = flattenNavigation(canonNavigation).length;
 
 interface DevServer {
   baseUrl: string;
@@ -30,6 +33,11 @@ interface NavSnapshot {
   activeVisible: boolean;
   sidebarOnScreen: boolean;
   navScrollTop: number;
+  mainHeading: string | null;
+  mainText: string;
+  viewportWidth: number;
+  documentWidth: number;
+  hasHorizontalOverflow: boolean;
 }
 
 function findChromePath(): string {
@@ -194,6 +202,7 @@ async function collectNavSnapshot(page: Page): Promise<NavSnapshot> {
 		const pathFor = (anchor) => anchor ? new URL(anchor.href).pathname : null;
 		const nav = document.querySelector('.sidebar-nav');
 		const sidebar = document.querySelector('.sidebar');
+		const main = document.querySelector('main');
 		const activeLink = document.querySelector('.sidebar-nav a[aria-current="page"]');
 		const links = Array.from(document.querySelectorAll('.sidebar-nav a[href]'));
 		const groups = Array.from(document.querySelectorAll('details.nav-group'));
@@ -219,7 +228,12 @@ async function collectNavSnapshot(page: Page): Promise<NavSnapshot> {
 			activeHref: pathFor(activeLink),
 			activeVisible: isOnScreen(activeLink),
 			sidebarOnScreen: isOnScreen(sidebar),
-			navScrollTop: nav?.scrollTop ?? 0
+			navScrollTop: nav?.scrollTop ?? 0,
+			mainHeading: text(main?.querySelector('h1')),
+			mainText: text(main) ?? '',
+			viewportWidth: window.innerWidth,
+			documentWidth: document.documentElement.scrollWidth,
+			hasHorizontalOverflow: document.documentElement.scrollWidth > window.innerWidth
 		};
 	})()`)) as NavSnapshot;
 }
@@ -228,7 +242,7 @@ function assertRootCanon(snapshot: NavSnapshot): void {
   assert.equal(snapshot.path, '/canon');
   assert.equal(
     snapshot.totalLinks,
-    53,
+    expectedLinkCount,
     'Canon sidebar should expose every registry-backed doc link.'
   );
   assert.deepEqual(snapshot.groupLabels, ['Primitives', 'Workflow', 'Systems']);
@@ -256,7 +270,7 @@ function assertConversionRoute(snapshot: NavSnapshot): void {
   assert.equal(snapshot.path, '/canon/components/conversion');
   assert.equal(
     snapshot.totalLinks,
-    53,
+    expectedLinkCount,
     'Canon sidebar should keep the full registry-backed link set.'
   );
   assert.deepEqual(snapshot.groupLabels, ['Primitives', 'Workflow', 'Systems']);
@@ -270,6 +284,30 @@ function assertConversionRoute(snapshot: NavSnapshot): void {
   assert.equal(snapshot.sidebarOnScreen, true);
   assert.equal(snapshot.visibleLinks.includes('Conversion'), true);
   assert.equal(snapshot.visibleLinks.includes('Feedback'), true);
+}
+
+function assertConvictionRoute(snapshot: NavSnapshot): void {
+  assert.equal(snapshot.path, '/canon/concepts/conviction-without-dependence');
+  assert.equal(snapshot.totalLinks, expectedLinkCount);
+  assert.ok(snapshot.openSections.includes('Concepts'));
+  assert.equal(snapshot.activeText, 'Conviction Without Dependence');
+  assert.equal(snapshot.activeHref, '/canon/concepts/conviction-without-dependence');
+  assert.equal(snapshot.activeVisible, true);
+  assert.equal(snapshot.sidebarOnScreen, true);
+  assert.equal(snapshot.mainHeading, 'Conviction Without Dependence');
+  assert.equal(
+    snapshot.hasHorizontalOverflow,
+    false,
+    `Canon doctrine should fit its ${snapshot.viewportWidth}px viewport; document width was ${snapshot.documentWidth}px.`
+  );
+  assert.match(
+    snapshot.mainText,
+    /Model-opinionated in practice\. Model-portable by design\./
+  );
+  assert.match(
+    snapshot.mainText,
+    /Built primarily with OpenAI Codex\. Designed to outlast any model\./
+  );
 }
 
 async function runSmoke(baseUrl: string): Promise<NavSnapshot[]> {
@@ -292,16 +330,26 @@ async function runSmoke(baseUrl: string): Promise<NavSnapshot[]> {
     assertConversionRoute(conversionDesktop);
     snapshots.push(conversionDesktop);
 
+    const convictionDesktop = await gotoCanonPath(
+      page,
+      baseUrl,
+      '/canon/concepts/conviction-without-dependence'
+    );
+    assertConvictionRoute(convictionDesktop);
+    snapshots.push(convictionDesktop);
+
     await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true });
-    await page.goto(`${baseUrl}/canon/components/conversion`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${baseUrl}/canon/concepts/conviction-without-dependence`, {
+      waitUntil: 'domcontentloaded'
+    });
     await page.waitForSelector('.menu-toggle');
     await page.click('.menu-toggle');
     await page.waitForSelector('.sidebar.sidebar-open');
     await page.waitForSelector('.nav-link-active');
     await sleep(150);
-    const conversionMobile = await collectNavSnapshot(page);
-    assertConversionRoute(conversionMobile);
-    snapshots.push(conversionMobile);
+    const convictionMobile = await collectNavSnapshot(page);
+    assertConvictionRoute(convictionMobile);
+    snapshots.push(convictionMobile);
 
     return snapshots;
   } catch (error) {

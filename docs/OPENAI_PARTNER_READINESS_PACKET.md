@@ -25,6 +25,27 @@ mechanics for eligible campaigns, but the public help docs describe
 campaign-specific, non-transferable promo/referral codes rather than an open,
 Dify-style recurring affiliate program.
 
+## Canonical OpenAI posture
+
+The governing Canon doctrine is **Conviction Without Dependence**:
+
+> Use the best instrument. Own the system.
+
+The approved commercial expression is:
+
+> Built primarily with OpenAI Codex. Designed to outlast any model.
+
+The technical expression is:
+
+> Model-opinionated in practice. Model-portable by design.
+
+These statements describe current product use and operating conviction. They do
+not establish an official OpenAI partnership, certification, affiliation,
+reseller relationship, endorsement, or Frontier Alliance status. Public proof
+must put the owned system beside the OpenAI claim: data, MCP contracts,
+harnesses, skills, prompts, policy, evals, receipts, routing, fallback, and
+recovery.
+
 ## Application Narrative
 
 CREATE SOMETHING uses OpenAI as a reasoning and agent host inside governed AI
@@ -92,6 +113,8 @@ Use this concise positioning summary:
 
 Approved before any OpenAI acceptance:
 
+- "Built primarily with OpenAI Codex. Designed to outlast any model."
+- "Model-opinionated in practice. Model-portable by design."
 - "OpenAI ecosystem readiness"
 - "OpenAI-ready MCP and Policy OS delivery"
 - "OpenAI as a reasoning and agent host in the stack"

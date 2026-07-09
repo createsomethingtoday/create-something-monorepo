@@ -41,6 +41,27 @@ Signal → Decision → Proof
 This is the communication layer. The implementation still uses MCP connectivity,
 contracts, approval modes, policy artifacts, traces, and runbooks.
 
+## Platform conviction and portability
+
+Policy OS operationalizes the Canon doctrine **Conviction Without Dependence**:
+
+> Use the best instrument. Own the system.
+
+Its technical rule is:
+
+> Model-opinionated in practice. Model-portable by design.
+
+OpenAI Codex is the current primary CREATE SOMETHING agent environment, and an
+OpenAI Agents SDK runtime is an explicit graduation option. Neither choice owns
+the Policy OS contract. The portable unit remains the workflow data, MCP
+contracts, harness, skills, prompts, approval policy, evals, receipts, routing,
+fallback, and recovery path.
+
+Every delivery must therefore name a current default, record why it was chosen,
+and retain a tested comparison or fallback path to another hosted, open-weight,
+or custom model. `Model-agnostic` is not sufficient metadata; the contract must
+identify the real default and the evidence-backed exit.
+
 ## Product shape
 
 Policy OS is delivered as one package with three delivery layers:

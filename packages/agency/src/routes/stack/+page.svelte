@@ -97,6 +97,30 @@
     }
   ];
 
+  const platformConviction: PerformanceCardItem[] = [
+    {
+      eyebrow: 'Current instrument',
+      icon: 'info',
+      title: 'OpenAI Codex',
+      detail:
+        'The primary environment for setup, demonstration, repository work, and agent-operable delivery.'
+    },
+    {
+      eyebrow: 'Owned system',
+      icon: 'check',
+      title: 'Context, policy, proof',
+      detail:
+        'The workflow boundary, organizational context, approval rules, evals, receipts, and recovery path stay inspectable and portable.'
+    },
+    {
+      eyebrow: 'Exit path',
+      icon: 'refresh',
+      title: 'Route, compare, recover',
+      detail:
+        'The same contracts and golden tasks can evaluate Claude, compatible harnesses, open-weight executors, and custom models.'
+    }
+  ];
+
   const faqItems = [
     {
       question: 'What is the stack boundary?',
@@ -275,6 +299,21 @@
 >
   {#snippet after()}
     <PerformanceCardGrid items={deliveryArtifacts} columns={3} ariaLabel="Stack delivery artifacts" />
+  {/snippet}
+</PerformancePageSection>
+
+<PerformancePageSection
+  variant="soft"
+  eyebrow="Platform conviction"
+  title="Model-opinionated in practice. Model-portable by design."
+  description="CREATE SOMETHING builds primarily with OpenAI Codex. The durable client asset is data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts, routing, fallback, and recovery—not access to one model."
+>
+  {#snippet after()}
+    <PerformanceCardGrid
+      items={platformConviction}
+      columns={3}
+      ariaLabel="Current platform, owned system, and portable exit path"
+    />
   {/snippet}
 </PerformancePageSection>
 

@@ -217,7 +217,12 @@ async function collectMarkdownFilesRecursive(
 // ============================================================================
 
 function escapeForTemplate(s: string): string {
-  return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$')
+    // Preserve Markdown hard breaks without emitting trailing source whitespace.
+    .replace(/ +(?=\r?\n|$)/g, spaces => '\\u0020'.repeat(spaces.length));
 }
 
 // ============================================================================

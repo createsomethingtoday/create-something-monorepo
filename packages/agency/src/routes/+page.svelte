@@ -226,6 +226,21 @@
     {/snippet}
   </PerformancePageSection>
 
+  <PerformancePageSection
+    variant="soft"
+    eyebrow="Current agent environment"
+    title="Built primarily with OpenAI Codex. Designed to outlast any model."
+    description="We choose OpenAI deliberately for Codex and agent reasoning. The durable client system remains yours: workflow data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts, routing, fallback, and recovery."
+  >
+    {#snippet actions()}
+      <Button href="/stack">See the stack boundary</Button>
+      <Button
+        href="https://createsomething.ltd/canon/concepts/conviction-without-dependence"
+        variant="secondary">Read the Canon</Button
+      >
+    {/snippet}
+  </PerformancePageSection>
+
   <PerformanceActionFooter
     eyebrow="Fixed-scope first step"
     title={agencyCoreMessaging.workflowCtaHeading}

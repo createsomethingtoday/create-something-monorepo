@@ -144,7 +144,7 @@ and proof panels unless a brand review explicitly approves the scene.
     slug: "components/clear",
     section: "components",
     title: "Clear Components",
-    description: "Ona-derived communication primitives for mapped, governed, proof-bearing work.",
+    description: "Performance Lab communication primitives for mapped, governed, proof-bearing work.",
     content: `## What Ships Today
 
 - \`ClearPageSection\`: open page bands for claims, proof, actions, and asides
@@ -300,6 +300,74 @@ claim, demo, or receipt and the user should return to the same workflow after wa
 - [Button](/canon/components/button)
 - [Clear Components](/canon/components/clear)
 - [Patterns](/canon/components/patterns)`
+  },
+  {
+    slug: "components/data",
+    section: "components",
+    title: "Data",
+    description: "Database-layer primitives for records, queues, cursors, and audit trails.",
+    content: `## Status: Candidate Review
+
+\`DataTable\` and \`StatusBadge\` ship through
+\`@create-something/canon/components/data\` under **candidate-review** policy —
+not stable. The first consumer is the deployed app-governance dashboard;
+promotion waits on a second consuming surface. Design source:
+\`docs/CANON_DATABASE_LAYER_DESIGN.md\`.
+
+## What Ships Today
+
+- \`DataTable\` — dense, Tufte-informed record table: real \`<table>\` semantics,
+  \`aria-sort\` headers, controlled sorting (the query layer owns ordering),
+  keyboard row activation, monospace machine-value columns, sticky header and
+  dense variants, cell and empty snippets
+- \`StatusBadge\` — semantic state indicator: success / error / warning / info /
+  neutral tones, pill and dot variants, emphasis for judgment-gate states
+
+## Selection Rules
+
+1. Use the dark shell surface language for database layers, never glass on
+   dense data.
+2. Machine values (ids, cursors, timestamps, counts) render monospace with
+   tabular numerals; numbers and timestamps align right.
+3. Color is state: map lifecycles and priorities to the five semantic tones;
+   never use chart series colors or per-category hues for state.
+4. Sorting is controlled — the parent re-queries and passes new rows; the
+   table never re-orders data itself.
+5. Chat and voice modalities summarize the underlying records as text instead
+   of rendering the grid; the badge label always carries the state as plain
+   text.
+
+## Example
+
+\`\`\`svelte
+<DataTable
+  columns={[
+    { key: 'id', label: 'ID', mono: true, width: '5rem' },
+    { key: 'title', label: 'Finding', sortable: true },
+    { key: 'status', label: 'Status' },
+    { key: 'updated_at', label: 'Updated', mono: true, align: 'right', sortable: true }
+  ]}
+  rows={findings}
+  sortKey="updated_at"
+  sortDirection="desc"
+  onsort={(key, dir) => goto(\`?sort=\${key}&dir=\${dir}\`)}
+  onrowclick={(row) => openDrawer(row.id)}
+>
+  {#snippet cell({ column, value })}
+    {#if column.key === 'status'}
+      <StatusBadge label={String(value)} tone="warning" variant="dot" />
+    {:else}
+      {String(value ?? '')}
+    {/if}
+  {/snippet}
+</DataTable>
+\`\`\`
+
+## Related
+
+- [Feedback](/canon/components/feedback)
+- [Navigation](/canon/components/navigation)
+- [Insights](/canon/components/insights)`
   },
   {
     slug: "components/diagrams",
@@ -526,7 +594,7 @@ claim, demo, or receipt and the user should return to the same workflow after wa
 <div class="card-content">
 <h2 class="card-title">Clear Components</h2>
 <p class="card-description">
-				Map workflows, proof, receipts, and governed states with Ona-derived clarity.
+				Map workflows, proof, receipts, and governed states with Performance Lab clarity.
 			</p>
 </div>
 <div class="card-arrow">
@@ -748,10 +816,10 @@ policies, approvals, and receipts connect across a workflow.
 ## Clear Communication Navigation
 
 \`Navigation\` and \`Footer\` both accept \`visualStyle?: 'classic' | 'clear'\`. The default is
-\`classic\` to preserve existing callers while the Ona-derived clear system rolls out.
+\`classic\` to preserve existing callers while the Performance Lab clear system rolls out.
 
 Use \`clear\` when the page must serve a buyer or operator who needs immediate orientation before
-brand atmosphere. The clear style follows the Ona-derived communication layer: frosted light shell,
+brand atmosphere. The clear style follows the Performance Lab communication layer: frosted light shell,
 compact readable links, crisp dividers, restrained active states, direct dark CTA, and no decorative
 navigation complexity.
 
@@ -1082,6 +1150,170 @@ grouping, or keyboard-first navigation reduces friction.
 </section>`
   },
   {
+    slug: "concepts/conviction-without-dependence",
+    section: "concepts",
+    title: "Conviction Without Dependence",
+    description: "Choose the best instrument deliberately while keeping the surrounding system, policy, evidence, and ability to change models under your control.",
+    content: `## Definition
+
+<blockquote class="definition-block">
+<p>
+  Conviction without dependence means choosing the best available instrument
+  deliberately while owning the system that gives the instrument context,
+  authority, memory, and proof.
+</p>
+</blockquote>
+
+> **Use the best instrument. Own the system.**
+
+This is neither vendor neutrality nor vendor capture. A team should be able to
+say which model and agent environment it prefers, why it prefers them, and what
+evidence supports the choice. The same team should be able to change that
+choice without losing its workflow, policy, data, or institutional learning.
+
+The technical shorthand is:
+
+> **Model-opinionated in practice. Model-portable by design.**
+
+## The Language System
+
+Use each expression for its own job:
+
+| Layer | Canonical language | Job |
+| --- | --- | --- |
+| Doctrine | **Conviction without dependence** | Names the enduring relationship between an instrument and the owned system around it. |
+| Maxim | **Use the best instrument. Own the system.** | Gives operators a compact decision rule. |
+| Technical | **Model-opinionated in practice. Model-portable by design.** | States that current choices are deliberate while interfaces, policy, and evidence remain portable. |
+| Commercial | **Built primarily with OpenAI Codex. Designed to outlast any model.** | Names the current \`.agency\` operating conviction without turning a vendor into the offer. |
+| Ownership | **Model capability is rented. Organizational intelligence and control are owned.** | Identifies where durable value must remain. |
+
+The language is intentionally asymmetric. The Canon names a durable principle.
+A commercial or technical surface may name the current platform. A current
+platform choice can change; the doctrine should not.
+
+## What the System Owns
+
+A model can reason, generate, classify, and call tools. Those capabilities are
+important, but they do not constitute the operating system around delegated
+work. Durable ownership sits in the layers a business can inspect, version,
+move, and improve:
+
+| Owned layer | What remains portable |
+| --- | --- |
+| **Data** | Source records, schemas, provenance, identity, and organizational context. |
+| **MCP boundaries** | Tool and resource contracts, authentication scopes, errors, and allowed actions. |
+| **Harness** | Context assembly, tool exposure, iteration loops, budgets, and recovery behavior. |
+| **Skills and prompts** | Reusable behavior, domain instructions, examples, and task framing. |
+| **Policy** | Approval rules, escalation, stop conditions, entitlements, and human authority. |
+| **Evals** | Golden tasks, failure cases, comparison criteria, and promotion thresholds. |
+| **Receipts** | Evidence, decisions, traces, outcomes, rollback notes, and audit history. |
+| **Routing** | The ability to choose hosted, open-weight, or custom models by task and risk. |
+
+The model participates in this system. It does not own the system.
+
+## Current Expression
+
+CREATE SOMETHING currently builds primarily with **OpenAI Codex**. This is a
+real operating conviction: Codex is the primary environment for setup,
+demonstration, repository work, and agent-operable delivery. OpenAI can also
+provide reasoning and agent hosting when a workflow benefits from it.
+
+That statement is not an official OpenAI partnership, certification,
+affiliation, reseller, or endorsement claim. It describes how CREATE SOMETHING
+works today.
+
+The surrounding artifacts remain portable across Claude, Pi, compatible agent
+harnesses, open-weight executors, and custom models. MCP contracts, policy
+artifacts, evals, receipts, and source data should survive a change in model or
+runtime. Portability is proven by the ability to route, compare, fall back, and
+recover—not by claiming indifference to model quality.
+
+## Rules
+
+### 1. Name the instrument honestly
+
+Do not hide a strong technical preference behind generic "best model for the
+job" language. State the current default and why it earns that position.
+
+### 2. Keep authority outside the model
+
+The model may propose or execute. Policy decides what can run, what waits for a
+named person, and what must stop. A vendor's system prompt is not a substitute
+for an owned approval and escalation policy.
+
+### 3. Prefer portable contracts
+
+Keep tools, resources, identity boundaries, and evidence accessible through
+documented interfaces. MCP, HTTP, OAuth, JSON, versioned schemas, and exported
+artifacts are materials that can outlast one model release.
+
+### 4. Evaluate before routing
+
+Model routing is an evidence decision. Use the same golden tasks, forbidden
+actions, latency measures, cost measures, trace requirements, and recovery
+checks when comparing frontier, open-weight, and custom models.
+
+### 5. Preserve a fallback
+
+Every production model choice needs a pinned version or named release, a known
+fallback, and a rollback path. Portability without a rehearsed recovery path is
+only an architectural claim.
+
+### 6. Keep the proof
+
+When the model or vendor changes, preserve the inputs, policy version, tool
+calls, decision, outcome, and receipt. The evidence belongs to the organization
+using the system.
+
+## Anti-Patterns
+
+- **Model reseller** — Selling access to a generally available model as though
+  the access itself were proprietary value.
+- **Badge-first marketing** — Using vendor marks or lab names as a substitute
+  for workflow boundaries, policy, evals, and proof.
+- **False agnosticism** — Claiming every model is interchangeable while hiding
+  real quality, cost, tool-use, safety, or latency differences.
+- **Shadow coupling** — Calling a system portable while prompts, tool schemas,
+  identity, traces, or state depend on undocumented vendor behavior.
+- **Outsourced judgment** — Allowing a model provider's defaults to become the
+  organization's approval, escalation, or risk policy.
+- **Implied endorsement** — Describing ordinary product use in language that
+  suggests an official partnership, certification, affiliation, or approval.
+- **Open weights without operations** — Treating downloadable weights as
+  independence without owning serving, evaluation, security, observability,
+  fallback, and upgrade responsibility.
+
+## The Test
+
+When evaluating a model or agent platform, ask:
+
+> **Could we replace this instrument without losing the workflow, policy,
+> evidence, or institutional learning?**
+
+If the answer is no, the system is captured. If the answer is yes but no model
+has been selected deliberately, the system lacks conviction. Good architecture
+holds both conditions at once: a strong present choice and a credible path to
+change it.
+
+## Relation to Other Concepts
+
+- [Gelassenheit](/canon/concepts/gelassenheit) supplies the stance: use
+  technology fully while remaining free from capture by it.
+- [Complementarity](/canon/concepts/complementarity) locates human judgment and
+  machine execution inside one accountable whole.
+- [Crystallization](/patterns/crystallization) turns judgment into portable,
+  inspectable policy rather than leaving it inside a person or a model session.
+- [Timeless Materials](/patterns/timeless-materials) favors standards and
+  interfaces with enough durability to survive vendor and framework churn.
+- [The Hermeneutic Circle](/canon/concepts/hermeneutic-circle) requires every
+  platform choice to serve the whole system and be revised when practical
+  evidence changes the whole.
+
+Conviction without dependence is the operational form of these principles for
+the model era: engage fully, choose deliberately, keep judgment visible, and
+remain able to change the instrument without losing the work.`
+  },
+  {
     slug: "concepts/gelassenheit",
     section: "concepts",
     title: "Gelassenheit",
@@ -1283,48 +1515,48 @@ grouping, or keyboard-first navigation reduces friction.
 
 <h2>Operationalizing Gelassenheit</h2>
 <p>
-		The question Gelassenheit poses—"when should automation yield to human judgment?"—requires 
-		a practical framework for answering. The 
-		<a href="https://github.com/quietloudlab/ai-interaction-atlas">AI Interaction Atlas</a> 
+		The question Gelassenheit poses—"when should automation yield to human judgment?"—requires\u0020
+		a practical framework for answering. The\u0020
+		<a href="https://github.com/quietloudlab/ai-interaction-atlas">AI Interaction Atlas</a>\u0020
 		provides this framework through its <code>human_oversight</code> taxonomy.
 	</p>
 <div class="manifestation-grid">
 <div class="manifestation">
 <h3>Required</h3>
 <p>
-				<strong>Gestell boundary.</strong> These are the gaps that must not be filled. 
-				Irreversible actions, safety-critical decisions, situations where automation would 
+				<strong>Gestell boundary.</strong> These are the gaps that must not be filled.\u0020
+				Irreversible actions, safety-critical decisions, situations where automation would\u0020
 				"fill every gap" and consume human agency.
 			</p>
 </div>
 <div class="manifestation">
 <h3>Recommended</h3>
 <p>
-				<strong>Verification gates.</strong> The craftsman checks the work. High-stakes 
-				outputs where confidence thresholds determine routing—if uncertain, the human 
+				<strong>Verification gates.</strong> The craftsman checks the work. High-stakes\u0020
+				outputs where confidence thresholds determine routing—if uncertain, the human\u0020
 				reviews; if confident, automation proceeds.
 			</p>
 </div>
 <div class="manifestation">
 <h3>Optional</h3>
 <p>
-				<strong>Quality assurance.</strong> Automation is acceptable with appropriate 
-				monitoring. Human review available but not required. The double gesture of 
+				<strong>Quality assurance.</strong> Automation is acceptable with appropriate\u0020
+				monitoring. Human review available but not required. The double gesture of\u0020
 				"yes and no" in equilibrium.
 			</p>
 </div>
 <div class="manifestation">
 <h3>None</h3>
 <p>
-				<strong>Zuhandenheit achieved.</strong> The tool disappears in use. Infrastructure 
-				that should be invisible—logging, caching, format conversion. Full automation 
+				<strong>Zuhandenheit achieved.</strong> The tool disappears in use. Infrastructure\u0020
+				that should be invisible—logging, caching, format conversion. Full automation\u0020
 				serves human purposes without requiring attention.
 			</p>
 </div>
 </div>
 <p>
-		This taxonomy answers Gelassenheit's central question not through abstract principle but 
-		through operational decision: for each task, what level of human engagement serves both 
+		This taxonomy answers Gelassenheit's central question not through abstract principle but\u0020
+		through operational decision: for each task, what level of human engagement serves both\u0020
 		full use and full freedom?
 	</p>
 
@@ -1339,7 +1571,7 @@ grouping, or keyboard-first navigation reduces friction.
 			Heidegger, Martin. "The Question Concerning Technology." <em>The Question Concerning Technology and Other Essays</em>. Trans. William Lovitt. New York: Harper &amp; Row, 1977.
 		</li>
 <li>
-			Harwood, Brandon. <a href="https://github.com/quietloudlab/ai-interaction-atlas">AI Interaction Atlas</a>. quietloudlab, 2025. 
+			Harwood, Brandon. <a href="https://github.com/quietloudlab/ai-interaction-atlas">AI Interaction Atlas</a>. quietloudlab, 2025.\u0020
 			<em>A shared language for designing AI experiences—provides the <code>human_oversight</code> taxonomy for operationalizing Gelassenheit.</em>
 		</li>
 <li>
@@ -2462,14 +2694,14 @@ Three border levels for separation and emphasis.
 | \`--color-border-emphasis\` | \`rgba(255,255,255,0.2)\` | Hover states |
 | \`--color-border-strong\` | \`rgba(255,255,255,0.3)\` | Active states |
 
-## Clear Communication Palette
+## Performance Lab Readability Palette
 
-The Ona-derived CREATE SOMETHING communication layer uses a light operational palette. Use these
-tokens for buyer-facing and operator-facing surfaces that need immediate comprehension.
+The CREATE SOMETHING Performance Lab communication layer uses a light operational palette. Use
+these tokens for buyer-facing and operator-facing surfaces that need immediate comprehension.
 
-This is now a stable Canon layer, not a one-off property treatment. Ona sets the clarity bar;
-CREATE SOMETHING owns the implementation language. Use the palette when the interface must show
-workflow maps, trust boundaries, approval states, receipts, validation gates, or handoff evidence.
+This is now a stable Canon layer, not a one-off property treatment. Use the palette when the
+interface must show workflow maps, trust boundaries, approval states, receipts, validation gates,
+or handoff evidence.
 
 | Token | Value | Use |
 |-------|-------|-----|
@@ -2566,9 +2798,9 @@ Three levels of elevation for clear visual hierarchy.
 
 \`\`\`css
 --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
---shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),\u0020
              0 2px 4px -1px rgba(0, 0, 0, 0.06);
---shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 
+--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),\u0020
              0 4px 6px -2px rgba(0, 0, 0, 0.05);
 \`\`\`
 
@@ -2770,7 +3002,7 @@ Every animation must answer: what does this communicate that stillness cannot? M
 
 ## Clear Communication Motion
 
-Ona-derived clear surfaces use motion only when it clarifies operational state. The acceptable uses
+Performance Lab clear surfaces use motion only when it clarifies operational state. The acceptable uses
 are narrow:
 
 - state changed: allow, review, block, waiting, complete
@@ -3127,11 +3359,11 @@ Always respect user preferences:
   /* 1. DRY: Use existing tokens, don't reinvent */
   padding: var(--space-md);
   border-radius: var(--radius-lg);
-  
+\u0020\u0020
   /* 2. Rams: Only necessary properties */
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
-  
+\u0020\u0020
   /* 3. Heidegger: Serve the system's coherence */
   transition: all var(--duration-micro) var(--ease-standard);
 }
@@ -3303,13 +3535,15 @@ Built on the golden ratio (φ = 1.618). Each step multiplies by φ for natural v
 ## Font Stack
 
 \`\`\`css
---font-sans: 'ABC Diatype', 'Stack Sans Notch', system-ui, sans-serif;
---font-mono: 'ABC Diatype Mono', 'JetBrains Mono', monospace;
---font-serif: 'Martina Plantijn', Georgia, serif;
+--font-sans: Arial, 'Helvetica Neue', Helvetica, system-ui, sans-serif;
+--font-display: var(--font-sans);
+--font-mono: ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+--font-serif: Georgia, 'Times New Roman', serif;
 \`\`\`
 
-The Ona-derived clear communication layer uses ABC Diatype for interface and body text, ABC Diatype
-Mono for compact system labels, and Martina Plantijn only when an editorial serif voice is useful.
+The Performance Lab layer uses the local/system sans stack for interface and body text, the platform
+mono stack for compact system labels, and Georgia only when an editorial serif voice is useful. No
+CREATE SOMETHING surface should depend on another company's font host.
 CREATE SOMETHING keeps local fallbacks so surfaces remain stable if external font loading fails.
 
 The type rule is operational comprehension first. Headlines name the workflow or offer plainly;
@@ -3366,7 +3600,7 @@ All text in the Canon system meets WCAG AA contrast requirements. The minimum ra
 
 ### Clear Proof and Status Surfaces
 
-Ona-derived clear surfaces often show workflow state, receipts, validation gates, and approval
+Performance Lab clear surfaces often show workflow state, receipts, validation gates, and approval
 boundaries. Do not communicate those states with color alone.
 
 Every proof or status surface must include:
@@ -3544,7 +3778,7 @@ Write like a colleague, not a robot.
 
 ## Clear Communication Copy
 
-For Ona-derived clear surfaces, write for operational comprehension before brand atmosphere. The
+For Performance Lab clear surfaces, write for operational comprehension before brand atmosphere. The
 copy should make the mapped workflow, governed action, proof object, and next step visible.
 
 Use the concrete noun before the abstract category:
@@ -3644,13 +3878,15 @@ Tell users what's happening.
     description: "CREATE SOMETHING image guidelines for marketing, articles, social previews, decks, and client proof artifacts.",
     content: `## Decision
 
-Use Ona.com as the design and communication foundation for CREATE SOMETHING images.
-The reference is communication quality, not identity: calm hierarchy, plain claims,
-compact proof, governed execution, visible customer evidence, and restrained action
-states.
+Use Performance Lab as the design and communication foundation for CREATE SOMETHING images:
+calm hierarchy, decisive contrast, plain claims, compact proof, governed execution, visible
+customer evidence, readiness states, and restrained action states.
 
 CREATE SOMETHING owns the implementation language. Our images should show how AI
 work gets mapped, integrated, governed, validated, shipped, and handed off.
+For external education, marketing, social, deck, and client-proof surfaces, the
+approved OpenAI generated export is the first-class visual when it communicates
+better than a raw SVG or Atlas render.
 
 Use \`docs/IMAGE_LANGUAGE_FOUNDATION.md\` when a generated, designed, captured, or
 rendered image needs TASTE-backed judgment context. TASTE references are inputs
@@ -3683,6 +3919,10 @@ decks, and client updates:
 | **Motion** | For video or animated exports, move only state, selection, progression, or handoff. |
 | **Proof** | Make validation visible through receipts, tests, links, dates, owners, and status. |
 
+Raw SVGs, Atlas renders, and graph exports are useful control artifacts. Publish
+them only when they meet the same quality bar as a generated export; otherwise
+use them as source briefs for OpenAI generation or edits.
+
 ## Image families
 
 Create reusable image families instead of one-off illustrations:
@@ -3697,8 +3937,8 @@ Create reusable image families instead of one-off illustrations:
 
 ## GPT Image 2 prompt contract
 
-Use \`gpt-image-2\` for production image generation when access is available. Keep
-prompts structured and repeatable:
+Use OpenAI \`gpt-image-2\` for production image generation when access is
+available. Keep prompts structured and repeatable:
 
 \`\`\`text
 Model: gpt-image-2
@@ -3709,16 +3949,21 @@ Create a CREATE SOMETHING <image family> for <surface>.
 Purpose: <what the image must prove>.
 Audience: <operator, buyer, builder, reviewer, client>.
 Show: <workflow objects, states, proof artifacts, owners, gates>.
-Style: Ona.com communication foundation translated into CREATE SOMETHING artifacts:
-calm hierarchy, porcelain surfaces, compact proof panels, governed execution,
-crisp labels, restrained cobalt/moss/stop accents, isometric cube signature.
+Style: CREATE SOMETHING Performance Lab image language:
+plain claim, decisive hierarchy, compact proof, governed execution, visible
+evidence, readiness states, and restrained action states. Translate that into CREATE SOMETHING
+artifacts: porcelain \`#f9f9f9\`, white panels, onyx \`#0a0e19\`, quiet grey
+\`#636363\`, thin \`#e1e1e1\` borders, 4-8px radii, compact receipts, state rows,
+decision panels, artifact cards, policy gates, owners, proof rails, and a small
+isometric cube signature only when useful. Use ocean \`#0048ff\`, moss \`#1e3c2c\`,
+and stop \`#c41e3a\` only as semantic state accents.
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains,
-fake dashboards, stock photography, unreadable file paths, private data,
-client secrets, vendor endorsement, watermarks.
+fake dashboards, stock photography, generic premium desk scenes, unreadable file
+paths, private data, client secrets, vendor endorsement, watermarks.
 \`\`\`
 
-The prompt should name the artifact family and proof requirement before style. Style
-cannot rescue a vague visual brief.
+The prompt should name the artifact family and proof requirement before style.
+Style cannot rescue a vague visual brief.
 
 For article, social, deck, sales, or client-update images, start from
 \`packages/agency/content/templates/marketing/image-prompt.md\` and store the
@@ -3726,6 +3971,8 @@ completed prompt beside the generated export.
 
 Use the Image API for a single completed generation or edit. Use the Responses
 API image generation tool for conversational, multi-turn image refinement.
+Prefer editing from an approved export for revisions instead of regenerating
+from scratch when layout continuity matters.
 
 ## Review gate
 
@@ -3736,7 +3983,8 @@ Before publishing or reusing an image:
 - The claim is supported by visible proof or a real screenshot.
 - No fake UI is presented as a screenshot.
 - No secrets, private data, private prompts, client records, or tokens appear.
-- The asset has source prompt, model, date, owner, target surface, and refresh date.
+- The asset has source prompt, source brief, model, date, output hash, owner,
+  target surface, and refresh date.
 - The result feels like governed operations, not generic AI atmosphere.
 
 Use deterministic repo checks as the required gate for this workflow. Langfuse
@@ -3750,12 +3998,13 @@ Every generated image should keep a source prompt beside the export:
 
 \`\`\`text
 <asset-slug>--prompt--vYYYYMMDD.txt
-<asset-slug>--source--vYYYYMMDD.svg
+<asset-slug>--brief--vYYYYMMDD.md
 <asset-slug>--export--1200x630--vYYYYMMDD.png
 \`\`\`
 
-Include the model, snapshot if known, quality, size, source inputs, and review status
-in the prompt file. This makes the visual system auditable and repeatable.
+Include the model, snapshot if known, quality, size, source inputs, output hash,
+and review status in the prompt file. This makes the visual system auditable and
+repeatable.
 For article image sets, copy
 \`packages/agency/content/templates/marketing/image-metadata.md\` into the asset
 folder and fill it before publish.
@@ -3768,10 +4017,14 @@ node scripts/marketing-image-assets-check.mjs
 
 ## Boundary
 
-Do not copy Ona identity, campaign language, page layouts, or category framing.
-Use Ona.com as the standard for how supervised autonomy should communicate. Use
-CREATE SOMETHING to show how that autonomy gets connected to real systems, policy,
-evidence, and delivery.`
+Do not copy third-party identity, campaign language, page layouts, or category framing.
+Use CREATE SOMETHING Performance Lab as the standard for how governed autonomy should
+communicate through real systems, policy, evidence, and delivery.
+
+Do not route Canon image generation through Google Gemini, Omni, or Vertex. This
+is an intentional stack-limit decision, not a temporary account-availability
+fallback. If OpenAI image access is blocked, keep the prompt and source brief
+ready rather than silently downgrading to another provider.`
   },
   {
     slug: "guidelines/responsive",
@@ -3889,12 +4142,12 @@ Scale spacing proportionally:
   .layout {
     flex-direction: row;
   }
-  
+\u0020\u0020
   .sidebar {
     width: 280px;
     flex-shrink: 0;
   }
-  
+\u0020\u0020
   .main {
     flex: 1;
   }
@@ -3970,7 +4223,7 @@ Override Canon's tokens at the root level:
   /* Brand color as accent */
   --color-accent: #6366f1;
   --color-accent-muted: rgba(99, 102, 241, 0.1);
-  
+\u0020\u0020
   /* Custom backgrounds */
   --color-bg-pure: #0f0f23;
   --color-bg-base: #1a1a2e;
@@ -4009,7 +4262,7 @@ Canon defaults to dark mode. Add light mode with a theme attribute:
 <script>
 function toggleTheme() {
   const current = document.documentElement.dataset.theme;
-  document.documentElement.dataset.theme = 
+  document.documentElement.dataset.theme =\u0020
     current === 'light' ? 'dark' : 'light';
 }
 </script>
@@ -4046,18 +4299,18 @@ Respect user's system preference:
   --color-bg-base: #fafafa;
   --color-bg-surface: #f5f5f5;
   --color-bg-elevated: #ffffff;
-  
+\u0020\u0020
   /* Foregrounds - dark text */
   --color-fg-primary: rgba(0, 0, 0, 0.9);
   --color-fg-secondary: rgba(0, 0, 0, 0.7);
   --color-fg-tertiary: rgba(0, 0, 0, 0.5);
   --color-fg-muted: rgba(0, 0, 0, 0.4);
-  
+\u0020\u0020
   /* Borders - adjusted for light bg */
   --color-border-default: rgba(0, 0, 0, 0.1);
   --color-border-emphasis: rgba(0, 0, 0, 0.2);
   --color-border-strong: rgba(0, 0, 0, 0.3);
-  
+\u0020\u0020
   /* Interactive - adjusted */
   --color-hover: rgba(0, 0, 0, 0.05);
   --color-active: rgba(0, 0, 0, 0.1);
@@ -4163,7 +4416,7 @@ Respect user's system preference:
 <section class="token-preview">
 <h2 class="section-title">Spacing That Feels Natural</h2>
 <p class="section-description">
-		We use the golden ratio (1.618) for spacing. It creates visual rhythm that feels 
+		We use the golden ratio (1.618) for spacing. It creates visual rhythm that feels\u0020
 		balanced without you having to think about why.
 	</p>
 <div class="token-examples">
@@ -4482,8 +4735,8 @@ Expanded examples for async tables, upload flows, and inline refresh states are 
 <span class="badge badge--new">Latest</span>
 </div>
 <p class="release-summary">
-			WORKWAY alignment release. The Canon Design System is now synchronized with 
-			WORKWAY's implementation, establishing a shared visual language across all 
+			WORKWAY alignment release. The Canon Design System is now synchronized with\u0020
+			WORKWAY's implementation, establishing a shared visual language across all\u0020
 			CREATE SOMETHING properties and the WORKWAY vertical.
 		</p>
 <h3>WORKWAY Alignment</h3>
@@ -4526,9 +4779,9 @@ Expanded examples for async tables, upload flows, and inline refresh states are 
 </ul>
 <h3>Notes</h3>
 <p class="release-note">
-			WORKWAY (the construction vertical) has advanced the shared Canon system with 
-			Tailwind v4, shadcn/ui components, and MagicUI animations. This release begins 
-			aligning CREATE SOMETHING properties (.agency first) with these updates. 
+			WORKWAY (the construction vertical) has advanced the shared Canon system with\u0020
+			Tailwind v4, shadcn/ui components, and MagicUI animations. This release begins\u0020
+			aligning CREATE SOMETHING properties (.agency first) with these updates.\u0020
 			Properties .io, .space, and .ltd will be migrated incrementally.
 		</p>
 <p class="release-note">

@@ -41,9 +41,9 @@
     {
       eyebrow: 'Reasoning',
       icon: 'check',
-      title: 'OpenAI helps decide.',
+      title: 'OpenAI is the primary reasoning and agent environment.',
       detail:
-        'Use OpenAI where reasoning is useful, with scoped tools, approval behavior, and grounded evidence around it.',
+        'Use OpenAI where reasoning is useful, with scoped tools, approval behavior, and grounded evidence. MCP contracts, policy, and evals preserve the route to Claude, open-weight and custom models.',
       href: '/stack',
       points: ['Reasoning layer', 'Approval behavior', 'Grounded context']
     }

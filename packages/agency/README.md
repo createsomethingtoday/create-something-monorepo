@@ -103,6 +103,32 @@ Validation:
 - Add a rule to `scripts/check-public-copy.mjs` when a phrase becomes a private
   planning term instead of public language.
 
+### Platform Conviction Contract
+
+Public platform language follows
+[Conviction Without Dependence](https://createsomething.ltd/canon/concepts/conviction-without-dependence):
+
+> Built primarily with OpenAI Codex. Designed to outlast any model.
+
+Apply the contract in this order:
+
+1. Explain the workflow, decision boundary, and proof before naming a vendor.
+2. Name OpenAI Codex as the current primary agent environment when the stack is
+   relevant to the reader.
+3. Put the owned system beside the claim: data, MCP contracts, harnesses,
+   skills, prompts, policy, evals, receipts, routing, fallback, and recovery.
+4. Describe portability as a tested exit path to Claude, compatible harnesses,
+   open-weight executors, or custom models—not as indifference to model quality.
+5. Do not imply OpenAI partnership, certification, affiliation, resale,
+   endorsement, or Frontier Alliance status without documentary authorization.
+
+The technical shorthand is:
+
+> Model-opinionated in practice. Model-portable by design.
+
+`pnpm copy:check` guards the prohibited relationship claims and the public
+surface test guards the required conviction and ownership language.
+
 ### Marketing Page Portfolio
 
 Public SEO/AEO pages should operate as a funnel portfolio, not a pile of
