@@ -43,6 +43,7 @@ import {
   storySessionPayload
 } from './story-api.js';
 import { tidyNodeUpdates } from './client/layout.js';
+import { readSharedCanvasState, updateSharedCanvasState } from './canvas-state.js';
 import { buildAtlasDatabaseHealth } from './database-health.js';
 import type { AtlasWritebackActionStatus } from './types.js';
 
@@ -339,6 +340,26 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
       const sessionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)$/);
       if (method === 'GET' && sessionMatch) {
         sendJson(response, 200, await readSession(decodeURIComponent(sessionMatch[1] ?? ''), cwd));
+        return;
+      }
+
+      const canvasStateMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/canvas-state$/);
+      if (method === 'GET' && canvasStateMatch) {
+        sendJson(
+          response,
+          200,
+          await readSharedCanvasState(decodeURIComponent(canvasStateMatch[1] ?? ''), cwd)
+        );
+        return;
+      }
+
+      if (method === 'PUT' && canvasStateMatch) {
+        const body = await readJson(request);
+        sendJson(
+          response,
+          200,
+          await updateSharedCanvasState(decodeURIComponent(canvasStateMatch[1] ?? ''), body, cwd)
+        );
         return;
       }
 
