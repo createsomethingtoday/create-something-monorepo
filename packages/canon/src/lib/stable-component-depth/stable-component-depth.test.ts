@@ -69,6 +69,10 @@ describe('Canon stable component depth', () => {
 
 		expect(clearStateRows).toBeDefined();
 		expect(clearStateRows?.dimensions['modality-behavior'].status).toBe('covered');
+		expect(clearStateRows?.dimensions['property-usage'].status).toBe('covered');
+		expect(clearStateRows?.dimensions['property-usage'].evidence[0]?.detail).toContain(
+			'PerformanceStateRows'
+		);
 		expect(clearStateRows?.modalities).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
 	});
 

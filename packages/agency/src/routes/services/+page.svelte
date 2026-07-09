@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
     Button,
-    ClearPageSection,
+    PerformancePageSection,
     PerformanceLabBand,
     SEO,
     type PerformanceLabMetric
@@ -100,7 +100,7 @@
 />
 
 <div class="services-performance property-performance">
-  <ClearPageSection
+  <PerformancePageSection
     variant="hero"
     titleLevel="h1"
     eyebrow="How I Work"
@@ -115,7 +115,7 @@
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
     {/snippet}
-  </ClearPageSection>
+  </PerformancePageSection>
 
   <PerformanceLabBand
     title="Build only when the workflow is ready."
@@ -124,7 +124,7 @@
     ariaLabel="Delegation readiness"
   />
 
-  <ClearPageSection
+  <PerformancePageSection
     id="atlas-warmup"
     variant="soft"
     eyebrow="Map before booking"
@@ -134,7 +134,7 @@
     {#snippet after()}
       <PublicAtlasCanvas />
     {/snippet}
-  </ClearPageSection>
+  </PerformancePageSection>
 </div>
 
 <style>

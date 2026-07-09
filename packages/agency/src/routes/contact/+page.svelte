@@ -1,9 +1,9 @@
 <script lang="ts">
   import {
-    ClearCardGrid,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem
+    type PerformanceCardItem
   } from '@create-something/canon';
   import { getAnalytics } from '@create-something/canon/analytics';
   import { SavvyCalButton } from '@create-something/canon/domains/agency';
@@ -136,7 +136,7 @@
     }
   };
 
-  const contactPathCards: ClearCardItem[] = contactPathOptions.map((option) => ({
+  const contactPathCards: PerformanceCardItem[] = contactPathOptions.map((option) => ({
     eyebrow: option.funnelStage,
     icon:
       option.funnelStage === 'awareness'
@@ -238,7 +238,7 @@
   propertyName="agency"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -247,9 +247,9 @@
   description={selectedContent.description}
 >
   {#snippet aside()}
-    <ClearCardGrid items={contactPathCards} columns={1} ariaLabel="Contact path options" />
+    <PerformanceCardGrid items={contactPathCards} columns={1} ariaLabel="Contact path options" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
 <section class="contact-section">
   <div class="contact-container">
@@ -366,7 +366,7 @@
   </div>
 </section>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Funnel routing"
   title="One intake path, three levels of commitment."
@@ -374,7 +374,7 @@
   {#snippet after()}
     <FunnelLadder />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
 <section class="email-section">
   <div class="section-container">
@@ -388,18 +388,18 @@
 
 <style>
   .section-container {
-    width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
     margin: 0 auto;
   }
 
   .contact-section {
     padding: 4.5rem 0;
-    background: var(--color-clear-porcelain, #f9f9f9);
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    background: var(--color-performance-paper, #f3f3f0);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .contact-container {
-    width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
     margin: 0 auto;
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(18rem, 0.9fr);
@@ -409,22 +409,22 @@
 
   .contact-option {
     padding: 1.15rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-md, 8px);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-md, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
   }
 
   .contact-option--calendar {
-    border-color: var(--color-clear-border-strong, #cecece);
+    border-color: var(--color-performance-line-strong, #9c9c96);
     background:
       linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
-      color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 18%, white);
+      color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 18%, white);
   }
 
   .contact-option h2 {
     margin: 0 0 0.65rem;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1.75rem;
     font-weight: var(--font-medium);
     line-height: 1.1;
@@ -432,7 +432,7 @@
 
   .contact-option > p {
     margin: 0 0 1.25rem;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.95rem;
     line-height: 1.55;
   }
@@ -445,7 +445,7 @@
 	}
 
 	.calendar-link {
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-size: 0.95rem;
 		font-weight: var(--font-medium);
 		text-decoration: underline;
@@ -453,14 +453,14 @@
 	}
 
   .contact-option :global(.booking-cta) {
-    border-radius: var(--radius-clear-sm, 4px);
+    border-radius: var(--radius-performance-sm, 4px);
     box-shadow: none;
     letter-spacing: 0;
   }
 
   .contact-option :global(.booking-cta.primary) {
-    background: var(--color-clear-onyx, #0a0e19);
-    border: 1px solid var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-ink, #090909);
+    border: 1px solid var(--color-performance-ink, #090909);
     color: #ffffff;
   }
 
@@ -484,7 +484,7 @@
   }
 
   .form-label {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.76rem;
     font-weight: var(--font-medium);
@@ -493,13 +493,13 @@
   }
 
   .form-label span {
-    color: var(--color-clear-grey-quiet, #818181);
+    color: var(--color-performance-muted, #5e6268);
     font-weight: 400;
   }
 
   .form-helper {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.86rem;
     line-height: 1.45;
   }
@@ -519,9 +519,9 @@
     gap: 0.75rem;
     align-items: start;
     padding: 0.85rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-paper, #f3f3f0);
     cursor: pointer;
     transition:
       border-color 160ms ease,
@@ -530,13 +530,13 @@
 
   .path-option:hover,
   .path-option.selected {
-    border-color: var(--color-clear-ocean, #0048ff);
-    background: color-mix(in srgb, var(--color-clear-pill-active, #cad7fa) 42%, white);
+    border-color: var(--color-performance-signal, #0057b8);
+    background: color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 42%, white);
   }
 
   .path-option input {
     margin-top: 0.22rem;
-    accent-color: var(--color-clear-ocean, #0048ff);
+    accent-color: var(--color-performance-signal, #0057b8);
   }
 
   .path-option span {
@@ -545,35 +545,35 @@
   }
 
   .path-option strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 0.9rem;
     line-height: 1.25;
   }
 
   .path-option small {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.8rem;
     line-height: 1.45;
   }
 
   .form-input {
     padding: 0.75rem 1rem;
-    background: var(--color-clear-panel, #ffffff);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    color: var(--color-performance-ink, #090909);
     font-size: 1rem;
     transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
   }
 
   .form-input::placeholder {
-    color: var(--color-clear-grey-quiet, #818181);
+    color: var(--color-performance-muted, #5e6268);
   }
 
   .form-input:focus {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
-    border-color: var(--color-clear-ocean, #0048ff);
+    border-color: var(--color-performance-signal, #0057b8);
   }
 
   .form-textarea {
@@ -583,12 +583,12 @@
 
   .form-submit {
     padding: 0.75rem 1.5rem;
-    background: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-ink, #090909);
     color: #ffffff;
     font-size: 1rem;
     font-weight: var(--font-semibold);
-    border: 1px solid var(--color-clear-onyx, #0a0e19);
-    border-radius: var(--radius-clear-sm, 4px);
+    border: 1px solid var(--color-performance-ink, #090909);
+    border-radius: var(--radius-performance-sm, 4px);
     cursor: pointer;
     transition:
       background var(--duration-micro, 200ms) var(--ease-standard),
@@ -610,7 +610,7 @@
   .form-message {
     margin: 0;
     padding: 0.75rem;
-    border-radius: var(--radius-clear-sm, 4px);
+    border-radius: var(--radius-performance-sm, 4px);
     font-size: 0.9rem;
     line-height: 1.4;
   }
@@ -630,18 +630,18 @@
   .email-section {
     padding: 2.5rem 0;
     text-align: center;
-    background: var(--color-clear-panel, #ffffff);
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    background: var(--color-performance-panel, #ffffff);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .email-text {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.95rem;
   }
 
   .email-link {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-weight: var(--font-medium);
     transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
   }
@@ -653,7 +653,7 @@
   @media (max-width: 768px) {
     .contact-container,
     .section-container {
-      width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+      width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
     }
 
     .contact-container {

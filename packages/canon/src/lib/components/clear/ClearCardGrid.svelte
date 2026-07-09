@@ -115,10 +115,10 @@
 		gap: 0.62rem;
 		min-height: 12rem;
 		padding: 1rem;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-panel, #ffffff);
-		color: var(--color-clear-onyx, #0a0e19);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-ink, #090909);
 		text-decoration: none;
 		box-shadow: none;
 	}
@@ -130,8 +130,8 @@
 	}
 
 	a.clear-card-grid__card:hover {
-		border-color: var(--color-clear-border-strong, #cecece);
-		background: var(--color-clear-porcelain, #f9f9f9);
+		border-color: var(--color-performance-line-strong, #9c9c96);
+		background: var(--color-performance-paper, #f3f3f0);
 		opacity: 1;
 	}
 
@@ -148,14 +148,14 @@
 		height: 2.1rem;
 		flex: 0 0 auto;
 		place-items: center;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-porcelain, #f9f9f9);
-		color: var(--color-clear-onyx, #0a0e19);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-paper, #f3f3f0);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	.clear-card-grid__eyebrow {
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-mono);
 		font-size: 0.72rem;
 		font-weight: var(--font-medium);
@@ -165,7 +165,7 @@
 	}
 
 	.clear-card-grid__card strong {
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-size: 1.18rem;
 		font-weight: var(--font-medium);
 		line-height: 1.18;
@@ -174,7 +174,7 @@
 
 	.clear-card-grid__card p,
 	.clear-card-grid__card li {
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-size: 0.94rem;
 		line-height: 1.48;
 		text-wrap: pretty;
@@ -194,7 +194,7 @@
 
 	.clear-card-grid__card li {
 		padding-top: 0.42rem;
-		border-top: 1px solid var(--color-clear-border, #e1e1e1);
+		border-top: 1px solid var(--color-performance-line, #d7d7d2);
 	}
 
 	.clear-card-grid--compact {

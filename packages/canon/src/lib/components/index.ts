@@ -110,11 +110,7 @@ export {
 } from './data/index.js';
 
 // Performance Lab primitives
-export {
-  PerformanceLabBand,
-  type PerformanceLabMetric,
-  type PerformanceLabTone
-} from './performance/index.js';
+export * from './performance/index.js';
 
 // Page action components
 export { default as PageActions } from './PageActions.svelte';

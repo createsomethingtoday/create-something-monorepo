@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { ClearErrorPage } from '@create-something/canon';
+  import { PerformanceErrorPage } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 </script>
 
@@ -8,7 +8,7 @@
   <title>{$page.status} | CREATE SOMETHING.agency</title>
 </svelte:head>
 
-<ClearErrorPage
+<PerformanceErrorPage
   status={$page.status}
   propertyLabel=".agency"
   errorMessage={$page.error?.message}

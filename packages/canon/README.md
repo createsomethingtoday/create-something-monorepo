@@ -138,8 +138,8 @@ Canon uses CSS custom properties for all design decisions:
 | **Typography** | `--text-*`, `--font-*`, `--leading-*` |
 | **Spacing** | `--space-xs` through `--space-3xl` (Golden Ratio) |
 | **Glass** | `--glass-blur-*`, `--glass-bg-*`, `--liquid-glass-*` |
-| **Clear Communication** | `--color-clear-*`, `--radius-clear-*`, `--shadow-clear-*` |
-| **Performance Excellence** | `--color-performance-*`, `--radius-performance-*`, `--shadow-performance-*` |
+| **Performance Lab** | `--color-performance-*`, `--radius-performance-*`, `--shadow-performance-*` |
+| **Legacy compatibility** | `--color-clear-*`, `Clear*` exports, and `component.clear-*` registry IDs resolve to Performance Lab but are not used by new surfaces. |
 
 ### Typography Roles
 
@@ -159,7 +159,7 @@ the value is machine-shaped. Do not hard-code route-local font families in
 Atlas renderers; route through these tokens so public Atlas, local
 Atlas Studio, and Substrate views keep the same typography contract.
 
-## Performance Lab Clear Communication
+## Performance Lab Surfaces
 
 Canon uses Performance Lab as the CREATE SOMETHING design-language direction:
 delegated work should feel trained, tested, governed, and proven before it
@@ -201,7 +201,7 @@ SOMETHING identity system. Canon turns the discipline into primitives:
 |-------|------------|
 | **Claims** | State the operational promise plainly, then put proof beside it. |
 | **Layout** | Prefer open page sections, compact navigation, and dense-but-readable operator surfaces. |
-| **Components** | Use `Clear*` primitives before inventing local cards, shells, or proof panels. |
+| **Components** | Use `Performance*` primitives before inventing local cards, shells, or proof panels. |
 | **Evidence** | Show maps, contracts, receipts, gates, state, and next actions as first-class UI objects. |
 | **Motion** | Use motion only to clarify status, selection, progression, or handoff. |
 | **Copy** | Write in nouns and verbs from the workflow: object, action, policy, owner, receipt. |
@@ -211,6 +211,21 @@ This means a CREATE SOMETHING surface should feel calm, precise, and prepared,
 but it should prove a different thing: that the workflow has been mapped,
 tested, governed, validated, and handed off with evidence.
 
+### Performance And Safety Signature
+
+The brand personality has two simultaneous axes:
+
+- **Performance** uses decisive hierarchy, square action geometry, pressure
+  rails, readiness metrics, and high-contrast black/white material surfaces.
+- **Safety** makes authority visible through `controlled`, `ready`, `review`,
+  and `stop` states, named owners, bounded actions, and receipt stamps.
+
+Use `.performance-control-rail` for state-bearing panels and
+`.performance-receipt-stamp` for compact proof identifiers. Color never stands
+alone: pair every state with a text label, icon, or explicit decision copy.
+`--color-performance-pressure` marks test intensity or decisive emphasis; it
+does not mean safe, approved, or ready.
+
 The same rule applies to marketing images and generated visuals. Use
 Performance Lab as the direction, then translate the work into CREATE SOMETHING
 artifact language: system maps, MCP boundaries, policy gates, receipts,
@@ -219,7 +234,7 @@ For the repeatable image-generation contract, see
 `docs/IMAGE_LANGUAGE_FOUNDATION.md` and
 `docs/CREATE_SOMETHING_PERFORMANCE_LAB_DESIGN_LANGUAGE.md`.
 
-For component-level usage rules, see
+For component-level usage and compatibility rules, see
 [`src/lib/components/clear/README.md`](./src/lib/components/clear/README.md).
 
 ## Canon Registry

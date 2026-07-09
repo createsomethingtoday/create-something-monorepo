@@ -1,17 +1,17 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const boundarySummary: ClearCardItem[] = [
+  const boundarySummary: PerformanceCardItem[] = [
     {
       eyebrow: 'Your team keeps',
       icon: 'user',
@@ -34,7 +34,7 @@
     }
   ];
 
-  const journey: ClearCardItem[] = [
+  const journey: PerformanceCardItem[] = [
     {
       eyebrow: '01 Map',
       icon: 'folder',
@@ -58,7 +58,7 @@
     }
   ];
 
-  const deliveryArtifacts: ClearCardItem[] = [
+  const deliveryArtifacts: PerformanceCardItem[] = [
     {
       eyebrow: 'Map',
       icon: 'folder',
@@ -115,7 +115,7 @@
     }
   ];
 
-  const stackRoles: ClearCardItem[] = [
+  const stackRoles: PerformanceCardItem[] = [
     {
       eyebrow: 'Runtime',
       icon: 'settings',
@@ -177,24 +177,27 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Workflow',
       icon: 'folder',
       title: 'First workflow map',
-      detail: 'Objects, source systems, owners, handoffs, and failure points.'
+      detail: 'Objects, source systems, owners, handoffs, and failure points.',
+      state: 'ready'
     },
     {
       label: 'Boundary',
       icon: 'user',
       title: 'Vendor and ownership boundary',
-      detail: 'What your team owns, what I deliver, and what vendors provide.'
+      detail: 'What your team owns, what I deliver, and what vendors provide.',
+      state: 'controlled'
     },
     {
       label: 'Control',
       icon: 'check',
       title: 'Decision states',
-      detail: 'Auto-allow, approval-needed, and blocked states with reasons.'
+      detail: 'Auto-allow, approval-needed, and blocked states with reasons.',
+      state: 'review'
     }
   ];
 </script>
@@ -208,7 +211,7 @@
   {faqItems}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -226,27 +229,27 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={boundarySummary}
       columns={1}
       density="compact"
       ariaLabel="Stack boundary summary"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="How the stack becomes a service"
   title="The stack should read like a handoff, not a vendor diagram."
   description="The story stays simple for a non-technical team: map the boundary, pilot one safe workflow, then control the risky actions only when live work needs it."
 >
   {#snippet after()}
-    <ClearCardGrid items={journey} columns={3} ariaLabel="Stack service journey" />
+    <PerformanceCardGrid items={journey} columns={3} ariaLabel="Stack service journey" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Boundary canvas"
   title="A stack boundary becomes useful when it shows what must stop."
@@ -262,35 +265,35 @@
       compact
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="What your team keeps"
   title="You keep the receipts, not a mystery stack."
   description="The technical stack can change. The durable asset is the workflow boundary: source accounts, scoped access, allowed actions, stop states, approval owners, runbooks, revocation paths, and evidence."
 >
   {#snippet after()}
-    <ClearCardGrid items={deliveryArtifacts} columns={3} ariaLabel="Stack delivery artifacts" />
+    <PerformanceCardGrid items={deliveryArtifacts} columns={3} ariaLabel="Stack delivery artifacts" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Vendor roles"
   title="Vendor names are receipts, not the explanation."
   description="Each service earns a clear job. The connected tools are replaceable infrastructure; the proof is the map that shows what connects, what runs, what waits, what stops, who decides, and what the operator receives."
 >
   {#snippet after()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={stackRoles}
       columns={4}
       ariaLabel="Vendor roles in the control layer stack"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the decision owner."
   description="CREATE SOMETHING will map the stack boundary, define the first controlled path, identify what can be assigned, and show what stays visible to the operator before implementation starts."
@@ -304,4 +307,4 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

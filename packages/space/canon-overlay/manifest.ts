@@ -102,7 +102,7 @@ export const CANON_PROJECT_OVERLAY_MANIFEST = {
           "name": "Workbench home",
           "modality": "web",
           "sourcePath": "src/routes/+page.svelte",
-          "proof": "The home route composes ClearPageSection, ClearCardGrid, ClearProofStrip, ClearDecisionPanel, and ClearCtaBand into a live tool directory with proof and handoff states."
+          "proof": "The home route composes PerformancePageSection, PerformanceCardGrid, PerformanceProofStrip, PerformanceDecisionPanel, and PerformanceCtaBand into a live tool directory with proof and handoff states."
         },
         {
           "surfaceId": "space-tool-routing-data",

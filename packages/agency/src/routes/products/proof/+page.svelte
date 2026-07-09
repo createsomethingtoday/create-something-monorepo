@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SEO, type ClearCardItem, type ClearCtaItem } from '@create-something/canon';
+  import { SEO, type PerformanceCardItem, type PerformanceCtaItem } from '@create-something/canon';
   import {
     SIGNAL_DECISION_PROOF_COMPOSITION,
     getGovernanceProduct
@@ -28,7 +28,7 @@
     }
   ];
 
-  const heroCards: ClearCardItem[] = [
+  const heroCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Proof graph',
       icon: 'document',
@@ -70,7 +70,7 @@
     }
   ];
 
-  const detailCards: ClearCardItem[] = [
+  const detailCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Owns',
       icon: 'document',
@@ -94,7 +94,7 @@
     }
   ];
 
-  const relatedCards: ClearCardItem[] = [
+  const relatedCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Inbox',
       icon: 'plus',
@@ -118,7 +118,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Record',
       icon: 'document',

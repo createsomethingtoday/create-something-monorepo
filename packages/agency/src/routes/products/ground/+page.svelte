@@ -273,27 +273,27 @@
 		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		padding: var(--space-xl) var(--space-lg);
-		background: var(--color-clear-panel, #ffffff);
-		color: var(--color-clear-onyx, #0a0e19);
-		--color-fg-primary: var(--color-clear-onyx, #0a0e19);
+		background: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-ink, #090909);
+		--color-fg-primary: var(--color-performance-ink, #090909);
 		--color-fg-secondary: #252a34;
-		--color-fg-muted: var(--color-clear-grey, #636363);
-		--color-fg-tertiary: var(--color-clear-grey, #636363);
-		--color-bg-pure: var(--color-clear-panel, #ffffff);
-		--color-bg-surface: var(--color-clear-panel, #ffffff);
-		--color-bg-subtle: var(--color-clear-porcelain, #f9f9f9);
-		--color-border-emphasis: var(--color-clear-border, #e1e1e1);
+		--color-fg-muted: var(--color-performance-muted, #5e6268);
+		--color-fg-tertiary: var(--color-performance-muted, #5e6268);
+		--color-bg-pure: var(--color-performance-panel, #ffffff);
+		--color-bg-surface: var(--color-performance-panel, #ffffff);
+		--color-bg-subtle: var(--color-performance-paper, #f3f3f0);
+		--color-border-emphasis: var(--color-performance-line, #d7d7d2);
 	}
 
 	/* Hero */
 	.hero {
 		text-align: center;
 		padding: 6rem 0 var(--space-xl);
-		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+		border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
 		background:
 			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 4.25rem
 				4.25rem,
-			linear-gradient(180deg, var(--color-clear-panel, #ffffff) 0%, #fbfbfb 100%);
+			linear-gradient(180deg, var(--color-performance-panel, #ffffff) 0%, #fbfbfb 100%);
 	}
 
 	.hero-badge {

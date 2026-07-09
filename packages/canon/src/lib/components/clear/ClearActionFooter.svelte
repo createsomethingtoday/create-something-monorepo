@@ -53,7 +53,7 @@
 		padding-block: 4.5rem;
 		background:
 			linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px) 0 0 / 4rem 4rem,
-			var(--color-clear-onyx, #0a0e19);
+			var(--color-performance-ink, #090909);
 		color: #ffffff;
 	}
 
@@ -62,7 +62,7 @@
 		grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.54fr);
 		gap: clamp(2rem, 6vw, 5rem);
 		align-items: end;
-		width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
 		margin-inline: auto;
 	}
 
@@ -80,7 +80,7 @@
 		align-items: center;
 		padding: 0.36rem 0.62rem;
 		border: 1px solid rgba(255, 255, 255, 0.18);
-		border-radius: var(--radius-clear-sm, 4px);
+		border-radius: var(--radius-performance-sm, 4px);
 		background: rgba(255, 255, 255, 0.08);
 		color: rgba(255, 255, 255, 0.74);
 		font-family: var(--font-mono);
@@ -129,7 +129,7 @@
 		gap: 0.26rem;
 		padding: 0.82rem 0.9rem;
 		border: 1px solid rgba(255, 255, 255, 0.16);
-		border-radius: var(--radius-clear-sm, 4px);
+		border-radius: var(--radius-performance-sm, 4px);
 		background: rgba(255, 255, 255, 0.08);
 	}
 
@@ -151,7 +151,7 @@
 	}
 
 	.clear-action-footer :global(.btn) {
-		border-radius: var(--radius-clear-sm, 4px);
+		border-radius: var(--radius-performance-sm, 4px);
 		letter-spacing: 0;
 		box-shadow: none;
 	}
@@ -159,12 +159,12 @@
 	.clear-action-footer :global(.btn-primary) {
 		background: #ffffff;
 		border-color: #ffffff;
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	.clear-action-footer :global(.btn-primary:hover) {
-		background: var(--color-clear-pastel-blue, #afc1fd);
-		border-color: var(--color-clear-pastel-blue, #afc1fd);
+		background: var(--color-performance-court, #e6e6e0);
+		border-color: var(--color-performance-court, #e6e6e0);
 		box-shadow: none;
 	}
 
@@ -175,8 +175,9 @@
 	}
 
 	.clear-action-footer :global(.btn-secondary:hover) {
-		background: rgba(255, 255, 255, 0.1);
-		border-color: rgba(255, 255, 255, 0.38);
+		background: var(--color-performance-panel, #ffffff);
+		border-color: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	@media (max-width: 900px) {
@@ -192,7 +193,7 @@
 		}
 
 		.clear-action-footer__inner {
-			width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+			width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
 		}
 
 		.clear-action-footer h2 {

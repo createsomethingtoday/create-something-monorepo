@@ -45,9 +45,9 @@
 <style>
 	.clear-logo-strip {
 		padding: 0;
-		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-		background: var(--color-clear-panel, #ffffff);
-		color: var(--color-clear-onyx, #0a0e19);
+		border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+		background: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	.clear-logo-strip__inner {
@@ -55,13 +55,13 @@
 		grid-template-columns: minmax(9rem, 0.22fr) minmax(0, 1fr);
 		gap: 1rem;
 		align-items: center;
-		width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
 		margin-inline: auto;
 		padding-block: 1rem;
 	}
 
 	.clear-logo-strip__eyebrow {
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-mono);
 		font-size: 0.72rem;
 		font-weight: var(--font-semibold);
@@ -82,16 +82,16 @@
 		min-height: 3.3rem;
 		align-content: center;
 		padding: 0.62rem 0.72rem;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-porcelain, #f9f9f9);
-		color: var(--color-clear-onyx, #0a0e19);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-paper, #f3f3f0);
+		color: var(--color-performance-ink, #090909);
 		text-decoration: none;
 	}
 
 	a.clear-logo-strip__item:hover {
-		border-color: var(--color-clear-border-strong, #cecece);
-		background: var(--color-clear-panel, #ffffff);
+		border-color: var(--color-performance-line-strong, #9c9c96);
+		background: var(--color-performance-panel, #ffffff);
 		opacity: 1;
 	}
 
@@ -102,7 +102,7 @@
 	}
 
 	.clear-logo-strip__item span {
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-size: 0.78rem;
 		line-height: 1.25;
 	}
@@ -119,7 +119,7 @@
 
 	@media (max-width: 640px) {
 		.clear-logo-strip__inner {
-			width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+			width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
 		}
 
 		.clear-logo-strip__items {

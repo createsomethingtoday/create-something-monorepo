@@ -15,6 +15,28 @@
  * @packageDocumentation
  */
 
+const performanceColors = {
+	paper: '#f3f3f0',
+	court: '#e6e6e0',
+	panel: '#ffffff',
+	ink: '#090909',
+	inkSoft: '#262626',
+	muted: '#5e6268',
+	line: '#d7d7d2',
+	lineStrong: '#9c9c96',
+	grid: 'rgb(9 9 9 / 0.055)',
+	growth: '#007a4d',
+	growthSoft: '#dcece5',
+	signal: '#0057b8',
+	signalSoft: '#dce8f5',
+	pressure: '#e54800',
+	pressureSoft: '#f7e2d7',
+	risk: '#c62026',
+	riskSoft: '#f3dadd',
+	gold: '#8b6b00',
+	goldSoft: '#eee6cc'
+} as const;
+
 export const colors = {
 	// Backgrounds - Pure to near-black
 	background: {
@@ -52,28 +74,9 @@ export const colors = {
 		infoMuted: 'rgba(68, 119, 170, 0.2)'
 	},
 
-	// Clear communication pilot - light, operational, proof-first surfaces
-	clear: {
-		porcelain: '#f9f9f9',
-		porcelainSoft: '#f2f2f2',
-		panel: '#ffffff',
-		onyx: '#0a0e19',
-		chocolate: '#541500',
-		grey: '#636363',
-		greyQuiet: '#818181',
-		border: '#e1e1e1',
-		borderStrong: '#cecece',
-		moss: '#1e3c2c',
-		fern: '#3e7f5c',
-		linkGreen: '#397554',
-		ocean: '#0048ff',
-		pastelBlue: '#afc1fd',
-		frostedMint: '#d9fff7',
-		candyPurple: '#efd4ff',
-		pistachio: '#dbefdb',
-		pillActive: '#cad7fa',
-		stop: '#c41e3a'
-	},
+	performance: performanceColors,
+	/** @deprecated Use colors.performance. */
+	clear: performanceColors,
 
 	// Interactive states
 	interactive: {
@@ -117,26 +120,34 @@ export const colorVars = {
 	'--color-info': colors.accent.info,
 	'--color-info-muted': colors.accent.infoMuted,
 
-	// Clear communication
-	'--color-clear-porcelain': colors.clear.porcelain,
-	'--color-clear-porcelain-soft': colors.clear.porcelainSoft,
-	'--color-clear-panel': colors.clear.panel,
-	'--color-clear-onyx': colors.clear.onyx,
-	'--color-clear-chocolate': colors.clear.chocolate,
-	'--color-clear-grey': colors.clear.grey,
-	'--color-clear-grey-quiet': colors.clear.greyQuiet,
-	'--color-clear-border': colors.clear.border,
-	'--color-clear-border-strong': colors.clear.borderStrong,
-	'--color-clear-moss': colors.clear.moss,
-	'--color-clear-fern': colors.clear.fern,
-	'--color-clear-link-green': colors.clear.linkGreen,
-	'--color-clear-ocean': colors.clear.ocean,
-	'--color-clear-pastel-blue': colors.clear.pastelBlue,
-	'--color-clear-frosted-mint': colors.clear.frostedMint,
-	'--color-clear-candy-purple': colors.clear.candyPurple,
-	'--color-clear-pistachio': colors.clear.pistachio,
-	'--color-clear-pill-active': colors.clear.pillActive,
-	'--color-clear-stop': colors.clear.stop,
+	// Performance Lab
+	'--color-performance-paper': colors.performance.paper,
+	'--color-performance-court': colors.performance.court,
+	'--color-performance-panel': colors.performance.panel,
+	'--color-performance-ink': colors.performance.ink,
+	'--color-performance-ink-soft': colors.performance.inkSoft,
+	'--color-performance-muted': colors.performance.muted,
+	'--color-performance-line': colors.performance.line,
+	'--color-performance-line-strong': colors.performance.lineStrong,
+	'--color-performance-grid': colors.performance.grid,
+	'--color-performance-growth': colors.performance.growth,
+	'--color-performance-growth-soft': colors.performance.growthSoft,
+	'--color-performance-signal': colors.performance.signal,
+	'--color-performance-signal-soft': colors.performance.signalSoft,
+	'--color-performance-pressure': colors.performance.pressure,
+	'--color-performance-pressure-soft': colors.performance.pressureSoft,
+	'--color-performance-risk': colors.performance.risk,
+	'--color-performance-risk-soft': colors.performance.riskSoft,
+	'--color-performance-gold': colors.performance.gold,
+	'--color-performance-gold-soft': colors.performance.goldSoft,
+	'--color-performance-controlled': colors.performance.signal,
+	'--color-performance-controlled-soft': colors.performance.signalSoft,
+	'--color-performance-ready': colors.performance.growth,
+	'--color-performance-ready-soft': colors.performance.growthSoft,
+	'--color-performance-review': colors.performance.gold,
+	'--color-performance-review-soft': colors.performance.goldSoft,
+	'--color-performance-stop': colors.performance.risk,
+	'--color-performance-stop-soft': colors.performance.riskSoft,
 
 	// Interactive
 	'--color-hover': colors.interactive.hover,

@@ -70,6 +70,10 @@ Recommendation:
 
 ## Color System Baseline
 
+The CRE-1156 follow-up supersedes the split token recommendation below:
+`--color-performance-*` is now the owned public and operational API.
+`--color-clear-*` and `Clear*` remain compatibility aliases only.
+
 Observed token families:
 
 - `--color-clear-*`: porcelain, white panels, onyx, grey, borders, moss, ocean,
@@ -84,7 +88,7 @@ Observed token families:
 Assessment:
 
 - The existing token families are enough for the first Performance Lab pass.
-- `--color-clear-*` should remain the baseline for public proof surfaces.
+- `--color-performance-*` is the baseline for public proof surfaces.
 - `--color-performance-*` gives the needed lab/pressure/readiness vocabulary,
   but it has a palette risk: court and pressure colors can drift into a
   brown/orange theme if overused.
@@ -98,8 +102,8 @@ Rendered Browser review:
   accents in the Atlas/proof sections.
 - The page does not currently lean on a dominant orange, brown, court, or
   pressure palette, which is the right first-pass posture.
-- Browser computed-style readback did not expose every `--color-clear-*` and
-  `--color-performance-*` token at `:root` on the verified page, even though
+- Browser computed-style readback did not expose every Performance token at
+  `:root` on the verified page, even though
   source imports Canon CSS and `.agency` uses fallbacks for critical base
   colors. The next token pass should verify token scope/import behavior before
   broadening color usage.
@@ -107,8 +111,8 @@ Rendered Browser review:
 Recommendation:
 
 1. Do not introduce a new palette yet.
-2. Use `--color-performance-*` as an accent layer over Canon Clear, not as a
-   dominant page wash.
+2. Use neutral Performance tokens as the page foundation and semantic
+   Performance colors as restrained accents, not a dominant page wash.
 3. Keep page grounds white/porcelain or near-black depending on the surface.
 4. Reserve orange/court/pressure tokens for readiness rails, stress markers,
    test states, and decisive CTAs.
@@ -121,7 +125,7 @@ Recommendation:
 
 | Need | Use now | Avoid |
 | --- | --- | --- |
-| Public proof pages | `--color-clear-*`, Clear components | New route-local hex palettes |
+| Public proof pages | `--color-performance-*`, Performance components | New route-local hex palettes |
 | Lab/readiness accents | `--color-performance-pressure`, `--color-performance-signal`, `--color-performance-line` | Full orange/brown page themes |
 | Dense data | `--color-shell-*`, `--color-fg-*`, semantic states | Glass tables, decorative gradients |
 | State/receipts | semantic success/warning/error/info plus mono labels | Per-category decorative colors |

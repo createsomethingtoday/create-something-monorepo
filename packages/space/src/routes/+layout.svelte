@@ -92,7 +92,7 @@
 		ctaLabel=".io"
 		ctaHref="https://createsomething.io"
 		showLogin={false}
-		visualStyle="clear"
+		visualStyle="performance"
 	/>
 
 	<main id="main-content" class="content">
@@ -110,7 +110,7 @@
 			{ label: 'Data Studio', href: '/data' }
 		]}
 		showSocial={true}
-		visualStyle="clear"
+		visualStyle="performance"
 	/>
 
 	<ModeIndicator current="space" />
@@ -119,7 +119,7 @@
 <style>
 	.layout {
 		min-height: 100vh;
-		background: var(--color-clear-porcelain, #f9f9f9);
+		background: var(--color-performance-paper, #f3f3f0);
 	}
 
 	.content {

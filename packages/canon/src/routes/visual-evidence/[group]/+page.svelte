@@ -458,8 +458,8 @@
 		display: grid;
 		min-height: 14rem;
 		place-items: center;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		background: var(--color-clear-panel, #ffffff);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		background: var(--color-performance-panel, #ffffff);
 	}
 
 	.skeleton-stack {

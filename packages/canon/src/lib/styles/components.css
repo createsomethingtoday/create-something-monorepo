@@ -882,16 +882,16 @@
      guidance treats these as Performance Lab system primitives.
      ========================================================================== */
   .performance-system-shell {
-    --performance-system-ink: var(--color-clear-onyx);
-    --performance-system-muted: var(--color-clear-grey);
-    --performance-system-line: var(--color-clear-border);
-    --performance-system-line-strong: var(--color-clear-border-strong);
-    --performance-system-paper: var(--color-clear-porcelain);
-    --performance-system-surface: var(--color-clear-panel);
-    --performance-system-blue: var(--color-clear-ocean);
-    --performance-system-green: var(--color-clear-moss);
-    --performance-system-soft-blue: var(--color-clear-pastel-blue);
-    --performance-system-red: var(--color-clear-stop);
+    --performance-system-ink: var(--color-performance-ink);
+    --performance-system-muted: var(--color-performance-muted);
+    --performance-system-line: var(--color-performance-line);
+    --performance-system-line-strong: var(--color-performance-line-strong);
+    --performance-system-paper: var(--color-performance-paper);
+    --performance-system-surface: var(--color-performance-panel);
+    --performance-system-blue: var(--color-performance-signal);
+    --performance-system-green: var(--color-performance-growth);
+    --performance-system-soft-blue: var(--color-performance-signal-soft);
+    --performance-system-red: var(--color-performance-risk);
     background: var(--performance-system-paper);
     color: var(--performance-system-ink);
     font-family: var(--font-sans);
@@ -900,15 +900,15 @@
   }
 
   .performance-system-container {
-    width: min(var(--content-width-clear), calc(100vw - 32px));
+    width: min(var(--content-width-performance), calc(100vw - 32px));
     margin-inline: auto;
   }
 
   .performance-system-panel {
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-md);
+    border-radius: var(--radius-performance-md);
     background: color-mix(in srgb, var(--performance-system-surface) 90%, transparent);
-    box-shadow: var(--shadow-clear-restraint);
+    box-shadow: var(--shadow-performance-panel);
   }
 
   .performance-system-hero {
@@ -975,7 +975,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 0 18px;
     color: var(--performance-system-ink);
     font-size: 0.84rem;
@@ -1024,7 +1024,7 @@
     position: relative;
     overflow: hidden;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-md);
+    border-radius: var(--radius-performance-md);
   }
 
   .performance-system-court {
@@ -1047,7 +1047,7 @@
     position: absolute;
     inset: 22px;
     border: 2px solid rgba(10, 14, 25, 0.12);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
   }
 
   .performance-system-court-half,
@@ -1104,7 +1104,7 @@
     padding: 16px;
     background: rgba(10, 14, 25, 0.9);
     color: white;
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     backdrop-filter: blur(10px);
   }
 
@@ -1140,7 +1140,7 @@
     gap: 8px;
     border: 1px solid var(--performance-system-line);
     border-top: 3px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 12px;
     background: var(--performance-system-surface);
     contain: layout paint;
@@ -1225,7 +1225,7 @@
     gap: 6px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-top: 8px;
     padding: 10px 12px;
     background: color-mix(in srgb, white 86%, var(--performance-system-surface));
@@ -1305,7 +1305,7 @@
     gap: 4px;
     align-content: center;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 8px 10px;
     background: #fff;
     color: var(--performance-system-ink);
@@ -1344,7 +1344,7 @@
     gap: 10px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-top: 10px;
     padding: 12px;
     background: white;
@@ -1387,7 +1387,7 @@
     justify-content: center;
     gap: 7px;
     border: 1px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 0 12px;
     background: var(--performance-system-ink);
     color: #fff;
@@ -1450,7 +1450,7 @@
     gap: 5px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid transparent;
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 8px 9px;
     background: color-mix(in srgb, white 90%, var(--performance-system-surface));
   }
@@ -1522,7 +1522,7 @@
   .performance-system-objective-brief-list article {
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-green);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 8px 9px;
     background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
@@ -1544,7 +1544,7 @@
     gap: 8px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-blue);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-top: 10px;
     padding: 10px 12px;
     background: white;
@@ -1578,7 +1578,7 @@
     display: grid;
     gap: 6px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 9px 10px;
     background: color-mix(in srgb, white 88%, var(--performance-system-surface));
     color: var(--performance-system-ink);
@@ -1739,7 +1739,7 @@
     justify-content: center;
     gap: 7px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     background: white;
     color: var(--performance-system-muted);
     font: inherit;
@@ -1758,7 +1758,7 @@
     display: grid;
     gap: 10px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-top: 14px;
     padding: 12px;
     background: white;
@@ -1847,7 +1847,7 @@
     width: 100%;
     min-height: 42px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 0 12px;
     background: white;
     color: var(--performance-system-ink);
@@ -1860,7 +1860,7 @@
   .performance-system-option-row button {
     min-height: 40px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     background: white;
     color: var(--performance-system-muted);
     font: inherit;
@@ -1882,7 +1882,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 6px 12px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 14px;
     background: white;
     color: var(--performance-system-ink);
@@ -1938,7 +1938,7 @@
     gap: 10px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-scouting-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-top: 14px;
     padding: 12px;
     background: white;
@@ -1987,7 +1987,7 @@
     gap: 5px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-green);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 9px 10px;
     background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
@@ -2032,7 +2032,7 @@
     gap: 8px 12px;
     align-items: center;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 12px;
     background: white;
     color: var(--performance-system-ink);
@@ -2092,7 +2092,7 @@
   .performance-system-builder textarea {
     width: 100%;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     background: white;
     color: var(--performance-system-ink);
     font: inherit;
@@ -2123,7 +2123,7 @@
     display: grid;
     gap: 5px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 9px 10px;
     background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
@@ -2151,7 +2151,7 @@
   .performance-system-builder-status {
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-green);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px 12px;
     background: color-mix(in srgb, white 86%, var(--performance-system-surface));
   }
@@ -2168,7 +2168,7 @@
     display: grid;
     gap: 8px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
@@ -2196,7 +2196,7 @@
     min-height: 106px;
     resize: vertical;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px 11px;
     background: white;
     color: var(--performance-system-ink);
@@ -2214,7 +2214,7 @@
   .performance-system-draft-actions button {
     min-height: 38px;
     border: 1px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     background: var(--performance-system-ink);
     color: white;
     font: inherit;
@@ -2228,7 +2228,7 @@
     min-height: 184px;
     resize: vertical;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 12px;
     background: white;
     color: var(--performance-system-ink);
@@ -2259,7 +2259,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     background: white;
     color: var(--performance-system-muted);
     font: inherit;
@@ -2291,7 +2291,7 @@
     gap: 8px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-line-strong);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px 12px;
     background: color-mix(in srgb, white 82%, var(--performance-system-surface));
   }
@@ -2337,7 +2337,7 @@
     gap: 10px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: white;
@@ -2367,7 +2367,7 @@
     gap: 10px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-blue);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: color-mix(in srgb, white 92%, var(--performance-system-surface));
@@ -2402,7 +2402,7 @@
     display: grid;
     gap: 6px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: white;
   }
@@ -2422,7 +2422,7 @@
   .performance-system-gate-impact,
   .performance-system-score-explain {
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     background: color-mix(in srgb, white 90%, var(--performance-system-surface));
   }
 
@@ -2471,7 +2471,7 @@
     align-content: space-between;
     gap: 8px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 12px;
     background: white;
   }
@@ -2603,7 +2603,7 @@
     gap: 7px;
     border: 1px solid var(--performance-system-line);
     border-top: 3px solid var(--performance-system-green);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: white;
   }
@@ -2649,7 +2649,7 @@
     gap: 12px;
     align-items: center;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: white;
@@ -2694,7 +2694,7 @@
   .performance-system-playback-controls button {
     min-height: 36px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 0 10px;
     background: white;
     color: var(--performance-system-ink);
@@ -2728,7 +2728,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 0 12px;
     background: white;
     color: var(--performance-system-ink);
@@ -2756,7 +2756,7 @@
     gap: 8px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-bottom: 10px;
     padding: 10px;
     background: color-mix(in srgb, white 88%, var(--performance-system-surface));
@@ -2816,7 +2816,7 @@
     display: grid;
     gap: 10px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: white;
@@ -2871,7 +2871,7 @@
     align-content: space-between;
     gap: 6px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: color-mix(in srgb, white 90%, var(--performance-system-surface));
   }
@@ -2904,7 +2904,7 @@
     gap: 10px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: color-mix(in srgb, white 87%, var(--performance-system-surface));
@@ -2957,7 +2957,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 0 12px;
     background: var(--performance-system-ink);
     color: #fff;
@@ -2980,7 +2980,7 @@
     align-content: space-between;
     gap: 6px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: white;
   }
@@ -3004,7 +3004,7 @@
     display: grid;
     gap: 10px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: white;
@@ -3048,7 +3048,7 @@
     align-content: space-between;
     gap: 8px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
@@ -3096,7 +3096,7 @@
     display: grid;
     gap: 12px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: white;
@@ -3147,7 +3147,7 @@
     align-items: stretch;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-green);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: color-mix(in srgb, white 90%, var(--performance-system-surface));
   }
@@ -3195,7 +3195,7 @@
     display: grid;
     gap: 4px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 8px;
     background: #fff;
   }
@@ -3219,7 +3219,7 @@
     gap: 4px;
     align-content: center;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 8px 10px;
     background: #fff;
     color: var(--performance-system-ink);
@@ -3257,7 +3257,7 @@
     gap: 10px;
     align-items: start;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: color-mix(in srgb, white 94%, var(--performance-system-surface));
   }
@@ -3301,7 +3301,7 @@
     display: grid;
     gap: 5px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 8px;
     background: #fff;
   }
@@ -3313,7 +3313,7 @@
   .performance-system-turn-disclosure {
     display: grid;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     background: color-mix(in srgb, white 92%, var(--performance-system-surface));
   }
 
@@ -3404,7 +3404,7 @@
     align-content: space-between;
     gap: 8px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: #fff;
     color: var(--performance-system-ink);
@@ -3464,7 +3464,7 @@
     align-content: space-between;
     gap: 6px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
@@ -3497,7 +3497,7 @@
     gap: 4px;
     align-content: center;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 9px 10px;
     background: #fff;
     color: var(--performance-system-ink);
@@ -3554,7 +3554,7 @@
     display: grid;
     gap: 10px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: color-mix(in srgb, white 90%, var(--performance-system-surface));
@@ -3598,7 +3598,7 @@
     align-content: space-between;
     gap: 6px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: #fff;
     color: var(--performance-system-ink);
@@ -3641,7 +3641,7 @@
     gap: 10px;
     border: 1px solid var(--performance-system-line);
     border-left: 3px solid var(--performance-system-blue);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     margin-bottom: 14px;
     padding: 12px;
     background: white;
@@ -3688,7 +3688,7 @@
   .performance-system-decision-moment-feature,
   .performance-system-decision-moment-list button {
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     background: #fff;
     color: var(--performance-system-ink);
   }
@@ -3779,7 +3779,7 @@
     align-content: space-between;
     gap: 8px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
@@ -3840,7 +3840,7 @@
     align-content: space-between;
     gap: 6px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: #fff;
     color: var(--performance-system-ink);
@@ -3904,7 +3904,7 @@
     display: grid;
     gap: 5px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 10px;
     background: white;
   }
@@ -4015,10 +4015,10 @@
     gap: 6px;
     transform: translate(-50%, -50%);
     border: 1px solid var(--performance-system-ink);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 12px;
     background: white;
-    box-shadow: var(--shadow-clear-restraint);
+    box-shadow: var(--shadow-performance-panel);
   }
 
   .performance-system-node strong {
@@ -4055,7 +4055,7 @@
     align-content: space-between;
     gap: 10px;
     border: 1px solid var(--performance-system-line);
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 14px;
     background: white;
   }
@@ -4133,7 +4133,7 @@
     gap: 12px;
     border: 1px solid var(--performance-system-line);
     border-top: 3px solid color-mix(in srgb, var(--performance-system-green) 78%, var(--performance-system-line));
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 12px;
     background: color-mix(in srgb, white 86%, var(--performance-system-surface));
   }
@@ -4458,7 +4458,7 @@
 
   @media (max-width: 640px) {
     .performance-system-container {
-      width: min(100vw - 22px, var(--content-width-clear));
+      width: min(100vw - 22px, var(--content-width-performance));
     }
 
     .performance-system-metric-grid {

@@ -108,17 +108,17 @@
 
   /* Card - Performance Lab clear surface */
   .category-card {
-    background: var(--color-clear-panel, #ffffff);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
     transition:
       background var(--duration-standard) var(--ease-standard),
       border-color var(--duration-standard) var(--ease-standard);
   }
 
   .category-card:hover {
-    background: var(--color-clear-porcelain, #f9f9f9);
-    border-color: var(--color-clear-border-strong, #cecece);
+    background: var(--color-performance-paper, #f3f3f0);
+    border-color: var(--color-performance-line-strong, #9c9c96);
   }
 
   /* Category Name */

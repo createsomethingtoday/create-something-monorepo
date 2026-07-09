@@ -1,12 +1,12 @@
 <script lang="ts">
   import {
-    ClearCardGrid,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem
+    type PerformanceCardItem
   } from '@create-something/canon';
 
-  const datasets: ClearCardItem[] = [
+  const datasets: PerformanceCardItem[] = [
     {
       eyebrow: 'Live data',
       icon: 'settings',
@@ -34,7 +34,7 @@
   ]}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   titleLevel="h1"
   eyebrow="Live data"
@@ -42,6 +42,6 @@
   description="Data Studio is the workbench surface for dashboards, historical snapshots, and derived metrics that need to stay useful under refresh and caching conditions."
 >
   {#snippet after()}
-    <ClearCardGrid items={datasets} columns={1} ariaLabel="Available live data surfaces" />
+    <PerformanceCardGrid items={datasets} columns={1} ariaLabel="Available live data surfaces" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>

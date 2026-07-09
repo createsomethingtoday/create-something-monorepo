@@ -1,16 +1,16 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const layerCards: ClearCardItem[] = [
+  const layerCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Dify',
       icon: 'settings',
@@ -34,7 +34,7 @@
     }
   ];
 
-  const implementationCards: ClearCardItem[] = [
+  const implementationCards: PerformanceCardItem[] = [
     {
       eyebrow: '01',
       icon: 'search',
@@ -69,7 +69,7 @@
     }
   ];
 
-  const contractBundleCards: ClearCardItem[] = [
+  const contractBundleCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Surface',
       icon: 'settings',
@@ -106,7 +106,7 @@
     }
   ];
 
-  const useCases: ClearCardItem[] = [
+  const useCases: PerformanceCardItem[] = [
     {
       eyebrow: 'Builders',
       icon: 'settings',
@@ -130,7 +130,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Surface',
       icon: 'settings',
@@ -165,7 +165,7 @@
   propertyName="agency"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -181,27 +181,27 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={layerCards}
       columns={1}
       density="compact"
       ariaLabel="Dify MCP control plane layers"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Layer map"
   title="Each layer has one job."
   description="The control plane only works when the app surface, tool boundary, and policy layer are not collapsed into one prompt."
 >
   {#snippet after()}
-    <ClearCardGrid items={layerCards} columns={3} ariaLabel="Control plane layer map" />
+    <PerformanceCardGrid items={layerCards} columns={3} ariaLabel="Control plane layer map" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   id="evals"
   variant="soft"
   eyebrow="Build order"
@@ -209,15 +209,15 @@
   description="A Dify app becomes production-worthy when the workflow, tool boundary, approval behavior, and evidence model are explicit enough for another operator to review."
 >
   {#snippet after()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={implementationCards}
       columns={4}
       ariaLabel="Dify control plane implementation steps"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   id="contract-bundle"
   variant="white"
   eyebrow="Contract bundle"
@@ -225,15 +225,15 @@
   description="Dify provides the visible workflow surface, but the operating boundary should travel as artifacts: MCP capability, agent behavior, outcome success, golden tasks, and a runbook."
 >
   {#snippet after()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={contractBundleCards}
       columns={4}
       ariaLabel="Dify control plane contract bundle"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   id="adoption"
   variant="soft"
   eyebrow="Who it serves"
@@ -241,11 +241,11 @@
   description="Builder adoption, operator governance, and agency packaging all become easier when the control plane is visible."
 >
   {#snippet after()}
-    <ClearCardGrid items={useCases} columns={3} ariaLabel="Dify control plane use cases" />
+    <PerformanceCardGrid items={useCases} columns={3} ariaLabel="Dify control plane use cases" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Next step"
   title="Use the control-plane article to qualify the next action."
   description="Readers can take the governance checklist, request a workflow map, or book the mapping session once the Dify workflow and decision owner are clear."
@@ -264,4 +264,4 @@
       Read Contract Bundle Paper
     </Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

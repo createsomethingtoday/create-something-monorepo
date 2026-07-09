@@ -261,16 +261,16 @@
 <style>
   /* ─── Layout ─── */
   .methodology-page {
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
-    --color-fg-primary: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
+    --color-fg-primary: var(--color-performance-ink, #090909);
     --color-fg-secondary: #252a34;
-    --color-fg-muted: var(--color-clear-grey, #636363);
-    --color-fg-tertiary: var(--color-clear-grey, #636363);
-    --color-bg-pure: var(--color-clear-panel, #ffffff);
-    --color-bg-surface: var(--color-clear-panel, #ffffff);
-    --color-bg-subtle: var(--color-clear-porcelain, #f9f9f9);
-    --color-border-emphasis: var(--color-clear-border, #e1e1e1);
+    --color-fg-muted: var(--color-performance-muted, #5e6268);
+    --color-fg-tertiary: var(--color-performance-muted, #5e6268);
+    --color-bg-pure: var(--color-performance-panel, #ffffff);
+    --color-bg-surface: var(--color-performance-panel, #ffffff);
+    --color-bg-subtle: var(--color-performance-paper, #f3f3f0);
+    --color-border-emphasis: var(--color-performance-line, #d7d7d2);
   }
 
   .section-container {

@@ -1,14 +1,14 @@
 <script lang="ts">
   import {
     Button,
-    ClearActionFooter,
-    ClearPageSection,
-    ClearPlatformHero,
-    ClearWorkflowMiniArtifact,
+    PerformanceActionFooter,
+    PerformancePageSection,
+    PerformancePlatformHero,
+    PerformanceWorkflowMiniArtifact,
     PerformanceLabBand,
     SEO,
-    type ClearActionFooterItem,
-    type ClearPlatformHeroProof,
+    type PerformanceActionFooterItem,
+    type PerformancePlatformHeroProof,
     type PerformanceLabMetric
   } from '@create-something/canon';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
@@ -73,7 +73,7 @@
     }
   ];
 
-  const heroProofItems: ClearPlatformHeroProof[] = [
+  const heroProofItems: PerformancePlatformHeroProof[] = [
     {
       value: 'Signal',
       label: 'Changes and requests\nenter one queue.'
@@ -119,7 +119,7 @@
     }
   ] as const;
 
-  const actionFooterItems: ClearActionFooterItem[] = [
+  const actionFooterItems: PerformanceActionFooterItem[] = [
     { label: 'Signal', value: 'One workflow your team wants to delegate' },
     { label: 'Decision', value: 'Owner, allowed actions, approval pauses, and stops' },
     { label: 'Proof', value: 'A fixed-scope map and proof plan before any build commitment' }
@@ -158,7 +158,7 @@
 />
 
 <div class="home-pilot property-performance">
-  <ClearPlatformHero
+  <PerformancePlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Make one workflow safe to delegate."
     description="CREATE SOMETHING turns one messy handoff into work that is mapped, tested, governed, and proven: Signals enter from the tools, Decisions route to the right owner, and Proof records approvals, stops, and outcomes."
@@ -173,7 +173,7 @@
     {#snippet aside()}
       <HeroTrustArtifact />
     {/snippet}
-  </ClearPlatformHero>
+  </PerformancePlatformHero>
 
   <PerformanceLabBand
     title="Train the workflow before it runs."
@@ -181,7 +181,7 @@
     metrics={labReadinessItems}
   />
 
-  <ClearPageSection
+  <PerformancePageSection
     variant="white"
     eyebrow="Workflow plan"
     title="Map the work before AI runs it."
@@ -190,9 +190,9 @@
     {#snippet after()}
       <PublicSubstrateCanvas />
     {/snippet}
-  </ClearPageSection>
+  </PerformancePageSection>
 
-  <ClearPageSection
+  <PerformancePageSection
     id="service-flow"
     variant="white"
     class="home-process-section"
@@ -205,7 +205,7 @@
         {#each serviceFlowSteps as step}
           <article class="service-flow-artifact service-flow-artifact--{step.id}">
             <div class="service-flow-artifact__visual">
-              <ClearWorkflowMiniArtifact kind={step.id} />
+              <PerformanceWorkflowMiniArtifact kind={step.id} />
             </div>
             <div class="service-flow-artifact__copy">
               <span>{step.eyebrow}</span>
@@ -224,9 +224,9 @@
         </p>
       </div>
     {/snippet}
-  </ClearPageSection>
+  </PerformancePageSection>
 
-  <ClearActionFooter
+  <PerformanceActionFooter
     eyebrow="Fixed-scope first step"
     title={agencyCoreMessaging.workflowCtaHeading}
     description="Start with a workflow map and proof plan. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear delegation boundary."
@@ -240,19 +240,19 @@
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
     {/snippet}
-  </ClearActionFooter>
+  </PerformanceActionFooter>
 </div>
 
 <style>
   .home-pilot {
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
   }
 
   .home-pilot :global(.clear-platform-hero) {
     background:
       linear-gradient(90deg, rgba(10, 14, 25, 0.04) 1px, transparent 1px) 0 0 / 4.25rem 4.25rem,
-      linear-gradient(180deg, var(--color-clear-panel, #ffffff) 0%, #fbfbfb 100%);
+      linear-gradient(180deg, var(--color-performance-panel, #ffffff) 0%, #fbfbfb 100%);
   }
 
   .home-pilot :global(.clear-platform-hero__kicker),
@@ -291,8 +291,8 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .service-flow-artifact {
@@ -304,7 +304,7 @@
   }
 
   .service-flow-artifact + .service-flow-artifact {
-    border-left: 1px solid var(--color-clear-border, #e1e1e1);
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .service-flow-artifact__visual {
@@ -312,7 +312,7 @@
     align-items: center;
     justify-items: center;
     min-width: 0;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .service-flow-artifact__copy {
@@ -324,7 +324,7 @@
 
   .service-flow-artifact__copy span,
   .service-flow-artifact__copy small {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     font-weight: var(--font-semibold);
@@ -335,7 +335,7 @@
 
   .service-flow-artifact__copy h3 {
     margin: 0;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1.12rem;
     font-weight: var(--font-medium);
     line-height: 1.18;
@@ -343,7 +343,7 @@
 
   .service-flow-artifact__copy p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.95rem;
     line-height: 1.45;
   }
@@ -351,7 +351,7 @@
   .service-flow-artifact__copy small {
     display: block;
     margin-top: 0.32rem;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     text-transform: none;
   }
 
@@ -367,13 +367,13 @@
 
   .service-flow-action p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.88rem;
     line-height: 1.45;
   }
 
   .service-flow-action a {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     text-underline-offset: 0.18em;
   }
 
@@ -401,7 +401,7 @@
     }
 
     .service-flow-artifact + .service-flow-artifact {
-      border-top: 1px solid var(--color-clear-border, #e1e1e1);
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
       border-left: 0;
     }
 

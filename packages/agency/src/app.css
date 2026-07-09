@@ -71,20 +71,20 @@ a:not([class*="button"]):not(.btn):hover {
 *:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
-  border-radius: var(--radius-clear-sm, 4px);
+  border-radius: var(--radius-performance-sm, 4px);
 }
 
 /* Smooth scroll behavior */
 html {
   scroll-behavior: smooth;
-  color: var(--color-clear-onyx, #0a0e19);
-  background: var(--color-clear-porcelain, #f9f9f9);
+  color: var(--color-performance-ink, #090909);
+  background: var(--color-performance-paper, #f3f3f0);
 }
 
 /* Body Typography Polish */
 body {
-  color: var(--color-clear-onyx, #0a0e19);
-  background: var(--color-clear-porcelain, #f9f9f9);
+  color: var(--color-performance-ink, #090909);
+  background: var(--color-performance-paper, #f3f3f0);
   letter-spacing: 0;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

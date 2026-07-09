@@ -1,12 +1,12 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -82,14 +82,14 @@
     }
   ];
 
-  const operatorStateCards: ClearCardItem[] = operatorStates.map((state) => ({
+  const operatorStateCards: PerformanceCardItem[] = operatorStates.map((state) => ({
     eyebrow: state.label,
     icon: state.label === 'Clear' ? 'check' : state.label === 'Review' ? 'search' : 'warning',
     title: state.value,
     detail: state.detail
   }));
 
-  const methodCards: ClearCardItem[] = methodSteps.map((step) => ({
+  const methodCards: PerformanceCardItem[] = methodSteps.map((step) => ({
     eyebrow: step.label,
     icon:
       step.label === '01'
@@ -103,7 +103,7 @@
     detail: step.detail
   }));
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Bring',
       icon: 'folder',
@@ -133,7 +133,7 @@
   propertyName="agency"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -142,11 +142,11 @@
   description="The operator should not carry the chaos of automation. My work turns toolchains into clear workflow states: what agents and tools can do, what needs judgment, and what must stop with a reason."
 >
   {#snippet aside()}
-    <ClearCardGrid items={operatorStateCards} columns={1} ariaLabel="Operator decision states" />
+    <PerformanceCardGrid items={operatorStateCards} columns={1} ariaLabel="Operator decision states" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   layout="split"
   eyebrow="Why this work"
@@ -186,20 +186,20 @@
       {/each}
     </aside>
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Calm Operator Method"
   title="Protect the operator before you scale the agents."
   description="The method is simple enough to fit on an e-ink surface: map the workflow, classify the judgment states, ship the control layer, and brief the human only when attention changes the outcome."
 >
   {#snippet after()}
-    <ClearCardGrid items={methodCards} columns={4} ariaLabel="Calm operator method steps" />
+    <PerformanceCardGrid items={methodCards} columns={4} ariaLabel="Calm operator method steps" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Working contract"
   title="The work stays narrow enough to trust."
@@ -216,9 +216,9 @@
       {/each}
     </div>
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection variant="white" eyebrow="System" title="The rest of CREATE SOMETHING">
+<PerformancePageSection variant="white" eyebrow="System" title="The rest of CREATE SOMETHING">
   <div class="about-prose">
     <p>
       CREATE SOMETHING operates as a connected system. Each property has a distinct job, and each
@@ -260,9 +260,9 @@
       I provide a direct referral path to trusted partners, including Half Dozen.
     </p>
   </div>
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Start with one workflow"
   title={agencyCoreMessaging.workflowCtaHeading}
   description={agencyCoreMessaging.workflowCtaDetail}
@@ -272,19 +272,19 @@
     <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
     <Button href="/services" variant="secondary">{agencyCoreMessaging.engagementModelLabel}</Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>
 
 <style>
   .about-prose {
     display: grid;
     gap: 1rem;
     max-width: 45rem;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .about-prose p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 1rem;
     line-height: 1.62;
   }
@@ -293,38 +293,38 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .circle-list li {
     padding: 0.72rem 0;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-    color: var(--color-clear-grey, #636363);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 1rem;
     line-height: 1.5;
   }
 
   .circle-list li strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-weight: var(--font-medium);
   }
 
   .muted {
-    color: var(--color-clear-grey-quiet, #818181);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.9rem;
   }
 
   .about-prose a {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-weight: var(--font-medium);
   }
 
   .signal-rail,
   .contract-card {
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
   }
 
   .signal-rail {
@@ -336,7 +336,7 @@
   .rail-label,
   .signal-card span,
   .contract-card span {
-    color: var(--color-clear-grey-quiet, #818181);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     font-weight: var(--font-semibold);
@@ -349,9 +349,9 @@
     display: grid;
     gap: 0.36rem;
     padding: 1rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .signal-card strong,
@@ -364,7 +364,7 @@
   .signal-card p,
   .contract-card p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.94rem;
     line-height: 1.5;
   }

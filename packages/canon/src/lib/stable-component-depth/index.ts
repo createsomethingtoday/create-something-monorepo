@@ -451,7 +451,7 @@ function evaluateVisualRegression(
 	component: CanonRegistryItem,
 	context: DepthContext
 ): CanonStableComponentDepthDimensionEntry {
-	const namePattern = componentNamePattern(component.name);
+	const namePattern = componentEvidenceNamePattern(component.name);
 	const evidence = context.testFiles
 		.filter((file) => namePattern.test(file.path) || namePattern.test(file.text))
 		.slice(0, 8)
@@ -503,14 +503,14 @@ function evaluatePropertyUsage(
 	component: CanonRegistryItem,
 	context: DepthContext
 ): CanonStableComponentDepthDimensionEntry {
-	const namePattern = componentNamePattern(component.name);
+	const namePattern = componentEvidenceNamePattern(component.name);
 	const evidence = context.propertyFiles
 		.filter((file) => namePattern.test(file.text))
 		.slice(0, 10)
 		.map((file) => ({
 			kind: 'property-source' as const,
 			path: file.path,
-			detail: `Property source references ${component.name}.`
+			detail: `Property source references ${componentEvidenceNames(component.name).join(' or ')}.`
 		}));
 
 	return dimensionEntry('property-usage', evidence);
@@ -604,8 +604,15 @@ function mentionsAnyModality(text: string) {
 	return /\b(web|chat|app|voice|glasses|modality|modalities)\b/i.test(text);
 }
 
-function componentNamePattern(componentName: string) {
-	return new RegExp(`\\b${escapeRegExp(componentName)}\\b`);
+function componentEvidenceNames(componentName: string) {
+	return componentName.startsWith('Clear')
+		? [componentName, `Performance${componentName.slice('Clear'.length)}`]
+		: [componentName];
+}
+
+function componentEvidenceNamePattern(componentName: string) {
+	const names = componentEvidenceNames(componentName).map(escapeRegExp).join('|');
+	return new RegExp(`\\b(?:${names})\\b`);
 }
 
 function isReadmePath(path: string) {

@@ -116,9 +116,9 @@ test('services route keeps one public Atlas map and removes the example canvas',
 	assert.ok(servicesRoute.includes('<PublicAtlasCanvas'));
 	assert.equal(servicesRoute.includes('<PublicAtlasStoryCanvas'), false);
 	assert.equal(servicesRoute.includes('storyId="services-marketplace-review-story"'), false);
-	assert.equal(servicesRoute.includes('<ClearDecisionPanel'), false);
-	assert.equal(servicesRoute.includes('<ClearCtaBand'), false);
-	assert.equal(servicesRoute.includes('<ClearCardGrid'), false);
+	assert.equal(servicesRoute.includes('<PerformanceDecisionPanel'), false);
+	assert.equal(servicesRoute.includes('<PerformanceCtaBand'), false);
+	assert.equal(servicesRoute.includes('<PerformanceCardGrid'), false);
 });
 
 test('home route uses the shared canvas kernel as a transparent proof object', () => {

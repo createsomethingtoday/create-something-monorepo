@@ -3,14 +3,14 @@
   import ImageLightbox from '$lib/components/taste/ImageLightbox.svelte';
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearMetadataRail,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformanceMetadataRail,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem,
-    type ClearMetadataGroup
+    type PerformanceCardItem,
+    type PerformanceCtaItem,
+    type PerformanceMetadataGroup
   } from '@create-something/canon';
 
   let { data }: { data: PageData } = $props();
@@ -56,7 +56,7 @@
     });
   }
 
-  const tasteMetadataGroups = $derived<ClearMetadataGroup[]>([
+  const tasteMetadataGroups = $derived<PerformanceMetadataGroup[]>([
     {
       title: 'Current corpus',
       items: [
@@ -82,7 +82,7 @@
     }
   ]);
 
-  const tasteEvidenceGroups = $derived<ClearMetadataGroup[]>([
+  const tasteEvidenceGroups = $derived<PerformanceMetadataGroup[]>([
     {
       title: 'Observed corpus',
       items: [
@@ -102,7 +102,7 @@
     }
   ]);
 
-  const performanceLoopGroups: ClearMetadataGroup[] = [
+  const performanceLoopGroups: PerformanceMetadataGroup[] = [
     {
       title: 'Reference',
       items: [
@@ -121,7 +121,7 @@
     }
   ];
 
-  const sampleTasteSystemGroups: ClearMetadataGroup[] = [
+  const sampleTasteSystemGroups: PerformanceMetadataGroup[] = [
     {
       title: 'Input',
       items: [
@@ -139,7 +139,7 @@
     }
   ];
 
-  const tasteSystemCards: ClearCardItem[] = [
+  const tasteSystemCards: PerformanceCardItem[] = [
     {
       eyebrow: '01',
       icon: 'folder',
@@ -166,7 +166,7 @@
     }
   ];
 
-  const tasteEvidenceCards: ClearCardItem[] = [
+  const tasteEvidenceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Surface',
       icon: 'folder',
@@ -195,7 +195,7 @@
     }
   ];
 
-  const performanceLoopCards: ClearCardItem[] = [
+  const performanceLoopCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Observe',
       icon: 'search',
@@ -222,7 +222,7 @@
     }
   ];
 
-  const principleCards: ClearCardItem[] = [
+  const principleCards: PerformanceCardItem[] = [
     {
       title: 'Negative Space',
       detail: 'Let elements breathe. Absence is presence.'
@@ -241,7 +241,7 @@
     }
   ];
 
-  const businessCtaItems: ClearCtaItem[] = [
+  const businessCtaItems: PerformanceCtaItem[] = [
     {
       label: 'Audit',
       icon: 'search',
@@ -274,7 +274,7 @@
   ]}
 />
 
-<ClearPageSection
+<PerformancePageSection
   class="taste-hero"
   variant="hero"
   layout="split"
@@ -289,7 +289,7 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearMetadataRail
+    <PerformanceMetadataRail
       eyebrow="Proof rail"
       title="Taste reference state"
       description="Managed as inspectable evidence, not decoration."
@@ -298,9 +298,9 @@
       ariaLabel="Taste reference metadata"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   id="taste-system"
   variant="white"
   layout="split"
@@ -314,7 +314,7 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearMetadataRail
+    <PerformanceMetadataRail
       eyebrow="Deliverable"
       title="Taste system report"
       description="A practical artifact for founders, teams, and agents."
@@ -325,16 +325,16 @@
   {/snippet}
 
   {#snippet after()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={tasteSystemCards}
       columns={4}
       density="compact"
       ariaLabel="Taste system workflow"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   id="taste-evidence"
   variant="soft"
   layout="split"
@@ -348,7 +348,7 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearMetadataRail
+    <PerformanceMetadataRail
       eyebrow="Observed"
       title="Current system state"
       description="Evidence from the live corpus and exposed context surfaces."
@@ -359,16 +359,16 @@
   {/snippet}
 
   {#snippet after()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={tasteEvidenceCards}
       columns={4}
       density="compact"
       ariaLabel="Taste operating evidence"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   id="performance-loop"
   variant="white"
   layout="split"
@@ -382,7 +382,7 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearMetadataRail
+    <PerformanceMetadataRail
       eyebrow="Control loop"
       title="Performance Lab benchmark"
       description="A reusable review path for product, site, and agent-output improvements."
@@ -393,14 +393,14 @@
   {/snippet}
 
   {#snippet after()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={performanceLoopCards}
       columns={4}
       density="compact"
       ariaLabel="Performance Lab continuous improvement loop"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
 <!-- Source Channels -->
 <section class="channels-section" id="source-channels">
@@ -501,23 +501,23 @@
   </section>
 {/if}
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Derived principles"
   title="What the corpus teaches."
   description="Taste is not imitation. References reveal the aesthetic; implementations express it."
 >
   {#snippet after()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={principleCards}
       columns={4}
       density="compact"
       ariaLabel="Derived taste principles"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Taste system sprint"
   title="Build a taste system your team and agents can use."
   description="Use TASTE to turn curation into direction for pages, product surfaces, content systems, and AI-assisted delivery."
@@ -527,7 +527,7 @@
     <Button href="https://createsomething.agency">Start With A Taste System</Button>
     <Button href="https://www.are.na/create-something" variant="secondary">Inspect The Source Channel</Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>
 
 <!-- Image Lightbox -->
 {#if data.examples && data.examples.length > 0}
@@ -584,9 +584,9 @@
     flex-direction: column;
     min-height: 5.25rem;
     padding: var(--space-sm);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
     transition:
       border-color var(--duration-micro) var(--ease-standard),
       background var(--duration-micro) var(--ease-standard);
@@ -595,7 +595,7 @@
 
   .channel-card:hover {
     border-color: var(--color-border-emphasis);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .channel-card.primary {
@@ -647,9 +647,9 @@
   .example-card {
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
     margin-bottom: 1rem;
     break-inside: avoid;
     /* Reset button styles */
@@ -733,9 +733,9 @@
     justify-content: space-between;
     gap: var(--space-sm);
     padding: var(--space-sm);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
   }
 
   .resource-content {
@@ -776,7 +776,7 @@
   }
 
   .resource-link:hover {
-    color: var(--color-clear-ocean, #315cff);
+    color: var(--color-performance-signal, #315cff);
   }
 
   @media (max-width: 640px) {

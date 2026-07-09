@@ -1,17 +1,17 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const timelineCards: ClearCardItem[] = [
+  const timelineCards: PerformanceCardItem[] = [
     {
       eyebrow: 'n8n',
       icon: 'settings',
@@ -35,7 +35,7 @@
     }
   ];
 
-  const layerFit: ClearCardItem[] = [
+  const layerFit: PerformanceCardItem[] = [
     {
       eyebrow: 'Internal workflow',
       icon: 'settings',
@@ -59,7 +59,7 @@
     }
   ];
 
-  const decisionCards: ClearCardItem[] = [
+  const decisionCards: PerformanceCardItem[] = [
     {
       eyebrow: 'n8n',
       icon: 'settings',
@@ -87,7 +87,7 @@
     }
   ];
 
-  const migrationCards: ClearCardItem[] = [
+  const migrationCards: PerformanceCardItem[] = [
     {
       eyebrow: '01',
       icon: 'search',
@@ -117,7 +117,7 @@
     }
   ];
 
-  const sourceCards: ClearCardItem[] = [
+  const sourceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'n8n',
       icon: 'external-link',
@@ -148,7 +148,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Automate',
       icon: 'settings',
@@ -184,7 +184,7 @@
   propertyName="agency"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -201,23 +201,23 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={timelineCards}
       columns={1}
       density="compact"
       ariaLabel="Workflow layer timeline"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Layer fit"
   title="The stack changed because the job changed."
   description="A workflow that starts as an internal automation can become a production route, then a client-facing agent product. Each shift changes the best tool."
 >
   {#snippet after()}
-    <ClearCardGrid items={layerFit} columns={3} ariaLabel="Dify n8n layer fit" />
+    <PerformanceCardGrid items={layerFit} columns={3} ariaLabel="Dify n8n layer fit" />
     <ArticleVisualFigure
       src="/images/articles/dify-vs-n8n/dify-n8n-layer-map.png"
       alt="Layer map comparing n8n for internal automation, Cloudflare for runtime ownership, Dify for client-facing agent surfaces, and Policy OS for governance."
@@ -227,42 +227,42 @@
       sourceLabel="Created by CREATE SOMETHING for this article."
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Decision map"
   title="Choose the tool by the operating layer."
   description="The practical comparison is not a winner-take-all ranking. It is a map of where the workflow should live."
 >
   {#snippet after()}
-    <ClearCardGrid items={decisionCards} columns={4} ariaLabel="Dify n8n decision map" />
+    <PerformanceCardGrid items={decisionCards} columns={4} ariaLabel="Dify n8n decision map" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Migration"
   title="Move only the part of the workflow that changed."
   description="The safest migration keeps internal automation, runtime ownership, agent surface, and policy evidence separate."
 >
   {#snippet after()}
-    <ClearCardGrid items={migrationCards} columns={4} ariaLabel="Dify n8n migration path" />
+    <PerformanceCardGrid items={migrationCards} columns={4} ariaLabel="Dify n8n migration path" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Sources"
   title="The recommendation is grounded in the tool surfaces."
   description="The docs show why n8n is strongest as workflow automation and Dify is strongest as an agent app surface."
 >
   {#snippet after()}
-    <ClearCardGrid items={sourceCards} columns={4} ariaLabel="Dify n8n source notes" />
+    <PerformanceCardGrid items={sourceCards} columns={4} ariaLabel="Dify n8n source notes" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Next step"
   title="Map the layer before changing tools."
   description="Bring the workflow and I’ll identify whether it should stay internal automation, move to runtime infrastructure, or become a governed agent app."
@@ -275,4 +275,4 @@
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
     <Button href="/dify/mcp-control-plane" variant="secondary">Read Control Plane</Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

@@ -1,15 +1,15 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
-    ClearProofStrip,
-    ClearWorkflowMiniArtifact,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
+    PerformanceProofStrip,
+    PerformanceWorkflowMiniArtifact,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem,
-    type ClearProofItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem,
+    type PerformanceProofItem
   } from '@create-something/canon';
   import { listGovernanceProducts, type GovernanceProduct } from '@create-something/canon/governance';
   import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
@@ -17,7 +17,7 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   type ProofStateIconName = 'objects' | 'actions' | 'states' | 'receipts';
-  type ProofStateItem = ClearProofItem & { icon: ProofStateIconName };
+  type ProofStateItem = PerformanceProofItem & { icon: ProofStateIconName };
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
   const featured = products.filter((product) => product.category === 'featured');
@@ -97,7 +97,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Signal',
       icon: 'plus',
@@ -118,7 +118,7 @@
     }
   ];
 
-  function productCard(product: Product): ClearCardItem {
+  function productCard(product: Product): PerformanceCardItem {
     const points = [product.tagline, product.npmPackage, product.client, product.timeline].filter(
       Boolean
     ) as string[];
@@ -174,7 +174,7 @@
   {faqItems}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -204,23 +204,23 @@
       </div>
       <div class="product-system-artifact__surfaces">
         <div>
-          <ClearWorkflowMiniArtifact kind="signal" ariaLabel="Signal mini artifact" />
+          <PerformanceWorkflowMiniArtifact kind="signal" ariaLabel="Signal mini artifact" />
           <strong>Signal</strong>
         </div>
         <div>
-          <ClearWorkflowMiniArtifact kind="decision" ariaLabel="Decision mini artifact" />
+          <PerformanceWorkflowMiniArtifact kind="decision" ariaLabel="Decision mini artifact" />
           <strong>Decision</strong>
         </div>
         <div>
-          <ClearWorkflowMiniArtifact kind="proof" ariaLabel="Proof mini artifact" />
+          <PerformanceWorkflowMiniArtifact kind="proof" ariaLabel="Proof mini artifact" />
           <strong>Proof</strong>
         </div>
       </div>
     </aside>
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Product overview"
   title="The product line follows the workflow."
@@ -233,7 +233,7 @@
           <span class="product-surface-list__label">{item.label}</span>
           <div class="product-surface-list__visual" aria-hidden="true">
             {#if item.kind}
-              <ClearWorkflowMiniArtifact kind={item.kind} />
+              <PerformanceWorkflowMiniArtifact kind={item.kind} />
             {:else}
               <span class="product-surface-list__atlas">
                 <i></i>
@@ -248,20 +248,20 @@
       {/each}
     </div>
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Operating sequence"
   title="The surfaces stay useful because they stay separate."
   description="Signal, Decision, Map, and Proof are not decorative categories. They are the sequence that keeps a workflow legible while tools and agents do bounded work."
 >
   {#snippet after()}
-    <ClearProofStrip items={proofStripItems} ariaLabel="Workflow proof states">
+    <PerformanceProofStrip items={proofStripItems} ariaLabel="Workflow proof states">
       {#snippet icon(item)}
         <WorkflowSignalIcon name={proofStateIcon(item.icon)} />
       {/snippet}
-    </ClearProofStrip>
+    </PerformanceProofStrip>
 
     <div class="proof-path" aria-label="Inspectable workflow path">
       {#each proofPathItems as step, index}
@@ -275,24 +275,24 @@
       {/each}
     </div>
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Supporting proof"
   title="Framework and tool proof sit under the product system."
   description="Ground and Loom MCP are evidence of the same operating rule in public: watch the signal, verify before deciding, preserve ownership, and keep evidence with the work."
 >
   {#snippet after()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={featured.map(productCard)}
       columns={2}
       ariaLabel="Flagship proof surfaces"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Apply the proof"
   title="Apply the proof to the workflow your team still protects by hand."
   description="I’ll map the first workflow, identify the safest signal source, define who decides, and name what proof the control layer should leave behind."
@@ -306,16 +306,16 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>
 
 <style>
   .product-system-artifact {
     display: grid;
     gap: 0.95rem;
     padding: 1rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
     box-shadow: 0 24px 70px rgb(10 14 25 / 0.08);
   }
 
@@ -325,13 +325,13 @@
     justify-content: space-between;
     gap: 1rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .product-system-artifact__header span,
   .product-system-artifact__atlas span,
   .product-surface-list__label {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     font-weight: var(--font-semibold);
@@ -340,7 +340,7 @@
   }
 
   .product-system-artifact__header strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     font-weight: var(--font-semibold);
@@ -353,17 +353,17 @@
     display: grid;
     gap: 0.25rem;
     padding: 0.95rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
     background:
-      linear-gradient(var(--color-clear-grid, rgb(10 14 25 / 0.05)) 1px, transparent 1px),
-      linear-gradient(90deg, var(--color-clear-grid, rgb(10 14 25 / 0.05)) 1px, transparent 1px),
-      var(--color-clear-porcelain, #f9f9f9);
+      linear-gradient(var(--color-performance-grid, rgb(9 9 9 / 0.055)) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-performance-grid, rgb(9 9 9 / 0.055)) 1px, transparent 1px),
+      var(--color-performance-paper, #f3f3f0);
     background-size: 22px 22px;
   }
 
   .product-system-artifact__atlas strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1.08rem;
     font-weight: var(--font-medium);
     line-height: 1.15;
@@ -372,7 +372,7 @@
   .product-system-artifact__atlas p {
     max-width: 24rem;
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.9rem;
     line-height: 1.42;
   }
@@ -390,9 +390,9 @@
     align-items: center;
     gap: 0.9rem;
     padding: 0.72rem 0.9rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
   }
 
   .product-system-artifact__surfaces > div :global(.clear-workflow-mini-artifact) {
@@ -407,7 +407,7 @@
 
   .product-system-artifact__surfaces strong {
     justify-self: end;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: var(--font-mono);
     font-size: 0.74rem;
     font-weight: var(--font-semibold);
@@ -418,9 +418,9 @@
   .product-surface-list {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
     overflow: hidden;
   }
 
@@ -430,7 +430,7 @@
     gap: 0.7rem;
     min-height: 19rem;
     padding: 1rem;
-    border-right: 1px solid var(--color-clear-border, #e1e1e1);
+    border-right: 1px solid var(--color-performance-line, #d7d7d2);
     color: inherit;
     text-decoration: none;
   }
@@ -440,7 +440,7 @@
   }
 
   .product-surface-list__item:hover {
-    background: var(--color-clear-porcelain, #f9f9f9);
+    background: var(--color-performance-paper, #f3f3f0);
     opacity: 1;
   }
 
@@ -448,7 +448,7 @@
     display: grid;
     min-height: 8rem;
     place-items: center;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .product-surface-list__atlas {
@@ -456,12 +456,12 @@
     display: block;
     width: min(100%, 11.5rem);
     height: 4.6rem;
-    border: 1px solid var(--color-clear-border-strong, #cecece);
-    border-radius: var(--radius-clear-sm, 4px);
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    border-radius: var(--radius-performance-sm, 4px);
     background:
-      linear-gradient(var(--color-clear-grid, rgb(10 14 25 / 0.055)) 1px, transparent 1px),
-      linear-gradient(90deg, var(--color-clear-grid, rgb(10 14 25 / 0.055)) 1px, transparent 1px),
-      var(--color-clear-panel, #ffffff);
+      linear-gradient(var(--color-performance-grid, rgb(9 9 9 / 0.055)) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-performance-grid, rgb(9 9 9 / 0.055)) 1px, transparent 1px),
+      var(--color-performance-panel, #ffffff);
     background-size: 14px 14px;
   }
 
@@ -470,9 +470,9 @@
   .product-surface-list__atlas em {
     position: absolute;
     display: block;
-    border: 1px solid var(--color-clear-border-strong, #cecece);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
   }
 
   .product-surface-list__atlas i {
@@ -497,7 +497,7 @@
   }
 
   .product-surface-list__item strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1rem;
     font-weight: var(--font-medium);
     line-height: 1.2;
@@ -505,7 +505,7 @@
 
   .product-surface-list__item p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.9rem;
     line-height: 1.43;
   }
@@ -515,9 +515,9 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0;
     margin-top: 0.85rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
     overflow: hidden;
   }
 
@@ -528,7 +528,7 @@
     min-height: 7.25rem;
     align-items: start;
     padding: 0.95rem;
-    border-right: 1px solid var(--color-clear-border, #e1e1e1);
+    border-right: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .proof-path__item:last-child {
@@ -540,10 +540,10 @@
     place-items: center;
     width: 2.35rem;
     height: 2.35rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-porcelain, #f9f9f9);
-    color: var(--color-clear-grey, #636363);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.74rem;
     font-weight: var(--font-semibold);
@@ -553,7 +553,7 @@
 
   .proof-path strong {
     display: block;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1rem;
     font-weight: var(--font-medium);
     line-height: 1.18;
@@ -561,7 +561,7 @@
 
   .proof-path p {
     margin: 0.38rem 0 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.88rem;
     line-height: 1.4;
   }
@@ -576,7 +576,7 @@
     }
 
     .product-surface-list__item:nth-child(-n + 2) {
-      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
     .proof-path {
@@ -588,7 +588,7 @@
     }
 
     .proof-path__item:nth-child(-n + 2) {
-      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }
   }
 
@@ -627,7 +627,7 @@
       grid-template-rows: auto auto auto;
       min-height: auto;
       border-right: 0;
-      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
     .product-surface-list__item:last-child {
@@ -647,7 +647,7 @@
     .proof-path__item:nth-child(-n + 2) {
       min-height: auto;
       border-right: 0;
-      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
     .proof-path__item:last-child {

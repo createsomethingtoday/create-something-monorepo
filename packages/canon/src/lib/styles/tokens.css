@@ -87,36 +87,7 @@
   --color-info-muted: rgba(80, 130, 185, 0.2);
   --color-info-border: rgba(80, 130, 185, 0.3);
 
-  /* Performance Lab readability - light, operational, proof-first surfaces
-   * These tokens are the owned CREATE SOMETHING substrate for mapped workflows,
-   * proof panels, receipts, governed action states, and operator handoff UI.
-   * Use them when the interface needs immediate comprehension before pressure.
-   */
-  --color-clear-porcelain: #f9f9f9;
-  --color-clear-porcelain-soft: #f2f2f2;
-  --color-clear-panel: #ffffff;
-  --color-clear-onyx: #0a0e19;
-  --color-clear-chocolate: #541500;
-  --color-clear-grey: #636363;
-  --color-clear-grey-quiet: #818181;
-  --color-clear-border: #e1e1e1;
-  --color-clear-border-strong: #cecece;
-  --color-clear-moss: #1e3c2c;
-  --color-clear-fern: #3e7f5c;
-  --color-clear-link-green: #397554;
-  --color-clear-ocean: #0048ff;
-  --color-clear-pastel-blue: #afc1fd;
-  --color-clear-frosted-mint: #d9fff7;
-  --color-clear-candy-purple: #efd4ff;
-  --color-clear-pistachio: #dbefdb;
-  --color-clear-pill-active: #cad7fa;
-  --color-clear-stop: #c41e3a;
-  --content-width-clear: 85rem;
-  --radius-clear-sm: 4px;
-  --radius-clear-md: 8px;
-  --shadow-clear-restraint: 0 4px 20px rgba(0, 0, 0, 0.06);
-
-  /* Performance Lab pressure - readiness, testing, and decision intensity
+  /* Performance Lab - readiness, testing, and decision intensity
    * Inspired by elite performance-product discipline: precise contrast,
    * measured motion, lab/field material cues, and visible pressure states.
    * Keep these brand-safe: use them as CREATE SOMETHING system tokens, not
@@ -125,21 +96,65 @@
   --color-performance-paper: #f3f3f0;
   --color-performance-panel: #ffffff;
   --color-performance-ink: #090909;
+  --color-performance-ink-soft: #262626;
   --color-performance-muted: #5e6268;
   --color-performance-line: #d7d7d2;
   --color-performance-line-strong: #9c9c96;
+  --color-performance-grid: rgb(9 9 9 / 0.055);
   --color-performance-court: #e6e6e0;
   --color-performance-court-line: rgba(255, 255, 255, 0.86);
   --color-performance-growth: #007a4d;
+  --color-performance-growth-soft: #dcece5;
   --color-performance-signal: #0057b8;
+  --color-performance-signal-soft: #dce8f5;
   --color-performance-pressure: #e54800;
+  --color-performance-pressure-soft: #f7e2d7;
   --color-performance-risk: #c62026;
+  --color-performance-risk-soft: #f3dadd;
   --color-performance-gold: #8b6b00;
+  --color-performance-gold-soft: #eee6cc;
+  /* Performance and Safety states: action authority, not decoration. */
+  --color-performance-controlled: var(--color-performance-signal);
+  --color-performance-controlled-soft: var(--color-performance-signal-soft);
+  --color-performance-ready: var(--color-performance-growth);
+  --color-performance-ready-soft: var(--color-performance-growth-soft);
+  --color-performance-review: var(--color-performance-gold);
+  --color-performance-review-soft: var(--color-performance-gold-soft);
+  --color-performance-stop: var(--color-performance-risk);
+  --color-performance-stop-soft: var(--color-performance-risk-soft);
   --shadow-performance-panel: none;
   --shadow-performance-node: none;
   --radius-performance-sm: 0;
   --radius-performance-md: 4px;
   --content-width-performance: 85rem;
+
+  /* Legacy Clear aliases
+   * Keep these for registry and downstream compatibility only. New surfaces
+   * must use the Performance Lab tokens above.
+   */
+  --color-clear-porcelain: var(--color-performance-paper);
+  --color-clear-porcelain-soft: var(--color-performance-court);
+  --color-clear-panel: var(--color-performance-panel);
+  --color-clear-onyx: var(--color-performance-ink);
+  --color-clear-chocolate: var(--color-performance-pressure);
+  --color-clear-grey: var(--color-performance-muted);
+  --color-clear-grey-quiet: var(--color-performance-muted);
+  --color-clear-border: var(--color-performance-line);
+  --color-clear-border-strong: var(--color-performance-line-strong);
+  --color-clear-moss: var(--color-performance-growth);
+  --color-clear-fern: var(--color-performance-growth);
+  --color-clear-link-green: var(--color-performance-growth);
+  --color-clear-ocean: var(--color-performance-signal);
+  --color-clear-pastel-blue: var(--color-performance-signal-soft);
+  --color-clear-frosted-mint: var(--color-performance-growth-soft);
+  --color-clear-candy-purple: var(--color-performance-pressure-soft);
+  --color-clear-pistachio: var(--color-performance-growth-soft);
+  --color-clear-pill-active: var(--color-performance-signal-soft);
+  --color-clear-stop: var(--color-performance-risk);
+  --content-width-clear: var(--content-width-performance);
+  --radius-clear-sm: var(--radius-performance-sm);
+  --radius-clear-md: var(--radius-performance-md);
+  --shadow-clear-restraint: var(--shadow-performance-panel);
 
   /* Interactive states */
   --color-hover: rgba(255, 255, 255, 0.05);

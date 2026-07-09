@@ -1,16 +1,16 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const statusCards: ClearCardItem[] = [
+  const statusCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Primary',
       icon: 'settings',
@@ -32,7 +32,7 @@
     }
   ];
 
-  const proofCards: ClearCardItem[] = [
+  const proofCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Operating model',
       icon: 'folder',
@@ -81,7 +81,7 @@
     }
   ];
 
-  const runtimeFlow: ClearCardItem[] = [
+  const runtimeFlow: PerformanceCardItem[] = [
     {
       eyebrow: '01 Route',
       icon: 'arrow-right',
@@ -117,7 +117,7 @@
     }
   ];
 
-  const ecosystemCards: ClearCardItem[] = [
+  const ecosystemCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Agent runtime',
       icon: 'settings',
@@ -142,7 +142,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Route',
       icon: 'arrow-right',
@@ -173,7 +173,7 @@
   {faqItems}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -189,49 +189,49 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={statusCards}
       columns={1}
       density="compact"
       ariaLabel="Cloudflare workflow runtime status"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Runtime proof"
   title="The runtime carries routes, tools, and evidence."
   description="Cloudflare is strongest when workflow infrastructure needs ownership, durability, a reviewable delivery path, and clear account boundaries before anything runs."
 >
   {#snippet after()}
-    <ClearCardGrid items={proofCards} columns={4} ariaLabel="Cloudflare runtime proof" />
+    <PerformanceCardGrid items={proofCards} columns={4} ariaLabel="Cloudflare runtime proof" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Runtime flow"
   title="Route. Gate. State. Act. Prove."
   description="The operating model makes the Cloudflare layer easy to explain before it becomes a hidden infrastructure decision."
 >
   {#snippet after()}
-    <ClearCardGrid items={runtimeFlow} columns={4} ariaLabel="Cloudflare runtime flow" />
+    <PerformanceCardGrid items={runtimeFlow} columns={4} ariaLabel="Cloudflare runtime flow" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Ecosystem"
   title="Cloudflare is the runtime, not the whole operating model."
   description="The workflow tool stack works because each adjacent surface keeps a distinct role. Public claims stay conservative: show readiness, proof, and client-safe evidence without implying official authorization before acceptance."
 >
   {#snippet after()}
-    <ClearCardGrid items={ecosystemCards} columns={3} ariaLabel="Cloudflare ecosystem roles" />
+    <PerformanceCardGrid items={ecosystemCards} columns={3} ariaLabel="Cloudflare ecosystem roles" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Map the runtime"
   title="Bring the workflow that needs a controlled route."
   description="I’ll map the route, state, permissions, tool boundary, and evidence your team needs before a Cloudflare build becomes production work."
@@ -243,4 +243,4 @@
     </Button>
     <Button href="/stack" variant="secondary">See Stack Boundary</Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

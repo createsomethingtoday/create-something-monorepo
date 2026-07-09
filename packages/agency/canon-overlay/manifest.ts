@@ -105,7 +105,7 @@ export const CANON_PROJECT_OVERLAY_MANIFEST = {
           "name": "Public Atlas route",
           "modality": "web",
           "sourcePath": "src/routes/atlas/+page.svelte",
-          "proof": "Route composes ClearPageSection, PublicAtlasStoryCanvas, and PublicAtlasCanvas so the public page shows story, editable map, readiness, and booking context from one Canon Atlas graph contract."
+          "proof": "Route composes PerformancePageSection, PublicAtlasStoryCanvas, and PublicAtlasCanvas so the public page shows story, editable map, readiness, and booking context from one Canon Atlas graph contract."
         },
         {
           "surfaceId": "agency-atlas-agent-canvas",

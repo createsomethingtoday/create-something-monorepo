@@ -1,18 +1,18 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const updatedDate = 'March 9, 2026';
 
-  const securityPath: ClearCardItem[] = [
+  const securityPath: PerformanceCardItem[] = [
     {
       eyebrow: 'Identity',
       icon: 'user',
@@ -43,7 +43,7 @@
     }
   ];
 
-  const runtimeRules: ClearCardItem[] = [
+  const runtimeRules: PerformanceCardItem[] = [
     {
       eyebrow: 'Allowed',
       icon: 'success',
@@ -67,7 +67,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Map',
       icon: 'folder',
@@ -95,7 +95,7 @@
   propertyName="agency"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -111,27 +111,27 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={runtimeRules}
       columns={1}
       density="compact"
       ariaLabel="Runtime security rules"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow={`Last updated ${updatedDate}`}
   title="Controlled delegation needs an explicit access chain."
   description="Each request passes through a clear path so approval requirements, blocked states, and recovery paths stay legible instead of hiding inside a prompt or a vendor account."
 >
   {#snippet after()}
-    <ClearCardGrid items={securityPath} columns={4} ariaLabel="Security control path" />
+    <PerformanceCardGrid items={securityPath} columns={4} ariaLabel="Security control path" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Access boundary"
   title="Map the workflow before you hand it credentials."
   description="Security is strongest when the workflow map names its objects, permissions, stop points, decision owner, and audit trail before any agent acts."
@@ -143,4 +143,4 @@
     </Button>
     <Button href="mailto:legal@createsomething.io" variant="secondary">Security Contact</Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

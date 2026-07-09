@@ -396,11 +396,11 @@
   .workbench {
     width: 100%;
     overflow: hidden;
-    border: 1px solid var(--color-clear-border-strong, #cecece);
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
     border-radius: 8px;
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
-    box-shadow: var(--shadow-clear-restraint, 0 4px 20px rgba(0, 0, 0, 0.06));
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
+    box-shadow: var(--shadow-performance-panel, none);
   }
 
   .workbench__bar {
@@ -409,8 +409,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.15rem;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-    background: var(--color-clear-porcelain-soft, #f2f2f2);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-court, #e6e6e0);
   }
 
   .workbench__bar-copy {
@@ -422,7 +422,7 @@
   .workbench__overline,
   .console-label,
   .session-id {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.68rem;
     line-height: 1.2;
@@ -430,7 +430,7 @@
   }
 
   .workbench__bar-copy strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1rem;
     font-weight: var(--font-medium);
     line-height: 1.1;
@@ -453,18 +453,18 @@
   }
 
   .status-chip.allow {
-    background: var(--color-clear-moss, #1e3c2c);
-    border-color: var(--color-clear-moss, #1e3c2c);
+    background: var(--color-performance-growth, #007a4d);
+    border-color: var(--color-performance-growth, #007a4d);
   }
 
   .status-chip.review {
-    background: var(--color-clear-onyx, #0a0e19);
-    border-color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-ink, #090909);
+    border-color: var(--color-performance-ink, #090909);
   }
 
   .status-chip.block {
-    background: var(--color-clear-stop, #c41e3a);
-    border-color: var(--color-clear-stop, #c41e3a);
+    background: var(--color-performance-risk, #c62026);
+    border-color: var(--color-performance-risk, #c62026);
   }
 
   .workbench__body {
@@ -477,16 +477,16 @@
     padding: 1rem;
     background:
       linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3.5rem 3.5rem,
-      var(--color-clear-porcelain, #f9f9f9);
+      var(--color-performance-paper, #f3f3f0);
   }
 
   .scenario-panel,
   .evidence-panel,
   .sandbox-panel {
     min-width: 0;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 8px;
-    background: var(--color-clear-panel, #ffffff);
+    background: var(--color-performance-panel, #ffffff);
   }
 
   .scenario-panel {
@@ -501,7 +501,7 @@
   .scenario-panel h3,
   .workflow-image__copy h4 {
     margin: 0;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-weight: var(--font-medium);
     line-height: 1.1;
   }
@@ -513,7 +513,7 @@
   .scenario-panel p,
   .workflow-image__copy p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.9rem;
     line-height: 1.5;
   }
@@ -531,9 +531,9 @@
     gap: 0.24rem;
     min-height: 4.25rem;
     padding: 0.78rem 0.82rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 4px;
-    background: var(--color-clear-panel, #ffffff);
+    background: var(--color-performance-panel, #ffffff);
     text-align: left;
     transition:
       border-color var(--duration-micro) var(--ease-standard),
@@ -542,12 +542,12 @@
 
   .scenario-tab:hover,
   .scenario-tab:focus-visible {
-    border-color: var(--color-clear-border-strong, #cecece);
+    border-color: var(--color-performance-line-strong, #9c9c96);
   }
 
   .scenario-tab.selected {
-    border-color: var(--color-clear-ocean, #0048ff);
-    background: color-mix(in srgb, var(--color-clear-pill-active, #cad7fa) 42%, white);
+    border-color: var(--color-performance-signal, #0057b8);
+    background: color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 42%, white);
   }
 
   .scenario-tab.selected::before {
@@ -555,18 +555,18 @@
     position: absolute;
     inset: 0 auto 0 0;
     width: 0.2rem;
-    background: var(--color-clear-ocean, #0048ff);
+    background: var(--color-performance-signal, #0057b8);
   }
 
   .scenario-tab__label {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 0.9rem;
     font-weight: var(--font-medium);
     line-height: 1.2;
   }
 
   .scenario-tab__summary {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.65rem;
     line-height: 1.35;
@@ -574,7 +574,7 @@
   }
 
   .workflow-image {
-    --workflow-accent: var(--color-clear-pastel-blue, #afc1fd);
+    --workflow-accent: var(--color-performance-signal-soft, #dce8f5);
     --workflow-surface: #dfe6ff;
     grid-area: visual;
     display: grid;
@@ -586,7 +586,7 @@
     padding: clamp(1.25rem, 2.1vw, 1.7rem);
     overflow: hidden;
     border: 1px solid
-      color-mix(in srgb, var(--workflow-accent) 74%, var(--color-clear-onyx, #0a0e19));
+      color-mix(in srgb, var(--workflow-accent) 74%, var(--color-performance-ink, #090909));
     border-radius: 8px;
     background:
       linear-gradient(90deg, rgba(10, 14, 25, 0.05) 1px, transparent 1px) 0 0 / 2.4rem 2.4rem,
@@ -594,17 +594,17 @@
   }
 
   .workflow-image--allow {
-    --workflow-accent: var(--color-clear-pistachio, #dbefdb);
-    --workflow-surface: var(--color-clear-frosted-mint, #d9fff7);
+    --workflow-accent: var(--color-performance-growth-soft, #dcece5);
+    --workflow-surface: var(--color-performance-growth-soft, #dcece5);
   }
 
   .workflow-image--review {
-    --workflow-accent: var(--color-clear-pastel-blue, #afc1fd);
+    --workflow-accent: var(--color-performance-signal-soft, #dce8f5);
     --workflow-surface: #dfe6ff;
   }
 
   .workflow-image--block {
-    --workflow-accent: var(--color-clear-candy-purple, #efd4ff);
+    --workflow-accent: var(--color-performance-pressure-soft, #f7e2d7);
     --workflow-surface: #f7e8ff;
   }
 
@@ -665,10 +665,10 @@
     align-items: center;
     min-height: 1.75rem;
     padding: 0.3rem 0.45rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 4px;
-    background: var(--color-clear-porcelain, #f9f9f9);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
     font-family: var(--font-mono);
     font-size: 0.66rem;
     line-height: 1.15;
@@ -686,15 +686,15 @@
     align-items: center;
     min-width: 0;
     padding: 0.6rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 4px;
-    background: var(--color-clear-panel, #ffffff);
+    background: var(--color-performance-panel, #ffffff);
   }
 
   .connection-row strong {
     display: block;
     overflow: hidden;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 0.78rem;
     font-weight: var(--font-medium);
     line-height: 1.25;
@@ -703,7 +703,7 @@
   }
 
   .connection-row span:last-child {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.72rem;
     line-height: 1.35;
   }
@@ -713,22 +713,22 @@
     width: 0.48rem;
     height: 0.48rem;
     border-radius: 999px;
-    background: var(--color-clear-grey-quiet, #818181);
+    background: var(--color-performance-muted, #5e6268);
   }
 
   .connection-dot.allow,
   .run-dot.pass {
-    background: var(--color-clear-link-green, #397554);
+    background: var(--color-performance-growth, #007a4d);
   }
 
   .connection-dot.review,
   .run-dot.warn {
-    background: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-ink, #090909);
   }
 
   .connection-dot.block,
   .run-dot.halt {
-    background: var(--color-clear-stop, #c41e3a);
+    background: var(--color-performance-risk, #c62026);
   }
 
   .console-row {
@@ -760,16 +760,16 @@
     min-height: 3.2rem;
     min-width: 0;
     padding: 0.62rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 4px;
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-grey, #636363);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.68rem;
     line-height: 1.25;
   }
 
   .sandbox-cell strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: var(--font-mono);
     font-size: 0.68rem;
     font-weight: var(--font-medium);

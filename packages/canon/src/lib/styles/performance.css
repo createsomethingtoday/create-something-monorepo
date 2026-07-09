@@ -24,7 +24,7 @@
   color: var(--color-performance-pressure);
   font-size: 0.76rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -90,6 +90,49 @@
 
 .performance-pressure-rail {
   box-shadow: inset 4px 0 0 var(--color-performance-pressure);
+}
+
+.performance-control-rail {
+  --performance-control-color: var(--color-performance-controlled);
+  --performance-control-surface: var(--color-performance-controlled-soft);
+  border: 1px solid var(--color-performance-line);
+  border-inline-start: 4px solid var(--performance-control-color);
+  border-radius: var(--radius-performance-sm);
+  background: color-mix(in srgb, var(--performance-control-surface) 24%, var(--color-performance-panel));
+}
+
+.performance-control-rail[data-control-state='ready'] {
+  --performance-control-color: var(--color-performance-ready);
+  --performance-control-surface: var(--color-performance-ready-soft);
+}
+
+.performance-control-rail[data-control-state='review'] {
+  --performance-control-color: var(--color-performance-review);
+  --performance-control-surface: var(--color-performance-review-soft);
+}
+
+.performance-control-rail[data-control-state='stop'] {
+  --performance-control-color: var(--color-performance-stop);
+  --performance-control-surface: var(--color-performance-stop-soft);
+}
+
+.performance-receipt-stamp {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 28px;
+  align-items: center;
+  padding-inline: 8px;
+  border: 1px solid var(--color-performance-line-strong);
+  border-radius: var(--radius-performance-sm);
+  background: var(--color-performance-panel);
+  color: var(--color-performance-ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .property-performance {

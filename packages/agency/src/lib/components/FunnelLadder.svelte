@@ -67,11 +67,11 @@
     width: 100%;
     margin: 0;
     padding: 1rem;
-    border: 1px solid var(--color-clear-border-strong, #cecece);
-    border-radius: var(--radius-clear-md, 8px);
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    border-radius: var(--radius-performance-md, 4px);
     background:
       linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
-      var(--color-clear-porcelain, #f9f9f9);
+      var(--color-performance-paper, #f3f3f0);
   }
 
   .funnel-ladder__copy {
@@ -88,10 +88,10 @@
     min-height: 1.9rem;
     align-items: center;
     padding: 0.36rem 0.62rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-grey, #636363);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.76rem;
     font-weight: var(--font-semibold);
@@ -103,7 +103,7 @@
   .funnel-ladder h2,
   .funnel-card h3 {
     margin: 0;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     letter-spacing: 0;
     text-wrap: balance;
   }
@@ -116,7 +116,7 @@
 
   .funnel-ladder p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     line-height: 1.58;
     text-wrap: pretty;
   }
@@ -133,13 +133,13 @@
     gap: 0.75rem;
     min-height: 18rem;
     padding: 1rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
   }
 
   .funnel-card span {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     letter-spacing: 0;
@@ -160,20 +160,20 @@
     align-self: end;
     justify-self: start;
     margin-top: 0.25rem;
-    border-radius: var(--radius-clear-sm, 4px);
+    border-radius: var(--radius-performance-sm, 4px);
     box-shadow: none;
   }
 
   .funnel-card :global(.btn-primary) {
-    background: var(--color-clear-onyx, #0a0e19);
-    border-color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-ink, #090909);
+    border-color: var(--color-performance-ink, #090909);
     color: #ffffff;
   }
 
   .funnel-card :global(.btn-secondary) {
-    background: var(--color-clear-panel, #ffffff);
-    border-color: var(--color-clear-border, #e1e1e1);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-panel, #ffffff);
+    border-color: var(--color-performance-line, #d7d7d2);
+    color: var(--color-performance-ink, #090909);
   }
 
   @media (max-width: 900px) {

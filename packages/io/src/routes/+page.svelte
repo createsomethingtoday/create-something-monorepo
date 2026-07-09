@@ -2,18 +2,18 @@
   import type { PageData } from './$types';
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearDecisionPanel,
-    ClearPageSection,
-    ClearProofStrip,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformanceDecisionPanel,
+    PerformancePageSection,
+    PerformanceProofStrip,
     PapersGrid,
     PerformanceLabBand,
     PropertyFunnel,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem,
-    type ClearDecisionItem,
+    type PerformanceCardItem,
+    type PerformanceCtaItem,
+    type PerformanceDecisionItem,
     type PerformanceLabMetric
   } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
@@ -71,7 +71,7 @@
     }
   ];
 
-  const heroSignals: ClearCardItem[] = [
+  const heroSignals: PerformanceCardItem[] = [
     {
       eyebrow: 'Signal',
       icon: 'search',
@@ -92,7 +92,7 @@
     }
   ];
 
-  const researchTracks: ClearCardItem[] = [
+  const researchTracks: PerformanceCardItem[] = [
     {
       eyebrow: 'Field evidence',
       icon: 'search',
@@ -143,7 +143,7 @@
     }
   ];
 
-  const handoffCards: ClearCardItem[] = [
+  const handoffCards: PerformanceCardItem[] = [
     {
       eyebrow: '.space',
       icon: 'settings',
@@ -170,7 +170,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Method',
       icon: 'document',
@@ -191,7 +191,7 @@
     }
   ];
 
-  const decisionStates: ClearDecisionItem[] = [
+  const decisionStates: PerformanceDecisionItem[] = [
     {
       label: 'Read',
       summary: 'Evidence selected',
@@ -256,7 +256,7 @@
   propertyName="io"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -272,7 +272,7 @@
   <p class="clear-note">Patterns, benchmarks, and operator notes tied back to real builds.</p>
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={heroSignals}
       columns={1}
       density="compact"
@@ -281,9 +281,9 @@
   {/snippet}
 
   {#snippet after()}
-    <ClearProofStrip items={proofMetrics} ariaLabel="Research proof artifacts" />
+    <PerformanceProofStrip items={proofMetrics} ariaLabel="Research proof artifacts" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
 <PerformanceLabBand
   title="Evidence earns the next move."
@@ -292,7 +292,7 @@
   ariaLabel="Research readiness"
 />
 
-<ClearDecisionPanel
+<PerformanceDecisionPanel
   id="research-decision"
   eyebrow="Research decision path"
   title="Let the interaction show whether to read, test, or scope."
@@ -301,16 +301,16 @@
   ariaLabel="Research decision path"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="What the research is for"
   title="The research layer should make the next operating decision easier."
   description="This is where CREATE SOMETHING documents what held up in practice, what failed under pressure, and what deserves to be carried forward into the product, policy, or delivery layer."
 >
   {#snippet after()}
-    <ClearCardGrid items={researchTracks} columns={2} ariaLabel="Research uses" />
+    <PerformanceCardGrid items={researchTracks} columns={2} ariaLabel="Research uses" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
 {#if featuredExperiments.length > 0}
   <PapersGrid
@@ -320,16 +320,16 @@
   />
 {/if}
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Cross-property handoff"
   title=".io does the reading so the rest of CREATE SOMETHING can move faster."
   description="Research only matters if it transfers cleanly into practice, delivery, or philosophy. That handoff is the point of the network."
 >
   {#snippet after()}
-    <ClearCardGrid items={handoffCards} columns={3} ariaLabel="Research handoff destinations" />
+    <PerformanceCardGrid items={handoffCards} columns={3} ariaLabel="Research handoff destinations" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
 <PropertyFunnel
   current="io"
@@ -337,7 +337,7 @@
   description="Use .io to understand the evidence, move to .space when the pattern needs runtime validation, and move to .agency when the workflow is ready to be scoped."
 />
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Research stack"
   title="Start with the methodology, then inspect the work."
   description="If you want the operating frame behind the papers, start with the methodology and then move into the experiment and paper archive."
@@ -347,13 +347,13 @@
     <Button href="/methodology">See The Methodology</Button>
     <Button href="/graph" variant="secondary">Open The Research Graph</Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>
 
 <style>
   .clear-note {
     margin: 0;
     max-width: 36rem;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.94rem;
     line-height: 1.55;
   }

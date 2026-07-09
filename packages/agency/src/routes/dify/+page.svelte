@@ -1,16 +1,16 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const statusCards: ClearCardItem[] = [
+  const statusCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Workflow',
       icon: 'settings',
@@ -31,7 +31,7 @@
     }
   ];
 
-  const proofCards: ClearCardItem[] = [
+  const proofCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Sanitized proof',
       icon: 'document',
@@ -80,7 +80,7 @@
     }
   ];
 
-  const audienceCards: ClearCardItem[] = [
+  const audienceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Builders',
       icon: 'settings',
@@ -104,7 +104,7 @@
     }
   ];
 
-  const funnelCards: ClearCardItem[] = [
+  const funnelCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Learn',
       icon: 'document',
@@ -138,7 +138,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Runtime',
       icon: 'settings',
@@ -169,7 +169,7 @@
   {faqItems}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -185,44 +185,44 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid items={statusCards} columns={1} density="compact" ariaLabel="Dify status" />
+    <PerformanceCardGrid items={statusCards} columns={1} density="compact" ariaLabel="Dify status" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Proof"
   title="Dify proof should be visible without exposing private traces."
   description="The workflow becomes easier to trust when decision owners can see the app shape, tool boundary, eval posture, sanitized artifacts, and delivery evidence."
 >
   {#snippet after()}
-    <ClearCardGrid items={proofCards} columns={4} ariaLabel="Dify proof cards" />
+    <PerformanceCardGrid items={proofCards} columns={4} ariaLabel="Dify proof cards" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Audience"
   title="The same Dify map serves builders, operators, and teams."
   description="Each audience sees a concrete path instead of a generic chatbot pitch."
 >
   {#snippet after()}
-    <ClearCardGrid items={audienceCards} columns={3} ariaLabel="Dify audience fit" />
+    <PerformanceCardGrid items={audienceCards} columns={3} ariaLabel="Dify audience fit" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Content path"
   title="Teach the control plane before asking for trust."
   description="The guide cluster explains the operating model, validates the workflow, routes teams to the right next action, and keeps the public language focused on the task, boundary, owner, stop point, and evidence."
 >
   {#snippet after()}
-    <ClearCardGrid items={funnelCards} columns={4} ariaLabel="Dify content path" />
+    <PerformanceCardGrid items={funnelCards} columns={4} ariaLabel="Dify content path" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Map the agent surface"
   title="Bring one Dify workflow that needs control."
   description="I’ll map the app surface, MCP boundary, eval gates, approval states, and evidence path before the workflow becomes a production agent."
@@ -235,4 +235,4 @@
     <Button href="/dify/mcp-control-plane" variant="secondary">Read Control Plane</Button>
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

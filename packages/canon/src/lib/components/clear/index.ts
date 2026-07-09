@@ -1,3 +1,7 @@
+/**
+ * @deprecated Import the preferred Performance* names from Canon instead.
+ * These exports remain stable for downstream and registry compatibility.
+ */
 export { default as ClearPageSection } from './ClearPageSection.svelte';
 export { default as ClearErrorPage } from './ClearErrorPage.svelte';
 export {
