@@ -4,7 +4,6 @@
 	import type { Asset } from '$lib/server/airtable';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
 	import { isTemplateSearchSuppressed } from '$lib/utils/template-health';
-	import { LoaderCircle } from 'lucide-svelte';
 	import {
 		formatCompactCurrency,
 		formatCompactNumber,
@@ -16,7 +15,6 @@
 		asset: Asset;
 		showPerformance?: boolean;
 		isViewDisabled?: boolean;
-		isViewLoading?: boolean;
 		isEditDisabled?: boolean;
 		isEditLoading?: boolean;
 		onView?: (id: string) => void;
@@ -29,7 +27,6 @@
 		asset,
 		showPerformance = false,
 		isViewDisabled = false,
-		isViewLoading = false,
 		isEditDisabled = false,
 		isEditLoading = false,
 		onView,
@@ -88,8 +85,8 @@
 		<a
 			href={assetHref}
 			class="asset-thumbnail-link"
-			class:loading={isViewLoading}
 			aria-disabled={isViewDisabled}
+			tabindex={isViewDisabled ? -1 : undefined}
 			onmouseenter={preloadView}
 			onfocus={preloadView}
 			onclick={handleView}
@@ -117,16 +114,13 @@
 		<a
 			href={assetHref}
 			class="asset-name-link"
-			class:loading={isViewLoading}
 			aria-disabled={isViewDisabled}
+			tabindex={isViewDisabled ? -1 : undefined}
 			onmouseenter={preloadView}
 			onfocus={preloadView}
 			onclick={handleView}
 		>
 			<span class="asset-name-row">
-				{#if isViewLoading}
-					<LoaderCircle size={14} class="row-spinner" />
-				{/if}
 				<span class="asset-name">{asset.name}</span>
 			</span>
 			{#if hasActiveOffer}
@@ -196,7 +190,6 @@
 			status={asset.status}
 			actions={[actionConfig.primary, ...actionConfig.secondary]}
 			{isViewDisabled}
-			{isViewLoading}
 			{isEditDisabled}
 			{isEditLoading}
 			{onView}
@@ -247,11 +240,6 @@
 		opacity: 0.65;
 	}
 
-	.asset-thumbnail-link.loading,
-	.asset-name-link.loading {
-		opacity: 1;
-	}
-
 	.thumbnail {
 		width: 30px;
 		height: 38px;
@@ -286,18 +274,6 @@
 		align-items: center;
 		gap: 0.35rem;
 		min-width: 0;
-	}
-
-	:global(.row-spinner) {
-		flex-shrink: 0;
-		color: var(--color-info);
-		animation: spin 0.8s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
 	}
 
 	.offer-badge-row {

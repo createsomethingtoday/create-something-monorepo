@@ -1,5 +1,6 @@
 // Button
 export { default as Button } from './Button.svelte';
+export { default as LinkButton } from './LinkButton.svelte';
 
 // Card
 export { default as Card } from './Card.svelte';
