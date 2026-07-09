@@ -12,7 +12,7 @@
  */
 
 import {
-  processZipFile,
+  processZipBuffer,
   buildInventory,
   runScan,
   generateReport,
@@ -76,6 +76,10 @@ export default {
       }
 
       if (url.pathname === '/scan' && request.method === 'POST') {
+        const auth = authorize(request, env);
+        if (!auth.ok) {
+          return json({ success: false, error: auth.error, duration_ms: 0 }, corsHeaders, auth.status);
+        }
         return await handleScan(request, env, corsHeaders);
       }
 
@@ -134,6 +138,17 @@ async function handleScan(
     );
   }
 
+  // SSRF guard: reject private, loopback, and link-local artifact hosts.
+  for (const candidate of [bundleUrl, sourceMapUrl]) {
+    if (candidate && !isPublicHostname(candidate.hostname)) {
+      return json(
+        { success: false, error: 'Artifact URLs must resolve to a public host.', duration_ms: 0 },
+        corsHeaders,
+        400
+      );
+    }
+  }
+
   console.log(`Scanning bundle: ${bundleUrl.href} (submission: ${body.submissionId || 'n/a'})`);
 
   try {
@@ -141,7 +156,7 @@ async function handleScan(
     const bundleArtifact = await fetchArtifact(bundleUrl, 'bundle');
 
     // Process ZIP
-    const files = await processZipFile(new Blob([bundleArtifact.buffer]), defaultConfig, (msg) =>
+    const files = await processZipBuffer(bundleArtifact.buffer, defaultConfig, (msg) =>
       console.log(`[ZIP] ${msg}`)
     );
 
@@ -213,6 +228,83 @@ function isHttpUrl(url: URL): boolean {
   return url.protocol === 'http:' || url.protocol === 'https:';
 }
 
+interface AuthResult {
+  ok: boolean;
+  status: number;
+  error?: string;
+}
+
+/**
+ * Authorize a /scan request against SCAN_WEBHOOK_SECRET.
+ *
+ * Accepts the secret via `Authorization: Bearer <secret>` or `X-Scan-Secret`.
+ * Fails closed in production if no secret is configured; allows unauthenticated
+ * access only in non-production environments (for local development).
+ */
+function authorize(request: Request, env: Env): AuthResult {
+  const secret = env.SCAN_WEBHOOK_SECRET;
+
+  if (!secret) {
+    if (env.ENVIRONMENT === 'production') {
+      return { ok: false, status: 500, error: 'Scanner auth is not configured.' };
+    }
+    return { ok: true, status: 200 };
+  }
+
+  const header = request.headers.get('Authorization') || '';
+  const bearer = header.startsWith('Bearer ') ? header.slice(7) : '';
+  const provided = bearer || request.headers.get('X-Scan-Secret') || '';
+
+  if (provided && constantTimeEqual(provided, secret)) {
+    return { ok: true, status: 200 };
+  }
+
+  return { ok: false, status: 401, error: 'Unauthorized' };
+}
+
+/**
+ * Constant-time string comparison to avoid leaking the secret via timing.
+ */
+function constantTimeEqual(a: string, b: string): boolean {
+  const aBytes = new TextEncoder().encode(a);
+  const bBytes = new TextEncoder().encode(b);
+  // Compare against max length so mismatched lengths still take constant time.
+  const length = Math.max(aBytes.length, bBytes.length);
+  let diff = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < length; i++) {
+    diff |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+  }
+  return diff === 0;
+}
+
+/**
+ * Reject hosts that could be used for SSRF: loopback, private, and link-local
+ * ranges, plus obvious internal names. Public DNS names are allowed.
+ */
+function isPublicHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, ''); // strip IPv6 brackets
+
+  if (host === 'localhost' || host.endsWith('.localhost')) return false;
+  if (host.endsWith('.local') || host.endsWith('.internal')) return false;
+
+  // IPv6 loopback / unique-local / link-local
+  if (host === '::1' || host.startsWith('fc') || host.startsWith('fd') || host.startsWith('fe80')) {
+    return false;
+  }
+
+  // IPv4 literal ranges
+  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4) {
+    const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
+    if (a === 127 || a === 10 || a === 0) return false; // loopback / private / this-host
+    if (a === 192 && b === 168) return false; // private
+    if (a === 169 && b === 254) return false; // link-local (incl. cloud metadata)
+    if (a === 172 && b >= 16 && b <= 31) return false; // private
+  }
+
+  return true;
+}
+
 async function sha256Hex(buffer: ArrayBuffer): Promise<string> {
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
   return [...new Uint8Array(hashBuffer)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
@@ -255,7 +347,7 @@ async function fetchSourceMapArtifact(url: URL): Promise<{
   const artifact = await fetchArtifact(url, 'source map artifact');
   try {
     return {
-      files: await processZipFile(new Blob([artifact.buffer]), defaultConfig, (msg) =>
+      files: await processZipBuffer(artifact.buffer, defaultConfig, (msg) =>
         console.log(`[SOURCE_MAP_ZIP] ${msg}`)
       ),
       metadata: artifact.metadata

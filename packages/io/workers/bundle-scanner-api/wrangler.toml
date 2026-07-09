@@ -11,7 +11,8 @@ compatibility_flags = ["nodejs_compat"]
 
 workers_dev = true
 
-# TODO: Add custom domain once tested
+# Custom domain: uncomment to bind on the next `wrangler deploy`.
+# The createsomething.io zone must be active in the same Cloudflare account.
 # routes = [{ pattern = "scanner-api.createsomething.io/*", zone_name = "createsomething.io" }]
 
 [vars]
@@ -19,6 +20,6 @@ ENVIRONMENT = "production"
 # Allowed origins for CORS
 ALLOWED_ORIGINS = "https://wf.createsomething.io,https://wf-asset-dashboard.vercel.app,https://webflow.com"
 
-# Secrets (set via `wrangler secret put`):
-# - AIRTABLE_API_KEY: For updating submission records with scan results
-# - SCAN_WEBHOOK_SECRET: HMAC key for authenticating scan requests
+# Secrets — set before deploying (see .dev.vars.example for local dev):
+#   wrangler secret put SCAN_WEBHOOK_SECRET   # required; POST /scan fails closed without it in production
+#   wrangler secret put AIRTABLE_API_KEY      # optional; write scan results back to submission records

@@ -2,6 +2,27 @@ import JSZip from 'jszip';
 import type { ScanConfig, UnzippedFile, ProgressCallback } from '../types';
 
 /**
+ * Normalize a raw ZIP entry name to a POSIX-style relative path:
+ * convert backslashes to forward slashes and strip leading slashes.
+ */
+export function normalizeEntryPath(rawFilename: string): string {
+  return rawFilename.replace(/\\/g, '/').replace(/^\/+/, '');
+}
+
+/**
+ * Determine whether a normalized entry path is unsafe to extract.
+ * Guards against zip-slip traversal (`..`), absolute paths, and macOS
+ * resource-fork (`__MACOSX`) metadata directories.
+ */
+export function isUnsafeEntryPath(normalizedPath: string): boolean {
+  return (
+    normalizedPath.includes('..') ||
+    normalizedPath.includes('__MACOSX') ||
+    normalizedPath.startsWith('/')
+  );
+}
+
+/**
  * Process a ZIP file and extract its contents with safety checks
  * 
  * @param file - The ZIP file to process
@@ -11,7 +32,7 @@ import type { ScanConfig, UnzippedFile, ProgressCallback } from '../types';
  * @throws Error if ZIP is invalid or exceeds safety limits
  */
 export async function processZipFile(
-  file: File | Blob,
+  file: File | Blob | ArrayBuffer | Uint8Array,
   config: ScanConfig,
   onProgress: ProgressCallback
 ): Promise<UnzippedFile[]> {
@@ -42,17 +63,11 @@ export async function processZipFile(
       // Skip directories
       if (entry.dir) continue;
 
-      // NORMALIZE PATH TO POSIX
-      // 1. Replace backslashes with forward slashes
-      // 2. Remove leading slashes
-      let normalizedPath = rawFilename.replace(/\\/g, '/').replace(/^\/+/, '');
+      // Normalize to a POSIX-style relative path.
+      const normalizedPath = normalizeEntryPath(rawFilename);
 
       // Zip Slip Protection & Basic Traversal Check
-      if (
-        normalizedPath.includes('..') || 
-        normalizedPath.includes('__MACOSX') ||
-        normalizedPath.startsWith('/')
-      ) {
+      if (isUnsafeEntryPath(normalizedPath)) {
         // Silent skip for MACOSX, warn for others
         if (!normalizedPath.includes('__MACOSX')) {
           console.warn(`Skipping unsafe or system path: ${normalizedPath}`);
@@ -84,13 +99,16 @@ export async function processZipFile(
 }
 
 /**
- * Process a ZIP file from a buffer (for Node.js usage)
+ * Process a ZIP file from a buffer (for Node.js / Cloudflare Workers usage).
+ *
+ * Loads the ArrayBuffer directly rather than wrapping it in a Blob. JSZip reads
+ * Blobs via FileReader, which is unavailable in Node and on the Workers runtime;
+ * ArrayBuffer input is supported everywhere.
  */
 export async function processZipBuffer(
   buffer: ArrayBuffer,
   config: ScanConfig,
   onProgress: ProgressCallback
 ): Promise<UnzippedFile[]> {
-  const blob = new Blob([buffer]);
-  return processZipFile(blob, config, onProgress);
+  return processZipFile(buffer, config, onProgress);
 }

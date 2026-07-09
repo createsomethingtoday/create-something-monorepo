@@ -1,0 +1,11 @@
+# Local development secrets for `wrangler dev`.
+# Copy to `.dev.vars` (gitignored) and fill in real values.
+#
+# In production these are set with `wrangler secret put <NAME>` instead.
+
+# Shared secret required on POST /scan (Authorization: Bearer <secret> or X-Scan-Secret).
+# Required in production; without it the worker fails closed (HTTP 500).
+SCAN_WEBHOOK_SECRET="local-dev-secret"
+
+# Optional: used to write scan results back to Airtable submission records.
+AIRTABLE_API_KEY=""

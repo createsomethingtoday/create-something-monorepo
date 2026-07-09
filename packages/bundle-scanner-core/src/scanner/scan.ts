@@ -132,9 +132,8 @@ export function runScan(
     let fileMatchCount = 0;
 
     for (const cm of compiledMatchers) {
-      // Early exit: check rule-level limits
-      const currentRuleCount = ruleMatchCounts.get(cm.ruleId) ?? 0;
-      if (currentRuleCount >= config.limits.maxMatchesPerRule) continue;
+      // Early exit: check rule-level limits (read live count, not a stale capture)
+      if ((ruleMatchCounts.get(cm.ruleId) ?? 0) >= config.limits.maxMatchesPerRule) continue;
       
       // Early exit: check file globs BEFORE regex execution
       if (!matchesAnyGlob(file.path, cm.matcher.fileGlobs)) continue;
@@ -151,8 +150,9 @@ export function runScan(
         // Safety: prevent infinite loops
         if (loopCount > 5000) break;
         
-        // Config limits
+        // Config limits (per-file and per-rule, both read live)
         if (fileMatchCount >= config.limits.maxMatchesPerFile) break;
+        if ((ruleMatchCounts.get(cm.ruleId) ?? 0) >= config.limits.maxMatchesPerRule) break;
 
         const index = match.index;
         const matchText = match[0];
@@ -263,7 +263,7 @@ export function runScan(
         });
 
         fileMatchCount++;
-        ruleMatchCounts.set(cm.ruleId, currentRuleCount + 1);
+        ruleMatchCounts.set(cm.ruleId, (ruleMatchCounts.get(cm.ruleId) ?? 0) + 1);
       }
     }
   }
