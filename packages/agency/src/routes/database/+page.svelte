@@ -366,6 +366,48 @@
   const performanceBudgets = databaseLayerDemoState.performanceBudgets;
   const systemDesignPrinciples = databaseLayerDemoState.systemDesignPrinciples;
 
+  const layerSpecs = [
+    {
+      label: 'Substrate',
+      role: 'Record truth',
+      detail:
+        'Source rows, workflow records, actions, runs, receipts, and readiness live as durable objects.',
+      proof: `${records.length} sample records / ${receipts.length} proof receipts`
+    },
+    {
+      label: 'Topology',
+      role: 'Relationship graph',
+      detail:
+        'Packages, workers, policies, clients, APIs, and records become a navigable graph instead of scattered context.',
+      proof: 'Relations, source bindings, and review signals stay attached'
+    },
+    {
+      label: 'Atlas',
+      role: 'Operator map',
+      detail:
+        'The workflow becomes a readable canvas: where state enters, what can run, what waits, what stops, and where proof lands.',
+      proof: `${bindings.length} Atlas bindings / selected node detail`
+    }
+  ];
+
+  const buildSpecs = [
+    {
+      label: 'Database',
+      value: 'source records',
+      detail: 'Imported state is named before it becomes a map node or agent task.'
+    },
+    {
+      label: 'Automation',
+      value: 'API + MCP',
+      detail: 'Approved surfaces inspect the same records instead of scraping UI state.'
+    },
+    {
+      label: 'Judgment',
+      value: 'receipts',
+      detail: 'Approvals, stops, handoffs, and proof stay beside the affected object.'
+    }
+  ];
+
   let selectedRecordId = $state(records[0]?.id ?? '');
   let filter = $state('');
 
@@ -543,6 +585,44 @@
         inspection across UI, API, MCP, and agents.
       </p>
     </div>
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
+  eyebrow="Spec reveal"
+  title="Three layers, one inspectable workflow object."
+  description="The product is not a hidden AI stack. It is a record system that reveals its own specs: Substrate stores the truth, Topology shows the relationships, and Atlas makes the workflow readable to operators and agents."
+>
+  {#snippet after()}
+    <section class="spec-reveal" aria-label="Atlas Topology Substrate spec reveal">
+      <div class="spec-reveal__layers">
+        {#each layerSpecs as spec}
+          <article>
+            <span>{spec.label}</span>
+            <strong>{spec.role}</strong>
+            <p>{spec.detail}</p>
+            <code>{spec.proof}</code>
+          </article>
+        {/each}
+      </div>
+
+      <div class="spec-reveal__receipt" aria-label="What went into the database layer">
+        <div class="spec-reveal__receipt-header">
+          <span>What went into it</span>
+          <strong>Database / Automation / Judgment</strong>
+        </div>
+        <div class="spec-reveal__build">
+          {#each buildSpecs as spec}
+            <div>
+              <span>{spec.label}</span>
+              <strong>{spec.value}</strong>
+              <p>{spec.detail}</p>
+            </div>
+          {/each}
+        </div>
+      </div>
+    </section>
   {/snippet}
 </ClearPageSection>
 
@@ -729,7 +809,8 @@
 
 <style>
   .demo-shell,
-  .database-demo {
+  .database-demo,
+  .spec-reveal {
     border: 1px solid var(--color-clear-border, #e1e1e1);
     border-radius: var(--radius-clear-sm, 4px);
     background: var(--color-clear-panel, #ffffff);
@@ -742,7 +823,8 @@
   }
 
   .demo-shell__bar,
-  .database-demo__toolbar {
+  .database-demo__toolbar,
+  .spec-reveal__receipt-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -755,7 +837,10 @@
   .record-list small,
   .record-detail__header span,
   .detail-grid span,
-  .detail-panel span {
+  .detail-panel span,
+  .spec-reveal article span,
+  .spec-reveal__receipt-header span,
+  .spec-reveal__build span {
     color: var(--color-clear-grey, #636363);
     font-family: var(--font-mono);
     font-size: 0.72rem;
@@ -768,6 +853,101 @@
     font-family: var(--font-mono);
     font-size: 0.74rem;
     font-weight: var(--font-medium);
+  }
+
+  .spec-reveal {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.4fr);
+    overflow: hidden;
+  }
+
+  .spec-reveal__layers {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .spec-reveal article {
+    display: grid;
+    align-content: start;
+    gap: 0.65rem;
+    min-height: 18rem;
+    padding: clamp(1rem, 2vw, 1.25rem);
+    border-right: 1px solid var(--color-clear-border, #e1e1e1);
+    background:
+      linear-gradient(var(--color-clear-grid, rgb(10 14 25 / 0.045)) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-clear-grid, rgb(10 14 25 / 0.045)) 1px, transparent 1px),
+      var(--color-clear-panel, #ffffff);
+    background-size: 24px 24px;
+  }
+
+  .spec-reveal article strong {
+    color: var(--color-clear-onyx, #0a0e19);
+    font-size: clamp(1.35rem, 2.5vw, 2rem);
+    font-weight: var(--font-medium);
+    line-height: 1.02;
+  }
+
+  .spec-reveal article p,
+  .spec-reveal__build p {
+    margin: 0;
+    color: var(--color-clear-grey, #636363);
+    line-height: 1.5;
+  }
+
+  .spec-reveal article code {
+    align-self: end;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--color-clear-border, #e1e1e1);
+    color: var(--color-clear-onyx, #0a0e19);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    line-height: 1.4;
+    white-space: normal;
+  }
+
+  .spec-reveal__receipt {
+    display: grid;
+    align-content: start;
+    border-left: 1px solid var(--color-clear-border, #e1e1e1);
+    background: var(--color-clear-porcelain, #f9f9f9);
+  }
+
+  .spec-reveal__receipt-header {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+  }
+
+  .spec-reveal__receipt-header strong {
+    color: var(--color-clear-onyx, #0a0e19);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    font-weight: var(--font-medium);
+    line-height: 1.3;
+    text-align: right;
+    text-transform: uppercase;
+  }
+
+  .spec-reveal__build {
+    display: grid;
+  }
+
+  .spec-reveal__build div {
+    display: grid;
+    gap: 0.32rem;
+    min-height: 6rem;
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+  }
+
+  .spec-reveal__build div:last-child {
+    border-bottom: 0;
+  }
+
+  .spec-reveal__build strong {
+    color: var(--color-clear-onyx, #0a0e19);
+    font-size: 1rem;
+    font-weight: var(--font-medium);
+    line-height: 1.2;
   }
 
   .demo-shell__metrics {
@@ -987,9 +1167,24 @@
   }
 
   @media (max-width: 900px) {
+    .spec-reveal,
     .database-demo__grid,
     .detail-grid {
       grid-template-columns: 1fr;
+    }
+
+    .spec-reveal__layers {
+      grid-template-columns: 1fr;
+    }
+
+    .spec-reveal article {
+      min-height: auto;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    }
+
+    .spec-reveal__receipt {
+      border-left: 0;
     }
 
     .record-list {
@@ -1015,6 +1210,7 @@
     }
 
     .database-demo__toolbar,
+    .spec-reveal__receipt-header,
     .database-demo__toolbar label {
       align-items: stretch;
       flex-direction: column;

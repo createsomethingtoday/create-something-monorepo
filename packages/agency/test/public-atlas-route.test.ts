@@ -25,6 +25,10 @@ const productsRoute = readFileSync(
 	new URL('../src/routes/products/+page.svelte', import.meta.url),
 	'utf8'
 );
+const databaseRoute = readFileSync(
+	new URL('../src/routes/database/+page.svelte', import.meta.url),
+	'utf8'
+);
 const signalProductRoute = readFileSync(
 	new URL('../src/routes/products/signal/+page.svelte', import.meta.url),
 	'utf8'
@@ -143,6 +147,22 @@ test('products route exposes the governance product contract surfaces', () => {
 	assert.ok(productsRoute.includes('Atlas maps the workflow.'));
 	assert.ok(productsRoute.includes("href: product.id === 'atlas' ? '/atlas' : `/products/${product.id}`"));
 	assert.equal(productsRoute.includes('<PublicAtlasCanvas'), false);
+});
+
+test('database route reveals Atlas Topology and Substrate as inspectable specs', () => {
+	assert.ok(databaseRoute.includes('eyebrow="Spec reveal"'));
+	assert.ok(databaseRoute.includes('Substrate'));
+	assert.ok(databaseRoute.includes('Topology'));
+	assert.ok(databaseRoute.includes('Atlas'));
+	assert.ok(databaseRoute.includes("role: 'Record truth'"));
+	assert.ok(databaseRoute.includes("role: 'Relationship graph'"));
+	assert.ok(databaseRoute.includes("role: 'Operator map'"));
+	assert.ok(databaseRoute.includes('What went into it'));
+	assert.ok(databaseRoute.includes('Database / Automation / Judgment'));
+	assert.ok(databaseRoute.includes('Filter records'));
+	assert.ok(databaseRoute.includes('Atlas binding'));
+	assert.ok(databaseRoute.includes('Workflow action'));
+	assert.ok(databaseRoute.includes('Proof receipt'));
 });
 
 test('Signal Decision and Proof product pages attach back to Atlas and each other', () => {
