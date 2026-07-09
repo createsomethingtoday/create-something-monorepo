@@ -170,6 +170,67 @@ test('Atlas Studio tidies the canvas with one persisted session update', async (
   }
 });
 
+test('Atlas Studio exposes shared canvas state over HTTP', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-canvas-state-test-'));
+  const session = await createSession(
+    { client: 'CREATE SOMETHING Test', workflow: 'Agent-assisted Atlas onboarding' },
+    cwd
+  );
+  const server = await startStudioServer({
+    host: '127.0.0.1',
+    port: 0,
+    sessionId: session.id,
+    cwd
+  });
+  const address = server.address();
+  assert.equal(typeof address, 'object');
+
+  try {
+    const initialResponse = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/canvas-state`
+    );
+    assert.equal(initialResponse.status, 200);
+    const initial = await initialResponse.json();
+    assert.equal(initial.version, 'flow.shared-canvas-state.v1');
+    assert.equal(initial.renderer, 'canvas-kernel');
+    assert.equal(initial.sessionId, session.id);
+    assert.equal(initial.counts.totalNodes, 4);
+    assert.equal(initial.visibleNodeIds.length, 4);
+    assert.equal(initial.joins.length, 4);
+
+    const updateResponse = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/canvas-state`,
+      {
+        body: JSON.stringify({
+          query: 'Agent support',
+          selectedNodeId: 'actor_agent',
+          viewport: { x: 12, y: 34, width: 900, height: 600, zoom: 0.42 }
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'PUT'
+      }
+    );
+    assert.equal(updateResponse.status, 200);
+    const updated = await updateResponse.json();
+    assert.equal(updated.query, 'Agent support');
+    assert.equal(updated.selectedNodeId, 'actor_agent');
+    assert.equal(updated.viewport.x, 12);
+    assert.equal(updated.viewport.y, 34);
+    assert.equal(updated.viewport.width, 900);
+    assert.equal(updated.viewport.height, 600);
+    assert.equal(updated.viewport.zoom, 0.42);
+    assert.deepEqual(updated.visibleNodeIds, ['actor_agent']);
+
+    const written = await readSession(session.id, cwd);
+    assert.equal(written.canvas.nodes.length, 4);
+    assert.equal(written.canvas.edges.length, 3);
+    assert.equal(written.canvasState?.version, 'flow.shared-canvas-state.v1');
+    assert.equal(written.canvasState?.query, 'Agent support');
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test('Atlas Studio deletes a canvas node and connected edges over HTTP', async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-delete-node-test-'));
   const session = await createSession(

@@ -1,0 +1,15 @@
+/*
+  App Governance dashboard — Canon database-layer surface.
+  Tailwind for structure, Canon for aesthetics (dark shell).
+*/
+
+@import '@create-something/canon/styles/canon.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: var(--color-bg-pure);
+  color: var(--color-fg-primary);
+}

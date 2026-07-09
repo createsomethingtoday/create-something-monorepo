@@ -133,17 +133,17 @@
 <style>
 	.shell-inner { max-width: 1320px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 	.hero { margin-bottom: 2rem; }
-	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: rgba(255,255,255,0.6); }
-	.hero p { max-width: 72ch; color: rgba(255,255,255,0.74); }
+	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-fg-tertiary); }
+	.hero p { max-width: 72ch; color: var(--color-fg-secondary); }
 	.subnav { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
 	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
-	.subnav a[aria-current='page'] { border-color: rgba(255,255,255,0.5); }
+	.subnav a[aria-current='page'] { border-color: var(--color-focus); }
 	.panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-	.panel { border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; background: rgba(255,255,255,0.03); padding: 1.2rem; }
+	.panel { border: 1px solid var(--color-border-default); border-radius: 20px; background: var(--color-hover); padding: 1.2rem; }
 	.panel.full { grid-column: 1 / -1; }
 	.table-wrap { overflow-x: auto; }
 	table { width: 100%; border-collapse: collapse; }
-	th, td { padding: 0.9rem 0.7rem; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,0.08); }
-	.muted { color: rgba(255,255,255,0.58); font-size: 0.85rem; margin-top: 0.25rem; }
+	th, td { padding: 0.9rem 0.7rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border-default); }
+	.muted { color: var(--color-fg-tertiary); font-size: 0.85rem; margin-top: 0.25rem; }
 	@media (max-width: 980px) { .panels { grid-template-columns: 1fr; } }
 </style>

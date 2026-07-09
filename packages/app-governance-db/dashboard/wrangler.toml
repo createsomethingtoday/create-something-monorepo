@@ -1,0 +1,24 @@
+# App Governance & Transparency — admin dashboard
+# Canon database-layer surface (docs/CANON_DATABASE_LAYER_DESIGN.md)
+
+name = "app-governance-dashboard"
+main = ".svelte-kit/cloudflare/_worker.js"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[assets]
+binding = "ASSETS"
+directory = ".svelte-kit/cloudflare"
+
+[[routes]]
+pattern = "app-governance-dash.createsomething.agency"
+custom_domain = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "app-governance-db"
+database_id = "65e0fa00-e934-47b6-a154-baccd09afa1c"

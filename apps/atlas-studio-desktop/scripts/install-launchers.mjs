@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { existsSync, readdirSync } from 'node:fs';
 import { chmod, cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -56,10 +57,28 @@ function shellQuote(value) {
   return `'${String(value).replaceAll("'", "'\\''")}'`;
 }
 
+function packageManagerEnv() {
+  const nvmVersionsDir = path.join(os.homedir(), '.nvm', 'versions', 'node');
+  const nvmBinDirs = existsSync(nvmVersionsDir)
+    ? readdirSync(nvmVersionsDir)
+        .map((version) => path.join(nvmVersionsDir, version, 'bin'))
+        .filter((binDir) => existsSync(path.join(binDir, 'pnpm')))
+        .sort()
+        .reverse()
+    : [];
+  const pathPrefix = [...nvmBinDirs, '/opt/homebrew/bin', '/usr/local/bin'].filter(Boolean);
+
+  return {
+    ...process.env,
+    PATH: [...pathPrefix, process.env.PATH || ''].join(':')
+  };
+}
+
 function run(command, args) {
   const result = spawnSync(command, args, {
     cwd: WORKSPACE_ROOT,
     encoding: 'utf8',
+    env: packageManagerEnv(),
     stdio: 'pipe'
   });
 

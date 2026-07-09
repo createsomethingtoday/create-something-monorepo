@@ -142,6 +142,78 @@ export declare const AtlasStudioSessionIdSchema: z.ZodObject<{
 }, {
     session_id: string;
 }>;
+export declare const AtlasStudioCanvasStateGetSchema: z.ZodObject<{
+    session_id: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+}, {
+    session_id: string;
+}>;
+export declare const AtlasStudioCanvasStateSetSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    lens: z.ZodOptional<z.ZodString>;
+    query: z.ZodOptional<z.ZodString>;
+    selected_node_id: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    focused_node_ids: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    story_step_id: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    viewport: z.ZodOptional<z.ZodObject<{
+        x: z.ZodOptional<z.ZodNumber>;
+        y: z.ZodOptional<z.ZodNumber>;
+        width: z.ZodOptional<z.ZodNumber>;
+        height: z.ZodOptional<z.ZodNumber>;
+        zoom: z.ZodOptional<z.ZodNumber>;
+        limit: z.ZodOptional<z.ZodNumber>;
+        lod: z.ZodOptional<z.ZodEnum<["detail", "compact", "skeleton"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit?: number | undefined;
+        x?: number | undefined;
+        y?: number | undefined;
+        width?: number | undefined;
+        height?: number | undefined;
+        zoom?: number | undefined;
+        lod?: "detail" | "compact" | "skeleton" | undefined;
+    }, {
+        limit?: number | undefined;
+        x?: number | undefined;
+        y?: number | undefined;
+        width?: number | undefined;
+        height?: number | undefined;
+        zoom?: number | undefined;
+        lod?: "detail" | "compact" | "skeleton" | undefined;
+    }>>;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    query?: string | undefined;
+    lens?: string | undefined;
+    selected_node_id?: string | null | undefined;
+    focused_node_ids?: string[] | undefined;
+    story_step_id?: string | null | undefined;
+    viewport?: {
+        limit?: number | undefined;
+        x?: number | undefined;
+        y?: number | undefined;
+        width?: number | undefined;
+        height?: number | undefined;
+        zoom?: number | undefined;
+        lod?: "detail" | "compact" | "skeleton" | undefined;
+    } | undefined;
+}, {
+    session_id: string;
+    query?: string | undefined;
+    lens?: string | undefined;
+    selected_node_id?: string | null | undefined;
+    focused_node_ids?: string[] | undefined;
+    story_step_id?: string | null | undefined;
+    viewport?: {
+        limit?: number | undefined;
+        x?: number | undefined;
+        y?: number | undefined;
+        width?: number | undefined;
+        height?: number | undefined;
+        zoom?: number | undefined;
+        lod?: "detail" | "compact" | "skeleton" | undefined;
+    } | undefined;
+}>;
 export declare const AtlasStudioObserveSchema: z.ZodObject<{
     session_id: z.ZodString;
     text: z.ZodString;
@@ -178,9 +250,9 @@ export declare const AtlasStudioNodeAddSchema: z.ZodObject<{
     label?: string | undefined;
     status?: "unknown" | "run" | "wait" | "stop" | undefined;
     owner?: string | undefined;
-    atlas_id?: string | undefined;
     x?: number | undefined;
     y?: number | undefined;
+    atlas_id?: string | undefined;
     evidence?: string | undefined;
 }, {
     session_id: string;
@@ -190,9 +262,9 @@ export declare const AtlasStudioNodeAddSchema: z.ZodObject<{
     label?: string | undefined;
     status?: "unknown" | "run" | "wait" | "stop" | undefined;
     owner?: string | undefined;
-    atlas_id?: string | undefined;
     x?: number | undefined;
     y?: number | undefined;
+    atlas_id?: string | undefined;
     evidence?: string | undefined;
 }>;
 export declare const AtlasStudioEdgeAddSchema: z.ZodObject<{

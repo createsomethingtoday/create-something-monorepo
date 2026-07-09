@@ -308,13 +308,13 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 		text-transform: uppercase;
 		letter-spacing: 0.12em;
 		font-size: 0.75rem;
-		color: var(--color-fg-tertiary, rgba(255,255,255,0.6));
+		color: var(--color-fg-tertiary);
 	}
 	h1 {
 		margin: 0.5rem 0;
 	}
 	p, .muted {
-		color: var(--color-fg-secondary, rgba(255,255,255,0.72));
+		color: var(--color-fg-secondary);
 	}
 	.subnav {
 		display: flex;
@@ -325,7 +325,7 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 	.subnav a,
 	.panel-header a,
 	.link-button {
-		color: var(--color-fg-primary, #fff);
+		color: var(--color-fg-primary);
 		text-decoration: none;
 	}
 	.link-button {
@@ -341,7 +341,7 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 		gap: 1.25rem;
 	}
 	.panel {
-		border: 1px solid rgba(255,255,255,0.1);
+		border: 1px solid var(--color-border-default);
 		border-radius: 20px;
 		padding: 1.25rem;
 	}
@@ -365,9 +365,9 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 	input,
 	textarea {
 		border-radius: 12px;
-		border: 1px solid rgba(255,255,255,0.14);
-		background: rgba(255,255,255,0.03);
-		color: #fff;
+		border: 1px solid var(--color-border-default);
+		background: var(--color-hover);
+		color: var(--color-fg-primary);
 		padding: 0.8rem 0.9rem;
 		font: inherit;
 	}
@@ -393,11 +393,11 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 		margin-top: 1rem;
 	}
 	button {
-		border: 1px solid rgba(255,255,255,0.14);
+		border: 1px solid var(--color-border-default);
 		border-radius: 999px;
 		padding: 0.75rem 1rem;
-		background: rgba(255,255,255,0.95);
-		color: #111;
+		background: var(--color-fg-primary);
+		color: var(--color-bg-surface);
 		font: inherit;
 		cursor: pointer;
 	}
@@ -416,27 +416,27 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 	th, td {
 		text-align: left;
 		padding: 0.85rem 0.6rem;
-		border-bottom: 1px solid rgba(255,255,255,0.08);
+		border-bottom: 1px solid var(--color-border-default);
 		vertical-align: top;
 	}
 	.seed-row {
 		cursor: pointer;
 	}
 	.seed-row:hover {
-		background: rgba(255,255,255,0.03);
+		background: var(--color-hover);
 	}
 	.mono {
 		font-family: inherit;
 		word-break: break-word;
 	}
 	.empty {
-		color: var(--color-fg-secondary, rgba(255,255,255,0.72));
+		color: var(--color-fg-secondary);
 	}
 	.success {
-		color: #8de8a5;
+		color: var(--color-success);
 	}
 	.error {
-		color: #ff8a80;
+		color: var(--color-error);
 		white-space: pre-wrap;
 	}
 	.import-copy {
