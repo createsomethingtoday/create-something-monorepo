@@ -159,7 +159,7 @@
 				<strong>60 FPS inspection</strong>
 			</div>
 
-			<svg viewBox="0 0 100 80" role="img" aria-label="Relationship graph plate">
+			<svg viewBox="0 8 100 66" role="img" aria-label="Relationship graph plate">
 				<defs>
 					<pattern id="clear-system-plate-grid" width="4" height="4" patternUnits="userSpaceOnUse">
 						<path d="M 4 0 L 0 0 0 4" fill="none" stroke="currentColor" stroke-width="0.08" />
@@ -343,8 +343,8 @@
 
 	.clear-system-plate__layout {
 		display: grid;
-		grid-template-columns: minmax(15rem, 0.46fr) minmax(0, 1fr) minmax(17rem, 0.45fr);
-		min-height: 34rem;
+		grid-template-columns: minmax(14rem, 0.42fr) minmax(0, 1fr) minmax(17rem, 0.43fr);
+		min-height: clamp(29rem, 58vw, 33rem);
 	}
 
 	.clear-system-plate__copy,
@@ -355,18 +355,18 @@
 	.clear-system-plate__copy {
 		display: grid;
 		align-content: start;
-		gap: 1.05rem;
+		gap: 0.9rem;
 		border-right: 1px solid var(--color-clear-border, #e1e1e1);
 	}
 
 	.clear-system-plate__copy h3 {
 		margin: 0;
-		max-width: 11ch;
+		max-width: 10.5ch;
 		color: var(--color-clear-onyx, #0a0e19);
-		font-size: clamp(2.6rem, 5vw, 4.8rem);
+		font-size: clamp(2.35rem, 4.3vw, 4.05rem);
 		font-weight: var(--font-medium);
 		letter-spacing: 0;
-		line-height: 0.98;
+		line-height: 1;
 		text-wrap: balance;
 	}
 
@@ -376,7 +376,7 @@
 	.clear-system-plate__review-item p {
 		margin: 0;
 		color: var(--color-clear-grey, #636363);
-		font-size: 0.9rem;
+		font-size: 0.88rem;
 		line-height: 1.5;
 		text-wrap: pretty;
 	}
@@ -406,7 +406,7 @@
 		grid-template-rows: auto 1fr auto;
 		min-width: 0;
 		background:
-			radial-gradient(circle at 52% 44%, rgb(0 72 255 / 0.08), transparent 33%),
+			radial-gradient(circle at 52% 52%, rgb(0 72 255 / 0.075), transparent 34%),
 			var(--color-clear-panel, #ffffff);
 	}
 
@@ -426,7 +426,7 @@
 
 	.clear-system-plate__canvas svg {
 		width: 100%;
-		min-height: 22rem;
+		min-height: 20rem;
 		height: 100%;
 		color: rgb(10 14 25 / 0.42);
 	}
@@ -492,14 +492,15 @@
 		display: grid;
 		grid-template-columns: repeat(4, minmax(0, 1fr));
 		border-top: 1px solid var(--color-clear-border, #e1e1e1);
+		background: rgb(255 255 255 / 0.78);
 	}
 
 	.clear-system-plate__metric {
 		display: grid;
 		gap: 0.16rem;
-		min-height: 4.8rem;
+		min-height: 4.15rem;
 		align-content: center;
-		padding: 0.7rem 0.78rem;
+		padding: 0.58rem 0.68rem;
 		border-right: 1px solid var(--color-clear-border, #e1e1e1);
 	}
 
@@ -510,7 +511,7 @@
 	.clear-system-plate__metric strong {
 		color: var(--color-clear-onyx, #0a0e19);
 		font-family: var(--font-mono);
-		font-size: 1rem;
+		font-size: 0.92rem;
 		font-weight: var(--font-medium);
 		line-height: 1.1;
 	}
@@ -518,7 +519,7 @@
 	.clear-system-plate__rail {
 		display: grid;
 		align-content: start;
-		gap: 0.85rem;
+		gap: 0.72rem;
 		border-left: 1px solid var(--color-clear-border, #e1e1e1);
 		background: rgb(249 249 249 / 0.72);
 	}
@@ -526,8 +527,8 @@
 	.clear-system-plate__layers,
 	.clear-system-plate__panel {
 		display: grid;
-		gap: 0.78rem;
-		padding: 0.82rem;
+		gap: 0.66rem;
+		padding: 0.72rem;
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: var(--radius-clear-sm, 4px);
 		background: rgb(255 255 255 / 0.82);
@@ -542,11 +543,11 @@
 	.clear-system-plate__layer {
 		display: grid;
 		gap: 0.12rem;
-		min-height: 2.6rem;
-		padding: 0.5rem 0.62rem;
+		min-height: 2.35rem;
+		padding: 0.46rem 0.58rem;
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		background: #ffffff;
-		transform: skewX(-10deg);
+		transform: skewX(-7deg);
 	}
 
 	.clear-system-plate__layer strong,
@@ -568,12 +569,12 @@
 
 	.clear-system-plate__layer span {
 		color: var(--color-clear-grey, #636363);
-		font-size: 0.76rem;
+		font-size: 0.74rem;
 		line-height: 1.25;
 	}
 
 	.clear-system-plate__panel h4 {
-		font-size: 1.05rem;
+		font-size: 0.98rem;
 	}
 
 	.clear-system-plate__rows {
@@ -585,7 +586,7 @@
 		display: flex;
 		justify-content: space-between;
 		gap: 0.7rem;
-		padding: 0.48rem 0;
+		padding: 0.42rem 0;
 		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
 	}
 
@@ -651,6 +652,7 @@
 
 		.clear-system-plate__copy h3 {
 			max-width: 16ch;
+			font-size: clamp(2.2rem, 9vw, 3.4rem);
 		}
 
 		.clear-system-plate__rail {
