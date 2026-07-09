@@ -3,11 +3,14 @@
 	import Icon from '../../icons/Icon.svelte';
 	import type { IconName } from '../../icons/types.js';
 
+	export type ClearControlState = 'controlled' | 'ready' | 'review' | 'stop';
+
 	export interface ClearCtaItem {
 		label: string;
 		icon?: IconName;
 		title: string;
 		detail: string;
+		state?: ClearControlState;
 	}
 
 	interface Props {
@@ -42,7 +45,7 @@
 		{#if items.length}
 			<div class="clear-cta-band__items" aria-label="CTA outcomes">
 				{#each items as item}
-					<article>
+				<article data-control-state={item.state ?? 'controlled'}>
 						{#if item.icon}
 							<span class="clear-cta-band__item-icon" aria-hidden="true">
 								<Icon name={item.icon} size="sm" strokeWidth={1.75} />
@@ -65,14 +68,14 @@
 		padding-block: 4.5rem;
 		background:
 			linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px) 0 0 / 4rem 4rem,
-			var(--color-clear-onyx, #0a0e19);
-		border-bottom: 1px solid var(--color-clear-onyx, #0a0e19);
+			var(--color-performance-ink, #090909);
+		border-bottom: 1px solid var(--color-performance-ink, #090909);
 	}
 
 	.clear-cta-band__inner {
 		display: grid;
 		gap: 2rem;
-		width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
 		margin-inline: auto;
 		color: #ffffff;
 	}
@@ -98,7 +101,7 @@
 		align-items: center;
 		padding: 0.36rem 0.62rem;
 		border: 1px solid rgba(255, 255, 255, 0.18);
-		border-radius: var(--radius-clear-sm, 4px);
+		border-radius: var(--radius-performance-sm, 4px);
 		background: rgba(255, 255, 255, 0.08);
 		color: rgba(255, 255, 255, 0.74);
 		font-family: var(--font-mono);
@@ -142,6 +145,7 @@
 	}
 
 	.clear-cta-band__items article {
+		--cta-accent: var(--color-performance-controlled, #0057b8);
 		position: relative;
 		overflow: hidden;
 		display: flex;
@@ -149,7 +153,7 @@
 		gap: 0.34rem;
 		padding: 0.95rem;
 		border: 1px solid rgba(255, 255, 255, 0.16);
-		border-radius: var(--radius-clear-sm, 4px);
+		border-radius: var(--radius-performance-sm, 4px);
 		background: rgba(255, 255, 255, 0.08);
 	}
 
@@ -158,15 +162,19 @@
 		position: absolute;
 		inset: 0 auto 0 0;
 		width: 0.2rem;
-		background: var(--cta-accent, var(--color-clear-pastel-blue, #afc1fd));
+		background: var(--cta-accent);
 	}
 
-	.clear-cta-band__items article:nth-child(2) {
-		--cta-accent: var(--color-clear-frosted-mint, #d9fff7);
+	.clear-cta-band__items article[data-control-state='ready'] {
+		--cta-accent: var(--color-performance-ready, #007a4d);
 	}
 
-	.clear-cta-band__items article:nth-child(3) {
-		--cta-accent: var(--color-clear-candy-purple, #efd4ff);
+	.clear-cta-band__items article[data-control-state='review'] {
+		--cta-accent: var(--color-performance-review, #8b6b00);
+	}
+
+	.clear-cta-band__items article[data-control-state='stop'] {
+		--cta-accent: var(--color-performance-stop, #c62026);
 	}
 
 	.clear-cta-band__item-icon {
@@ -177,9 +185,9 @@
 		place-items: center;
 		margin-right: 0.48rem;
 		border: 1px solid rgba(255, 255, 255, 0.18);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: color-mix(in srgb, var(--cta-accent, var(--color-clear-pastel-blue, #afc1fd)) 70%, white);
-		color: var(--color-clear-onyx, #0a0e19);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: color-mix(in srgb, var(--cta-accent) 16%, white);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	.clear-cta-band__item-copy {
@@ -211,7 +219,7 @@
 	}
 
 	.clear-cta-band :global(.btn) {
-		border-radius: var(--radius-clear-sm, 4px);
+		border-radius: var(--radius-performance-sm, 4px);
 		letter-spacing: 0;
 		box-shadow: none;
 	}
@@ -219,12 +227,12 @@
 	.clear-cta-band :global(.btn-primary) {
 		background: #ffffff;
 		border-color: #ffffff;
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	.clear-cta-band :global(.btn-primary:hover) {
-		background: var(--color-clear-pastel-blue, #afc1fd);
-		border-color: var(--color-clear-pastel-blue, #afc1fd);
+		background: var(--color-performance-court, #e6e6e0);
+		border-color: var(--color-performance-court, #e6e6e0);
 		box-shadow: none;
 	}
 
@@ -235,8 +243,9 @@
 	}
 
 	.clear-cta-band :global(.btn-secondary:hover) {
-		background: rgba(255, 255, 255, 0.1);
-		border-color: rgba(255, 255, 255, 0.38);
+		background: var(--color-performance-panel, #ffffff);
+		border-color: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	@media (max-width: 640px) {
@@ -245,7 +254,7 @@
 		}
 
 		.clear-cta-band__inner {
-			width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+			width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
 		}
 
 		.clear-cta-band__inner--with-items {

@@ -198,8 +198,8 @@
     padding-block: clamp(4rem, 8vw, 6.5rem);
     background:
       linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px) 0 0 / 4rem 4rem,
-      var(--color-clear-onyx, #0a0e19);
-    border-block: 1px solid var(--color-clear-onyx, #0a0e19);
+      var(--color-performance-ink, #090909);
+    border-block: 1px solid var(--color-performance-ink, #090909);
     color: #ffffff;
   }
 
@@ -208,7 +208,7 @@
     grid-template-columns: minmax(0, 0.92fr) minmax(22rem, 0.68fr);
     gap: clamp(1.5rem, 4vw, 3rem);
     align-items: stretch;
-    width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
     margin-inline: auto;
   }
 
@@ -229,7 +229,7 @@
     align-items: center;
     padding: 0.36rem 0.62rem;
     border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: var(--radius-clear-sm, 4px);
+    border-radius: var(--radius-performance-sm, 4px);
     background: rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.74);
     font-family: var(--font-mono);
@@ -266,7 +266,7 @@
     min-width: 0;
     padding: clamp(1rem, 3vw, 1.35rem);
     border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: var(--radius-clear-sm, 4px);
+    border-radius: var(--radius-performance-sm, 4px);
     background: rgba(255, 255, 255, 0.08);
   }
 
@@ -320,9 +320,9 @@
     min-height: 44px;
     padding: 0.74rem 1rem;
     border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: var(--radius-clear-sm, 4px);
+    border-radius: var(--radius-performance-sm, 4px);
     background: rgba(255, 255, 255, 0.96);
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: inherit;
     font-size: 1rem;
     transition:
@@ -331,7 +331,7 @@
   }
 
   input[type='email']::placeholder {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
   }
 
   input[type='email']:hover:not(:disabled):not(:focus) {
@@ -340,8 +340,8 @@
 
   input[type='email']:focus {
     outline: none;
-    border-color: var(--color-clear-ocean, #315cff);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-clear-ocean, #315cff) 16%, transparent);
+    border-color: var(--color-performance-signal, #315cff);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-performance-signal, #315cff) 16%, transparent);
   }
 
   input[type='email']:disabled {
@@ -366,9 +366,9 @@
     gap: 0.5rem;
     padding: 0.74rem 1rem;
     border: 1px solid #ffffff;
-    border-radius: var(--radius-clear-sm, 4px);
+    border-radius: var(--radius-performance-sm, 4px);
     background: #ffffff;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: inherit;
     font-size: 1rem;
     font-weight: var(--font-semibold);
@@ -379,12 +379,12 @@
   }
 
   .submit-button:hover:not(:disabled) {
-    border-color: var(--color-clear-pastel-blue, #afc1fd);
-    background: var(--color-clear-pastel-blue, #afc1fd);
+    border-color: var(--color-performance-signal-soft, #dce8f5);
+    background: var(--color-performance-signal-soft, #dce8f5);
   }
 
   .submit-button:focus-visible {
-    outline: 2px solid var(--color-clear-ocean, #315cff);
+    outline: 2px solid var(--color-performance-signal, #315cff);
     outline-offset: 3px;
   }
 
@@ -396,7 +396,7 @@
   .loading-spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid var(--color-clear-onyx, #0a0e19);
+    border: 2px solid var(--color-performance-ink, #090909);
     border-top-color: transparent;
     border-radius: 50%;
     animation: spin var(--duration-slow) linear infinite;
@@ -418,7 +418,7 @@
 
   .error-message {
     margin: 0;
-    color: var(--color-clear-pastel-blue, #afc1fd);
+    color: var(--color-performance-signal-soft, #dce8f5);
     font-size: 0.9rem;
     line-height: 1.4;
   }
@@ -430,8 +430,8 @@
     min-width: 0;
     padding: 1rem;
     border: 1px solid rgba(255, 255, 255, 0.16);
-    border-left: 0.2rem solid var(--color-clear-ocean, #315cff);
-    border-radius: var(--radius-clear-sm, 4px);
+    border-left: 0.2rem solid var(--color-performance-signal, #315cff);
+    border-radius: var(--radius-performance-sm, 4px);
     background: rgba(255, 255, 255, 0.08);
     color: #ffffff;
     font-size: 1rem;
@@ -463,7 +463,7 @@
 
     .newsletter-content {
       grid-template-columns: 1fr;
-      width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+      width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
     }
 
     .newsletter-headline {

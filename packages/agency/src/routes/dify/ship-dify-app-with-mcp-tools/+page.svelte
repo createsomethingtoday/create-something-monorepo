@@ -1,17 +1,17 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const quickAnswer: ClearCardItem[] = [
+  const quickAnswer: PerformanceCardItem[] = [
     {
       eyebrow: 'Surface',
       icon: 'settings',
@@ -35,7 +35,7 @@
     }
   ];
 
-  const buildPath: ClearCardItem[] = [
+  const buildPath: PerformanceCardItem[] = [
     {
       eyebrow: '01',
       icon: 'search',
@@ -73,7 +73,7 @@
     }
   ];
 
-  const contractCards: ClearCardItem[] = [
+  const contractCards: PerformanceCardItem[] = [
     {
       eyebrow: 'mcp_contract.yaml',
       icon: 'folder',
@@ -111,7 +111,7 @@
     }
   ];
 
-  const gateCards: ClearCardItem[] = [
+  const gateCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Health',
       icon: 'check',
@@ -156,7 +156,7 @@
     }
   ];
 
-  const proofCards: ClearCardItem[] = [
+  const proofCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Public',
       icon: 'document',
@@ -180,7 +180,7 @@
     }
   ];
 
-  const exampleCards: ClearCardItem[] = [
+  const exampleCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Auto-allow',
       icon: 'check',
@@ -211,7 +211,7 @@
     }
   ];
 
-  const sourceCards: ClearCardItem[] = [
+  const sourceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Dify',
       icon: 'external-link',
@@ -242,7 +242,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Map',
       icon: 'search',
@@ -278,7 +278,7 @@
   propertyName="agency"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -294,18 +294,18 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid items={quickAnswer} columns={1} density="compact" ariaLabel="Dify MCP quick answer" />
+    <PerformanceCardGrid items={quickAnswer} columns={1} density="compact" ariaLabel="Dify MCP quick answer" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Operating path"
   title="Ship the smallest workflow that can be inspected."
   description="Do not start with a generic agent. Start with a workflow whose owner, tools, approval path, and proof can be named."
 >
   {#snippet after()}
-    <ClearCardGrid items={buildPath} columns={4} ariaLabel="Dify MCP shipping path" />
+    <PerformanceCardGrid items={buildPath} columns={4} ariaLabel="Dify MCP shipping path" />
     <ArticleVisualFigure
       src="/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path.png"
       alt="Diagram showing Dify as the app surface, MCP as the tool boundary, Policy OS as the control layer, and proof as the release surface."
@@ -315,64 +315,64 @@
       sourceLabel="Created by CREATE SOMETHING for this field guide."
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Contract bundle"
   title="The app ships with artifacts, not just prompts."
   description="A Dify workflow becomes governable when its tool access, behavior, outcome, tests, and operating steps are separate enough to review."
 >
   {#snippet after()}
-    <ClearCardGrid items={contractCards} columns={4} ariaLabel="Dify MCP contract bundle" />
+    <PerformanceCardGrid items={contractCards} columns={4} ariaLabel="Dify MCP contract bundle" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Eval gates"
   title="Run gates where the workflow can overreach."
   description="The goal is not a generic benchmark. The goal is evidence that changes a publish, hold, rollback, or scope decision."
 >
   {#snippet after()}
-    <ClearCardGrid items={gateCards} columns={3} ariaLabel="Dify MCP eval gates" />
+    <PerformanceCardGrid items={gateCards} columns={3} ariaLabel="Dify MCP eval gates" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Worked example"
   title="For support triage, the same workflow has four different decisions."
   description="This is the quality bar from the papers applied to one Dify app: every tool call needs a state, owner, evidence path, and stop condition."
 >
   {#snippet after()}
-    <ClearCardGrid items={exampleCards} columns={4} ariaLabel="Dify MCP support triage example" />
+    <PerformanceCardGrid items={exampleCards} columns={4} ariaLabel="Dify MCP support triage example" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Proof"
   title="Separate client-safe proof from private evidence."
   description="Decision owners need enough proof to trust the workflow. Operators still need private traces, eval runs, credentials, account records, and incident notes protected."
 >
   {#snippet after()}
-    <ClearCardGrid items={proofCards} columns={3} ariaLabel="Dify MCP proof split" />
+    <PerformanceCardGrid items={proofCards} columns={3} ariaLabel="Dify MCP proof split" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Sources"
   title="The recommendation follows the current Dify surfaces."
   description="Dify provides the app and publishing model, MCP connects external tools, and Langfuse can monitor app performance. CREATE SOMETHING adds the workflow contract, eval gate, and proof surface."
 >
   {#snippet after()}
-    <ClearCardGrid items={sourceCards} columns={4} ariaLabel="Dify MCP source notes" />
+    <PerformanceCardGrid items={sourceCards} columns={4} ariaLabel="Dify MCP source notes" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Next step"
   title="Bring one Dify workflow before adding more tools."
   description="I’ll map the workflow, MCP tool boundary, approval path, eval gates, and client-safe proof package before the app gets more autonomy."
@@ -388,4 +388,4 @@
       Read Contract Bundle Paper
     </Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

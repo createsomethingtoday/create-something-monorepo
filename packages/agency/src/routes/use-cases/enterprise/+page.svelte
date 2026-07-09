@@ -1,16 +1,16 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const reliabilitySummary: ClearCardItem[] = [
+  const reliabilitySummary: PerformanceCardItem[] = [
     {
       eyebrow: 'Layer',
       icon: 'settings',
@@ -34,7 +34,7 @@
     }
   ];
 
-  const failureModes: ClearCardItem[] = [
+  const failureModes: PerformanceCardItem[] = [
     {
       eyebrow: '01',
       icon: 'warning',
@@ -58,7 +58,7 @@
     }
   ];
 
-  const controlLayer: ClearCardItem[] = [
+  const controlLayer: PerformanceCardItem[] = [
     {
       eyebrow: 'Prompt',
       icon: 'edit',
@@ -89,7 +89,7 @@
     }
   ];
 
-  const tiers: ClearCardItem[] = [
+  const tiers: PerformanceCardItem[] = [
     {
       eyebrow: 'Database',
       icon: 'folder',
@@ -110,7 +110,7 @@
     }
   ];
 
-  const plans: ClearCardItem[] = [
+  const plans: PerformanceCardItem[] = [
     {
       eyebrow: '$1,500-$2,000/mo',
       icon: 'settings',
@@ -134,7 +134,7 @@
     }
   ];
 
-  const audienceCards: ClearCardItem[] = [
+  const audienceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Systems live',
       icon: 'settings',
@@ -173,7 +173,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Bring',
       icon: 'folder',
@@ -204,7 +204,7 @@
   {faqItems}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -222,71 +222,71 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={reliabilitySummary}
       columns={1}
       density="compact"
       ariaLabel="Policy OS reliability summary"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Why automation breaks"
   title="Most AI automation fails after deployment, not during it."
   description="The failure is rarely the connection itself. The failure is missing judgment: no policy, no owner, no blocked state, no evidence, and no recovery path."
 >
   {#snippet after()}
-    <ClearCardGrid items={failureModes} columns={3} ariaLabel="Enterprise automation failure modes" />
+    <PerformanceCardGrid items={failureModes} columns={3} ariaLabel="Enterprise automation failure modes" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Control layer"
   title="Policy OS keeps the workflow explainable after launch."
   description="The work is not another trigger. It is the operating layer that keeps agent capacity aligned with ownership, approval, recovery, and evidence."
 >
   {#snippet after()}
-    <ClearCardGrid items={controlLayer} columns={4} ariaLabel="Policy OS control layer" />
+    <PerformanceCardGrid items={controlLayer} columns={4} ariaLabel="Policy OS control layer" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Three-tier framework"
   title="Every operating workflow has three layers."
   description="Database tells the system what exists. Automation moves the work. Judgment decides what should happen when risk, ambiguity, or approval enters the path."
 >
   {#snippet after()}
-    <ClearCardGrid items={tiers} columns={3} ariaLabel="Database automation judgment layers" />
+    <PerformanceCardGrid items={tiers} columns={3} ariaLabel="Database automation judgment layers" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Operating plans"
   title="Start with the amount of control the workflow actually needs."
   description="Pricing is shaped by the number of workflows in operation, the risk of each action, and the review rhythm needed to keep the system trusted."
 >
   {#snippet after()}
-    <ClearCardGrid items={plans} columns={3} ariaLabel="Workflow control operating plans" />
+    <PerformanceCardGrid items={plans} columns={3} ariaLabel="Workflow control operating plans" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Fit"
   title="This is for teams whose automations are now operational infrastructure."
   description="The work fits when a workflow is already valuable enough that drift, unclear approvals, or invisible failures would create real operational cost."
 >
   {#snippet after()}
-    <ClearCardGrid items={audienceCards} columns={3} ariaLabel="Policy OS fit" />
+    <PerformanceCardGrid items={audienceCards} columns={3} ariaLabel="Policy OS fit" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Start with the workflow"
   title="Bring the workflow, owner, and first risk boundary."
   description="I will map the control states before expanding automation authority."
@@ -300,4 +300,4 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

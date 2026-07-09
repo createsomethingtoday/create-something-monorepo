@@ -1,16 +1,16 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const fitCards: ClearCardItem[] = [
+  const fitCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Agent surface',
       icon: 'settings',
@@ -49,7 +49,7 @@
     }
   ];
 
-  const deliverables: ClearCardItem[] = [
+  const deliverables: PerformanceCardItem[] = [
     {
       eyebrow: 'Map',
       icon: 'document',
@@ -76,7 +76,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Agent surface',
       icon: 'settings',
@@ -125,7 +125,7 @@
   {faqItems}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="stack"
   titleLevel="h1"
@@ -141,31 +141,31 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Tool fit"
   title="The workflow decides which tool gets a job."
   description="Dify, Cloudflare, Notion, and OpenAI are useful when each one has a clear role, scoped authority, and evidence path."
 >
   {#snippet after()}
-    <ClearCardGrid items={fitCards} columns={4} ariaLabel="Workflow tool fit" />
+    <PerformanceCardGrid items={fitCards} columns={4} ariaLabel="Workflow tool fit" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="What you keep"
   title="The useful output is a map, not a vendor diagram."
   description="The first artifact should tell an operator what happens, who owns the decision, where the system stops, and what proof remains."
 >
   {#snippet after()}
-    <ClearCardGrid items={deliverables} columns={4} ariaLabel="Workflow tool stack deliverables" />
+    <PerformanceCardGrid items={deliverables} columns={4} ariaLabel="Workflow tool stack deliverables" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Map the workflow"
   title="Bring the workflow before choosing the stack."
   description="I’ll map the handoff, owner, connected systems, allowed actions, approval pauses, stop points, and evidence path before implementation starts."
@@ -179,4 +179,4 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

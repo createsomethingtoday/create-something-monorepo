@@ -1,17 +1,17 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const quickAnswer: ClearCardItem[] = [
+  const quickAnswer: PerformanceCardItem[] = [
     {
       eyebrow: 'First template',
       icon: 'document',
@@ -35,7 +35,7 @@
     }
   ];
 
-  const submissionPath: ClearCardItem[] = [
+  const submissionPath: PerformanceCardItem[] = [
     {
       eyebrow: '01',
       icon: 'folder',
@@ -73,7 +73,7 @@
     }
   ];
 
-  const listingCards: ClearCardItem[] = [
+  const listingCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Name',
       icon: 'document',
@@ -104,7 +104,7 @@
     }
   ];
 
-  const gateCards: ClearCardItem[] = [
+  const gateCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Static',
       icon: 'check',
@@ -134,7 +134,7 @@
     }
   ];
 
-  const sourceCards: ClearCardItem[] = [
+  const sourceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Dify',
       icon: 'external-link',
@@ -159,7 +159,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Map',
       icon: 'search',
@@ -195,7 +195,7 @@
   propertyName="agency"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -213,23 +213,23 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={quickAnswer}
       columns={1}
       density="compact"
       ariaLabel="Dify marketplace proof summary"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Submission path"
   title="The first template should be read-only and easy to inspect."
   description="A marketplace template should help a new Dify user get to a working app in minutes while keeping private delivery evidence out of the public package."
 >
   {#snippet after()}
-    <ClearCardGrid items={submissionPath} columns={4} ariaLabel="Dify marketplace submission path" />
+    <PerformanceCardGrid items={submissionPath} columns={4} ariaLabel="Dify marketplace submission path" />
     <ArticleVisualFigure
       src="/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path.png"
       alt="Diagram showing Dify as the app surface, MCP as the tool boundary, Policy OS as the control layer, and proof as the release surface."
@@ -239,42 +239,42 @@
       sourceLabel="Created by CREATE SOMETHING for the Dify implementation cluster."
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Listing packet"
   title="The marketplace listing needs clear metadata."
   description="Dify templates should have English names, concise overviews, focused categories, and setup steps that match the real app setup order."
 >
   {#snippet after()}
-    <ClearCardGrid items={listingCards} columns={4} ariaLabel="Dify marketplace listing packet" />
+    <PerformanceCardGrid items={listingCards} columns={4} ariaLabel="Dify marketplace listing packet" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Gates"
   title="Do not submit until the app and repo agree."
   description="The Dify Studio clone, exported DSL, repo manifest, smoke case, and public copy should all describe the same workflow boundary."
 >
   {#snippet after()}
-    <ClearCardGrid items={gateCards} columns={4} ariaLabel="Dify marketplace gates" />
+    <PerformanceCardGrid items={gateCards} columns={4} ariaLabel="Dify marketplace gates" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Sources"
   title="The path follows Dify's current publishing model."
   description="Creator Center owns submission and review. The repo owns the template contract, smoke evidence, and public explanation."
 >
   {#snippet after()}
-    <ClearCardGrid items={sourceCards} columns={3} ariaLabel="Dify marketplace sources" />
+    <PerformanceCardGrid items={sourceCards} columns={3} ariaLabel="Dify marketplace sources" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Next step"
   title="Map one Dify template before it goes public."
   description="I’ll map the workflow, app surface, MCP boundary, setup steps, smoke checks, and client-safe proof before the template expands to more tools."
@@ -287,4 +287,4 @@
     <Button href="/dify" variant="secondary">Back To Dify</Button>
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

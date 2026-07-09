@@ -67,20 +67,20 @@
   .milestones {
     overflow: hidden;
     margin-bottom: 0.5rem;
-    border: 1px solid var(--color-clear-border-strong, #cecece);
-    border-radius: var(--radius-clear-md, 8px);
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    border-radius: var(--radius-performance-md, 4px);
     background:
       linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
-      var(--color-clear-panel, #ffffff);
+      var(--color-performance-panel, #ffffff);
     --color-bg-pure: transparent;
-    --color-bg-subtle: var(--color-clear-panel, #ffffff);
-    --color-fg-primary: var(--color-clear-onyx, #0a0e19);
-    --color-fg-secondary: var(--color-clear-grey, #636363);
-    --color-fg-muted: var(--color-clear-grey, #636363);
-    --color-fg-tertiary: var(--color-clear-grey-quiet, #818181);
-    --color-fg-subtle: var(--color-clear-border-strong, #cecece);
-    --color-border-default: var(--color-clear-border, #e1e1e1);
-    --color-border-emphasis: var(--color-clear-border-strong, #cecece);
+    --color-bg-subtle: var(--color-performance-panel, #ffffff);
+    --color-fg-primary: var(--color-performance-ink, #090909);
+    --color-fg-secondary: var(--color-performance-muted, #5e6268);
+    --color-fg-muted: var(--color-performance-muted, #5e6268);
+    --color-fg-tertiary: var(--color-performance-muted, #5e6268);
+    --color-fg-subtle: var(--color-performance-line-strong, #9c9c96);
+    --color-border-default: var(--color-performance-line, #d7d7d2);
+    --color-border-emphasis: var(--color-performance-line-strong, #9c9c96);
   }
 
   .milestones-inner {
@@ -114,7 +114,7 @@
     bottom: 0.75rem;
     left: 0.68rem;
     width: 1px;
-    background: var(--color-clear-border-strong, #cecece);
+    background: var(--color-performance-line-strong, #9c9c96);
     z-index: 0;
   }
 
@@ -128,8 +128,8 @@
     background: linear-gradient(
       to bottom,
       transparent 0%,
-      var(--color-clear-pastel-blue, #afc1fd) 45%,
-      var(--color-clear-frosted-mint, #d9fff7) 70%,
+      var(--color-performance-signal-soft, #dce8f5) 45%,
+      var(--color-performance-growth-soft, #dcece5) 70%,
       transparent 100%
     );
     z-index: 1;
@@ -150,23 +150,23 @@
     width: 0.78rem;
     height: 0.78rem;
     margin: 0.85rem auto 0;
-    border: 2px solid var(--color-clear-onyx, #0a0e19);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-pastel-blue, #afc1fd);
+    border: 2px solid var(--color-performance-ink, #090909);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-signal-soft, #dce8f5);
   }
 
   .timeline-body {
     min-width: 0;
     padding: 1rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
   }
 
   .timeline-date {
     margin: 0 0 0.55rem;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.76rem;
     line-height: 1.15;
@@ -174,7 +174,7 @@
 
   .timeline-title {
     margin: 0 0 0.5rem;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1.12rem;
     font-weight: var(--font-medium);
     line-height: 1.2;
@@ -182,13 +182,13 @@
   }
 
   .timeline-org {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-weight: var(--font-regular, 400);
   }
 
   .timeline-subtitle {
     margin: 0 0 0.85rem;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.92rem;
     line-height: 1.52;
     overflow-wrap: anywhere;
@@ -204,15 +204,15 @@
 
   .timeline-bullets li {
     padding-top: 0.46rem;
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
-    color: var(--color-clear-grey, #636363);
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.9rem;
     line-height: 1.5;
     overflow-wrap: anywhere;
   }
 
   .timeline-bullets strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-weight: var(--font-medium);
   }
 

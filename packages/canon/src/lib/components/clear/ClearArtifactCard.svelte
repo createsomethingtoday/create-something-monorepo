@@ -36,10 +36,10 @@
 		gap: 0.55rem;
 		min-height: 10.5rem;
 		padding: 1rem;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-panel, #ffffff);
-		color: var(--color-clear-onyx, #0a0e19);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-ink, #090909);
 		text-decoration: none;
 	}
 
@@ -48,7 +48,7 @@
 		position: absolute;
 		inset: 0 0 auto;
 		height: 0.22rem;
-		background: var(--color-clear-pill-active, #cad7fa);
+		background: var(--color-performance-signal-soft, #dce8f5);
 	}
 
 	a.clear-artifact-card {
@@ -58,14 +58,14 @@
 	}
 
 	a.clear-artifact-card:hover {
-		border-color: var(--color-clear-border-strong, #cecece);
-		background: var(--color-clear-porcelain, #f9f9f9);
+		border-color: var(--color-performance-line-strong, #9c9c96);
+		background: var(--color-performance-paper, #f3f3f0);
 		opacity: 1;
 		transform: none;
 	}
 
 	.clear-artifact-card span {
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-mono);
 		font-size: 0.72rem;
 		font-weight: var(--font-medium);
@@ -74,7 +74,7 @@
 	}
 
 	.clear-artifact-card strong {
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-size: 1.12rem;
 		font-weight: var(--font-medium);
 		line-height: 1.2;
@@ -82,7 +82,7 @@
 
 	.clear-artifact-card p {
 		margin: 0;
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-size: 0.92rem;
 		line-height: 1.45;
 	}

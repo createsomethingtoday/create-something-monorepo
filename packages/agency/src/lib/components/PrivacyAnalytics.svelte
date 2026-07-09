@@ -124,7 +124,7 @@
     bottom: max(1rem, env(safe-area-inset-bottom));
     z-index: 80;
     max-width: min(24rem, calc(100vw - 2rem));
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: var(--font-sans);
   }
 
@@ -132,11 +132,11 @@
     display: grid;
     gap: 1rem;
     padding: 1rem;
-    border: 1px solid var(--color-clear-border-strong, #cecece);
-    border-radius: var(--radius-clear-md, 8px);
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    border-radius: var(--radius-performance-md, 4px);
     background:
       linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 2.75rem 2.75rem,
-      var(--color-clear-panel, #ffffff);
+      var(--color-performance-panel, #ffffff);
     box-shadow: 0 18px 44px rgba(10, 14, 25, 0.16);
   }
 
@@ -149,10 +149,10 @@
     width: fit-content;
     margin: 0;
     padding: 0.28rem 0.48rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-grey, #636363);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.68rem;
     font-weight: var(--font-semibold);
@@ -170,14 +170,14 @@
 
   .privacy-panel p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.88rem;
     line-height: 1.52;
   }
 
   .privacy-panel a {
     width: fit-content;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 0.8rem;
     font-weight: var(--font-medium);
     text-decoration: underline;
@@ -192,8 +192,8 @@
 
   .privacy-button,
   .privacy-pill {
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
     cursor: pointer;
     font: inherit;
     transition:
@@ -206,15 +206,15 @@
   .privacy-button {
     min-height: 2.25rem;
     padding: 0.55rem 0.85rem;
-    background: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-ink, #090909);
     color: #ffffff;
     font-size: 0.83rem;
     font-weight: 700;
   }
 
   .privacy-button--ghost {
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
   }
 
   .privacy-pill {
@@ -223,8 +223,8 @@
     gap: 0.45rem;
     min-height: 2rem;
     padding: 0.35rem 0.65rem;
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-grey, #636363);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-muted, #5e6268);
     box-shadow: 0 10px 26px rgba(10, 14, 25, 0.12);
     font-size: 0.72rem;
   }
@@ -241,7 +241,7 @@
   }
 
   .privacy-pill__sub {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: var(--font-mono);
     font-size: 0.62rem;
     letter-spacing: 0;
@@ -250,12 +250,12 @@
 
   .privacy-button:hover,
   .privacy-pill:hover {
-    border-color: var(--color-clear-onyx, #0a0e19);
+    border-color: var(--color-performance-ink, #090909);
     transform: translateY(-1px);
   }
 
   .privacy-button--ghost:hover {
-    background: var(--color-clear-porcelain, #f9f9f9);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   @media (max-width: 640px) {
@@ -274,7 +274,7 @@
     .privacy-panel {
       gap: 0.42rem;
       padding: 0.52rem;
-      border-radius: var(--radius-clear-sm, 4px);
+      border-radius: var(--radius-performance-sm, 4px);
     }
 
     .privacy-panel__copy {

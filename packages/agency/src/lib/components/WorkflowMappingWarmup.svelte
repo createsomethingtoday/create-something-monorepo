@@ -463,9 +463,9 @@
   .warmup-intake label,
   .dimension,
   .warmup-summary {
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 8px;
-    background: var(--color-clear-panel, #ffffff);
+    background: var(--color-performance-panel, #ffffff);
     box-shadow: 0 12px 30px rgba(10, 14, 25, 0.04);
   }
 
@@ -478,7 +478,7 @@
   .warmup-intake span,
   .dimension > span,
   .warmup-summary span {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -487,17 +487,17 @@
 
   .warmup-intake input {
     min-width: 0;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 6px;
-    background: var(--color-clear-porcelain, #f9f9f9);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
     font: inherit;
     padding: 0.75rem;
   }
 
   .warmup-intake input:focus {
-    border-color: var(--color-clear-pastel-blue, #afc1fd);
-    outline: 2px solid color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 38%, transparent);
+    border-color: var(--color-performance-signal-soft, #dce8f5);
+    outline: 2px solid color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 38%, transparent);
     outline-offset: 2px;
   }
 
@@ -516,7 +516,7 @@
   .dimension h3,
   .warmup-summary h3 {
     margin: 0;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: clamp(1rem, 1.4vw, 1.2rem);
     letter-spacing: 0;
     line-height: 1.2;
@@ -525,7 +525,7 @@
   .dimension p,
   .warmup-summary p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.92rem;
     line-height: 1.5;
   }
@@ -535,9 +535,9 @@
     gap: 0.2rem;
     margin-top: 0.85rem;
     padding: 0.75rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 6px;
-    background: var(--color-clear-porcelain, #f9f9f9);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .warmup-result {
@@ -545,30 +545,30 @@
     gap: 0.35rem;
     margin-top: 0.75rem;
     padding: 0.75rem;
-    border: 1px solid color-mix(in srgb, var(--color-clear-pastel-green, #d8ead7) 68%, #cecece);
+    border: 1px solid color-mix(in srgb, var(--color-performance-growth-soft, #dcece5) 68%, #9c9c96);
     border-radius: 6px;
-    background: color-mix(in srgb, var(--color-clear-pastel-green, #d8ead7) 22%, #ffffff);
+    background: color-mix(in srgb, var(--color-performance-growth-soft, #dcece5) 22%, #ffffff);
   }
 
   .warmup-result strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1rem;
     line-height: 1.25;
   }
 
   .warmup-result small {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.78rem;
     line-height: 1.4;
   }
 
   .warmup-progress strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 0.9rem;
   }
 
   .warmup-progress small {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.78rem;
     line-height: 1.4;
   }
@@ -583,10 +583,10 @@
     gap: 0.2rem;
     width: 100%;
     min-height: 4rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 6px;
-    background: var(--color-clear-porcelain, #f9f9f9);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
     cursor: pointer;
     font: inherit;
     padding: 0.7rem;
@@ -600,8 +600,8 @@
   .option-list button:hover,
   .option-list button:focus-visible,
   .option-list button.selected {
-    border-color: color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 72%, #0a0e19);
-    background: color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 18%, #ffffff);
+    border-color: color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 72%, #090909);
+    background: color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 18%, #ffffff);
     outline: none;
     transform: translateY(-1px);
   }
@@ -612,7 +612,7 @@
   }
 
   .option-list small {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.78rem;
     line-height: 1.3;
   }
@@ -629,10 +629,10 @@
     max-height: 16rem;
     overflow: auto;
     margin: 0;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 6px;
-    background: var(--color-clear-porcelain, #f9f9f9);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
     font:
       0.78rem/1.55 ui-monospace,
       SFMono-Regular,
@@ -659,7 +659,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 6px;
-    border: 1px solid var(--color-clear-onyx, #0a0e19);
+    border: 1px solid var(--color-performance-ink, #090909);
     font: inherit;
     font-weight: 700;
     padding: 0.7rem 1rem;
@@ -668,16 +668,16 @@
 
   .warmup-actions button {
     background: transparent;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     cursor: pointer;
   }
 
   .warmup-actions .warmup-reset {
-    border-color: var(--color-clear-border-strong, #cecece);
+    border-color: var(--color-performance-line-strong, #9c9c96);
   }
 
   .warmup-actions a {
-    background: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-ink, #090909);
     color: #ffffff;
   }
 

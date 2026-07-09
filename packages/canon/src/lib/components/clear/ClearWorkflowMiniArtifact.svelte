@@ -75,7 +75,7 @@
 		width: min(100%, 14.36rem);
 		min-height: 5.95rem;
 		margin-inline: auto;
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	.clear-workflow-mini-artifact--proof {
@@ -107,7 +107,7 @@
 		min-width: 0;
 		height: 1.38rem;
 		border: 1px solid rgba(10, 14, 25, 0.22);
-		border-radius: var(--radius-clear-sm, 4px);
+		border-radius: var(--radius-performance-sm, 4px);
 		background: #ffffff;
 		box-shadow: 0 1px 0 rgba(10, 14, 25, 0.035);
 	}
@@ -163,7 +163,7 @@
 		place-items: center;
 		width: 2.02rem;
 		height: 1.6rem;
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-family: var(--font-mono);
 		font-size: 0.56rem;
 		font-weight: var(--font-semibold);

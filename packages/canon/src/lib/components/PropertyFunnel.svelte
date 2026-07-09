@@ -176,9 +176,9 @@
 <style>
   .property-funnel {
     padding-block: 4.5rem;
-    background: var(--color-clear-panel, #ffffff);
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-panel, #ffffff);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    color: var(--color-performance-ink, #090909);
   }
 
   .property-funnel__inner {
@@ -186,7 +186,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 2rem;
     align-items: end;
-    width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
     margin-inline: auto;
   }
 
@@ -200,7 +200,7 @@
   .property-funnel__status span,
   .property-funnel__step-index,
   .property-funnel__step-label {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.76rem;
     font-weight: var(--font-medium);
@@ -211,7 +211,7 @@
 
   .property-funnel__copy h2 {
     margin: 0;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 3.1rem;
     font-weight: var(--font-medium);
     letter-spacing: 0;
@@ -221,7 +221,7 @@
 
   .property-funnel__copy p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 1.08rem;
     line-height: 1.55;
     text-wrap: pretty;
@@ -232,13 +232,13 @@
     gap: 0.55rem;
     min-width: 12rem;
     padding: 1rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .property-funnel__status strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1rem;
     font-weight: var(--font-medium);
     line-height: 1.25;
@@ -264,9 +264,9 @@
     gap: 0.62rem;
     min-height: 12.5rem;
     padding: 1rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
     color: inherit;
     text-decoration: none;
     opacity: 1;
@@ -276,27 +276,27 @@
   }
 
   .property-funnel__step:hover {
-    border-color: var(--color-clear-border-strong, #cecece);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    border-color: var(--color-performance-line-strong, #9c9c96);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .property-funnel__step:focus-visible,
   .property-funnel__button:focus-visible {
-    outline: 2px solid var(--color-clear-ocean, #315cff);
+    outline: 2px solid var(--color-performance-signal, #315cff);
     outline-offset: 3px;
   }
 
   .property-funnel__step--active .property-funnel__step {
-    border-color: var(--color-clear-ocean, #315cff);
-    background: color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 22%, white);
+    border-color: var(--color-performance-signal, #315cff);
+    background: color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 22%, white);
   }
 
   .property-funnel__step-label {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
   }
 
   .property-funnel__step strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1.18rem;
     font-weight: var(--font-medium);
     line-height: 1.18;
@@ -304,7 +304,7 @@
   }
 
   .property-funnel__step-summary {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.94rem;
     line-height: 1.48;
     overflow-wrap: anywhere;
@@ -326,7 +326,7 @@
     min-height: 44px;
     padding: 0.74rem 1rem;
     border: 1px solid transparent;
-    border-radius: var(--radius-clear-sm, 4px);
+    border-radius: var(--radius-performance-sm, 4px);
     font-size: 0.94rem;
     font-weight: var(--font-semibold);
     letter-spacing: 0;
@@ -339,8 +339,8 @@
   }
 
   .property-funnel__button--primary {
-    border-color: var(--color-clear-onyx, #0a0e19);
-    background: var(--color-clear-onyx, #0a0e19);
+    border-color: var(--color-performance-ink, #090909);
+    background: var(--color-performance-ink, #090909);
     color: #ffffff;
   }
 
@@ -351,14 +351,14 @@
   }
 
   .property-funnel__button--secondary {
-    border-color: var(--color-clear-border, #e1e1e1);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    border-color: var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
   }
 
   .property-funnel__button--secondary:hover {
-    border-color: var(--color-clear-onyx, #0a0e19);
-    background: var(--color-clear-onyx, #0a0e19);
+    border-color: var(--color-performance-ink, #090909);
+    background: var(--color-performance-ink, #090909);
     color: #ffffff;
     opacity: 1;
   }
@@ -383,7 +383,7 @@
     }
 
     .property-funnel__inner {
-      width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+      width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
     }
 
     .property-funnel__copy h2 {

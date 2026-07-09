@@ -153,9 +153,9 @@
 <style>
   /* Card container: Performance Lab clear panel, retained for legacy paper grids. */
   .paper-card {
-    background: var(--color-clear-panel, #ffffff);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
     transition:
       background var(--duration-standard) var(--ease-standard),
       border-color var(--duration-standard) var(--ease-standard);
@@ -167,8 +167,8 @@
   }
 
   .paper-card:hover {
-    background: var(--color-clear-porcelain, #f9f9f9);
-    border-color: var(--color-clear-border-strong, #cecece);
+    background: var(--color-performance-paper, #f3f3f0);
+    border-color: var(--color-performance-line-strong, #9c9c96);
   }
 
   .paper-card:active {
@@ -198,9 +198,9 @@
 
   /* Arrow Button */
   .arrow-button {
-    background: var(--color-clear-panel, #ffffff);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
   }
 
   .arrow-icon {

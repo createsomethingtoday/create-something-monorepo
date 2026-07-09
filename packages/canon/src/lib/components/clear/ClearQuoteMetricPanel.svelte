@@ -45,20 +45,20 @@
 <style>
 	.clear-quote-metric-panel {
 		padding-block: 4.5rem;
-		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-		background: var(--color-clear-porcelain, #f9f9f9);
-		color: var(--color-clear-onyx, #0a0e19);
+		border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+		background: var(--color-performance-paper, #f3f3f0);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	.clear-quote-metric-panel__inner {
 		display: grid;
 		grid-template-columns: minmax(0, 0.92fr) minmax(18rem, 1.08fr);
 		gap: 0;
-		width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
 		margin-inline: auto;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-panel, #ffffff);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-panel, #ffffff);
 		overflow: hidden;
 	}
 
@@ -69,7 +69,7 @@
 		min-height: 22rem;
 		margin: 0;
 		padding: clamp(1.25rem, 4vw, 2.25rem);
-		border-right: 1px solid var(--color-clear-border, #e1e1e1);
+		border-right: 1px solid var(--color-performance-line, #d7d7d2);
 	}
 
 	.clear-quote-metric-panel__quote span {
@@ -79,10 +79,10 @@
 		min-height: 1.9rem;
 		align-items: center;
 		padding: 0.36rem 0.62rem;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-porcelain, #f9f9f9);
-		color: var(--color-clear-grey, #636363);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-paper, #f3f3f0);
+		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-mono);
 		font-size: 0.76rem;
 		font-weight: var(--font-semibold);
@@ -94,7 +94,7 @@
 	.clear-quote-metric-panel blockquote {
 		margin: 0;
 		max-width: 15ch;
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-size: 3.05rem;
 		font-weight: var(--font-medium);
 		letter-spacing: 0;
@@ -103,7 +103,7 @@
 	}
 
 	.clear-quote-metric-panel figcaption {
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-size: 0.95rem;
 		line-height: 1.45;
 	}
@@ -119,9 +119,9 @@
 		align-content: end;
 		min-height: 11rem;
 		padding: 1rem;
-		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-		border-right: 1px solid var(--color-clear-border, #e1e1e1);
-		background: var(--color-clear-panel, #ffffff);
+		border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+		border-right: 1px solid var(--color-performance-line, #d7d7d2);
+		background: var(--color-performance-panel, #ffffff);
 	}
 
 	.clear-quote-metric-panel__metrics article:nth-child(2n) {
@@ -133,7 +133,7 @@
 	}
 
 	.clear-quote-metric-panel__metrics strong {
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-size: clamp(2.6rem, 6vw, 5rem);
 		font-weight: var(--font-medium);
 		letter-spacing: 0;
@@ -141,7 +141,7 @@
 	}
 
 	.clear-quote-metric-panel__metrics span {
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-size: 1.02rem;
 		font-weight: var(--font-medium);
 		line-height: 1.18;
@@ -149,7 +149,7 @@
 
 	.clear-quote-metric-panel__metrics p {
 		margin: 0;
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-size: 0.9rem;
 		line-height: 1.42;
 	}
@@ -162,7 +162,7 @@
 		.clear-quote-metric-panel__quote {
 			min-height: auto;
 			border-right: 0;
-			border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+			border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
 		}
 	}
 
@@ -172,7 +172,7 @@
 		}
 
 		.clear-quote-metric-panel__inner {
-			width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+			width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
 		}
 
 		.clear-quote-metric-panel blockquote {
@@ -187,7 +187,7 @@
 		.clear-quote-metric-panel__metrics article:nth-child(2n),
 		.clear-quote-metric-panel__metrics article:nth-last-child(-n + 2) {
 			border-right: 0;
-			border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+			border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
 		}
 
 		.clear-quote-metric-panel__metrics article:last-child {

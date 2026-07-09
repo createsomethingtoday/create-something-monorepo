@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ClearPageSection, PrivacyPolicyContent, SEO } from '@create-something/canon';
+  import { PerformancePageSection, PrivacyPolicyContent, SEO } from '@create-something/canon';
 </script>
 
 <SEO
@@ -9,7 +9,7 @@
   noindex={true}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   titleLevel="h1"
   eyebrow="Privacy"
@@ -23,4 +23,4 @@
       lastUpdated="January 29, 2026"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>

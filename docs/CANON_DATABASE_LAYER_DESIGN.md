@@ -16,16 +16,16 @@ Unchanged from the CSS Canon. Layout composition (`flex`, `grid`, `gap-*`, `p-*`
 
 Token source of truth: `packages/canon/src/lib/styles/tokens.css` (published as `@create-something/canon`). Note: older docs reference `packages/components`; the live package is `packages/canon`.
 
-### 1.2 Theme: the dark shell, not Clear
+### 1.2 Theme: the dark shell, not the public Performance surface
 
 Canon currently carries two surface languages:
 
 | Language | Tokens | Purpose |
 |----------|--------|---------|
 | **Shell (dark monochrome)** | `--color-shell-surface*`, `--color-shell-border-*`, `--color-bg-*`, `--color-fg-*` | Operator cockpits, tools, telemetry |
-| **Clear (light, Ona-derived)** | `--color-clear-*`, `Clear*` components | Proof-bearing communication surfaces (mapped/governed/validated claims) |
+| **Performance Lab (light)** | `--color-performance-*`, `Performance*` components | Proof-bearing communication surfaces (mapped/governed/validated claims) |
 
-Database-layer surfaces use the **dark shell**. Rationale: the cockpit principle — instruments read best against a dark ground, semantic color carries maximum signal on `#000`/`#0d0d0d`, and the Clear components' contract ("a clear surface should answer an operational question *to a buyer or operator reading claims*") is a different job than dense record manipulation. `ClearStateRows`/`ClearDecisionPanel` remain available when a governance surface must *present* a decision narrative; they are not the workhorse.
+Database-layer surfaces use the **dark shell**. Rationale: the cockpit principle — instruments read best against a dark ground, semantic color carries maximum signal on `#000`/`#0d0d0d`, and the Performance components' contract is a different job than dense record manipulation. `PerformanceStateRows`/`PerformanceDecisionPanel` remain available when a governance surface must *present* a decision narrative; they are not the workhorse.
 
 Surface stack for database layers:
 
@@ -255,7 +255,7 @@ Degradation rule from the schema's own design: if a table/migration is unavailab
 
 | Deviation | Canon replacement |
 |-----------|-------------------|
-| Light theme with hardcoded slate hexes (`#64748b`, `#e2e8f0`, `#f8fafc`, `#0f172a`) | Dark shell tokens (`--color-shell-*`, `--color-fg-*`, `--color-border-*`) — or, if it stays light, `--color-clear-*`; hardcoded hex is a violation either way |
+| Light theme with hardcoded slate hexes (`#64748b`, `#e2e8f0`, `#f8fafc`, `#0f172a`) | Dark shell tokens (`--color-shell-*`, `--color-fg-*`, `--color-border-*`) — or, if it stays light, `--color-performance-*`; hardcoded hex is a violation either way |
 | Hand-rolled `.pill` classes with Tailwind-palette fills (`#dcfce7`, `#fee2e2`, `#e0f2fe`) | `StatusBadge` with semantic tokens |
 | Hardcoded px/rem sizes (`font-size: 2rem`, `padding: 18px`, `border-radius: 8px`) | `--text-*`, `--space-*`/Tailwind spacing, `--radius-*` |
 | No `--duration-*`/`--ease-standard` transitions | Canon motion tokens |

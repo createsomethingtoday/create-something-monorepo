@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ClearPageSection, SEO, TermsOfServiceContent } from '@create-something/canon';
+  import { PerformancePageSection, SEO, TermsOfServiceContent } from '@create-something/canon';
 </script>
 
 <SEO
@@ -9,7 +9,7 @@
   noindex={true}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   titleLevel="h1"
   eyebrow="Terms"
@@ -24,4 +24,4 @@
       contactEmail="legal@createsomething.io"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>

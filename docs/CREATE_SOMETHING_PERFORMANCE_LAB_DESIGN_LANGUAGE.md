@@ -81,10 +81,10 @@ replace the fallback values without rewriting consuming components.
 
 Use existing token families before inventing new palettes:
 
-- `--color-clear-*` for public proof surfaces, articles, service pages, and
-  readable operator communication.
-- `--color-performance-*` for labs, readiness surfaces, proof rooms, maps,
-  dashboards, and high-stakes decision environments.
+- `--color-performance-*` for public proof surfaces, articles, service pages,
+  labs, readiness surfaces, proof rooms, maps, dashboards, and high-stakes
+  decision environments.
+- `--color-clear-*` exists only as a compatibility alias for older consumers.
 - `--color-shell-*`, `--color-bg-*`, `--color-fg-*`, and semantic state tokens
   for dense operator cockpits and database surfaces.
 
@@ -117,6 +117,27 @@ Avoid public language like:
 - generic AI governance platform
 
 ## Surface Rules
+
+### Performance And Safety
+
+Every signature surface should express both qualities:
+
+1. **Performance:** direct hierarchy, stable dimensions, square action
+   geometry, visible pressure/readiness rails, and no decorative shadow or
+   gradient treatment on controls.
+2. **Safety:** explicit `controlled`, `ready`, `review`, and `stop` states;
+   named ownership; bounded permissions; and receipt or evidence references.
+3. **State contract:** controlled is signal blue, ready is growth green,
+   review is gold, and stop is risk red. Pressure orange is reserved for test
+   intensity and decisive emphasis, not approval.
+4. **Redundancy:** never communicate safety with color alone. Include a state
+   word, icon, decision reason, or receipt.
+5. **Material signature:** use near-black, white, paper, court, precise lines,
+   mono record labels, and semantic rails. Avoid pill controls, soft candy
+   palettes, floating shadows, and ornamental gradients.
+
+Canon exposes this through the Performance state tokens,
+`.performance-control-rail`, and `.performance-receipt-stamp`.
 
 | Surface | Direction |
 | --- | --- |

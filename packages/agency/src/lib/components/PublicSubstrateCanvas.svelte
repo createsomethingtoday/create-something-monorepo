@@ -171,7 +171,7 @@
 			linear-gradient(180deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
 			linear-gradient(180deg, #fbfbf4 0%, #ffffff 100%);
 		box-shadow: 0 24px 60px rgba(10, 14, 25, 0.08);
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		overflow: hidden;
 	}
 
@@ -321,7 +321,7 @@
 
 	.public-substrate-canvas__actions button {
 		border: 1px solid rgba(10, 14, 25, 0.16);
-		background: #0a0e19;
+		background: #090909;
 		color: #fff;
 		cursor: pointer;
 		font: inherit;
@@ -332,7 +332,7 @@
 
 	.public-substrate-canvas__actions button + button {
 		background: #fff;
-		color: #0a0e19;
+		color: #090909;
 	}
 
 	.public-substrate-canvas__actions button:focus-visible {

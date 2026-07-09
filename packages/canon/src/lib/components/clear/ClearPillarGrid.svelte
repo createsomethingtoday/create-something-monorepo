@@ -83,10 +83,10 @@
 		gap: 0.7rem;
 		min-height: 16rem;
 		padding: 1rem;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-panel, #ffffff);
-		color: var(--color-clear-onyx, #0a0e19);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-ink, #090909);
 		text-decoration: none;
 		box-shadow: none;
 	}
@@ -98,8 +98,8 @@
 	}
 
 	a.clear-pillar:hover {
-		border-color: var(--color-clear-border-strong, #cecece);
-		background: var(--color-clear-porcelain, #f9f9f9);
+		border-color: var(--color-performance-line-strong, #9c9c96);
+		background: var(--color-performance-paper, #f3f3f0);
 		opacity: 1;
 	}
 
@@ -109,10 +109,10 @@
 		min-height: 1.78rem;
 		align-items: center;
 		padding: 0.3rem 0.5rem;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-porcelain, #f9f9f9);
-		color: var(--color-clear-grey, #636363);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-paper, #f3f3f0);
+		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-mono);
 		font-size: 0.72rem;
 		font-weight: var(--font-semibold);
@@ -124,7 +124,7 @@
 	.clear-pillar strong,
 	.clear-pillar__title-link {
 		display: block;
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-size: 1.18rem;
 		font-weight: var(--font-medium);
 		line-height: 1.16;
@@ -138,7 +138,7 @@
 
 	.clear-pillar p {
 		margin: 0;
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-size: 0.94rem;
 		line-height: 1.48;
 		text-wrap: pretty;
@@ -148,8 +148,8 @@
 		display: block;
 		margin-top: auto;
 		padding-top: 0.72rem;
-		border-top: 1px solid var(--color-clear-border, #e1e1e1);
-		color: var(--color-clear-onyx, #0a0e19);
+		border-top: 1px solid var(--color-performance-line, #d7d7d2);
+		color: var(--color-performance-ink, #090909);
 		font-family: var(--font-mono);
 		font-size: 0.76rem;
 		font-weight: var(--font-medium);
@@ -168,10 +168,10 @@
 		min-height: 1.8rem;
 		align-items: center;
 		padding: 0.3rem 0.48rem;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-panel, #ffffff);
-		color: var(--color-clear-onyx, #0a0e19);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-ink, #090909);
 		font-size: 0.8rem;
 		font-weight: var(--font-medium);
 		line-height: 1.2;
@@ -179,8 +179,8 @@
 	}
 
 	.clear-pillar__links a:hover {
-		border-color: var(--color-clear-border-strong, #cecece);
-		background: var(--color-clear-porcelain, #f9f9f9);
+		border-color: var(--color-performance-line-strong, #9c9c96);
+		background: var(--color-performance-paper, #f3f3f0);
 		opacity: 1;
 	}
 

@@ -69,9 +69,9 @@
 <style>
   /* Base Card */
   .card {
-    background: var(--color-clear-panel, #ffffff);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    color: var(--color-performance-ink, #090909);
     transition:
       border-color var(--duration-standard) var(--ease-standard),
       background var(--duration-standard) var(--ease-standard);
@@ -84,18 +84,18 @@
 
   .card-outlined {
     background: transparent;
-    border: 1px solid var(--color-clear-border-strong, #cecece);
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
   }
 
   /* Backward-compatible alias: render old glass cards as Performance Lab clear panels. */
   .card-glass {
-    background: var(--color-clear-panel, #ffffff);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    background: var(--color-performance-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .card-glass.card-hover:hover {
-    background: var(--color-clear-porcelain, #f9f9f9);
-    border-color: var(--color-clear-border-strong, #cecece);
+    background: var(--color-performance-paper, #f3f3f0);
+    border-color: var(--color-performance-line-strong, #9c9c96);
   }
 
   /* Radius variants */
@@ -121,8 +121,8 @@
   }
 
   .card-hover:hover {
-    border-color: var(--color-clear-border-strong, #cecece);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    border-color: var(--color-performance-line-strong, #9c9c96);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .card-hover:active {

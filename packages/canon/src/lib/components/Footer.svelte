@@ -20,7 +20,7 @@
     description?: string;
   }
 
-  type FooterVisualStyle = 'classic' | 'clear';
+  type FooterVisualStyle = 'classic' | 'performance' | 'clear';
 
   interface Props {
     mode?: 'ltd' | 'io' | 'space' | 'agency' | 'learn';
@@ -200,6 +200,7 @@
   }
 
   const currentYear = new Date().getFullYear();
+  const usesPerformanceStyle = $derived(visualStyle === 'performance' || visualStyle === 'clear');
   const defaultCopyright = `© ${currentYear} Create Something. The canon for "less, but better."`;
   const footerLinkGroups = $derived(
     quickLinkGroups.length > 0
@@ -209,7 +210,7 @@
         : []
   );
   const propertyDirectoryTitle = $derived(
-    visualStyle === 'clear' ? 'CREATE SOMETHING' : 'Modes of Being'
+    usesPerformanceStyle ? 'CREATE SOMETHING' : 'Modes of Being'
   );
 
   // Cross-property transition handler
@@ -250,7 +251,7 @@
   }
 </script>
 
-<footer class="footer" class:footer-clear={visualStyle === 'clear'}>
+<footer class="footer" class:footer-clear={usesPerformanceStyle}>
   <!-- Newsletter Section (Optional) -->
   {#if showNewsletter}
     <section id="newsletter" class="py-20 px-6">
@@ -339,7 +340,7 @@
       <div class="footer-links-grid">
         <!-- About / Brand Column -->
         <div class="footer-brand-column">
-          {#if visualStyle === 'clear'}
+          {#if usesPerformanceStyle}
             <a href="/" class="footer-mark" aria-label="CREATE SOMETHING home">
               <CubeMark size={44} variant="mono" />
             </a>
@@ -827,9 +828,9 @@
   }
 
   .footer-clear {
-    background: var(--color-clear-porcelain, #f9f9f9);
-    color: var(--color-clear-onyx, #0a0e19);
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .footer-clear #newsletter {
@@ -841,12 +842,12 @@
   .footer-clear .newsletter-title {
     max-width: 38rem;
     margin-inline: auto;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     line-height: 1.08;
   }
 
   .footer-clear .newsletter-description {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 1rem;
     line-height: 1.55;
   }
@@ -854,15 +855,15 @@
   .footer-clear .newsletter-input,
   .footer-clear .newsletter-button {
     min-height: 3.35rem;
-    border-radius: var(--radius-clear-sm, 4px);
+    border-radius: var(--radius-performance-sm, 4px);
   }
 
   .footer-clear .newsletter-input {
-    background: var(--color-clear-panel, #ffffff);
+    background: var(--color-performance-panel, #ffffff);
   }
 
   .footer-clear .newsletter-button {
-    background: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-ink, #090909);
     color: #ffffff;
   }
 
@@ -870,11 +871,11 @@
     padding-top: 5rem;
     padding-bottom: 1.25rem;
     padding-inline: 0;
-    background: var(--color-clear-porcelain, #f9f9f9);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .footer-clear .footer-inner {
-    width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
     max-width: none;
   }
 
@@ -883,9 +884,9 @@
     gap: 2rem 2.5rem;
     align-items: start;
     padding: clamp(1.5rem, 3vw, 2rem);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 8px;
-    background: var(--color-clear-panel, #ffffff);
+    background: var(--color-performance-panel, #ffffff);
     box-shadow: 0 12px 48px rgba(10, 14, 25, 0.08);
   }
 
@@ -897,18 +898,18 @@
   }
 
   .footer-clear .footer-mark {
-    --color-fg-primary: var(--color-clear-onyx, #0a0e19);
+    --color-fg-primary: var(--color-performance-ink, #090909);
     display: inline-grid;
     place-items: center;
     width: 3rem;
     height: 3rem;
     margin-bottom: 1.75rem;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     text-decoration: none;
   }
 
   .footer-clear .brand-title {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: var(--font-mono);
     font-size: 0.86rem;
     font-weight: var(--font-medium);
@@ -917,16 +918,16 @@
   }
 
   .footer-clear .brand-description {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.95rem;
     line-height: 1.55;
   }
 
   .footer-clear .footer-cta {
     width: min(100%, 17.5rem);
-    border-color: var(--color-clear-onyx, #0a0e19);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-onyx, #0a0e19);
+    border-color: var(--color-performance-ink, #090909);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-ink, #090909);
     color: #ffffff;
     box-shadow: none;
   }
@@ -943,7 +944,7 @@
   }
 
   .footer-clear .section-title {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.74rem;
     font-weight: var(--font-medium);
@@ -952,15 +953,15 @@
   }
 
   .footer-clear .section-description {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
   }
 
   .footer-clear .footer-link {
     display: block;
     width: fit-content;
     max-width: 100%;
-    color: var(--color-clear-onyx, #0a0e19);
-    border-radius: var(--radius-clear-sm, 4px);
+    color: var(--color-performance-ink, #090909);
+    border-radius: var(--radius-performance-sm, 4px);
     padding: 0.1rem 0;
     font-size: 0.96rem;
     line-height: 1.35;
@@ -968,7 +969,7 @@
 
   .footer-clear .footer-link:hover,
   .footer-clear .footer-link.active {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     opacity: 1;
   }
 
@@ -978,7 +979,7 @@
   .footer-clear .legal-link,
   .footer-clear .legal-separator,
   .footer-clear .quote-text {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
   }
 
   .footer-clear .link-description {
@@ -987,23 +988,23 @@
   }
 
   .footer-clear .social-link {
-    border-color: var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    border-color: var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
   }
 
   .footer-clear .social-link:hover {
-    border-color: var(--color-clear-border-strong, #cecece);
-    background: var(--color-clear-porcelain-soft, #f2f2f2);
-    color: var(--color-clear-onyx, #0a0e19);
+    border-color: var(--color-performance-line-strong, #9c9c96);
+    background: var(--color-performance-court, #e6e6e0);
+    color: var(--color-performance-ink, #090909);
   }
 
   .footer-clear .footer-copyright,
   .footer-clear .footer-quote {
     padding-inline: 0;
     border-top: 0;
-    background: var(--color-clear-porcelain, #f9f9f9);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .footer-clear .footer-copyright .footer-inner {
@@ -1059,7 +1060,7 @@
     }
 
     .footer-clear .footer-inner {
-      width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+      width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
     }
 
     .footer-clear .footer-links-grid {
@@ -1069,7 +1070,7 @@
 
     .footer-clear .footer-brand-column {
       padding-bottom: 1.1rem;
-      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
     .footer-clear .footer-mark {

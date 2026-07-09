@@ -1,16 +1,16 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const gateCards: ClearCardItem[] = [
+  const gateCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Health',
       icon: 'check',
@@ -55,7 +55,7 @@
     }
   ];
 
-  const observabilityCards: ClearCardItem[] = [
+  const observabilityCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Dify',
       icon: 'search',
@@ -79,7 +79,7 @@
     }
   ];
 
-  const evidenceCards: ClearCardItem[] = [
+  const evidenceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Health',
       icon: 'check',
@@ -126,7 +126,7 @@
     }
   ];
 
-  const workflowCards: ClearCardItem[] = [
+  const workflowCards: PerformanceCardItem[] = [
     {
       eyebrow: '01',
       icon: 'document',
@@ -157,7 +157,7 @@
     }
   ];
 
-  const proofCards: ClearCardItem[] = [
+  const proofCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Public',
       icon: 'document',
@@ -181,7 +181,7 @@
     }
   ];
 
-  const exampleRows: ClearCardItem[] = [
+  const exampleRows: PerformanceCardItem[] = [
     {
       eyebrow: 'Support triage',
       icon: 'mail',
@@ -205,7 +205,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Contract',
       icon: 'document',
@@ -241,7 +241,7 @@
   propertyName="agency"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -257,86 +257,86 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={gateCards.slice(0, 3)}
       columns={1}
       density="compact"
       ariaLabel="Primary Dify eval gates"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Trace and gate layer"
   title="Use Langfuse for Dify traces and MCP gates."
   description="Dify carries the app. Langfuse observes the Dify runtime and evaluates the MCP contracts CREATE SOMETHING creates."
 >
   {#snippet after()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={observabilityCards}
       columns={3}
       ariaLabel="Dify Langfuse observability and eval layer"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Gate set"
   title="The first gates should match the real workflow risk."
   description="Do not start with a generic benchmark. Start with the places a Dify workflow can overreach, hide uncertainty, or lose the operating boundary."
 >
   {#snippet after()}
-    <ClearCardGrid items={gateCards} columns={3} ariaLabel="Dify agent eval gates" />
+    <PerformanceCardGrid items={gateCards} columns={3} ariaLabel="Dify agent eval gates" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Evidence map"
   title="Each gate should point to the system that proves it."
   description="The goal is not duplicate observability. The goal is to know which trace or eval run answers the operator's question."
 >
   {#snippet after()}
-    <ClearCardGrid items={evidenceCards} columns={4} ariaLabel="Dify eval gate evidence map" />
+    <PerformanceCardGrid items={evidenceCards} columns={4} ariaLabel="Dify eval gate evidence map" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Operating loop"
   title="Eval gates travel with the contract bundle."
   description="The gates should be derived from the same artifacts that define the workflow: tool access, allowed behavior, success criteria, golden tasks, and runbook."
 >
   {#snippet after()}
-    <ClearCardGrid items={workflowCards} columns={4} ariaLabel="Dify eval operating loop" />
+    <PerformanceCardGrid items={workflowCards} columns={4} ariaLabel="Dify eval operating loop" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Examples"
   title="A gate is useful only when it names a concrete failure."
   description="Each workflow needs a small set of cases that prove the expected path and the stop path."
 >
   {#snippet after()}
-    <ClearCardGrid items={exampleRows} columns={3} ariaLabel="Dify eval examples" />
+    <PerformanceCardGrid items={exampleRows} columns={3} ariaLabel="Dify eval examples" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Evidence"
   title="Public proof and private evidence are different artifacts."
   description="Decision owners need proof that the workflow is governed. Operators still need private traces, receipts, and detailed records that should not be published."
 >
   {#snippet after()}
-    <ClearCardGrid items={proofCards} columns={3} ariaLabel="Dify eval evidence types" />
+    <PerformanceCardGrid items={proofCards} columns={3} ariaLabel="Dify eval evidence types" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Next step"
   title="Map the first eval gates before publishing the workflow."
   description="Bring one Dify app and I’ll map the tool boundary, approval states, blocked paths, golden tasks, and client-safe evidence package."
@@ -352,4 +352,4 @@
       Read Eval Evidence Paper
     </Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

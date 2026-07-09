@@ -1,17 +1,17 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const statusCards: ClearCardItem[] = [
+  const statusCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Primary',
       icon: 'users',
@@ -32,7 +32,7 @@
     }
   ];
 
-  const proofCards: ClearCardItem[] = [
+  const proofCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Operating model',
       icon: 'folder',
@@ -81,7 +81,7 @@
     }
   ];
 
-  const routeSteps: ClearCardItem[] = [
+  const routeSteps: PerformanceCardItem[] = [
     {
       eyebrow: 'Apply',
       icon: 'document',
@@ -105,7 +105,7 @@
     }
   ];
 
-  const ecosystemCards: ClearCardItem[] = [
+  const ecosystemCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Agent runtime',
       icon: 'settings',
@@ -130,7 +130,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Workspace',
       icon: 'document',
@@ -161,7 +161,7 @@
   {faqItems}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -177,18 +177,18 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid items={statusCards} columns={1} density="compact" ariaLabel="Notion status" />
+    <PerformanceCardGrid items={statusCards} columns={1} density="compact" ariaLabel="Notion status" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Proof"
   title="Notion is useful when the operating boundary is clear."
   description="The page should show where Notion helps operators, builders, and teams inspect the workflow without pretending it owns every source of truth."
 >
   {#snippet after()}
-    <ClearCardGrid items={proofCards} columns={4} ariaLabel="Notion proof cards" />
+    <PerformanceCardGrid items={proofCards} columns={4} ariaLabel="Notion proof cards" />
     <ArticleVisualFigure
       src="/images/articles/notion-ops-workspace/notion-operator-workspace.png"
       alt="Diagram showing Notion as the operator workspace, with Linear, production systems, and policy evidence kept in their own source-of-truth boundaries."
@@ -198,31 +198,31 @@
       sourceLabel="Created by CREATE SOMETHING for this workflow tool stack."
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Route"
   title="Consulting first, templates second, technology later."
   description="The public Notion path becomes credible when implementation, template proof, privacy boundaries, and support readiness exist before any integration approval claim."
 >
   {#snippet after()}
-    <ClearCardGrid items={routeSteps} columns={3} ariaLabel="Notion public route" />
+    <PerformanceCardGrid items={routeSteps} columns={3} ariaLabel="Notion public route" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Ecosystem"
   title="Notion is the workspace, not the whole stack."
   description="Dify, Cloudflare, and the stack boundary keep their own jobs so the operating model stays explainable."
 >
   {#snippet after()}
-    <ClearCardGrid items={ecosystemCards} columns={3} ariaLabel="Notion ecosystem roles" />
+    <PerformanceCardGrid items={ecosystemCards} columns={3} ariaLabel="Notion ecosystem roles" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Map the workspace"
   title="Bring the Notion surface that needs an operating boundary."
   description="I’ll map what Notion should own, what the workflow should keep elsewhere, and which automation path is safe to test first."
@@ -234,4 +234,4 @@
     </Button>
     <Button href="/stack" variant="secondary">See Stack Boundary</Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

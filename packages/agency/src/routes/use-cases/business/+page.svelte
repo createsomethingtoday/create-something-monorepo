@@ -1,16 +1,16 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem,
-    type ClearCtaItem
+    type PerformanceCardItem,
+    type PerformanceCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const workflowSummary: ClearCardItem[] = [
+  const workflowSummary: PerformanceCardItem[] = [
     {
       eyebrow: 'Start',
       icon: 'search',
@@ -31,7 +31,7 @@
     }
   ];
 
-  const journey: ClearCardItem[] = [
+  const journey: PerformanceCardItem[] = [
     {
       eyebrow: '01',
       icon: 'folder',
@@ -62,7 +62,7 @@
     }
   ];
 
-  const packageCards: ClearCardItem[] = [
+  const packageCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Workflow Pilot',
       icon: 'settings',
@@ -89,7 +89,7 @@
     }
   ];
 
-  const exampleMetrics: ClearCardItem[] = [
+  const exampleMetrics: PerformanceCardItem[] = [
     {
       eyebrow: 'Month 1',
       icon: 'plus',
@@ -116,7 +116,7 @@
     }
   ];
 
-  const audienceCards: ClearCardItem[] = [
+  const audienceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Operator gap',
       icon: 'user',
@@ -155,7 +155,7 @@
     }
   ];
 
-  const ctaItems: ClearCtaItem[] = [
+  const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Bring',
       icon: 'folder',
@@ -186,7 +186,7 @@
   {faqItems}
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -204,60 +204,60 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={workflowSummary}
       columns={1}
       density="compact"
       ariaLabel="Workflow pilot summary"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Operating path"
   title="Do not re-platform. Remove one manual bridge."
   description="Your team does not need a full-stack rebuild on the first call. You need to see which handoff can be mapped, delegated, stopped, and proven."
 >
   {#snippet after()}
-    <ClearCardGrid items={journey} columns={4} ariaLabel="Small-team workflow pilot journey" />
+    <PerformanceCardGrid items={journey} columns={4} ariaLabel="Small-team workflow pilot journey" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Service shape"
   title="The offer expands only after the first pilot proves useful."
   description="One controlled workflow becomes the evidence for the next map, not a promise to automate everything at once."
 >
   {#snippet after()}
-    <ClearCardGrid items={packageCards} columns={3} ariaLabel="Workflow pilot service packages" />
+    <PerformanceCardGrid items={packageCards} columns={3} ariaLabel="Workflow pilot service packages" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Example"
   title="A small team can feel the difference without changing every tool."
   description="A professional-services team can start with one pipeline handoff, then use the evidence to decide what deserves the next connection."
 >
   {#snippet after()}
-    <ClearCardGrid items={exampleMetrics} columns={3} ariaLabel="Small business workflow example metrics" />
+    <PerformanceCardGrid items={exampleMetrics} columns={3} ariaLabel="Small business workflow example metrics" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Fit"
   title="This is for teams carrying too much workflow in people."
   description="The right starting team can name the repeated handoff, the person currently rebuilding context, and the business consequence when that handoff breaks."
 >
   {#snippet after()}
-    <ClearCardGrid items={audienceCards} columns={3} ariaLabel="Small-team workflow fit" />
+    <PerformanceCardGrid items={audienceCards} columns={3} ariaLabel="Small-team workflow fit" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow="Start with one workflow"
   title="Bring the workflow that wastes the most time."
   description="I will help map the first controlled pilot before expanding authority, scope, or spend."
@@ -271,4 +271,4 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>

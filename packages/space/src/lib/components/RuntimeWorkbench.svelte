@@ -184,11 +184,11 @@
 <style>
   .runtime-workbench {
     width: 100%;
-    border-color: var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-md, 8px);
-    background: var(--color-clear-panel, #ffffff);
-    box-shadow: var(--shadow-clear-restraint, 0 4px 20px rgba(0, 0, 0, 0.06));
-    color: var(--color-clear-onyx, #0a0e19);
+    border-color: var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-md, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    box-shadow: var(--shadow-performance-panel, none);
+    color: var(--color-performance-ink, #090909);
   }
 
   :global(.runtime-workbench.terminal-surface)::before {
@@ -196,8 +196,8 @@
   }
 
   .runtime-workbench :global(.terminal-surface__bar) {
-    border-bottom-color: var(--color-clear-border, #e1e1e1);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    border-bottom-color: var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .runtime-workbench :global(.terminal-surface__title) {
@@ -213,8 +213,8 @@
     display: grid;
     gap: 1.25rem;
     padding: 1.2rem;
-    border-right: 1px solid var(--color-clear-border, #e1e1e1);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    border-right: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .runtime-workbench__intro {
@@ -245,9 +245,9 @@
     display: grid;
     gap: 0.3rem;
     padding: 0.9rem 0.95rem;
-    border-radius: var(--radius-clear-md, 8px);
+    border-radius: var(--radius-performance-md, 4px);
     border: 1px solid rgba(10, 14, 25, 0.08);
-    background: var(--color-clear-panel, #ffffff);
+    background: var(--color-performance-panel, #ffffff);
     text-align: left;
     transition:
       border-color var(--duration-micro) var(--ease-standard),
@@ -257,7 +257,7 @@
 
   .preview-tab:hover {
     border-color: rgba(10, 14, 25, 0.16);
-    background: var(--color-clear-porcelain-soft, #f2f2f2);
+    background: var(--color-performance-court, #e6e6e0);
     transform: translateY(-1px);
   }
 
@@ -304,9 +304,9 @@
   .panel-command {
     margin: 0;
     padding: 1rem 1.05rem;
-    border-radius: var(--radius-clear-md, 8px);
+    border-radius: var(--radius-performance-md, 4px);
     border: 1px solid rgba(10, 14, 25, 0.08);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    background: var(--color-performance-paper, #f3f3f0);
     color: var(--color-fg-primary);
     font-family: var(--font-mono);
     font-size: 0.9rem;
@@ -355,7 +355,7 @@
 
   .runtime-decision {
     padding: 1rem 1.05rem;
-    border-radius: var(--radius-clear-md, 8px);
+    border-radius: var(--radius-performance-md, 4px);
     border: 1px solid rgba(49, 92, 255, 0.18);
     background: linear-gradient(180deg, rgba(49, 92, 255, 0.08), rgba(49, 92, 255, 0.03));
   }
@@ -416,7 +416,7 @@
 
     .runtime-workbench__sidebar {
       border-right: 0;
-      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }
   }
 </style>

@@ -48,17 +48,14 @@
 {/if}
 
 <style>
-	/* Base Button */
 	.btn {
-		border-radius: 999px;
+		border-radius: var(--radius-performance-sm);
 		border: 1px solid transparent;
 		font-weight: var(--font-semibold);
-		letter-spacing: 0.02em;
+		letter-spacing: 0;
 		transition:
-			transform var(--duration-micro) var(--ease-standard),
 			background var(--duration-micro) var(--ease-standard),
 			border-color var(--duration-micro) var(--ease-standard),
-			box-shadow var(--duration-micro) var(--ease-standard),
 			color var(--duration-micro) var(--ease-standard);
 		-webkit-tap-highlight-color: transparent;
 	}
@@ -81,61 +78,42 @@
 		font-size: var(--text-body-lg);
 	}
 
-	/* Primary Variant */
 	.btn-primary {
-		background: linear-gradient(180deg, #ffffff, #eceef7);
-		color: #090909;
-		border-color: rgba(255, 255, 255, 0.28);
-		box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16);
+		background: var(--color-performance-ink);
+		color: var(--color-performance-panel);
+		border-color: var(--color-performance-ink);
 	}
 
 	.btn-primary:hover:not(:disabled) {
-		transform: translateY(-1px);
-		box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+		background: var(--color-performance-ink-soft);
+		border-color: var(--color-performance-ink-soft);
 	}
 
-	.btn-primary:active:not(:disabled) {
-		transform: translateY(0);
-	}
-
-	/* Secondary Variant */
 	.btn-secondary {
-		background: color-mix(in srgb, var(--color-shell-surface-secondary) 88%, transparent);
-		color: var(--color-fg-primary);
-		border-color: var(--color-shell-border-default);
+		background: var(--color-performance-panel);
+		color: var(--color-performance-ink);
+		border-color: var(--color-performance-line-strong);
 	}
 
 	.btn-secondary:hover:not(:disabled) {
-		transform: translateY(-1px);
-		background: var(--color-shell-surface-hover);
-		border-color: var(--color-shell-border-strong);
+		background: var(--color-performance-court);
+		border-color: var(--color-performance-ink);
 	}
 
-	.btn-secondary:active:not(:disabled) {
-		transform: translateY(0);
-	}
-
-	/* Ghost Variant */
 	.btn-ghost {
 		background: transparent;
-		color: var(--color-fg-primary);
-		border-color: var(--color-shell-border-subtle);
+		color: var(--color-performance-ink);
+		border-color: var(--color-performance-line);
 	}
 
 	.btn-ghost:hover:not(:disabled) {
-		transform: translateY(-1px);
-		background: var(--color-hover);
-		border-color: var(--color-shell-border-default);
+		background: var(--color-performance-court);
+		border-color: var(--color-performance-line-strong);
 	}
 
-	.btn-ghost:active:not(:disabled) {
-		transform: translateY(0);
-	}
-
-	/* Focus states for accessibility */
 	a:focus-visible,
 	button:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-signal);
 		outline-offset: 2px;
 	}
 </style>

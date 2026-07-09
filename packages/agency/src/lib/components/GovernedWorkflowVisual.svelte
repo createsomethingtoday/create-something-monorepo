@@ -80,7 +80,7 @@
 
 <style>
   .governed-visual {
-    --governed-accent: var(--color-clear-pastel-blue, #afc1fd);
+    --governed-accent: var(--color-performance-signal-soft, #dce8f5);
     --governed-surface: #eef2ff;
     position: relative;
     display: grid;
@@ -97,17 +97,17 @@
   }
 
   .governed-visual--allow {
-    --governed-accent: var(--color-clear-pistachio, #dbefdb);
-    --governed-surface: var(--color-clear-frosted-mint, #d9fff7);
+    --governed-accent: var(--color-performance-growth-soft, #dcece5);
+    --governed-surface: var(--color-performance-growth-soft, #dcece5);
   }
 
   .governed-visual--review {
-    --governed-accent: var(--color-clear-pastel-blue, #afc1fd);
+    --governed-accent: var(--color-performance-signal-soft, #dce8f5);
     --governed-surface: #eef2ff;
   }
 
   .governed-visual--block {
-    --governed-accent: var(--color-clear-candy-purple, #efd4ff);
+    --governed-accent: var(--color-performance-pressure-soft, #f7e2d7);
     --governed-surface: #f7e8ff;
   }
 
@@ -144,7 +144,7 @@
 
   .governed-visual__timeline span.active {
     border-color: rgba(196, 30, 58, 0.42);
-    background: var(--color-clear-stop, #c41e3a);
+    background: var(--color-performance-risk, #c62026);
   }
 
   .governed-visual__surface {
@@ -203,7 +203,7 @@
     content: '';
     width: 0.92rem;
     height: 0.92rem;
-    border: 1.4px solid var(--color-clear-onyx, #0a0e19);
+    border: 1.4px solid var(--color-performance-ink, #090909);
   }
 
   .node-icon--case::after {
@@ -248,7 +248,7 @@
     width: 0.54rem;
     height: 0.54rem;
     border-radius: 999px;
-    background: var(--color-clear-ocean, #0048ff);
+    background: var(--color-performance-signal, #0057b8);
   }
 
   .check-dot {
@@ -261,9 +261,9 @@
     place-items: center;
     min-width: 1.8rem;
     min-height: 1.5rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 4px;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     background: rgba(255, 255, 255, 0.68);
@@ -308,30 +308,30 @@
     width: 0.62rem;
     height: 0.62rem;
     border-radius: 999px;
-    background: var(--color-clear-grey-quiet, #818181);
+    background: var(--color-performance-muted, #5e6268);
   }
 
   .allow .decision-dot {
-    background: #397554;
+    background: #007a4d;
   }
 
   .review .decision-dot {
-    background: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-ink, #090909);
   }
 
   .block .decision-dot {
-    background: var(--color-clear-stop, #c41e3a);
+    background: var(--color-performance-risk, #c62026);
   }
 
   .decision-pill strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 0.8rem;
     font-weight: var(--font-medium);
     line-height: 1.1;
   }
 
   .decision-pill span:last-child {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.58rem;
     line-height: 1.18;
     white-space: normal;
@@ -356,7 +356,7 @@
     height: 1.9rem;
     border: 1px solid rgba(10, 14, 25, 0.1);
     border-radius: 5px;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: var(--font-mono);
     font-size: 0.58rem;
     background: color-mix(in srgb, var(--governed-accent) 34%, white);

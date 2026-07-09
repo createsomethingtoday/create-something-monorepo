@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, ClearPageSection, SEO } from '@create-something/canon';
+	import { Button, PerformancePageSection, SEO } from '@create-something/canon';
 	import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
 	import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -13,7 +13,7 @@
 />
 
 <main class="atlas-page">
-	<ClearPageSection
+	<PerformancePageSection
 		variant="hero"
 		titleLevel="h1"
 		eyebrow="Atlas canvas"
@@ -26,9 +26,9 @@
 				{agencyCoreMessaging.bookMappingSessionLabel}
 			</Button>
 		{/snippet}
-	</ClearPageSection>
+	</PerformancePageSection>
 
-	<ClearPageSection
+	<PerformancePageSection
 		variant="soft"
 		eyebrow="Atlas story"
 		title="See the workflow as a story before editing the map."
@@ -40,9 +40,9 @@
 				storyId="atlas-page-marketplace-review-story"
 			/>
 		{/snippet}
-	</ClearPageSection>
+	</PerformancePageSection>
 
-	<ClearPageSection
+	<PerformancePageSection
 		id="canvas"
 		variant="white"
 		eyebrow="Public mapping surface"
@@ -52,5 +52,5 @@
 		{#snippet after()}
 			<PublicAtlasCanvas bookingHref="/book" />
 		{/snippet}
-	</ClearPageSection>
+	</PerformancePageSection>
 </main>

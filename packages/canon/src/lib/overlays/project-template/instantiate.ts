@@ -427,15 +427,15 @@ function renderThemeCss(manifest: CanonProjectOverlayManifest): string {
  */
 
 :root {
-\t--overlay-accent: var(--color-clear-action, #155eef);
-\t--overlay-accent-contrast: var(--color-clear-action-contrast, #ffffff);
+\t--overlay-accent: var(--color-performance-signal, #0057b8);
+\t--overlay-accent-contrast: var(--color-performance-panel, #ffffff);
 \t--overlay-surface: var(--color-bg-surface, #ffffff);
 \t--overlay-surface-muted: var(--color-bg-subtle, #f6f7f9);
 \t--overlay-border: var(--color-border-default, #d9dde5);
-\t--overlay-proof: var(--color-clear-proof, #0f766e);
-\t--overlay-review: var(--color-clear-review, #a16207);
-\t--overlay-block: var(--color-clear-block, #b42318);
-\t--overlay-radius: var(--radius-clear, 8px);
+\t--overlay-proof: var(--color-performance-growth, #007a4d);
+\t--overlay-review: var(--color-performance-gold, #8b6b00);
+\t--overlay-block: var(--color-performance-risk, #c62026);
+\t--overlay-radius: var(--radius-performance-md, 4px);
 \t--overlay-focus-ring: 0 0 0 3px color-mix(in srgb, var(--overlay-accent) 24%, transparent);
 }
 

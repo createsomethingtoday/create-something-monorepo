@@ -1,20 +1,20 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearCtaBand,
-    ClearPageSection,
-    ClearProofStrip,
-    ClearWorkflowMiniArtifact,
-    type ClearCardItem,
-    type ClearCtaItem,
-    type ClearProofItem
+    PerformanceCardGrid,
+    PerformanceCtaBand,
+    PerformancePageSection,
+    PerformanceProofStrip,
+    PerformanceWorkflowMiniArtifact,
+    type PerformanceCardItem,
+    type PerformanceCtaItem,
+    type PerformanceProofItem
   } from '@create-something/canon';
   import type { GovernanceProduct } from '@create-something/canon/governance';
   import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
 
   type ProofStateIconName = 'objects' | 'actions' | 'states' | 'receipts';
-  type ProductProofItem = ClearProofItem & { icon: ProofStateIconName };
+  type ProductProofItem = PerformanceProofItem & { icon: ProofStateIconName };
 
   interface RelatedLink {
     label: string;
@@ -25,11 +25,11 @@
     product: GovernanceProduct;
     title: string;
     description: string;
-    heroCards: ClearCardItem[];
+    heroCards: PerformanceCardItem[];
     pathItems: ProductProofItem[];
-    detailCards: ClearCardItem[];
-    relatedCards: ClearCardItem[];
-    ctaItems: ClearCtaItem[];
+    detailCards: PerformanceCardItem[];
+    relatedCards: PerformanceCardItem[];
+    ctaItems: PerformanceCtaItem[];
     primaryAction: string;
     primaryHref: string;
     secondaryAction: string;
@@ -70,7 +70,7 @@
   }
 </script>
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -84,16 +84,16 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={heroCards}
       columns={1}
       density="compact"
       ariaLabel={`${product.name} operating cards`}
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow={`${product.name} surface`}
   title={`${product.name} owns the ${product.surface.replace('-', ' ')}.`}
@@ -103,40 +103,40 @@
     {@const artifactKind = miniArtifactKind(product.id)}
     {#if artifactKind}
       <div class="governance-product-artifact">
-        <ClearWorkflowMiniArtifact
+        <PerformanceWorkflowMiniArtifact
           kind={artifactKind}
           ariaLabel={`${product.name} workflow mini artifact`}
         />
       </div>
     {/if}
 
-    <ClearProofStrip items={pathItems} ariaLabel={`${product.name} composition path`}>
+    <PerformanceProofStrip items={pathItems} ariaLabel={`${product.name} composition path`}>
       {#snippet icon(item)}
         <WorkflowSignalIcon name={proofStateIcon(item.icon)} />
       {/snippet}
-    </ClearProofStrip>
+    </PerformanceProofStrip>
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Production contract"
   title="The product boundary stays small enough for operators to inspect."
   description={`In production, ${product.name} is required because it owns ${product.owns.join(', ')}.`}
 >
   {#snippet after()}
-    <ClearCardGrid items={detailCards} columns={3} ariaLabel={`${product.name} production contract`} />
+    <PerformanceCardGrid items={detailCards} columns={3} ariaLabel={`${product.name} production contract`} />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Connected products"
   title="Atlas connects this product to the rest of the governance loop."
   description="Each page describes one product surface, but production workflows need the four surfaces attached to the same map: Atlas, Signal, Decision, and Proof."
 >
   {#snippet after()}
-    <ClearCardGrid items={relatedCards} columns={3} ariaLabel="Related governance product surfaces" />
+    <PerformanceCardGrid items={relatedCards} columns={3} ariaLabel="Related governance product surfaces" />
 
     <nav class="governance-product-links" aria-label="Governance product links">
       {#each relatedLinks as link}
@@ -144,9 +144,9 @@
       {/each}
     </nav>
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearCtaBand
+<PerformanceCtaBand
   eyebrow={`${product.name} implementation`}
   title="Attach this surface to a real workflow."
   description="Start with one live workflow, connect the source signal, name the decision owner, and decide which proof record must survive the action."
@@ -156,7 +156,7 @@
     <Button href={primaryHref}>{primaryAction}</Button>
     <Button href={secondaryHref} variant="secondary">{secondaryAction}</Button>
   {/snippet}
-</ClearCtaBand>
+</PerformanceCtaBand>
 
 <style>
   .governance-product-artifact {
@@ -164,9 +164,9 @@
     justify-items: center;
     margin-bottom: 0.95rem;
     padding: 1.1rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
   }
 
   .governance-product-links {
@@ -181,17 +181,17 @@
     min-height: 2.35rem;
     align-items: center;
     padding: 0.4rem 0.72rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
     font-size: 0.92rem;
     text-decoration: none;
   }
 
   .governance-product-links a:hover {
-    border-color: var(--color-clear-border-strong, #cecece);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    border-color: var(--color-performance-line-strong, #9c9c96);
+    background: var(--color-performance-paper, #f3f3f0);
     opacity: 1;
   }
 </style>

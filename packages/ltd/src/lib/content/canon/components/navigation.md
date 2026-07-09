@@ -47,17 +47,17 @@ published: true
 />
 ```
 
-## Clear Communication Navigation
+## Performance Navigation
 
-`Navigation` and `Footer` both accept `visualStyle?: 'classic' | 'clear'`. The default is
-`classic` to preserve existing callers while the Performance Lab clear system rolls out.
+`Navigation` and `Footer` accept `visualStyle?: 'classic' | 'performance' | 'clear'`. Use
+`performance`; `clear` remains an input alias for downstream compatibility.
 
-Use `clear` when the page must serve a buyer or operator who needs immediate orientation before
-brand atmosphere. The clear style follows the Performance Lab communication layer: frosted light shell,
+Use `performance` when the page must serve a buyer or operator who needs immediate orientation before
+brand atmosphere. The style follows the Performance Lab layer: a light shell,
 compact readable links, crisp dividers, restrained active states, direct dark CTA, and no decorative
 navigation complexity.
 
-Clear navigation should route people into proof-bearing work, not generic brand exploration. Prefer
+Performance navigation should route people into proof-bearing work, not generic brand exploration. Prefer
 labels for maps, policies, systems, workflows, receipts, and contact paths. Keep the primary CTA
 bounded to a concrete next action such as mapping one workflow, reviewing a handoff, or opening a
 governed surface.
@@ -71,7 +71,7 @@ governed surface.
   fixed={true}
   ctaLabel="Map one workflow"
   ctaHref="/book"
-  visualStyle="clear"
+  visualStyle="performance"
 />
 
 <Footer
@@ -83,20 +83,20 @@ governed surface.
     href: '/book',
     description: 'Leave with the workflow, boundary, and proof path.'
   }}
-  visualStyle="clear"
+  visualStyle="performance"
 />
 ```
 
-## Clear Communication Primitives
+## Performance Primitives
 
-The clear navigation and footer are designed to pair with:
+The Performance navigation and footer are designed to pair with:
 
-- `ClearPageSection`: claim, proof, action, and split hero sections
-- `ClearProofStrip`: compact objects/actions/states/receipts proof
-- `ClearStateRows`: governed run/wait/stop rows
-- `ClearDecisionPanel`: selectable allow/review/block decision paths with evidence and receipts
-- `ClearReceiptGrid` and `ClearArtifactCard`: evidence and delivery receipts
-- `ClearCtaBand`: restrained final action band
+- `PerformancePageSection`: claim, proof, action, and split hero sections
+- `PerformanceProofStrip`: compact objects/actions/states/receipts proof
+- `PerformanceStateRows`: governed run/wait/stop rows
+- `PerformanceDecisionPanel`: selectable allow/review/block decision paths with evidence and receipts
+- `PerformanceReceiptGrid` and `PerformanceArtifactCard`: evidence and delivery receipts
+- `PerformanceCtaBand`: restrained final action band
 
 ## Breadcrumbs and Tabs
 
@@ -139,12 +139,12 @@ grouping, or keyboard-first navigation reduces friction.
 1. Keep the primary header focused on top-level choices.
 2. Use breadcrumbs when the user needs a clear sense of depth.
 3. Use tabs for peer content, not for hiding unrelated workflows.
-4. Use `visualStyle="clear"` for the new CREATE SOMETHING communication layer: plain-language
+4. Use `visualStyle="performance"` for the CREATE SOMETHING communication layer: plain-language
    orientation, visible proof, and a direct next action.
 
 ## Related
 
-- [Clear Components](/canon/components/clear)
+- [Performance Components](/canon/components/clear)
 - [Layout](/canon/foundations/layout)
 - [Content](/canon/guidelines/content)
 - [Responsive](/canon/guidelines/responsive)

@@ -3,10 +3,10 @@
 	import { tick } from 'svelte';
 	import {
 		Button,
-		ClearCardGrid,
-		ClearPageSection,
+		PerformanceCardGrid,
+		PerformancePageSection,
 		SEO,
-		type ClearCardItem
+		type PerformanceCardItem
 	} from '@create-something/canon';
 	import { getAnalytics } from '@create-something/canon/analytics';
 	import { DatePicker } from '@create-something/canon/domains/agency';
@@ -119,7 +119,7 @@
 	const warmupStorageKey = PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary;
 	const warmupDraftStorageKey = PUBLIC_ATLAS_STORAGE_KEYS.warmupDraft;
 
-	const mappingSessionOutcomes: ClearCardItem[] = [
+	const mappingSessionOutcomes: PerformanceCardItem[] = [
 		{
 			eyebrow: 'Handoff',
 			icon: 'folder',
@@ -146,7 +146,7 @@
 		}
 	];
 
-	const mappingSessionPrep: ClearCardItem[] = [
+	const mappingSessionPrep: PerformanceCardItem[] = [
 		{
 			eyebrow: 'Workflow',
 			icon: 'folder',
@@ -173,7 +173,7 @@
 		}
 	];
 
-	const sessionFitSignals: ClearCardItem[] = [
+	const sessionFitSignals: PerformanceCardItem[] = [
 		{
 			eyebrow: 'Book this when',
 			icon: 'success',
@@ -470,7 +470,7 @@
 />
 
 <main class="booking-page">
-	<ClearPageSection
+	<PerformancePageSection
 		variant="hero"
 		layout="split"
 		titleLevel="h1"
@@ -487,40 +487,40 @@
 		{/snippet}
 
 		{#snippet aside()}
-			<ClearCardGrid
+			<PerformanceCardGrid
 				items={mappingSessionOutcomes}
 				columns={1}
 				density="compact"
 				ariaLabel="Mapping session outcomes"
 			/>
 		{/snippet}
-	</ClearPageSection>
+	</PerformancePageSection>
 
-	<ClearPageSection
+	<PerformancePageSection
 		variant="white"
 		eyebrow="Bring enough context"
 		title="Bring context, not secrets."
 		description="The session works best when we can see the real handoff and decide what your team keeps. Credentials move through Infisical or the approved runtime path only after the map shows a controlled build path."
 	>
 		{#snippet after()}
-			<ClearCardGrid
+			<PerformanceCardGrid
 				items={mappingSessionPrep}
 				columns={4}
 				ariaLabel="What to bring to the mapping session"
 			/>
 		{/snippet}
-	</ClearPageSection>
+	</PerformancePageSection>
 
-	<ClearPageSection
+	<PerformancePageSection
 		variant="soft"
 		eyebrow="Fit check"
 		title="Book when the workflow is ready to become an operating path."
 		description="The mapping session is for a real handoff with an owner, risk, and next decision. It is the fixed-scope first step before any workflow pilot."
 	>
 		{#snippet after()}
-			<ClearCardGrid items={sessionFitSignals} columns={2} ariaLabel="Mapping session fit" />
+			<PerformanceCardGrid items={sessionFitSignals} columns={2} ariaLabel="Mapping session fit" />
 		{/snippet}
-	</ClearPageSection>
+	</PerformancePageSection>
 
 	<section id="booking-flow" class="booking-flow" aria-label="Booking flow">
 		<header class="booking-flow__header">
@@ -664,22 +664,22 @@
 
 <style>
 	.booking-page {
-		background: var(--color-clear-panel, #ffffff);
-		color: var(--color-clear-onyx, #0a0e19);
+		background: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	.booking-flow {
-		--color-bg-surface: var(--color-clear-panel, #ffffff);
-		--color-bg-muted: var(--color-clear-porcelain, #f9f9f9);
-		--color-fg-primary: var(--color-clear-onyx, #0a0e19);
+		--color-bg-surface: var(--color-performance-panel, #ffffff);
+		--color-bg-muted: var(--color-performance-paper, #f3f3f0);
+		--color-fg-primary: var(--color-performance-ink, #090909);
 		--color-fg-secondary: #2f3542;
-		--color-fg-tertiary: var(--color-clear-grey, #636363);
-		--color-fg-muted: var(--color-clear-grey-quiet, #818181);
-		--color-border-default: var(--color-clear-border, #e1e1e1);
-		--color-border-emphasis: var(--color-clear-border-strong, #cecece);
+		--color-fg-tertiary: var(--color-performance-muted, #5e6268);
+		--color-fg-muted: var(--color-performance-muted, #5e6268);
+		--color-border-default: var(--color-performance-line, #d7d7d2);
+		--color-border-emphasis: var(--color-performance-line-strong, #9c9c96);
 		--color-hover: rgba(10, 14, 25, 0.045);
-		--color-success: var(--color-clear-moss, #1e3c2c);
-		width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+		--color-success: var(--color-performance-growth, #007a4d);
+		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
 		margin-inline: auto;
 		padding-block: 4rem;
 		scroll-margin-top: 5.25rem;
@@ -699,10 +699,10 @@
 		min-height: 1.9rem;
 		align-items: center;
 		padding: 0.36rem 0.62rem;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-panel, #ffffff);
-		color: var(--color-clear-grey, #636363);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-mono);
 		font-size: 0.76rem;
 		font-weight: var(--font-semibold);
@@ -712,7 +712,7 @@
 	.booking-flow__header h2 {
 		margin: 0;
 		max-width: 16ch;
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-size: 2.65rem;
 		font-weight: var(--font-medium);
 		line-height: 1.04;
@@ -778,7 +778,7 @@
 
 	@media (max-width: 520px) {
 		.booking-flow {
-			width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+			width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
 			padding-block: 2.75rem;
 		}
 
@@ -814,14 +814,14 @@
 		justify-content: space-between;
 		margin-bottom: clamp(1rem, 2vw, 1.4rem);
 		padding: 1rem;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-porcelain, #f9f9f9);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-paper, #f3f3f0);
 	}
 
 	.booking-backup--primary {
-		border-color: var(--color-clear-border-strong, #cecece);
-		background: color-mix(in srgb, var(--color-clear-pill-active, #cad7fa) 34%, white);
+		border-color: var(--color-performance-line-strong, #9c9c96);
+		background: color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 34%, white);
 	}
 
 	.booking-backup div {
@@ -831,7 +831,7 @@
 	}
 
 	.booking-backup span {
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-mono);
 		font-size: 0.74rem;
 		font-weight: var(--font-semibold);
@@ -839,7 +839,7 @@
 	}
 
 	.booking-backup strong {
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-size: 1rem;
 		font-weight: var(--font-medium);
 		line-height: 1.22;
@@ -848,7 +848,7 @@
 	.booking-backup p {
 		margin: 0;
 		max-width: 48rem;
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-size: 0.9rem;
 		line-height: 1.4;
 	}
@@ -860,9 +860,9 @@
 		align-items: center;
 		justify-content: center;
 		padding-inline: 1rem;
-		border: 1px solid var(--color-clear-onyx, #0a0e19);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-onyx, #0a0e19);
+		border: 1px solid var(--color-performance-ink, #090909);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-ink, #090909);
 		color: #ffffff;
 		font-size: 0.94rem;
 		font-weight: var(--font-medium);
@@ -870,8 +870,8 @@
 	}
 
 	.booking-backup a:hover {
-		background: var(--color-clear-panel, #ffffff);
-		color: var(--color-clear-onyx, #0a0e19);
+		background: var(--color-performance-panel, #ffffff);
+		color: var(--color-performance-ink, #090909);
 	}
 
 	.warmup-carryover {
@@ -881,16 +881,16 @@
 		align-items: start;
 		margin-bottom: clamp(1rem, 2vw, 1.4rem);
 		padding: 1rem;
-		border: 1px solid color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 56%, var(--color-clear-border, #e1e1e1));
+		border: 1px solid color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 56%, var(--color-performance-line, #d7d7d2));
 		border-radius: 8px;
-		background: color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 10%, #ffffff);
+		background: color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 10%, #ffffff);
 		box-shadow: 0 16px 44px rgba(10, 14, 25, 0.05);
 	}
 
 	.warmup-carryover span {
 		display: inline-flex;
 		margin-bottom: 0.4rem;
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-size: 0.72rem;
 		font-weight: 800;
 		letter-spacing: 0.08em;
@@ -899,7 +899,7 @@
 
 	.warmup-carryover h3 {
 		margin: 0;
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		font-size: 1.05rem;
 		letter-spacing: 0;
 		line-height: 1.25;
@@ -907,7 +907,7 @@
 
 	.warmup-carryover p {
 		margin: 0.45rem 0 0;
-		color: var(--color-clear-grey, #636363);
+		color: var(--color-performance-muted, #5e6268);
 		font-size: 0.92rem;
 		line-height: 1.5;
 	}
@@ -916,10 +916,10 @@
 		max-height: 13rem;
 		overflow: auto;
 		margin: 0;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
 		border-radius: 6px;
-		background: var(--color-clear-porcelain, #f9f9f9);
-		color: var(--color-clear-onyx, #0a0e19);
+		background: var(--color-performance-paper, #f3f3f0);
+		color: var(--color-performance-ink, #090909);
 		font: 0.78rem/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 		padding: 0.85rem;
 		white-space: pre-wrap;
@@ -930,10 +930,10 @@
 		grid-column: 1 / -1;
 		justify-self: start;
 		min-height: 2.45rem;
-		border: 1px solid var(--color-clear-border-strong, #cecece);
+		border: 1px solid var(--color-performance-line-strong, #9c9c96);
 		border-radius: 6px;
 		background: #ffffff;
-		color: var(--color-clear-onyx, #0a0e19);
+		color: var(--color-performance-ink, #090909);
 		cursor: pointer;
 		font: inherit;
 		font-weight: 700;
@@ -949,9 +949,9 @@
 		flex-direction: column;
 		gap: var(--space-lg);
 		padding: 1.25rem;
-		border: 1px solid var(--color-clear-border, #e1e1e1);
-		border-radius: var(--radius-clear-sm, 4px);
-		background: var(--color-clear-panel, #ffffff);
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		border-radius: var(--radius-performance-sm, 4px);
+		background: var(--color-performance-panel, #ffffff);
 		scroll-margin-top: 5.75rem;
 	}
 

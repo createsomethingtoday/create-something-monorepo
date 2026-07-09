@@ -1,22 +1,22 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearDecisionPanel,
-    ClearPageSection,
-    ClearPlatformHero,
-    ClearStateRows,
+    PerformanceCardGrid,
+    PerformanceDecisionPanel,
+    PerformancePageSection,
+    PerformancePlatformHero,
+    PerformanceStateRows,
     SEO,
     NewsletterSignup,
     PropertyFunnel,
-    type ClearCardItem,
-    type ClearDecisionItem,
-    type ClearPlatformHeroMeta,
-    type ClearPlatformHeroProof,
-    type ClearWorkflowState
+    type PerformanceCardItem,
+    type PerformanceDecisionItem,
+    type PerformancePlatformHeroMeta,
+    type PerformancePlatformHeroProof,
+    type PerformanceWorkflowState
   } from '@create-something/canon';
 
-  const heroProofItems: ClearPlatformHeroProof[] = [
+  const heroProofItems: PerformancePlatformHeroProof[] = [
     {
       value: 'Creation',
       label: 'The moat is building governed connectivity, not consuming AI tools.'
@@ -35,13 +35,13 @@
     }
   ];
 
-  const heroMetaItems: ClearPlatformHeroMeta[] = [
+  const heroMetaItems: PerformancePlatformHeroMeta[] = [
     { label: 'Property role', value: 'Philosophy layer' },
     { label: 'Category', value: 'Delegated Work Control' },
     { label: 'Method', value: 'Less, but better' }
   ];
 
-  const creationStates: ClearWorkflowState[] = [
+  const creationStates: PerformanceWorkflowState[] = [
     {
       tone: 'run',
       state: 'Build',
@@ -62,7 +62,7 @@
     }
   ];
 
-  const canonCards: ClearCardItem[] = [
+  const canonCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Creation moat',
       icon: 'check',
@@ -101,7 +101,7 @@
     }
   ];
 
-  const patternCards: ClearCardItem[] = [
+  const patternCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Featured pattern',
       icon: 'settings',
@@ -128,7 +128,7 @@
     }
   ];
 
-  const masterCards: ClearCardItem[] = [
+  const masterCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Industrial design',
       icon: 'user',
@@ -145,7 +145,7 @@
     }
   ];
 
-  const ecosystemCards: ClearCardItem[] = [
+  const ecosystemCards: PerformanceCardItem[] = [
     {
       eyebrow: '.io',
       icon: 'document',
@@ -172,7 +172,7 @@
     }
   ];
 
-  const decisionStates: ClearDecisionItem[] = [
+  const decisionStates: PerformanceDecisionItem[] = [
     {
       label: 'Connect',
       summary: 'Chassis needed',
@@ -238,7 +238,7 @@
   propertyName="ltd"
 />
 
-<ClearPlatformHero
+<PerformancePlatformHero
   eyebrow="CREATE SOMETHING .ltd"
   title="The philosophy of automation infrastructure."
   description="CREATE SOMETHING .ltd explains the creation moat: consuming AI tools is easy; building governed connectivity, policy, trust boundaries, and proof is the work."
@@ -252,7 +252,7 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearStateRows
+    <PerformanceStateRows
       eyebrow="Creation loop"
       title="Build, govern, prove"
       states={creationStates}
@@ -261,9 +261,9 @@
       ariaLabel="Automation infrastructure creation loop"
     />
   {/snippet}
-</ClearPlatformHero>
+</PerformancePlatformHero>
 
-<ClearDecisionPanel
+<PerformanceDecisionPanel
   id="canon-decision"
   eyebrow="Delegation canon"
   title="Creation starts where consumption stops."
@@ -272,29 +272,29 @@
   ariaLabel="Delegated work control decision path"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Operating thesis"
   title="MCP consumption is commoditized. MCP creation is not."
   description="The entry point to automation is connectivity, not intelligence. The canon names the discipline required to build that connectivity without losing control."
 >
   {#snippet after()}
-    <ClearCardGrid items={canonCards} columns={3} ariaLabel="Automation infrastructure principles" />
+    <PerformanceCardGrid items={canonCards} columns={3} ariaLabel="Automation infrastructure principles" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Featured pattern"
   title="Crystallization turns judgment into an operating artifact."
   description="The strongest ideas in the canon are not decorative. They become constraints, quality gates, routing decisions, and review paths."
 >
   {#snippet after()}
-    <ClearCardGrid items={patternCards} columns={2} ariaLabel="Crystallization pattern details" />
+    <PerformanceCardGrid items={patternCards} columns={2} ariaLabel="Crystallization pattern details" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow="Featured masters"
   title="Reference points for restraint."
@@ -305,24 +305,24 @@
   {/snippet}
 
   {#snippet after()}
-    <ClearCardGrid items={masterCards} columns={2} ariaLabel="Featured masters" />
+    <PerformanceCardGrid items={masterCards} columns={2} ariaLabel="Featured masters" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Property loop"
   title="The philosophy has to return to the work."
   description=".ltd names the standard, .io documents the evidence, .space tests the runtime, and .agency turns the fit into governed workflow delivery."
 >
   {#snippet after()}
-    <ClearCardGrid
+    <PerformanceCardGrid
       items={ecosystemCards}
       columns={3}
       ariaLabel="CREATE SOMETHING property system"
     />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
 <PropertyFunnel
   current="ltd"

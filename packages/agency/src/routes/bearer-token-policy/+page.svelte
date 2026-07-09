@@ -1,15 +1,15 @@
 <script lang="ts">
   import {
     Button,
-    ClearCardGrid,
-    ClearPageSection,
+    PerformanceCardGrid,
+    PerformancePageSection,
     SEO,
-    type ClearCardItem
+    type PerformanceCardItem
   } from '@create-something/canon';
 
   const effectiveDate = 'March 6, 2026';
 
-  const controls: ClearCardItem[] = [
+  const controls: PerformanceCardItem[] = [
     {
       eyebrow: 'Token',
       icon: 'user',
@@ -36,7 +36,7 @@
     }
   ];
 
-  const responsibilities: ClearCardItem[] = [
+  const responsibilities: PerformanceCardItem[] = [
     {
       eyebrow: 'Do not share',
       icon: 'users',
@@ -70,7 +70,7 @@
   propertyName="agency"
 />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   titleLevel="h1"
   eyebrow="Bearer Token Policy"
@@ -82,22 +82,22 @@
   {/snippet}
 
   {#snippet after()}
-    <ClearCardGrid items={controls} columns={4} ariaLabel="Bearer token controls" />
+    <PerformanceCardGrid items={controls} columns={4} ariaLabel="Bearer token controls" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="white"
   eyebrow={`Effective ${effectiveDate}`}
   title="User responsibilities are part of the control model."
   description="Bearer tokens are useful because they are managed, revocable, and auditable. They become risky when treated as shared credentials or bypass paths."
 >
   {#snippet after()}
-    <ClearCardGrid items={responsibilities} columns={4} ariaLabel="Bearer token responsibilities" />
+    <PerformanceCardGrid items={responsibilities} columns={4} ariaLabel="Bearer token responsibilities" />
   {/snippet}
-</ClearPageSection>
+</PerformancePageSection>
 
-<ClearPageSection
+<PerformancePageSection
   variant="soft"
   eyebrow="Enforcement"
   title="Revocation terminates token usability at once."

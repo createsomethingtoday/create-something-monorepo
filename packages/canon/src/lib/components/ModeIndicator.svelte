@@ -109,13 +109,13 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.48rem 0.55rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: var(--radius-full);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
     z-index: var(--z-fixed);
     opacity: 0.92;
-    box-shadow: var(--shadow-clear-restraint, 0 4px 20px rgba(0, 0, 0, 0.06));
+    box-shadow: var(--shadow-performance-panel, none);
     transition:
       opacity var(--duration-micro) var(--ease-standard),
       border-color var(--duration-micro) var(--ease-standard),
@@ -124,8 +124,8 @@
 
   .mode-indicator:hover {
     opacity: 1;
-    border-color: var(--color-clear-border-strong, #cecece);
-    box-shadow: var(--shadow-clear-lift, 0 8px 28px rgba(0, 0, 0, 0.08));
+    border-color: var(--color-performance-line-strong, #9c9c96);
+    box-shadow: var(--shadow-performance-node, none);
   }
 
   .mode-item {
@@ -145,19 +145,19 @@
   }
 
   .mode-item:hover:not(.active) {
-    background: var(--color-clear-porcelain, #f9f9f9);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .mode-item.active {
     cursor: default;
-    background: color-mix(in srgb, var(--color-clear-pill-active, #cad7fa) 34%, white);
+    background: color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 34%, white);
   }
 
   .mode-dot {
     width: 0.42rem;
     height: 0.42rem;
     border-radius: var(--radius-full);
-    background: var(--color-clear-border-strong, #cecece);
+    background: var(--color-performance-line-strong, #9c9c96);
     transition:
       background var(--duration-micro) var(--ease-standard),
       transform var(--duration-micro) var(--ease-standard),
@@ -165,32 +165,32 @@
   }
 
   .mode-item:hover:not(.active) .mode-dot {
-    background: var(--color-clear-grey-quiet, #818181);
+    background: var(--color-performance-muted, #5e6268);
     transform: scale(1.12);
   }
 
   .mode-item.active .mode-dot {
-    background: var(--color-clear-onyx, #0a0e19);
-    box-shadow: 0 0 0 3px var(--color-clear-panel, #ffffff);
+    background: var(--color-performance-ink, #090909);
+    box-shadow: 0 0 0 3px var(--color-performance-panel, #ffffff);
   }
 
   .mode-label {
     font-family: var(--font-mono);
     font-size: var(--text-caption);
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     transition: color var(--duration-micro) var(--ease-standard);
   }
 
   .mode-item:hover:not(.active) .mode-label {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .mode-item.active .mode-label {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .mode-item:focus-visible {
-    outline: 2px solid var(--color-clear-ocean, #0048ff);
+    outline: 2px solid var(--color-performance-signal, #0057b8);
     outline-offset: 2px;
   }
 
@@ -203,14 +203,14 @@
     gap: 0.12rem;
     min-width: max-content;
     padding: 0.42rem 0.55rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 4px;
-    background: var(--color-clear-panel, #ffffff);
+    background: var(--color-performance-panel, #ffffff);
     font-size: var(--text-caption);
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     white-space: nowrap;
     pointer-events: none;
-    box-shadow: var(--shadow-clear-restraint, 0 4px 20px rgba(0, 0, 0, 0.06));
+    box-shadow: var(--shadow-performance-panel, none);
     animation: fadeIn var(--duration-micro) var(--ease-standard);
   }
 
@@ -221,14 +221,14 @@
   }
 
   .mode-tooltip strong {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     font-weight: var(--font-semibold, 600);
   }
 
   .mode-tooltip span {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.68rem;
   }
 

@@ -424,7 +424,7 @@
     user={data.user}
     onLogout={handleLogout}
     accountHref="/account"
-    visualStyle="clear"
+    visualStyle="performance"
   />
 
   <main id="main-content" class="pt-[72px]">
@@ -443,7 +443,7 @@
     }}
     showSocial={true}
     isAuthenticated={!!data.user}
-    visualStyle="clear"
+    visualStyle="performance"
   />
 
   {#if $page.url.pathname !== '/' && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
@@ -453,6 +453,6 @@
 
 <style>
   .layout-root {
-    background: var(--color-clear-porcelain, #f9f9f9);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 </style>

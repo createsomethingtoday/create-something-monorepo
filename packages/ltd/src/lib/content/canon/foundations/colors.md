@@ -60,17 +60,17 @@ or handoff evidence.
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--color-clear-porcelain` | `#f9f9f9` | Page canvas |
-| `--color-clear-porcelain-soft` | `#f2f2f2` | Secondary bands and inactive states |
-| `--color-clear-panel` | `#ffffff` | Cards, panels, receipts |
-| `--color-clear-onyx` | `#0a0e19` | Primary text and dark CTAs |
-| `--color-clear-grey` | `#636363` | Secondary copy |
-| `--color-clear-grey-quiet` | `#818181` | Low-emphasis labels |
-| `--color-clear-border` | `#e1e1e1` | Hairline panel borders |
-| `--color-clear-border-strong` | `#cecece` | Focused panel borders |
-| `--color-clear-ocean` | `#0048ff` | System/action accent |
-| `--color-clear-moss` | `#1e3c2c` | Governed run/wait states |
-| `--color-clear-stop` | `#c41e3a` | Stop/block states |
+| `--color-performance-paper` | `#f3f3f0` | Page canvas |
+| `--color-performance-court` | `#e6e6e0` | Secondary bands and inactive states |
+| `--color-performance-panel` | `#ffffff` | Cards, panels, receipts |
+| `--color-performance-ink` | `#090909` | Primary text and dark CTAs |
+| `--color-performance-muted` | `#5e6268` | Secondary copy |
+| `--color-performance-muted` | `#5e6268` | Low-emphasis labels |
+| `--color-performance-line` | `#d7d7d2` | Hairline panel borders |
+| `--color-performance-line-strong` | `#9c9c96` | Focused panel borders |
+| `--color-performance-signal` | `#0057b8` | System/action accent |
+| `--color-performance-growth` | `#007a4d` | Governed run/wait states |
+| `--color-performance-risk` | `#c62026` | Stop/block states |
 
 Do not use the clear palette as generic decoration. A clear surface should answer at least one
 operational question: what is mapped, what can run, what needs review, what is blocked, or what
