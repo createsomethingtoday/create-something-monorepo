@@ -244,8 +244,23 @@ test('agency public Substrate canvas mounts the shared canvas kernel', () => {
 	assert.ok(agencySubstrateCanvasWrapper.includes('The operating graph is the experience.'));
 	assert.ok(agencySubstrateCanvasModule.includes("from '@create-something/canvas-kernel'"));
 	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROJECTION'));
+	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_MOBILE_PROJECTION'));
 	assert.ok(agencySubstrateCanvasModule.includes("'agency_canvas'"));
 	assert.ok(agencySubstrateCanvasModule.includes("'receipt_graph'"));
+});
+
+test('agency public Substrate canvas keeps a readable mobile projection', () => {
+	assert.ok(agencySubstrateCanvasWrapper.includes("window.matchMedia('(max-width: 680px)'"));
+	assert.ok(agencySubstrateCanvasWrapper.includes('PUBLIC_SUBSTRATE_CANVAS_MOBILE_PROJECTION'));
+	assert.ok(agencySubstrateCanvasWrapper.includes(': projection = isCompactCanvas'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('public-substrate-canvas__backend'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('@media (max-width: 680px)'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('clamp(21rem, 54vh, 28rem)'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'));
+	assert.ok(agencySubstrateCanvasModule.includes("x: 22"));
+	assert.ok(agencySubstrateCanvasModule.includes("x: 210"));
+	assert.ok(agencySubstrateCanvasModule.includes("y: 300"));
+	assert.ok(agencySubstrateCanvasModule.includes('edges: PUBLIC_SUBSTRATE_CANVAS_PROJECTION.edges'));
 });
 
 test('agency editable Atlas flow is a Canon wrapper over local intake state', () => {

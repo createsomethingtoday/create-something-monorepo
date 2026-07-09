@@ -178,6 +178,92 @@ export const PUBLIC_SUBSTRATE_CANVAS_PROJECTION: CanvasKernelProjection = {
 	]
 };
 
+export const PUBLIC_SUBSTRATE_CANVAS_MOBILE_PROJECTION: CanvasKernelProjection = {
+	nodes: [
+		{
+			height: 54,
+			id: 'agency_canvas',
+			kind: 'touchpoint',
+			label: '.agency public canvas',
+			status: 'run',
+			width: 160,
+			x: 22,
+			y: 36
+		},
+		{
+			height: 54,
+			id: 'signal_queue',
+			kind: 'data',
+			label: 'Signal queue',
+			status: 'run',
+			width: 160,
+			x: 210,
+			y: 36
+		},
+		{
+			height: 58,
+			id: 'substrate_graph',
+			kind: 'system',
+			label: 'Substrate graph',
+			status: 'run',
+			width: 160,
+			x: 22,
+			y: 124
+		},
+		{
+			height: 54,
+			id: 'agent_queue',
+			kind: 'ai',
+			label: 'Agent work queue',
+			status: 'wait',
+			width: 160,
+			x: 210,
+			y: 124
+		},
+		{
+			height: 54,
+			id: 'decision_gate',
+			kind: 'human',
+			label: 'Decision gate',
+			status: 'wait',
+			width: 160,
+			x: 22,
+			y: 212
+		},
+		{
+			height: 54,
+			id: 'stop_boundary',
+			kind: 'constraint',
+			label: 'Stop boundary',
+			status: 'stop',
+			width: 160,
+			x: 210,
+			y: 212
+		},
+		{
+			height: 54,
+			id: 'client_delivery',
+			kind: 'actor',
+			label: 'Client delivery lane',
+			status: 'run',
+			width: 160,
+			x: 22,
+			y: 300
+		},
+		{
+			height: 54,
+			id: 'receipt_graph',
+			kind: 'touchpoint',
+			label: 'Receipt graph',
+			status: 'run',
+			width: 160,
+			x: 210,
+			y: 300
+		}
+	],
+	edges: PUBLIC_SUBSTRATE_CANVAS_PROJECTION.edges
+};
+
 export const PUBLIC_SUBSTRATE_CANVAS_ACTIVE_NODE_IDS = new Set([
 	'agency_canvas',
 	'substrate_graph',

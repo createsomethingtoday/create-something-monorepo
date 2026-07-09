@@ -312,7 +312,9 @@ Implementation surface:
 - `src/lib/atlas/public-substrate-canvas.ts` owns the public-safe operating
   projection for that live canvas: signal queue, Substrate graph, agent queue,
   decision gate, stop boundary, client delivery lane, receipt graph, and the
-  `.agency` surface itself.
+  `.agency` surface itself. It also owns the mobile projection: same nodes and
+  edges, arranged as a readable phone-width operating map instead of shrinking
+  the desktop map into an illegible thumbnail.
 - `src/lib/components/PublicAtlasFlow.svelte` wraps Canon's `AtlasFlow` so the
   editable renderer stays reusable while `.agency` owns intake state.
 - `src/lib/components/PublicAtlasCanvas.svelte` renders the selector and persists
@@ -345,6 +347,10 @@ Renderer rule:
   `PublicSubstrateCanvas.svelte` mounts the shared `@create-something/canvas-kernel`
   renderer and shows a public projection of the real Substrate/Atlas/receipt
   operating model instead of a story-only abstraction.
+- Public canvas surfaces need data-level responsive projections when the graph
+  shape changes by viewport. Do not rely on CSS alone to squeeze a wide desktop
+  map into a phone; keep the same operating records and relationships, then
+  arrange them for the viewport.
 - Static story canvases are the fallback for marketing, articles, social cards,
   and non-JS presentation.
 - Sigma/Cosmograph are reserved for large read-only network exploration. Do not

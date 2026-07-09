@@ -2,6 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import {
 		PUBLIC_SUBSTRATE_CANVAS_ACTIVE_NODE_IDS,
+		PUBLIC_SUBSTRATE_CANVAS_MOBILE_PROJECTION,
 		PUBLIC_SUBSTRATE_CANVAS_PALETTE,
 		PUBLIC_SUBSTRATE_CANVAS_PROJECTION,
 		publicSubstrateCanvasDetail
@@ -23,15 +24,20 @@
 	let root: ReactRoot | null = null;
 	let createElement: ReactCreateElement | null = null;
 	let CanvasKernelComponent: unknown = null;
+	let removeCompactCanvasListener: (() => void) | null = null;
 	let selectedNodeId: string | null = 'agency_canvas';
 	let fitRequest = 0;
 	let focusRequest: CanvasKernelFocusRequest = null;
+	let isCompactCanvas = false;
 	let viewport: CanvasKernelViewport = { x: 0, y: 0, zoom: 1 };
 	let renderBackend: CanvasKernelRenderBackend = 'unavailable';
 
 	$: selectedDetail = publicSubstrateCanvasDetail(selectedNodeId);
-	$: nodeCount = PUBLIC_SUBSTRATE_CANVAS_PROJECTION.nodes.length;
-	$: edgeCount = PUBLIC_SUBSTRATE_CANVAS_PROJECTION.edges.length;
+	$: projection = isCompactCanvas
+		? PUBLIC_SUBSTRATE_CANVAS_MOBILE_PROJECTION
+		: PUBLIC_SUBSTRATE_CANVAS_PROJECTION;
+	$: nodeCount = projection.nodes.length;
+	$: edgeCount = projection.edges.length;
 	$: renderKernel();
 
 	function requestFit() {
@@ -68,13 +74,28 @@
 							: 'canvas-2d';
 				},
 				palette: PUBLIC_SUBSTRATE_CANVAS_PALETTE,
-				projection: PUBLIC_SUBSTRATE_CANVAS_PROJECTION,
+				projection,
 				selectedNodeId
 			})
 		);
 	}
 
 	onMount(async () => {
+		const compactQuery = window.matchMedia('(max-width: 680px)');
+		const updateCompactCanvas = (matches: boolean) => {
+			if (isCompactCanvas === matches) return;
+			isCompactCanvas = matches;
+			fitRequest += 1;
+		};
+		const handleCompactChange = (event: MediaQueryListEvent) => {
+			updateCompactCanvas(event.matches);
+		};
+		updateCompactCanvas(compactQuery.matches);
+		compactQuery.addEventListener('change', handleCompactChange);
+		removeCompactCanvasListener = () => {
+			compactQuery.removeEventListener('change', handleCompactChange);
+		};
+
 		const [react, reactDom, kernel] = await Promise.all([
 			import('react'),
 			import('react-dom/client'),
@@ -87,6 +108,8 @@
 	});
 
 	onDestroy(() => {
+		removeCompactCanvasListener?.();
+		removeCompactCanvasListener = null;
 		root?.unmount();
 		root = null;
 	});
@@ -106,7 +129,7 @@
 		<div class="public-substrate-canvas__meta" aria-label="Canvas metadata">
 			<span>{nodeCount} nodes</span>
 			<span>{edgeCount} edges</span>
-			<span>{renderBackend}</span>
+			<span class="public-substrate-canvas__backend">{renderBackend}</span>
 		</div>
 	</div>
 
@@ -364,6 +387,71 @@
 		.public-substrate-canvas__inspector {
 			border-top: 1px solid rgba(10, 14, 25, 0.1);
 			border-left: 0;
+		}
+	}
+
+	@media (max-width: 680px) {
+		.public-substrate-canvas {
+			margin-inline: -0.5rem;
+			box-shadow: 0 18px 42px rgba(10, 14, 25, 0.08);
+		}
+
+		.public-substrate-canvas__chrome {
+			gap: 1rem;
+			padding: 1rem;
+		}
+
+		.public-substrate-canvas h3 {
+			max-width: 14ch;
+			font-size: clamp(1.38rem, 8vw, 1.95rem);
+		}
+
+		.public-substrate-canvas h3 + p {
+			font-size: 0.9rem;
+			line-height: 1.48;
+		}
+
+		.public-substrate-canvas__meta {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			min-width: 0;
+			width: 100%;
+		}
+
+		.public-substrate-canvas__meta span {
+			text-align: center;
+		}
+
+		.public-substrate-canvas__backend {
+			display: none;
+		}
+
+		.public-substrate-canvas__viewport {
+			min-height: clamp(21rem, 54vh, 28rem);
+		}
+
+		.public-substrate-canvas__inspector {
+			gap: 0.75rem;
+			padding: 1rem;
+		}
+
+		.public-substrate-canvas__inspector dl {
+			gap: 0.55rem;
+		}
+
+		.public-substrate-canvas__actions {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.public-substrate-canvas__actions button {
+			min-height: 2.75rem;
+			padding-inline: 0.7rem;
+		}
+
+		:global(.public-substrate-canvas .fast-node-label) {
+			font-size: 0.68rem;
+			padding: 0.38rem 0.44rem 0.38rem 0.58rem;
 		}
 	}
 </style>
