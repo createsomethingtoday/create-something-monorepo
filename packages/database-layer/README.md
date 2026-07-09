@@ -8,6 +8,12 @@ showing the database layer without exposing the internal App Governance
 dashboard. It is deliberately contract-first: callers should be able to inspect
 the system design before they adopt an implementation detail.
 
+The marketing and product design direction is now Canon's system-plate pattern:
+Substrate is not presented as a faster table store alone. It is a WebGPU-ready
+database canvas where durable records, topology relationships, compute state,
+policy, and proof can be consumed visually by a human operator before automation
+runs.
+
 The package models:
 
 - source records
@@ -40,6 +46,12 @@ The compute projection uses `flow.substrate-compute-snapshot.v1` from
 impact, attention, bottleneck, and agent work queue buffers for future GPU
 simulation without making the canvas the source of truth.
 
+That boundary is important: WebGPU changes what the operator can inspect at
+speed; it does not move truth into pixels. The canvas is a first-class projection
+for human-in-the-loop review, topology navigation, and visual query narrowing.
+Substrate remains the record truth, Topology remains the relationship model, and
+Atlas remains the operator-facing map.
+
 `packages/app-governance-db` remains the first realized instance. Substrate is
 the first-class runtime direction for the reusable layer: Cloudflare durable
 state, API/MCP access, Atlas topology as records, fast UI projection, and
@@ -47,10 +59,11 @@ receipt-backed workflow execution. Future extraction should move proven generic
 schema and behavior here while leaving app-review-specific concepts in
 `app-governance-db`.
 
-The speed bar is an Obsidian-like operator path: direct navigation, local
-filtering over active working sets, stable record URLs, and small state refreshes
-instead of heavy workspace reloads. That is a design budget, not a benchmark
-claim; production claims need measured evidence.
+The speed bar is an Obsidian-like operator path with canvas-native inspection:
+direct navigation, local filtering over active working sets, stable record URLs,
+fit/focus/proof controls, and small state refreshes instead of heavy workspace
+reloads. That is a design budget, not a benchmark claim; production claims need
+measured evidence.
 
 See `docs/CREATE_SOMETHING_DATABASE_LAYER.md` for the product/module direction.
 

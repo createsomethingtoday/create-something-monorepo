@@ -14,6 +14,18 @@ export {
 export { default as ClearStateRows, type ClearWorkflowState } from './ClearStateRows.svelte';
 export { default as ClearArtifactCard } from './ClearArtifactCard.svelte';
 export { default as ClearCardGrid, type ClearCardItem } from './ClearCardGrid.svelte';
+export {
+	default as ClearSystemPlate,
+	type ClearSystemPlateEdge,
+	type ClearSystemPlateLayer,
+	type ClearSystemPlateMetaItem,
+	type ClearSystemPlateMetric,
+	type ClearSystemPlateNode,
+	type ClearSystemPlatePanel,
+	type ClearSystemPlatePanelRow,
+	type ClearSystemPlateReviewItem,
+	type ClearSystemPlateTone
+} from './ClearSystemPlate.svelte';
 export { default as ClearUseCaseBand, type ClearUseCaseItem } from './ClearUseCaseBand.svelte';
 export {
 	default as ClearQuoteMetricPanel,

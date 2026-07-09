@@ -190,6 +190,34 @@ repeatable image-generation contract, see the public Canon Images guideline in
 For component-level usage rules, see
 [`src/lib/components/clear/README.md`](./src/lib/components/clear/README.md).
 
+### Technical System Plates
+
+Canon also owns the `ClearSystemPlate` pattern for CREATE SOMETHING technical
+marketing moments: WebGPU canvases, Atlas maps, Topology relationship views, and
+Substrate record systems. The plate format is the reusable answer to
+engineering-spec presentation: a calm porcelain surface, graph-first proof,
+compact metrics, layer stacks, review rows, and policy/receipt state in one
+scan.
+
+Use `ClearSystemPlate` when the product claim depends on visual consumption, not
+just stored data. For Substrate, this means showing that WebGPU makes the
+database fast enough to become a human-in-the-loop operating surface: records,
+relationships, compute state, and review decisions remain visible in the same
+frame.
+
+```svelte
+<ClearSystemPlate
+  plateId="SUBSTRATE // WGPU"
+  eyebrow="Human-in-the-loop database"
+  title="A database built on a WebGPU canvas."
+  description="Records, topology, policy, and compute state become one inspectable operating surface."
+  metrics={[
+    { label: 'inspection', value: '60 FPS', tone: 'signal' },
+    { label: 'response', value: '<16ms' }
+  ]}
+/>
+```
+
 ## Atlas Graph And Story Primitives
 
 Canon owns the reusable Atlas graph/story contract at

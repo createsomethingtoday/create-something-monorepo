@@ -25,6 +25,7 @@ should answer at least one operational question.
 | `ClearPlatformHero` | The first viewport needs to anchor a product, system, or platform with proof. |
 | `ClearProofStrip` | Several compact proof objects need to be scanned together. |
 | `ClearWorkflowMiniArtifact` | Signal, Decision, or Proof needs a deterministic mini artifact that reads as interface evidence, not illustration. |
+| `ClearSystemPlate` | A technical system, canvas, topology, or database needs a mood-board/spec-sheet presentation with graph proof, metrics, layers, and operator review lanes. |
 | `ClearDecisionPanel` | A workflow has allow, review, block, or neutral decision states. |
 | `ClearStateRows` | The page needs explicit run, wait, stop, or handoff rows. |
 | `ClearReceiptGrid` | Delivery evidence, artifacts, or validation receipts need to be shown. |
@@ -48,9 +49,34 @@ Avoid generic AI language when a concrete operational noun exists.
 - Keep headings plain and short.
 - Put evidence beside claims, not several sections later.
 - Use compact panels for operator surfaces.
+- Use `ClearSystemPlate` when Atlas, Topology, Substrate, or another canvas-native
+  system needs to be consumed like an engineering plate: graph first, metadata
+  beside it, human review below it, and proof state visible without opening a
+  separate dashboard.
 - Use motion only for state, selection, progression, or handoff.
 - Keep CTAs bounded to concrete work such as mapping one workflow, reviewing a
   handoff, or opening a governed surface.
+
+## System Plate Contract
+
+`ClearSystemPlate` is Canon's reusable presentation pattern for CREATE SOMETHING
+technical mood boards. It should make a complex system feel inspectable rather
+than decorative.
+
+Use it for:
+
+- WebGPU database and canvas surfaces where performance changes what a human can
+  see, filter, and decide in real time.
+- Atlas maps where the graph is the operating object, not an illustration of one.
+- Topology surfaces that need relationship density, health, and ownership in the
+  same frame.
+- Substrate records where durability, policy, actions, and receipts should be
+  read as one technical artifact.
+
+The plate should contain at least three of these proof objects: graph/canvas,
+system layers, metrics, query or action trace, human review state, policy/proof
+rows, and source metadata. Avoid using it as a static collage without an
+operational claim.
 
 ## Boundary
 

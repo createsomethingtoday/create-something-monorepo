@@ -25,12 +25,12 @@
 	const PUBLIC_SUBSTRATE_RECORDS: PublicSubstrateRecord[] = [
 		{
 			id: 'agency_canvas',
-			label: 'Workflow map',
+			label: 'Atlas map',
 			kicker: 'Start here',
 			status: 'run',
 			body:
-				'CREATE SOMETHING starts with one messy handoff and turns it into a visible map before AI gets a lane.',
-			proof: 'workflow boundary - safe sample map - no private client records'
+				'Atlas gives the operator a visible map before AI gets a lane: object, owner, action, stop condition, and proof.',
+			proof: 'operator map - safe sample canvas - no private client records'
 		},
 		{
 			id: 'signal_queue',
@@ -43,11 +43,11 @@
 		},
 		{
 			id: 'substrate_graph',
-			label: 'Workflow record',
-			kicker: 'Map',
+			label: 'Substrate record',
+			kicker: 'Substrate',
 			status: 'run',
 			body:
-				'The workflow record shows systems, owners, policy, context, and risk in one inspectable operating surface.',
+				'Substrate stores the durable workflow object: systems, owners, policy, context, risk, and receipts.',
 			proof: 'systems - owners - policy - receipts'
 		},
 		{
@@ -89,10 +89,10 @@
 		{
 			id: 'receipt_graph',
 			label: 'Proof trail',
-			kicker: 'Proof',
+			kicker: 'Topology proof',
 			status: 'run',
 			body:
-				'Every meaningful action leaves evidence a client, operator, or follow-up agent can inspect later.',
+				'Topology keeps the proof trail connected to the affected record, so follow-up agents and humans see the same evidence.',
 			proof: 'what changed - who/what acted - observed result'
 		}
 	];
@@ -191,6 +191,12 @@
 			: viewMode === 'focus'
 				? `Focus ${Math.round(viewport.zoom * 100)}%`
 				: `${Math.round(viewport.zoom * 100)}%`;
+	$: backendLabel =
+		renderBackend === 'webgpu'
+			? 'WebGPU'
+			: renderBackend === 'canvas-2d'
+				? 'Canvas fallback'
+				: 'WebGPU-ready';
 	$: renderKey = `${isCompact ? 'compact' : 'wide'}:${selectedNodeId}:${fitRequest}:${fitPadding}:${focusRequest?.nodeId ?? 'none'}:${focusRequest?.requestId ?? 0}:${viewportRequest?.requestId ?? 0}`;
 	$: if (root && createElement && CanvasKernel && renderKey) {
 		renderKernel();
@@ -251,6 +257,28 @@
 		fitRequest += 1;
 	}
 
+	function showOverview(): void {
+		viewMode = 'overview';
+		selectedNodeId = 'agency_canvas';
+		fitPadding = isCompact ? DEFAULT_FIT_PADDING : PUBLIC_OVERVIEW_FIT_PADDING;
+		focusRequest = null;
+		const size = currentViewportSize();
+		viewportRequest = {
+			requestId: Date.now(),
+			viewport: canvasKernelViewportForNodes(projection.nodes, size.width, size.height, {
+				fitPadding
+			})
+		};
+		fitRequest += 1;
+	}
+
+	function focusWorkflow(): void {
+		viewMode = 'focus';
+		selectedNodeId = 'substrate_graph';
+		viewportRequest = null;
+		focusRequest = { nodeId: 'substrate_graph', requestId: Date.now() };
+	}
+
 	function showReceipts(): void {
 		viewMode = 'focus';
 		selectedNodeId = 'receipt_graph';
@@ -263,6 +291,8 @@
 		const mediaQuery = window.matchMedia('(max-width: 680px)');
 		const syncCompact = (matches: boolean) => {
 			isCompact = matches;
+			viewMode = 'overview';
+			fitPadding = matches ? DEFAULT_FIT_PADDING : PUBLIC_OVERVIEW_FIT_PADDING;
 			viewportRequest = null;
 			fitRequest += 1;
 		};
@@ -280,6 +310,7 @@
 			CanvasKernel = canvasKernel.CanvasKernel;
 			root = reactDom.createRoot(viewportElement);
 			renderKernel();
+			window.requestAnimationFrame(() => showOverview());
 		});
 
 		return () => {
@@ -294,19 +325,20 @@
 <section class="public-substrate-canvas" data-public-substrate-canvas aria-labelledby="substrate-canvas-title">
 	<div class="public-substrate-canvas__chrome">
 		<div>
-			<p class="public-substrate-canvas__eyebrow">Workflow map / Signal / Decision / Proof</p>
-			<h3 id="substrate-canvas-title">Map the workflow before AI runs it.</h3>
+			<p class="public-substrate-canvas__eyebrow">Substrate / Topology / Atlas</p>
+			<h3 id="substrate-canvas-title">Inspect the database as a canvas.</h3>
 			<p>
-				This is the first deliverable: a safe sample map that shows what can run, what waits
-				for an owner, what must stop, and what proof stays attached after the work moves.
+				WebGPU makes the database visual enough for human review: Substrate stores the
+				record, Topology reveals the relationships, and Atlas gives operators the inspection
+				controls before agents run.
 			</p>
 		</div>
 		<div class="public-substrate-canvas__meta" aria-label="Canvas metadata">
-			<span>Signal</span>
-			<span>Decision</span>
-			<span>Proof</span>
-			<span class="public-substrate-canvas__backend" aria-label="Renderer {renderBackend}">
-				shared renderer
+			<span>Substrate records</span>
+			<span>Topology graph</span>
+			<span>Atlas review</span>
+			<span class="public-substrate-canvas__backend" aria-label={`Renderer ${renderBackend}`}>
+				{backendLabel}
 			</span>
 		</div>
 	</div>
@@ -327,13 +359,21 @@
 					<dd>{selectedRecord.proof}</dd>
 				</div>
 				<div>
-					<dt>View</dt>
-					<dd>{viewLabel}</dd>
+					<dt>Canvas</dt>
+					<dd>{viewLabel} / {backendLabel}</dd>
 				</div>
 			</dl>
 			<div class="public-substrate-canvas__actions">
-				<button type="button" onclick={fitMap}>Fit map</button>
-				<button type="button" onclick={showReceipts}>Show proof</button>
+				<button type="button" class:active={viewMode === 'overview'} onclick={showOverview}>
+					Overview
+				</button>
+				<button type="button" class:active={selectedNodeId === 'substrate_graph'} onclick={focusWorkflow}>
+					Substrate
+				</button>
+				<button type="button" class:active={selectedNodeId === 'receipt_graph'} onclick={showReceipts}>
+					Proof
+				</button>
+				<button type="button" onclick={fitMap}>Fit</button>
 			</div>
 		</aside>
 	</div>
@@ -491,8 +531,8 @@
 	}
 
 	.public-substrate-canvas__actions {
-		display: flex;
-		flex-wrap: wrap;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 0.55rem;
 		margin-top: auto;
 	}
@@ -508,9 +548,13 @@
 		font-weight: 720;
 	}
 
-	.public-substrate-canvas__actions button + button {
+	.public-substrate-canvas__actions button:not(.active) {
 		background: #fff;
 		color: #0a0e19;
+	}
+
+	.public-substrate-canvas__actions button.active {
+		border-color: rgba(10, 14, 25, 0.42);
 	}
 
 	.public-substrate-canvas__actions button:focus-visible {
@@ -632,11 +676,6 @@
 
 		.public-substrate-canvas__inspector dl {
 			gap: 0.55rem;
-		}
-
-		.public-substrate-canvas__actions {
-			display: grid;
-			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 
 		.public-substrate-canvas__actions button {

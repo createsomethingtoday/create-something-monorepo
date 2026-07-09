@@ -91,13 +91,13 @@
 	];
 	$: isProofMode = mode === 'proof';
 	$: atlasEyebrow = isProofMode
-		? 'Workflow map / Signal / Decision / Proof'
+		? 'Atlas / Topology / Substrate'
 		: 'Public Atlas canvas';
 	$: atlasTitle = isProofMode
-		? 'Map the workflow before AI runs it.'
+		? 'Atlas is the human view of the database.'
 		: 'Turn one workflow into a map before booking.';
 	$: atlasDescription = isProofMode
-		? 'This is the same Atlas canvas used in onboarding: a safe sample map showing what can run, what waits for an owner, what must stop, and what proof stays attached.'
+		? 'Atlas turns Substrate records and Topology relationships into a canvas an operator can inspect: what can run, what waits for an owner, what must stop, and what proof stays attached.'
 		: 'Chat with the constrained mapping agent, shape the canvas, then carry the summary into the mapping session. This public agent can only edit this prospect map.';
 
 	function initialUsage(tier: AgentResponse['usage']['tier']): AgentResponse['usage'] {
@@ -503,7 +503,7 @@
 							</div>
 							<div>
 								<dt>Proof</dt>
-								<dd>Same Atlas canvas, read-only introduction, no prospect data writes.</dd>
+								<dd>Read-only Atlas projection over the same Substrate/Topology presentation contract.</dd>
 							</div>
 						</dl>
 						<div class="proof-panel__actions">

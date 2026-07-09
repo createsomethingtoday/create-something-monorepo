@@ -7,8 +7,8 @@ export const databaseLayerDemoState: DatabaseLayerDemoState = {
     storage: ['Cloudflare D1 relational records', 'R2 files and receipts', 'Atlas graph state'],
     apiBoundary: 'Typed HTTP/JSON resources expose records, bindings, actions, runs, and receipts.',
     mcpBoundary: 'MCP resources and tools operate the same record model under policy.',
-    uiBoundary: 'The UI is a fast projection over the database contract, not a second source of truth.',
-    atlasBoundary: 'Atlas maps are durable database records rendered by Canon/SvelteFlow surfaces.',
+    uiBoundary: 'The UI is a fast WebGPU-ready projection over the database contract, not a second source of truth.',
+    atlasBoundary: 'Atlas maps are durable database records rendered by Canon/canvas-kernel surfaces for human inspection.',
     desktopBoundary: 'Desktop is a local-first shell over shared Substrate state, not a competing database.'
   },
   records: [

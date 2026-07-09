@@ -6,14 +6,23 @@
     ClearPageSection,
     ClearProofStrip,
     ClearReceiptGrid,
+    ClearSystemPlate,
     SEO,
     type ClearCardItem,
     type ClearCtaItem,
     type ClearProofItem,
-    type ClearReceipt
+    type ClearReceipt,
+    type ClearSystemPlateEdge,
+    type ClearSystemPlateLayer,
+    type ClearSystemPlateMetaItem,
+    type ClearSystemPlateMetric,
+    type ClearSystemPlateNode,
+    type ClearSystemPlatePanel,
+    type ClearSystemPlateReviewItem
   } from '@create-something/canon';
   import { databaseLayerDemoState, type DatabaseLayerSourceRecord } from '@create-something/database-layer';
   import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
+  import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const records = databaseLayerDemoState.records;
@@ -25,45 +34,133 @@
   const performanceBudgets = databaseLayerDemoState.performanceBudgets;
   const systemDesignPrinciples = databaseLayerDemoState.systemDesignPrinciples;
 
-  const layerSpecs = [
+  const systemPlateLayers: ClearSystemPlateLayer[] = [
     {
       label: 'Substrate',
-      role: 'Record truth',
-      detail:
-        'Source rows, workflow records, actions, runs, receipts, and readiness live as durable objects.',
-      proof: `${records.length} sample records / ${receipts.length} proof receipts`
+      detail: 'Durable records, actions, runs, receipts, and source bindings.',
+      tone: 'dark'
     },
     {
       label: 'Topology',
-      role: 'Relationship graph',
-      detail:
-        'Packages, workers, policies, clients, APIs, and records become a navigable graph instead of scattered context.',
-      proof: 'Relations, source bindings, and review signals stay attached'
+      detail: 'Relationships, owners, policies, clients, APIs, and workflow edges.',
+      tone: 'signal'
     },
     {
       label: 'Atlas',
-      role: 'Operator map',
-      detail:
-        'The workflow becomes a readable canvas: where state enters, what can run, what waits, what stops, and where proof lands.',
-      proof: `${bindings.length} Atlas bindings / selected node detail`
+      detail: 'The human inspection canvas: run, wait, stop, handoff, and proof.',
+      tone: 'success'
     }
   ];
 
-  const buildSpecs = [
+  const systemPlateMetrics: ClearSystemPlateMetric[] = [
     {
-      label: 'Database',
-      value: 'source records',
-      detail: 'Imported state is named before it becomes a map node or agent task.'
+      label: 'records',
+      value: String(records.length),
+      detail: 'sample working set'
     },
     {
-      label: 'Automation',
-      value: 'API + MCP',
-      detail: 'Approved surfaces inspect the same records instead of scraping UI state.'
+      label: 'bindings',
+      value: String(bindings.length),
+      detail: 'Atlas nodes',
+      tone: 'signal'
     },
     {
-      label: 'Judgment',
-      value: 'receipts',
-      detail: 'Approvals, stops, handoffs, and proof stay beside the affected object.'
+      label: 'visual response',
+      value: '<16ms',
+      detail: 'inspection target',
+      tone: 'success'
+    },
+    {
+      label: 'surface',
+      value: 'WebGPU',
+      detail: 'canvas-native'
+    }
+  ];
+
+  const systemPlateMeta: ClearSystemPlateMetaItem[] = [
+    { label: 'Primitive', value: 'Database / Automation / Judgment' },
+    { label: 'Renderer', value: 'WebGPU canvas, fallback-safe' },
+    { label: 'Consumption', value: 'visual first, API-readable' },
+    { label: 'Human loop', value: 'inspect, annotate, decide' }
+  ];
+
+  const systemPlateNodes: ClearSystemPlateNode[] = [
+    { id: 'source', label: 'source', x: 14, y: 24, size: 3.5, tone: 'dark' },
+    { id: 'record', label: 'record', x: 29, y: 38, size: 7.5, tone: 'signal', active: true },
+    { id: 'policy', label: 'policy', x: 48, y: 25, size: 4.5, tone: 'warning' },
+    { id: 'topology', label: 'topology', x: 58, y: 48, size: 9, tone: 'dark' },
+    { id: 'atlas', label: 'atlas', x: 76, y: 34, size: 6.5, tone: 'success', active: true },
+    { id: 'agent', label: 'agent', x: 82, y: 62, size: 4.5, tone: 'signal' },
+    { id: 'receipt', label: 'receipt', x: 42, y: 66, size: 5.5, tone: 'success' },
+    { id: 'review', label: 'review', x: 21, y: 59, size: 4.5, tone: 'warning' }
+  ];
+
+  const systemPlateEdges: ClearSystemPlateEdge[] = [
+    { x1: 14, y1: 24, x2: 29, y2: 38 },
+    { x1: 29, y1: 38, x2: 48, y2: 25, tone: 'warning' },
+    { x1: 29, y1: 38, x2: 58, y2: 48, tone: 'signal' },
+    { x1: 58, y1: 48, x2: 76, y2: 34, tone: 'success' },
+    { x1: 76, y1: 34, x2: 82, y2: 62, tone: 'signal' },
+    { x1: 82, y1: 62, x2: 42, y2: 66 },
+    { x1: 42, y1: 66, x2: 21, y2: 59, tone: 'warning' },
+    { x1: 21, y1: 59, x2: 29, y2: 38 },
+    { x1: 58, y1: 48, x2: 42, y2: 66, tone: 'success' }
+  ];
+
+  const systemPlatePanels: ClearSystemPlatePanel[] = [
+    {
+      eyebrow: 'Performance at scale',
+      title: 'GPU-accelerated visual inspection.',
+      detail:
+        'The database can render relationship density as an operator surface, not a slow report after the query.',
+      metric: '60 FPS',
+      tone: 'signal',
+      rows: [
+        { label: 'Query path', value: 'records -> topology -> canvas' },
+        { label: 'Working set', value: `${records.length} records / ${bindings.length} bindings` }
+      ]
+    },
+    {
+      eyebrow: 'Human in the loop',
+      title: 'The canvas is where judgment happens.',
+      detail:
+        'Operators inspect the same state agents and MCP tools can read: source, relation, policy, action, receipt.',
+      rows: [
+        { label: 'Allowed', value: 'run', tone: 'success' },
+        { label: 'Needs owner', value: 'wait', tone: 'warning' },
+        { label: 'Blocked', value: 'stop' }
+      ]
+    },
+    {
+      eyebrow: 'Live query trace',
+      title: 'Visual consumption changes the database.',
+      detail:
+        'Rows are still there. The difference is that relationships, risk, and proof can be scanned before an action runs.',
+      rows: [
+        { label: 'Surface', value: 'UI / API / MCP / Agent' },
+        { label: 'Proof', value: `${receipts.length} receipts`, tone: 'success' }
+      ]
+    }
+  ];
+
+  const systemPlateReviews: ClearSystemPlateReviewItem[] = [
+    {
+      label: 'Substrate stores the durable workflow object.',
+      status: 'Record truth',
+      detail: 'Starting state stays addressable before it becomes automation.',
+      tone: 'success'
+    },
+    {
+      label: 'Topology makes relationships visible.',
+      status: 'Graph proof',
+      detail: 'Density, ownership, policy, and handoffs become inspectable.',
+      tone: 'signal'
+    },
+    {
+      label: 'Atlas keeps humans in the loop.',
+      status: 'Operator review',
+      detail: 'Selection and annotation happen beside the action path.',
+      tone: 'warning'
     }
   ];
 
@@ -206,8 +303,8 @@
 
 <SEO
   title="Substrate Database Layer | Fast AI-native workflow records"
-  description="Inspect Substrate, the CREATE SOMETHING database-layer system: source records, Atlas bindings, workflow actions, proof receipts, speed budgets, and API/MCP-ready state."
-  keywords="Substrate database layer, CREATE SOMETHING database layer, AI-native database, workflow records, Atlas bindings, MCP database, Cloudflare D1 workflow system, Obsidian-like database UI"
+  description="Inspect Substrate, the CREATE SOMETHING WebGPU database canvas: durable records, relationship topology, Atlas operator review, proof receipts, and API/MCP-ready state."
+  keywords="Substrate database layer, WebGPU database canvas, CREATE SOMETHING database layer, human in the loop database, visual database, topology database, Atlas bindings, MCP database, Cloudflare D1 workflow system"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
@@ -217,9 +314,9 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Substrate Database Layer"
-  title="A fast database for mapped AI workflows."
-  description="Substrate is the CREATE SOMETHING database-layer system design: topology as records, execution as actions and runs, judgment as receipts, and UI/API/MCP surfaces over the same state."
+  eyebrow="Substrate Database Canvas"
+  title="A database built for visual operation."
+  description="Substrate is the CREATE SOMETHING database-layer system design: durable workflow records rendered through a WebGPU canvas so humans can inspect topology, policy, actions, and proof before agents run."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
@@ -249,39 +346,39 @@
 
 <ClearPageSection
   variant="white"
-  eyebrow="Spec reveal"
-  title="Three layers, one inspectable workflow object."
-  description="The product is not a hidden AI stack. It is a record system that reveals its own specs: Substrate stores the truth, Topology shows the relationships, and Atlas makes the workflow readable to operators and agents."
+  eyebrow="Canon system plate"
+  title="The database becomes an operating surface."
+  description="Traditional databases hide relationships behind tables, dashboards, and delayed reports. Substrate uses a canvas-native record model so topology, computation, policy, and human review can be consumed in one frame."
 >
   {#snippet after()}
-    <section class="spec-reveal" aria-label="Atlas Topology Substrate spec reveal">
-      <div class="spec-reveal__layers">
-        {#each layerSpecs as spec}
-          <article>
-            <span>{spec.label}</span>
-            <strong>{spec.role}</strong>
-            <p>{spec.detail}</p>
-            <code>{spec.proof}</code>
-          </article>
-        {/each}
-      </div>
+    <ClearSystemPlate
+      plateId="SUBSTRATE // WGPU"
+      plateMeta="CREATE SOMETHING DATABASE CANVAS"
+      eyebrow="Atlas / Topology / Substrate"
+      title="A database built on WebGPU."
+      description="Records, relationships, compute state, policy, and proof stay visible enough for a human to inspect, annotate, and decide in the loop."
+      graphLabel="Topology view"
+      nodes={systemPlateNodes}
+      edges={systemPlateEdges}
+      layers={systemPlateLayers}
+      metrics={systemPlateMetrics}
+      panels={systemPlatePanels}
+      reviewItems={systemPlateReviews}
+      metaItems={systemPlateMeta}
+      footnote="Canon pattern: graph first, proof beside the claim, human review inside the artifact."
+      ariaLabel="WebGPU database canvas system plate"
+    />
+  {/snippet}
+</ClearPageSection>
 
-      <div class="spec-reveal__receipt" aria-label="What went into the database layer">
-        <div class="spec-reveal__receipt-header">
-          <span>What went into it</span>
-          <strong>Database / Automation / Judgment</strong>
-        </div>
-        <div class="spec-reveal__build">
-          {#each buildSpecs as spec}
-            <div>
-              <span>{spec.label}</span>
-              <strong>{spec.value}</strong>
-              <p>{spec.detail}</p>
-            </div>
-          {/each}
-        </div>
-      </div>
-    </section>
+<ClearPageSection
+  variant="white"
+  eyebrow="Canvas ergonomics"
+  title="Inspect topology, then focus the record under review."
+  description="The WebGPU canvas direction matters because it changes the operator loop. A human can move from overview to Substrate record to proof trail without leaving the database surface."
+>
+  {#snippet after()}
+    <PublicSubstrateCanvas />
   {/snippet}
 </ClearPageSection>
 
@@ -468,8 +565,7 @@
 
 <style>
   .demo-shell,
-  .database-demo,
-  .spec-reveal {
+  .database-demo {
     border: 1px solid var(--color-clear-border, #e1e1e1);
     border-radius: var(--radius-clear-sm, 4px);
     background: var(--color-clear-panel, #ffffff);
@@ -482,8 +578,7 @@
   }
 
   .demo-shell__bar,
-  .database-demo__toolbar,
-  .spec-reveal__receipt-header {
+  .database-demo__toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -496,10 +591,7 @@
   .record-list small,
   .record-detail__header span,
   .detail-grid span,
-  .detail-panel span,
-  .spec-reveal article span,
-  .spec-reveal__receipt-header span,
-  .spec-reveal__build span {
+  .detail-panel span {
     color: var(--color-clear-grey, #636363);
     font-family: var(--font-mono);
     font-size: 0.72rem;
@@ -512,101 +604,6 @@
     font-family: var(--font-mono);
     font-size: 0.74rem;
     font-weight: var(--font-medium);
-  }
-
-  .spec-reveal {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.4fr);
-    overflow: hidden;
-  }
-
-  .spec-reveal__layers {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .spec-reveal article {
-    display: grid;
-    align-content: start;
-    gap: 0.65rem;
-    min-height: 18rem;
-    padding: clamp(1rem, 2vw, 1.25rem);
-    border-right: 1px solid var(--color-clear-border, #e1e1e1);
-    background:
-      linear-gradient(var(--color-clear-grid, rgb(10 14 25 / 0.045)) 1px, transparent 1px),
-      linear-gradient(90deg, var(--color-clear-grid, rgb(10 14 25 / 0.045)) 1px, transparent 1px),
-      var(--color-clear-panel, #ffffff);
-    background-size: 24px 24px;
-  }
-
-  .spec-reveal article strong {
-    color: var(--color-clear-onyx, #0a0e19);
-    font-size: clamp(1.35rem, 2.5vw, 2rem);
-    font-weight: var(--font-medium);
-    line-height: 1.02;
-  }
-
-  .spec-reveal article p,
-  .spec-reveal__build p {
-    margin: 0;
-    color: var(--color-clear-grey, #636363);
-    line-height: 1.5;
-  }
-
-  .spec-reveal article code {
-    align-self: end;
-    padding-top: 0.85rem;
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
-    color: var(--color-clear-onyx, #0a0e19);
-    font-family: var(--font-mono);
-    font-size: 0.76rem;
-    line-height: 1.4;
-    white-space: normal;
-  }
-
-  .spec-reveal__receipt {
-    display: grid;
-    align-content: start;
-    border-left: 1px solid var(--color-clear-border, #e1e1e1);
-    background: var(--color-clear-porcelain, #f9f9f9);
-  }
-
-  .spec-reveal__receipt-header {
-    padding: 0.9rem 1rem;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-  }
-
-  .spec-reveal__receipt-header strong {
-    color: var(--color-clear-onyx, #0a0e19);
-    font-family: var(--font-mono);
-    font-size: 0.74rem;
-    font-weight: var(--font-medium);
-    line-height: 1.3;
-    text-align: right;
-    text-transform: uppercase;
-  }
-
-  .spec-reveal__build {
-    display: grid;
-  }
-
-  .spec-reveal__build div {
-    display: grid;
-    gap: 0.32rem;
-    min-height: 6rem;
-    padding: 0.95rem 1rem;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-  }
-
-  .spec-reveal__build div:last-child {
-    border-bottom: 0;
-  }
-
-  .spec-reveal__build strong {
-    color: var(--color-clear-onyx, #0a0e19);
-    font-size: 1rem;
-    font-weight: var(--font-medium);
-    line-height: 1.2;
   }
 
   .demo-shell__metrics {
@@ -826,24 +823,9 @@
   }
 
   @media (max-width: 900px) {
-    .spec-reveal,
     .database-demo__grid,
     .detail-grid {
       grid-template-columns: 1fr;
-    }
-
-    .spec-reveal__layers {
-      grid-template-columns: 1fr;
-    }
-
-    .spec-reveal article {
-      min-height: auto;
-      border-right: 0;
-      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-    }
-
-    .spec-reveal__receipt {
-      border-left: 0;
     }
 
     .record-list {
@@ -869,7 +851,6 @@
     }
 
     .database-demo__toolbar,
-    .spec-reveal__receipt-header,
     .database-demo__toolbar label {
       align-items: stretch;
       flex-direction: column;
