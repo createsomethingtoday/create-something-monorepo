@@ -25,6 +25,16 @@ import { parseJsonBody, isValidEmail, ValidationError } from '../lib/validation'
 import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('LibraryValidation');
+const DEFAULT_LIBRARY_ASSET_TYPE = 'Library📚';
+
+function escapeAirtableString(value: string): string {
+  return value.replace(/'/g, "\\'");
+}
+
+function libraryAssetTypeFormula(env: Env): string {
+  const assetType = escapeAirtableString(env.LIBRARY_ASSET_TYPE || DEFAULT_LIBRARY_ASSET_TYPE);
+  return `OR({🆎Type} = '${assetType}', {⚙️🆎Type (Text)} = '${assetType}')`;
+}
 
 /**
  * POST /library/user
@@ -91,13 +101,15 @@ export async function handleLibraryName(
 
   const libraryname = body.libraryname;
 
-  // Check for substring match (case-insensitive, excluding archived)
-  const escapedName = libraryname.replace(/'/g, "\\'");
-  const filterFormula = `AND(FIND(LOWER('${escapedName}'), LOWER({Name})) > 0, NOT(FIND(LOWER('archived'), LOWER({Name})) > 0))`;
+  // Check for substring match (case-insensitive), excluding archived assets and
+  // scoping the result to Library assets. Without the type clause this endpoint
+  // can falsely block a Library name because a template has a similar name.
+  const escapedName = escapeAirtableString(libraryname);
+  const filterFormula = `AND(FIND(LOWER('${escapedName}'), LOWER({Name})) > 0, NOT(FIND(LOWER('archived'), LOWER({Name})) > 0), ${libraryAssetTypeFormula(env)})`;
 
-  // Note: Libraries likely use a different table - adjust if needed
   const records = await queryRecords(env, TABLES.TEMPLATES, filterFormula, {
     view: 'viwHnsM1aqC0UvxUG',
+    maxRecords: 1,
   });
 
   logger.debug('Library name search', { libraryname, recordsFound: records.length, taken: records.length > 0 });

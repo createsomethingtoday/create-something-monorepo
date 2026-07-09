@@ -7,7 +7,7 @@ import type { AirtableClient } from '../src/airtable.js';
 import { RUBRIC_DIMENSIONS } from '../src/comprehensive-review-contract.js';
 import type { ReviewerProfile } from '../src/reviewer-directory.js';
 import { METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
-import { registerTools } from '../src/tools.js';
+import { registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
 
 type ToolResult = { content: Array<{ text: string }>; isError?: boolean };
 type ToolHandler = (args: Record<string, unknown>) => Promise<ToolResult>;
@@ -1015,4 +1015,39 @@ test('get_field_map exposes stable table ids and metrics field ids', async () =>
   assert.deepEqual(payload.data?.metricsFieldIds, {
     assets: METRICS_ASSET_FIELD_IDS,
   });
+});
+
+test('read-only access registers no write tools', () => {
+  const { server, names } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+    {},
+    { allowWrites: false },
+  );
+
+  for (const writeTool of WRITE_TOOL_NAMES) {
+    assert.equal(names.includes(writeTool), false, `expected ${writeTool} to be hidden for read-only access`);
+  }
+  assert.notEqual(names.indexOf('template_review_get_review_context'), -1);
+  assert.notEqual(names.indexOf('template_review_run_published_site_validation'), -1);
+  assert.notEqual(names.indexOf('template_review_format_agent_review_feedback'), -1);
+});
+
+test('default access keeps the full write surface', () => {
+  const { server, names } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  for (const writeTool of WRITE_TOOL_NAMES) {
+    assert.notEqual(names.indexOf(writeTool), -1, `expected ${writeTool} to be registered by default`);
+  }
 });

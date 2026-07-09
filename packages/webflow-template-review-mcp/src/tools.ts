@@ -144,7 +144,45 @@ function assertReviewerScopedReviewOwner(value: unknown, reviewer: ReviewerProfi
   });
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null, validationConfig: ValidationToolConfig = {}): void {
+export interface ToolAccess {
+  allowWrites: boolean;
+}
+
+/**
+ * Tools that mutate Airtable review state. Sessions without the
+ * template-review:write scope never see these registered.
+ */
+export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
+  'template_review_assign_self',
+  'template_review_unassign_self',
+  'template_review_assign_reviewer',
+  'template_review_request_changes',
+  'template_review_set_review_status',
+  'template_review_save_agent_feedback',
+  'template_review_save_draft_feedback',
+  'template_review_complete_publishing',
+  'template_review_update_asset_metadata',
+  'template_review_update_asset_publishing',
+  'template_review_update_version_review',
+  'template_review_approve_version',
+  'template_review_reject_version',
+]);
+
+export function registerTools(
+  mcpServer: McpServer,
+  getClient: ClientFactory,
+  getReviewer: ReviewerFactory = () => null,
+  validationConfig: ValidationToolConfig = {},
+  access: ToolAccess = { allowWrites: true },
+): void {
+  const registerOnServer = mcpServer.tool.bind(mcpServer) as (...args: unknown[]) => unknown;
+  const server = {
+    tool: ((name: string, ...rest: unknown[]) => {
+      if (!access.allowWrites && WRITE_TOOL_NAMES.has(name)) return undefined;
+      return registerOnServer(name, ...rest);
+    }) as McpServer['tool'],
+  };
+
   server.tool('template_review_workflow', 'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.', {}, async () => ({
     content: [{ type: 'text' as const, text: REVIEW_WORKFLOW }],
   }));

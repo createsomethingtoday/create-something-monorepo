@@ -24,6 +24,17 @@ AIRTABLE_VIEW_ID = "viwHnsM1aqC0UvxUG"
 AIRTABLE_ASSETS_TABLE_ID = "tblRwzpWoLgE9MrUm"
 AIRTABLE_ASSETS_VIEW_ID = "viwHnsM1aqC0UvxUG"
 AIRTABLE_CREATORS_TABLE_ID = "tbljt0plqxdMARZXb"
+# Optional Library intake overrides. Configure these before routing
+# /api/checkLibraryuser traffic to this Worker in production.
+# AIRTABLE_LIBRARY_USERS_TABLE_ID = ""
+# AIRTABLE_LIBRARY_USERS_VIEW_ID = ""
+# AIRTABLE_LIBRARY_USER_EMAIL_FIELDS = "fldFNavkQ2JJ6Kxt2"
+# AIRTABLE_LIBRARY_PERMISSION_TABLE_ID = ""
+# AIRTABLE_LIBRARY_PERMISSION_VIEW_ID = ""
+# AIRTABLE_LIBRARY_PERMISSION_EMAIL_FIELDS = "fldhvneqrRuoF5grB"
+# AIRTABLE_LIBRARY_PERMISSION_FIELD = "⚙️Can submit Libraries?"
+# AIRTABLE_LIBRARY_PERMISSION_ALLOWED_VALUES = "1,true,yes,approved,allowed"
+AIRTABLE_LIBRARY_ASSET_TYPE = "Library📚"
 ALLOWED_ORIGINS = "https://wf-form-validation-with-airtable-databa.webflow.io,https://template-marketplace.webflow.io,https://template-marketplace.design.webflow.com,https://webflow.com,https://marketing-main.webflow.io,https://analyzer.mcp.createsomething.agency,https://webflow-site-analyzer-mcp.createsomething.workers.dev"
 
 # Secrets (set via `wrangler secret put`):

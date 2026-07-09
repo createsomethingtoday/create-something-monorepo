@@ -9,6 +9,7 @@ export interface Env {
   ENVIRONMENT: string;
   AIRTABLE_BASE_ID: string;
   ALLOWED_ORIGINS: string;
+  LIBRARY_ASSET_TYPE?: string;
 
   // Secrets (set via wrangler secret put)
   AIRTABLE_API_KEY: string;

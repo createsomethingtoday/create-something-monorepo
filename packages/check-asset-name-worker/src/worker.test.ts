@@ -30,6 +30,15 @@ test('email formula matches whole email tokens only', () => {
   assert.equal(regex.test('ann@example.com.au'), false);
 });
 
+test('library name availability formula scopes to library assets', () => {
+  const formula = workerTestExports.buildNameAvailabilityFormula('Radiant UI', 'Library📚');
+
+  assert.match(formula, /LOWER\('Radiant UI'\)/);
+  assert.match(formula, /NOT\(FIND\(LOWER\('archived'\)/);
+  assert.match(formula, /\{🆎Type\} = 'Library📚'/);
+  assert.match(formula, /\{⚙️🆎Type \(Text\)\} = 'Library📚'/);
+});
+
 test('submission stats do not treat terminal or blank statuses as active review', () => {
   const now = Date.parse('2026-05-05T00:00:00.000Z');
   const stats = summarizeTemplateSubmissionRecords(

@@ -28,23 +28,93 @@ Phase 1 is intentionally conservative:
 
 ## Auth
 
-Worker boundary bearer auth:
+The worker supports two parallel auth modes:
+
+### OAuth 2.1 + DCR via Clerk (Claude Enterprise connector)
+
+For claude.ai / Claude Enterprise custom connectors. **Clerk is the
+authorization server**; this worker is a pure OAuth resource server:
+
+- Connector URL: `https://webflow-template-review-mcp.createsomething.workers.dev/mcp`.
+  Do not attach a `createsomething.agency` custom domain to this worker and do
+  not point the connector at `wf-template-review.mcp.createsomething.agency`:
+  that domain is the hub remote, and a same-zone custom domain here breaks the
+  hub's downstream fetch with Cloudflare error 1042.
+- Discovery: the worker serves RFC 9728 metadata at
+  `/.well-known/oauth-protected-resource`, pointing clients at the Clerk
+  Frontend API (derived from `CLERK_PUBLISHABLE_KEY`). Claude registers itself
+  with Clerk via Dynamic Client Registration and sends users through Clerk's
+  hosted sign-in/consent.
+- Token validation: `@clerk/backend` `authenticateRequest` with
+  `acceptsToken: 'oauth_token'`; the Clerk user's primary email is resolved
+  (cached per isolate) and passed through the access policy in
+  `src/oauth-access.ts`.
+- Access policy:
+  - email must be a `@webflow.com` account (`OAUTH_ALLOWED_EMAIL_DOMAIN`)
+  - when `OAUTH_ALLOWED_EMAILS` is set, only those emails may connect at all
+  - allowlisted users and `REVIEWER_DIRECTORY_JSON` email matches get
+    `template-review:write`; everyone else gets `template-review:read`
+- Write tools are **not registered** on read-only sessions, so non-reviewers
+  never see them.
+
+One-time Clerk setup:
+
+1. Create a Clerk application (a dedicated one is recommended — Claude's DCR
+   clients and reviewer users will live in it) and enable **Dynamic client
+   registration** under OAuth Applications in the Clerk Dashboard.
+2. Store keys in Infisical, then sync the secret to the worker:
+
+```bash
+infisical secrets set --env=prod --path=/webflow-template-review-mcp \
+  CLERK_SECRET_KEY=sk_live_... CLERK_PUBLISHABLE_KEY=pk_live_...
+
+cd packages/webflow-template-review-mcp/worker
+infisical run --env=prod --path=/webflow-template-review-mcp -- \
+  sh -c 'printf %s "$CLERK_SECRET_KEY" | node ../../../scripts/run-wrangler.mjs secret put CLERK_SECRET_KEY'
+infisical run --env=prod --path=/webflow-template-review-mcp -- \
+  sh -c 'printf %s "$CLERK_PUBLISHABLE_KEY" | node ../../../scripts/run-wrangler.mjs secret put CLERK_PUBLISHABLE_KEY'
+```
+
+Claude Enterprise rollout: an org Owner adds a custom connector pointing at
+`https://webflow-template-review-mcp.createsomething.workers.dev/mcp`. Claude discovers
+Clerk via the protected-resource metadata, registers via DCR, and each
+reviewer signs in once through Clerk. Enterprise-managed (Okta) auth is not
+yet available for custom connectors, so per-user OAuth is the supported path.
+
+### Legacy shared bearer (hub bridges)
 
 - Header: `Authorization: Bearer <MCP_API_KEY>`
-- `MCP_API_KEY` is required in all environments.
-- If `MCP_API_KEY` is missing, `/mcp` and `/sse` return `503` with `MISCONFIGURED`.
+- Reviewer identity via trusted `x-mcp-account-id` / `x-hub-account-id` header
+  (per-reviewer hub bridges only).
+- Legacy sessions keep the full tool surface. If `MCP_API_KEY` is unset, the
+  legacy path is disabled and only OAuth traffic is served.
 
 ## Secrets / Vars
 
 Required:
 
 - `AIRTABLE_API_KEY` (Airtable PAT)
-- `MCP_API_KEY` (worker boundary bearer token)
+
+OAuth mode:
+
+- `CLERK_SECRET_KEY` (worker secret; canonical copy in Infisical at
+  `prod:/webflow-template-review-mcp`)
+- `CLERK_PUBLISHABLE_KEY` (worker secret or var; also encodes the Clerk
+  Frontend API domain used in discovery metadata)
+- `OAUTH_ALLOWED_EMAIL_DOMAIN` (defaults to `webflow.com`)
+- `OAUTH_ALLOWED_EMAILS` (comma-separated sign-in allowlist; allowlisted
+  users receive write scope)
+
+Legacy mode:
+
+- `MCP_API_KEY` (shared worker boundary bearer token for hub bridges)
 
 Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
-- `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity, used by `template_review_assign_self` and reviewer resources)
+- `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity;
+  entries need `email` set for OAuth write-scope matching, and are used by
+  `template_review_assign_self` and reviewer resources)
 - `WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL` (defaults to `https://validation-worker.createsomething.workers.dev/validate`)
 - `GSAP_VALIDATION_WORKER_URL` (defaults to `https://gsap-validation-worker.createsomething.workers.dev/validateGsap`)
 - `TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS` (defaults to `45000`)

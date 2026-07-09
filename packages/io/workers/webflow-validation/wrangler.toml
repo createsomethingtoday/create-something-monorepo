@@ -20,8 +20,9 @@ routes = [{ pattern = "webflow-api.createsomething.io/*", zone_name = "createsom
 ENVIRONMENT = "production"
 # Airtable base ID
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+LIBRARY_ASSET_TYPE = "Library📚"
 # Allowed origins for CORS - Webflow properties
-ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,https://branch--submit-a-template-template-marketplace-b3138c.webflow.io,https://branch--submit-a-library-webflow-marketplace-v1-670053.webflow.io,https://marketing-main.webflow.io,https://developers.webflow.com,https://wf-asset-dashboard.vercel.app,https://wf.createsomething.io,https://wf-form-validation-with-airtable-databa.webflow.io"
+ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,https://branch--submit-a-template-template-marketplace-b3138c.webflow.io,https://marketing-main.webflow.io,https://developers.webflow.com,https://wf-asset-dashboard.vercel.app,https://wf.createsomething.io,https://wf-form-validation-with-airtable-databa.webflow.io"
 
 # Secrets (set via `wrangler secret put`):
 # - AIRTABLE_API_KEY: Airtable Personal Access Token
