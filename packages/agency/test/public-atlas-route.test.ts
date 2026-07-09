@@ -241,12 +241,17 @@ test('agency public Substrate canvas mounts the shared canvas kernel', () => {
 	assert.ok(agencySubstrateCanvasWrapper.includes("import('@create-something/canvas-kernel')"));
 	assert.ok(agencySubstrateCanvasWrapper.includes('kernel.CanvasKernel'));
 	assert.ok(agencySubstrateCanvasWrapper.includes('data-public-substrate-canvas'));
-	assert.ok(agencySubstrateCanvasWrapper.includes('The operating graph is the experience.'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('The canvas is the proof object.'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('Signal / Decision / Proof'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('shared kernel'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('Show receipts'));
 	assert.ok(agencySubstrateCanvasModule.includes("from '@create-something/canvas-kernel'"));
 	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROJECTION'));
 	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_MOBILE_PROJECTION'));
 	assert.ok(agencySubstrateCanvasModule.includes("'agency_canvas'"));
 	assert.ok(agencySubstrateCanvasModule.includes("'receipt_graph'"));
+	assert.ok(agencySubstrateCanvasModule.includes('Public proof surface'));
+	assert.ok(agencySubstrateCanvasModule.includes('Stop condition'));
 });
 
 test('agency public Substrate canvas keeps a readable mobile projection', () => {
@@ -289,6 +294,9 @@ test('agency README documents the current interactive Atlas renderer contract', 
 	assert.ok(agencyReadme.includes('`PublicSubstrateCanvas.svelte`'));
 	assert.ok(agencyReadme.includes('`@create-something/canvas-kernel` renderer'));
 	assert.ok(agencyReadme.includes('transparent operating canvas'));
+	assert.ok(agencyReadme.includes('Ona/UNA communication foundation'));
+	assert.ok(agencyReadme.includes('implementation details hidden until they are'));
+	assert.ok(agencyReadme.includes('useful evidence'));
 	assert.equal(agencyReadme.includes('React Flow is the primary renderer'), false);
 });
 
