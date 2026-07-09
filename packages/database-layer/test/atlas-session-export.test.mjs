@@ -10,10 +10,14 @@ const sessionPath = path.join(
   'data',
   'create-something-internal-operating-topology.atlas-session.json'
 );
-const diagnosticsPath = path.join(packageRoot, 'data', 'create-something-topology-diagnostics.json');
 const topology = JSON.parse(fs.readFileSync(topologyPath, 'utf8'));
 const session = JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
-const diagnostics = JSON.parse(fs.readFileSync(diagnosticsPath, 'utf8'));
+const performanceContract = JSON.parse(
+  fs.readFileSync(path.join(packageRoot, 'data', 'create-something-performance-contract.json'), 'utf8')
+);
+const organizationReview = JSON.parse(
+  fs.readFileSync(path.join(packageRoot, 'data', 'create-something-organization-review.json'), 'utf8')
+);
 
 test('internal topology exports an Atlas Studio session artifact', () => {
   assert.equal(session.version, 1);
@@ -54,7 +58,7 @@ test('Atlas Studio session carries Substrate bindings, sync state, and governanc
 test('Atlas Studio session includes a review story for topology completion', () => {
   assert.equal(session.story.active, true);
   assert.equal(session.story.activeStepId, 'topology-root');
-  assert.equal(session.story.steps.length, 4);
+  assert.equal(session.story.steps.length, 6);
   assert.ok(session.story.callouts.length > 0);
   assert.ok(
     session.story.questions.some((question) =>
@@ -89,8 +93,41 @@ test('Atlas Studio session surfaces topology diagnostics for business review', (
   assert.ok(diagnosticsObservation.text.includes('0 hard gaps'));
   assert.ok(diagnosticsObservation.text.includes('6 review signals'));
   assert.ok(diagnosticsStep);
-  assert.ok(diagnosticsStep.summary.includes(`Automation has ${diagnostics.summary.tierCounts.Automation}`));
-  assert.ok(diagnosticsStep.summary.includes(`Database has ${diagnostics.summary.tierCounts.Database}`));
+  assert.ok(diagnosticsStep.summary.includes('Automation has 237'));
+  assert.ok(diagnosticsStep.summary.includes('Database has 21'));
   assert.ok(diagnosticsStep.proof.includes('0 hard gaps'));
   assert.ok(session.story.callouts.some((callout) => callout.id.startsWith('diagnostic_callout_')));
+});
+
+test('Atlas Studio session surfaces the Substrate performance contract for speed review', () => {
+  const performanceObservation = session.observations.find(
+    (observation) => observation.id === 'observation_performance_contract'
+  );
+  const performanceStep = session.story.steps.find((step) => step.id === 'substrate-performance');
+
+  assert.ok(performanceObservation);
+  assert.ok(performanceObservation.text.includes('obsidian_like_operator_speed'));
+  assert.ok(performanceObservation.text.includes(`${performanceContract.summary.topologyRecords} topology records`));
+  assert.ok(performanceStep);
+  assert.ok(performanceStep.summary.includes('Record navigation'));
+  assert.ok(performanceStep.summary.includes('Direct record URLs'));
+  assert.ok(performanceStep.proof.includes(`${performanceContract.budgets.length} budgets`));
+  assert.ok(performanceStep.proof.includes(`${performanceContract.fastPath.length} fast paths`));
+});
+
+test('Atlas Studio session surfaces the organization review for business value review', () => {
+  const organizationObservation = session.observations.find(
+    (observation) => observation.id === 'observation_organization_review'
+  );
+  const organizationStep = session.story.steps.find((step) => step.id === 'organization-review');
+
+  assert.ok(organizationObservation);
+  assert.ok(organizationObservation.text.includes(organizationReview.valueState));
+  assert.ok(organizationObservation.text.includes(`${organizationReview.summary.hardGaps} hard gaps`));
+  assert.ok(organizationObservation.text.includes(`${organizationReview.summary.reviewSignals} review signals`));
+  assert.ok(organizationStep);
+  assert.ok(organizationStep.summary.includes('Atlas is showing value'));
+  assert.ok(organizationStep.summary.includes('automation/database imbalance'));
+  assert.ok(organizationStep.proof.includes('5 findings'));
+  assert.ok(organizationStep.proof.includes('4 recommended moves'));
 });

@@ -24,10 +24,21 @@ The package models:
 - Atlas coverage grouping
 - operating slice review and promotion readiness
 - operating slice readiness gates
+- business operating recommendations
 - API/MCP/agent management surface
 - CREATE SOMETHING internal operating topology
 - CREATE SOMETHING topology completion report
+- CREATE SOMETHING organization review
+- Atlas/Substrate agent wiki projection
 - read-only demo state
+
+The shared canvas projection uses `flow.shared-canvas-state.v1` from
+`@create-something/canvas-kernel/shared-canvas-state`, while Database Layer keeps
+the canonical records, joins, receipts, and API/MCP/agent read surfaces.
+The compute projection uses `flow.substrate-compute-snapshot.v1` from
+`@create-something/canvas-kernel/substrate-compute-snapshot` to expose indexed
+impact, attention, bottleneck, and agent work queue buffers for future GPU
+simulation without making the canvas the source of truth.
 
 `packages/app-governance-db` remains the first realized instance. Substrate is
 the first-class runtime direction for the reusable layer: Cloudflare durable
@@ -42,6 +53,20 @@ instead of heavy workspace reloads. That is a design budget, not a benchmark
 claim; production claims need measured evidence.
 
 See `docs/CREATE_SOMETHING_DATABASE_LAYER.md` for the product/module direction.
+
+The generated Atlas/Substrate agent wiki lives at
+`docs/agent-wiki/README.md`. It is an orientation layer for agents and humans,
+not a second source of truth. Regenerate it with:
+
+```bash
+pnpm --filter @create-something/database-layer agent-wiki:generate
+```
+
+Check freshness without writing files:
+
+```bash
+pnpm --filter @create-something/database-layer agent-wiki:check
+```
 
 ## Agent Legibility Contract
 
@@ -106,12 +131,16 @@ pnpm --filter @create-something/database-layer atlas-coverage:generate
 pnpm --filter @create-something/database-layer topology:generate
 pnpm --filter @create-something/database-layer operating-slices:generate
 pnpm --filter @create-something/database-layer operating-slice-readiness:generate
+pnpm --filter @create-something/database-layer organization-review:generate
+pnpm --filter @create-something/database-layer management-surface:generate
+pnpm --filter @create-something/database-layer business-recommendations:generate
 pnpm --filter @create-something/database-layer management-surface:generate
 pnpm --filter @create-something/database-layer worker-state:generate
 pnpm --filter @create-something/database-layer build
 pnpm --filter @create-something/database-layer topology:report
 pnpm --filter @create-something/database-layer topology:3d:generate
 pnpm --filter @create-something/database-layer topology:atlas-session
+pnpm --filter @create-something/database-layer agent-wiki:generate
 pnpm --filter @create-something/database-layer test
 pnpm --filter @create-something/database-layer topology:summary
 ```
@@ -213,11 +242,43 @@ packages/database-layer/data/create-something-management-surface.json
 
 That artifact assigns API paths, MCP resource URIs/tools, and agent commands to
 the topology, Atlas session, runtime coverage, every operating slice, and every
-slice readiness object. Read operations are inspection-only. Write-shaped
+slice readiness object, plus the derived receipt ledger. Read operations are inspection-only. Write-shaped
 operations create local proposals, approval records, or receipts only; they do
 not mutate Cloudflare, Atlas production, Dify Studio, client systems, or other
 third-party state without explicit operator approval and the owning promotion
 workflow.
+
+Use `organization-review:generate` after topology diagnostics to create the
+business organization review artifact:
+
+```text
+packages/database-layer/data/create-something-organization-review.json
+```
+
+That artifact answers whether Atlas is showing operating value for CREATE
+SOMETHING and separates hard gaps from review signals, overlap, and redundancy.
+It is generated from topology diagnostics, operating slices, completion status,
+and client overlay coverage so the business readout remains tied to repo truth.
+
+Use `business-recommendations:generate` after organization review and a
+management-surface bootstrap to create the operating lane artifact:
+
+```text
+packages/database-layer/data/create-something-business-operating-recommendations.json
+```
+
+That artifact completes the current CREATE SOMETHING business recommendations
+locally by turning each recommended move into an agent-readable lane with
+evidence, metrics, resources, receipts, next action, and approval boundary:
+
+- Substrate as the CREATE SOMETHING database/product surface.
+- Worker runtime review as the first ongoing operational lane.
+- Client overlays as repeatable delivery packets.
+- Policy and guides attached to operating slices.
+
+The artifact is a read-only proof surface. It does not deploy, communicate with
+clients, mutate Cloudflare, change Dify Studio, or write external systems.
+Those actions remain approval-gated through the owning workflow.
 
 The package also exports dependency-free management API helpers:
 
@@ -279,12 +340,96 @@ The read-only Worker host also exposes MCP-style HTTP helpers over the same
 contract:
 
 ```text
+GET /api/substrate/capabilities
+GET /api/substrate/health
+GET /api/substrate/management
+GET /api/substrate/openapi.json
+GET /api/substrate/contract/audit
+GET /api/substrate/business/recommendations
+GET /api/substrate/query
+GET /api/substrate/workbench
+GET /api/substrate/workflow/queue
+GET /api/substrate/receipts
+GET /api/substrate/topology/internal
+GET /api/substrate/compute-snapshot
+GET /api/substrate/atlas-sessions/{sessionId}
+GET /api/substrate/atlas-sessions/{sessionId}/viewport
+GET /api/substrate/atlas-sessions/{sessionId}/compute-snapshot
+GET /api/substrate/coverage/runtime-bindings/cloudflare
+GET /api/substrate/operating-slices/{sliceId}
+GET /api/substrate/topology/internal/records/{recordId}/context
 GET /api/substrate/mcp/resources
 GET /api/substrate/mcp/resources/{encodedMcpUri}
 GET /api/substrate/mcp/tools
+GET /api/substrate/mcp/tools/database_layer_get_capabilities/call
+GET /api/substrate/mcp/tools/database_layer_get_health/call
+GET /api/substrate/mcp/tools/database_layer_get_openapi/call
+GET /api/substrate/mcp/tools/database_layer_get_contract_audit/call
+GET /api/substrate/mcp/tools/database_layer_get_business_recommendations/call
+GET /api/substrate/mcp/tools/database_layer_query_records/call
+GET /api/substrate/mcp/tools/database_layer_get_workbench/call
+GET /api/substrate/mcp/tools/database_layer_get_workflow_queue/call
+GET /api/substrate/mcp/tools/database_layer_list_receipts/call
+GET /api/substrate/mcp/tools/database_layer_get_topology/call
+GET /api/substrate/mcp/tools/database_layer_get_compute_snapshot/call
+GET /api/substrate/mcp/tools/database_layer_get_atlas_session/call/{sessionId}
+GET /api/substrate/mcp/tools/database_layer_get_atlas_viewport/call/{sessionId}
+GET /api/substrate/mcp/tools/database_layer_get_runtime_binding_coverage/call
+GET /api/substrate/mcp/tools/database_layer_get_operating_slice/call/{sliceSlug}
+GET /api/substrate/mcp/tools/database_layer_get_topology_record_context/call/{recordSlug}
 GET /api/substrate/mcp/tools/database_layer_get_operating_slice_readiness/call/{sliceSlug}
 POST /api/substrate/mcp/rpc
 ```
+
+`/api/substrate/capabilities` is the compact bootstrap contract for API,
+MCP, and agent clients. It returns endpoint, resource, tool, command, approval,
+and performance metadata derived from the generated management surface.
+`/api/substrate/health` returns the cheap readiness packet for Cloudflare,
+MCP, and agent clients: topology counts, management counts, approval posture,
+cache/CORS expectations, and speed baseline.
+`/api/substrate/openapi.json` returns the OpenAPI 3.1 contract derived from the
+same operation list so external clients can bind to Substrate without reading
+source code.
+`/api/substrate/contract/audit` is the self-check for API-first completeness:
+it verifies that every generated resource resolves to a read operation template,
+that operation paths are not duplicated, and that write-shaped operations remain
+approval-gated.
+`/api/substrate/business/recommendations` is the completed business
+recommendation surface. It returns the four operating lanes, worker runtime
+review packet, client delivery packets, policy/guide attachments, receipts, and
+approval boundary derived from current topology and management artifacts.
+`/api/substrate/query` is the fast narrowing endpoint for large Atlas maps. It
+filters topology records by `q`, `surface`, `tier`, `status`, and `limit` so UI,
+MCP, and agent clients can inspect a working set instead of loading every record.
+`/api/substrate/workbench` is the compact database-panel payload: current query
+results, topology facets, and optional selected-record context in one bounded
+read for UI, MCP, and agent clients.
+`/api/substrate/workflow/queue` is the read-only workflow action queue derived
+from generated topology, client overlay, runtime binding, agent config, and
+operating-slice readiness artifacts. It shows runnable/review-gated work without
+mutating production state.
+`/api/substrate/receipts` is the read-only proof ledger derived from Atlas
+governance records plus client overlay, runtime binding, and agent config
+coverage receipts. Filter by `recordId`, `type`, `source`, and `limit` to inspect
+why a mapped record can be trusted without loading the whole workflow queue.
+`/api/substrate/topology/internal`, `/api/substrate/atlas-sessions/{sessionId}`,
+`/api/substrate/coverage/runtime-bindings/cloudflare`, and
+`/api/substrate/operating-slices/{sliceId}` expose the larger generated read
+models as formal OpenAPI/MCP tool operations, not only as ad hoc resource URLs.
+`/api/substrate/atlas-sessions/{sessionId}/viewport` is the bounded map read for
+pan/zoom. It accepts `x`, `y`, `width`, `height`, `zoom`, and `limit`, then
+returns visible nodes, visible-node edges, level-of-detail metadata, and
+omission counts so a UI can move through a large Atlas canvas without
+reloading the full session.
+`/api/substrate/compute-snapshot` and
+`/api/substrate/atlas-sessions/{sessionId}/compute-snapshot` return the
+read-only CPU projection that a future WebGPU path can consume directly:
+deterministic node/edge indexes, numeric weight buffers, impact propagation,
+attention ranks, bottleneck candidates, and agent work queue items.
+`/api/substrate/topology/internal/records/{recordId}/context` is the selected
+record packet for database UI and agents: record summary, source record, Atlas
+node/bindings/sync/proof receipts, bounded adjacent edges, related records, and
+review signals without loading the whole canvas.
 
 Write-shaped MCP tool calls return `approval_required` until a production
 approval workflow is implemented.

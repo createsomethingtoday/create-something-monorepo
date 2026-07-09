@@ -108,6 +108,6 @@ test('internal topology normalizes owners into displayable strings', () => {
 
 test('internal topology includes direct repo truth paths for current proof surfaces', () => {
   assert.equal(nodeByPath('packages/substrate-mcp/worker/wrangler.toml')?.surface, 'worker');
-  assert.equal(nodeByPath('docs/README.md')?.surface, 'doc');
+  assert.equal(nodeByPath('docs/CREATE_SOMETHING_DATABASE_LAYER.md')?.surface, 'doc');
   assert.equal(nodeByPath('packages/agency/clients/outerfields')?.surface, 'client');
 });

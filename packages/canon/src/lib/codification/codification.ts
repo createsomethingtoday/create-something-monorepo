@@ -127,6 +127,12 @@ export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 			'Interaction Atlas MCP UI is a tooling demo attached to MCP package behavior, not a rendered Canon-consuming property surface.'
 	},
 	{
+		path: 'packages/canvas-kernel',
+		reason: 'render-tooling-surface',
+		justification:
+			'Canvas Kernel is shared render infrastructure for Atlas, Substrate, and topology surfaces; Canon governs rendered product shells while this package remains a product-local compute surface.'
+	},
+	{
 		path: 'packages/agent-sdk/experiments',
 		reason: 'research-prototype',
 		justification:

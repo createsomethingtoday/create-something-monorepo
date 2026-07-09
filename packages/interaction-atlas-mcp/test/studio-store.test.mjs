@@ -23,6 +23,7 @@ import {
   createSession,
   exportSessionMarkdown,
   readSession,
+  readSessionDatabaseHealth,
   removeNode,
   setStoryFocus,
   updateEdge,
@@ -259,6 +260,79 @@ test('Atlas Story API v1 accepts snake_case payloads and reports invalid focus i
   assert.equal(payload.story?.nextAction, 'Confirm the system of record.');
   assert.equal(payload.story?.callouts[0].severity, 'decision');
   assert.deepEqual(payload.story?.steps[0].focusNodeIds, ['data_workflow']);
+});
+
+test('Atlas Studio session database health is readable by agent commands', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-health-command-test-'));
+  const session = await createSession(
+    { client: 'CREATE SOMETHING', workflow: 'Internal operating topology', owner: 'Micah' },
+    cwd
+  );
+
+  await writeSession(
+    {
+      ...session,
+      story: {
+        active: true,
+        activeStepId: 'topology-diagnostics',
+        callouts: [
+          {
+            id: 'diagnostic_callout_data_workflow',
+            nodeId: 'data_workflow',
+            severity: 'decision',
+            text: 'Workflow ownership needs a durable database binding.'
+          }
+        ],
+        dimUnfocused: false,
+        focusEdgeIds: [],
+        focusNodeIds: ['data_workflow'],
+        steps: [
+          {
+            id: 'topology-diagnostics',
+            title: 'Business health signals',
+            summary: 'Atlas surfaced one durable topology gap.',
+            proof: '1 signal from 4 nodes / 3 edges',
+            status: 'current'
+          },
+          {
+            id: 'substrate-performance',
+            title: 'Substrate speed contract',
+            summary: 'Large maps stay responsive by disabling expensive chrome.',
+            proof: 'MiniMap disabled over 180 nodes.',
+            status: 'next'
+          },
+          {
+            id: 'organization-review',
+            title: 'Organization review',
+            summary: 'Atlas can surface disconnects and redundancy.',
+            proof: '5 findings / 4 recommended moves',
+            status: 'next'
+          }
+        ],
+        title: 'Health',
+        updatedAt: new Date().toISOString(),
+        updatedBy: 'agent'
+      },
+      observations: [
+        {
+          id: 'observation_organization_review',
+          source: 'agent',
+          text: 'Organization review: one API ownership gap should be filled.',
+          createdAt: new Date().toISOString()
+        }
+      ]
+    },
+    cwd
+  );
+
+  const health = await readSessionDatabaseHealth(session.id, cwd);
+
+  assert.equal(health.sessionId, session.id);
+  assert.equal(health.topology.title, 'Business health signals');
+  assert.equal(health.topology.signals[0]?.nodeLabel, 'Internal operating topology');
+  assert.equal(health.performance?.title, 'Substrate speed contract');
+  assert.equal(health.organization?.proof, '5 findings / 4 recommended moves');
+  assert.match(health.organization?.observation ?? '', /API ownership gap/);
 });
 
 test('Atlas Story API v1 projects Canon story chapters into presenter steps', async () => {

@@ -78,13 +78,20 @@ const tscBin = require.resolve('typescript/bin/tsc');
 runStep('TypeScript build', process.execPath, [tscBin]);
 runStep('Completion report', process.execPath, ['scripts/report-internal-topology.mjs']);
 runStep('Topology diagnostics', process.execPath, ['scripts/generate-topology-diagnostics.mjs']);
+runStep('Organization review', process.execPath, ['scripts/generate-organization-review.mjs']);
+runStep('Management surface bootstrap', process.execPath, ['scripts/generate-management-surface.mjs']);
+runStep('Business operating recommendations', process.execPath, [
+  'scripts/generate-business-operating-recommendations.mjs'
+]);
 runStep('Management surface', process.execPath, ['scripts/generate-management-surface.mjs']);
+runStep('Performance contract', process.execPath, ['scripts/generate-performance-contract.mjs']);
 runStep('Worker state', process.execPath, ['scripts/generate-worker-state.mjs']);
 runStep('3D topology projection', process.execPath, ['scripts/generate-topology-3d.mjs']);
 runStep('Atlas Studio session export', process.execPath, [
   'scripts/export-internal-atlas-session.mjs',
   ...(installAtlasSession ? ['--install', '--install-app-data'] : [])
 ]);
+runStep('Atlas/Substrate agent wiki', process.execPath, ['scripts/generate-agent-wiki.mjs']);
 
 if (!skipTests) {
   runStep('Database-layer tests', process.execPath, ['--test', ...testFiles()]);
@@ -96,10 +103,13 @@ runStep('Topology summary', process.execPath, ['scripts/summarize-internal-topol
 const topology = readJson('data/create-something-internal-topology.json');
 const report = readJson('data/create-something-internal-topology-completion-report.json');
 const managementSurface = readJson('data/create-something-management-surface.json');
+const organizationReview = readJson('data/create-something-organization-review.json');
+const businessRecommendations = readJson('data/create-something-business-operating-recommendations.json');
 const operatingSliceReview = readJson('data/create-something-operating-slice-review.json');
 const operatingSliceReadiness = readJson('data/create-something-operating-slice-readiness.json');
 const atlasSessionPath = path.join(packageRoot, 'data', 'create-something-internal-operating-topology.atlas-session.json');
 const topology3dPath = path.join(packageRoot, 'data', 'create-something-internal-topology.3d.json');
+const agentWikiPath = path.join(packageRoot, 'docs', 'agent-wiki', 'README.md');
 const workerStatePath = path.join(packageRoot, 'worker', 'generated-state.mjs');
 
 assertNoLocalTopologyGaps(report);
@@ -116,13 +126,17 @@ console.log(
       gaps: report.totals.gaps,
       managementResources: managementSurface.resources.length,
       managementOperations: managementSurface.operations.length,
+      organizationValueState: organizationReview.valueState,
+      businessRecommendationLanes: businessRecommendations.lanes.length,
       operatingSlices: operatingSliceReview.slices.length,
       readinessItems: operatingSliceReadiness.items.length,
       artifacts: {
         topology: relative(path.join(packageRoot, 'data', 'create-something-internal-topology.json')),
         completionReport: relative(path.join(packageRoot, 'data', 'create-something-internal-topology-completion-report.json')),
+        businessRecommendations: relative(path.join(packageRoot, 'data', 'create-something-business-operating-recommendations.json')),
         atlasSession: relative(atlasSessionPath),
         topology3d: relative(topology3dPath),
+        agentWiki: relative(agentWikiPath),
         workerState: relative(workerStatePath)
       },
       verification: skipTests ? 'skipped_tests' : 'build_tests_worker_smoke'

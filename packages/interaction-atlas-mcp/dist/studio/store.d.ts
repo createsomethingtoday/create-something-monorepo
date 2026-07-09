@@ -1,3 +1,4 @@
+import { type AtlasDatabaseHealth } from './database-health.js';
 import type { AtlasCanvasEdge, AtlasCanvasNode, AtlasCanvasNodeKind, AtlasCanvasNodeStatus, AtlasGovernanceRecordRef, AtlasGovernanceProductAttachment, AtlasSession, AtlasSessionActor, AtlasStoryCallout, AtlasStoryQuestion, AtlasStoryStep } from './types.js';
 type CreateSessionInput = {
     client: string;
@@ -69,6 +70,7 @@ export declare function createSession(input: CreateSessionInput, cwd?: string): 
 export declare function readSession(sessionId: string, cwd?: string): Promise<AtlasSession>;
 export declare function writeSession(session: AtlasSession, cwd?: string): Promise<AtlasSession>;
 export declare function listSessions(cwd?: string): Promise<AtlasSession[]>;
+export declare function readSessionDatabaseHealth(sessionId: string, cwd?: string): Promise<AtlasDatabaseHealth>;
 export declare function addNode(sessionId: string, input: AddNodeInput, cwd?: string): Promise<AtlasSession>;
 export declare function updateNode(sessionId: string, nodeId: string, input: UpdateNodeInput, cwd?: string): Promise<AtlasSession>;
 export declare function attachGovernanceRecord(sessionId: string, nodeId: string, input: AttachGovernanceRecordInput, cwd?: string): Promise<AtlasSession>;

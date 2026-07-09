@@ -12,6 +12,10 @@ const DEFAULT_ATLAS_SESSION_PATH = path.resolve(
   __dirname,
   '../data/create-something-internal-operating-topology.atlas-session.json'
 );
+const DEFAULT_CLIENT_OVERLAY_COVERAGE_PATH = path.resolve(
+  __dirname,
+  '../data/create-something-client-overlay-coverage.json'
+);
 
 const DEFAULT_STATE = Object.freeze({
   lensId: 'operational',
@@ -26,6 +30,14 @@ const DEFAULT_STATE = Object.freeze({
 const VALID_STATUS = new Set(['', 'mapped', 'needs_atlas', 'needs_substrate']);
 const VALID_TIER = new Set(['', 'Database', 'Automation', 'Judgment', 'Mixed']);
 const VALID_EDGE_MODE = new Set(['operational', 'structural', 'all', 'contains']);
+
+function slug(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/^@/, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 const TOOL_INPUT_SCHEMAS = {
   topology3d_context_read: {
@@ -95,6 +107,14 @@ const TOOL_INPUT_SCHEMAS = {
       stepId: { type: 'string', description: 'Optional Atlas story step id to focus.' },
       limit: { type: 'integer', minimum: 0, maximum: 100 }
     }
+  },
+  topology3d_client_overlay_context_read: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      clientSlug: { type: 'string', description: 'Client overlay slug to load.' },
+      nodeId: { type: 'string', description: 'Topology node id whose client overlay should be loaded.' }
+    }
   }
 };
 
@@ -119,14 +139,23 @@ export function loadTopology3dAtlasSession(atlasSessionPath = DEFAULT_ATLAS_SESS
   return JSON.parse(fs.readFileSync(atlasSessionPath, 'utf8'));
 }
 
+export function loadTopology3dClientOverlayCoverage(
+  clientOverlayCoveragePath = DEFAULT_CLIENT_OVERLAY_COVERAGE_PATH
+) {
+  return JSON.parse(fs.readFileSync(clientOverlayCoveragePath, 'utf8'));
+}
+
 export function createTopology3dRuntime(options = {}) {
   const artifact = options.artifact ?? loadTopology3dArtifact(options.artifactPath);
   const atlasSession = options.atlasSession ?? loadTopology3dAtlasSession(options.atlasSessionPath);
+  const clientOverlayCoverage =
+    options.clientOverlayCoverage ?? loadTopology3dClientOverlayCoverage(options.clientOverlayCoveragePath);
   const atlasNodes = atlasSession.canvas?.nodes ?? [];
   const atlasEdges = atlasSession.canvas?.edges ?? [];
   const atlasNodeById = new Map(atlasNodes.map((node) => [node.id, node]));
   const atlasNodeByTopologyId = new Map(atlasNodes.map((node) => [node.atlasId, node]));
   const topologyNodeById = new Map(artifact.nodes.map((node, index) => [node.id, { node, index }]));
+  const clientOverlayByKey = buildClientOverlayIndex(clientOverlayCoverage.overlays ?? []);
   let state = normalizeState(artifact, {
     ...DEFAULT_STATE,
     selectedNodeId: artifact.nodes?.[0]?.id ?? null,
@@ -585,6 +614,45 @@ export function createTopology3dRuntime(options = {}) {
     };
   }
 
+  function clientOverlayContextRead(options = {}) {
+    let topologyEntry = options.nodeId ? topologyNodeById.get(options.nodeId) : null;
+    if (options.nodeId && !topologyEntry) throw new Error(`Unknown topology node id "${options.nodeId}".`);
+    if (!topologyEntry && state.selectedNodeId) topologyEntry = topologyNodeById.get(state.selectedNodeId) ?? null;
+
+    const node = topologyEntry?.node ?? null;
+    const key = options.clientSlug ?? node?.clientOverlay?.clientSlug ?? node?.clientSlug;
+    if (!key) {
+      throw new Error('topology3d_client_overlay_context_read requires clientSlug or a selected client topology node.');
+    }
+
+    const overlay = clientOverlayByKey.get(key) ?? clientOverlayByKey.get(slug(String(key)));
+    if (!overlay) throw new Error(`Unknown client overlay "${key}".`);
+
+    const overlaySlug = slug(overlay.clientSlug);
+    const selectedNode = topologyEntry ? nodePacket(topologyEntry.index, state.lensId) : null;
+    return {
+      clientOverlay: overlay,
+      selectedNode,
+      handoff: {
+        topologyId: artifact.topologyId,
+        atlasCanvasId: artifact.atlasCanvasId,
+        clientSlug: overlay.clientSlug,
+        clientOverlayApiPath: `/api/substrate/client-overlays/${overlaySlug}`,
+        clientOverlayMcpUri: `substrate://client-overlays/${overlaySlug}`,
+        clientOverlayAgentCommand: 'databaseLayer.clientOverlays.get',
+        clientOverlayTopology3dResourceUri: `topology3d://create-something/internal/client-overlay/${overlaySlug}`,
+        clientOverlayAtlasCanvasId: overlay.atlasCanvasId,
+        selectedNodeId: selectedNode?.id ?? null,
+        selectedPath: selectedNode?.path ?? null,
+        packageCount: overlay.packages.length,
+        receiptCount: overlay.receipts.length,
+        nextActionCount: overlay.nextActions.length
+      },
+      boundary:
+        'Read-only client overlay context. Client system writes, Atlas write-back, Cloudflare changes, and production promotion require the owning approval workflow.'
+    };
+  }
+
   function selectionExport(options = {}) {
     const snapshot = contextSnapshot(options);
     return {
@@ -593,6 +661,7 @@ export function createTopology3dRuntime(options = {}) {
       visibleNodes: snapshot.nodes,
       visibleEdges: snapshot.edges,
       substrate: snapshot.selectedNode?.substrate ?? null,
+      clientOverlay: snapshot.selectedNode?.clientOverlay ?? null,
       handoff: {
         topologyId: artifact.topologyId,
         atlasCanvasId: artifact.atlasCanvasId,
@@ -606,6 +675,11 @@ export function createTopology3dRuntime(options = {}) {
         actionId: snapshot.selectedNode?.substrate?.actionId ?? null,
         operatingSliceId: snapshot.selectedNode?.substrate?.operatingSliceId ?? null,
         readinessApiPath: snapshot.selectedNode?.substrate?.readinessApiPath ?? null,
+        clientOverlaySlug: snapshot.selectedNode?.clientOverlay?.clientSlug ?? null,
+        clientOverlayApiPath: snapshot.selectedNode?.clientOverlay?.apiPath ?? null,
+        clientOverlayMcpUri: snapshot.selectedNode?.clientOverlay?.mcpUri ?? null,
+        clientOverlayAgentCommand: snapshot.selectedNode?.clientOverlay?.agentCommand ?? null,
+        clientOverlayTopology3dResourceUri: snapshot.selectedNode?.clientOverlay?.topology3dResourceUri ?? null,
         selectedNodeId: snapshot.state.selectedNodeId,
         selectedAtlasNodeId: snapshot.selectedNode?.atlas?.atlasNodeId ?? null,
         selectedPath: snapshot.selectedNode?.path ?? null,
@@ -627,6 +701,20 @@ export function createTopology3dRuntime(options = {}) {
     if (uri === 'topology3d://create-something/internal/insights') return insightsRead();
     if (uri === 'topology3d://create-something/internal/atlas-session') return atlasSession;
     if (uri === 'topology3d://create-something/internal/atlas-story') return atlasStoryRead();
+    if (uri === 'topology3d://create-something/internal/client-overlays') {
+      return {
+        id: clientOverlayCoverage.id,
+        topologyId: artifact.topologyId,
+        atlasCanvasId: artifact.atlasCanvasId,
+        overlays: (clientOverlayCoverage.overlays ?? []).map(clientOverlaySummary)
+      };
+    }
+
+    const clientOverlayPrefix = 'topology3d://create-something/internal/client-overlay/';
+    if (uri.startsWith(clientOverlayPrefix)) {
+      const clientSlug = decodeURIComponent(uri.slice(clientOverlayPrefix.length));
+      return clientOverlayContextRead({ clientSlug });
+    }
 
     const atlasNodePrefix = 'topology3d://create-something/internal/atlas-node/';
     if (uri.startsWith(atlasNodePrefix)) {
@@ -661,6 +749,7 @@ export function createTopology3dRuntime(options = {}) {
     if (name === 'topology3d_group_explain') return explainGroup(args);
     if (name === 'topology3d_atlas_context_read') return atlasContextRead(args);
     if (name === 'topology3d_atlas_story_read') return atlasStoryRead(args);
+    if (name === 'topology3d_client_overlay_context_read') return clientOverlayContextRead(args);
     throw new Error(`Unknown tool "${name}". Use tools/list for available topology3d tools.`);
   }
 
@@ -713,6 +802,7 @@ export function createTopology3dRuntime(options = {}) {
     explainGroup,
     atlasContextRead,
     atlasStoryRead,
+    clientOverlayContextRead,
     insightsRead,
     readResource,
     resourcesList,
@@ -722,6 +812,45 @@ export function createTopology3dRuntime(options = {}) {
     toolsList,
     callTool
   };
+}
+
+function clientOverlaySummary(overlay) {
+  const overlaySlug = slug(overlay.clientSlug);
+  return {
+    clientSlug: overlay.clientSlug,
+    slug: overlaySlug,
+    recordId: overlay.recordId,
+    atlasCanvasId: overlay.atlasCanvasId,
+    title: overlay.title,
+    owner: overlay.owner,
+    status: overlay.status,
+    packageCount: overlay.packages.length,
+    apiPath: `/api/substrate/client-overlays/${overlaySlug}`,
+    mcpUri: `substrate://client-overlays/${overlaySlug}`,
+    agentCommand: 'databaseLayer.clientOverlays.get',
+    topology3dResourceUri: `topology3d://create-something/internal/client-overlay/${overlaySlug}`
+  };
+}
+
+function buildClientOverlayIndex(overlays) {
+  const index = new Map();
+  for (const overlay of overlays) {
+    index.set(overlay.clientSlug, overlay);
+    index.set(slug(overlay.clientSlug), overlay);
+    index.set(overlay.recordId, overlay);
+    index.set(slug(overlay.recordId), overlay);
+    index.set(overlay.atlasCanvasId, overlay);
+    index.set(slug(overlay.atlasCanvasId), overlay);
+    for (const pkg of overlay.packages ?? []) {
+      index.set(pkg.recordId, overlay);
+      index.set(slug(pkg.recordId), overlay);
+      index.set(pkg.atlasNodeId, overlay);
+      index.set(slug(pkg.atlasNodeId), overlay);
+      index.set(pkg.path, overlay);
+      index.set(slug(pkg.path), overlay);
+    }
+  }
+  return index;
 }
 
 export function createJsonRpcHandler(runtime = createTopology3dRuntime()) {

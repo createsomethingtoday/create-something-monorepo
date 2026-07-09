@@ -9,7 +9,7 @@
     "cs-atlas-studio": "dist/studio/cli.js"
   },
   "scripts": {
-    "prebuild": "pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/observability build",
+    "prebuild": "pnpm --filter @create-something/canvas-kernel build && pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/observability build",
     "build": "tsc && node dist/studio/build-client.js",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
@@ -20,6 +20,7 @@
     "test": "pnpm --filter @create-something/mcp-authz build && pnpm --filter @create-something/mcp-core build && pnpm build && node --test test/*.test.mjs"
   },
   "dependencies": {
+    "@create-something/canvas-kernel": "workspace:*",
     "@create-something/mcp-authz": "workspace:*",
     "@create-something/mcp-core": "workspace:*",
     "@create-something/observability": "workspace:*",
@@ -27,7 +28,6 @@
     "@create-something/policy-os-engine": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@quietloudlab/ai-interaction-atlas": "^1.0.7",
-    "@xyflow/react": "^12.11.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

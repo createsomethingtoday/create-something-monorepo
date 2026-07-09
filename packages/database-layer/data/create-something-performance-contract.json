@@ -1,0 +1,96 @@
+{
+  "id": "substrate:create-something:performance-contract:internal",
+  "generatedAt": "2026-07-09T03:50:01.769Z",
+  "topologyId": "substrate:create-something:topology:internal",
+  "atlasCanvasId": "create-something-internal-operating-topology",
+  "runtime": "substrate",
+  "baseline": "obsidian_like_operator_speed",
+  "summary": {
+    "topologyRecords": 440,
+    "topologyEdges": 898,
+    "managementResources": 507,
+    "managementOperations": 29,
+    "workerCacheControl": "public, max-age=15",
+    "generatedArtifactCount": 15
+  },
+  "budgets": [
+    {
+      "label": "Record navigation",
+      "surface": "local",
+      "target": "Immediate local filter, selection, and row-to-detail movement on loaded records.",
+      "baseline": "Obsidian-like command speed for the operator path.",
+      "detail": "Atlas Studio keeps the active working set in memory and focuses records locally; cloud reads refresh the state without blocking inspection."
+    },
+    {
+      "label": "Direct record URLs",
+      "surface": "cloud",
+      "target": "Every important topology record, Atlas node, operating slice, readiness item, and diagnostic has a durable address.",
+      "baseline": "No hidden canvas-only state.",
+      "detail": "Substrate serves stable HTTP JSON endpoints for direct object review before loading the surrounding map."
+    },
+    {
+      "label": "Viewport rendering",
+      "surface": "cloud",
+      "target": "Pan and zoom reads stay bounded to the visible Atlas window and node budget.",
+      "baseline": "Obsidian-like movement on large mapped workflows.",
+      "detail": "The Atlas viewport endpoint returns only visible nodes, visible-node edges, LOD metadata, and omission counts so the UI can avoid reprocessing the full canvas during navigation."
+    },
+    {
+      "label": "Agent read path",
+      "surface": "agent",
+      "target": "Agents inspect the same topology, diagnostics, performance, and readiness records through API/MCP.",
+      "baseline": "No UI scraping or prompt-only state.",
+      "detail": "MCP resources, MCP tools, and agent commands are generated from the same management surface as the HTTP API."
+    },
+    {
+      "label": "Proof refresh",
+      "surface": "cloud",
+      "target": "Receipts, diagnostics, and audit entries move as small state payloads.",
+      "baseline": "Fast notes app feel with shared database durability.",
+      "detail": "The Cloudflare-compatible edge adapter uses short read caching and no-store writes so inspection stays fast while mutation remains explicit."
+    }
+  ],
+  "fastPath": [
+    {
+      "id": "precomputed-management-surface",
+      "surface": "api",
+      "mechanism": "Generated management resources and operations are materialized before the Worker starts.",
+      "evidence": "packages/database-layer/data/create-something-management-surface.json"
+    },
+    {
+      "id": "stable-record-addresses",
+      "surface": "api",
+      "mechanism": "Topology records are addressable by record id, Atlas node id, or stable slug.",
+      "evidence": "/api/substrate/topology/internal/records/{recordId}"
+    },
+    {
+      "id": "bounded-atlas-viewport",
+      "surface": "api",
+      "mechanism": "Atlas pan/zoom reads can request a bounded viewport instead of loading the full session graph.",
+      "evidence": "/api/substrate/atlas-sessions/{sessionId}/viewport"
+    },
+    {
+      "id": "edge-read-cache",
+      "surface": "worker",
+      "mechanism": "Successful GET responses carry a short public cache header; approval-gated writes use no-store.",
+      "evidence": "createDatabaseLayerManagementEdgeAdapter cache-control contract"
+    },
+    {
+      "id": "single-contract-agent-access",
+      "surface": "agent",
+      "mechanism": "MCP resource, MCP tool, and agent command reads all dispatch to the same in-memory API state.",
+      "evidence": "databaseLayer.performance.get and database_layer_get_performance_contract"
+    },
+    {
+      "id": "atlas-local-working-set",
+      "surface": "client",
+      "mechanism": "Atlas Studio filters, selects, and focuses loaded nodes locally instead of waiting on graph reloads.",
+      "evidence": "packages/interaction-atlas-mcp/src/studio/client/App.tsx"
+    }
+  ],
+  "nonGoals": [
+    "This contract does not claim production latency measurements until deployed Cloudflare telemetry is attached.",
+    "This contract does not replace D1, R2, KV, or Durable Object design decisions for a future write store.",
+    "This contract does not permit mutation without the existing approval-gated operation boundary."
+  ]
+}

@@ -1,3 +1,26 @@
+import type {
+  SharedCanvasEdge,
+  SharedCanvasLevelOfDetail,
+  SharedCanvasNode,
+  SharedCanvasRenderer,
+  SharedCanvasSource,
+  SharedCanvasState,
+  SharedCanvasStateOptions,
+  SharedCanvasViewport
+} from '@create-something/canvas-kernel/shared-canvas-state';
+import type {
+  SubstrateComputeAgentWorkItem,
+  SubstrateComputeAttentionRank,
+  SubstrateComputeBottleneckCandidate,
+  SubstrateComputeEdge,
+  SubstrateComputeImpactScore,
+  SubstrateComputeNode,
+  SubstrateComputeScenarioInput,
+  SubstrateComputeSnapshot,
+  SubstrateComputeSnapshotOptions,
+  SubstrateComputeWeightKey
+} from '@create-something/canvas-kernel/substrate-compute-snapshot';
+
 export type DatabaseLayerRecordStatus = 'ready' | 'review' | 'blocked' | 'complete';
 
 export type DatabaseLayerBindingHealth = 'bound' | 'reviewed' | 'gap';
@@ -60,6 +83,174 @@ export type DatabaseLayerPerformanceBudget = {
   target: string;
   baseline: string;
   detail: string;
+};
+
+export type DatabaseLayerPerformanceFastPath = {
+  id: string;
+  surface: 'api' | 'worker' | 'client' | 'agent';
+  mechanism: string;
+  evidence: string;
+};
+
+export type DatabaseLayerPerformanceContract = {
+  id: string;
+  generatedAt: string;
+  topologyId: string;
+  atlasCanvasId: string;
+  runtime: 'substrate';
+  baseline: 'obsidian_like_operator_speed';
+  summary: {
+    topologyRecords: number;
+    topologyEdges: number;
+    managementResources: number;
+    managementOperations: number;
+    workerCacheControl: string;
+    generatedArtifactCount: number;
+  };
+  budgets: DatabaseLayerPerformanceBudget[];
+  fastPath: DatabaseLayerPerformanceFastPath[];
+  nonGoals: string[];
+};
+
+export type DatabaseLayerOrganizationReviewFinding = {
+  id: string;
+  classification: 'value_signal' | 'disconnect' | 'overlap' | 'redundancy' | 'risk';
+  severity: 'info' | 'review' | 'high';
+  title: string;
+  summary: string;
+  evidence: string[];
+  nextAction: string;
+};
+
+export type DatabaseLayerOrganizationReviewMove = {
+  id: string;
+  title: string;
+  tier: 'Database' | 'Automation' | 'Judgment' | 'Mixed';
+  summary: string;
+  evidence: string[];
+  apiPath?: string;
+  agentCommand?: string;
+};
+
+export type DatabaseLayerOrganizationReview = {
+  id: string;
+  generatedAt: string;
+  topologyId: string;
+  atlasCanvasId: string;
+  valueState: 'valuable' | 'valuable_with_review_signals' | 'blocked';
+  answer: string;
+  summary: {
+    nodes: number;
+    edges: number;
+    mapped: number;
+    hardGaps: number;
+    reviewSignals: number;
+    operatingSlices: number;
+    clientOverlays: number;
+    automationRecords: number;
+    databaseRecords: number;
+    workerRecords: number;
+    mcpRecords: number;
+    policyRecords: number;
+    guideRecords: number;
+  };
+  findings: DatabaseLayerOrganizationReviewFinding[];
+  recommendedMoves: DatabaseLayerOrganizationReviewMove[];
+};
+
+export type DatabaseLayerBusinessOperatingLane = {
+  id: string;
+  sourceMoveId: string;
+  title: string;
+  tier: DatabaseLayerTopologyTier;
+  status: 'operationalized';
+  operatingLane:
+    | 'substrate_product_surface'
+    | 'worker_runtime_review'
+    | 'client_overlay_delivery'
+    | 'policy_guide_attachment';
+  summary: string;
+  evidence: string[];
+  sourceArtifacts: string[];
+  resources: unknown[];
+  metrics: Record<string, unknown>;
+  relatedSliceIds: string[];
+  deliveryPacketIds: string[];
+  policyAttachmentCount: number;
+  apiPath: string;
+  mcpUri: string;
+  agentCommand: string;
+  receiptId: string;
+  approvalBoundary: string;
+  nextAction: string;
+  verification: string[];
+};
+
+export type DatabaseLayerBusinessClientDeliveryPacket = {
+  clientSlug: string;
+  title: string;
+  status: 'mapped';
+  atlasCanvasId: string;
+  packageCount: number;
+  receiptCount: number;
+  nextActionCount: number;
+  runtimeCount: number;
+  docCount: number;
+  workerConfigCount: number;
+  apiPath: string;
+  mcpUri: string;
+  agentCommand: string;
+  packages: unknown[];
+  receiptIds: string[];
+  actionIds: string[];
+  approvalBoundary: string;
+};
+
+export type DatabaseLayerBusinessPolicyGuideAttachment = {
+  sliceId: string;
+  title: string;
+  tier: DatabaseLayerTopologyTier;
+  surface: DatabaseLayerTopologySurface;
+  productionStatus: 'approval_required' | 'blocked';
+  policyRecordIds: string[];
+  guideRecordIds: string[];
+  docRecordIds: string[];
+  policyPaths: string[];
+  guidePaths: string[];
+  docPaths: string[];
+  approvalBoundary: string;
+  receiptPath: string;
+  attachmentStatus: 'attached' | 'review';
+};
+
+export type DatabaseLayerBusinessOperatingRecommendations = {
+  id: string;
+  generatedAt: string;
+  topologyId: string;
+  atlasCanvasId: string;
+  sourceOrganizationReviewId: string;
+  sourceManagementSurfaceId: string;
+  valueState: 'operationalized_recommendations';
+  answer: string;
+  summary: {
+    recommendedMoves: number;
+    operationalizedLanes: number;
+    topologyNodes: number;
+    topologyEdges: number;
+    managementResources: number;
+    managementOperations: number;
+    operatingSlices: number;
+    workerSlices: number;
+    clientDeliveryPackets: number;
+    policyGuideAttachments: number;
+    approvalRequiredForExternalWrites: boolean;
+  };
+  lanes: DatabaseLayerBusinessOperatingLane[];
+  workerRuntimeReview: unknown;
+  clientDeliveryPackets: DatabaseLayerBusinessClientDeliveryPacket[];
+  policyGuideAttachments: DatabaseLayerBusinessPolicyGuideAttachment[];
+  receipts: DatabaseLayerReceipt[];
+  approvalBoundary: string;
 };
 
 export type DatabaseLayerSystemDesignPrinciple = {
@@ -198,9 +389,63 @@ export type DatabaseLayerAtlasCanvas = {
   updatedAt: string;
 };
 
+export type DatabaseLayerSharedCanvasRenderer = SharedCanvasRenderer;
+
+export type DatabaseLayerSharedCanvasSource = SharedCanvasSource;
+
+export type DatabaseLayerSharedCanvasLevelOfDetail = SharedCanvasLevelOfDetail;
+
+export type DatabaseLayerSharedCanvasViewport = SharedCanvasViewport;
+
+export type DatabaseLayerSharedCanvasNode = Omit<SharedCanvasNode, 'kind' | 'status' | 'surface' | 'tier'> & {
+  kind: DatabaseLayerAtlasNodeKind;
+  status: DatabaseLayerAtlasNodeStatus;
+  tier?: DatabaseLayerTopologyTier;
+  surface?: DatabaseLayerTopologySurface;
+};
+
+export type DatabaseLayerSharedCanvasEdge = SharedCanvasEdge;
+
+export type DatabaseLayerSharedCanvasState = Omit<SharedCanvasState, 'edges' | 'nodes' | 'viewport'> & {
+  viewport: DatabaseLayerSharedCanvasViewport;
+  nodes: DatabaseLayerSharedCanvasNode[];
+  edges: DatabaseLayerSharedCanvasEdge[];
+};
+
+export type DatabaseLayerSharedCanvasStateOptions = SharedCanvasStateOptions;
+
+export type DatabaseLayerSubstrateComputeWeightKey = SubstrateComputeWeightKey;
+
+export type DatabaseLayerSubstrateComputeNode = SubstrateComputeNode & {
+  tier: DatabaseLayerTopologyTier;
+  surface: DatabaseLayerTopologySurface;
+  status: DatabaseLayerTopologyNodeStatus;
+};
+
+export type DatabaseLayerSubstrateComputeEdge = SubstrateComputeEdge;
+
+export type DatabaseLayerSubstrateComputeScenarioInput = SubstrateComputeScenarioInput;
+
+export type DatabaseLayerSubstrateComputeImpactScore = SubstrateComputeImpactScore;
+
+export type DatabaseLayerSubstrateComputeAttentionRank = SubstrateComputeAttentionRank;
+
+export type DatabaseLayerSubstrateComputeBottleneckCandidate = SubstrateComputeBottleneckCandidate;
+
+export type DatabaseLayerSubstrateComputeAgentWorkItem = SubstrateComputeAgentWorkItem;
+
+export type DatabaseLayerSubstrateComputeSnapshot = Omit<SubstrateComputeSnapshot, 'edges' | 'nodes'> & {
+  nodes: DatabaseLayerSubstrateComputeNode[];
+  edges: DatabaseLayerSubstrateComputeEdge[];
+};
+
+export type DatabaseLayerSubstrateComputeSnapshotOptions = SubstrateComputeSnapshotOptions;
+
 export type DatabaseLayerTopologyProjection = {
   topologyId: string;
   atlasCanvas: DatabaseLayerAtlasCanvas;
+  sharedCanvasState: DatabaseLayerSharedCanvasState;
+  computeSnapshot: DatabaseLayerSubstrateComputeSnapshot;
   sourceRecords: DatabaseLayerSourceRecord[];
   atlasBindings: DatabaseLayerAtlasBinding[];
   gapActions: DatabaseLayerWorkflowAction[];
@@ -568,13 +813,28 @@ export type DatabaseLayerOperatingSliceReadiness = {
 };
 
 export type DatabaseLayerManagementSurfaceKind =
+  | 'capabilities'
+  | 'business_recommendations'
+  | 'client_overlay'
+  | 'contract_audit'
+  | 'health'
+  | 'openapi'
+  | 'query'
+  | 'receipts'
+  | 'workbench'
+  | 'workflow_queue'
   | 'topology'
   | 'topology_record'
   | 'diagnostics'
+  | 'organization_review'
+  | 'performance'
   | 'slice'
   | 'readiness'
   | 'coverage'
-  | 'atlas_session';
+  | 'atlas_session'
+  | 'canvas_state'
+  | 'compute_snapshot'
+  | 'atlas_viewport';
 
 export type DatabaseLayerManagementAccessMode = 'read' | 'propose' | 'approve' | 'receipt';
 
@@ -659,8 +919,13 @@ export type DatabaseLayerManagementApiState = {
   operatingSliceReadiness: DatabaseLayerOperatingSliceReadiness;
   topology: DatabaseLayerInternalTopology;
   atlasSession?: unknown;
+  clientOverlayCoverage?: DatabaseLayerClientOverlayCoverage;
+  agentConfigCoverage?: unknown;
   runtimeBindingCoverage?: unknown;
   topologyDiagnostics?: DatabaseLayerTopologyDiagnostics;
+  performanceContract?: DatabaseLayerPerformanceContract;
+  organizationReview?: DatabaseLayerOrganizationReview;
+  businessRecommendations?: DatabaseLayerBusinessOperatingRecommendations;
 };
 
 export type DatabaseLayerDemoState = {

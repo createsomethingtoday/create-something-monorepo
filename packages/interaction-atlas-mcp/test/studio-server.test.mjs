@@ -94,7 +94,7 @@ test('Atlas Studio streams session changes to open canvas clients', async () => 
   }
 });
 
-test('Atlas Studio serves the React Flow canvas shell and bundled assets', async () => {
+test('Atlas Studio serves the shared fast canvas shell and bundled assets', async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-assets-test-'));
   const session = await createSession(
     { client: 'CREATE SOMETHING Test', workflow: 'Agent-assisted Atlas onboarding' },
@@ -121,13 +121,13 @@ test('Atlas Studio serves the React Flow canvas shell and bundled assets', async
     assert.equal(script.status, 200);
     assert.match(script.headers.get('cache-control') ?? '', /immutable/);
     assert.match(script.headers.get('content-type') ?? '', /text\/javascript/);
-    assert.match(await script.text(), /ReactFlow|react-flow/);
+    assert.match(await script.text(), /CanvasKernel|fast-topology-canvas/);
 
     const css = await fetch(`http://127.0.0.1:${address.port}/studio/assets/app.css`);
     assert.equal(css.status, 200);
     assert.match(css.headers.get('cache-control') ?? '', /immutable/);
     assert.match(css.headers.get('content-type') ?? '', /text\/css/);
-    assert.match(await css.text(), /atlas-node/);
+    assert.match(await css.text(), /fast-topology-canvas/);
 
     const sourceMap = await fetch(`http://127.0.0.1:${address.port}/studio/assets/app.js.map`);
     assert.equal(sourceMap.status, 200);
@@ -309,6 +309,100 @@ test('Atlas Studio Story API normalizes endpoint payloads over HTTP', async () =
     const current = await getResponse.json();
     assert.equal(current.story.activeStepId, 'intro');
     assert.equal(current.meta.apiVersion, 1);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('Atlas Studio exposes session database health as an API endpoint', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-database-health-test-'));
+  const session = await createSession(
+    { client: 'CREATE SOMETHING Test', workflow: 'Agent-assisted Atlas onboarding' },
+    cwd
+  );
+  const server = await startStudioServer({
+    host: '127.0.0.1',
+    port: 0,
+    sessionId: session.id,
+    cwd
+  });
+  const address = server.address();
+  assert.equal(typeof address, 'object');
+
+  try {
+    const storyResponse = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/story`,
+      {
+        body: JSON.stringify({
+          steps: [
+            {
+              id: 'topology-diagnostics',
+              title: 'Business health signals',
+              summary: 'Automation has 237 record(s); Database has 21 record(s).',
+              proof: '0 hard gaps / 6 review signals'
+            },
+            {
+              id: 'substrate-performance',
+              title: 'Substrate speed contract',
+              summary: 'Record navigation, Direct record URLs, Agent read path, Proof refresh keep the operator path close to obsidian_like_operator_speed.',
+              proof: '4 budgets / 5 fast paths'
+            },
+            {
+              id: 'organization-review',
+              title: 'Organization review',
+              summary: 'Atlas is showing value for CREATE SOMETHING, especially automation/database imbalance and worker/MCP concentration.',
+              proof: '5 findings / 4 recommended moves'
+            }
+          ],
+          callouts: [
+            {
+              id: 'diagnostic_callout_1',
+              node_id: 'data_workflow',
+              severity: 'decision',
+              text: 'Automation and Database balance: review signal.'
+            }
+          ]
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST'
+      }
+    );
+    assert.equal(storyResponse.status, 200);
+
+    await addObservation(
+      session.id,
+      {
+        source: 'system',
+        text: 'Substrate performance contract: obsidian_like_operator_speed, 439 topology records, 488 API/MCP/agent resources, 4 budgets, and 5 fast paths.'
+      },
+      cwd
+    );
+    await addObservation(
+      session.id,
+      {
+        source: 'system',
+        text: 'Organization review: valuable_with_review_signals, 0 hard gaps, 6 review signals, 5 findings, and 4 recommended moves.'
+      },
+      cwd
+    );
+
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/database-health`
+    );
+    assert.equal(response.status, 200);
+    const health = await response.json();
+
+    assert.equal(health.sessionId, session.id);
+    assert.equal(health.topology.title, 'Business health signals');
+    assert.equal(health.topology.proof, '0 hard gaps / 6 review signals');
+    assert.equal(health.topology.signals.length, 1);
+    assert.equal(health.topology.signals[0].nodeLabel, 'Agent-assisted Atlas onboarding');
+    assert.equal(health.performance.title, 'Substrate speed contract');
+    assert.equal(health.performance.proof, '4 budgets / 5 fast paths');
+    assert.match(health.performance.observation, /obsidian_like_operator_speed/);
+    assert.equal(health.organization.title, 'Organization review');
+    assert.equal(health.organization.proof, '5 findings / 4 recommended moves');
+    assert.match(health.organization.observation, /valuable_with_review_signals/);
   } finally {
     await closeServer(server);
   }

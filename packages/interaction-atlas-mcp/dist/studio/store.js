@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { defaultLabelForKind } from './atlas.js';
+import { buildAtlasDatabaseHealth } from './database-health.js';
 function now() {
     return new Date().toISOString();
 }
@@ -256,6 +257,9 @@ export async function listSessions(cwd = process.cwd()) {
     const files = (await readdir(dir)).filter((file) => file.endsWith('.json'));
     const sessions = await Promise.all(files.map(async (file) => JSON.parse(await readFile(path.join(dir, file), 'utf8'))));
     return sessions.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+export async function readSessionDatabaseHealth(sessionId, cwd = process.cwd()) {
+    return buildAtlasDatabaseHealth(await readSession(sessionId, cwd));
 }
 function nextNodePosition(session, kind) {
     const lanes = {
