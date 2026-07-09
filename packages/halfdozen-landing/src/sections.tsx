@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { assetDefaults, clients, keepUpItems, navItems, services, testimonials } from './content';
 
 export type HalfDozenAssetProps = Partial<typeof assetDefaults>;
@@ -44,8 +45,59 @@ export function HeroSection({
   eyebrow = 'A system is an interconnected set of elements that is coherently organized in a way that achieves something.',
   description = 'Half Dozen is a strategic solutions partner helping teams in live events build better systems and do more with less.'
 }: HeroProps) {
+  const sectionRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let frame = 0;
+
+    const setProgress = () => {
+      frame = 0;
+
+      if (reduceMotion.matches) {
+        section.style.setProperty('--hd-hero-card-zoom', '1');
+        section.style.setProperty('--hd-hero-card-y', '0px');
+        section.style.setProperty('--hd-hero-photo-zoom', '1');
+        section.style.setProperty('--hd-hero-photo-y', '0px');
+        section.style.setProperty('--hd-hero-title-y', '0px');
+        return;
+      }
+
+      const rect = section.getBoundingClientRect();
+      const travel = Math.max(window.innerHeight * 0.95, 680);
+      const progress = Math.min(1, Math.max(0, -rect.top / travel));
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      section.style.setProperty('--hd-hero-card-zoom', (1 + eased * 0.16).toFixed(4));
+      section.style.setProperty('--hd-hero-card-y', `${Math.round(eased * 28)}px`);
+      section.style.setProperty('--hd-hero-photo-zoom', (1 + eased * 0.28).toFixed(4));
+      section.style.setProperty('--hd-hero-photo-y', `${Math.round(eased * -86)}px`);
+      section.style.setProperty('--hd-hero-title-y', `${Math.round(eased * -42)}px`);
+    };
+
+    const schedule = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(setProgress);
+    };
+
+    setProgress();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    reduceMotion.addEventListener('change', schedule);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      reduceMotion.removeEventListener('change', schedule);
+    };
+  }, []);
+
   return (
-    <section className="hd-section hd-hero" id="work">
+    <section className="hd-section hd-hero" id="work" ref={sectionRef}>
       <HalfDozenHeader />
       <div className="hd-hero__headline">
         <h1>

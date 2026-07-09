@@ -179,6 +179,11 @@ button:focus-visible {
   isolation: isolate;
   min-height: clamp(1540px, 110vw, 1710px);
   padding-bottom: 118px;
+  --hd-hero-card-zoom: 1;
+  --hd-hero-card-y: 0px;
+  --hd-hero-photo-zoom: 1;
+  --hd-hero-photo-y: 0px;
+  --hd-hero-title-y: 0px;
 }
 
 .hd-hero__headline {
@@ -200,6 +205,9 @@ button:focus-visible {
   line-height: 0.88;
   text-align: center;
   text-transform: uppercase;
+  transform: translate3d(0, var(--hd-hero-title-y), 0);
+  transition: transform 80ms linear;
+  will-change: transform;
 }
 
 .hd-hero h1 span {
@@ -223,8 +231,10 @@ button:focus-visible {
   display: block;
   width: min(515px, 42vw);
   pointer-events: none;
-  transform: translate3d(0, 0, 0) scale(1);
+  transform: translate3d(0, var(--hd-hero-card-y), 0) scale(var(--hd-hero-card-zoom));
+  transform-origin: center center;
   opacity: 1;
+  transition: transform 80ms linear;
   will-change: transform, opacity;
 }
 
@@ -317,8 +327,10 @@ button:focus-visible {
   display: block;
   width: min(630px, 47vw);
   margin: 94px auto 0;
-  transform: translate3d(0, 0, 0) scale(1);
+  transform: translate3d(0, var(--hd-hero-photo-y), 0) scale(var(--hd-hero-photo-zoom));
+  transform-origin: center 42%;
   opacity: 1;
+  transition: transform 80ms linear;
   will-change: transform, opacity;
 }
 
