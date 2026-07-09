@@ -49,14 +49,14 @@ Three border levels for separation and emphasis.
 | `--color-border-emphasis` | `rgba(255,255,255,0.2)` | Hover states |
 | `--color-border-strong` | `rgba(255,255,255,0.3)` | Active states |
 
-## Clear Communication Palette
+## Performance Lab Readability Palette
 
-The Ona-derived CREATE SOMETHING communication layer uses a light operational palette. Use these
-tokens for buyer-facing and operator-facing surfaces that need immediate comprehension.
+The CREATE SOMETHING Performance Lab communication layer uses a light operational palette. Use
+these tokens for buyer-facing and operator-facing surfaces that need immediate comprehension.
 
-This is now a stable Canon layer, not a one-off property treatment. Ona sets the clarity bar;
-CREATE SOMETHING owns the implementation language. Use the palette when the interface must show
-workflow maps, trust boundaries, approval states, receipts, validation gates, or handoff evidence.
+This is now a stable Canon layer, not a one-off property treatment. Use the palette when the
+interface must show workflow maps, trust boundaries, approval states, receipts, validation gates,
+or handoff evidence.
 
 | Token | Value | Use |
 |-------|-------|-----|

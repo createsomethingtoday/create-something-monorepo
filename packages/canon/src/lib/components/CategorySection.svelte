@@ -106,7 +106,7 @@
     }
   }
 
-  /* Card - clear Ona surface */
+  /* Card - Performance Lab clear surface */
   .category-card {
     background: var(--color-clear-panel, #ffffff);
     border: 1px solid var(--color-clear-border, #e1e1e1);

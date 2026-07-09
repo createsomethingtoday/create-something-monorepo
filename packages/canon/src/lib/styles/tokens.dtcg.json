@@ -238,16 +238,16 @@
   },
   "font": {
     "sans": {
-      "$value": "'ABC Diatype', 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif",
+      "$value": "Arial, \"Helvetica Neue\", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
       "$type": "string",
       "$description": "Font families"
     },
     "mono": {
-      "$value": "'ABC Diatype Mono', \"JetBrains Mono\", \"Fira Code\", \"SF Mono\", Consolas, monospace",
+      "$value": "ui-monospace, \"SFMono-Regular\", \"SF Mono\", Menlo, Monaco, Consolas, \"Liberation Mono\", monospace",
       "$type": "string"
     },
     "serif": {
-      "$value": "'Martina Plantijn', Georgia, \"Times New Roman\", serif",
+      "$value": "Georgia, \"Times New Roman\", serif",
       "$type": "string"
     },
     "light": {

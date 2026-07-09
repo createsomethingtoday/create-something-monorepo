@@ -3,17 +3,16 @@ category: "Canon"
 section: "Guidelines"
 title: "Images"
 description: "CREATE SOMETHING image guidelines for marketing, articles, social previews, decks, and client proof artifacts."
-lead: "Images should make the operating system visible. Use Ona.com as the communication foundation, then translate that clarity into CREATE SOMETHING maps, receipts, gates, and proof."
+lead: "Images should make the operating system visible. Use Performance Lab as the communication foundation, then translate that discipline into CREATE SOMETHING maps, receipts, gates, and proof."
 publishedAt: "2026-06-22"
 published: true
 ---
 
 ## Decision
 
-Use Ona.com as the design and communication foundation for CREATE SOMETHING images.
-The reference is communication quality, not identity: calm hierarchy, plain claims,
-compact proof, governed execution, visible customer evidence, and restrained action
-states.
+Use Performance Lab as the design and communication foundation for CREATE SOMETHING images:
+calm hierarchy, decisive contrast, plain claims, compact proof, governed execution, visible
+customer evidence, readiness states, and restrained action states.
 
 CREATE SOMETHING owns the implementation language. Our images should show how AI
 work gets mapped, integrated, governed, validated, shipped, and handed off.
@@ -82,9 +81,9 @@ Create a CREATE SOMETHING <image family> for <surface>.
 Purpose: <what the image must prove>.
 Audience: <operator, buyer, builder, reviewer, client>.
 Show: <workflow objects, states, proof artifacts, owners, gates>.
-Style: Canon Clear image language. Ona.com is the communication foundation:
-plain claim, calm hierarchy, compact proof, governed execution, visible
-evidence, and restrained action states. Translate that into CREATE SOMETHING
+Style: CREATE SOMETHING Performance Lab image language:
+plain claim, decisive hierarchy, compact proof, governed execution, visible
+evidence, readiness states, and restrained action states. Translate that into CREATE SOMETHING
 artifacts: porcelain `#f9f9f9`, white panels, onyx `#0a0e19`, quiet grey
 `#636363`, thin `#e1e1e1` borders, 4-8px radii, compact receipts, state rows,
 decision panels, artifact cards, policy gates, owners, proof rails, and a small
@@ -150,10 +149,9 @@ node scripts/marketing-image-assets-check.mjs
 
 ## Boundary
 
-Do not copy Ona identity, campaign language, page layouts, or category framing.
-Use Ona.com as the standard for how supervised autonomy should communicate. Use
-CREATE SOMETHING to show how that autonomy gets connected to real systems, policy,
-evidence, and delivery.
+Do not copy third-party identity, campaign language, page layouts, or category framing.
+Use CREATE SOMETHING Performance Lab as the standard for how governed autonomy should
+communicate through real systems, policy, evidence, and delivery.
 
 Do not route Canon image generation through Google Gemini, Omni, or Vertex. This
 is an intentional stack-limit decision, not a temporary account-availability

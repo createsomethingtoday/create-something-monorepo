@@ -1,8 +1,8 @@
 # Clear Components
 
-The `Clear*` components are Canon's owned implementation of Ona-derived clear
-communication. Ona is the communication reference; these components are the
-CREATE SOMETHING surface for mapped, governed, proof-bearing work.
+The `Clear*` components are Canon's owned implementation of Performance Lab
+clear communication. Performance Lab is the CREATE SOMETHING surface for
+mapped, governed, proof-bearing work.
 
 The public Canon docs page for this layer is
 `packages/ltd/src/lib/content/canon/components/clear.md`.
@@ -55,5 +55,5 @@ Avoid generic AI language when a concrete operational noun exists.
 ## Boundary
 
 Clear components should make CREATE SOMETHING feel calm and inevitable while
-proving a different thing than Ona: the work has been mapped, integrated,
-governed, validated, and handed off with evidence.
+proving that the work has been mapped, integrated, governed, validated, and
+handed off with evidence.

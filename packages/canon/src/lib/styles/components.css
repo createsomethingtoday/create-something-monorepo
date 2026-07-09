@@ -875,41 +875,43 @@
   }
 
   /* ==========================================================================
-     Ona System Surface
+     Performance Lab System Surface
      Reusable primitives for system maps, simulation labs, operating consoles,
      and evidence-first decision surfaces.
+     The `performance-system-*` selector namespace is retained for compatibility; new
+     guidance treats these as Performance Lab system primitives.
      ========================================================================== */
-  .ona-system-shell {
-    --ona-system-ink: var(--color-clear-onyx);
-    --ona-system-muted: var(--color-clear-grey);
-    --ona-system-line: var(--color-clear-border);
-    --ona-system-line-strong: var(--color-clear-border-strong);
-    --ona-system-paper: var(--color-clear-porcelain);
-    --ona-system-surface: var(--color-clear-panel);
-    --ona-system-blue: var(--color-clear-ocean);
-    --ona-system-green: var(--color-clear-moss);
-    --ona-system-soft-blue: var(--color-clear-pastel-blue);
-    --ona-system-red: var(--color-clear-stop);
-    background: var(--ona-system-paper);
-    color: var(--ona-system-ink);
+  .performance-system-shell {
+    --performance-system-ink: var(--color-clear-onyx);
+    --performance-system-muted: var(--color-clear-grey);
+    --performance-system-line: var(--color-clear-border);
+    --performance-system-line-strong: var(--color-clear-border-strong);
+    --performance-system-paper: var(--color-clear-porcelain);
+    --performance-system-surface: var(--color-clear-panel);
+    --performance-system-blue: var(--color-clear-ocean);
+    --performance-system-green: var(--color-clear-moss);
+    --performance-system-soft-blue: var(--color-clear-pastel-blue);
+    --performance-system-red: var(--color-clear-stop);
+    background: var(--performance-system-paper);
+    color: var(--performance-system-ink);
     font-family: var(--font-sans);
     letter-spacing: 0;
     text-rendering: geometricPrecision;
   }
 
-  .ona-system-container {
+  .performance-system-container {
     width: min(var(--content-width-clear), calc(100vw - 32px));
     margin-inline: auto;
   }
 
-  .ona-system-panel {
-    border: 1px solid var(--ona-system-line);
+  .performance-system-panel {
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-md);
-    background: color-mix(in srgb, var(--ona-system-surface) 90%, transparent);
+    background: color-mix(in srgb, var(--performance-system-surface) 90%, transparent);
     box-shadow: var(--shadow-clear-restraint);
   }
 
-  .ona-system-hero {
+  .performance-system-hero {
     display: grid;
     grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
     gap: 56px;
@@ -917,17 +919,17 @@
     padding: 92px 0 44px;
   }
 
-  .ona-system-copy {
+  .performance-system-copy {
     display: grid;
     gap: 22px;
     align-content: center;
   }
 
-  .ona-system-shell :where(h1, h2, h3, p) {
+  .performance-system-shell :where(h1, h2, h3, p) {
     margin: 0;
   }
 
-  .ona-system-shell h1 {
+  .performance-system-shell h1 {
     max-width: 12ch;
     font-size: clamp(3.2rem, 5.4vw, 5.2rem);
     line-height: 1;
@@ -936,103 +938,103 @@
     text-wrap: balance;
   }
 
-  .ona-system-eyebrow,
-  .ona-system-kicker {
+  .performance-system-eyebrow,
+  .performance-system-kicker {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.76rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-lede {
+  .performance-system-lede {
     max-width: 660px;
     color: #34373d;
     font-size: clamp(1rem, 1.25vw, 1.14rem);
     line-height: 1.55;
   }
 
-  .ona-system-actions,
-  .ona-system-strip,
-  .ona-system-kicker,
-  .ona-system-map-badge {
+  .performance-system-actions,
+  .performance-system-strip,
+  .performance-system-kicker,
+  .performance-system-map-badge {
     display: flex;
     align-items: center;
   }
 
-  .ona-system-actions {
+  .performance-system-actions {
     gap: 10px;
     flex-wrap: wrap;
   }
 
-  .ona-system-action,
-  .ona-system-strip a {
+  .performance-system-action,
+  .performance-system-strip a {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
     padding: 0 18px;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font-size: 0.84rem;
     font-weight: 700;
     text-decoration: none;
   }
 
-  .ona-system-action--primary {
-    background: var(--ona-system-ink);
+  .performance-system-action--primary {
+    background: var(--performance-system-ink);
     color: white;
   }
 
-  .ona-system-action--secondary {
+  .performance-system-action--secondary {
     background: transparent;
   }
 
-  .ona-system-league-panel {
+  .performance-system-league-panel {
     padding: 16px;
     display: grid;
     gap: 14px;
     contain: layout paint style;
   }
 
-  .ona-system-panel-header,
-  .ona-system-map-header {
+  .performance-system-panel-header,
+  .performance-system-map-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
   }
 
-  .ona-system-panel-header {
-    border-bottom: 1px solid var(--ona-system-line);
+  .performance-system-panel-header {
+    border-bottom: 1px solid var(--performance-system-line);
     padding-bottom: 12px;
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-panel-header span {
-    color: var(--ona-system-muted);
+  .performance-system-panel-header span {
+    color: var(--performance-system-muted);
   }
 
-  .ona-system-court,
-  .ona-system-map-stage {
+  .performance-system-court,
+  .performance-system-map-stage {
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-md);
   }
 
-  .ona-system-court {
+  .performance-system-court {
     min-height: 336px;
     background:
       linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 44px 44px,
-      color-mix(in srgb, var(--ona-system-soft-blue) 14%, white);
+      color-mix(in srgb, var(--performance-system-soft-blue) 14%, white);
   }
 
-  .ona-system-court::before {
+  .performance-system-court::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -1041,29 +1043,29 @@
       linear-gradient(0deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 100% 28px;
   }
 
-  .ona-system-court-lines {
+  .performance-system-court-lines {
     position: absolute;
     inset: 22px;
     border: 2px solid rgba(10, 14, 25, 0.12);
     border-radius: var(--radius-clear-sm);
   }
 
-  .ona-system-court-half,
-  .ona-system-court-key,
-  .ona-system-court-arc,
-  .ona-system-court-dot {
+  .performance-system-court-half,
+  .performance-system-court-key,
+  .performance-system-court-arc,
+  .performance-system-court-dot {
     position: absolute;
     border-color: rgba(10, 14, 25, 0.12);
   }
 
-  .ona-system-court-half {
+  .performance-system-court-half {
     left: 50%;
     top: 0;
     bottom: 0;
     border-left: 2px solid rgba(10, 14, 25, 0.12);
   }
 
-  .ona-system-court-key {
+  .performance-system-court-key {
     left: 0;
     top: 31%;
     width: 31%;
@@ -1072,7 +1074,7 @@
     border-left: 0;
   }
 
-  .ona-system-court-arc {
+  .performance-system-court-arc {
     left: -17%;
     top: 23%;
     width: 43%;
@@ -1082,7 +1084,7 @@
     border-radius: 0 999px 999px 0;
   }
 
-  .ona-system-court-dot {
+  .performance-system-court-dot {
     left: calc(50% - 6px);
     top: calc(50% - 6px);
     width: 12px;
@@ -1092,7 +1094,7 @@
     border: 0;
   }
 
-  .ona-system-court-readout {
+  .performance-system-court-readout {
     position: absolute;
     left: 18px;
     right: 18px;
@@ -1106,12 +1108,12 @@
     backdrop-filter: blur(10px);
   }
 
-  .ona-system-court-readout span,
-  .ona-system-court-readout small,
-  .ona-system-metric span,
-  .ona-system-metric small,
-  .ona-system-report span,
-  .ona-system-node span {
+  .performance-system-court-readout span,
+  .performance-system-court-readout small,
+  .performance-system-metric span,
+  .performance-system-metric small,
+  .performance-system-report span,
+  .performance-system-node span {
     color: inherit;
     opacity: 0.74;
     font-size: 0.7rem;
@@ -1120,69 +1122,69 @@
     letter-spacing: 0;
   }
 
-  .ona-system-court-readout strong {
+  .performance-system-court-readout strong {
     font-size: 1.05rem;
     line-height: 1.2;
   }
 
-  .ona-system-metric-grid {
+  .performance-system-metric-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-metric {
+  .performance-system-metric {
     min-height: 96px;
     display: grid;
     align-content: space-between;
     gap: 8px;
-    border: 1px solid var(--ona-system-line);
-    border-top: 3px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-line);
+    border-top: 3px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
     padding: 12px;
-    background: var(--ona-system-surface);
+    background: var(--performance-system-surface);
     contain: layout paint;
   }
 
-  .ona-system-metric[data-tone='green'] {
-    border-top-color: var(--ona-system-green);
+  .performance-system-metric[data-tone='green'] {
+    border-top-color: var(--performance-system-green);
   }
 
-  .ona-system-metric[data-tone='blue'] {
-    border-top-color: var(--ona-system-blue);
+  .performance-system-metric[data-tone='blue'] {
+    border-top-color: var(--performance-system-blue);
   }
 
-  .ona-system-metric[data-tone='neutral'] {
-    border-top-color: var(--ona-system-line-strong);
+  .performance-system-metric[data-tone='neutral'] {
+    border-top-color: var(--performance-system-line-strong);
   }
 
-  .ona-system-metric[data-tone='red'] {
-    border-top-color: var(--ona-system-red);
+  .performance-system-metric[data-tone='red'] {
+    border-top-color: var(--performance-system-red);
   }
 
-  .ona-system-metric strong {
+  .performance-system-metric strong {
     font-size: clamp(1.2rem, 1.65vw, 1.62rem);
     line-height: 1;
   }
 
-  .ona-system-lab-grid {
+  .performance-system-lab-grid {
     display: grid;
     grid-template-columns: 310px minmax(0, 1fr);
     gap: 18px;
     padding: 30px 0;
   }
 
-  .ona-system-policy-rail {
+  .performance-system-policy-rail {
     padding: 18px;
     align-self: stretch;
   }
 
-  .ona-system-kicker {
+  .performance-system-kicker {
     gap: 8px;
   }
 
-  .ona-system-policy-rail h2,
-  .ona-system-map-header h2 {
+  .performance-system-policy-rail h2,
+  .performance-system-map-header h2 {
     margin-top: 14px;
     font-size: clamp(1.35rem, 2vw, 1.9rem);
     line-height: 1.08;
@@ -1190,7 +1192,7 @@
     letter-spacing: 0;
   }
 
-  .ona-system-report-intro h2 {
+  .performance-system-report-intro h2 {
     margin-top: 14px;
     font-size: clamp(2rem, 3.2vw, 3.15rem);
     line-height: 1.05;
@@ -1198,82 +1200,82 @@
     letter-spacing: 0;
   }
 
-  .ona-system-policy-list {
+  .performance-system-policy-list {
     display: grid;
     gap: 10px;
     margin-top: 22px;
   }
 
-  .ona-system-mode-control,
-  .ona-system-option-row {
+  .performance-system-mode-control,
+  .performance-system-option-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }
 
-  .ona-system-mode-control {
+  .performance-system-mode-control {
     margin-top: 18px;
   }
 
-  .ona-system-mode-note,
-  .ona-system-objective-brief,
-  .ona-system-environment-note,
-  .ona-system-steering-handoff {
+  .performance-system-mode-note,
+  .performance-system-objective-brief,
+  .performance-system-environment-note,
+  .performance-system-steering-handoff {
     display: grid;
     gap: 6px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
     margin-top: 8px;
     padding: 10px 12px;
-    background: color-mix(in srgb, white 86%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 86%, var(--performance-system-surface));
   }
 
-  .ona-system-environment-note {
+  .performance-system-environment-note {
     margin-top: 0;
-    border-left-color: var(--ona-system-blue);
+    border-left-color: var(--performance-system-blue);
   }
 
-  .ona-system-steering-handoff {
+  .performance-system-steering-handoff {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: baseline;
-    border-left-color: var(--ona-system-green);
+    border-left-color: var(--performance-system-green);
     margin-top: 12px;
   }
 
-  .ona-system-steering-handoff p {
+  .performance-system-steering-handoff p {
     grid-column: 1 / -1;
   }
 
-  .ona-system-objective-brief {
-    --ona-system-objective-line: var(--ona-system-green);
-    border-left-color: var(--ona-system-objective-line);
+  .performance-system-objective-brief {
+    --performance-system-objective-line: var(--performance-system-green);
+    border-left-color: var(--performance-system-objective-line);
     margin-top: 10px;
     background: white;
   }
 
-  .ona-system-objective-brief[data-status='close'] {
-    --ona-system-objective-line: var(--ona-system-ink);
+  .performance-system-objective-brief[data-status='close'] {
+    --performance-system-objective-line: var(--performance-system-ink);
   }
 
-  .ona-system-objective-brief[data-status='missed'] {
-    --ona-system-objective-line: var(--ona-system-red);
+  .performance-system-objective-brief[data-status='missed'] {
+    --performance-system-objective-line: var(--performance-system-red);
   }
 
-  .ona-system-objective-brief[data-status='versus'] {
-    --ona-system-objective-line: var(--ona-system-blue);
+  .performance-system-objective-brief[data-status='versus'] {
+    --performance-system-objective-line: var(--performance-system-blue);
   }
 
-  .ona-system-mode-note strong,
-  .ona-system-objective-brief strong,
-  .ona-system-environment-note strong,
-  .ona-system-steering-handoff strong {
+  .performance-system-mode-note strong,
+  .performance-system-objective-brief strong,
+  .performance-system-environment-note strong,
+  .performance-system-steering-handoff strong {
     font-size: 0.82rem;
     line-height: 1.2;
   }
 
-  .ona-system-steering-handoff > span {
-    color: var(--ona-system-muted);
+  .performance-system-steering-handoff > span {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 800;
     line-height: 1;
@@ -1281,51 +1283,51 @@
     letter-spacing: 0;
   }
 
-  .ona-system-mode-note p,
-  .ona-system-objective-brief p,
-  .ona-system-environment-note p,
-  .ona-system-steering-handoff p {
-    color: var(--ona-system-muted);
+  .performance-system-mode-note p,
+  .performance-system-objective-brief p,
+  .performance-system-environment-note p,
+  .performance-system-steering-handoff p {
+    color: var(--performance-system-muted);
     font-size: 0.76rem;
     line-height: 1.42;
   }
 
-  .ona-system-versus-control {
+  .performance-system-versus-control {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
     margin-top: 8px;
   }
 
-  .ona-system-versus-control button {
+  .performance-system-versus-control button {
     min-height: 46px;
     display: grid;
     gap: 4px;
     align-content: center;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 8px 10px;
     background: #fff;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     text-align: left;
     cursor: pointer;
   }
 
-  .ona-system-versus-control button.active {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-versus-control button.active {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: #fff;
   }
 
-  .ona-system-versus-control span {
+  .performance-system-versus-control span {
     font-size: 0.78rem;
     font-weight: 800;
     line-height: 1.05;
   }
 
-  .ona-system-versus-control small {
-    color: var(--ona-system-muted);
+  .performance-system-versus-control small {
+    color: var(--performance-system-muted);
     font-size: 0.64rem;
     font-weight: 700;
     line-height: 1.1;
@@ -1333,37 +1335,37 @@
     letter-spacing: 0;
   }
 
-  .ona-system-versus-control button.active small {
+  .performance-system-versus-control button.active small {
     color: rgba(255, 255, 255, 0.7);
   }
 
-  .ona-system-game-turn {
+  .performance-system-game-turn {
     display: grid;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
     margin-top: 10px;
     padding: 12px;
     background: white;
   }
 
-  .ona-system-game-turn-header {
+  .performance-system-game-turn-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
     align-items: stretch;
   }
 
-  .ona-system-game-turn-header > div {
+  .performance-system-game-turn-header > div {
     display: grid;
     gap: 5px;
     align-content: center;
   }
 
-  .ona-system-game-turn-header span,
-  .ona-system-game-turn-lanes span {
-    color: var(--ona-system-muted);
+  .performance-system-game-turn-header span,
+  .performance-system-game-turn-lanes span {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -1371,23 +1373,23 @@
     letter-spacing: 0;
   }
 
-  .ona-system-game-turn-header strong {
-    color: var(--ona-system-ink);
+  .performance-system-game-turn-header strong {
+    color: var(--performance-system-ink);
     font-size: 0.98rem;
     line-height: 1.1;
   }
 
-  .ona-system-game-turn-header button {
+  .performance-system-game-turn-header button {
     min-width: 126px;
     min-height: 50px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 7px;
-    border: 1px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
     padding: 0 12px;
-    background: var(--ona-system-ink);
+    background: var(--performance-system-ink);
     color: #fff;
     font: inherit;
     font-size: 0.72rem;
@@ -1395,76 +1397,76 @@
     cursor: pointer;
   }
 
-  .ona-system-game-turn-header button span {
+  .performance-system-game-turn-header button span {
     color: inherit;
     font-size: inherit;
   }
 
-  .ona-system-game-turn-header button.active {
-    background: var(--ona-system-blue);
-    border-color: var(--ona-system-blue);
+  .performance-system-game-turn-header button.active {
+    background: var(--performance-system-blue);
+    border-color: var(--performance-system-blue);
   }
 
-  .ona-system-game-turn-lanes {
+  .performance-system-game-turn-lanes {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-game-turn-lanes article {
+  .performance-system-game-turn-lanes article {
     display: grid;
     gap: 5px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding-top: 8px;
   }
 
-  .ona-system-game-turn-lanes article:first-child {
+  .performance-system-game-turn-lanes article:first-child {
     border-top: 0;
     padding-top: 0;
   }
 
-  .ona-system-game-turn-lanes strong {
-    color: var(--ona-system-ink);
+  .performance-system-game-turn-lanes strong {
+    color: var(--performance-system-ink);
     font-size: 0.84rem;
     line-height: 1.14;
   }
 
-  .ona-system-game-turn-lanes p {
+  .performance-system-game-turn-lanes p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.72rem;
     font-weight: 700;
     line-height: 1.32;
   }
 
-  .ona-system-first-run-flow {
+  .performance-system-first-run-flow {
     display: grid;
     gap: 6px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding-top: 8px;
   }
 
-  .ona-system-first-run-flow article {
+  .performance-system-first-run-flow article {
     display: grid;
     gap: 5px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-left: 3px solid transparent;
     border-radius: var(--radius-clear-sm);
     padding: 8px 9px;
-    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 90%, var(--performance-system-surface));
   }
 
-  .ona-system-first-run-flow article[data-status='current'] {
-    border-color: var(--ona-system-ink);
-    border-left-color: var(--ona-system-ink);
+  .performance-system-first-run-flow article[data-status='current'] {
+    border-color: var(--performance-system-ink);
+    border-left-color: var(--performance-system-ink);
     background: white;
   }
 
-  .ona-system-first-run-flow article[data-status='done'] {
-    border-left-color: var(--ona-system-green);
+  .performance-system-first-run-flow article[data-status='done'] {
+    border-left-color: var(--performance-system-green);
   }
 
-  .ona-system-first-run-flow span {
-    color: var(--ona-system-muted);
+  .performance-system-first-run-flow span {
+    color: var(--performance-system-muted);
     font-size: 0.64rem;
     font-weight: 800;
     line-height: 1;
@@ -1472,119 +1474,119 @@
     letter-spacing: 0;
   }
 
-  .ona-system-first-run-flow strong {
-    color: var(--ona-system-ink);
+  .performance-system-first-run-flow strong {
+    color: var(--performance-system-ink);
     font-size: 0.8rem;
     line-height: 1.14;
     overflow-wrap: anywhere;
   }
 
-  .ona-system-first-run-flow p {
+  .performance-system-first-run-flow p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.7rem;
     font-weight: 700;
     line-height: 1.3;
   }
 
-  .ona-system-objective-brief > div:first-child,
-  .ona-system-objective-brief-list article {
+  .performance-system-objective-brief > div:first-child,
+  .performance-system-objective-brief-list article {
     display: grid;
     gap: 5px;
   }
 
-  .ona-system-objective-brief span,
-  .ona-system-objective-brief small {
-    color: var(--ona-system-muted);
+  .performance-system-objective-brief span,
+  .performance-system-objective-brief small {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-objective-brief-list article p {
+  .performance-system-objective-brief-list article p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.72rem;
     line-height: 1.35;
   }
 
-  .ona-system-objective-brief-list {
+  .performance-system-objective-brief-list {
     display: grid;
     gap: 6px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     margin-top: 2px;
     padding-top: 8px;
   }
 
-  .ona-system-objective-brief-list article {
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-green);
+  .performance-system-objective-brief-list article {
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-green);
     border-radius: var(--radius-clear-sm);
     padding: 8px 9px;
-    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
 
-  .ona-system-objective-brief-list article[data-status='close'] {
-    border-left-color: var(--ona-system-ink);
+  .performance-system-objective-brief-list article[data-status='close'] {
+    border-left-color: var(--performance-system-ink);
   }
 
-  .ona-system-objective-brief-list article[data-status='missed'] {
-    border-left-color: var(--ona-system-red);
+  .performance-system-objective-brief-list article[data-status='missed'] {
+    border-left-color: var(--performance-system-red);
   }
 
-  .ona-system-objective-brief-list article strong {
+  .performance-system-objective-brief-list article strong {
     font-size: 0.94rem;
   }
 
-  .ona-system-competition-setup {
+  .performance-system-competition-setup {
     display: grid;
     gap: 8px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-blue);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-blue);
     border-radius: var(--radius-clear-sm);
     margin-top: 10px;
     padding: 10px 12px;
     background: white;
   }
 
-  .ona-system-competition-setup[data-state='custom'] {
-    border-left-color: var(--ona-system-green);
+  .performance-system-competition-setup[data-state='custom'] {
+    border-left-color: var(--performance-system-green);
   }
 
-  .ona-system-competition-setup > strong,
-  .ona-system-competition-proof strong {
-    color: var(--ona-system-ink);
+  .performance-system-competition-setup > strong,
+  .performance-system-competition-proof strong {
+    color: var(--performance-system-ink);
     font-size: 0.88rem;
     line-height: 1.15;
   }
 
-  .ona-system-competition-setup > p,
-  .ona-system-competition-proof p {
-    color: var(--ona-system-muted);
+  .performance-system-competition-setup > p,
+  .performance-system-competition-proof p {
+    color: var(--performance-system-muted);
     font-size: 0.76rem;
     line-height: 1.42;
   }
 
-  .ona-system-competition-roster {
+  .performance-system-competition-roster {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-competition-roster button,
-  .ona-system-competition-proof {
+  .performance-system-competition-roster button,
+  .performance-system-competition-proof {
     display: grid;
     gap: 6px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 9px 10px;
-    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
-    color: var(--ona-system-ink);
+    background: color-mix(in srgb, white 88%, var(--performance-system-surface));
+    color: var(--performance-system-ink);
     font: inherit;
     text-align: left;
   }
 
-  .ona-system-competition-roster button {
+  .performance-system-competition-roster button {
     cursor: pointer;
     transition:
       border-color 120ms linear,
@@ -1592,49 +1594,49 @@
       transform 120ms cubic-bezier(0.19, 1, 0.22, 1);
   }
 
-  .ona-system-competition-roster button:hover {
+  .performance-system-competition-roster button:hover {
     opacity: 0.86;
   }
 
-  .ona-system-competition-roster button:active {
+  .performance-system-competition-roster button:active {
     opacity: 1;
     transform: scale(0.99);
   }
 
-  .ona-system-competition-roster button:focus-visible {
-    outline: 2px solid var(--ona-system-ink);
+  .performance-system-competition-roster button:focus-visible {
+    outline: 2px solid var(--performance-system-ink);
     outline-offset: 3px;
   }
 
-  .ona-system-competition-roster button.active {
-    border-color: var(--ona-system-ink);
+  .performance-system-competition-roster button.active {
+    border-color: var(--performance-system-ink);
   }
 
-  .ona-system-competition-roster button[data-readiness='ready'] {
-    border-left: 3px solid var(--ona-system-green);
+  .performance-system-competition-roster button[data-readiness='ready'] {
+    border-left: 3px solid var(--performance-system-green);
   }
 
-  .ona-system-competition-roster button[data-readiness='watch'] {
-    border-left: 3px solid var(--ona-system-blue);
+  .performance-system-competition-roster button[data-readiness='watch'] {
+    border-left: 3px solid var(--performance-system-blue);
   }
 
-  .ona-system-competition-roster button[data-readiness='break'] {
-    border-left: 3px solid var(--ona-system-red);
+  .performance-system-competition-roster button[data-readiness='break'] {
+    border-left: 3px solid var(--performance-system-red);
   }
 
-  .ona-system-competition-roster button > div:first-child,
-  .ona-system-competition-roster-meta,
-  .ona-system-competition-roster-gate {
+  .performance-system-competition-roster button > div:first-child,
+  .performance-system-competition-roster-meta,
+  .performance-system-competition-roster-gate {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px;
     align-items: baseline;
   }
 
-  .ona-system-competition-roster span,
-  .ona-system-competition-roster small,
-  .ona-system-competition-proof span {
-    color: var(--ona-system-muted);
+  .performance-system-competition-roster span,
+  .performance-system-competition-roster small,
+  .performance-system-competition-proof span {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 700;
     line-height: 1.12;
@@ -1643,64 +1645,64 @@
     overflow-wrap: anywhere;
   }
 
-  .ona-system-competition-roster strong {
+  .performance-system-competition-roster strong {
     font-size: 0.82rem;
     line-height: 1.15;
     overflow-wrap: anywhere;
   }
 
-  .ona-system-competition-roster p {
+  .performance-system-competition-roster p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.7rem;
     font-weight: 700;
     line-height: 1.28;
     overflow-wrap: anywhere;
   }
 
-  .ona-system-competition-roster-gate {
+  .performance-system-competition-roster-gate {
     align-items: start;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding-top: 7px;
   }
 
-  .ona-system-competition-roster-gate > div {
+  .performance-system-competition-roster-gate > div {
     display: grid;
     gap: 3px;
     min-width: 0;
   }
 
-  .ona-system-competition-roster-gate small {
+  .performance-system-competition-roster-gate small {
     font-weight: 600;
     line-height: 1.25;
     text-transform: none;
   }
 
-  .ona-system-competition-roster-meta strong {
+  .performance-system-competition-roster-meta strong {
     font-size: 0.92rem;
   }
 
-  .ona-system-competition-roster-gate strong {
+  .performance-system-competition-roster-gate strong {
     font-size: 0.72rem;
     line-height: 1.1;
     white-space: nowrap;
   }
 
-  .ona-system-field-setup-lanes {
+  .performance-system-field-setup-lanes {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
   }
 
-  .ona-system-field-setup-lanes article {
+  .performance-system-field-setup-lanes article {
     display: grid;
     gap: 4px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding-top: 8px;
   }
 
-  .ona-system-field-setup-lanes span {
-    color: var(--ona-system-muted);
+  .performance-system-field-setup-lanes span {
+    color: var(--performance-system-muted);
     font-size: 0.62rem;
     font-weight: 700;
     line-height: 1.1;
@@ -1708,182 +1710,182 @@
     letter-spacing: 0;
   }
 
-  .ona-system-field-setup-lanes strong {
-    color: var(--ona-system-ink);
+  .performance-system-field-setup-lanes strong {
+    color: var(--performance-system-ink);
     font-size: 0.78rem;
     line-height: 1.12;
     overflow-wrap: anywhere;
   }
 
-  .ona-system-field-setup-lanes p {
+  .performance-system-field-setup-lanes p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     line-height: 1.28;
     overflow-wrap: anywhere;
   }
 
-  .ona-system-competition-actions {
+  .performance-system-competition-actions {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 6px;
   }
 
-  .ona-system-competition-actions button {
+  .performance-system-competition-actions button {
     min-height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 7px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     background: white;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font: inherit;
     font-size: 0.72rem;
     font-weight: 700;
     cursor: pointer;
   }
 
-  .ona-system-competition-actions button:first-child {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-competition-actions button:first-child {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: white;
   }
 
-  .ona-system-run-summary {
+  .performance-system-run-summary {
     display: grid;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     margin-top: 14px;
     padding: 12px;
     background: white;
   }
 
-  .ona-system-run-summary > div:first-child {
+  .performance-system-run-summary > div:first-child {
     display: grid;
     gap: 5px;
   }
 
-  .ona-system-run-summary span,
-  .ona-system-run-summary small,
-  .ona-system-advanced summary span {
-    color: var(--ona-system-muted);
+  .performance-system-run-summary span,
+  .performance-system-run-summary small,
+  .performance-system-advanced summary span {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-run-summary strong {
-    color: var(--ona-system-ink);
+  .performance-system-run-summary strong {
+    color: var(--performance-system-ink);
     font-size: 0.95rem;
     line-height: 1.15;
   }
 
-  .ona-system-run-summary p {
-    color: var(--ona-system-muted);
+  .performance-system-run-summary p {
+    color: var(--performance-system-muted);
     font-size: 0.76rem;
     line-height: 1.42;
   }
 
-  .ona-system-run-lanes {
+  .performance-system-run-lanes {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-run-lanes article {
+  .performance-system-run-lanes article {
     display: grid;
     grid-template-columns: minmax(0, 0.72fr) auto;
     gap: 5px 10px;
     align-items: baseline;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding-top: 9px;
   }
 
-  .ona-system-run-lanes article:first-child {
+  .performance-system-run-lanes article:first-child {
     border-top: 0;
     padding-top: 0;
   }
 
-  .ona-system-run-lanes strong {
+  .performance-system-run-lanes strong {
     justify-self: end;
     font-size: 1rem;
   }
 
-  .ona-system-run-lanes small {
+  .performance-system-run-lanes small {
     grid-column: 1 / -1;
     line-height: 1.35;
     text-transform: none;
   }
 
-  .ona-system-option-row {
+  .performance-system-option-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .ona-system-option-row--wrap {
+  .performance-system-option-row--wrap {
     grid-template-columns: 1fr;
   }
 
-  .ona-system-control-group {
+  .performance-system-control-group {
     display: grid;
     gap: 8px;
     margin-top: 18px;
   }
 
-  .ona-system-control-group > span {
-    color: var(--ona-system-muted);
+  .performance-system-control-group > span {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-control-group select {
+  .performance-system-control-group select {
     width: 100%;
     min-height: 42px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 0 12px;
     background: white;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     font-size: 0.86rem;
     font-weight: 700;
   }
 
-  .ona-system-mode-control button,
-  .ona-system-option-row button {
+  .performance-system-mode-control button,
+  .performance-system-option-row button {
     min-height: 40px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     background: white;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font: inherit;
     font-size: 0.72rem;
     font-weight: 700;
     cursor: pointer;
   }
 
-  .ona-system-mode-control button.active,
-  .ona-system-option-row button.active {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-mode-control button.active,
+  .performance-system-option-row button.active {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: white;
   }
 
-  .ona-system-policy-list button {
+  .performance-system-policy-list button {
     width: 100%;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 6px 12px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 14px;
     background: white;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     text-align: left;
     cursor: pointer;
     transition:
@@ -1892,219 +1894,219 @@
       opacity 180ms linear;
   }
 
-  .ona-system-policy-list button.active,
-  .ona-system-policy-list button:hover {
-    border-color: var(--ona-system-ink);
+  .performance-system-policy-list button.active,
+  .performance-system-policy-list button:hover {
+    border-color: var(--performance-system-ink);
   }
 
-  .ona-system-policy-list button:hover {
+  .performance-system-policy-list button:hover {
     opacity: 0.86;
   }
 
-  .ona-system-policy-list button:active {
+  .performance-system-policy-list button:active {
     opacity: 1;
     transform: scale(0.99);
   }
 
-  .ona-system-policy-list button:focus-visible {
-    outline: 2px solid var(--ona-system-ink);
+  .performance-system-policy-list button:focus-visible {
+    outline: 2px solid var(--performance-system-ink);
     outline-offset: 3px;
   }
 
-  .ona-system-policy-list span,
-  .ona-system-policy-list small {
-    color: var(--ona-system-muted);
+  .performance-system-policy-list span,
+  .performance-system-policy-list small {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-policy-list strong {
+  .performance-system-policy-list strong {
     font-size: 0.94rem;
     line-height: 1.15;
   }
 
-  .ona-system-policy-list small {
+  .performance-system-policy-list small {
     justify-self: end;
-    color: var(--ona-system-green);
+    color: var(--performance-system-green);
   }
 
-  .ona-system-scouting-report {
-    --ona-system-scouting-line: var(--ona-system-green);
+  .performance-system-scouting-report {
+    --performance-system-scouting-line: var(--performance-system-green);
     display: grid;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-scouting-line);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-scouting-line);
     border-radius: var(--radius-clear-sm);
     margin-top: 14px;
     padding: 12px;
     background: white;
   }
 
-  .ona-system-scouting-report[data-status='watch'] {
-    --ona-system-scouting-line: var(--ona-system-ink);
+  .performance-system-scouting-report[data-status='watch'] {
+    --performance-system-scouting-line: var(--performance-system-ink);
   }
 
-  .ona-system-scouting-report[data-status='fail'] {
-    --ona-system-scouting-line: var(--ona-system-red);
+  .performance-system-scouting-report[data-status='fail'] {
+    --performance-system-scouting-line: var(--performance-system-red);
   }
 
-  .ona-system-scouting-header,
-  .ona-system-scouting-list {
+  .performance-system-scouting-header,
+  .performance-system-scouting-list {
     display: grid;
     gap: 7px;
   }
 
-  .ona-system-scouting-header span,
-  .ona-system-scouting-list span,
-  .ona-system-scouting-list small {
-    color: var(--ona-system-muted);
+  .performance-system-scouting-header span,
+  .performance-system-scouting-list span,
+  .performance-system-scouting-list small {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-scouting-header strong,
-  .ona-system-scouting-list strong {
-    color: var(--ona-system-ink);
+  .performance-system-scouting-header strong,
+  .performance-system-scouting-list strong {
+    color: var(--performance-system-ink);
     font-size: 0.92rem;
     line-height: 1.12;
   }
 
-  .ona-system-scouting-header p,
-  .ona-system-scouting-list p {
-    color: var(--ona-system-muted);
+  .performance-system-scouting-header p,
+  .performance-system-scouting-list p {
+    color: var(--performance-system-muted);
     font-size: 0.75rem;
     line-height: 1.38;
   }
 
-  .ona-system-scouting-list article {
+  .performance-system-scouting-list article {
     display: grid;
     gap: 5px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-green);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-green);
     border-radius: var(--radius-clear-sm);
     padding: 9px 10px;
-    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
 
-  .ona-system-scouting-list article[data-status='watch'] {
-    border-left-color: var(--ona-system-ink);
+  .performance-system-scouting-list article[data-status='watch'] {
+    border-left-color: var(--performance-system-ink);
   }
 
-  .ona-system-scouting-list article[data-status='fail'] {
-    border-left-color: var(--ona-system-red);
+  .performance-system-scouting-list article[data-status='fail'] {
+    border-left-color: var(--performance-system-red);
   }
 
-  .ona-system-scouting-list article[data-status='deferred'] {
-    border-left-color: var(--ona-system-blue);
+  .performance-system-scouting-list article[data-status='deferred'] {
+    border-left-color: var(--performance-system-blue);
   }
 
-  .ona-system-scouting-list article > div {
+  .performance-system-scouting-list article > div {
     display: flex;
     gap: 8px;
     align-items: baseline;
     justify-content: space-between;
   }
 
-  .ona-system-scouting-list article[data-status='watch'] small,
-  .ona-system-scouting-list article[data-status='fail'] small {
-    color: var(--ona-system-ink);
+  .performance-system-scouting-list article[data-status='watch'] small,
+  .performance-system-scouting-list article[data-status='fail'] small {
+    color: var(--performance-system-ink);
   }
 
-  .ona-system-scouting-list article[data-status='fail'] small {
-    color: var(--ona-system-red);
+  .performance-system-scouting-list article[data-status='fail'] small {
+    color: var(--performance-system-red);
   }
 
-  .ona-system-advanced {
-    border-top: 1px solid var(--ona-system-line);
+  .performance-system-advanced {
+    border-top: 1px solid var(--performance-system-line);
     margin-top: 20px;
     padding-top: 18px;
   }
 
-  .ona-system-advanced summary {
+  .performance-system-advanced summary {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px 12px;
     align-items: center;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 12px;
     background: white;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     cursor: pointer;
     list-style: none;
   }
 
-  .ona-system-advanced summary::-webkit-details-marker {
+  .performance-system-advanced summary::-webkit-details-marker {
     display: none;
   }
 
-  .ona-system-advanced summary::after {
+  .performance-system-advanced summary::after {
     content: '+';
     grid-row: 1 / span 2;
     grid-column: 2;
     align-self: center;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 1.1rem;
     font-weight: 700;
     line-height: 1;
   }
 
-  .ona-system-advanced[open] summary::after {
+  .performance-system-advanced[open] summary::after {
     content: '-';
   }
 
-  .ona-system-advanced summary strong {
+  .performance-system-advanced summary strong {
     grid-column: 1;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font-size: 0.9rem;
     line-height: 1.15;
   }
 
-  .ona-system-builder {
+  .performance-system-builder {
     display: grid;
     gap: 10px;
     margin-top: 12px;
   }
 
-  .ona-system-builder > label {
+  .performance-system-builder > label {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-builder > label > span,
-  .ona-system-builder-weights label span,
-  .ona-system-builder-status span {
-    color: var(--ona-system-muted);
+  .performance-system-builder > label > span,
+  .performance-system-builder-weights label span,
+  .performance-system-builder-status span {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-builder input:not([type='range']),
-  .ona-system-builder select,
-  .ona-system-builder textarea {
+  .performance-system-builder input:not([type='range']),
+  .performance-system-builder select,
+  .performance-system-builder textarea {
     width: 100%;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     background: white;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     font-size: 0.82rem;
     font-weight: 700;
   }
 
-  .ona-system-builder input:not([type='range']),
-  .ona-system-builder select {
+  .performance-system-builder input:not([type='range']),
+  .performance-system-builder select {
     min-height: 40px;
     padding: 0 11px;
   }
 
-  .ona-system-builder textarea {
+  .performance-system-builder textarea {
     min-height: 84px;
     resize: vertical;
     padding: 10px 11px;
@@ -2112,108 +2114,108 @@
     line-height: 1.42;
   }
 
-  .ona-system-builder-weights {
+  .performance-system-builder-weights {
     display: grid;
     gap: 9px;
   }
 
-  .ona-system-builder-weights article {
+  .performance-system-builder-weights article {
     display: grid;
     gap: 5px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 9px 10px;
-    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
 
-  .ona-system-builder-weights label,
-  .ona-system-builder-status {
+  .performance-system-builder-weights label,
+  .performance-system-builder-status {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
   }
 
-  .ona-system-builder-weights label strong,
-  .ona-system-builder-status strong {
-    color: var(--ona-system-ink);
+  .performance-system-builder-weights label strong,
+  .performance-system-builder-status strong {
+    color: var(--performance-system-ink);
     font-size: 0.82rem;
     line-height: 1;
   }
 
-  .ona-system-builder-weights input[type='range'] {
+  .performance-system-builder-weights input[type='range'] {
     width: 100%;
-    accent-color: var(--ona-system-ink);
+    accent-color: var(--performance-system-ink);
   }
 
-  .ona-system-builder-status {
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-green);
+  .performance-system-builder-status {
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-green);
     border-radius: var(--radius-clear-sm);
     padding: 10px 12px;
-    background: color-mix(in srgb, white 86%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 86%, var(--performance-system-surface));
   }
 
-  .ona-system-upload {
+  .performance-system-upload {
     display: grid;
     gap: 10px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     margin-top: 20px;
     padding-top: 18px;
   }
 
-  .ona-system-draft-import {
+  .performance-system-draft-import {
     display: grid;
     gap: 8px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
-    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
 
-  .ona-system-draft-import label {
+  .performance-system-draft-import label {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-draft-import label span,
-  .ona-system-draft-actions span {
-    color: var(--ona-system-muted);
+  .performance-system-draft-import label span,
+  .performance-system-draft-actions span {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     line-height: 1.3;
   }
 
-  .ona-system-draft-import label span {
+  .performance-system-draft-import label span {
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-draft-import textarea {
+  .performance-system-draft-import textarea {
     width: 100%;
     min-height: 106px;
     resize: vertical;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px 11px;
     background: white;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     font-size: 0.78rem;
     font-weight: 650;
     line-height: 1.4;
   }
 
-  .ona-system-draft-actions {
+  .performance-system-draft-actions {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-draft-actions button {
+  .performance-system-draft-actions button {
     min-height: 38px;
-    border: 1px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
-    background: var(--ona-system-ink);
+    background: var(--performance-system-ink);
     color: white;
     font: inherit;
     font-size: 0.72rem;
@@ -2221,27 +2223,27 @@
     cursor: pointer;
   }
 
-  .ona-system-upload textarea {
+  .performance-system-upload textarea {
     width: 100%;
     min-height: 184px;
     resize: vertical;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 12px;
     background: white;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 0.72rem;
     line-height: 1.45;
   }
 
-  .ona-system-upload-actions {
+  .performance-system-upload-actions {
     display: grid;
     grid-template-columns: 1fr;
     gap: 6px;
   }
 
-  .ona-system-upload-actions input {
+  .performance-system-upload-actions input {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
@@ -2250,187 +2252,187 @@
     white-space: nowrap;
   }
 
-  .ona-system-upload-actions label,
-  .ona-system-upload-actions button {
+  .performance-system-upload-actions label,
+  .performance-system-upload-actions button {
     min-height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     background: white;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font: inherit;
     font-size: 0.72rem;
     font-weight: 700;
     cursor: pointer;
   }
 
-  .ona-system-upload-actions button:nth-child(2) {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-upload-actions button:nth-child(2) {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: white;
   }
 
-  .ona-system-builder .ona-system-upload-actions button:nth-child(2) {
-    border-color: var(--ona-system-line);
+  .performance-system-builder .performance-system-upload-actions button:nth-child(2) {
+    border-color: var(--performance-system-line);
     background: white;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
   }
 
-  .ona-system-builder .ona-system-upload-actions button:first-child {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-builder .performance-system-upload-actions button:first-child {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: white;
   }
 
-  .ona-system-upload-status {
+  .performance-system-upload-status {
     display: grid;
     gap: 8px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-line-strong);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-line-strong);
     border-radius: var(--radius-clear-sm);
     padding: 10px 12px;
-    background: color-mix(in srgb, white 82%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 82%, var(--performance-system-surface));
   }
 
-  .ona-system-upload-status[data-state='accepted'] {
-    border-left-color: var(--ona-system-green);
+  .performance-system-upload-status[data-state='accepted'] {
+    border-left-color: var(--performance-system-green);
   }
 
-  .ona-system-upload-status strong {
+  .performance-system-upload-status strong {
     font-size: 0.82rem;
     line-height: 1.2;
   }
 
-  .ona-system-upload-status ul {
+  .performance-system-upload-status ul {
     display: grid;
     gap: 5px;
     margin: 0;
     padding-left: 16px;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.72rem;
     line-height: 1.35;
   }
 
-  .ona-system-map {
+  .performance-system-map {
     min-width: 0;
     padding: 18px;
     contain: layout paint style;
   }
 
-  .ona-system-map-header {
+  .performance-system-map-header {
     margin-bottom: 14px;
   }
 
-  .ona-system-rulebook {
+  .performance-system-rulebook {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 10px;
   }
 
-  .ona-system-kickoff {
+  .performance-system-kickoff {
     display: grid;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: white;
   }
 
-  .ona-system-kickoff-header {
+  .performance-system-kickoff-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(220px, 0.72fr);
     gap: 14px;
     align-items: start;
   }
 
-  .ona-system-kickoff-header > div {
+  .performance-system-kickoff-header > div {
     display: grid;
     gap: 6px;
     min-width: 0;
   }
 
-  .ona-system-kickoff-grid {
+  .performance-system-kickoff-grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-live-standings {
+  .performance-system-live-standings {
     display: grid;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-blue);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-blue);
     border-radius: var(--radius-clear-sm);
     margin-bottom: 10px;
     padding: 12px;
-    background: color-mix(in srgb, white 92%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 92%, var(--performance-system-surface));
   }
 
-  .ona-system-live-standings-header {
+  .performance-system-live-standings-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr);
     gap: 14px;
     align-items: start;
   }
 
-  .ona-system-live-standings-header > div {
+  .performance-system-live-standings-header > div {
     display: grid;
     gap: 6px;
     min-width: 0;
   }
 
-  .ona-system-live-standings-list {
+  .performance-system-live-standings-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 8px;
   }
 
-  .ona-system-live-callout {
+  .performance-system-live-callout {
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(180px, 0.85fr);
     gap: 8px;
   }
 
-  .ona-system-live-callout > div {
+  .performance-system-live-callout > div {
     display: grid;
     gap: 6px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
     background: white;
   }
 
-  .ona-system-live-callout[data-tone='changed'] > div:first-child {
-    border-left: 3px solid var(--ona-system-blue);
+  .performance-system-live-callout[data-tone='changed'] > div:first-child {
+    border-left: 3px solid var(--performance-system-blue);
   }
 
-  .ona-system-live-callout[data-tone='coach'] > div:first-child {
-    border-left: 3px solid var(--ona-system-green);
+  .performance-system-live-callout[data-tone='coach'] > div:first-child {
+    border-left: 3px solid var(--performance-system-green);
   }
 
-  .ona-system-rulebook article,
-  .ona-system-kickoff-grid article,
-  .ona-system-live-standings-list article,
-  .ona-system-challenge,
-  .ona-system-gate-impact,
-  .ona-system-score-explain {
-    border: 1px solid var(--ona-system-line);
+  .performance-system-rulebook article,
+  .performance-system-kickoff-grid article,
+  .performance-system-live-standings-list article,
+  .performance-system-challenge,
+  .performance-system-gate-impact,
+  .performance-system-score-explain {
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
-    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 90%, var(--performance-system-surface));
   }
 
-  .ona-system-rulebook article {
+  .performance-system-rulebook article {
     display: grid;
     gap: 6px;
     padding: 12px;
   }
 
-  .ona-system-kickoff-grid article {
+  .performance-system-kickoff-grid article {
     display: grid;
     align-content: start;
     gap: 6px;
@@ -2438,356 +2440,356 @@
     padding: 10px;
   }
 
-  .ona-system-live-standings-list article {
+  .performance-system-live-standings-list article {
     display: grid;
     gap: 8px;
     padding: 10px;
     background: white;
   }
 
-  .ona-system-live-standings-list article.active {
-    border-color: var(--ona-system-ink);
+  .performance-system-live-standings-list article.active {
+    border-color: var(--performance-system-ink);
   }
 
-  .ona-system-live-standings-list article > div {
+  .performance-system-live-standings-list article > div {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px;
     align-items: baseline;
   }
 
-  .ona-system-scoreboard {
+  .performance-system-scoreboard {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 14px;
   }
 
-  .ona-system-scoreboard article {
+  .performance-system-scoreboard article {
     min-height: 84px;
     display: grid;
     align-content: space-between;
     gap: 8px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 12px;
     background: white;
   }
 
-  .ona-system-scoreboard article.active {
-    border-color: var(--ona-system-ink);
+  .performance-system-scoreboard article.active {
+    border-color: var(--performance-system-ink);
   }
 
-  .ona-system-scoreboard span,
-  .ona-system-scoreboard small,
-  .ona-system-kickoff span,
-  .ona-system-kickoff small,
-  .ona-system-live-standings span,
-  .ona-system-live-standings small,
-  .ona-system-rulebook span,
-  .ona-system-rulebook small,
-  .ona-system-gate-impact span,
-  .ona-system-gate-impact small,
-  .ona-system-score-explain span,
-  .ona-system-score-explain small,
-  .ona-system-projection-grid span,
-  .ona-system-timeline span,
-  .ona-system-validation span {
-    color: var(--ona-system-muted);
+  .performance-system-scoreboard span,
+  .performance-system-scoreboard small,
+  .performance-system-kickoff span,
+  .performance-system-kickoff small,
+  .performance-system-live-standings span,
+  .performance-system-live-standings small,
+  .performance-system-rulebook span,
+  .performance-system-rulebook small,
+  .performance-system-gate-impact span,
+  .performance-system-gate-impact small,
+  .performance-system-score-explain span,
+  .performance-system-score-explain small,
+  .performance-system-projection-grid span,
+  .performance-system-timeline span,
+  .performance-system-validation span {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-scoreboard strong {
+  .performance-system-scoreboard strong {
     font-size: 1.34rem;
     line-height: 1;
   }
 
-  .ona-system-rulebook strong {
+  .performance-system-rulebook strong {
     font-size: 0.92rem;
     line-height: 1.2;
   }
 
-  .ona-system-kickoff strong {
-    color: var(--ona-system-ink);
+  .performance-system-kickoff strong {
+    color: var(--performance-system-ink);
     font-size: 0.9rem;
     line-height: 1.15;
     overflow-wrap: anywhere;
   }
 
-  .ona-system-live-standings strong {
-    color: var(--ona-system-ink);
+  .performance-system-live-standings strong {
+    color: var(--performance-system-ink);
     font-size: 0.9rem;
     line-height: 1.15;
     overflow-wrap: anywhere;
   }
 
-  .ona-system-kickoff-header > p,
-  .ona-system-kickoff-grid p,
-  .ona-system-live-callout p,
-  .ona-system-live-standings-header > p,
-  .ona-system-live-standings-list p {
+  .performance-system-kickoff-header > p,
+  .performance-system-kickoff-grid p,
+  .performance-system-live-callout p,
+  .performance-system-live-standings-header > p,
+  .performance-system-live-standings-list p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.75rem;
     font-weight: 650;
     line-height: 1.34;
     overflow-wrap: anywhere;
   }
 
-  .ona-system-rulebook p {
-    color: var(--ona-system-muted);
+  .performance-system-rulebook p {
+    color: var(--performance-system-muted);
     font-size: 0.78rem;
     line-height: 1.42;
   }
 
-  .ona-system-challenge {
-    --ona-system-challenge-line: var(--ona-system-green);
+  .performance-system-challenge {
+    --performance-system-challenge-line: var(--performance-system-green);
     display: grid;
     gap: 12px;
-    border-left: 3px solid var(--ona-system-challenge-line);
+    border-left: 3px solid var(--performance-system-challenge-line);
     margin-bottom: 10px;
     padding: 12px;
   }
 
-  .ona-system-challenge[data-status='close'] {
-    --ona-system-challenge-line: var(--ona-system-ink);
+  .performance-system-challenge[data-status='close'] {
+    --performance-system-challenge-line: var(--performance-system-ink);
   }
 
-  .ona-system-challenge[data-status='missed'] {
-    --ona-system-challenge-line: var(--ona-system-red);
+  .performance-system-challenge[data-status='missed'] {
+    --performance-system-challenge-line: var(--performance-system-red);
   }
 
-  .ona-system-challenge[data-status='versus'] {
-    --ona-system-challenge-line: var(--ona-system-blue);
+  .performance-system-challenge[data-status='versus'] {
+    --performance-system-challenge-line: var(--performance-system-blue);
   }
 
-  .ona-system-challenge-header,
-  .ona-system-challenge-list article > div {
+  .performance-system-challenge-header,
+  .performance-system-challenge-list article > div {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
   }
 
-  .ona-system-challenge-header > div {
+  .performance-system-challenge-header > div {
     display: grid;
     gap: 6px;
     min-width: 180px;
   }
 
-  .ona-system-challenge-header strong {
+  .performance-system-challenge-header strong {
     font-size: 1rem;
     line-height: 1.15;
   }
 
-  .ona-system-challenge-header p,
-  .ona-system-challenge-list p {
-    color: var(--ona-system-muted);
+  .performance-system-challenge-header p,
+  .performance-system-challenge-list p {
+    color: var(--performance-system-muted);
     font-size: 0.78rem;
     line-height: 1.42;
   }
 
-  .ona-system-challenge-list {
+  .performance-system-challenge-list {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-challenge-list article {
+  .performance-system-challenge-list article {
     display: grid;
     gap: 7px;
-    border: 1px solid var(--ona-system-line);
-    border-top: 3px solid var(--ona-system-green);
+    border: 1px solid var(--performance-system-line);
+    border-top: 3px solid var(--performance-system-green);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
     background: white;
   }
 
-  .ona-system-challenge-list article[data-status='close'] {
-    border-top-color: var(--ona-system-ink);
+  .performance-system-challenge-list article[data-status='close'] {
+    border-top-color: var(--performance-system-ink);
   }
 
-  .ona-system-challenge-list article[data-status='missed'] {
-    border-top-color: var(--ona-system-red);
+  .performance-system-challenge-list article[data-status='missed'] {
+    border-top-color: var(--performance-system-red);
   }
 
-  .ona-system-challenge-list span,
-  .ona-system-challenge-list small,
-  .ona-system-challenge .ona-system-timeline-header span {
-    color: var(--ona-system-muted);
+  .performance-system-challenge-list span,
+  .performance-system-challenge-list small,
+  .performance-system-challenge .performance-system-timeline-header span {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-challenge-list article > div small {
-    color: var(--ona-system-green);
+  .performance-system-challenge-list article > div small {
+    color: var(--performance-system-green);
   }
 
-  .ona-system-challenge-list article[data-status='close'] > div small {
-    color: var(--ona-system-ink);
+  .performance-system-challenge-list article[data-status='close'] > div small {
+    color: var(--performance-system-ink);
   }
 
-  .ona-system-challenge-list article[data-status='missed'] > div small {
-    color: var(--ona-system-red);
+  .performance-system-challenge-list article[data-status='missed'] > div small {
+    color: var(--performance-system-red);
   }
 
-  .ona-system-challenge-list strong {
+  .performance-system-challenge-list strong {
     font-size: 1.1rem;
     line-height: 1;
   }
 
-  .ona-system-playback {
+  .performance-system-playback {
     display: grid;
     grid-template-columns: minmax(0, 0.95fr) minmax(260px, 1.05fr);
     gap: 12px;
     align-items: center;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: white;
   }
 
-  .ona-system-playback > div:first-child {
+  .performance-system-playback > div:first-child {
     display: grid;
     gap: 5px;
   }
 
-  .ona-system-playback span {
-    color: var(--ona-system-muted);
+  .performance-system-playback span {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-playback strong {
+  .performance-system-playback strong {
     font-size: 1.05rem;
     line-height: 1.05;
   }
 
-  .ona-system-playback p {
-    color: var(--ona-system-muted);
+  .performance-system-playback p {
+    color: var(--performance-system-muted);
     font-size: 0.78rem;
     line-height: 1.42;
   }
 
-  .ona-system-playback-panel {
+  .performance-system-playback-panel {
     display: grid;
     gap: 8px;
   }
 
-  .ona-system-playback-controls {
+  .performance-system-playback-controls {
     display: grid;
     grid-template-columns: auto minmax(90px, 1fr) auto;
     gap: 8px;
     align-items: center;
   }
 
-  .ona-system-playback-controls button {
+  .performance-system-playback-controls button {
     min-height: 36px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 0 10px;
     background: white;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     font-size: 0.72rem;
     font-weight: 700;
     cursor: pointer;
   }
 
-  .ona-system-playback-controls button:disabled {
-    color: var(--ona-system-muted);
+  .performance-system-playback-controls button:disabled {
+    color: var(--performance-system-muted);
     cursor: default;
     opacity: 0.48;
   }
 
-  .ona-system-playback-controls input {
+  .performance-system-playback-controls input {
     width: 100%;
-    accent-color: var(--ona-system-ink);
+    accent-color: var(--performance-system-ink);
   }
 
-  .ona-system-playback-actions {
+  .performance-system-playback-actions {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px;
   }
 
-  .ona-system-playback-actions button {
+  .performance-system-playback-actions button {
     min-height: 38px;
     display: inline-flex;
     gap: 7px;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 0 12px;
     background: white;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     font-size: 0.72rem;
     font-weight: 800;
     cursor: pointer;
   }
 
-  .ona-system-playback-actions button.active {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-playback-actions button.active {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: #fff;
   }
 
-  .ona-system-playback-actions button:disabled {
-    color: var(--ona-system-muted);
+  .performance-system-playback-actions button:disabled {
+    color: var(--performance-system-muted);
     cursor: default;
     opacity: 0.52;
   }
 
-  .ona-system-turn-recap {
+  .performance-system-turn-recap {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
     margin-bottom: 10px;
     padding: 10px;
-    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
 
-  .ona-system-turn-recap[data-status='cleared'] {
-    border-left-color: var(--ona-system-green);
+  .performance-system-turn-recap[data-status='cleared'] {
+    border-left-color: var(--performance-system-green);
   }
 
-  .ona-system-turn-recap[data-status='close'] {
-    border-left-color: var(--ona-system-blue);
+  .performance-system-turn-recap[data-status='close'] {
+    border-left-color: var(--performance-system-blue);
   }
 
-  .ona-system-turn-recap[data-status='missed'] {
-    border-left-color: var(--ona-system-red);
+  .performance-system-turn-recap[data-status='missed'] {
+    border-left-color: var(--performance-system-red);
   }
 
-  .ona-system-turn-recap article {
+  .performance-system-turn-recap article {
     min-height: 92px;
     display: grid;
     align-content: space-between;
     gap: 6px;
-    border-right: 1px solid var(--ona-system-line);
+    border-right: 1px solid var(--performance-system-line);
     padding: 4px 10px 4px 0;
   }
 
-  .ona-system-turn-recap article:last-child {
+  .performance-system-turn-recap article:last-child {
     border-right: 0;
     padding-right: 0;
   }
 
-  .ona-system-turn-recap span {
-    color: var(--ona-system-muted);
+  .performance-system-turn-recap span {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -2795,47 +2797,47 @@
     letter-spacing: 0;
   }
 
-  .ona-system-turn-recap strong {
+  .performance-system-turn-recap strong {
     overflow-wrap: anywhere;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font-size: 1rem;
     line-height: 1.08;
   }
 
-  .ona-system-turn-recap p {
+  .performance-system-turn-recap p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.72rem;
     font-weight: 700;
     line-height: 1.32;
   }
 
-  .ona-system-compounding-trail {
+  .performance-system-compounding-trail {
     display: grid;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: white;
   }
 
-  .ona-system-compounding-trail-header {
+  .performance-system-compounding-trail-header {
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(220px, 1.1fr);
     gap: 12px;
     align-items: start;
   }
 
-  .ona-system-compounding-trail-header > div {
+  .performance-system-compounding-trail-header > div {
     display: grid;
     gap: 5px;
   }
 
-  .ona-system-compounding-trail-header span,
-  .ona-system-compounding-trail-list span,
-  .ona-system-compounding-trail-list small {
-    color: var(--ona-system-muted);
+  .performance-system-compounding-trail-header span,
+  .performance-system-compounding-trail-list span,
+  .performance-system-compounding-trail-list small {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -2843,121 +2845,121 @@
     letter-spacing: 0;
   }
 
-  .ona-system-compounding-trail-header strong {
-    color: var(--ona-system-ink);
+  .performance-system-compounding-trail-header strong {
+    color: var(--performance-system-ink);
     font-size: 1.02rem;
     line-height: 1.08;
   }
 
-  .ona-system-compounding-trail-header p {
+  .performance-system-compounding-trail-header p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.76rem;
     font-weight: 700;
     line-height: 1.38;
   }
 
-  .ona-system-compounding-trail-list {
+  .performance-system-compounding-trail-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
     gap: 8px;
   }
 
-  .ona-system-compounding-trail-list article {
+  .performance-system-compounding-trail-list article {
     min-height: 112px;
     display: grid;
     align-content: space-between;
     gap: 6px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
-    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 90%, var(--performance-system-surface));
   }
 
-  .ona-system-compounding-trail-list article.active {
-    border-color: var(--ona-system-ink);
-    box-shadow: inset 0 0 0 1px var(--ona-system-ink);
+  .performance-system-compounding-trail-list article.active {
+    border-color: var(--performance-system-ink);
+    box-shadow: inset 0 0 0 1px var(--performance-system-ink);
   }
 
-  .ona-system-compounding-trail-list article.steered {
-    border-left: 3px solid var(--ona-system-blue);
+  .performance-system-compounding-trail-list article.steered {
+    border-left: 3px solid var(--performance-system-blue);
   }
 
-  .ona-system-compounding-trail-list strong {
-    color: var(--ona-system-ink);
+  .performance-system-compounding-trail-list strong {
+    color: var(--performance-system-ink);
     font-size: 1.02rem;
     line-height: 1;
   }
 
-  .ona-system-compounding-trail-list p {
+  .performance-system-compounding-trail-list p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     line-height: 1.28;
   }
 
-  .ona-system-final-outcome {
+  .performance-system-final-outcome {
     display: grid;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
     margin-bottom: 10px;
     padding: 12px;
-    background: color-mix(in srgb, white 87%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 87%, var(--performance-system-surface));
   }
 
-  .ona-system-final-outcome[data-status='cleared'] {
-    border-left-color: var(--ona-system-green);
+  .performance-system-final-outcome[data-status='cleared'] {
+    border-left-color: var(--performance-system-green);
   }
 
-  .ona-system-final-outcome[data-status='close'],
-  .ona-system-final-outcome[data-status='versus'] {
-    border-left-color: var(--ona-system-blue);
+  .performance-system-final-outcome[data-status='close'],
+  .performance-system-final-outcome[data-status='versus'] {
+    border-left-color: var(--performance-system-blue);
   }
 
-  .ona-system-final-outcome[data-status='missed'] {
-    border-left-color: var(--ona-system-red);
+  .performance-system-final-outcome[data-status='missed'] {
+    border-left-color: var(--performance-system-red);
   }
 
-  .ona-system-final-outcome-header {
+  .performance-system-final-outcome-header {
     display: grid;
     grid-template-columns: minmax(0, 0.78fr) minmax(220px, 1fr) auto;
     gap: 12px;
     align-items: start;
   }
 
-  .ona-system-final-outcome-header > div {
+  .performance-system-final-outcome-header > div {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-final-outcome-header strong {
-    color: var(--ona-system-ink);
+  .performance-system-final-outcome-header strong {
+    color: var(--performance-system-ink);
     font-size: 1.08rem;
     line-height: 1.08;
   }
 
-  .ona-system-final-outcome-header p,
-  .ona-system-final-outcome-lanes p {
+  .performance-system-final-outcome-header p,
+  .performance-system-final-outcome-lanes p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.74rem;
     font-weight: 700;
     line-height: 1.34;
   }
 
-  .ona-system-final-outcome-header button {
+  .performance-system-final-outcome-header button {
     min-height: 38px;
     display: inline-flex;
     gap: 7px;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
     padding: 0 12px;
-    background: var(--ona-system-ink);
+    background: var(--performance-system-ink);
     color: #fff;
     font: inherit;
     font-size: 0.72rem;
@@ -2966,25 +2968,25 @@
     cursor: pointer;
   }
 
-  .ona-system-final-outcome-lanes {
+  .performance-system-final-outcome-lanes {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 8px;
   }
 
-  .ona-system-final-outcome-lanes article {
+  .performance-system-final-outcome-lanes article {
     min-height: 88px;
     display: grid;
     align-content: space-between;
     gap: 6px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
     background: white;
   }
 
-  .ona-system-final-outcome-lanes span {
-    color: var(--ona-system-muted);
+  .performance-system-final-outcome-lanes span {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -2992,83 +2994,83 @@
     letter-spacing: 0;
   }
 
-  .ona-system-final-outcome-lanes strong {
-    color: var(--ona-system-ink);
+  .performance-system-final-outcome-lanes strong {
+    color: var(--performance-system-ink);
     font-size: 1.05rem;
     line-height: 1;
   }
 
-  .ona-system-field-standings {
+  .performance-system-field-standings {
     display: grid;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: white;
   }
 
-  .ona-system-field-standings-header {
+  .performance-system-field-standings-header {
     display: grid;
     grid-template-columns: minmax(0, 0.78fr) minmax(220px, 1fr);
     gap: 12px;
     align-items: start;
   }
 
-  .ona-system-field-standings-header > div {
+  .performance-system-field-standings-header > div {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-field-standings-header strong {
-    color: var(--ona-system-ink);
+  .performance-system-field-standings-header strong {
+    color: var(--performance-system-ink);
     font-size: 1.04rem;
     line-height: 1.08;
   }
 
-  .ona-system-field-standings-header p {
+  .performance-system-field-standings-header p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.74rem;
     font-weight: 700;
     line-height: 1.34;
   }
 
-  .ona-system-field-standings-list {
+  .performance-system-field-standings-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     gap: 8px;
   }
 
-  .ona-system-field-standings-list article {
+  .performance-system-field-standings-list article {
     min-height: 142px;
     display: grid;
     align-content: space-between;
     gap: 8px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
-    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
 
-  .ona-system-field-standings-list article.active {
-    border-left: 3px solid var(--ona-system-green);
+  .performance-system-field-standings-list article.active {
+    border-left: 3px solid var(--performance-system-green);
   }
 
-  .ona-system-field-standings-list article > div {
+  .performance-system-field-standings-list article > div {
     display: grid;
     gap: 4px;
   }
 
-  .ona-system-field-standings-list article > div:first-child {
+  .performance-system-field-standings-list article > div:first-child {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
     align-items: baseline;
   }
 
-  .ona-system-field-standings-list span,
-  .ona-system-field-standings-list small {
-    color: var(--ona-system-muted);
+  .performance-system-field-standings-list span,
+  .performance-system-field-standings-list small {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -3076,97 +3078,97 @@
     letter-spacing: 0;
   }
 
-  .ona-system-field-standings-list strong {
-    color: var(--ona-system-ink);
+  .performance-system-field-standings-list strong {
+    color: var(--performance-system-ink);
     font-size: 1.18rem;
     line-height: 1;
   }
 
-  .ona-system-field-standings-list p {
+  .performance-system-field-standings-list p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.7rem;
     font-weight: 700;
     line-height: 1.28;
   }
 
-  .ona-system-steering-cockpit {
+  .performance-system-steering-cockpit {
     display: grid;
     gap: 12px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     margin-bottom: 10px;
     padding: 12px;
     background: white;
   }
 
-  .ona-system-steering-cockpit-header {
+  .performance-system-steering-cockpit-header {
     display: grid;
     grid-template-columns: minmax(0, 0.82fr) minmax(260px, 1.18fr);
     gap: 12px;
     align-items: start;
   }
 
-  .ona-system-steering-cockpit-header > div {
+  .performance-system-steering-cockpit-header > div {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-steering-cockpit-header strong {
-    color: var(--ona-system-ink);
+  .performance-system-steering-cockpit-header strong {
+    color: var(--performance-system-ink);
     font-size: 1.05rem;
     line-height: 1.08;
   }
 
-  .ona-system-steering-cockpit-header p,
-  .ona-system-steering-locked span {
+  .performance-system-steering-cockpit-header p,
+  .performance-system-steering-locked span {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.78rem;
     line-height: 1.42;
   }
 
-  .ona-system-steering-actions {
+  .performance-system-steering-actions {
     display: grid;
     grid-template-columns: minmax(120px, 1.1fr) minmax(96px, 0.75fr) repeat(3, minmax(112px, 1fr));
     gap: 8px;
   }
 
-  .ona-system-steering-season {
+  .performance-system-steering-season {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-next-turn {
+  .performance-system-next-turn {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
     align-items: stretch;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-green);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-green);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
-    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 90%, var(--performance-system-surface));
   }
 
-  .ona-system-next-turn[data-status='hold'] {
-    border-left-color: var(--ona-system-blue);
+  .performance-system-next-turn[data-status='hold'] {
+    border-left-color: var(--performance-system-blue);
   }
 
-  .ona-system-next-turn[data-status='applied'] {
-    border-left-color: var(--ona-system-ink);
+  .performance-system-next-turn[data-status='applied'] {
+    border-left-color: var(--performance-system-ink);
   }
 
-  .ona-system-next-turn > div:first-child {
+  .performance-system-next-turn > div:first-child {
     display: grid;
     gap: 5px;
     align-content: center;
   }
 
-  .ona-system-next-turn span,
-  .ona-system-next-turn-actions span {
-    color: var(--ona-system-muted);
+  .performance-system-next-turn span,
+  .performance-system-next-turn-actions span {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -3174,100 +3176,100 @@
     letter-spacing: 0;
   }
 
-  .ona-system-next-turn strong {
-    color: var(--ona-system-ink);
+  .performance-system-next-turn strong {
+    color: var(--performance-system-ink);
     font-size: 0.98rem;
     line-height: 1.1;
   }
 
-  .ona-system-next-turn p {
+  .performance-system-next-turn p {
     max-width: 74ch;
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.74rem;
     font-weight: 700;
     line-height: 1.34;
   }
 
-  .ona-system-next-turn-gate {
+  .performance-system-next-turn-gate {
     display: grid;
     gap: 4px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 8px;
     background: #fff;
   }
 
-  .ona-system-next-turn-gate small {
-    color: var(--ona-system-muted);
+  .performance-system-next-turn-gate small {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     line-height: 1.3;
   }
 
-  .ona-system-next-turn-actions {
+  .performance-system-next-turn-actions {
     display: grid;
     grid-template-columns: minmax(132px, 1.2fr) repeat(2, minmax(94px, 0.8fr));
     gap: 8px;
   }
 
-  .ona-system-next-turn-actions button {
+  .performance-system-next-turn-actions button {
     min-height: 56px;
     display: grid;
     gap: 4px;
     align-content: center;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 8px 10px;
     background: #fff;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     text-align: left;
     cursor: pointer;
   }
 
-  .ona-system-next-turn-actions button.primary {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-next-turn-actions button.primary {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: #fff;
   }
 
-  .ona-system-next-turn-actions button:disabled {
+  .performance-system-next-turn-actions button:disabled {
     cursor: default;
     opacity: 0.58;
   }
 
-  .ona-system-next-turn-actions button.primary span {
+  .performance-system-next-turn-actions button.primary span {
     color: rgba(255, 255, 255, 0.72);
   }
 
-  .ona-system-next-turn-actions button.primary strong {
+  .performance-system-next-turn-actions button.primary strong {
     color: #fff;
   }
 
-  .ona-system-next-turn-actions strong {
+  .performance-system-next-turn-actions strong {
     font-size: 0.9rem;
   }
 
-  .ona-system-decision-ledger {
+  .performance-system-decision-ledger {
     display: grid;
     grid-template-columns: minmax(190px, 0.46fr) minmax(0, 1fr);
     gap: 10px;
     align-items: start;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
-    background: color-mix(in srgb, white 94%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 94%, var(--performance-system-surface));
   }
 
-  .ona-system-decision-ledger > div:first-child {
+  .performance-system-decision-ledger > div:first-child {
     display: grid;
     gap: 5px;
   }
 
-  .ona-system-decision-ledger span,
-  .ona-system-decision-ledger-list span {
-    color: var(--ona-system-muted);
+  .performance-system-decision-ledger span,
+  .performance-system-decision-ledger-list span {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -3275,47 +3277,47 @@
     letter-spacing: 0;
   }
 
-  .ona-system-decision-ledger strong {
-    color: var(--ona-system-ink);
+  .performance-system-decision-ledger strong {
+    color: var(--performance-system-ink);
     font-size: 0.95rem;
     line-height: 1.12;
   }
 
-  .ona-system-decision-ledger p {
+  .performance-system-decision-ledger p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.72rem;
     font-weight: 700;
     line-height: 1.34;
   }
 
-  .ona-system-decision-ledger-list {
+  .performance-system-decision-ledger-list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-decision-ledger-list article {
+  .performance-system-decision-ledger-list article {
     display: grid;
     gap: 5px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 8px;
     background: #fff;
   }
 
-  .ona-system-decision-ledger-list article.active {
-    border-color: var(--ona-system-ink);
+  .performance-system-decision-ledger-list article.active {
+    border-color: var(--performance-system-ink);
   }
 
-  .ona-system-turn-disclosure {
+  .performance-system-turn-disclosure {
     display: grid;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
-    background: color-mix(in srgb, white 92%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 92%, var(--performance-system-surface));
   }
 
-  .ona-system-turn-disclosure summary {
+  .performance-system-turn-disclosure summary {
     min-height: 48px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -3326,17 +3328,17 @@
     list-style: none;
   }
 
-  .ona-system-turn-disclosure summary::-webkit-details-marker {
+  .performance-system-turn-disclosure summary::-webkit-details-marker {
     display: none;
   }
 
-  .ona-system-turn-disclosure summary span,
-  .ona-system-turn-disclosure summary strong {
+  .performance-system-turn-disclosure summary span,
+  .performance-system-turn-disclosure summary strong {
     min-width: 0;
   }
 
-  .ona-system-turn-disclosure summary span {
-    color: var(--ona-system-muted);
+  .performance-system-turn-disclosure summary span {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -3344,39 +3346,39 @@
     letter-spacing: 0;
   }
 
-  .ona-system-turn-disclosure summary strong {
-    color: var(--ona-system-ink);
+  .performance-system-turn-disclosure summary strong {
+    color: var(--performance-system-ink);
     font-size: 0.82rem;
     line-height: 1.12;
     text-align: right;
   }
 
-  .ona-system-turn-disclosure[open] summary {
-    border-bottom: 1px solid var(--ona-system-line);
+  .performance-system-turn-disclosure[open] summary {
+    border-bottom: 1px solid var(--performance-system-line);
   }
 
-  .ona-system-turn-disclosure-body {
+  .performance-system-turn-disclosure-body {
     display: grid;
     gap: 8px;
     padding: 10px;
   }
 
-  .ona-system-steering-previews {
+  .performance-system-steering-previews {
     display: grid;
     gap: 8px;
   }
 
-  .ona-system-steering-previews-header {
+  .performance-system-steering-previews-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
     align-items: baseline;
   }
 
-  .ona-system-steering-previews-header span,
-  .ona-system-steering-preview-grid span,
-  .ona-system-steering-preview-grid small {
-    color: var(--ona-system-muted);
+  .performance-system-steering-previews-header span,
+  .performance-system-steering-preview-grid span,
+  .performance-system-steering-preview-grid small {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -3384,144 +3386,144 @@
     letter-spacing: 0;
   }
 
-  .ona-system-steering-previews-header strong {
-    color: var(--ona-system-ink);
+  .performance-system-steering-previews-header strong {
+    color: var(--performance-system-ink);
     font-size: 0.82rem;
     line-height: 1.1;
   }
 
-  .ona-system-steering-preview-grid {
+  .performance-system-steering-preview-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-steering-preview-grid button {
+  .performance-system-steering-preview-grid button {
     min-height: 132px;
     display: grid;
     align-content: space-between;
     gap: 8px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
     background: #fff;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     text-align: left;
     cursor: pointer;
   }
 
-  .ona-system-steering-preview-grid button[data-recommended='true'] {
-    border-left: 3px solid var(--ona-system-green);
+  .performance-system-steering-preview-grid button[data-recommended='true'] {
+    border-left: 3px solid var(--performance-system-green);
   }
 
-  .ona-system-steering-preview-grid button.active {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-steering-preview-grid button.active {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: #fff;
   }
 
-  .ona-system-steering-preview-grid button > div {
+  .performance-system-steering-preview-grid button > div {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px;
     align-items: baseline;
   }
 
-  .ona-system-steering-preview-grid strong {
+  .performance-system-steering-preview-grid strong {
     color: inherit;
     font-size: 1.28rem;
     line-height: 1;
   }
 
-  .ona-system-steering-preview-grid p {
+  .performance-system-steering-preview-grid p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.7rem;
     font-weight: 700;
     line-height: 1.3;
   }
 
-  .ona-system-steering-preview-grid button.active span,
-  .ona-system-steering-preview-grid button.active small,
-  .ona-system-steering-preview-grid button.active p {
+  .performance-system-steering-preview-grid button.active span,
+  .performance-system-steering-preview-grid button.active small,
+  .performance-system-steering-preview-grid button.active p {
     color: rgba(255, 255, 255, 0.72);
   }
 
-  .ona-system-steering-comparison {
+  .performance-system-steering-comparison {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding-top: 10px;
   }
 
-  .ona-system-steering-comparison article {
+  .performance-system-steering-comparison article {
     min-height: 88px;
     display: grid;
     align-content: space-between;
     gap: 6px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
-    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
 
-  .ona-system-steering-comparison span {
-    color: var(--ona-system-muted);
+  .performance-system-steering-comparison span {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-steering-comparison strong {
-    color: var(--ona-system-ink);
+  .performance-system-steering-comparison strong {
+    color: var(--performance-system-ink);
     font-size: 1.08rem;
     line-height: 1;
   }
 
-  .ona-system-steering-comparison small {
-    color: var(--ona-system-muted);
+  .performance-system-steering-comparison small {
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     line-height: 1.26;
   }
 
-  .ona-system-steering-actions button,
-  .ona-system-steering-season button {
+  .performance-system-steering-actions button,
+  .performance-system-steering-season button {
     min-height: 54px;
     display: grid;
     gap: 4px;
     align-content: center;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 9px 10px;
     background: #fff;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     text-align: left;
     cursor: pointer;
   }
 
-  .ona-system-steering-actions button.active,
-  .ona-system-steering-season button.active {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-steering-actions button.active,
+  .performance-system-steering-season button.active {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: #fff;
   }
 
-  .ona-system-steering-actions span,
-  .ona-system-steering-season span {
+  .performance-system-steering-actions span,
+  .performance-system-steering-season span {
     overflow-wrap: anywhere;
     font-size: 0.76rem;
     font-weight: 800;
     line-height: 1.08;
   }
 
-  .ona-system-steering-actions small,
-  .ona-system-steering-season small {
-    color: var(--ona-system-muted);
+  .performance-system-steering-actions small,
+  .performance-system-steering-season small {
+    color: var(--performance-system-muted);
     font-size: 0.65rem;
     font-weight: 700;
     line-height: 1.1;
@@ -3529,90 +3531,90 @@
     letter-spacing: 0;
   }
 
-  .ona-system-steering-actions button.active small,
-  .ona-system-steering-season button.active small {
+  .performance-system-steering-actions button.active small,
+  .performance-system-steering-season button.active small {
     color: rgba(255, 255, 255, 0.72);
   }
 
-  .ona-system-steering-locked {
+  .performance-system-steering-locked {
     display: flex;
     gap: 10px;
     align-items: center;
     justify-content: space-between;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding-top: 10px;
   }
 
-  .ona-system-steering-locked strong {
+  .performance-system-steering-locked strong {
     font-size: 0.86rem;
     line-height: 1.1;
   }
 
-  .ona-system-race-history {
+  .performance-system-race-history {
     display: grid;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     margin-bottom: 10px;
     padding: 12px;
-    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 90%, var(--performance-system-surface));
   }
 
-  .ona-system-race-history-header {
+  .performance-system-race-history-header {
     display: grid;
     grid-template-columns: minmax(0, 0.72fr) minmax(240px, 1fr);
     gap: 12px;
     align-items: start;
   }
 
-  .ona-system-race-history-header > div {
+  .performance-system-race-history-header > div {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-race-history-header strong {
-    color: var(--ona-system-ink);
+  .performance-system-race-history-header strong {
+    color: var(--performance-system-ink);
     font-size: 1.02rem;
     line-height: 1.08;
   }
 
-  .ona-system-race-history-header p {
+  .performance-system-race-history-header p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.76rem;
     font-weight: 700;
     line-height: 1.36;
   }
 
-  .ona-system-race-history-list {
+  .performance-system-race-history-list {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-race-history-list button {
+  .performance-system-race-history-list button {
     min-height: 118px;
     display: grid;
     align-content: space-between;
     gap: 6px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
     background: #fff;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     text-align: left;
     cursor: pointer;
   }
 
-  .ona-system-race-history-list button.active {
-    border-color: var(--ona-system-ink);
-    box-shadow: inset 0 0 0 1px var(--ona-system-ink);
+  .performance-system-race-history-list button.active {
+    border-color: var(--performance-system-ink);
+    box-shadow: inset 0 0 0 1px var(--performance-system-ink);
   }
 
-  .ona-system-race-history-list span,
-  .ona-system-race-history-list small {
-    color: var(--ona-system-muted);
+  .performance-system-race-history-list span,
+  .performance-system-race-history-list small {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -3620,78 +3622,78 @@
     letter-spacing: 0;
   }
 
-  .ona-system-race-history-list strong {
-    color: var(--ona-system-ink);
+  .performance-system-race-history-list strong {
+    color: var(--performance-system-ink);
     font-size: 0.94rem;
     line-height: 1.08;
   }
 
-  .ona-system-race-history-list p {
+  .performance-system-race-history-list p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.7rem;
     font-weight: 700;
     line-height: 1.28;
   }
 
-  .ona-system-race-momentum {
+  .performance-system-race-momentum {
     display: grid;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-blue);
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-blue);
     border-radius: var(--radius-clear-sm);
     margin-bottom: 14px;
     padding: 12px;
     background: white;
   }
 
-  .ona-system-race-momentum-header {
+  .performance-system-race-momentum-header {
     display: grid;
     grid-template-columns: minmax(0, 0.78fr) minmax(240px, 1fr);
     gap: 12px;
     align-items: start;
   }
 
-  .ona-system-race-momentum-header > div {
+  .performance-system-race-momentum-header > div {
     display: grid;
     gap: 6px;
   }
 
-  .ona-system-race-momentum-header strong {
-    color: var(--ona-system-ink);
+  .performance-system-race-momentum-header strong {
+    color: var(--performance-system-ink);
     font-size: 1.04rem;
     line-height: 1.08;
   }
 
-  .ona-system-race-momentum-header p {
+  .performance-system-race-momentum-header p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.76rem;
     font-weight: 700;
     line-height: 1.36;
   }
 
-  .ona-system-race-momentum-grid {
+  .performance-system-race-momentum-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-decision-moments {
+  .performance-system-decision-moments {
     display: grid;
     grid-template-columns: minmax(210px, 0.62fr) minmax(0, 1fr);
     gap: 8px;
   }
 
-  .ona-system-decision-moment-feature,
-  .ona-system-decision-moment-list button {
-    border: 1px solid var(--ona-system-line);
+  .performance-system-decision-moment-feature,
+  .performance-system-decision-moment-list button {
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     background: #fff;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
   }
 
-  .ona-system-decision-moment-feature {
+  .performance-system-decision-moment-feature {
     min-height: 146px;
     display: grid;
     align-content: space-between;
@@ -3699,21 +3701,21 @@
     padding: 12px;
   }
 
-  .ona-system-decision-moment-feature[data-tone='changed'],
-  .ona-system-decision-moment-list button[data-tone='changed'] {
-    border-left: 3px solid var(--ona-system-blue);
+  .performance-system-decision-moment-feature[data-tone='changed'],
+  .performance-system-decision-moment-list button[data-tone='changed'] {
+    border-left: 3px solid var(--performance-system-blue);
   }
 
-  .ona-system-decision-moment-feature[data-tone='coach'],
-  .ona-system-decision-moment-list button[data-tone='coach'] {
-    border-left: 3px solid var(--ona-system-green);
+  .performance-system-decision-moment-feature[data-tone='coach'],
+  .performance-system-decision-moment-list button[data-tone='coach'] {
+    border-left: 3px solid var(--performance-system-green);
   }
 
-  .ona-system-decision-moment-feature span,
-  .ona-system-decision-moment-feature small,
-  .ona-system-decision-moment-list span,
-  .ona-system-decision-moment-list small {
-    color: var(--ona-system-muted);
+  .performance-system-decision-moment-feature span,
+  .performance-system-decision-moment-feature small,
+  .performance-system-decision-moment-list span,
+  .performance-system-decision-moment-list small {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -3721,28 +3723,28 @@
     letter-spacing: 0;
   }
 
-  .ona-system-decision-moment-feature strong {
-    color: var(--ona-system-ink);
+  .performance-system-decision-moment-feature strong {
+    color: var(--performance-system-ink);
     font-size: 1.16rem;
     line-height: 1.04;
   }
 
-  .ona-system-decision-moment-feature p,
-  .ona-system-decision-moment-list p {
+  .performance-system-decision-moment-feature p,
+  .performance-system-decision-moment-list p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.72rem;
     font-weight: 700;
     line-height: 1.3;
   }
 
-  .ona-system-decision-moment-list {
+  .performance-system-decision-moment-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
     gap: 8px;
   }
 
-  .ona-system-decision-moment-list button {
+  .performance-system-decision-moment-list button {
     min-height: 146px;
     display: grid;
     align-content: space-between;
@@ -3753,56 +3755,56 @@
     cursor: pointer;
   }
 
-  .ona-system-decision-moment-list button.active {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-decision-moment-list button.active {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: #fff;
   }
 
-  .ona-system-decision-moment-list button.active span,
-  .ona-system-decision-moment-list button.active small,
-  .ona-system-decision-moment-list button.active p {
+  .performance-system-decision-moment-list button.active span,
+  .performance-system-decision-moment-list button.active small,
+  .performance-system-decision-moment-list button.active p {
     color: rgba(255, 255, 255, 0.72);
   }
 
-  .ona-system-decision-moment-list strong {
+  .performance-system-decision-moment-list strong {
     color: inherit;
     font-size: 0.84rem;
     line-height: 1.08;
   }
 
-  .ona-system-race-momentum-grid article {
+  .performance-system-race-momentum-grid article {
     min-height: 126px;
     display: grid;
     align-content: space-between;
     gap: 8px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
-    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 88%, var(--performance-system-surface));
   }
 
-  .ona-system-race-momentum-grid article.active {
-    border-color: var(--ona-system-ink);
-    box-shadow: inset 0 0 0 1px var(--ona-system-ink);
+  .performance-system-race-momentum-grid article.active {
+    border-color: var(--performance-system-ink);
+    box-shadow: inset 0 0 0 1px var(--performance-system-ink);
   }
 
-  .ona-system-race-momentum-grid article > div {
+  .performance-system-race-momentum-grid article > div {
     display: grid;
     gap: 4px;
   }
 
-  .ona-system-race-momentum-grid article > div:first-child {
+  .performance-system-race-momentum-grid article > div:first-child {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
     align-items: baseline;
   }
 
-  .ona-system-race-momentum-grid span,
-  .ona-system-race-momentum-grid small,
-  .ona-system-race-year-strip span,
-  .ona-system-race-year-strip small {
-    color: var(--ona-system-muted);
+  .performance-system-race-momentum-grid span,
+  .performance-system-race-momentum-grid small,
+  .performance-system-race-year-strip span,
+  .performance-system-race-year-strip small {
+    color: var(--performance-system-muted);
     font-size: 0.66rem;
     font-weight: 800;
     line-height: 1;
@@ -3810,74 +3812,74 @@
     letter-spacing: 0;
   }
 
-  .ona-system-race-momentum-grid strong {
-    color: var(--ona-system-ink);
+  .performance-system-race-momentum-grid strong {
+    color: var(--performance-system-ink);
     font-size: 1.16rem;
     line-height: 1;
   }
 
-  .ona-system-race-momentum-grid p {
+  .performance-system-race-momentum-grid p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.7rem;
     font-weight: 700;
     line-height: 1.28;
   }
 
-  .ona-system-race-year-strip {
+  .performance-system-race-year-strip {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
     gap: 8px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding-top: 10px;
   }
 
-  .ona-system-race-year-strip button {
+  .performance-system-race-year-strip button {
     min-height: 112px;
     display: grid;
     align-content: space-between;
     gap: 6px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
     background: #fff;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     font: inherit;
     text-align: left;
     cursor: pointer;
   }
 
-  .ona-system-race-year-strip button.active {
-    border-color: var(--ona-system-ink);
-    background: var(--ona-system-ink);
+  .performance-system-race-year-strip button.active {
+    border-color: var(--performance-system-ink);
+    background: var(--performance-system-ink);
     color: #fff;
   }
 
-  .ona-system-race-year-strip button.changed {
-    border-left: 3px solid var(--ona-system-blue);
+  .performance-system-race-year-strip button.changed {
+    border-left: 3px solid var(--performance-system-blue);
   }
 
-  .ona-system-race-year-strip button.active span,
-  .ona-system-race-year-strip button.active small,
-  .ona-system-race-year-strip button.active p {
+  .performance-system-race-year-strip button.active span,
+  .performance-system-race-year-strip button.active small,
+  .performance-system-race-year-strip button.active p {
     color: rgba(255, 255, 255, 0.72);
   }
 
-  .ona-system-race-year-strip strong {
+  .performance-system-race-year-strip strong {
     color: inherit;
     font-size: 0.86rem;
     line-height: 1.08;
   }
 
-  .ona-system-race-year-strip p {
+  .performance-system-race-year-strip p {
     margin: 0;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
     line-height: 1.26;
   }
 
-  .ona-system-gate-impact {
+  .performance-system-gate-impact {
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(220px, 0.7fr);
     gap: 12px;
@@ -3885,126 +3887,126 @@
     padding: 12px;
   }
 
-  .ona-system-gate-impact > div:first-child {
+  .performance-system-gate-impact > div:first-child {
     display: grid;
     gap: 6px;
     align-content: start;
   }
 
-  .ona-system-gate-impact > div:nth-child(2) {
+  .performance-system-gate-impact > div:nth-child(2) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-gate-impact > div:nth-child(2) article,
-  .ona-system-gate-impact-list article {
+  .performance-system-gate-impact > div:nth-child(2) article,
+  .performance-system-gate-impact-list article {
     display: grid;
     gap: 5px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 10px;
     background: white;
   }
 
-  .ona-system-gate-impact strong {
+  .performance-system-gate-impact strong {
     font-size: 1.2rem;
     line-height: 1;
   }
 
-  .ona-system-gate-impact p {
-    color: var(--ona-system-muted);
+  .performance-system-gate-impact p {
+    color: var(--performance-system-muted);
     font-size: 0.78rem;
     line-height: 1.42;
   }
 
-  .ona-system-gate-impact-list {
+  .performance-system-gate-impact-list {
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-gate-impact-list article[data-status='watch'] {
-    border-top: 3px solid var(--ona-system-ink);
+  .performance-system-gate-impact-list article[data-status='watch'] {
+    border-top: 3px solid var(--performance-system-ink);
   }
 
-  .ona-system-gate-impact-list article[data-status='fail'] {
-    border-top: 3px solid var(--ona-system-red);
+  .performance-system-gate-impact-list article[data-status='fail'] {
+    border-top: 3px solid var(--performance-system-red);
   }
 
-  .ona-system-gate-impact-list article[data-status='pass'] {
-    border-top: 3px solid var(--ona-system-green);
+  .performance-system-gate-impact-list article[data-status='pass'] {
+    border-top: 3px solid var(--performance-system-green);
   }
 
-  .ona-system-score-explain {
+  .performance-system-score-explain {
     display: grid;
     gap: 10px;
     margin-bottom: 14px;
     padding: 12px;
   }
 
-  .ona-system-score-explain > div:last-child {
+  .performance-system-score-explain > div:last-child {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-score-explain article {
+  .performance-system-score-explain article {
     display: grid;
     gap: 5px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding-top: 8px;
   }
 
-  .ona-system-score-explain strong {
+  .performance-system-score-explain strong {
     font-size: 1rem;
     line-height: 1;
   }
 
-  .ona-system-map-badge {
+  .performance-system-map-badge {
     gap: 8px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: 999px;
     padding: 8px 12px;
     background: white;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.76rem;
     font-weight: 700;
     white-space: nowrap;
   }
 
-  .ona-system-map-stage {
+  .performance-system-map-stage {
     min-height: 520px;
   }
 
-  .ona-system-map-stage svg {
+  .performance-system-map-stage svg {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
   }
 
-  .ona-system-court-boundary,
-  .ona-system-court-line {
+  .performance-system-court-boundary,
+  .performance-system-court-line {
     fill: none;
     stroke: rgba(10, 14, 25, 0.12);
     stroke-width: 2;
   }
 
-  .ona-system-effect-edge {
+  .performance-system-effect-edge {
     fill: none;
-    stroke: var(--ona-system-ink);
+    stroke: var(--performance-system-ink);
     stroke-width: 2.4;
     stroke-dasharray: 8 8;
     opacity: 0.72;
   }
 
-  .ona-system-map-stage marker path {
-    fill: var(--ona-system-ink);
+  .performance-system-map-stage marker path {
+    fill: var(--performance-system-ink);
   }
 
-  .ona-system-node {
+  .performance-system-node {
     position: absolute;
     left: var(--desktop-x);
     top: var(--desktop-y);
@@ -4012,236 +4014,236 @@
     display: grid;
     gap: 6px;
     transform: translate(-50%, -50%);
-    border: 1px solid var(--ona-system-ink);
+    border: 1px solid var(--performance-system-ink);
     border-radius: var(--radius-clear-sm);
     padding: 12px;
     background: white;
     box-shadow: var(--shadow-clear-restraint);
   }
 
-  .ona-system-node strong {
+  .performance-system-node strong {
     font-size: 0.92rem;
     line-height: 1.12;
   }
 
-  .ona-system-node[data-tone='green'] {
-    border-color: var(--ona-system-green);
+  .performance-system-node[data-tone='green'] {
+    border-color: var(--performance-system-green);
   }
 
-  .ona-system-node[data-tone='blue'] {
-    border-color: var(--ona-system-blue);
+  .performance-system-node[data-tone='blue'] {
+    border-color: var(--performance-system-blue);
   }
 
-  .ona-system-node[data-tone='neutral'] {
-    border-color: var(--ona-system-line-strong);
+  .performance-system-node[data-tone='neutral'] {
+    border-color: var(--performance-system-line-strong);
   }
 
-  .ona-system-node[data-tone='red'] {
-    border-color: var(--ona-system-red);
+  .performance-system-node[data-tone='red'] {
+    border-color: var(--performance-system-red);
   }
 
-  .ona-system-projection-grid {
+  .performance-system-projection-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     margin-top: 12px;
   }
 
-  .ona-system-projection-grid article {
+  .performance-system-projection-grid article {
     min-height: 128px;
     display: grid;
     align-content: space-between;
     gap: 10px;
-    border: 1px solid var(--ona-system-line);
+    border: 1px solid var(--performance-system-line);
     border-radius: var(--radius-clear-sm);
     padding: 14px;
     background: white;
   }
 
-  .ona-system-projection-grid strong {
+  .performance-system-projection-grid strong {
     font-size: 1.18rem;
     line-height: 1;
   }
 
-  .ona-system-projection-grid p {
-    color: var(--ona-system-muted);
+  .performance-system-projection-grid p {
+    color: var(--performance-system-muted);
     font-size: 0.86rem;
     line-height: 1.42;
   }
 
-  .ona-system-validation {
-    --ona-system-validation-line: var(--ona-system-green);
+  .performance-system-validation {
+    --performance-system-validation-line: var(--performance-system-green);
     display: grid;
     gap: 14px;
-    border-block: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-validation-line);
+    border-block: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-validation-line);
     margin-top: 14px;
     padding: 16px 0 16px 14px;
   }
 
-  .ona-system-validation[data-status='watch'] {
-    --ona-system-validation-line: var(--ona-system-ink);
+  .performance-system-validation[data-status='watch'] {
+    --performance-system-validation-line: var(--performance-system-ink);
   }
 
-  .ona-system-validation[data-status='fail'] {
-    --ona-system-validation-line: var(--ona-system-red);
+  .performance-system-validation[data-status='fail'] {
+    --performance-system-validation-line: var(--performance-system-red);
   }
 
-  .ona-system-validation-header {
+  .performance-system-validation-header {
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
     gap: 18px;
     align-items: start;
   }
 
-  .ona-system-validation-header > div {
+  .performance-system-validation-header > div {
     display: grid;
     gap: 7px;
   }
 
-  .ona-system-validation-header strong {
+  .performance-system-validation-header strong {
     font-size: 1rem;
     line-height: 1.2;
   }
 
-  .ona-system-validation-header small {
-    color: var(--ona-system-muted);
+  .performance-system-validation-header small {
+    color: var(--performance-system-muted);
     font-size: 0.72rem;
     font-weight: 700;
     line-height: 1.3;
   }
 
-  .ona-system-validation-header p,
-  .ona-system-validation-list p {
-    color: var(--ona-system-muted);
+  .performance-system-validation-header p,
+  .performance-system-validation-list p {
+    color: var(--performance-system-muted);
     font-size: 0.86rem;
     line-height: 1.42;
   }
 
-  .ona-system-validation-list {
+  .performance-system-validation-list {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .ona-system-validation-list article {
+  .performance-system-validation-list article {
     min-height: 126px;
     display: grid;
     align-content: space-between;
     gap: 12px;
-    border: 1px solid var(--ona-system-line);
-    border-top: 3px solid color-mix(in srgb, var(--ona-system-green) 78%, var(--ona-system-line));
+    border: 1px solid var(--performance-system-line);
+    border-top: 3px solid color-mix(in srgb, var(--performance-system-green) 78%, var(--performance-system-line));
     border-radius: var(--radius-clear-sm);
     padding: 12px;
-    background: color-mix(in srgb, white 86%, var(--ona-system-surface));
+    background: color-mix(in srgb, white 86%, var(--performance-system-surface));
   }
 
-  .ona-system-validation-list article[data-status='watch'] {
-    border-top-color: var(--ona-system-ink);
+  .performance-system-validation-list article[data-status='watch'] {
+    border-top-color: var(--performance-system-ink);
     background: white;
   }
 
-  .ona-system-validation-list article[data-status='fail'] {
-    border-top-color: var(--ona-system-red);
+  .performance-system-validation-list article[data-status='fail'] {
+    border-top-color: var(--performance-system-red);
     background: white;
   }
 
-  .ona-system-validation-list article[data-status='deferred'] {
-    border-top-color: var(--ona-system-line-strong);
+  .performance-system-validation-list article[data-status='deferred'] {
+    border-top-color: var(--performance-system-line-strong);
     background: white;
   }
 
-  .ona-system-validation-list article > div {
+  .performance-system-validation-list article > div {
     display: grid;
     gap: 7px;
   }
 
-  .ona-system-validation-card-header {
+  .performance-system-validation-card-header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 10px;
   }
 
-  .ona-system-validation-card-header small {
-    color: var(--ona-system-muted);
+  .performance-system-validation-card-header small {
+    color: var(--performance-system-muted);
     font-size: 0.62rem;
     font-weight: 800;
     text-transform: uppercase;
     white-space: nowrap;
   }
 
-  .ona-system-validation-list article[data-status='watch'] .ona-system-validation-card-header small,
-  .ona-system-validation-list article[data-status='fail'] .ona-system-validation-card-header small {
-    color: var(--ona-system-ink);
+  .performance-system-validation-list article[data-status='watch'] .performance-system-validation-card-header small,
+  .performance-system-validation-list article[data-status='fail'] .performance-system-validation-card-header small {
+    color: var(--performance-system-ink);
   }
 
-  .ona-system-validation-list article[data-status='fail'] .ona-system-validation-card-header small {
-    color: var(--ona-system-red);
+  .performance-system-validation-list article[data-status='fail'] .performance-system-validation-card-header small {
+    color: var(--performance-system-red);
   }
 
-  .ona-system-validation-list strong {
+  .performance-system-validation-list strong {
     font-size: 0.92rem;
     line-height: 1.15;
   }
 
-  .ona-system-timeline {
+  .performance-system-timeline {
     display: grid;
     gap: 0;
-    border-block: 1px solid var(--ona-system-line);
+    border-block: 1px solid var(--performance-system-line);
     margin-top: 14px;
   }
 
-  .ona-system-timeline-header {
+  .performance-system-timeline-header {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 12px 0;
   }
 
-  .ona-system-timeline article {
+  .performance-system-timeline article {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 128px;
     gap: 18px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding: 14px 0;
   }
 
-  .ona-system-timeline article.active {
-    color: var(--ona-system-ink);
+  .performance-system-timeline article.active {
+    color: var(--performance-system-ink);
   }
 
-  .ona-system-timeline article > div {
+  .performance-system-timeline article > div {
     display: grid;
     gap: 7px;
     align-content: start;
   }
 
-  .ona-system-timeline article > div:last-child {
+  .performance-system-timeline article > div:last-child {
     text-align: right;
   }
 
-  .ona-system-timeline strong {
+  .performance-system-timeline strong {
     font-size: 0.95rem;
     line-height: 1.2;
   }
 
-  .ona-system-timeline p {
-    color: var(--ona-system-muted);
+  .performance-system-timeline p {
+    color: var(--performance-system-muted);
     font-size: 0.86rem;
     line-height: 1.42;
   }
 
-  .ona-system-report-band {
+  .performance-system-report-band {
     display: grid;
     grid-template-columns: minmax(280px, 0.62fr) minmax(0, 1.38fr);
     gap: 48px 56px;
     align-items: start;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding: 68px 0 48px;
   }
 
-  .ona-system-report-intro p {
+  .performance-system-report-intro p {
     margin-top: 16px;
     max-width: 560px;
     color: #44484f;
@@ -4249,289 +4251,289 @@
     line-height: 1.6;
   }
 
-  .ona-system-report-grid {
+  .performance-system-report-grid {
     display: grid;
     gap: 0;
   }
 
-  .ona-system-report {
+  .performance-system-report {
     display: grid;
     gap: 12px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding: 22px 0;
     contain: layout paint;
   }
 
-  .ona-system-report:first-child {
+  .performance-system-report:first-child {
     padding-top: 0;
     border-top: 0;
   }
 
-  .ona-system-report:last-child {
+  .performance-system-report:last-child {
     padding-bottom: 0;
   }
 
-  .ona-system-report h3 {
+  .performance-system-report h3 {
     max-width: 58ch;
     font-size: clamp(1.1rem, 1.55vw, 1.42rem);
     line-height: 1.16;
     text-wrap: balance;
   }
 
-  .ona-system-report p {
-    color: var(--ona-system-muted);
+  .performance-system-report p {
+    color: var(--performance-system-muted);
     font-size: 0.95rem;
     line-height: 1.55;
   }
 
-  .ona-system-receipt-ledger {
+  .performance-system-receipt-ledger {
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    border-block: 1px solid var(--ona-system-line);
+    border-block: 1px solid var(--performance-system-line);
     margin-top: 8px;
   }
 
-  .ona-system-receipt {
+  .performance-system-receipt {
     min-height: 132px;
     display: grid;
     grid-template-rows: 1fr auto;
     gap: 18px;
-    border-right: 1px solid var(--ona-system-line);
+    border-right: 1px solid var(--performance-system-line);
     padding: 18px 18px 20px;
-    background: color-mix(in srgb, var(--ona-system-surface) 58%, transparent);
+    background: color-mix(in srgb, var(--performance-system-surface) 58%, transparent);
   }
 
-  .ona-system-receipt:last-child {
+  .performance-system-receipt:last-child {
     border-right: 0;
   }
 
-  .ona-system-receipt span {
-    color: var(--ona-system-muted);
+  .performance-system-receipt span {
+    color: var(--performance-system-muted);
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-receipt p {
+  .performance-system-receipt p {
     margin-top: 10px;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.9rem;
     line-height: 1.45;
   }
 
-  .ona-system-receipt strong {
-    color: var(--ona-system-ink);
+  .performance-system-receipt strong {
+    color: var(--performance-system-ink);
     font-size: clamp(1.16rem, 2vw, 1.75rem);
     line-height: 1;
     letter-spacing: 0;
   }
 
-  .ona-system-strip {
+  .performance-system-strip {
     justify-content: space-between;
     gap: 10px;
-    border-top: 1px solid var(--ona-system-line);
+    border-top: 1px solid var(--performance-system-line);
     padding: 22px 0 44px;
   }
 
-  .ona-system-strip div,
-  .ona-system-strip a {
+  .performance-system-strip div,
+  .performance-system-strip a {
     gap: 8px;
-    color: var(--ona-system-muted);
+    color: var(--performance-system-muted);
     font-size: 0.76rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0;
   }
 
-  .ona-system-strip a {
+  .performance-system-strip a {
     min-height: 38px;
-    color: var(--ona-system-ink);
+    color: var(--performance-system-ink);
     text-transform: none;
     letter-spacing: 0;
   }
 
   @media (max-width: 960px) {
-    .ona-system-hero,
-    .ona-system-lab-grid,
-    .ona-system-report-band {
+    .performance-system-hero,
+    .performance-system-lab-grid,
+    .performance-system-report-band {
       grid-template-columns: 1fr;
     }
 
-    .ona-system-hero {
+    .performance-system-hero {
       gap: 28px;
       padding-top: 46px;
     }
 
-    .ona-system-shell h1 {
+    .performance-system-shell h1 {
       max-width: 10ch;
     }
 
-    .ona-system-policy-rail {
+    .performance-system-policy-rail {
       align-self: auto;
     }
 
-    .ona-system-map-stage {
+    .performance-system-map-stage {
       min-height: 470px;
     }
 
-    .ona-system-receipt-ledger {
+    .performance-system-receipt-ledger {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ona-system-projection-grid {
+    .performance-system-projection-grid {
       grid-template-columns: 1fr;
     }
 
-    .ona-system-rulebook,
-    .ona-system-kickoff-header,
-    .ona-system-live-standings-header,
-    .ona-system-live-callout,
-    .ona-system-game-turn-header,
-    .ona-system-playback,
-    .ona-system-turn-recap,
-    .ona-system-compounding-trail-header,
-    .ona-system-final-outcome-header,
-    .ona-system-field-standings-header,
-    .ona-system-steering-cockpit-header,
-    .ona-system-next-turn,
-    .ona-system-decision-ledger,
-    .ona-system-race-history-header,
-    .ona-system-race-momentum-header,
-    .ona-system-decision-moments,
-    .ona-system-gate-impact,
-    .ona-system-gate-impact-list,
-    .ona-system-challenge-list,
-    .ona-system-score-explain > div:last-child {
+    .performance-system-rulebook,
+    .performance-system-kickoff-header,
+    .performance-system-live-standings-header,
+    .performance-system-live-callout,
+    .performance-system-game-turn-header,
+    .performance-system-playback,
+    .performance-system-turn-recap,
+    .performance-system-compounding-trail-header,
+    .performance-system-final-outcome-header,
+    .performance-system-field-standings-header,
+    .performance-system-steering-cockpit-header,
+    .performance-system-next-turn,
+    .performance-system-decision-ledger,
+    .performance-system-race-history-header,
+    .performance-system-race-momentum-header,
+    .performance-system-decision-moments,
+    .performance-system-gate-impact,
+    .performance-system-gate-impact-list,
+    .performance-system-challenge-list,
+    .performance-system-score-explain > div:last-child {
       grid-template-columns: 1fr;
     }
 
-    .ona-system-kickoff-grid {
+    .performance-system-kickoff-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ona-system-steering-actions {
+    .performance-system-steering-actions {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ona-system-next-turn-actions {
+    .performance-system-next-turn-actions {
       grid-template-columns: 1fr;
     }
 
-    .ona-system-steering-comparison {
+    .performance-system-steering-comparison {
       grid-template-columns: 1fr;
     }
 
-    .ona-system-decision-ledger-list {
+    .performance-system-decision-ledger-list {
       grid-template-columns: 1fr;
     }
 
-    .ona-system-steering-preview-grid {
+    .performance-system-steering-preview-grid {
       grid-template-columns: 1fr;
     }
 
-    .ona-system-challenge-header {
+    .performance-system-challenge-header {
       display: grid;
     }
 
-    .ona-system-validation-header,
-    .ona-system-validation-list {
+    .performance-system-validation-header,
+    .performance-system-validation-list {
       grid-template-columns: 1fr;
     }
 
-    .ona-system-receipt:nth-child(2n) {
+    .performance-system-receipt:nth-child(2n) {
       border-right: 0;
     }
 
-    .ona-system-receipt:nth-child(n + 3) {
-      border-top: 1px solid var(--ona-system-line);
+    .performance-system-receipt:nth-child(n + 3) {
+      border-top: 1px solid var(--performance-system-line);
     }
 
-    .ona-system-strip {
+    .performance-system-strip {
       flex-wrap: wrap;
       justify-content: flex-start;
     }
   }
 
   @media (max-width: 640px) {
-    .ona-system-container {
+    .performance-system-container {
       width: min(100vw - 22px, var(--content-width-clear));
     }
 
-    .ona-system-metric-grid {
+    .performance-system-metric-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ona-system-actions {
+    .performance-system-actions {
       display: grid;
       grid-template-columns: 1fr;
     }
 
-    .ona-system-scoreboard,
-    .ona-system-kickoff-grid,
-    .ona-system-live-standings-list,
-    .ona-system-field-setup-lanes,
-    .ona-system-gate-impact > div:nth-child(2),
-    .ona-system-versus-control,
-    .ona-system-game-turn-header,
-    .ona-system-playback-controls,
-    .ona-system-playback-actions,
-    .ona-system-turn-recap,
-    .ona-system-compounding-trail-header,
-    .ona-system-compounding-trail-list,
-    .ona-system-final-outcome-header,
-    .ona-system-final-outcome-lanes,
-    .ona-system-field-standings-header,
-    .ona-system-steering-actions,
-    .ona-system-steering-season,
-    .ona-system-steering-previews-header,
-    .ona-system-steering-preview-grid,
-    .ona-system-steering-comparison,
-    .ona-system-race-history-header,
-    .ona-system-race-history-list,
-    .ona-system-race-momentum-header,
-    .ona-system-decision-moments,
-    .ona-system-decision-moment-list,
-    .ona-system-race-momentum-grid,
-    .ona-system-race-year-strip,
-    .ona-system-challenge-list article > div,
-    .ona-system-timeline article {
+    .performance-system-scoreboard,
+    .performance-system-kickoff-grid,
+    .performance-system-live-standings-list,
+    .performance-system-field-setup-lanes,
+    .performance-system-gate-impact > div:nth-child(2),
+    .performance-system-versus-control,
+    .performance-system-game-turn-header,
+    .performance-system-playback-controls,
+    .performance-system-playback-actions,
+    .performance-system-turn-recap,
+    .performance-system-compounding-trail-header,
+    .performance-system-compounding-trail-list,
+    .performance-system-final-outcome-header,
+    .performance-system-final-outcome-lanes,
+    .performance-system-field-standings-header,
+    .performance-system-steering-actions,
+    .performance-system-steering-season,
+    .performance-system-steering-previews-header,
+    .performance-system-steering-preview-grid,
+    .performance-system-steering-comparison,
+    .performance-system-race-history-header,
+    .performance-system-race-history-list,
+    .performance-system-race-momentum-header,
+    .performance-system-decision-moments,
+    .performance-system-decision-moment-list,
+    .performance-system-race-momentum-grid,
+    .performance-system-race-year-strip,
+    .performance-system-challenge-list article > div,
+    .performance-system-timeline article {
       grid-template-columns: 1fr;
     }
 
-    .ona-system-challenge-list article > div {
+    .performance-system-challenge-list article > div {
       display: grid;
       gap: 4px;
     }
 
-    .ona-system-turn-recap article {
+    .performance-system-turn-recap article {
       min-height: auto;
       border-right: 0;
-      border-bottom: 1px solid var(--ona-system-line);
+      border-bottom: 1px solid var(--performance-system-line);
       padding: 2px 0 10px;
     }
 
-    .ona-system-turn-recap article:last-child {
+    .performance-system-turn-recap article:last-child {
       border-bottom: 0;
       padding-bottom: 2px;
     }
 
-    .ona-system-action {
+    .performance-system-action {
       width: 100%;
     }
 
-    .ona-system-final-outcome-header button {
+    .performance-system-final-outcome-header button {
       width: 100%;
     }
 
-    .ona-system-map-header,
-    .ona-system-panel-header {
+    .performance-system-map-header,
+    .performance-system-panel-header {
       align-items: flex-start;
       flex-direction: column;
     }
 
-    .ona-system-node {
+    .performance-system-node {
       left: var(--mobile-x);
       top: var(--mobile-y);
       width: 98px;
@@ -4539,45 +4541,45 @@
       transform: none;
     }
 
-    .ona-system-node span {
+    .performance-system-node span {
       font-size: 0.62rem;
     }
 
-    .ona-system-node strong {
+    .performance-system-node strong {
       font-size: 0.76rem;
     }
 
-    .ona-system-report-band {
+    .performance-system-report-band {
       gap: 28px;
       padding: 48px 0 34px;
     }
 
-    .ona-system-timeline article > div:last-child {
+    .performance-system-timeline article > div:last-child {
       text-align: left;
     }
 
-    .ona-system-receipt-ledger {
+    .performance-system-receipt-ledger {
       grid-template-columns: 1fr;
     }
 
-    .ona-system-receipt,
-    .ona-system-receipt:nth-child(2n) {
+    .performance-system-receipt,
+    .performance-system-receipt:nth-child(2n) {
       min-height: 0;
       border-right: 0;
     }
 
-    .ona-system-receipt + .ona-system-receipt {
-      border-top: 1px solid var(--ona-system-line);
+    .performance-system-receipt + .performance-system-receipt {
+      border-top: 1px solid var(--performance-system-line);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .ona-system-policy-list button {
+    .performance-system-policy-list button {
       transition: none;
     }
 
-    .ona-system-policy-list button:hover,
-    .ona-system-policy-list button:active {
+    .performance-system-policy-list button:hover,
+    .performance-system-policy-list button:active {
       transform: none;
     }
   }

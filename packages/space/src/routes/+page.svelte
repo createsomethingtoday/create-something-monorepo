@@ -6,11 +6,13 @@
     ClearDecisionPanel,
     ClearPageSection,
     ClearProofStrip,
+    PerformanceLabBand,
     PropertyFunnel,
     SEO,
     type ClearCardItem,
     type ClearCtaItem,
-    type ClearDecisionItem
+    type ClearDecisionItem,
+    type PerformanceLabMetric
   } from '@create-something/canon';
 
   const proofMetrics = [
@@ -18,6 +20,27 @@
     { value: '3', label: 'runtime loops previewed in the shell' },
     { value: '100%', label: 'Cloudflare Workers-first execution' },
     { value: 'Direct', label: 'inspectable routes, outputs, and state' }
+  ];
+
+  const workbenchReadiness: PerformanceLabMetric[] = [
+    {
+      label: 'Route',
+      value: 'Live',
+      detail: 'The surface performs real work against the runtime instead of simulating an outcome.',
+      tone: 'signal'
+    },
+    {
+      label: 'Failure',
+      value: 'Visible',
+      detail: 'Timing, state, limits, and recovery behavior stay inspectable during the run.',
+      tone: 'pressure'
+    },
+    {
+      label: 'Promotion',
+      value: 'Receipted',
+      detail: 'Patterns move to research or delivery only with a repeatable result and named handoff.',
+      tone: 'growth'
+    }
   ];
 
   const heroSignals: ClearCardItem[] = [
@@ -265,6 +288,13 @@
     <ClearProofStrip items={proofMetrics} ariaLabel="Workbench proof artifacts" />
   {/snippet}
 </ClearPageSection>
+
+<PerformanceLabBand
+  title="The runtime decides what advances."
+  description="Workbench patterns move forward only after the route runs, the failure state is visible, and the handoff has evidence."
+  metrics={workbenchReadiness}
+  ariaLabel="Workbench readiness"
+/>
 
 <ClearDecisionPanel
   id="runtime-decision"

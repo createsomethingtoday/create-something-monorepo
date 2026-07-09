@@ -56,13 +56,15 @@ Built on the golden ratio (φ = 1.618). Each step multiplies by φ for natural v
 ## Font Stack
 
 ```css
---font-sans: 'ABC Diatype', 'Stack Sans Notch', system-ui, sans-serif;
---font-mono: 'ABC Diatype Mono', 'JetBrains Mono', monospace;
---font-serif: 'Martina Plantijn', Georgia, serif;
+--font-sans: Arial, 'Helvetica Neue', Helvetica, system-ui, sans-serif;
+--font-display: var(--font-sans);
+--font-mono: ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+--font-serif: Georgia, 'Times New Roman', serif;
 ```
 
-The Ona-derived clear communication layer uses ABC Diatype for interface and body text, ABC Diatype
-Mono for compact system labels, and Martina Plantijn only when an editorial serif voice is useful.
+The Performance Lab layer uses the local/system sans stack for interface and body text, the platform
+mono stack for compact system labels, and Georgia only when an editorial serif voice is useful. No
+CREATE SOMETHING surface should depend on another company's font host.
 CREATE SOMETHING keeps local fallbacks so surfaces remain stable if external font loading fails.
 
 The type rule is operational comprehension first. Headlines name the workflow or offer plainly;

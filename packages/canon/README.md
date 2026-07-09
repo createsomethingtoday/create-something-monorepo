@@ -40,6 +40,7 @@ import {
   SEO,
   Navigation,
   Footer,
+  PerformanceLabBand,
   ClearPageSection,
   ClearDecisionPanel,
   ClearProofStrip,
@@ -154,39 +155,47 @@ surfaces need stable scanning:
 | Code and payloads | `--font-code` | CLI commands, JSON payloads, terminal output |
 
 Topology and record labels use `letter-spacing: 0` and tabular numerics where
-the value is machine-shaped. Do not hard-code `Inter` or local `ABCDiatype`
-aliases in Atlas renderers; route through these tokens so public Atlas, local
+the value is machine-shaped. Do not hard-code route-local font families in
+Atlas renderers; route through these tokens so public Atlas, local
 Atlas Studio, and Substrate views keep the same typography contract.
 
-## Ona-Derived Clear Communication
+## Performance Lab Clear Communication
 
-Canon uses Ona's public design/UI/UX direction as the communication reference for CREATE
-SOMETHING: plain first-screen claims, readable type, porcelain surfaces, visible proof artifacts,
-compact navigation, and restrained action states. The micro-interaction rule is communication
-first: use motion or selection only when it clarifies state, evidence, or the next action.
-`.agency` is the first verified rollout surface; the shared primitives are the path for the rest
-of CREATE SOMETHING as surfaces are migrated.
+Canon uses Performance Lab as the CREATE SOMETHING design-language direction:
+delegated work should feel trained, tested, governed, and proven before it
+runs. The house language is now Performance Lab: plain claims, readable type,
+porcelain and near-black proof surfaces, visible artifacts, compact navigation,
+readiness rails, and restrained action states. The micro-interaction rule is
+performance first: use motion or selection only when it clarifies state,
+evidence, pressure, or the next action. `.agency` is the first verified rollout
+surface; the shared primitives are the path for the rest of CREATE SOMETHING as
+surfaces are migrated.
+
+For readiness summaries that repeat across properties, use `PerformanceLabBand`
+instead of defining a route-local row of metric cards. It renders one continuous,
+responsive operating rail with token-backed signal, pressure, growth, and risk states.
 
 For simulation surfaces, system maps, operating consoles, and decision labs, use the shared
-`ona-system-*` primitives instead of creating a local visual namespace. These primitives keep
-interactive prototypes on the same Ona-derived language as the properties: porcelain surfaces,
-compact panels, visible state, restrained motion, and reusable map/report/metric structures.
+`performance-system-*` primitives instead of creating a local visual namespace. These primitives
+keep interactive prototypes on the same owned system language as the properties: neutral or
+near-black surfaces, compact panels, visible state, restrained motion, pressure/readiness rails,
+and reusable map/report/metric structures.
 
 ```svelte
-<section class="ona-system-shell">
-  <div class="ona-system-hero ona-system-container">
-    <div class="ona-system-copy">
-      <p class="ona-system-eyebrow">Systems Lab</p>
+<section class="performance-system-shell">
+  <div class="performance-system-hero performance-system-container">
+    <div class="performance-system-copy">
+      <p class="performance-system-eyebrow">Systems Lab</p>
       <h1>Run the system with visible state.</h1>
-      <p class="ona-system-lede">Explain the policy, state, and receipt before action.</p>
+      <p class="performance-system-lede">Explain the policy, state, and receipt before action.</p>
     </div>
-    <div class="ona-system-panel">...</div>
+    <div class="performance-system-panel">...</div>
   </div>
 </section>
 ```
 
-The codification rule is practical: Ona is a reference for communication quality, not a brand
-surface to copy. Canon turns that reference into owned CREATE SOMETHING primitives:
+The codification rule is practical: Performance Lab is the owned CREATE
+SOMETHING identity system. Canon turns the discipline into primitives:
 
 | Layer | Canon rule |
 |-------|------------|
@@ -196,17 +205,19 @@ surface to copy. Canon turns that reference into owned CREATE SOMETHING primitiv
 | **Evidence** | Show maps, contracts, receipts, gates, state, and next actions as first-class UI objects. |
 | **Motion** | Use motion only to clarify status, selection, progression, or handoff. |
 | **Copy** | Write in nouns and verbs from the workflow: object, action, policy, owner, receipt. |
-| **Boundary** | Do not copy Ona identity, campaign language, or category framing. |
+| **Boundary** | Do not copy third-party identity, campaign language, source assets, fonts, or category framing. |
 
-This means a CREATE SOMETHING surface should feel calm and inevitable, but it should prove a
-different thing: that the workflow has been mapped, integrated, governed, validated, and handed
-off with evidence.
+This means a CREATE SOMETHING surface should feel calm, precise, and prepared,
+but it should prove a different thing: that the workflow has been mapped,
+tested, governed, validated, and handed off with evidence.
 
-The same rule applies to marketing images and generated visuals. Use Ona.com as the design and
-communication foundation, then translate it into CREATE SOMETHING artifact language: system maps,
-MCP boundaries, policy gates, receipts, validation proof, owners, and handoff state. For the
-repeatable image-generation contract, see the public Canon Images guideline in
-`packages/ltd/src/lib/content/canon/guidelines/images.md`.
+The same rule applies to marketing images and generated visuals. Use
+Performance Lab as the direction, then translate the work into CREATE SOMETHING
+artifact language: system maps, MCP boundaries, policy gates, receipts,
+validation proof, owners, and handoff state.
+For the repeatable image-generation contract, see
+`docs/IMAGE_LANGUAGE_FOUNDATION.md` and
+`docs/CREATE_SOMETHING_PERFORMANCE_LAB_DESIGN_LANGUAGE.md`.
 
 For component-level usage rules, see
 [`src/lib/components/clear/README.md`](./src/lib/components/clear/README.md).
@@ -474,8 +485,10 @@ UI files with `needs-canon-decision`.
 ## Atlas Graph And Story Primitives
 
 Canon owns the reusable Atlas graph/story contract at
-`@create-something/canon/atlas/headless` and the Svelte Atlas renderers at
-`@create-something/canon/atlas`.
+`@create-something/canon/atlas/headless` and the Svelte Atlas adapters at
+`@create-something/canon/atlas`. The adapters render through
+`@create-something/canvas-kernel`, the same canvas foundation used by Atlas
+Studio, Topology, and Substrate.
 
 Use this package for:
 
@@ -485,9 +498,9 @@ Use this package for:
   contract for humans, agents, and renderer adapters
 - `createPublicAtlasStoryArtifact(...)` for deterministic static chapters,
   accessibility summaries, article visuals, and social cards
-- `AtlasStoryCanvas` as the read-only Svelte renderer for the story artifact
-- `AtlasFlow` as the editable Svelte workflow-map renderer for the same graph
-  contract
+- `AtlasStoryCanvas` as the read-only Svelte adapter for the story artifact
+- `AtlasFlow` as the editable Svelte adapter for the same graph contract and
+  shared canvas kernel
 
 Property packages should supply their own starter maps, booking behavior,
 persistence, agent mutation path, and production integrations. Do not fork the
@@ -511,11 +524,11 @@ Atlas graph nodes now carry product attachments so independent Signal,
 Decision, and Proof product surfaces can be composed without inventing new IDs
 or a parallel map format.
 
-Canon also carries a performance-excellence layer influenced by Nike-level product discipline:
-athletic precision, decisive contrast, measured motion, material cues from performance spaces,
-and clear pressure states. Use this as a CREATE SOMETHING design principle, not as Nike branding:
-tokens and classes use `performance` language so every property can inherit the discipline without
-copying third-party identity.
+Canon also carries a performance-excellence layer for NikeLab-grade internal taste without
+third-party branding: athletic precision, decisive contrast, measured motion, material cues from
+performance spaces, research surfaces, and clear pressure states. Use this as a CREATE SOMETHING
+design principle, not as Nike branding: tokens and classes use `performance` language so every
+property can inherit the discipline without copying third-party identity.
 
 ```css
 @import '@create-something/canon/styles/performance.css';

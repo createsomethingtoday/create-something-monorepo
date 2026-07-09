@@ -55,7 +55,7 @@ published: true
 <div class="card-content">
 <h2 class="card-title">Clear Components</h2>
 <p class="card-description">
-				Map workflows, proof, receipts, and governed states with Ona-derived clarity.
+				Map workflows, proof, receipts, and governed states with Performance Lab clarity.
 			</p>
 </div>
 <div class="card-arrow">

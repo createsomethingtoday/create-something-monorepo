@@ -38,8 +38,8 @@ pnpm delivery:abundance:image2
 The deterministic SVG/PNG files remain as fallback evidence. The Image 2 assets are client presentation images, not the durable source of truth.
 
 Image 2 prompt files are written with the Canon image standard already included.
-That standard uses Ona.com as the design and communication foundation, then
-translates it into CREATE SOMETHING artifact language: system maps, MCP
+That standard uses Performance Lab as the design and communication foundation,
+then translates it into CREATE SOMETHING artifact language: system maps, MCP
 boundaries, policy gates, receipts, validation proof, owners, and handoff state.
 The public Canon rule lives in
 `packages/ltd/src/lib/content/canon/guidelines/images.md`.
@@ -168,9 +168,13 @@ For generated images:
 - keep the repo manifest as the source of truth
 - store prompts beside generated assets
 - include model, snapshot when known, date, source manifest, image family, and review status
-- use the Canon image standard and Ona.com communication foundation
+- use the Canon image standard and Performance Lab communication foundation
 - avoid real people, PHI, secrets, private client data, and fake screenshots
 - keep deterministic SVG/PNG evidence available as fallback
 - do not rely on generated text for exact file paths or operational facts
 - do not downgrade to another model if `gpt-image-2` access is blocked
 - do not require Langfuse unless there is a separate scored image-quality rubric
+
+## Review Note for docs/guides/MONOREPO_DELIVERY_UPDATES.md
+
+When reviewing the **Delivery Shape** section, ensure all project manifests align with current generator expectations before proceeding to Agent Delivery Updates.

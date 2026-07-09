@@ -5,9 +5,11 @@
     ClearPageSection,
     ClearPlatformHero,
     ClearWorkflowMiniArtifact,
+    PerformanceLabBand,
     SEO,
     type ClearActionFooterItem,
-    type ClearPlatformHeroProof
+    type ClearPlatformHeroProof,
+    type PerformanceLabMetric
   } from '@create-something/canon';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
@@ -122,6 +124,27 @@
     { label: 'Decision', value: 'Owner, allowed actions, approval pauses, and stops' },
     { label: 'Proof', value: 'A fixed-scope map and proof plan before any build commitment' }
   ];
+
+  const labReadinessItems: PerformanceLabMetric[] = [
+    {
+      label: 'Mapped',
+      value: '7/7',
+      detail: 'Actor, AI task, human task, system, artifact, constraint, touchpoint',
+      tone: 'signal'
+    },
+    {
+      label: 'Decision pressure',
+      value: 'Run / Wait / Stop',
+      detail: 'Every action has an owner, approval pause, or stop condition',
+      tone: 'pressure'
+    },
+    {
+      label: 'Proof attached',
+      value: '3 receipts',
+      detail: 'Workflow map, owner approval, proof record before build commitment',
+      tone: 'growth'
+    }
+  ];
 </script>
 
 <SEO
@@ -134,11 +157,11 @@
   {faqItems}
 />
 
-<div class="home-pilot">
+<div class="home-pilot property-performance">
   <ClearPlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Make one workflow safe to delegate."
-    description="CREATE SOMETHING turns one messy handoff into Signals, Decisions, and Proof: the process is mapped, the tools are connected, AI gets a clear lane, and your team keeps approvals, stop conditions, and an audit trail."
+    description="CREATE SOMETHING turns one messy handoff into work that is mapped, tested, governed, and proven: Signals enter from the tools, Decisions route to the right owner, and Proof records approvals, stops, and outcomes."
     proofItems={heroProofItems}
     hideAsideOnMobile={true}
   >
@@ -151,6 +174,12 @@
       <HeroTrustArtifact />
     {/snippet}
   </ClearPlatformHero>
+
+  <PerformanceLabBand
+    title="Train the workflow before it runs."
+    description="A workflow earns delegation through explicit coverage, decision pressure, and attached proof."
+    metrics={labReadinessItems}
+  />
 
   <ClearPageSection
     variant="white"

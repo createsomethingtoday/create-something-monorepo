@@ -186,12 +186,12 @@
     <h2 class="section-title">Typography</h2>
     <div class="typography-grid">
       <div class="type-card">
-        <span class="type-sample sans">ABC Diatype</span>
-        <span class="type-meta">Primary · Interface and body text</span>
+        <span class="type-sample sans">Canon Sans</span>
+        <span class="type-meta">Arial / Helvetica / system · Weight 700 · Neutral tracking</span>
       </div>
       <div class="type-card">
-        <span class="type-sample mono">ABC Diatype Mono</span>
-        <span class="type-meta">Records · Topology labels · Code-adjacent UI</span>
+        <span class="type-sample mono">Canon Mono</span>
+        <span class="type-meta">Platform monospace · Operational state and technical content</span>
       </div>
     </div>
   </section>

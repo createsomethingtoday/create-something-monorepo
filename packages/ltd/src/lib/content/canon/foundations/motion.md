@@ -33,7 +33,7 @@ Every animation must answer: what does this communicate that stillness cannot? M
 
 ## Clear Communication Motion
 
-Ona-derived clear surfaces use motion only when it clarifies operational state. The acceptable uses
+Performance Lab clear surfaces use motion only when it clarifies operational state. The acceptable uses
 are narrow:
 
 - state changed: allow, review, block, waiting, complete

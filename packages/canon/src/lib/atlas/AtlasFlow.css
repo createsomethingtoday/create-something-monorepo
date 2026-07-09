@@ -7,8 +7,9 @@
 	background-color: #fbfbf8;
 	font-family: var(
 		--font-interface,
-		'ABC Diatype',
-		ui-sans-serif,
+		Arial,
+		"Helvetica Neue",
+		Helvetica,
 		system-ui,
 		-apple-system,
 		BlinkMacSystemFont,

@@ -2,7 +2,9 @@
   import {
     Button,
     ClearPageSection,
-    SEO
+    PerformanceLabBand,
+    SEO,
+    type PerformanceLabMetric
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
@@ -64,6 +66,27 @@
         'Yes. Clients retain ownership of code, workflows, operating documentation, and approval authority.'
     }
   ];
+
+  const readinessItems: PerformanceLabMetric[] = [
+    {
+      label: 'Boundary',
+      value: 'Named',
+      detail: 'Object, owner, allowed action, and stop condition before build',
+      tone: 'signal'
+    },
+    {
+      label: 'Pressure',
+      value: 'Held',
+      detail: 'Customer, money, production, and account-touching work pauses for proof',
+      tone: 'pressure'
+    },
+    {
+      label: 'Evidence',
+      value: 'Attached',
+      detail: 'Map, approval, runbook, and proof record travel with the pilot',
+      tone: 'growth'
+    }
+  ];
 </script>
 
 <SEO
@@ -76,31 +99,43 @@
   {faqItems}
 />
 
-<ClearPageSection
-  variant="hero"
-  titleLevel="h1"
-  eyebrow="How I Work"
-  title="Map the workflow before deciding to build."
-  description="Bring one real handoff your team still protects by hand. Atlas maps the signal, owner, AI boundary, approval pause, stop condition, and proof record before anything touches customers, money, production, or accounts."
->
-  {#snippet actions()}
-    <Button href="#atlas-warmup">
-      {agencyCoreMessaging.selfMapLabel}
-    </Button>
-    <Button href={agencyCoreMessaging.servicesMappingSessionHref} variant="secondary">
-      {agencyCoreMessaging.bookMappingSessionLabel}
-    </Button>
-  {/snippet}
-</ClearPageSection>
+<div class="services-performance property-performance">
+  <ClearPageSection
+    variant="hero"
+    titleLevel="h1"
+    eyebrow="How I Work"
+    title="Map the workflow before deciding to build."
+    description="Bring one real handoff your team still protects by hand. Atlas maps the signal, owner, AI boundary, approval pause, stop condition, and proof record before anything touches customers, money, production, or accounts."
+  >
+    {#snippet actions()}
+      <Button href="#atlas-warmup">
+        {agencyCoreMessaging.selfMapLabel}
+      </Button>
+      <Button href={agencyCoreMessaging.servicesMappingSessionHref} variant="secondary">
+        {agencyCoreMessaging.bookMappingSessionLabel}
+      </Button>
+    {/snippet}
+  </ClearPageSection>
 
-<ClearPageSection
-  id="atlas-warmup"
-  variant="soft"
-  eyebrow="Map before booking"
-  title="See the workflow before deciding to build."
-  description="The public Atlas map turns one workflow into a first plan: the systems involved, which signals matter, what AI can handle, where people approve, and what proof records the outcome. It does not touch production systems."
->
-  {#snippet after()}
-    <PublicAtlasCanvas />
-  {/snippet}
-</ClearPageSection>
+  <PerformanceLabBand
+    title="Build only when the workflow is ready."
+    description="The first map establishes the boundary, pressure gate, and evidence package before implementation begins."
+    metrics={readinessItems}
+    ariaLabel="Delegation readiness"
+  />
+
+  <ClearPageSection
+    id="atlas-warmup"
+    variant="soft"
+    eyebrow="Map before booking"
+    title="See the workflow before deciding to build."
+    description="The public Atlas map turns one workflow into a first plan: the systems involved, which signals matter, what AI can handle, where people approve, and what proof records the outcome. It does not touch production systems."
+  >
+    {#snippet after()}
+      <PublicAtlasCanvas />
+    {/snippet}
+  </ClearPageSection>
+</div>
+
+<style>
+</style>

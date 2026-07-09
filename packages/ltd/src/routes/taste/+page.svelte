@@ -96,18 +96,18 @@
       items: [
         { label: 'Agent context', value: 'Active', href: '/llm.txt' },
         { label: 'Context API', value: 'Active', href: '/api/taste/context' },
-        { label: 'Ona benchmark', value: 'Required', href: '/standards' },
+        { label: 'Performance Lab', value: 'Required', href: '/standards' },
         { label: 'Self healing', value: 'Partial' }
       ]
     }
   ]);
 
-  const onaLoopGroups: ClearMetadataGroup[] = [
+  const performanceLoopGroups: ClearMetadataGroup[] = [
     {
       title: 'Reference',
       items: [
-        { label: 'Public pattern', value: 'Ona.com', href: 'https://ona.com' },
-        { label: 'Local standard', value: 'Clear Communication UI', href: '/standards' }
+        { label: 'House system', value: 'Performance Lab', href: '/standards' },
+        { label: 'Local standard', value: 'Performance Lab UI', href: '/standards' }
       ]
     },
     {
@@ -195,11 +195,11 @@
     }
   ];
 
-  const onaLoopCards: ClearCardItem[] = [
+  const performanceLoopCards: ClearCardItem[] = [
     {
       eyebrow: 'Observe',
       icon: 'search',
-      title: 'Search the feed for Ona-like signals',
+      title: 'Search the feed for Performance Lab signals',
       detail: 'Use Are.na discovery to propose references with literal offers, quiet surfaces, visible proof, and direct actions.'
     },
     {
@@ -369,35 +369,35 @@
 </ClearPageSection>
 
 <ClearPageSection
-  id="ona-loop"
+  id="performance-loop"
   variant="white"
   layout="split"
   eyebrow="Continuous improvement"
-  title="Use TASTE to keep Ona-level clarity alive."
-  description="The loop is not passive inspiration. TASTE should continuously compare CREATE SOMETHING surfaces against Ona.com's clear communication pattern, translate the useful parts into Canon primitives, and produce reviewed design and language corrections through an agent-first, mobile-first operator interface."
+  title="Use TASTE to keep Performance Lab sharp."
+  description="The loop is not passive inspiration. TASTE should continuously compare CREATE SOMETHING surfaces against the Performance Lab standard, translate useful references into Canon primitives, and produce reviewed design and language corrections through an agent-first, mobile-first operator interface."
 >
   {#snippet actions()}
     <Button href="/standards">Read The Standard</Button>
-    <Button href="https://ona.com" variant="secondary">Inspect Ona.com</Button>
+    <Button href="/taste/insights" variant="secondary">Inspect Signals</Button>
   {/snippet}
 
   {#snippet aside()}
     <ClearMetadataRail
       eyebrow="Control loop"
-      title="Ona clarity benchmark"
+      title="Performance Lab benchmark"
       description="A reusable review path for product, site, and agent-output improvements."
-      groups={onaLoopGroups}
-      tags={['clear language', 'owned canon', 'reviewed corrections']}
-      ariaLabel="Ona clarity loop metadata"
+      groups={performanceLoopGroups}
+      tags={['performance language', 'owned canon', 'reviewed corrections']}
+      ariaLabel="Performance Lab loop metadata"
     />
   {/snippet}
 
   {#snippet after()}
     <ClearCardGrid
-      items={onaLoopCards}
+      items={performanceLoopCards}
       columns={4}
       density="compact"
-      ariaLabel="Ona clarity continuous improvement loop"
+      ariaLabel="Performance Lab continuous improvement loop"
     />
   {/snippet}
 </ClearPageSection>

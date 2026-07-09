@@ -269,13 +269,13 @@ export const DESIGN_PRINCIPLES: DesignPrinciples = {
 		'Semantic colors for state (success, error, warning, info)'
 	],
 	clearCommunication: [
-		'Ona reference: one literal offer, one outcome sentence, direct actions, nearby proof',
-		'Use Are.na discovery to propose Ona-like references from the feed, then require human approval before corpus entry',
+		'Performance Lab reference: one literal offer, one outcome sentence, direct actions, readiness state, nearby proof',
+		'Use Are.na discovery to propose Performance Lab references from the feed, then require human approval before corpus entry',
 		'Human-in-the-loop interfaces must be agent-first and mobile-first: agents carry context, operators approve, reject, or redirect from small screens',
 		'Light operational surfaces with clear contrast, stable spacing, and visible boundaries',
 		'Every major claim needs a nearby artifact, receipt, metric, or named system boundary',
 		'Use concrete task language before abstract framework language',
-		'Translate public Ona patterns into owned Canon primitives; do not copy generated CSS, fonts, or assets'
+		'Translate public reference patterns into owned Canon primitives; do not copy generated CSS, fonts, assets, campaign language, or identity'
 	],
 	antiPatterns: [
 		'Decorative animation (bouncing icons, pulsing elements)',

@@ -18,54 +18,6 @@
  * @see .claude/rules/css-canon.md for token reference
  */
 
-@font-face {
-  font-family: 'ABC Diatype';
-  src:
-    url('https://ona.com/fonts/ABCDiatype-Regular.woff2') format('woff2'),
-    url('https://ona.com/fonts/ABCDiatype-Regular.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'ABC Diatype';
-  src:
-    url('https://ona.com/fonts/ABCDiatype-Bold.woff2') format('woff2'),
-    url('https://ona.com/fonts/ABCDiatype-Bold.woff') format('woff');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'ABC Diatype Mono';
-  src:
-    url('https://ona.com/fonts/ABCDiatypeSemi-Mono-Regular.woff2') format('woff2'),
-    url('https://ona.com/fonts/ABCDiatypeSemi-Mono-Regular.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'ABC Diatype Mono';
-  src:
-    url('https://ona.com/fonts/ABCDiatypeSemi-Mono-Medium.woff2') format('woff2'),
-    url('https://ona.com/fonts/ABCDiatypeSemi-Mono-Medium.woff') format('woff');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Martina Plantijn';
-  src: url('https://ona.com/fonts/Martina-Plantijn-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   /* ==========================================================================
      Colors - Functional Minimalism
@@ -135,10 +87,10 @@
   --color-info-muted: rgba(80, 130, 185, 0.2);
   --color-info-border: rgba(80, 130, 185, 0.3);
 
-  /* Clear communication - light, operational, proof-first surfaces
-   * Ona is the communication reference; these tokens are the owned CREATE
-   * SOMETHING implementation surface. Use them for mapped workflows, proof
-   * panels, receipts, governed action states, and operator handoff UI.
+  /* Performance Lab readability - light, operational, proof-first surfaces
+   * These tokens are the owned CREATE SOMETHING substrate for mapped workflows,
+   * proof panels, receipts, governed action states, and operator handoff UI.
+   * Use them when the interface needs immediate comprehension before pressure.
    */
   --color-clear-porcelain: #f9f9f9;
   --color-clear-porcelain-soft: #f2f2f2;
@@ -164,30 +116,30 @@
   --radius-clear-md: 8px;
   --shadow-clear-restraint: 0 4px 20px rgba(0, 0, 0, 0.06);
 
-  /* Performance excellence - Ona clarity with athletic discipline
-   * Inspired by elite performance-product design: precise contrast, measured
-   * motion, court/field material cues, and visible pressure states. Keep these
-   * brand-safe: use them as CREATE SOMETHING system tokens, not third-party
-   * brand identifiers.
+  /* Performance Lab pressure - readiness, testing, and decision intensity
+   * Inspired by elite performance-product discipline: precise contrast,
+   * measured motion, lab/field material cues, and visible pressure states.
+   * Keep these brand-safe: use them as CREATE SOMETHING system tokens, not
+   * third-party brand identifiers.
    */
-  --color-performance-paper: #f7f5ef;
+  --color-performance-paper: #f3f3f0;
   --color-performance-panel: #ffffff;
-  --color-performance-ink: #111111;
-  --color-performance-muted: #60646c;
-  --color-performance-line: #d9d6cf;
-  --color-performance-line-strong: #bdb6aa;
-  --color-performance-court: #d39a4d;
+  --color-performance-ink: #090909;
+  --color-performance-muted: #5e6268;
+  --color-performance-line: #d7d7d2;
+  --color-performance-line-strong: #9c9c96;
+  --color-performance-court: #e6e6e0;
   --color-performance-court-line: rgba(255, 255, 255, 0.86);
-  --color-performance-growth: #28724f;
-  --color-performance-signal: #255f85;
-  --color-performance-pressure: #c35d21;
-  --color-performance-risk: #b83f36;
-  --color-performance-gold: #b48a2c;
-  --shadow-performance-panel: 0 22px 70px rgba(18, 18, 18, 0.08);
-  --shadow-performance-node: 0 16px 32px rgba(17, 17, 17, 0.1);
-  --radius-performance-sm: 4px;
-  --radius-performance-md: 8px;
-  --content-width-performance: 73.75rem;
+  --color-performance-growth: #007a4d;
+  --color-performance-signal: #0057b8;
+  --color-performance-pressure: #e54800;
+  --color-performance-risk: #c62026;
+  --color-performance-gold: #8b6b00;
+  --shadow-performance-panel: none;
+  --shadow-performance-node: none;
+  --radius-performance-sm: 0;
+  --radius-performance-md: 4px;
+  --content-width-performance: 85rem;
 
   /* Interactive states */
   --color-hover: rgba(255, 255, 255, 0.05);
@@ -432,10 +384,11 @@
      ========================================================================== */
 
   /* Font families */
-  --font-sans: 'ABC Diatype', 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-heading: var(--font-sans);
-  --font-mono: 'ABC Diatype Mono', "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
-  --font-serif: 'Martina Plantijn', Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --font-serif: Georgia, "Times New Roman", serif;
   --font-interface: var(--font-sans);
   --font-prose: var(--font-sans);
   --font-record: var(--font-mono);

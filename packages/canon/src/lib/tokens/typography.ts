@@ -12,9 +12,13 @@
 export const typography = {
 	// Font families
 	family: {
-		sans: '"ABC Diatype", "Stack Sans Notch", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-		mono: '"ABC Diatype Mono", "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace',
-		serif: '"Martina Plantijn", Georgia, "Times New Roman", serif',
+		sans:
+			'Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+		display:
+			'Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+		mono:
+			'ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace',
+		serif: 'Georgia, "Times New Roman", serif',
 		interface: 'var(--font-sans)',
 		prose: 'var(--font-sans)',
 		record: 'var(--font-mono)',
@@ -94,6 +98,7 @@ export type TypeScale = keyof typeof typography.scale;
 export const typographyVars = {
 	// Families
 	'--font-sans': typography.family.sans,
+	'--font-display': typography.family.display,
 	'--font-mono': typography.family.mono,
 	'--font-serif': typography.family.serif,
 	'--font-interface': typography.family.interface,

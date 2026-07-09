@@ -73,21 +73,23 @@ For production image work:
 TASTE references are judgment inputs, not source assets. Do not copy third-party
 images, fonts, brand marks, page layouts, campaign language, or generated CSS.
 
-## Ona Clarity Loop
+## Performance Lab Taste Loop
 
 TASTE should continuously improve CREATE SOMETHING implementation against the
-Ona.com clear-communication standard.
+Performance Lab standard.
 
-Use Ona.com as a public pattern reference, then translate the useful pattern into
-owned Canon primitives and CREATE SOMETHING language. Do not copy generated CSS,
-font files, images, or source assets from Ona.
+Use approved public references as pattern inputs, then translate the useful
+qualities into owned Canon primitives and CREATE SOMETHING language. Do not copy
+generated CSS, font files, images, source assets, campaign language, or identity
+from any reference.
 
 The recurring loop is:
 
-1. Observe the current Ona.com pattern: literal offer, short outcome sentence,
-   direct actions, compact navigation, nearby proof, and visible governance.
+1. Observe the current Performance Lab gap: literal offer, short outcome
+   sentence, direct actions, compact navigation, nearby proof, readiness state,
+   and visible governance.
 2. Compare CREATE SOMETHING pages, product surfaces, and agent outputs against
-   that pattern.
+   that standard.
 3. Convert gaps into Canon-level improvements: clearer page hierarchy, lighter
    operational surfaces, stable spacing, visible proof artifacts, and direct
    language.
@@ -99,8 +101,8 @@ The recurring loop is:
 6. Feed the updated standard back into `/llm.txt`, `/api/taste/context`, and the
    relevant page or delivery runbook.
 
-The Are.na integration can also find Ona-style/taste candidates inside the wider
-feed. Use `ArenaClient.searchBlocks()` or the proposal-only curator worker with
+The Are.na integration can also find Performance Lab taste candidates inside the
+wider feed. Use `ArenaClient.searchBlocks()` or the proposal-only curator worker with
 queries such as `background agents interface`, `minimal developer tool
 interface`, `mission control software agents`, `clear product UI`, and `agent
 workflow proof`.

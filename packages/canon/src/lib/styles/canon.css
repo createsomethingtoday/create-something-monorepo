@@ -3,7 +3,7 @@
   Shared across all properties: .io, .space, .agency, .ltd
 
   Philosophy: "Weniger, aber besser" - Dieter Rams
-  Font Stack: ABC Diatype + ABC Diatype Mono, with CREATE SOMETHING fallbacks
+  Font Stack: locally available sans + mono system families
 
   This file combines Canon tokens with base styles, utilities, and components.
   Property-specific customizations live in each app.css.

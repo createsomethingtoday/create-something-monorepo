@@ -1,5 +1,5 @@
 /**
- * Ona Clarity Candidate API
+ * Performance Lab Candidate API
  *
  * Proposal-only Are.na discovery lane for human review.
  * The endpoint never writes to Are.na or D1.
@@ -9,9 +9,9 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { ArenaClient, type ArenaBlock } from '$lib/integrations/arena';
 import {
-	DEFAULT_ONA_CANDIDATE_QUERIES,
-	ONA_OPERATOR_ACTIONS,
-	rankOnaCandidates
+	DEFAULT_PERFORMANCE_LAB_CANDIDATE_QUERIES,
+	PERFORMANCE_LAB_OPERATOR_ACTIONS,
+	rankPerformanceLabCandidates
 } from '$lib/taste/ona-candidates';
 
 const MAX_LIMIT = 24;
@@ -69,7 +69,7 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 		}
 	}
 
-	const candidates = rankOnaCandidates(blocks, limit);
+	const candidates = rankPerformanceLabCandidates(blocks, limit);
 	const status =
 		source === 'are.na-managed-channels'
 			? candidates.length > 0
@@ -90,9 +90,9 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 			fallbackChannels: source === 'are.na-managed-channels' ? MANAGED_FALLBACK_CHANNELS : [],
 			writePolicy: {
 				writesEnabled: false,
-				allowedActions: ONA_OPERATOR_ACTIONS,
+				allowedActions: PERFORMANCE_LAB_OPERATOR_ACTIONS,
 				note:
-					'This endpoint only proposes Ona-style clarity candidates. A human must approve, reject, redirect, or request evidence before anything enters Are.na, D1, /taste, /llm.txt, or /api/taste/context.'
+					'This legacy endpoint only proposes Performance Lab candidate references. A human must approve, reject, redirect, or request evidence before anything enters Are.na, D1, /taste, /llm.txt, or /api/taste/context.'
 			},
 			operatorInterface: {
 				priority: 'agent-first, mobile-first',
@@ -114,14 +114,14 @@ function parseQueries(url: URL): string[] {
 	const directQueries = url.searchParams.getAll('q');
 	const queryList = directQueries.length
 		? directQueries.flatMap((query) => query.split(/[|,]/))
-		: [...DEFAULT_ONA_CANDIDATE_QUERIES];
+		: [...DEFAULT_PERFORMANCE_LAB_CANDIDATE_QUERIES];
 
 	const cleaned = queryList
 		.map((query) => query.trim())
 		.filter((query) => query.length > 0)
 		.slice(0, 8);
 
-	return cleaned.length ? cleaned : [...DEFAULT_ONA_CANDIDATE_QUERIES];
+	return cleaned.length ? cleaned : [...DEFAULT_PERFORMANCE_LAB_CANDIDATE_QUERIES];
 }
 
 function filterBlocksForQueries(blocks: ArenaBlock[], queries: string[]): ArenaBlock[] {

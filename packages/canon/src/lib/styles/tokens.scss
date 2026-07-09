@@ -58,8 +58,8 @@ $color-rank-bronze-muted: rgba(194, 65, 12, 0.2); // Bronze/3rd place
 
 // Font
 // ----------------------------------------------------------------------
-$font-sans: unquote("'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif"); // Font families
-$font-mono: unquote(""JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace");
+$font-sans: unquote('Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'); // Font families
+$font-mono: unquote('ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace');
 $font-serif: unquote("Georgia, "Times New Roman", serif");
 $font-light: 300; // Font weights
 $font-regular: 400;
@@ -243,8 +243,8 @@ $canon-tokens: (
   'color-rank-gold-muted': rgba(202, 138, 4, 0.2),
   'color-rank-bronze': #c2410c,
   'color-rank-bronze-muted': rgba(194, 65, 12, 0.2),
-  'font-sans': unquote("'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif"),
-  'font-mono': unquote(""JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace"),
+  'font-sans': unquote('Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'),
+  'font-mono': unquote('ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace'),
   'font-serif': unquote("Georgia, "Times New Roman", serif"),
   'font-light': 300,
   'font-regular': 400,
