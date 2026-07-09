@@ -1,0 +1,16 @@
+{
+  "schema_version": "multi-agent-work-unit.v1",
+  "id": "CRE-1154-worker",
+  "linear": { "issue": "CRE-1154" },
+  "lane": "code-quality",
+  "role": "worker",
+  "tier": ["Database", "Automation", "Judgment"],
+  "goal": "Implement one bounded reviewed agent-loop pilot.",
+  "scope": { "packages": ["@create-something/symphony"], "paths": ["packages/symphony/**", "scripts/agent-loop-pilot.mjs", "automation/agent-contracts/**"] },
+  "locks": { "packages": ["@create-something/symphony"], "paths": ["packages/symphony/**", "scripts/agent-loop-pilot.mjs", "automation/agent-contracts/**"], "mode": "write" },
+  "allowed_commands": ["corepack pnpm --filter @create-something/symphony test"],
+  "verification": [{ "command": "corepack pnpm --filter @create-something/symphony test", "evidence": "Symphony tests pass." }],
+  "evidence": { "target": "Linear CRE-1154 comment", "required_artifacts": ["commands", "changed paths", "worker summary"] },
+  "stop_conditions": ["Stop before batch or daemon promotion."],
+  "promotion_gate": { "batch_agents": false, "production_mutation": false, "merge_or_deploy": false }
+}

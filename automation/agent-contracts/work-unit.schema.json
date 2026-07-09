@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://createsomething.agency/schemas/multi-agent-work-unit.v1.json",
+  "title": "CREATE SOMETHING Multi-Agent Work Unit",
+  "type": "object",
+  "required": ["schema_version", "id", "linear", "lane", "role", "tier", "goal", "scope", "locks", "allowed_commands", "verification", "evidence", "stop_conditions", "promotion_gate"],
+  "allOf": [
+    {
+      "if": { "properties": { "role": { "const": "reviewer" } } },
+      "then": { "properties": { "locks": { "properties": { "mode": { "const": "read" } } } } }
+    }
+  ],
+  "properties": {
+    "schema_version": { "const": "multi-agent-work-unit.v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "linear": { "type": "object", "required": ["issue"] },
+    "lane": { "enum": ["code-quality", "policy", "stability", "performance", "innovation", "review", "promotion"] },
+    "role": { "enum": ["scout", "worker", "reviewer", "integrator", "operator"] },
+    "tier": { "type": "array", "minItems": 1 },
+    "goal": { "type": "string", "minLength": 1 },
+    "scope": { "type": "object", "required": ["packages", "paths"] },
+    "locks": { "type": "object", "required": ["packages", "paths", "mode"] },
+    "allowed_commands": { "type": "array", "minItems": 1 },
+    "verification": { "type": "array", "minItems": 1 },
+    "evidence": { "type": "object", "required": ["target", "required_artifacts"] },
+    "stop_conditions": { "type": "array", "minItems": 1 },
+    "promotion_gate": { "type": "object", "required": ["batch_agents", "production_mutation", "merge_or_deploy"] }
+  }
+}

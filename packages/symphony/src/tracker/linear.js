@@ -108,6 +108,25 @@ export class LinearTrackerClient {
         const issues = await this.fetch_issues_by_states(this.config.tracker.active_states);
         return issues.filter((issue) => has_required_labels(issue, this.config));
     }
+    async fetch_issue_by_identifier(identifier) {
+        const payload = await this.graphql(`
+        query SymphonyIssueByIdentifier($id: String!) {
+          issue(id: $id) {
+            ${LINEAR_ISSUE_FIELDS}
+          }
+        }
+      `, { id: identifier });
+        const node = payload.data?.issue;
+        if (!node) {
+            return null;
+        }
+        const issue = normalize_issue(node);
+        const active_states = new Set(this.config.tracker.active_states.map(normalize_state_name));
+        if (!active_states.has(normalize_state_name(issue.state)) || !has_required_labels(issue, this.config)) {
+            return null;
+        }
+        return issue;
+    }
     async fetch_issues_by_states(states) {
         if (states.length === 0) {
             return [];

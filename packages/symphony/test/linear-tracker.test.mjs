@@ -100,3 +100,26 @@ test('fetch_candidate_issues requires all configured tracker labels', async () =
     ['CRE-1']
   );
 });
+
+test('fetch_issue_by_identifier selects an active labeled issue without project membership', async () => {
+  const node = createIssue('CRE-1154', ['code-quality']);
+  const client = new LinearTrackerClient(
+    createConfig(),
+    logger,
+    async (_url, init) => {
+      const payload = JSON.parse(init.body);
+      assert.match(payload.query, /query SymphonyIssueByIdentifier/);
+      assert.equal(payload.variables.id, 'CRE-1154');
+      return new Response(JSON.stringify({ data: { issue: node } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+  );
+
+  const issue = await client.fetch_issue_by_identifier('CRE-1154');
+
+  assert.equal(issue.identifier, 'CRE-1154');
+  assert.equal(issue.state, 'Todo');
+  assert.deepEqual(issue.labels, ['code-quality']);
+});

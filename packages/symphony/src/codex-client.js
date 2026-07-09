@@ -70,6 +70,7 @@ export class CodexAppServerClient {
     cwd;
     logger;
     on_event;
+    env;
     proc = null;
     stdout_buffer = '';
     pending = new Map();
@@ -84,6 +85,7 @@ export class CodexAppServerClient {
         this.cwd = options.cwd;
         this.logger = options.logger;
         this.on_event = options.on_event;
+        this.env = options.env ?? process.env;
     }
     async start_session() {
         this.ensure_process();
@@ -183,6 +185,7 @@ export class CodexAppServerClient {
         try {
             this.proc = spawn('bash', ['-lc', this.config.codex.command], {
                 cwd: this.cwd,
+                env: this.env,
                 stdio: ['pipe', 'pipe', 'pipe'],
             });
         }
@@ -277,10 +280,11 @@ export class CodexAppServerClient {
             rate_limits,
         };
         if (typeof message.id === 'number' && method.endsWith('requestApproval')) {
-            this.respond(message.id, { decision: 'acceptForSession' });
+            const deny = this.config.codex.approval_policy === 'never';
+            this.respond(message.id, { decision: deny ? 'decline' : 'acceptForSession' });
             this.emit({
                 ...base,
-                event: 'approval_auto_approved',
+                event: deny ? 'approval_declined' : 'approval_auto_approved',
                 message: method,
             });
             return;

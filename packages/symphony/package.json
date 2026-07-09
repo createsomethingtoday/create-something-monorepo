@@ -31,7 +31,8 @@
   ],
   "scripts": {
     "check": "for f in src/*.js src/tracker/*.js test/*.mjs; do node --check \"$f\"; done",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "work-unit:verify": "node ../../scripts/agent-work-unit-verify.mjs"
   },
   "dependencies": {
     "liquidjs": "^10.25.0",

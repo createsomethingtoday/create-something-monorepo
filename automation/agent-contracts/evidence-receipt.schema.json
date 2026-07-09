@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://createsomething.agency/schemas/multi-agent-evidence-receipt.v1.json",
+  "title": "CREATE SOMETHING Multi-Agent Evidence Receipt",
+  "type": "object",
+  "required": ["schema_version", "run_id", "role", "work_unit_id", "linear", "status", "commands", "changed_paths", "evidence", "next_decision", "metrics"],
+  "properties": {
+    "schema_version": { "const": "multi-agent-evidence-receipt.v1" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "role": { "enum": ["scout", "worker", "reviewer", "integrator", "operator"] },
+    "work_unit_id": { "type": "string", "minLength": 1 },
+    "linear": { "type": "object", "required": ["issue"] },
+    "status": { "enum": ["passed", "failed", "blocked"] },
+    "commands": { "type": "array", "minItems": 1 },
+    "changed_paths": { "type": "array" },
+    "evidence": { "type": "string", "minLength": 1 },
+    "next_decision": { "type": "string", "minLength": 1 },
+    "metrics": {
+      "type": "object",
+      "required": ["duration_ms", "retry_count", "human_intervention_count", "tokens"]
+    }
+  }
+}

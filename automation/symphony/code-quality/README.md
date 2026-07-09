@@ -57,6 +57,19 @@ pnpm agent:loop-pilot:dispatch
 `pnpm symphony:code-quality:once`. That command performs one poll/dispatch pass
 and drains to idle instead of leaving a daemon running.
 
+For one worker → read-only reviewer → integrator pass, use the exact-issue lane:
+
+```bash
+pnpm agent:loop-pilot:reviewed:check -- --issue CRE-1154 --json
+pnpm agent:loop-pilot:reviewed -- --issue CRE-1154 --json
+```
+
+The readiness command validates the exact active `code-quality` issue and all
+three work-unit contracts without creating a workspace. The live command uses
+account-authenticated Codex, preserves the inspected workspace, writes a
+machine-readable aggregate receipt, and comments Linear. It does not close,
+merge, deploy, batch, or start a daemon.
+
 Only `In Progress` Linear issues in the configured project with the
 `code-quality` label are dispatchable. `Backlog` and `Todo` issues may appear in
 broad Linear ready views, but the code-quality Symphony workflow must not
@@ -109,9 +122,11 @@ Stop and escalate when:
 
 For each pilot run, capture:
 
-- command used: `pnpm agent:loop-pilot` or `pnpm agent:loop-pilot:dispatch`
+- command used, including reviewed readiness or dispatch when applicable
 - generated report result
 - Linear issue identifier and workspace path when dispatching
 - checks run by the worker
 - whether the result was a diff, a comment, a blocked note, or no-op
 - rollback or cleanup note for any preserved workspace
+- worker, reviewer, and integrator receipts plus reviewer fingerprint status
+- elapsed time, stage durations, retries, token usage, and human interventions
