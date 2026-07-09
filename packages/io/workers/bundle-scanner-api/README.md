@@ -2,6 +2,19 @@
 
 Worker endpoint for pre-review Webflow App bundle scanning.
 
+## Authentication
+
+`POST /scan` requires the shared secret `SCAN_WEBHOOK_SECRET`, supplied as either:
+
+- `Authorization: Bearer <secret>`, or
+- `X-Scan-Secret: <secret>`
+
+The secret is compared in constant time. In `production` the worker **fails closed**:
+if `SCAN_WEBHOOK_SECRET` is unset, `/scan` returns `500`. In non-production
+environments an unset secret allows unauthenticated access for local development.
+
+`GET /health` is unauthenticated.
+
 ## Scan Contract
 
 `POST /scan`
@@ -14,6 +27,9 @@ Worker endpoint for pre-review Webflow App bundle scanning.
   "callbackUrl": "https://optional-callback.example.com/scan-result"
 }
 ```
+
+Artifact URLs must be `http(s)` and resolve to a **public** host — requests to
+loopback, private, or link-local addresses are rejected (`400`) as an SSRF guard.
 
 - `bundleUrl` is the canonical app bundle artifact. In the final pipeline this should come
   from Webflow Admin or from a hash-linked copy of that Admin bundle.
@@ -40,3 +56,37 @@ The scan report includes `sourceMapSummary`:
 `publicExposure: true` means the production bundle contained `.map` files or `sourceMappingURL`
 references. The form can still collect source maps separately, but public exposure should be
 handled as a release-blocking cleanup item before publication.
+
+## Local Development
+
+```bash
+cp .dev.vars.example .dev.vars   # then edit SCAN_WEBHOOK_SECRET
+pnpm --filter=@create-something/bundle-scanner-api dev
+pnpm --filter=@create-something/bundle-scanner-api test
+```
+
+## Deploy
+
+Deployment is a deliberate step — run it yourself when ready.
+
+```bash
+# 1. Set secrets (once per environment)
+wrangler secret put SCAN_WEBHOOK_SECRET
+wrangler secret put AIRTABLE_API_KEY        # optional
+
+# 2. Deploy (workers.dev subdomain by default)
+pnpm --filter=@create-something/bundle-scanner-api deploy
+
+# 3. (Optional) Bind the custom domain: uncomment the `routes` line in
+#    wrangler.toml, then deploy again. Requires the createsomething.io zone.
+```
+
+Smoke test after deploy:
+
+```bash
+curl https://<deployed-host>/health
+curl -X POST https://<deployed-host>/scan \
+  -H "Authorization: Bearer $SCAN_WEBHOOK_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"submissionId":"test","bundleUrl":"https://.../bundle.zip"}'
+```
