@@ -7,8 +7,17 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 [observability]
 enabled = true
 
+# NOTE: do NOT attach a createsomething.agency custom domain to this worker.
+# The hub remote (wf-template-review.mcp.createsomething.agency) fetches this
+# worker as a downstream, and a same-zone custom domain here makes that
+# worker-to-worker subrequest fail with Cloudflare error 1042. The Claude
+# Enterprise connector uses the public workers.dev URL instead:
+# https://webflow-template-review-mcp.createsomething.workers.dev/mcp
+
 [vars]
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
+OAUTH_ALLOWED_EMAILS = "micah@webflow.com,eric.unger@webflow.com,mariana.segura@webflow.com"
 WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
 GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
 

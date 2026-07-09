@@ -83,6 +83,63 @@ async function checkTemplateName(templatename, env = BASE_ENV) {
   };
 }
 
+async function checkLibraryName(libraryname, env = BASE_ENV) {
+  const response = await worker.fetch(
+    new Request('https://worker.test/api/checkLibraryname', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://webflow.com'
+      },
+      body: JSON.stringify({ libraryname })
+    }),
+    env
+  );
+
+  return {
+    response,
+    payload: await response.json()
+  };
+}
+
+async function checkLibraryEmail(email, env = BASE_ENV) {
+  const response = await worker.fetch(
+    new Request('https://worker.test/api/checkLibraryemail', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://webflow.com'
+      },
+      body: JSON.stringify({ email })
+    }),
+    env
+  );
+
+  return {
+    response,
+    payload: await response.json()
+  };
+}
+
+async function checkLibraryUser(email, env = BASE_ENV) {
+  const response = await worker.fetch(
+    new Request('https://worker.test/api/checkLibraryuser', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://webflow.com'
+      },
+      body: JSON.stringify({ email })
+    }),
+    env
+  );
+
+  return {
+    response,
+    payload: await response.json()
+  };
+}
+
 function creatorRecord(fields) {
   return {
     id: 'recCreator',
@@ -133,6 +190,50 @@ test('does not block nearby non-agent template names', async () => {
   assert.equal(calls.length, 1);
 });
 
+test('checks library user existence and permission against legacy library tables by default', async () => {
+  const calls = installAirtableMock((url) => {
+    if (url.pathname === '/v0/appTest/tbldQNGszIyOjt9a1') {
+      assert.match(url.searchParams.get('filterByFormula'), /fldFNavkQ2JJ6Kxt2/);
+      return {
+        records: [
+          {
+            id: 'recLibraryUser',
+            fields: {
+              Name: 'Library User'
+            }
+          }
+        ]
+      };
+    }
+
+    if (url.pathname === '/v0/appTest/creators') {
+      assert.match(url.searchParams.get('filterByFormula'), /fldhvneqrRuoF5grB/);
+      return {
+        records: [
+          {
+            id: 'recPermission',
+            fields: {
+              Name: 'Template User',
+              '⚙️Can submit Libraries?': 1
+            }
+          }
+        ]
+      };
+    }
+  });
+
+  const { response, payload } = await checkLibraryUser('creator@example.com');
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(payload, {
+    userExists: true,
+    canSubmitLibraries: true,
+    hasError: false,
+    message: 'Creator can submit Libraries.'
+  });
+  assert.equal(calls.length, 2);
+});
+
 test('clarifies template name availability backend authorization errors', async () => {
   globalThis.fetch = async () =>
     jsonResponse({ error: 'You are not authorized to perform this operation' }, 403);
@@ -142,6 +243,122 @@ test('clarifies template name availability backend authorization errors', async 
   assert.equal(response.status, 503);
   assert.match(payload.message, /marketplace name lookup is not authorized/);
   assert.doesNotMatch(payload.message, /You are not authorized/);
+});
+
+test('checks library names against library assets only', async () => {
+  const calls = installAirtableMock((url) => {
+    if (url.pathname === '/v0/appTest/assets') {
+      assert.match(url.searchParams.get('filterByFormula'), /\{🆎Type\} = 'Library📚'/);
+      assert.match(url.searchParams.get('filterByFormula'), /\{⚙️🆎Type \(Text\)\} = 'Library📚'/);
+      return {
+        records: [
+          {
+            id: 'recLibrary',
+            fields: {
+              Name: 'Radiant UI Library',
+              '🆎Type': 'Library📚',
+              '⚙️🆎Type (Text)': 'Library📚'
+            }
+          }
+        ]
+      };
+    }
+  });
+
+  const { response, payload } = await checkLibraryName('Radiant UI');
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(payload, { taken: true });
+  assert.equal(calls.length, 1);
+});
+
+test('checks library creator email with the existing creator lookup contract', async () => {
+  installAirtableMock((url) => {
+    if (url.pathname === '/v0/appTest/creators') {
+      return { records: [creatorRecord({})] };
+    }
+  });
+
+  const { response, payload } = await checkLibraryEmail('creator@example.com');
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(payload, {
+    emailExists: true,
+    message: 'This email is already in use.'
+  });
+});
+
+test('checks configured library user permission', async () => {
+  const calls = installAirtableMock((url) => {
+    if (url.pathname === '/v0/appTest/libraryUsers') {
+      assert.match(url.searchParams.get('filterByFormula'), /REGEX_MATCH/);
+      return {
+        records: [
+          {
+            id: 'recLibraryUser',
+            fields: {
+              Name: 'Library Creator',
+              Email: 'creator@example.com',
+              'Can submit Libraries': 'Approved'
+            }
+          }
+        ]
+      };
+    }
+  });
+
+  const env = {
+    ...BASE_ENV,
+    AIRTABLE_LIBRARY_USERS_TABLE_ID: 'libraryUsers',
+    AIRTABLE_LIBRARY_USER_EMAIL_FIELDS: 'Email',
+    AIRTABLE_LIBRARY_PERMISSION_FIELD: 'Can submit Libraries',
+    AIRTABLE_LIBRARY_PERMISSION_ALLOWED_VALUES: 'Approved'
+  };
+
+  const { response, payload } = await checkLibraryUser('creator@example.com', env);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(payload, {
+    userExists: true,
+    canSubmitLibraries: true,
+    hasError: false,
+    message: 'Creator can submit Libraries.'
+  });
+  assert.equal(calls.length, 2);
+});
+
+test('blocks unapproved library users', async () => {
+  installAirtableMock((url) => {
+    if (url.pathname === '/v0/appTest/libraryUsers') {
+      return {
+        records: [
+          {
+            id: 'recLibraryUser',
+            fields: {
+              Name: 'Library Creator',
+              Email: 'creator@example.com',
+              'Can submit Libraries': 'No'
+            }
+          }
+        ]
+      };
+    }
+  });
+
+  const env = {
+    ...BASE_ENV,
+    AIRTABLE_LIBRARY_USERS_TABLE_ID: 'libraryUsers',
+    AIRTABLE_LIBRARY_USER_EMAIL_FIELDS: 'Email',
+    AIRTABLE_LIBRARY_PERMISSION_FIELD: 'Can submit Libraries'
+  };
+
+  const { response, payload } = await checkLibraryUser('creator@example.com', env);
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.userExists, true);
+  assert.equal(payload.canSubmitLibraries, false);
+  assert.equal(payload.hasError, true);
+  assert.match(payload.message, /not approved/);
 });
 
 test('blocks creators with an active banned instance before eligibility checks', async () => {

@@ -51,3 +51,12 @@ export function getReviewerProfileForAccount(directory: ReviewerDirectory, accou
   if (!accountId) return null;
   return directory.get(accountId) ?? null;
 }
+
+export function getReviewerProfileForEmail(directory: ReviewerDirectory, email?: string | null): ReviewerProfile | null {
+  const normalized = email?.trim().toLowerCase();
+  if (!normalized) return null;
+  for (const profile of directory.values()) {
+    if (profile.email?.toLowerCase() === normalized) return profile;
+  }
+  return null;
+}

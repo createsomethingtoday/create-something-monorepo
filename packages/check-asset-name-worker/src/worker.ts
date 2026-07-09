@@ -11,6 +11,9 @@
  *   POST /api/checkTemplatename  — Check if a template name is taken
  *   POST /api/checkTemplateuser  — Get creator submission stats
  *   POST /api/checkTemplateemail — Email-based creator lookup
+ *   POST /api/checkLibraryname   — Check if a library name is taken
+ *   POST /api/checkLibraryuser   — Check Library creator permission
+ *   POST /api/checkLibraryemail  — Email-based creator lookup for Library intake
  *   GET  /                       — Health/info
  */
 
@@ -24,6 +27,15 @@ interface Env {
   AIRTABLE_CREATORS_TABLE_ID?: string;
   AIRTABLE_CREATORS_VIEW_ID?: string;
   AIRTABLE_BANNED_INSTANCES_TABLE_ID?: string;
+  AIRTABLE_LIBRARY_USERS_TABLE_ID?: string;
+  AIRTABLE_LIBRARY_USERS_VIEW_ID?: string;
+  AIRTABLE_LIBRARY_USER_EMAIL_FIELDS?: string;
+  AIRTABLE_LIBRARY_PERMISSION_TABLE_ID?: string;
+  AIRTABLE_LIBRARY_PERMISSION_VIEW_ID?: string;
+  AIRTABLE_LIBRARY_PERMISSION_EMAIL_FIELDS?: string;
+  AIRTABLE_LIBRARY_PERMISSION_FIELD?: string;
+  AIRTABLE_LIBRARY_PERMISSION_ALLOWED_VALUES?: string;
+  AIRTABLE_LIBRARY_ASSET_TYPE?: string;
   WHITELISTED_CREATORS?: string;
   ALLOWED_ORIGINS: string;
 }
@@ -32,6 +44,10 @@ type AirtableRecord = { id: string; fields: Record<string, unknown> };
 
 const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
 const DEFAULT_BANNED_INSTANCES_TABLE_ID = 'tblEaBjs3Y6f4YmlR';
+const DEFAULT_LIBRARY_USERS_TABLE_ID = 'tbldQNGszIyOjt9a1';
+const DEFAULT_LIBRARY_ASSET_TYPE = 'Library📚';
+const DEFAULT_LIBRARY_PERMISSION_FIELD = '⚙️Can submit Libraries?';
+const DEFAULT_LIBRARY_PERMISSION_ALLOWED_VALUES = ['1', 'true', 'yes', 'approved', 'allowed'];
 const BAN_STATUS_FIELD_ID = 'fldIvMlWqF6LZeLeW';
 const DEFAULT_WHITELISTED_CREATORS = ['hello@zealousweb.com'] as const;
 const ASSET_CREATOR_EMAIL_FIELDS = [
@@ -40,6 +56,8 @@ const ASSET_CREATOR_EMAIL_FIELDS = [
   '📧Emails (from 🎨Creator)'
 ] as const;
 const CREATOR_RECORD_EMAIL_FIELDS = ['📧Email', '📧WF Account Email', '📧Emails'] as const;
+const DEFAULT_LIBRARY_USER_EMAIL_FIELDS = ['fldFNavkQ2JJ6Kxt2'] as const;
+const DEFAULT_LIBRARY_PERMISSION_EMAIL_FIELDS = ['fldhvneqrRuoF5grB'] as const;
 const CREATOR_ELIGIBILITY_FIELDS = [
   'Name',
   ...CREATOR_RECORD_EMAIL_FIELDS,
@@ -239,8 +257,64 @@ function getBannedInstancesTableId(env: Env): string {
   return env.AIRTABLE_BANNED_INSTANCES_TABLE_ID || DEFAULT_BANNED_INSTANCES_TABLE_ID;
 }
 
+function getLibraryUsersTableId(env: Env): string {
+  return env.AIRTABLE_LIBRARY_USERS_TABLE_ID || DEFAULT_LIBRARY_USERS_TABLE_ID;
+}
+
+function getLibraryUsersViewId(env: Env): string | undefined {
+  return env.AIRTABLE_LIBRARY_USERS_VIEW_ID || getCreatorsViewId(env);
+}
+
+function configuredList(value: string | undefined, fallback: readonly string[]): string[] {
+  const configured = (value || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return configured.length > 0 ? configured : [...fallback];
+}
+
+function getLibraryUserEmailFields(env: Env): string[] {
+  return configuredList(env.AIRTABLE_LIBRARY_USER_EMAIL_FIELDS, DEFAULT_LIBRARY_USER_EMAIL_FIELDS);
+}
+
+function getLibraryPermissionTableId(env: Env): string {
+  if (env.AIRTABLE_LIBRARY_PERMISSION_TABLE_ID) return env.AIRTABLE_LIBRARY_PERMISSION_TABLE_ID;
+  return env.AIRTABLE_LIBRARY_USERS_TABLE_ID ? getLibraryUsersTableId(env) : getCreatorsTableId(env);
+}
+
+function getLibraryPermissionViewId(env: Env): string | undefined {
+  return env.AIRTABLE_LIBRARY_PERMISSION_VIEW_ID || getCreatorsViewId(env);
+}
+
+function getLibraryPermissionEmailFields(env: Env): string[] {
+  return configuredList(
+    env.AIRTABLE_LIBRARY_PERMISSION_EMAIL_FIELDS,
+    env.AIRTABLE_LIBRARY_USERS_TABLE_ID
+      ? getLibraryUserEmailFields(env)
+      : DEFAULT_LIBRARY_PERMISSION_EMAIL_FIELDS
+  );
+}
+
+function getLibraryPermissionField(env: Env): string {
+  return env.AIRTABLE_LIBRARY_PERMISSION_FIELD || DEFAULT_LIBRARY_PERMISSION_FIELD;
+}
+
+function getLibraryPermissionAllowedValues(env: Env): Set<string> {
+  return new Set(
+    configuredList(
+      env.AIRTABLE_LIBRARY_PERMISSION_ALLOWED_VALUES,
+      DEFAULT_LIBRARY_PERMISSION_ALLOWED_VALUES
+    ).map((value) => value.toLowerCase())
+  );
+}
+
+function getLibraryAssetType(env: Env): string {
+  return env.AIRTABLE_LIBRARY_ASSET_TYPE || DEFAULT_LIBRARY_ASSET_TYPE;
+}
+
 function escapeAirtableString(input: string): string {
-  return input.replace(/'/g, "''");
+  return input.replace(/'/g, "\\'");
 }
 
 function escapeRegexLiteral(input: string): string {
@@ -267,6 +341,28 @@ function buildCreatorRecordEmailFormula(email: string): string {
   return buildEmailMatchFormula(email, CREATOR_RECORD_EMAIL_FIELDS);
 }
 
+function buildLibraryUserEmailFormula(email: string, env: Env): string {
+  return buildEmailMatchFormula(email, getLibraryUserEmailFields(env));
+}
+
+function buildLibraryPermissionEmailFormula(email: string, env: Env): string {
+  return buildEmailMatchFormula(email, getLibraryPermissionEmailFields(env));
+}
+
+function buildAssetTypeFormula(assetType: string): string {
+  const escaped = escapeAirtableString(assetType);
+  return `OR({🆎Type} = '${escaped}', {⚙️🆎Type (Text)} = '${escaped}')`;
+}
+
+function buildNameAvailabilityFormula(name: string, assetType?: string): string {
+  const escapedName = escapeAirtableString(name);
+  const base = `FIND(LOWER('${escapedName}'), LOWER({Name})) > 0`;
+  const notArchived = `NOT(FIND(LOWER('archived'), LOWER({Name})) > 0)`;
+  const clauses = [base, notArchived];
+  if (assetType) clauses.push(buildAssetTypeFormula(assetType));
+  return `AND(${clauses.join(', ')})`;
+}
+
 function firstString(value: unknown): string {
   if (typeof value === 'string') return value.trim();
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -277,6 +373,14 @@ function firstString(value: unknown): string {
     }
   }
   return '';
+}
+
+function hasAllowedPermission(value: unknown, allowedValues: Set<string>): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value === 1;
+  if (typeof value === 'string') return allowedValues.has(value.trim().toLowerCase());
+  if (Array.isArray(value)) return value.some((item) => hasAllowedPermission(item, allowedValues));
+  return false;
 }
 
 function stringArray(value: unknown): string[] {
@@ -400,7 +504,9 @@ export function summarizeTemplateSubmissionRecords(
 }
 
 export const workerTestExports = {
+  buildAssetTypeFormula,
   buildEmailMatchFormula,
+  buildNameAvailabilityFormula,
   isActiveReviewMarketplaceStatus,
   isRejectedMarketplaceStatus,
   summarizeTemplateSubmissionRecords
@@ -505,12 +611,35 @@ async function handleCheckTemplatename(
   }
 
   // Airtable substring search (case-insensitive, exclude archived)
-  const formula = `AND(FIND(LOWER('${templatename.replace(/'/g, "\\'")}'), LOWER({Name})) > 0, NOT(FIND(LOWER('archived'), LOWER({Name})) > 0))`;
+  const formula = buildNameAvailabilityFormula(templatename);
   const records = await airtableQuery(env, {
     tableId: getAssetsTableId(env),
     viewId: getAssetsViewId(env),
     formula,
     fields: ['Name', '🚀Marketplace Status']
+  });
+
+  return json({ taken: records.length > 0 }, 200, corsHeaders);
+}
+
+async function handleCheckLibraryname(
+  body: { libraryname?: string },
+  env: Env,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  const { libraryname } = body;
+
+  if (!libraryname || typeof libraryname !== 'string') {
+    return json({ message: 'Library name is required.' }, 400, corsHeaders);
+  }
+
+  const formula = buildNameAvailabilityFormula(libraryname, getLibraryAssetType(env));
+  const records = await airtableQuery(env, {
+    tableId: getAssetsTableId(env),
+    viewId: getAssetsViewId(env),
+    formula,
+    fields: ['Name', '🚀Marketplace Status', '🆎Type', '⚙️🆎Type (Text)'],
+    maxRecords: 1
   });
 
   return json({ taken: records.length > 0 }, 200, corsHeaders);
@@ -678,6 +807,75 @@ async function handleCheckTemplateemail(
   );
 }
 
+async function handleCheckLibraryemail(
+  body: { email?: string },
+  env: Env,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  return handleCheckTemplateemail(body, env, corsHeaders);
+}
+
+async function handleCheckLibraryuser(
+  body: { email?: string },
+  env: Env,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  const { email } = body;
+
+  if (!email || typeof email !== 'string') {
+    return json(
+      {
+        userExists: false,
+        canSubmitLibraries: false,
+        hasError: true,
+        message: 'Email is required'
+      },
+      400,
+      corsHeaders
+    );
+  }
+
+  const [userRecords, permissionRecords] = await Promise.all([
+    airtableQuery(env, {
+      tableId: getLibraryUsersTableId(env),
+      viewId: getLibraryUsersViewId(env),
+      formula: buildLibraryUserEmailFormula(email, env),
+      maxRecords: 1
+    }),
+    airtableQuery(env, {
+      tableId: getLibraryPermissionTableId(env),
+      viewId: getLibraryPermissionViewId(env),
+      formula: buildLibraryPermissionEmailFormula(email, env),
+      maxRecords: 1
+    })
+  ]);
+
+  const userRecord = userRecords[0];
+  const permissionRecord = permissionRecords[0];
+  const userExists = Boolean(userRecord);
+  const canSubmitLibraries = permissionRecord
+    ? hasAllowedPermission(
+        permissionRecord.fields[getLibraryPermissionField(env)],
+        getLibraryPermissionAllowedValues(env)
+      )
+    : false;
+
+  return json(
+    {
+      userExists,
+      canSubmitLibraries,
+      hasError: !canSubmitLibraries,
+      message: canSubmitLibraries
+        ? 'Creator can submit Libraries.'
+        : userExists
+          ? 'Creator is not approved to submit Libraries.'
+          : 'User not found in our system.'
+    },
+    200,
+    corsHeaders
+  );
+}
+
 // =============================================================================
 // Worker Entry Point
 // =============================================================================
@@ -703,7 +901,10 @@ export default {
           endpoints: [
             { path: '/api/checkTemplatename', method: 'POST' },
             { path: '/api/checkTemplateuser', method: 'POST' },
-            { path: '/api/checkTemplateemail', method: 'POST' }
+            { path: '/api/checkTemplateemail', method: 'POST' },
+            { path: '/api/checkLibraryname', method: 'POST' },
+            { path: '/api/checkLibraryuser', method: 'POST' },
+            { path: '/api/checkLibraryemail', method: 'POST' }
           ]
         },
         200,
@@ -731,6 +932,12 @@ export default {
           return await handleCheckTemplateuser(body as { email?: string }, env, corsHeaders);
         case '/api/checkTemplateemail':
           return await handleCheckTemplateemail(body as { email?: string }, env, corsHeaders);
+        case '/api/checkLibraryname':
+          return await handleCheckLibraryname(body as { libraryname?: string }, env, corsHeaders);
+        case '/api/checkLibraryuser':
+          return await handleCheckLibraryuser(body as { email?: string }, env, corsHeaders);
+        case '/api/checkLibraryemail':
+          return await handleCheckLibraryemail(body as { email?: string }, env, corsHeaders);
         default:
           return json({ error: `Not found: ${path}` }, 404, corsHeaders);
       }
