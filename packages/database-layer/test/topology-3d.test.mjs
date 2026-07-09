@@ -37,6 +37,14 @@ test('3d topology artifact has finite precomputed positions and compact click ta
     assert.equal(Number.isFinite(node.z), true);
     assert.ok(node.size > 0);
     assert.match(node.color, /^#[0-9a-f]{6}$/i);
+
+    if (node.clientSlug) {
+      assert.equal(node.clientOverlay.clientSlug, node.clientSlug);
+      assert.ok(node.clientOverlay.apiPath.startsWith('/api/substrate/client-overlays/'));
+      assert.ok(node.clientOverlay.mcpUri.startsWith('substrate://client-overlays/'));
+      assert.equal(node.clientOverlay.agentCommand, 'databaseLayer.clientOverlays.get');
+      assert.ok(node.clientOverlay.topology3dResourceUri.startsWith('topology3d://create-something/internal/client-overlay/'));
+    }
   }
 });
 
@@ -96,6 +104,8 @@ test('3d topology artifact declares an agent-native context API contract', () =>
   assert.ok(resourceUris.has('topology3d://create-something/internal/atlas-session'));
   assert.ok(resourceUris.has('topology3d://create-something/internal/atlas-story'));
   assert.ok(resourceUris.has('topology3d://create-something/internal/atlas-node/{atlasNodeId}'));
+  assert.ok(resourceUris.has('topology3d://create-something/internal/client-overlays'));
+  assert.ok(resourceUris.has('topology3d://create-something/internal/client-overlay/{clientSlug}'));
 
   const tools = new Map(topology3d.contextApi.tools.map((tool) => [tool.name, tool]));
   assert.equal(tools.get('topology3d_context_read')?.kind, 'read');
@@ -107,6 +117,7 @@ test('3d topology artifact declares an agent-native context API contract', () =>
   assert.equal(tools.get('topology3d_group_explain')?.kind, 'read');
   assert.equal(tools.get('topology3d_atlas_context_read')?.kind, 'read');
   assert.equal(tools.get('topology3d_atlas_story_read')?.kind, 'read');
+  assert.equal(tools.get('topology3d_client_overlay_context_read')?.kind, 'read');
   assert.ok(topology3d.contextApi.mcp.boundaries.some((boundary) => boundary.includes('do not mutate topology truth')));
 });
 
@@ -166,20 +177,17 @@ test('3d topology artifact includes generated insights and improvement candidate
 
   const improvementIds = new Set(topology3d.insights.improvementCandidates.map((candidate) => candidate.id));
   assert.ok(improvementIds.has('client-api-overlay-playbooks'));
+  assert.equal(improvementIds.has('substrate-operator-contract'), false);
   assert.ok(improvementIds.has('capability-package-contracts'));
 
   const completedIds = new Set(topology3d.insights.completedImprovements.map((candidate) => candidate.id));
   assert.ok(completedIds.has('semantic-edge-weighting'));
   assert.ok(completedIds.has('agent-explainable-groups'));
-  assert.notEqual(
-    improvementIds.has('substrate-operator-contract'),
-    completedIds.has('substrate-operator-contract')
-  );
+  assert.ok(completedIds.has('substrate-operator-contract'));
   assert.ok(
-    [
-      ...topology3d.insights.improvementCandidates,
-      ...topology3d.insights.completedImprovements
-    ].some((candidate) => candidate.groupIds?.includes('api-readable-substrate'))
+    topology3d.insights.completedImprovements.some((candidate) =>
+      candidate.groupIds?.includes('api-readable-substrate')
+    )
   );
 
   assert.equal(topology3d.insights.relationCounts.contains > topology3d.insights.relationCounts.depends_on, true);

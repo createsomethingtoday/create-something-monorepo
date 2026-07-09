@@ -3,6 +3,7 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { defaultLabelForKind } from './atlas.js';
+import { buildAtlasDatabaseHealth, type AtlasDatabaseHealth } from './database-health.js';
 import type {
   AtlasCanvasEdge,
   AtlasCanvasNode,
@@ -394,6 +395,13 @@ export async function listSessions(cwd = process.cwd()): Promise<AtlasSession[]>
     )
   );
   return sessions.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+export async function readSessionDatabaseHealth(
+  sessionId: string,
+  cwd = process.cwd()
+): Promise<AtlasDatabaseHealth> {
+  return buildAtlasDatabaseHealth(await readSession(sessionId, cwd));
 }
 
 function nextNodePosition(

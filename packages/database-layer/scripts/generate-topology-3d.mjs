@@ -3,11 +3,15 @@ import path from 'node:path';
 
 const packageRoot = path.resolve(new URL('..', import.meta.url).pathname);
 const topologyPath = path.join(packageRoot, 'data', 'create-something-internal-topology.json');
+const clientOverlayCoveragePath = path.join(packageRoot, 'data', 'create-something-client-overlay-coverage.json');
 const operatingSliceReviewPath = path.join(packageRoot, 'data', 'create-something-operating-slice-review.json');
 const operatingSliceReadinessPath = path.join(packageRoot, 'data', 'create-something-operating-slice-readiness.json');
 const outputPath = path.join(packageRoot, 'data', 'create-something-internal-topology.3d.json');
 
 const topology = JSON.parse(fs.readFileSync(topologyPath, 'utf8'));
+const clientOverlayCoverage = fs.existsSync(clientOverlayCoveragePath)
+  ? JSON.parse(fs.readFileSync(clientOverlayCoveragePath, 'utf8'))
+  : { overlays: [] };
 const operatingSliceReview = fs.existsSync(operatingSliceReviewPath)
   ? JSON.parse(fs.readFileSync(operatingSliceReviewPath, 'utf8'))
   : { slices: [] };
@@ -369,6 +373,7 @@ for (const slice of operatingSliceReview.slices ?? []) {
 }
 
 const readinessBySliceId = new Map((operatingSliceReadiness.items ?? []).map((item) => [item.sliceId, item]));
+const clientOverlayBySlug = new Map((clientOverlayCoverage.overlays ?? []).map((overlay) => [overlay.clientSlug, overlay]));
 
 function substratePacket(node) {
   const recordSlug = slug(node.id);
@@ -389,6 +394,24 @@ function substratePacket(node) {
     readinessStatus: readiness?.productionStatus ?? null,
     atlasCanvasId: topology.atlasCanvasId,
     atlasNodeId: node.atlasNodeId
+  };
+}
+
+function clientOverlayPacket(node) {
+  if (!node.clientSlug) return null;
+  const overlay = clientOverlayBySlug.get(node.clientSlug);
+  const overlaySlug = slug(node.clientSlug);
+
+  return {
+    clientSlug: node.clientSlug,
+    apiPath: `/api/substrate/client-overlays/${overlaySlug}`,
+    mcpUri: `substrate://client-overlays/${overlaySlug}`,
+    agentCommand: 'databaseLayer.clientOverlays.get',
+    topology3dResourceUri: `topology3d://create-something/internal/client-overlay/${overlaySlug}`,
+    topology3dTool: 'topology3d_client_overlay_context_read',
+    atlasCanvasId: overlay?.atlasCanvasId ?? `create-something-internal-operating-topology:${overlaySlug}`,
+    packageCount: overlay?.packages?.length ?? null,
+    sourcePath: 'packages/database-layer/data/create-something-client-overlay-coverage.json'
   };
 }
 
@@ -550,12 +573,14 @@ const nodes = topology.nodes.map((node, index) => {
       id: node.id,
       atlasNodeId: node.atlasNodeId,
       substrate: substratePacket(node),
+      clientOverlay: clientOverlayPacket(node),
       label: node.title,
       path: node.path,
       tier: node.tier,
       surface: node.surface,
       status: node.status,
       owner: node.owner,
+      clientSlug: node.clientSlug,
       clusterId: cluster.id,
       relationCount: relations,
       x: 0,
@@ -571,12 +596,14 @@ const nodes = topology.nodes.map((node, index) => {
     id: node.id,
     atlasNodeId: node.atlasNodeId,
     substrate: substratePacket(node),
+    clientOverlay: clientOverlayPacket(node),
     label: node.title,
     path: node.path,
     tier: node.tier,
     surface: node.surface,
     status: node.status,
     owner: node.owner,
+    clientSlug: node.clientSlug,
     clusterId: cluster.id,
     relationCount: relations,
     x: Math.round((tierX[node.tier] ?? 0) + cluster.x * 0.18 + Math.cos(localAngle) * ring),
@@ -987,6 +1014,14 @@ const contextApi = {
     {
       uri: 'topology3d://create-something/internal/atlas-node/{atlasNodeId}',
       description: 'Single Atlas canvas node joined back to its topology node and adjacent Atlas edges.'
+    },
+    {
+      uri: 'topology3d://create-something/internal/client-overlays',
+      description: 'List of client overlay summaries available for lazy detail loading outside the 3D renderer.'
+    },
+    {
+      uri: 'topology3d://create-something/internal/client-overlay/{clientSlug}',
+      description: 'Single client overlay detail packet loaded from the client overlay coverage artifact.'
     }
   ],
   tools: [
@@ -1061,6 +1096,14 @@ const contextApi = {
         'Read the associated Atlas story, active step, callouts, questions, and focus topology joins without loading the full canvas.',
       input: ['stepId', 'limit'],
       returns: ['atlasSession', 'story', 'activeStep', 'steps', 'callouts', 'questions']
+    },
+    {
+      name: 'topology3d_client_overlay_context_read',
+      kind: 'read',
+      description:
+        'Load client overlay detail on demand for a client slug or selected topology node, so a consumer can switch views without expanding the 3D graph.',
+      input: ['clientSlug', 'nodeId'],
+      returns: ['clientOverlay', 'selectedNode', 'handoff', 'boundary']
     }
   ],
   mcp: {

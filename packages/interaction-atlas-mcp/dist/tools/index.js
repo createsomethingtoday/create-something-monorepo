@@ -26,7 +26,7 @@ import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-ev
 import { claimNextSecurityIncidentForReview, evaluateAbusePatternAndMitigate, getSecurityIncidentById, getAccountAccess, listRecentSecurityIncidents, resolveSecurityIncident, setAccountAccess, } from '../storage/security.js';
 import { createAutomationRun, decideApproval, getActiveAutomationContract, listActiveAutomationContracts, listPendingApprovals, upsertAutomationContract, } from '../storage/control-plane.js';
 import { getJudgmentDashboardSummary } from '../storage/dashboard.js';
-import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, listSessions, readSession, updateEdge, updateNodes, } from '../studio/store.js';
+import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, listSessions, readSessionDatabaseHealth, readSession, updateEdge, updateNodes, } from '../studio/store.js';
 import { activateStoryApiStep, addStoryApiQuestion, advanceStoryApiStep, clearStory, focusStory, storySessionPayload, } from '../studio/story-api.js';
 import { getAtlasStudioAppHome, getAtlasBrowserPortalStatus, startAtlasBrowserPortal, stopAtlasBrowserPortal, } from '../studio/portal.js';
 import { healSessionProductionBindings } from '../studio/production-bindings.js';
@@ -628,6 +628,13 @@ export function registerTools(server) {
         return jsonContent({
             accountId: ctx.accountId,
             session: await readSession(input.session_id, atlasStudioCwd()),
+        });
+    }, { readOnly: true });
+    server.tool('atlas_studio_database_health', 'Read Atlas Studio database health for a local mapping session, including topology diagnostics, speed contract, and organization review.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioSessionIdSchema.parse(params);
+        return jsonContent({
+            accountId: ctx.accountId,
+            health: await readSessionDatabaseHealth(input.session_id, atlasStudioCwd()),
         });
     }, { readOnly: true });
     server.tool('atlas_studio_observe', 'Add a live-call observation to an Atlas Studio session and optionally queue mapping suggestions.', AtlasStudioObserveSchema.shape, async (params, ctx) => {

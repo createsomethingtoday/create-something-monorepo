@@ -20,6 +20,7 @@
           <select id="lensFilter" aria-label="Lens">
             <option value="operational">Operational</option>
             <option value="business">Business</option>
+            <option value="apiAi">API / AI</option>
           </select>
         </label>
         <label class="field-wide">
@@ -88,6 +89,27 @@
           <dt>Meaning</dt>
           <dd id="nodeMeaning">Topology projection</dd>
         </dl>
+        <div class="inspector-actions">
+          <button id="clientOverlayButton" type="button" hidden>Open overlay</button>
+        </div>
+        <section id="clientOverlayPanel" class="client-overlay-panel" aria-label="Client overlay detail" hidden>
+          <p class="panel-label">Client overlay</p>
+          <h2 id="clientOverlayTitle">Client overlay</h2>
+          <div class="metric-row overlay-metrics">
+            <span id="clientOverlayPackageCount">0 packages</span>
+            <span id="clientOverlayReceiptCount">0 receipts</span>
+            <span id="clientOverlayActionCount">0 actions</span>
+          </div>
+          <dl class="overlay-detail-list">
+            <dt>Canvas</dt>
+            <dd id="clientOverlayCanvas">atlas:pending</dd>
+            <dt>API</dt>
+            <dd id="clientOverlayApi">/api/substrate/client-overlays</dd>
+            <dt>MCP</dt>
+            <dd id="clientOverlayMcp">substrate://client-overlays</dd>
+          </dl>
+          <ul id="clientOverlayPackages" class="package-list"></ul>
+        </section>
       </aside>
     </main>
     <script type="module" src="./viewer.mjs"></script>

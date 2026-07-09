@@ -1,0 +1,144 @@
+{
+  "id": "substrate:create-something:organization-review:internal",
+  "generatedAt": "2026-07-08T18:21:42.115Z",
+  "topologyId": "substrate:create-something:topology:internal",
+  "atlasCanvasId": "create-something-internal-operating-topology",
+  "valueState": "valuable_with_review_signals",
+  "answer": "Atlas is showing value for CREATE SOMETHING: the business is mapped enough to reveal review signals, especially automation/database imbalance and worker/MCP concentration.",
+  "summary": {
+    "nodes": 440,
+    "edges": 898,
+    "mapped": 440,
+    "hardGaps": 0,
+    "reviewSignals": 6,
+    "operatingSlices": 22,
+    "clientOverlays": 4,
+    "automationRecords": 237,
+    "databaseRecords": 21,
+    "workerRecords": 146,
+    "mcpRecords": 72,
+    "policyRecords": 56,
+    "guideRecords": 55
+  },
+  "findings": [
+    {
+      "id": "atlas_is_showing_value",
+      "classification": "value_signal",
+      "severity": "info",
+      "title": "Atlas is showing operating value",
+      "summary": "CREATE SOMETHING now has a connected internal map with all current topology records mapped and no hard gaps.",
+      "evidence": [
+        "440/440 topology records mapped",
+        "0 local Atlas/Substrate gaps",
+        "0 exact duplicate paths",
+        "0 isolated nodes"
+      ],
+      "nextAction": "Use Atlas as the operating review surface instead of a static inventory; the value is in review-ready slices and proof-linked records."
+    },
+    {
+      "id": "automation_database_imbalance",
+      "classification": "disconnect",
+      "severity": "review",
+      "title": "Automation is heavier than Database",
+      "summary": "Automation records substantially outnumber Database records. This is the clearest business-shape disconnect: execution has outrun the shared substrate.",
+      "evidence": [
+        "Automation=237",
+        "Database=21",
+        "Review signal count=6"
+      ],
+      "nextAction": "Promote Substrate as the shared database layer so worker, MCP, agent, and policy surfaces read from the same source of truth."
+    },
+    {
+      "id": "worker_surface_concentration",
+      "classification": "overlap",
+      "severity": "review",
+      "title": "Worker surface concentration needs runtime ownership",
+      "summary": "Worker records are the largest runtime surface. This is not inherently bad, but it is where duplicated routes, configs, and deployment claims can hide.",
+      "evidence": [
+        "Worker records=146",
+        "Automation worker Atlas coverage: 123 records",
+        "Runtime binding coverage exists before production mutation"
+      ],
+      "nextAction": "Review worker slices through runtime binding coverage and attach ownership, route, storage, and rollback proof before promotion."
+    },
+    {
+      "id": "mcp_surface_overlap",
+      "classification": "overlap",
+      "severity": "review",
+      "title": "MCP surface overlap needs grouping",
+      "summary": "The MCP surface is large enough to be a product advantage and an operations risk. Similar MCP packages should be grouped by client, data domain, and runtime boundary.",
+      "evidence": [
+        "MCP records=72",
+        "Automation MCP Atlas coverage: 52 records",
+        "MCP creation remains the strategic moat"
+      ],
+      "nextAction": "Cluster MCP records by reusable capability versus client-specific adapter, then make each cluster API/MCP/agent addressable."
+    },
+    {
+      "id": "knowledge_policy_spread",
+      "classification": "redundancy",
+      "severity": "review",
+      "title": "Policy and guide knowledge is broad but needs attachment",
+      "summary": "Policy and guide records are well represented, but Atlas should keep pushing them onto the workflows they govern so docs do not become detached instructions.",
+      "evidence": [
+        "Policy records=56",
+        "Guide records=55",
+        "Judgment policy Atlas coverage: 56 records",
+        "Mixed guide Atlas coverage: 55 records"
+      ],
+      "nextAction": "Attach policy and guide nodes to the operating slices they govern, then treat missing attachment as a review signal."
+    }
+  ],
+  "recommendedMoves": [
+    {
+      "id": "promote_database_layer_as_product_surface",
+      "title": "Promote Substrate as the CREATE SOMETHING database layer",
+      "tier": "Database",
+      "summary": "The healthiest next move is to make the database layer a first-class product surface rather than a hidden app-governance implementation detail.",
+      "evidence": [
+        "21 Database records currently support 237 Automation records",
+        "Management surface exposes stable API/MCP/agent access",
+        "Atlas UI projects the same records instead of becoming a separate source of truth"
+      ],
+      "apiPath": "/api/substrate/management",
+      "agentCommand": "databaseLayer.management.get"
+    },
+    {
+      "id": "review_worker_runtime_slice_first",
+      "title": "Review worker runtime slices before production claims",
+      "tier": "Automation",
+      "summary": "The worker surface is the largest concentration of operational risk and should be the first ongoing review lane.",
+      "evidence": [
+        "Worker records=146",
+        "123 records in the primary worker slice"
+      ],
+      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
+      "agentCommand": "databaseLayer.operatingSlices.get"
+    },
+    {
+      "id": "turn_client_overlays_into_repeatable_delivery",
+      "title": "Turn client overlays into repeatable delivery",
+      "tier": "Mixed",
+      "summary": "Client overlays are mapped, which means CREATE SOMETHING can use itself as the proof path for client Atlas/Substrate implementations.",
+      "evidence": [
+        "4 client overlays mapped",
+        "Client package surfaces are represented as Atlas/Substrate records"
+      ],
+      "apiPath": "/api/substrate/coverage/runtime-bindings/cloudflare",
+      "agentCommand": "databaseLayer.coverage.runtimeBindings"
+    },
+    {
+      "id": "attach_policy_to_slices",
+      "title": "Attach policy and guides to operating slices",
+      "tier": "Judgment",
+      "summary": "Policy is already present; the improvement is to make every critical workflow show its policy, guide, approval boundary, and receipt path in context.",
+      "evidence": [
+        "Policy records=56",
+        "Guide records=55",
+        "22 operating slices are review-ready"
+      ],
+      "apiPath": "/api/substrate/operating-slices",
+      "agentCommand": "databaseLayer.operatingSlices.list"
+    }
+  ]
+}

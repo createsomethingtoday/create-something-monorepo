@@ -9,6 +9,8 @@ const atlasCoveragePath = path.join(packageRoot, 'data', 'create-something-atlas
 const managementSurfacePath = path.join(packageRoot, 'data', 'create-something-management-surface.json');
 const operatingSliceReviewPath = path.join(packageRoot, 'data', 'create-something-operating-slice-review.json');
 const operatingSliceReadinessPath = path.join(packageRoot, 'data', 'create-something-operating-slice-readiness.json');
+const organizationReviewPath = path.join(packageRoot, 'data', 'create-something-organization-review.json');
+const performanceContractPath = path.join(packageRoot, 'data', 'create-something-performance-contract.json');
 const topologyDiagnosticsPath = path.join(packageRoot, 'data', 'create-something-topology-diagnostics.json');
 const topologyPath = path.join(packageRoot, 'data', 'create-something-internal-topology.json');
 const distPath = path.join(packageRoot, 'dist', 'index.js');
@@ -112,6 +114,16 @@ function readTopologyDiagnostics() {
   return JSON.parse(fs.readFileSync(topologyDiagnosticsPath, 'utf8'));
 }
 
+function readPerformanceContract() {
+  if (!fs.existsSync(performanceContractPath)) return undefined;
+  return JSON.parse(fs.readFileSync(performanceContractPath, 'utf8'));
+}
+
+function readOrganizationReview() {
+  if (!fs.existsSync(organizationReviewPath)) return undefined;
+  return JSON.parse(fs.readFileSync(organizationReviewPath, 'utf8'));
+}
+
 function diagnosticSignalById(topologyDiagnostics, id) {
   return topologyDiagnostics?.signals?.find((signal) => signal.id === id);
 }
@@ -177,10 +189,22 @@ function operatingSliceCallouts(operatingSliceReview, operatingSliceReadiness, p
     });
 }
 
-function buildStorySteps(projection, topology, report, topologyDiagnostics) {
+function buildStorySteps(
+  projection,
+  topology,
+  report,
+  topologyDiagnostics,
+  performanceContract,
+  organizationReview
+) {
   const rootNode = projection.atlasCanvas.nodes.find((node) => node.sourceRecordId === topology.rootNodeId);
   const databaseNode = projection.atlasCanvas.nodes.find((node) => node.sourceRecordId.includes('database-layer'));
   const substrateNode = projection.atlasCanvas.nodes.find((node) => node.sourceRecordId.includes('substrate-mcp'));
+  const workerFocusNodeIds = new Set(
+    (topologyDiagnostics?.signals ?? [])
+      .filter((signal) => ['surface_overlap_worker', 'surface_review_worker', 'surface_review_mcp'].includes(signal.id))
+      .flatMap((signal) => signal.nodeIds ?? [])
+  );
   const clientNodes = projection.atlasCanvas.nodes
     .filter((node) => /packages\/agency\/clients/.test(node.notes ?? ''))
     .slice(0, 12);
@@ -236,6 +260,35 @@ function buildStorySteps(projection, topology, report, topologyDiagnostics) {
         ? `${topologyDiagnostics.summary.hardGapCount} hard gaps / ${topologyDiagnostics.summary.reviewSignalCount} review signals`
         : 'diagnostics unavailable',
       status: 'next'
+    },
+    {
+      id: 'substrate-performance',
+      title: 'Substrate speed contract',
+      summary: performanceContract
+        ? `${performanceContract.budgets.map((budget) => budget.label).join(', ')} keep the operator path close to ${performanceContract.baseline}.`
+        : 'Substrate performance contract was not available when this session was exported.',
+      focusNodeIds: [databaseNode?.id, substrateNode?.id].filter(Boolean),
+      owner: 'CREATE SOMETHING',
+      proof: performanceContract
+        ? `${performanceContract.budgets.length} budgets / ${performanceContract.fastPath.length} fast paths`
+        : 'performance contract unavailable',
+      status: 'next'
+    },
+    {
+      id: 'organization-review',
+      title: 'Organization review',
+      summary: organizationReview
+        ? `${organizationReview.answer} Primary review signal: automation/database imbalance, with worker/MCP concentration and policy/guide attachment as the next operating lenses.`
+        : 'Organization review was not available when this session was exported.',
+      focusNodeIds: projection.atlasCanvas.nodes
+        .filter((node) => workerFocusNodeIds.has(node.sourceRecordId))
+        .slice(0, 16)
+        .map((node) => node.id),
+      owner: 'CREATE SOMETHING',
+      proof: organizationReview
+        ? `${organizationReview.findings.length} findings / ${organizationReview.recommendedMoves.length} recommended moves`
+        : 'organization review unavailable',
+      status: 'next'
     }
   ];
 }
@@ -249,6 +302,8 @@ const managementSurface = readManagementSurface();
 const operatingSliceReview = readOperatingSliceReview();
 const operatingSliceReadiness = readOperatingSliceReadiness();
 const topologyDiagnostics = readTopologyDiagnostics();
+const performanceContract = readPerformanceContract();
+const organizationReview = readOrganizationReview();
 const clientAtlasLane = completionReport.completionLanes.find((lane) => lane.id === 'client_atlas');
 const substrateRuntimeLane = completionReport.completionLanes.find((lane) => lane.id === 'substrate_runtime');
 const sourceRecordById = new Map(projection.sourceRecords.map((record) => [record.id, record]));
@@ -358,6 +413,26 @@ const session = {
             createdAt
           }
         ]
+      : []),
+    ...(performanceContract
+      ? [
+          {
+            id: 'observation_performance_contract',
+            text: `Substrate performance contract: ${performanceContract.baseline}, ${performanceContract.summary.topologyRecords} topology records, ${performanceContract.summary.managementResources} API/MCP/agent resources, ${performanceContract.budgets.length} budgets, and ${performanceContract.fastPath.length} fast paths.`,
+            source: 'system',
+            createdAt
+          }
+        ]
+      : []),
+    ...(organizationReview
+      ? [
+          {
+            id: 'observation_organization_review',
+            text: `Organization review: ${organizationReview.valueState}, ${organizationReview.summary.hardGaps} hard gaps, ${organizationReview.summary.reviewSignals} review signals, ${organizationReview.findings.length} findings, and ${organizationReview.recommendedMoves.length} recommended moves.`,
+            source: 'system',
+            createdAt
+          }
+        ]
       : [])
   ],
   story: {
@@ -399,7 +474,14 @@ const session = {
         status: 'open'
       }
     ],
-    steps: buildStorySteps(projection, topology, completionReport, topologyDiagnostics),
+    steps: buildStorySteps(
+      projection,
+      topology,
+      completionReport,
+      topologyDiagnostics,
+      performanceContract,
+      organizationReview
+    ),
     updatedAt: createdAt,
     updatedBy: 'system'
   },

@@ -78,6 +78,50 @@ test('database-layer Worker host serves MCP-style resources and tool calls', asy
   assert.equal((await toolCall.json()).productionStatus, 'approval_required');
 });
 
+test('database-layer Worker host lazy-loads client overlay detail', async () => {
+  const list = await worker.fetch(
+    new Request('https://database-layer.local/api/substrate/client-overlays', {
+      method: 'GET'
+    })
+  );
+  const listBody = await list.json();
+  const outerfields = listBody.overlays.find((overlay) => overlay.clientSlug === 'outerfields');
+  const detail = await worker.fetch(
+    new Request(`https://database-layer.local${outerfields.apiPath}`, {
+      method: 'GET'
+    })
+  );
+  const toolCall = await worker.fetch(
+    new Request(
+      'https://database-layer.local/api/substrate/mcp/tools/database_layer_get_client_overlay/call/outerfields',
+      { method: 'GET' }
+    )
+  );
+
+  assert.equal(list.status, 200);
+  assert.equal(listBody.overlays.length, databaseLayerWorkerState.clientOverlayCoverage.overlays.length);
+  assert.equal(detail.status, 200);
+  assert.equal((await detail.json()).packages.length, 3);
+  assert.equal(toolCall.status, 200);
+  assert.equal((await toolCall.json()).clientSlug, 'outerfields');
+});
+
+test('database-layer Worker host serves business operating recommendations', async () => {
+  const response = await worker.fetch(
+    new Request('https://database-layer.local/api/substrate/business/recommendations', {
+      method: 'GET'
+    })
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.id, databaseLayerWorkerState.businessRecommendations.id);
+  assert.equal(body.summary.operationalizedLanes, 4);
+  assert.ok(
+    body.lanes.some((lane) => lane.sourceMoveId === 'turn_client_overlays_into_repeatable_delivery')
+  );
+});
+
 test('database-layer Worker host serves MCP JSON-RPC read calls', async () => {
   const list = await worker.fetch(
     new Request('https://database-layer.local/api/substrate/operating-slices', {

@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm --filter @create-something/database-layer build && node ../scripts/generate-worker-state.mjs",
-    "dev": "pnpm build && node ../../../scripts/run-wrangler.mjs dev",
-    "deploy": "pnpm build && node ../../../scripts/run-wrangler.mjs deploy",
-    "smoke": "pnpm build && node smoke.mjs"
+    "build": "node ../scripts/generate-worker-state.mjs",
+    "dev": "node ../scripts/generate-worker-state.mjs && node ../../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../scripts/generate-worker-state.mjs && node ../../../scripts/run-wrangler.mjs deploy",
+    "smoke": "node smoke.mjs"
   },
   "dependencies": {
     "@create-something/database-layer": "workspace:*"

@@ -1,0 +1,42 @@
+{
+  "name": "@create-something/canvas-kernel",
+  "version": "0.1.0",
+  "description": "Shared CREATE SOMETHING canvas renderer and canvas-state contracts for Atlas, Substrate, and Topology surfaces.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./shared-canvas-state": {
+      "types": "./dist/shared-canvas-state.d.ts",
+      "default": "./dist/shared-canvas-state.js"
+    },
+    "./substrate-compute-snapshot": {
+      "types": "./dist/substrate-compute-snapshot.d.ts",
+      "default": "./dist/substrate-compute-snapshot.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && node --test test/*.test.mjs"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "typescript": "^5.7.0"
+  },
+  "keywords": [
+    "canvas",
+    "webgpu",
+    "substrate",
+    "atlas",
+    "topology"
+  ],
+  "license": "MIT"
+}

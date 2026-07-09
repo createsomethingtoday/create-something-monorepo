@@ -210,6 +210,15 @@ h1 {
   letter-spacing: 0;
 }
 
+h2 {
+  margin: 0 0 12px;
+  color: var(--topology-fg);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: 0;
+}
+
 dl {
   display: grid;
   grid-template-columns: 82px minmax(0, 1fr);
@@ -236,6 +245,65 @@ dd {
 #nodeTier,
 #nodeSurface {
   color: var(--topology-fg);
+}
+
+.inspector-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 14px;
+}
+
+.inspector-actions button {
+  width: auto;
+}
+
+.client-overlay-panel {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--topology-border);
+}
+
+.overlay-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
+.overlay-detail-list {
+  margin-bottom: 12px;
+}
+
+.package-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.package-list li {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--topology-border);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-bg-elevated, #0a0a0a) 86%, transparent);
+}
+
+.package-list strong {
+  display: block;
+  margin-bottom: 5px;
+  overflow-wrap: anywhere;
+  color: var(--topology-fg);
+  font-size: 12px;
+  line-height: 1.24;
+}
+
+.package-list span {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--topology-muted);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 @media (max-width: 1120px) {

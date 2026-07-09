@@ -78,6 +78,47 @@ Both MCP tools and CLI commands use the same app-data store:
 ~/Library/Application Support/CREATE SOMETHING/Atlas Studio
 ```
 
+### Shared canvas kernel
+
+Atlas Studio renders topology maps through the shared
+`@create-something/canvas-kernel` package. The kernel is intentionally
+domain-neutral so Atlas, Substrate, and future Topology surfaces can reuse the
+same pan, zoom, fit, focus, label, hit-test, and WebGPU-first rendering
+behavior.
+
+Adapters should stay thin:
+
+- map their domain records to `{ id, label, kind, status, x, y, width, height }`
+  nodes and `{ id, source, target }` edges,
+- pass a surface palette and control inputs for fit/focus,
+- keep product-specific overlays, story steps, inspector panels, and policy
+  actions outside the kernel.
+
+The shared agent-readable canvas state contract is
+`flow.shared-canvas-state.v1`, also exported by
+`@create-something/canvas-kernel/shared-canvas-state`:
+
+```ts
+type SharedCanvasState = {
+  version: 'flow.shared-canvas-state.v1';
+  renderer: 'canvas-kernel';
+  viewport: { x: number; y: number; width: number; height: number; zoom: number };
+  visibleNodeIds: string[];
+  selectedNodeId: string | null;
+  lens: string;
+  query: string;
+  focusedNodeIds: string[];
+  storyStepId: string | null;
+  joins: { substrateRecordId: string; topologyNodeId: string; atlasCanvasId: string; atlasNodeId: string }[];
+};
+```
+
+MCP resources and tools that operate on Atlas/Substrate/Topology should expose
+or accept that contract rather than renderer-specific DOM details. The browser
+surface publishes renderer readback via `data-atlas-renderer="canvas-kernel"`,
+`data-render-backend`, `data-node-count`, `data-edge-count`, and `data-viewport`
+on the canvas root for verification and agent control.
+
 ### 1) Mapping + visualization URLs
 
 The following tools now return visualization URLs and decision metadata:

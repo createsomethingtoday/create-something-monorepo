@@ -12,6 +12,7 @@ import { createWritebackProposal, exportWritebackProposalHandoffForSession, revi
 import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, getSessionPath, listSessions, readSession, removeNode, updateNode, updateEdge, updateNodes } from './store.js';
 import { activateStoryApiStep, addStoryApiQuestion, advanceStoryApiStep, clearStory, focusStory, getStory, storySessionPayload } from './story-api.js';
 import { tidyNodeUpdates } from './client/layout.js';
+import { buildAtlasDatabaseHealth } from './database-health.js';
 const gzipAsync = promisify(gzip);
 async function readJson(request) {
     const chunks = [];
@@ -228,6 +229,11 @@ export async function startStudioServer(options) {
             const sessionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)$/);
             if (method === 'GET' && sessionMatch) {
                 sendJson(response, 200, await readSession(decodeURIComponent(sessionMatch[1] ?? ''), cwd));
+                return;
+            }
+            const databaseHealthMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/database-health$/);
+            if (method === 'GET' && databaseHealthMatch) {
+                sendJson(response, 200, buildAtlasDatabaseHealth(await readSession(decodeURIComponent(databaseHealthMatch[1] ?? ''), cwd)));
                 return;
             }
             const healMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/heal$/);

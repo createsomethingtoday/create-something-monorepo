@@ -143,6 +143,7 @@ import {
   createSession,
   exportSessionMarkdown,
   listSessions,
+  readSessionDatabaseHealth,
   readSession,
   updateEdge,
   updateNodes,
@@ -975,6 +976,20 @@ export function registerTools(server: ScopedMcpServer): void {
       return jsonContent({
         accountId: ctx.accountId,
         session: await readSession(input.session_id, atlasStudioCwd()),
+      });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'atlas_studio_database_health',
+    'Read Atlas Studio database health for a local mapping session, including topology diagnostics, speed contract, and organization review.',
+    AtlasStudioSessionIdSchema.shape,
+    async (params, ctx) => {
+      const input = AtlasStudioSessionIdSchema.parse(params);
+      return jsonContent({
+        accountId: ctx.accountId,
+        health: await readSessionDatabaseHealth(input.session_id, atlasStudioCwd()),
       });
     },
     { readOnly: true },

@@ -21,7 +21,17 @@ const inspector = {
   substrate: document.querySelector('#nodeSubstrate'),
   apiPath: document.querySelector('#nodeApiPath'),
   receipt: document.querySelector('#nodeReceipt'),
-  meaning: document.querySelector('#nodeMeaning')
+  meaning: document.querySelector('#nodeMeaning'),
+  clientOverlayButton: document.querySelector('#clientOverlayButton'),
+  clientOverlayPanel: document.querySelector('#clientOverlayPanel'),
+  clientOverlayTitle: document.querySelector('#clientOverlayTitle'),
+  clientOverlayPackageCount: document.querySelector('#clientOverlayPackageCount'),
+  clientOverlayReceiptCount: document.querySelector('#clientOverlayReceiptCount'),
+  clientOverlayActionCount: document.querySelector('#clientOverlayActionCount'),
+  clientOverlayCanvas: document.querySelector('#clientOverlayCanvas'),
+  clientOverlayApi: document.querySelector('#clientOverlayApi'),
+  clientOverlayMcp: document.querySelector('#clientOverlayMcp'),
+  clientOverlayPackages: document.querySelector('#clientOverlayPackages')
 };
 
 async function loadThree() {
@@ -49,6 +59,18 @@ function hexToRgbUnit(hex) {
     Number.parseInt(value.slice(2, 4), 16) / 255,
     Number.parseInt(value.slice(4, 6), 16) / 255
   ];
+}
+
+function slug(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/^@/, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function text(value) {
+  return value === undefined || value === null || value === '' ? 'none' : String(value);
 }
 
 function currentLens(artifact) {
@@ -143,6 +165,7 @@ function createScene(THREE, artifact) {
   let dragging = false;
   let lastX = 0;
   let lastY = 0;
+  let clientOverlayCoveragePromise;
 
   const pointMaterial = new THREE.ShaderMaterial({
     transparent: true,
@@ -206,6 +229,7 @@ function createScene(THREE, artifact) {
     const visibleSet = new Set(visible);
     activeNodeIndexes = visible;
     activeNodes = visible.map((nodeIndex) => artifact.nodes[nodeIndex]);
+    hoveredVisibleIndex = -1;
 
     const positions = new Float32Array(activeNodes.length * 3);
     const colors = new Float32Array(activeNodes.length * 3);
@@ -304,6 +328,13 @@ function createScene(THREE, artifact) {
     inspector.apiPath.textContent = node.substrate?.apiPath ?? '';
     inspector.receipt.textContent = node.substrate?.receiptId ?? '';
     inspector.meaning.textContent = cluster?.meaning ?? lens?.meaning ?? 'Topology projection';
+
+    inspector.clientOverlayButton.hidden = !node.clientOverlay;
+    if (node.clientOverlay) {
+      inspector.clientOverlayButton.textContent = `Open ${node.clientOverlay.clientSlug}`;
+    } else {
+      hideClientOverlayPanel();
+    }
   }
 
   function nodePacket(nodeIndex) {
@@ -419,6 +450,138 @@ function createScene(THREE, artifact) {
     };
   }
 
+  async function loadClientOverlayCoverage() {
+    clientOverlayCoveragePromise ??= fetch('../../data/create-something-client-overlay-coverage.json').then((response) => {
+      if (!response.ok) throw new Error(`Client overlay request failed: ${response.status}`);
+      return response.json();
+    });
+    return clientOverlayCoveragePromise;
+  }
+
+  function clientOverlaySummary(overlay) {
+    const overlaySlug = slug(overlay.clientSlug);
+    return {
+      clientSlug: overlay.clientSlug,
+      slug: overlaySlug,
+      recordId: overlay.recordId,
+      atlasCanvasId: overlay.atlasCanvasId,
+      title: overlay.title,
+      owner: overlay.owner,
+      status: overlay.status,
+      packageCount: overlay.packages.length,
+      apiPath: `/api/substrate/client-overlays/${overlaySlug}`,
+      mcpUri: `substrate://client-overlays/${overlaySlug}`,
+      agentCommand: 'databaseLayer.clientOverlays.get',
+      topology3dResourceUri: `topology3d://create-something/internal/client-overlay/${overlaySlug}`
+    };
+  }
+
+  function findClientOverlay(overlays, key) {
+    const normalized = slug(key);
+    return overlays.find((overlay) => {
+      if (overlay.clientSlug === key || slug(overlay.clientSlug) === normalized) return true;
+      if (overlay.recordId === key || slug(overlay.recordId) === normalized) return true;
+      if (overlay.atlasCanvasId === key || slug(overlay.atlasCanvasId) === normalized) return true;
+      return overlay.packages.some(
+        (pkg) =>
+          pkg.recordId === key ||
+          slug(pkg.recordId) === normalized ||
+          pkg.atlasNodeId === key ||
+          slug(pkg.atlasNodeId) === normalized ||
+          pkg.path === key ||
+          slug(pkg.path) === normalized
+      );
+    });
+  }
+
+  async function clientOverlayContextRead(options = {}) {
+    const node = options.nodeId
+      ? artifact.nodes.find((candidate) => candidate.id === options.nodeId)
+      : selectedNode;
+    const key = options.clientSlug ?? node?.clientOverlay?.clientSlug ?? node?.clientSlug;
+    if (!key) throw new Error('Client overlay context requires a client slug or selected client node.');
+
+    const coverage = await loadClientOverlayCoverage();
+    const overlay = findClientOverlay(coverage.overlays ?? [], key);
+    if (!overlay) throw new Error(`Unknown client overlay "${key}".`);
+
+    const overlaySlug = slug(overlay.clientSlug);
+    return {
+      clientOverlay: overlay,
+      selectedNode: node ?? null,
+      handoff: {
+        topologyId: artifact.topologyId,
+        atlasCanvasId: artifact.atlasCanvasId,
+        clientSlug: overlay.clientSlug,
+        clientOverlayApiPath: `/api/substrate/client-overlays/${overlaySlug}`,
+        clientOverlayMcpUri: `substrate://client-overlays/${overlaySlug}`,
+        clientOverlayAgentCommand: 'databaseLayer.clientOverlays.get',
+        clientOverlayTopology3dResourceUri: `topology3d://create-something/internal/client-overlay/${overlaySlug}`,
+        clientOverlayAtlasCanvasId: overlay.atlasCanvasId,
+        selectedNodeId: node?.id ?? null,
+        selectedPath: node?.path ?? null,
+        packageCount: overlay.packages.length,
+        receiptCount: overlay.receipts.length,
+        nextActionCount: overlay.nextActions.length
+      },
+      boundary:
+        'Read-only client overlay context. Client system writes, Atlas write-back, Cloudflare changes, and production promotion require the owning approval workflow.'
+    };
+  }
+
+  function hideClientOverlayPanel() {
+    inspector.clientOverlayPanel.hidden = true;
+    inspector.clientOverlayPackages.replaceChildren();
+  }
+
+  function renderClientOverlay(context) {
+    const overlay = context.clientOverlay;
+    inspector.clientOverlayPanel.hidden = false;
+    inspector.clientOverlayTitle.textContent = overlay.title;
+    inspector.clientOverlayPackageCount.textContent = `${overlay.packages.length} packages`;
+    inspector.clientOverlayReceiptCount.textContent = `${overlay.receipts.length} receipts`;
+    inspector.clientOverlayActionCount.textContent = `${overlay.nextActions.length} actions`;
+    inspector.clientOverlayCanvas.textContent = overlay.atlasCanvasId;
+    inspector.clientOverlayApi.textContent = context.handoff.clientOverlayApiPath;
+    inspector.clientOverlayMcp.textContent = context.handoff.clientOverlayMcpUri;
+    inspector.clientOverlayPackages.replaceChildren(
+      ...overlay.packages.map((pkg) => {
+        const item = document.createElement('li');
+        const label = document.createElement('strong');
+        const pathText = document.createElement('span');
+        const meta = document.createElement('span');
+        label.textContent = pkg.packageName;
+        pathText.textContent = pkg.path;
+        meta.textContent = `${text(pkg.runtime)} | ${pkg.commands.length} commands | ${pkg.docs.length} docs | ${pkg.workerConfigs.length} workers`;
+        item.append(label, pathText, meta);
+        return item;
+      })
+    );
+  }
+
+  async function openClientOverlayForNode(node = selectedNode) {
+    if (!node?.clientOverlay) return null;
+    inspector.clientOverlayButton.disabled = true;
+    try {
+      const context = await clientOverlayContextRead({ clientSlug: node.clientOverlay.clientSlug, nodeId: node.id });
+      renderClientOverlay(context);
+      return context;
+    } catch (error) {
+      inspector.clientOverlayPanel.hidden = false;
+      inspector.clientOverlayTitle.textContent = 'Client overlay unavailable';
+      inspector.clientOverlayPackageCount.textContent = '0 packages';
+      inspector.clientOverlayReceiptCount.textContent = '0 receipts';
+      inspector.clientOverlayActionCount.textContent = '0 actions';
+      inspector.clientOverlayCanvas.textContent = 'none';
+      inspector.clientOverlayApi.textContent = 'none';
+      inspector.clientOverlayMcp.textContent = error instanceof Error ? error.message : String(error);
+      inspector.clientOverlayPackages.replaceChildren();
+      return null;
+    } finally {
+      inspector.clientOverlayButton.disabled = false;
+    }
+  }
+
   function summarizeLens(lensId = lensFilter.value) {
     const lens = artifact.lenses?.[lensId] ?? currentLens(artifact);
     return {
@@ -512,6 +675,7 @@ function createScene(THREE, artifact) {
       visibleNodes: snapshot.nodes,
       visibleEdges: snapshot.edges,
       substrate: snapshot.selectedNode?.substrate ?? null,
+      clientOverlay: snapshot.selectedNode?.clientOverlay ?? null,
       handoff: {
         topologyId: artifact.topologyId,
         atlasCanvasId: artifact.atlasCanvasId,
@@ -525,6 +689,11 @@ function createScene(THREE, artifact) {
         actionId: snapshot.selectedNode?.substrate?.actionId ?? null,
         operatingSliceId: snapshot.selectedNode?.substrate?.operatingSliceId ?? null,
         readinessApiPath: snapshot.selectedNode?.substrate?.readinessApiPath ?? null,
+        clientOverlaySlug: snapshot.selectedNode?.clientOverlay?.clientSlug ?? null,
+        clientOverlayApiPath: snapshot.selectedNode?.clientOverlay?.apiPath ?? null,
+        clientOverlayMcpUri: snapshot.selectedNode?.clientOverlay?.mcpUri ?? null,
+        clientOverlayAgentCommand: snapshot.selectedNode?.clientOverlay?.agentCommand ?? null,
+        clientOverlayTopology3dResourceUri: snapshot.selectedNode?.clientOverlay?.topology3dResourceUri ?? null,
         selectedNodeId: snapshot.state.selectedNodeId,
         selectedPath: snapshot.selectedNode?.path ?? null,
         selectedGroup: snapshot.selectedNode?.group?.label ?? null,
@@ -539,7 +708,10 @@ function createScene(THREE, artifact) {
     if (!pointCloud) return null;
     raycaster.setFromCamera(pointer, camera);
     const hit = raycaster.intersectObject(pointCloud, false)[0];
-    if (!hit) return null;
+    if (!hit) {
+      hoveredVisibleIndex = -1;
+      return null;
+    }
     hoveredVisibleIndex = hit.index;
     return activeNodes[hit.index] ?? null;
   }
@@ -595,8 +767,13 @@ function createScene(THREE, artifact) {
     canvas.style.cursor = node ? 'pointer' : 'grab';
   });
 
-  canvas.addEventListener('dblclick', () => {
+  canvas.addEventListener('dblclick', async () => {
     const node = hoveredVisibleIndex >= 0 ? activeNodes[hoveredVisibleIndex] : selectedNode;
+    if (node?.clientOverlay) {
+      selectNode(node);
+      await openClientOverlayForNode(node);
+      return;
+    }
     if (!node?.targetPath) return;
     window.open(`/${node.targetPath.replace(/^\.\/?/, '')}`, '_blank', 'noopener');
   });
@@ -624,6 +801,9 @@ function createScene(THREE, artifact) {
   }
 
   resetView.addEventListener('click', resetCamera);
+  inspector.clientOverlayButton.addEventListener('click', () => {
+    void openClientOverlayForNode(selectedNode);
+  });
   window.addEventListener('resize', resize);
 
   resize();
@@ -641,7 +821,8 @@ function createScene(THREE, artifact) {
     selectionExport,
     setViewState,
     insightsRead,
-    summarizeLens
+    summarizeLens,
+    clientOverlayContextRead
   };
 }
 
@@ -667,6 +848,7 @@ window.__topology3dApi = {
   insightsRead: sceneApi.insightsRead,
   lensSummarize: sceneApi.summarizeLens,
   selectionExport: sceneApi.selectionExport,
+  clientOverlayContextRead: sceneApi.clientOverlayContextRead,
   stateRead: sceneApi.getViewState
 };
 window.__topology3dMetrics = {

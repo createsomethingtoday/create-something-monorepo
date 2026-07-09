@@ -1,27 +1,5 @@
-import '@xyflow/react/dist/style.css';
 import './styles.css';
 
-import {
-  Background,
-  BackgroundVariant,
-  Controls,
-  Handle,
-  MarkerType,
-  MiniMap,
-  Panel,
-  Position,
-  ReactFlow,
-  ReactFlowProvider,
-  applyNodeChanges,
-  type Connection,
-  type Edge,
-  type Node,
-  type NodeChange,
-  type NodeMouseHandler,
-  type NodeProps,
-  type ReactFlowInstance,
-  type Viewport
-} from '@xyflow/react';
 import {
   Blocks,
   Bot,
@@ -32,6 +10,7 @@ import {
   Clipboard,
   Database,
   FileText,
+  Gauge,
   LockKeyhole,
   Map as MapIcon,
   MessagesSquare,
@@ -45,6 +24,7 @@ import {
   RefreshCw,
   Rows3,
   ScanLine,
+  Search,
   ShieldAlert,
   Sparkles,
   Terminal,
@@ -56,7 +36,6 @@ import {
   type LucideIcon
 } from 'lucide-react';
 import React, {
-  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -75,28 +54,25 @@ import type {
   AtlasGovernanceRecordProductId,
   AtlasPaletteItem,
   AtlasSession,
+  AtlasStoryCallout,
   AtlasStoryStep,
   AtlasWritebackActionStatus,
   AtlasWritebackProposal
 } from '../types.js';
 import {
-  detailModeForZoom,
+  buildAtlasDatabaseHealth,
+  type AtlasDatabaseHealthCard,
+  type AtlasDatabaseHealthSummary
+} from '../database-health.js';
+import {
   focusedStoryNodeSummaries,
-  nodeWidthForMode,
-  type CanvasDetailMode
+  intersectNodeIdSets,
+  storyPresenterNodeIds,
+  topologyBoardSectionForNode,
+  type TopologyBoardSectionKey
 } from './layout.js';
-
-type AtlasNodeData = {
-  detailMode: CanvasDetailMode;
-  isAgentActive: boolean;
-  isStoryDimmed: boolean;
-  isStoryFocused: boolean;
-  storyCalloutSeverity?: 'decision' | 'info' | 'risk';
-  storyStepIndex?: number;
-  node: AtlasCanvasNode;
-};
-
-type FlowNode = Node<AtlasNodeData, 'atlas'>;
+import { FastTopologyCanvas } from './FastTopologyCanvas.js';
+import type { CanvasKernelViewport } from '@create-something/canvas-kernel';
 
 type Palette = Record<AtlasCanvasNodeKind, AtlasPaletteItem[]>;
 
@@ -106,6 +82,85 @@ type NodeDraft = {
   status: AtlasCanvasNodeStatus;
   notes: string;
   evidence: string;
+};
+
+type DatabasePanelView = 'health' | 'records' | 'run' | 'bindings' | 'governance' | 'activity';
+type TopologyLens = 'all' | TopologyBoardSectionKey;
+
+type DatabaseRecordRow = {
+  bindings: number;
+  governanceRecords: number;
+  id: string;
+  kind: AtlasCanvasNodeKind;
+  label: string;
+  owner: string;
+  status: AtlasCanvasNodeStatus;
+  syncStatus: string;
+  updatedAt: string;
+};
+
+type DatabaseBindingRow = {
+  id: string;
+  kind: string;
+  label: string;
+  nodeId: string;
+  nodeLabel: string;
+  source: string;
+  status: string;
+};
+
+type DatabaseGovernanceRow = {
+  id: string;
+  nodeId: string;
+  nodeLabel: string;
+  productId: AtlasGovernanceRecordProductId;
+  source: string;
+  status: string;
+  title: string;
+};
+
+type DatabaseActivityRow = {
+  id: string;
+  kind: string;
+  label: string;
+  nodeId?: string;
+  source: string;
+  state: string;
+};
+
+type DatabaseRunRow = {
+  bindingStatus: string;
+  downstream: number;
+  executor: string;
+  gate: string;
+  id: string;
+  label: string;
+  proofRecords: number;
+  status: AtlasCanvasNodeStatus;
+  upstream: number;
+};
+
+type DatabaseHealthSummary = AtlasDatabaseHealthSummary & {
+  organization?: AtlasDatabaseHealthCard;
+  performance?: AtlasDatabaseHealthCard;
+};
+
+type DatabaseSnapshot = {
+  activity: DatabaseActivityRow[];
+  bindings: DatabaseBindingRow[];
+  governance: DatabaseGovernanceRow[];
+  health: DatabaseHealthSummary;
+  records: DatabaseRecordRow[];
+  run: DatabaseRunRow[];
+  summary: Array<{ label: string; value: number }>;
+};
+
+type DatabaseLensSummary = {
+  active: boolean;
+  label: string;
+  query: string;
+  totalNodes: number;
+  visibleNodes: number;
 };
 
 const KIND_ICONS: Record<AtlasCanvasNodeKind, LucideIcon> = {
@@ -130,26 +185,110 @@ const KIND_ORDER: AtlasCanvasNodeKind[] = [
 
 const STATUS_OPTIONS: AtlasCanvasNodeStatus[] = ['unknown', 'run', 'wait', 'stop'];
 
-const DEFAULT_EDGE_OPTIONS = {
-  type: 'smoothstep',
-  markerEnd: {
-    type: MarkerType.ArrowClosed,
-    color: '#a7a7a0',
-    width: 13,
-    height: 13
-  },
-  interactionWidth: 18,
-  style: {
-    stroke: '#a7a7a0',
-    strokeWidth: 1.05
-  }
-};
+const STORY_DETAIL_NODE_PREVIEW_LIMIT = 6;
 
-const FIT_VIEW_OPTIONS = {
-  duration: 260,
-  maxZoom: 1.08,
-  padding: 0.24
-};
+const TOPOLOGY_LENSES: Array<{ id: TopologyLens; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'core', label: 'Core' },
+  { id: 'runtime', label: 'Runtime' },
+  { id: 'agent_plane', label: 'MCP / Agents' },
+  { id: 'judgment', label: 'Policy / Canon' }
+];
+
+function topologyLensLabel(lens: TopologyLens): string {
+  return TOPOLOGY_LENSES.find((item) => item.id === lens)?.label ?? 'All';
+}
+
+function buildPresenterStoryPayload(
+  session: AtlasSession,
+  visibleNodeIds: Set<string> | null
+): {
+  activeStepId: string;
+  dimUnfocused: boolean;
+  focusEdgeIds: string[];
+  focusNodeIds: string[];
+  narration: string;
+  nextAction: string;
+  steps: Array<Omit<AtlasStoryStep, 'id'> & { id: string }>;
+  title: string;
+} | null {
+  const sourceNodes = visibleNodeIds
+    ? session.canvas.nodes.filter((node) => visibleNodeIds.has(node.id))
+    : session.canvas.nodes;
+  if (!sourceNodes.length) return null;
+
+  const overviewNodes = sourceNodes.slice(0, 16);
+  const steps: Array<Omit<AtlasStoryStep, 'id'> & { id: string }> = [
+    {
+      focusNodeIds: overviewNodes.map((node) => node.id),
+      id: 'canvas-overview',
+      owner: 'Atlas Studio',
+      proof: `${sourceNodes.length} visible records from ${session.canvas.nodes.length} total nodes.`,
+      status: 'current',
+      summary: 'Start from the currently visible operating map and the records nearest this view.',
+      title: 'Current operating view'
+    }
+  ];
+
+  for (const lens of TOPOLOGY_LENSES.filter((item) => item.id !== 'all')) {
+    const lensNodes = sourceNodes
+      .filter((node) => topologyBoardSectionForNode(node) === lens.id)
+      .slice(0, 12);
+    if (!lensNodes.length) continue;
+    steps.push({
+      focusNodeIds: lensNodes.map((node) => node.id),
+      id: `canvas-${lens.id}`,
+      owner: 'Atlas Studio',
+      proof: `${lensNodes.length} representative ${lens.label.toLowerCase()} records.`,
+      status: 'next',
+      summary: `Review the ${lens.label.toLowerCase()} lane as an executable slice of the topology.`,
+      title: lens.label
+    });
+  }
+
+  return {
+    activeStepId: steps[0].id,
+    dimUnfocused: true,
+    focusEdgeIds: [],
+    focusNodeIds: steps[0].focusNodeIds ?? [],
+    narration: 'Generated from the shared fast canvas so the operator and agents can inspect the same slice.',
+    nextAction: 'Use Next to walk the topology lanes or select a node for receipt-level detail.',
+    steps,
+    title: `${formatClient(session.client)} / ${session.workflow}`
+  };
+}
+
+function nodeMatchesTopologyQuery(node: AtlasCanvasNode, query: string): boolean {
+  if (!query) return true;
+  const haystack = [
+    node.id,
+    node.atlasId,
+    node.label,
+    displayText(node.owner),
+    node.notes,
+    node.evidence,
+    node.sync?.summary,
+    ...(node.bindings ?? []).flatMap((binding) => [
+      binding.id,
+      binding.kind,
+      binding.label,
+      binding.source,
+      binding.selector
+    ]),
+    ...(node.governanceRecords ?? []).flatMap((record) => [
+      record.id,
+      record.productId,
+      record.title,
+      record.summary,
+      record.source,
+      record.status
+    ])
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return haystack.includes(query);
+}
 
 type StoryPanelOffset = {
   x: number;
@@ -181,6 +320,19 @@ function formatClient(client: string): string {
   return label || client;
 }
 
+function displayText(value: unknown, fallback = ''): string {
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (value && typeof value === 'object') {
+    const record = value as { name?: unknown; label?: unknown; title?: unknown; url?: unknown };
+    if (typeof record.name === 'string' && record.name.trim()) return record.name.trim();
+    if (typeof record.label === 'string' && record.label.trim()) return record.label.trim();
+    if (typeof record.title === 'string' && record.title.trim()) return record.title.trim();
+    if (typeof record.url === 'string' && record.url.trim()) return record.url.trim();
+  }
+  return fallback;
+}
+
 function nodeActivitySignature(node: AtlasCanvasNode): string {
   return [
     node.updatedAt,
@@ -198,136 +350,6 @@ function nodeActivitySignature(node: AtlasCanvasNode): string {
   ].join('|');
 }
 
-function flowNodeSignature(node: FlowNode): string {
-  return [
-    node.id,
-    node.selected ? 'selected' : 'idle',
-    node.position.x,
-    node.position.y,
-    node.style?.width ?? '',
-    node.data.detailMode,
-    node.data.isAgentActive ? 'active' : 'quiet',
-    node.data.isStoryFocused ? 'story-focus' : 'story-idle',
-    node.data.isStoryDimmed ? 'story-dim' : 'story-visible',
-    node.data.storyCalloutSeverity ?? '',
-    node.data.storyStepIndex ?? '',
-    nodeActivitySignature(node.data.node)
-  ].join('|');
-}
-
-function edgeSignature(edge: Edge): string {
-  return [
-    edge.id,
-    edge.source,
-    edge.target,
-    edge.label ?? '',
-    edge.type ?? '',
-    JSON.stringify(edge.style ?? {})
-  ].join('|');
-}
-
-function toFlowNodes(
-  session: AtlasSession,
-  selectedNodeId: string | null,
-  activeNodeIds: Set<string>,
-  detailMode: CanvasDetailMode,
-  storyEnabled: boolean
-): FlowNode[] {
-  const story = storyEnabled && session.story?.active ? session.story : undefined;
-  const focusNodeIds = new Set(story?.focusNodeIds ?? []);
-  const activeStepIndex = story?.steps?.findIndex((step) => step.id === story.activeStepId) ?? -1;
-  const storyStepIndex = activeStepIndex >= 0 ? activeStepIndex + 1 : undefined;
-  const calloutByNode = new Map(
-    (story?.callouts ?? [])
-      .filter((callout) => callout.nodeId)
-      .map((callout) => [callout.nodeId as string, callout.severity])
-  );
-  return session.canvas.nodes.map((node) => ({
-    id: node.id,
-    type: 'atlas',
-    position: { x: node.x, y: node.y },
-    data: {
-      detailMode,
-      isAgentActive: activeNodeIds.has(node.id),
-      isStoryDimmed: Boolean(
-        story?.dimUnfocused && focusNodeIds.size && !focusNodeIds.has(node.id)
-      ),
-      isStoryFocused: focusNodeIds.has(node.id),
-      node,
-      storyCalloutSeverity: calloutByNode.get(node.id),
-      storyStepIndex: focusNodeIds.has(node.id) ? storyStepIndex : undefined
-    },
-    selected: node.id === selectedNodeId,
-    style: { width: nodeWidthForMode(node, detailMode) }
-  }));
-}
-
-function toFlowEdge(
-  edge: AtlasSession['canvas']['edges'][number],
-  session: AtlasSession,
-  storyEnabled: boolean
-): Edge {
-  const story = storyEnabled && session.story?.active ? session.story : undefined;
-  const focusEdgeIds = new Set(story?.focusEdgeIds ?? []);
-  const focusNodeIds = new Set(story?.focusNodeIds ?? []);
-  const explicitlyFocused = focusEdgeIds.has(edge.id);
-  const connectedFocus =
-    focusNodeIds.size > 0 && focusNodeIds.has(edge.source) && focusNodeIds.has(edge.target);
-  const isFocused = explicitlyFocused || connectedFocus;
-  const isDimmed = Boolean(
-    story?.dimUnfocused && (focusNodeIds.size || focusEdgeIds.size) && !isFocused
-  );
-  const style = isFocused
-    ? { stroke: '#0048ff', strokeWidth: 2.25 }
-    : isDimmed
-      ? { stroke: '#d6d6cf', strokeOpacity: 0.26, strokeWidth: 0.9 }
-      : DEFAULT_EDGE_OPTIONS.style;
-  return {
-    className: `${isFocused ? 'story-edge-focused' : ''} ${isDimmed ? 'story-edge-dimmed' : ''}`,
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-    label: edge.label,
-    labelBgPadding: [7, 4],
-    labelBgBorderRadius: 5,
-    labelBgStyle: { fill: '#f9f9f9', fillOpacity: 0.92 },
-    labelStyle: {
-      fill: '#787878',
-      fontSize: 11,
-      fontWeight: 400
-    },
-    ...DEFAULT_EDGE_OPTIONS,
-    style
-  };
-}
-
-function toStableFlowEdges(
-  session: AtlasSession,
-  cache: Map<string, { edge: Edge; signature: string }>,
-  previousList: { edges: Edge[]; signature: string } | null,
-  storyEnabled: boolean
-): { edges: Edge[]; signature: string } {
-  const liveIds = new Set(session.canvas.edges.map((edge) => edge.id));
-  for (const id of cache.keys()) {
-    if (!liveIds.has(id)) cache.delete(id);
-  }
-
-  const nextEdges = session.canvas.edges.map((edge) => {
-    const next = toFlowEdge(edge, session, storyEnabled);
-    const signature = edgeSignature(next);
-    const cached = cache.get(edge.id);
-    if (cached?.signature === signature) return cached.edge;
-    cache.set(edge.id, { edge: next, signature });
-    return next;
-  });
-  const signature = nextEdges
-    .map((edge) => cache.get(edge.id)?.signature ?? edgeSignature(edge))
-    .join('\n');
-
-  if (previousList?.signature === signature) return previousList;
-  return { edges: nextEdges, signature };
-}
-
 async function requestJson<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
     ...options,
@@ -342,24 +364,6 @@ async function requestJson<T>(url: string, options: RequestInit = {}): Promise<T
 
 function getSessionId(): string {
   return location.pathname.match(/\/sessions\/([^/]+)/)?.[1] ?? '';
-}
-
-function readStoredViewport(sessionId: string): Viewport | undefined {
-  try {
-    const raw = localStorage.getItem(`atlas-studio:${sessionId}:viewport`);
-    if (!raw) return undefined;
-    const parsed = JSON.parse(raw) as Viewport;
-    if (
-      typeof parsed.x === 'number' &&
-      typeof parsed.y === 'number' &&
-      typeof parsed.zoom === 'number'
-    ) {
-      return parsed;
-    }
-  } catch {
-    return undefined;
-  }
-  return undefined;
 }
 
 function readStoredStoryPanelOffset(sessionId: string): StoryPanelOffset {
@@ -506,77 +510,164 @@ function summarizeOperatorState(session: AtlasSession | null): OperatorStateSumm
   };
 }
 
-const AtlasFlowNode = memo(function AtlasFlowNode({
-  data,
-  selected
-}: NodeProps<FlowNode>): React.ReactElement {
-  const node = data.node;
-  const Icon = KIND_ICONS[node.kind];
-  const note = node.notes || node.evidence || 'Boundary and evidence can be added here.';
-  const owner = node.owner || node.createdBy || 'agent';
-  const sync = node.sync;
-  const products = node.products ?? [];
-  const recordCounts = governanceRecordCounts(node);
+function buildDatabaseSnapshot(
+  session: AtlasSession | null,
+  visibleNodeIds: Set<string> | null = null
+): DatabaseSnapshot {
+  if (!session) {
+    return {
+      activity: [],
+      bindings: [],
+      governance: [],
+      health: {
+        performance: undefined,
+        proof: 'No topology diagnostics loaded',
+        signals: [],
+        summary: 'Atlas has not loaded an operating topology health pass yet.',
+        title: 'Business health'
+      },
+      records: [],
+      run: [],
+      summary: [
+        { label: 'Nodes', value: 0 },
+        { label: 'Edges', value: 0 },
+        { label: 'Bindings', value: 0 },
+        { label: 'Proof', value: 0 },
+        { label: 'Actions', value: 0 },
+        { label: 'Notes', value: 0 }
+      ]
+    };
+  }
 
-  return (
-    <article
-      className={`atlas-node kind-${node.kind} detail-${data.detailMode} ${
-        data.isAgentActive ? 'agent-active' : ''
-      } ${data.isStoryFocused ? 'story-focused' : ''} ${
-        data.isStoryDimmed ? 'story-dimmed' : ''
-      } ${data.storyCalloutSeverity ? `story-callout-${data.storyCalloutSeverity}` : ''} ${
-        selected ? 'selected' : ''
-      }`}
-    >
-      <Handle className="atlas-handle target" position={Position.Left} type="target" />
-      <Handle className="atlas-handle source" position={Position.Right} type="source" />
-      {data.storyStepIndex ? <span className="story-step-badge">{data.storyStepIndex}</span> : null}
-      <div className="node-topline">
-        <span className="node-kind">
-          <Icon aria-hidden="true" />
-          <span>{formatKind(node.kind)}</span>
-        </span>
-        <span className="node-badges">
-          {sync ? (
-            <span className={`node-sync ${sync.status}`} title={sync.summary}>
-              {sync.status}
-            </span>
-          ) : null}
-          {products.map((product) => (
-            <span
-              className={`node-product product-${product.productId}`}
-              key={`${node.id}-${product.productId}-${product.surface}`}
-              title={`${formatProductId(product.productId)} · ${product.surface}`}
-            >
-              {formatProductId(product.productId)}
-            </span>
-          ))}
-          {recordCounts.map((record) => (
-            <span
-              className={`node-record product-${record.productId}`}
-              key={`${node.id}-record-${record.productId}`}
-              title={`${record.count} attached ${formatProductId(record.productId)} record${record.count === 1 ? '' : 's'}`}
-            >
-              {formatProductId(record.productId)} {record.count}
-            </span>
-          ))}
-          <span className={`node-status ${node.status}`}>{node.status}</span>
-        </span>
-      </div>
-      <strong className="node-title">{node.label}</strong>
-      {data.detailMode === 'compact' ? null : (
-        <div className="node-meta">
-          <span>{owner}</span>
-          <p>{note}</p>
-        </div>
-      )}
-    </article>
+  const scopedNodes = visibleNodeIds
+    ? session.canvas.nodes.filter((node) => visibleNodeIds.has(node.id))
+    : session.canvas.nodes;
+  const scopedNodeIds = visibleNodeIds ?? new Set(scopedNodes.map((node) => node.id));
+  const incomingEdges = new Map<string, number>();
+  const outgoingEdges = new Map<string, number>();
+  const scopedEdges = session.canvas.edges.filter(
+    (edge) => scopedNodeIds.has(edge.source) && scopedNodeIds.has(edge.target)
   );
-});
+  for (const edge of scopedEdges) {
+    outgoingEdges.set(edge.source, (outgoingEdges.get(edge.source) ?? 0) + 1);
+    incomingEdges.set(edge.target, (incomingEdges.get(edge.target) ?? 0) + 1);
+  }
 
-const NODE_TYPES = {
-  atlas: AtlasFlowNode
-};
+  const records = scopedNodes.map((node) => ({
+    bindings: node.bindings?.length ?? 0,
+    governanceRecords: node.governanceRecords?.length ?? 0,
+    id: node.id,
+    kind: node.kind,
+    label: node.label,
+    owner: displayText(node.owner, node.createdBy || 'agent'),
+    status: node.status,
+    syncStatus: node.sync?.status ?? 'unbound',
+    updatedAt: node.updatedAt
+  }));
+  const databaseHealth = buildAtlasDatabaseHealth(session, visibleNodeIds);
+
+  const bindings = scopedNodes.flatMap((node) =>
+    (node.bindings ?? []).map((binding) => {
+      const check = node.sync?.checks.find((item) => item.id === binding.id);
+      return {
+        id: binding.id,
+        kind: binding.kind,
+        label: binding.label,
+        nodeId: node.id,
+        nodeLabel: node.label,
+        source: binding.source,
+        status: check?.status ?? node.sync?.status ?? 'unknown'
+      };
+    })
+  );
+
+  const governance = scopedNodes.flatMap((node) =>
+    (node.governanceRecords ?? []).map((record) => ({
+      id: record.id,
+      nodeId: node.id,
+      nodeLabel: node.label,
+      productId: record.productId,
+      source: record.source ?? record.attachedBy,
+      status: record.status ?? 'attached',
+      title: record.title
+    }))
+  );
+
+  const proposalActivity =
+    session.proposals?.flatMap((proposal) =>
+      proposal.actions
+        .filter((action) => !visibleNodeIds || !action.nodeId || visibleNodeIds.has(action.nodeId))
+        .map((action) => ({
+          id: action.id,
+          kind: action.risk,
+          label: action.title,
+          nodeId: action.nodeId,
+          source: proposal.profile,
+          state: action.status
+        }))
+    ) ?? [];
+  const suggestionActivity = session.suggestions.map((suggestion) => ({
+    id: suggestion.id,
+    kind: 'suggestion',
+    label: suggestion.payload.label,
+    source: 'agent',
+    state: suggestion.status
+  }));
+  const observationActivity = session.observations.map((observation) => ({
+    id: observation.id,
+    kind: 'note',
+    label: observation.text,
+    source: observation.source,
+    state: new Date(observation.createdAt).toLocaleTimeString()
+  }));
+
+  const run = scopedNodes.map((node) => {
+    const bindingStatus = node.sync?.status ?? (node.bindings?.length ? 'unknown' : 'unbound');
+    const proofRecords = node.governanceRecords?.length ?? 0;
+    const gate =
+      node.status === 'stop'
+        ? 'blocked'
+        : bindingStatus === 'missing'
+          ? 'missing binding'
+          : bindingStatus === 'partial'
+            ? 'partial binding'
+            : proofRecords || node.evidence?.trim()
+              ? 'ready'
+              : 'needs proof';
+    return {
+      bindingStatus,
+      downstream: outgoingEdges.get(node.id) ?? 0,
+      executor: displayText(node.owner, formatKind(node.kind)),
+      gate,
+      id: node.id,
+      label: node.label,
+      proofRecords,
+      status: node.status,
+      upstream: incomingEdges.get(node.id) ?? 0
+    };
+  });
+
+  return {
+    activity: [...proposalActivity, ...suggestionActivity, ...observationActivity],
+    bindings,
+    governance,
+    health: {
+      ...databaseHealth.topology,
+      organization: databaseHealth.organization ?? undefined,
+      performance: databaseHealth.performance ?? undefined
+    },
+    records,
+    run,
+    summary: [
+      { label: 'Nodes', value: scopedNodes.length },
+      { label: 'Edges', value: scopedEdges.length },
+      { label: 'Bindings', value: bindings.length },
+      { label: 'Proof', value: governance.length },
+      { label: 'Actions', value: proposalActivity.length },
+      { label: 'Notes', value: session.observations.length }
+    ]
+  };
+}
 
 function StoryPanel({
   onClear,
@@ -597,6 +688,10 @@ function StoryPanel({
 }): React.ReactElement | null {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const story = session?.story;
+  useEffect(() => {
+    setDetailsOpen(false);
+  }, [story?.activeStepId]);
+
   if (!story?.active && !story?.questions.length) return null;
 
   const openQuestions = story.questions.filter((question) => question.status === 'open');
@@ -604,6 +699,8 @@ function StoryPanel({
   const activeStepIndex = steps.findIndex((step) => step.id === story.activeStepId);
   const activeStep = steps[activeStepIndex] ?? steps.find((step) => step.status === 'current');
   const focusedNodes = session ? focusedStoryNodeSummaries(session) : [];
+  const focusedNodePreview = focusedNodes.slice(0, STORY_DETAIL_NODE_PREVIEW_LIMIT);
+  const hiddenFocusedNodeCount = Math.max(0, focusedNodes.length - focusedNodePreview.length);
   const canGoPrevious = activeStepIndex > 0;
   const canGoNext = activeStepIndex >= 0 && activeStepIndex < steps.length - 1;
   const detailCount =
@@ -713,14 +810,14 @@ function StoryPanel({
           {focusedNodes.length ? (
             <div className="story-node-review">
               <strong>Node review · {focusedNodes.length}</strong>
-              {focusedNodes.map((node) => (
+              {focusedNodePreview.map((node) => (
                 <article className="story-node-card" key={node.id}>
                   <div className="story-node-card-title">
                     <span className={`status-chip ${node.status}`}>{node.status}</span>
                     <span>{formatKind(node.kind)}</span>
                   </div>
                   <strong>{node.label}</strong>
-                  <em>{node.owner}</em>
+                  <em>{displayText(node.owner, 'Unassigned')}</em>
                   {node.notes ? <p>{node.notes}</p> : null}
                   {node.evidence ? <p className="story-node-evidence">{node.evidence}</p> : null}
                   {node.callouts.length ? (
@@ -753,6 +850,12 @@ function StoryPanel({
                   </div>
                 </article>
               ))}
+              {hiddenFocusedNodeCount ? (
+                <p className="story-detail-overflow">
+                  Showing {focusedNodePreview.length} of {focusedNodes.length} focused nodes. Use
+                  the highlighted canvas nodes for the rest.
+                </p>
+              ) : null}
             </div>
           ) : null}
           {story.callouts.length ? (
@@ -783,6 +886,393 @@ function StoryPanel({
           ) : null}
         </div>
       ) : null}
+    </aside>
+  );
+}
+
+function DatabaseLayerPanel({
+  activeView,
+  lens,
+  onChangeView,
+  onClose,
+  onSelectNode,
+  session,
+  visibleNodeIds
+}: {
+  activeView: DatabasePanelView;
+  lens: DatabaseLensSummary;
+  onChangeView: (view: DatabasePanelView) => void;
+  onClose: () => void;
+  onSelectNode: (nodeId: string) => void;
+  session: AtlasSession | null;
+  visibleNodeIds: Set<string> | null;
+}): React.ReactElement {
+  const snapshot = useMemo(() => buildDatabaseSnapshot(session, visibleNodeIds), [session, visibleNodeIds]);
+  const views: Array<{ icon: LucideIcon; id: DatabasePanelView; label: string; total: number }> = [
+    { icon: Gauge, id: 'health', label: 'Health', total: snapshot.health.signals.length },
+    { icon: Rows3, id: 'records', label: 'Records', total: snapshot.records.length },
+    { icon: Workflow, id: 'run', label: 'Run', total: snapshot.run.length },
+    { icon: Braces, id: 'bindings', label: 'Bindings', total: snapshot.bindings.length },
+    { icon: FileText, id: 'governance', label: 'Proof', total: snapshot.governance.length },
+    { icon: Terminal, id: 'activity', label: 'Activity', total: snapshot.activity.length }
+  ];
+
+  return (
+    <aside className="database-panel" aria-label="Database layer">
+      <div className="database-panel-header">
+        <span className="title-lockup">
+          <span className="title-icon">
+            <Database aria-hidden="true" />
+          </span>
+          <span>
+            <strong>Database Layer</strong>
+            <em>
+              {lens.active
+                ? `${lens.label}${lens.query ? ` / ${lens.query}` : ''}: ${lens.visibleNodes} records in view / ${lens.totalNodes} total`
+                : 'Atlas workflow state, bindings, governance records, and agent activity'}
+            </em>
+          </span>
+        </span>
+        <button
+          aria-label="Close database layer"
+          className="icon-only"
+          onClick={onClose}
+          title="Close database layer"
+          type="button"
+        >
+          <X aria-hidden="true" />
+        </button>
+      </div>
+      <div className="database-summary" aria-label="Database summary">
+        {lens.active ? (
+          <span className="database-stat lens-stat">
+            <strong>{lens.query || lens.label}</strong>
+            <span>Lens</span>
+          </span>
+        ) : null}
+        {snapshot.summary.map((item) => (
+          <span className="database-stat" key={item.label}>
+            <strong>{item.value}</strong>
+            <span>{item.label}</span>
+          </span>
+        ))}
+      </div>
+      <div className="database-tabs" aria-label="Database views">
+        {views.map((view) => {
+          const Icon = view.icon;
+          return (
+            <button
+              aria-pressed={activeView === view.id}
+              className="database-tab"
+              key={view.id}
+              onClick={() => onChangeView(view.id)}
+              type="button"
+            >
+              <Icon aria-hidden="true" />
+              <span>{view.label}</span>
+              <em>{view.total}</em>
+            </button>
+          );
+        })}
+      </div>
+      <div className="database-table-wrap">
+        {activeView === 'health' ? (
+          <div className="database-health" aria-label="Topology diagnostics">
+            <div className="database-health-summaries">
+              <div className="database-health-summary">
+                <span>Diagnostics</span>
+                <strong>{snapshot.health.title}</strong>
+                <p>{snapshot.health.summary}</p>
+                <em>{snapshot.health.proof}</em>
+              </div>
+              {snapshot.health.performance ? (
+                <div className="database-health-summary">
+                  <span>Speed</span>
+                  <strong>{snapshot.health.performance.title}</strong>
+                  <p>{snapshot.health.performance.summary}</p>
+                  {snapshot.health.performance.observation ? (
+                    <p>{snapshot.health.performance.observation}</p>
+                  ) : null}
+                  <em>{snapshot.health.performance.proof}</em>
+                </div>
+              ) : null}
+              {snapshot.health.organization ? (
+                <div className="database-health-summary">
+                  <span>Organization</span>
+                  <strong>{snapshot.health.organization.title}</strong>
+                  <p>{snapshot.health.organization.summary}</p>
+                  {snapshot.health.organization.observation ? (
+                    <p>{snapshot.health.organization.observation}</p>
+                  ) : null}
+                  <em>{snapshot.health.organization.proof}</em>
+                </div>
+              ) : null}
+            </div>
+            <table className="database-table health-table">
+              <thead>
+                <tr>
+                  <th scope="col">Signal</th>
+                  <th scope="col">Severity</th>
+                  <th scope="col">Node</th>
+                </tr>
+              </thead>
+              <tbody>
+                {snapshot.health.signals.length ? (
+                  snapshot.health.signals.map((signal) => (
+                    <tr key={signal.id}>
+                      <td>{signal.text}</td>
+                      <td>
+                        <span className={`story-signal ${signal.severity}`}>{signal.severity}</span>
+                      </td>
+                      <td>
+                        {signal.nodeId ? (
+                          <button
+                            className="database-row-button"
+                            onClick={() => onSelectNode(signal.nodeId as string)}
+                            title={`Select ${signal.nodeLabel ?? signal.nodeId}`}
+                            type="button"
+                          >
+                            {signal.nodeLabel ?? signal.nodeId}
+                          </button>
+                        ) : (
+                          'Whole map'
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3}>No topology diagnostics signals are attached yet.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+        {activeView === 'records' ? (
+          <table className="database-table">
+            <thead>
+              <tr>
+                <th scope="col">Record</th>
+                <th scope="col">Kind</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Status</th>
+                <th scope="col">Sync</th>
+                <th scope="col">Refs</th>
+              </tr>
+            </thead>
+            <tbody>
+              {snapshot.records.length ? (
+                snapshot.records.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <button
+                        className="database-row-button"
+                        onClick={() => onSelectNode(row.id)}
+                        title={`Select ${row.label}`}
+                        type="button"
+                      >
+                        {row.label}
+                      </button>
+                    </td>
+                    <td>{formatKind(row.kind)}</td>
+                    <td>{row.owner}</td>
+                    <td>
+                      <span className={`status-chip ${row.status}`}>{row.status}</span>
+                    </td>
+                    <td>
+                      <span className={`node-sync ${row.syncStatus}`}>{row.syncStatus}</span>
+                    </td>
+                    <td>
+                      {row.bindings} binding{row.bindings === 1 ? '' : 's'} /{' '}
+                      {row.governanceRecords} proof
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6}>No Atlas records loaded yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        ) : null}
+        {activeView === 'run' ? (
+          <table className="database-table">
+            <thead>
+              <tr>
+                <th scope="col">Executable unit</th>
+                <th scope="col">Executor</th>
+                <th scope="col">Gate</th>
+                <th scope="col">Status</th>
+                <th scope="col">Bindings</th>
+                <th scope="col">Deps</th>
+                <th scope="col">Proof</th>
+              </tr>
+            </thead>
+            <tbody>
+              {snapshot.run.length ? (
+                snapshot.run.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <button
+                        className="database-row-button"
+                        onClick={() => onSelectNode(row.id)}
+                        title={`Select ${row.label}`}
+                        type="button"
+                      >
+                        {row.label}
+                      </button>
+                    </td>
+                    <td>{row.executor}</td>
+                    <td>{row.gate}</td>
+                    <td>
+                      <span className={`status-chip ${row.status}`}>{row.status}</span>
+                    </td>
+                    <td>
+                      <span className={`node-sync ${row.bindingStatus}`}>
+                        {row.bindingStatus}
+                      </span>
+                    </td>
+                    <td>
+                      {row.upstream} in / {row.downstream} out
+                    </td>
+                    <td>{row.proofRecords}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7}>No executable workflow units loaded yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        ) : null}
+        {activeView === 'bindings' ? (
+          <table className="database-table">
+            <thead>
+              <tr>
+                <th scope="col">Binding</th>
+                <th scope="col">Node</th>
+                <th scope="col">Kind</th>
+                <th scope="col">Source</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {snapshot.bindings.length ? (
+                snapshot.bindings.map((row) => (
+                  <tr key={`${row.nodeId}-${row.id}`}>
+                    <td>
+                      <button
+                        className="database-row-button"
+                        onClick={() => onSelectNode(row.nodeId)}
+                        title={`Select ${row.nodeLabel}`}
+                        type="button"
+                      >
+                        {row.label}
+                      </button>
+                    </td>
+                    <td>{row.nodeLabel}</td>
+                    <td>{row.kind}</td>
+                    <td>{row.source}</td>
+                    <td>
+                      <span className={`node-sync ${row.status}`}>{row.status}</span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5}>No bindings attached yet. Run Check to populate sync state.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        ) : null}
+        {activeView === 'governance' ? (
+          <table className="database-table">
+            <thead>
+              <tr>
+                <th scope="col">Record</th>
+                <th scope="col">Product</th>
+                <th scope="col">Node</th>
+                <th scope="col">Source</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {snapshot.governance.length ? (
+                snapshot.governance.map((row) => (
+                  <tr key={`${row.nodeId}-${row.productId}-${row.id}`}>
+                    <td>
+                      <button
+                        className="database-row-button"
+                        onClick={() => onSelectNode(row.nodeId)}
+                        title={`Select ${row.nodeLabel}`}
+                        type="button"
+                      >
+                        {row.title}
+                      </button>
+                    </td>
+                    <td>
+                      <span className={`node-record product-${row.productId}`}>
+                        {formatProductId(row.productId)}
+                      </span>
+                    </td>
+                    <td>{row.nodeLabel}</td>
+                    <td>{row.source}</td>
+                    <td>{row.status}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5}>No Signal, Decision, or Proof records are attached yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        ) : null}
+        {activeView === 'activity' ? (
+          <table className="database-table">
+            <thead>
+              <tr>
+                <th scope="col">Activity</th>
+                <th scope="col">Type</th>
+                <th scope="col">Source</th>
+                <th scope="col">State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {snapshot.activity.length ? (
+                snapshot.activity.slice(0, 80).map((row) => (
+                  <tr key={`${row.kind}-${row.id}`}>
+                    <td>
+                      {row.nodeId ? (
+                        <button
+                          className="database-row-button"
+                          onClick={() => onSelectNode(row.nodeId as string)}
+                          type="button"
+                        >
+                          {row.label}
+                        </button>
+                      ) : (
+                        row.label
+                      )}
+                    </td>
+                    <td>{row.kind}</td>
+                    <td>{row.source}</td>
+                    <td>{row.state}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4}>No observations, suggestions, or review actions yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        ) : null}
+      </div>
     </aside>
   );
 }
@@ -1291,19 +1781,29 @@ function Inspector({
 
 function AtlasStudio(): React.ReactElement {
   const sessionId = useMemo(getSessionId, []);
-  const initialViewport = useMemo(() => readStoredViewport(sessionId), [sessionId]);
   const initialStoryPanelOffset = useMemo(() => readStoredStoryPanelOffset(sessionId), [sessionId]);
   const [session, setSession] = useState<AtlasSession | null>(null);
   const [palette, setPalette] = useState<Palette | null>(null);
-  const [nodes, setNodes] = useState<FlowNode[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [activeNodeIds, setActiveNodeIds] = useState<Set<string>>(() => new Set());
-  const [detailMode, setDetailMode] = useState<CanvasDetailMode>(() =>
-    detailModeForZoom(initialViewport?.zoom ?? 1)
-  );
   const [railOpen, setRailOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [databaseOpen, setDatabaseOpen] = useState(false);
+  const [databaseView, setDatabaseView] = useState<DatabasePanelView>('records');
   const [presenterMode, setPresenterMode] = useState(false);
+  const [presenterNotice, setPresenterNotice] = useState<string | null>(null);
+  const [topologyLens, setTopologyLens] = useState<TopologyLens>('all');
+  const [topologyQuery, setTopologyQuery] = useState('');
+  const [fastFitRequest, setFastFitRequest] = useState(0);
+  const [fastFocusRequest, setFastFocusRequest] = useState<{
+    nodeId: string;
+    requestId: number;
+  } | null>(null);
+  const [canvasViewport, setCanvasViewport] = useState<CanvasKernelViewport>({
+    x: 0,
+    y: 0,
+    zoom: 1
+  });
   const [storyPanelOffset, setStoryPanelOffset] =
     useState<StoryPanelOffset>(initialStoryPanelOffset);
   const [draft, setDraft] = useState<NodeDraft | null>(null);
@@ -1311,13 +1811,9 @@ function AtlasStudio(): React.ReactElement {
   const [healSummary, setHealSummary] = useState<string | null>(null);
   const [proposalSummary, setProposalSummary] = useState<string | null>(null);
   const canvasStageRef = useRef<HTMLDivElement | null>(null);
-  const flowRef = useRef<ReactFlowInstance<FlowNode, Edge> | null>(null);
-  const edgeCache = useRef<Map<string, { edge: Edge; signature: string }>>(new Map());
-  const edgeListCache = useRef<{ edges: Edge[]; signature: string } | null>(null);
   const sessionRef = useRef<AtlasSession | null>(null);
   const nodeSignatures = useRef<Map<string, string>>(new Map());
   const activityTimer = useRef<number | null>(null);
-  const storyFrameKey = useRef<string | null>(null);
   const storySelectionKey = useRef<string | null>(null);
   const storyPanelDrag = useRef<{
     originX: number;
@@ -1327,21 +1823,45 @@ function AtlasStudio(): React.ReactElement {
   } | null>(null);
   const presenterModeInitialized = useRef(false);
 
-  const edges = useMemo(() => {
-    if (!session) return [];
-    edgeListCache.current = toStableFlowEdges(
-      session,
-      edgeCache.current,
-      edgeListCache.current,
-      presenterMode
+  const largeTopology = (session?.canvas.nodes.length ?? 0) >= 96;
+  const normalizedTopologyQuery = topologyQuery.trim().toLowerCase();
+  const topologyLensCounts = useMemo(() => {
+    const countsByLens = new Map<TopologyLens, number>(TOPOLOGY_LENSES.map((lens) => [lens.id, 0]));
+    const nodes = session?.canvas.nodes ?? [];
+    countsByLens.set('all', nodes.length);
+    for (const node of nodes) {
+      const section = topologyBoardSectionForNode(node);
+      countsByLens.set(section, (countsByLens.get(section) ?? 0) + 1);
+    }
+    return countsByLens;
+  }, [session]);
+  const visibleNodeIds = useMemo(() => {
+    if (!session || (topologyLens === 'all' && !normalizedTopologyQuery)) return null;
+    return new Set(
+      session.canvas.nodes
+        .filter((node) => topologyLens === 'all' || topologyBoardSectionForNode(node) === topologyLens)
+        .filter((node) => nodeMatchesTopologyQuery(node, normalizedTopologyQuery))
+        .map((node) => node.id)
     );
-    return edgeListCache.current.edges;
-  }, [presenterMode, session]);
+  }, [normalizedTopologyQuery, session, topologyLens]);
+  const storyVisibleNodeIds = useMemo(
+    () => (presenterMode && session ? storyPresenterNodeIds(session) : null),
+    [presenterMode, session]
+  );
+  const activePresenterStory = Boolean(storyVisibleNodeIds);
+  const canvasVisibleNodeIds = useMemo(
+    () => intersectNodeIdSets(visibleNodeIds, storyVisibleNodeIds),
+    [storyVisibleNodeIds, visibleNodeIds]
+  );
   const selectedNode = useMemo(
     () => session?.canvas.nodes.find((node) => node.id === selectedNodeId) ?? null,
     [selectedNodeId, session]
   );
   const counts = `${session?.canvas.nodes.length ?? 0} nodes / ${session?.canvas.edges.length ?? 0} edges`;
+  const visibleCounts =
+    canvasVisibleNodeIds
+      ? `${canvasVisibleNodeIds.size} of ${session?.canvas.nodes.length ?? 0} nodes`
+      : counts;
   const sessionTitle = session
     ? `${formatClient(session.client)} / ${session.workflow}`
     : 'Loading session...';
@@ -1467,36 +1987,7 @@ function AtlasStudio(): React.ReactElement {
       presenterModeInitialized.current = true;
       setPresenterMode(true);
     }
-    const nextNodes = toFlowNodes(
-      session,
-      selectedNodeId,
-      activeNodeIds,
-      detailMode,
-      presenterMode
-    );
-
-    setNodes((current) => {
-      const currentById = new Map(current.map((node) => [node.id, node]));
-      let changed = current.length !== nextNodes.length;
-      const merged = nextNodes.map((node, index) => {
-        if (current[index]?.id !== node.id) changed = true;
-        const existing = currentById.get(node.id);
-        if (!existing) {
-          changed = true;
-          return node;
-        }
-
-        const canonicalPositionChanged =
-          existing.data.node.x !== node.data.node.x || existing.data.node.y !== node.data.node.y;
-        const nextNode = canonicalPositionChanged ? node : { ...node, position: existing.position };
-
-        if (flowNodeSignature(existing) === flowNodeSignature(nextNode)) return existing;
-        changed = true;
-        return nextNode;
-      });
-      return changed ? merged : current;
-    });
-  }, [activeNodeIds, detailMode, presenterMode, selectedNodeId, session]);
+  }, [session]);
 
   useEffect(() => {
     return () => {
@@ -1519,6 +2010,12 @@ function AtlasStudio(): React.ReactElement {
   }, [selectedNode]);
 
   useEffect(() => {
+    if (!selectedNodeId || !visibleNodeIds || visibleNodeIds.has(selectedNodeId)) return;
+    setSelectedNodeId(null);
+    setInspectorOpen(false);
+  }, [selectedNodeId, visibleNodeIds]);
+
+  useEffect(() => {
     if (!('EventSource' in window) || !sessionId) {
       const timer = window.setInterval(() => void loadSession(), 1000);
       return () => window.clearInterval(timer);
@@ -1538,63 +2035,37 @@ function AtlasStudio(): React.ReactElement {
     return () => events.close();
   }, [applySession, loadSession, sessionId]);
 
-  const onNodesChange = useCallback((changes: NodeChange<FlowNode>[]) => {
-    setNodes((current) => applyNodeChanges(changes, current));
-  }, []);
+  const focusNodeOnCanvas = useCallback(
+    (nodeId: string) => {
+      setFastFocusRequest({ nodeId, requestId: Date.now() });
+    },
+    []
+  );
 
-  const onNodeClick = useCallback<NodeMouseHandler<FlowNode>>((_, node) => {
-    setSelectedNodeId(node.id);
+  const selectFastNode = useCallback((nodeId: string) => {
+    setSelectedNodeId(nodeId);
     setInspectorOpen(true);
   }, []);
+
+  const selectDatabaseNode = useCallback(
+    (nodeId: string) => {
+      setSelectedNodeId(nodeId);
+      setInspectorOpen(true);
+      focusNodeOnCanvas(nodeId);
+    },
+    [focusNodeOnCanvas]
+  );
 
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
   }, []);
 
-  const onNodeDragStop = useCallback(
-    (_: MouseEvent | TouchEvent, node: FlowNode) => {
-      const original = session?.canvas.nodes.find((item) => item.id === node.id);
-      if (!original) return;
-      const x = Math.round(node.position.x);
-      const y = Math.round(node.position.y);
-      if (x === original.x && y === original.y) return;
-      void patchNode(node.id, { x, y });
+  const handleCanvasViewportChange = useCallback(
+    (viewport: CanvasKernelViewport) => {
+      setCanvasViewport(viewport);
+      localStorage.setItem(`atlas-studio:${sessionId}:canvas-kernel-viewport`, JSON.stringify(viewport));
     },
-    [patchNode, session]
-  );
-
-  const onConnect = useCallback(
-    async (connection: Connection) => {
-      if (!connection.source || !connection.target || connection.source === connection.target)
-        return;
-      const next = await requestJson<AtlasSession>(
-        `/api/sessions/${encodeURIComponent(sessionId)}/edges`,
-        {
-          body: JSON.stringify({
-            createdBy: 'operator',
-            label: 'relates to',
-            source: connection.source,
-            target: connection.target
-          }),
-          method: 'POST'
-        }
-      );
-      applySession(next, 'local');
-    },
-    [applySession, sessionId]
-  );
-
-  const updateDetailModeForViewport = useCallback((viewport: Viewport) => {
-    const next = detailModeForZoom(viewport.zoom);
-    setDetailMode((current) => (current === next ? current : next));
-  }, []);
-
-  const onMoveEnd = useCallback(
-    (_: MouseEvent | TouchEvent | null, viewport: Viewport) => {
-      updateDetailModeForViewport(viewport);
-      localStorage.setItem(`atlas-studio:${sessionId}:viewport`, JSON.stringify(viewport));
-    },
-    [sessionId, updateDetailModeForViewport]
+    [sessionId]
   );
 
   const addObservation = useCallback(
@@ -1674,11 +2145,11 @@ function AtlasStudio(): React.ReactElement {
 
   const addNode = useCallback(
     async (kind: AtlasCanvasNodeKind) => {
-      const viewport = flowRef.current?.getViewport();
-      const center = flowRef.current?.screenToFlowPosition({
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2
-      });
+      const stage = canvasStageRef.current;
+      const center = {
+        x: ((stage?.clientWidth ?? window.innerWidth) / 2 - canvasViewport.x) / canvasViewport.zoom,
+        y: ((stage?.clientHeight ?? window.innerHeight) / 2 - canvasViewport.y) / canvasViewport.zoom
+      };
       const next = await requestJson<AtlasSession>(
         `/api/sessions/${encodeURIComponent(sessionId)}/nodes`,
         {
@@ -1691,13 +2162,12 @@ function AtlasStudio(): React.ReactElement {
           method: 'POST'
         }
       );
-      void viewport;
       const newest = next.canvas.nodes.at(-1);
       setSelectedNodeId(newest?.id ?? null);
       applySession(next, 'local');
       setInspectorOpen(true);
     },
-    [applySession, sessionId]
+    [applySession, canvasViewport, sessionId]
   );
 
   const saveDraft = useCallback(() => {
@@ -1762,31 +2232,14 @@ function AtlasStudio(): React.ReactElement {
   }, [advancePresenterStep, presenterMode, session?.story?.active]);
 
   const fitCanvas = useCallback(() => {
-    void flowRef.current?.fitView(FIT_VIEW_OPTIONS);
+    setFastFitRequest((request) => request + 1);
+    setFastFocusRequest(null);
   }, []);
 
-  const fitStoryFocus = useCallback(() => {
-    const story = session?.story;
-    if (!story?.active || !story.focusNodeIds.length) {
-      storyFrameKey.current = null;
-      return;
-    }
-    const key = [story.activeStepId ?? 'story', ...story.focusNodeIds].join('|');
-    if (storyFrameKey.current === key) return;
-    storyFrameKey.current = key;
-    window.setTimeout(() => {
-      void flowRef.current?.fitView({
-        ...FIT_VIEW_OPTIONS,
-        maxZoom: 1.18,
-        nodes: story.focusNodeIds.map((id) => ({ id })),
-        padding: 0.34
-      });
-    }, 60);
-  }, [session]);
-
   useEffect(() => {
-    fitStoryFocus();
-  }, [fitStoryFocus, nodes]);
+    if (!largeTopology) return;
+    window.setTimeout(() => fitCanvas(), 80);
+  }, [fitCanvas, largeTopology, topologyLens]);
 
   useEffect(() => {
     const story = session?.story;
@@ -1800,7 +2253,9 @@ function AtlasStudio(): React.ReactElement {
     if (storySelectionKey.current === key) return;
     storySelectionKey.current = key;
     setSelectedNodeId(firstFocusedNodeId);
-    setInspectorOpen(true);
+    setFastFocusRequest({ nodeId: firstFocusedNodeId, requestId: Date.now() });
+    setInspectorOpen(false);
+    setDatabaseOpen(false);
   }, [presenterMode, session?.story]);
 
   const tidyCanvas = useCallback(async () => {
@@ -1900,13 +2355,60 @@ function AtlasStudio(): React.ReactElement {
     [applySession, sessionId]
   );
 
-  const onInit = useCallback(
-    (instance: ReactFlowInstance<FlowNode, Edge>) => {
-      flowRef.current = instance;
-      updateDetailModeForViewport(instance.getViewport());
-    },
-    [updateDetailModeForViewport]
-  );
+  const activatePresenter = useCallback(async () => {
+    if (!session) return;
+    if (presenterMode && activePresenterStory) {
+      setPresenterMode(false);
+      setPresenterNotice(null);
+      return;
+    }
+
+    const currentStoryIds = storyPresenterNodeIds(session);
+    if (currentStoryIds?.size) {
+      setPresenterMode(true);
+      setPresenterNotice(null);
+      const firstNodeId = [...currentStoryIds][0];
+      if (firstNodeId) setFastFocusRequest({ nodeId: firstNodeId, requestId: Date.now() });
+      return;
+    }
+
+    const firstStoryStep = session.story?.steps.find(
+      (step) => step.focusNodeIds?.length || step.focusEdgeIds?.length
+    );
+    if (firstStoryStep) {
+      const next = await requestJson<AtlasSession>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/story/steps/${encodeURIComponent(
+          firstStoryStep.id
+        )}/activate`,
+        { method: 'POST' }
+      );
+      applySession(next, 'local');
+      setPresenterMode(true);
+      setPresenterNotice(null);
+      const firstNodeId = next.story?.focusNodeIds[0];
+      if (firstNodeId) setFastFocusRequest({ nodeId: firstNodeId, requestId: Date.now() });
+      return;
+    }
+
+    const payload = buildPresenterStoryPayload(session, visibleNodeIds);
+    if (!payload) {
+      setPresenterNotice('No visible topology records are available for presentation.');
+      return;
+    }
+
+    const next = await requestJson<AtlasSession>(
+      `/api/sessions/${encodeURIComponent(sessionId)}/story`,
+      {
+        body: JSON.stringify(payload),
+        method: 'POST'
+      }
+    );
+    applySession(next, 'local');
+    setPresenterMode(true);
+    setPresenterNotice(null);
+    const firstNodeId = next.story?.focusNodeIds[0];
+    if (firstNodeId) setFastFocusRequest({ nodeId: firstNodeId, requestId: Date.now() });
+  }, [activePresenterStory, applySession, presenterMode, session, sessionId, visibleNodeIds]);
 
   const copyCommand = useCallback(async () => {
     const command = `pnpm atlas:studio observe --session ${sessionId} --suggest --text "client says..."`;
@@ -1943,10 +2445,18 @@ function AtlasStudio(): React.ReactElement {
             Inspector
           </IconButton>
           <IconButton
-            active={presenterMode}
+            active={databaseOpen}
+            icon={Database}
+            onClick={() => setDatabaseOpen((value) => !value)}
+            title={databaseOpen ? 'Hide database layer' : 'Show database layer'}
+          >
+            Database
+          </IconButton>
+          <IconButton
+            active={activePresenterStory}
             icon={Presentation}
-            onClick={() => setPresenterMode((value) => !value)}
-            title={presenterMode ? 'Exit presenter mode' : 'Enter presenter mode'}
+            onClick={() => void activatePresenter()}
+            title={activePresenterStory ? 'Exit presenter mode' : 'Enter presenter mode'}
           >
             Present
           </IconButton>
@@ -1979,88 +2489,85 @@ function AtlasStudio(): React.ReactElement {
         </div>
       </header>
 
-      <main className="studio-main">
-        <ReactFlowProvider>
-          <div
-            ref={canvasStageRef}
-            className={`canvas-stage ${presenterMode ? 'presenter-mode' : ''}`}
-            aria-label="Atlas workflow canvas"
-          >
-            <ReactFlow
-              attributionPosition="bottom-left"
-              colorMode="light"
-              defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
-              defaultViewport={initialViewport}
-              deleteKeyCode={null}
-              edges={edges}
-              elevateEdgesOnSelect={false}
-              fitView={!initialViewport}
-              fitViewOptions={FIT_VIEW_OPTIONS}
-              maxZoom={1.8}
-              minZoom={0.18}
-              nodeClickDistance={6}
-              nodeDragThreshold={8}
-              nodeTypes={NODE_TYPES}
-              nodes={nodes}
-              nodesConnectable={!presenterMode}
-              nodesDraggable={!presenterMode}
-              onConnect={onConnect}
-              onInit={onInit}
-              onMoveEnd={onMoveEnd}
-              onNodeClick={onNodeClick}
-              onNodeDragStop={onNodeDragStop}
-              onNodesChange={onNodesChange}
-              onPaneClick={onPaneClick}
-              onlyRenderVisibleElements={nodes.length > 80}
-              panOnDrag
-              panOnScroll
-              panOnScrollSpeed={0.65}
-              preventScrolling
-              proOptions={{ hideAttribution: true }}
-              snapGrid={[12, 12]}
-              snapToGrid
-              zoomOnDoubleClick={false}
-              zoomOnPinch
-              zoomOnScroll
-            >
-              <Background
-                color="#dcdcd6"
-                gap={36}
-                lineWidth={0.6}
-                variant={BackgroundVariant.Lines}
+      <main className={`studio-main ${databaseOpen ? 'database-open' : ''}`}>
+        <div
+          ref={canvasStageRef}
+          className={`canvas-stage ${activePresenterStory ? 'presenter-mode' : ''} ${
+            largeTopology ? 'large-topology' : ''
+          } fast-renderer-active`}
+          aria-label="Atlas workflow canvas"
+        >
+          {session ? (
+            <>
+              <FastTopologyCanvas
+                activeNodeIds={activeNodeIds}
+                fitRequest={fastFitRequest}
+                focusRequest={fastFocusRequest}
+                onNodeSelect={selectFastNode}
+                onPaneClick={onPaneClick}
+                onViewportChange={handleCanvasViewportChange}
+                selectedNodeId={selectedNodeId}
+                session={session}
+                visibleNodeIds={canvasVisibleNodeIds}
               />
-              <Controls className="flow-controls" showInteractive={false} />
-              <MiniMap
-                className="flow-minimap"
-                maskColor="#f7f7f2cc"
-                nodeBorderRadius={8}
-                nodeColor={(node) => {
-                  const kind = (node as FlowNode).data.node.kind;
-                  if (kind === 'human') return '#dfe6ff';
-                  if (kind === 'constraint') return '#ffe6ec';
-                  if (kind === 'ai') return '#e7f3e9';
-                  return '#f4f4ef';
-                }}
-                pannable
-                zoomable
-              />
-              <Panel className="canvas-kicker" position="top-left">
+              <div className="canvas-kicker canvas-overlay top-left">
                 <Workflow aria-hidden="true" />
                 <strong>Workflow map</strong>
-                <span>{counts}</span>
-              </Panel>
-              <Panel className="canvas-legend" position="top-right">
+                <span>{visibleCounts}</span>
+              </div>
+              <div
+                aria-label="Topology section view"
+                className="canvas-board-legend canvas-overlay top-center"
+              >
+                <label className="canvas-search">
+                  <Search aria-hidden="true" />
+                  <input
+                    aria-label="Find topology node"
+                    onChange={(event) => setTopologyQuery(event.target.value)}
+                    placeholder="Find node"
+                    type="search"
+                    value={topologyQuery}
+                  />
+                  {topologyQuery ? (
+                    <button
+                      aria-label="Clear topology search"
+                      onClick={() => setTopologyQuery('')}
+                      title="Clear search"
+                      type="button"
+                    >
+                      <X aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </label>
+                {TOPOLOGY_LENSES.map((lens) => (
+                  <button
+                    aria-pressed={topologyLens === lens.id}
+                    key={lens.id}
+                    onClick={() => setTopologyLens(lens.id)}
+                    title={`Show ${lens.label}`}
+                    type="button"
+                  >
+                    <span>{lens.label}</span>
+                    <em>{topologyLensCounts.get(lens.id) ?? 0}</em>
+                  </button>
+                ))}
+              </div>
+              <div className="canvas-legend canvas-overlay top-right">
                 <span className="status-chip run">Run</span>
                 <span className="status-chip wait">Wait</span>
                 <span className="status-chip stop">Stop</span>
-              </Panel>
-              <Panel className="canvas-mark" position="bottom-right">
+              </div>
+              <div className="canvas-mark canvas-overlay bottom-right">
                 <CubeMark />
-              </Panel>
-              {presenterMode ? (
-                <Panel
-                  className="story-panel-wrap"
-                  position="bottom-left"
+              </div>
+              {presenterNotice ? (
+                <div className="presenter-notice canvas-overlay bottom-left">
+                  {presenterNotice}
+                </div>
+              ) : null}
+              {activePresenterStory ? (
+                <div
+                  className="story-panel-wrap canvas-overlay bottom-left"
                   style={{
                     transform: `translate(${storyPanelOffset.x}px, ${storyPanelOffset.y}px)`
                   }}
@@ -2074,11 +2581,11 @@ function AtlasStudio(): React.ReactElement {
                     onSelectStep={(step) => void selectStoryStep(step)}
                     session={session}
                   />
-                </Panel>
+                </div>
               ) : null}
-            </ReactFlow>
-          </div>
-        </ReactFlowProvider>
+            </>
+          ) : null}
+        </div>
 
         <Rail
           onAcceptSuggestion={acceptSuggestion}
@@ -2103,6 +2610,23 @@ function AtlasStudio(): React.ReactElement {
           selectedNode={selectedNode}
           sessionId={sessionId}
         />
+        {databaseOpen ? (
+          <DatabaseLayerPanel
+            activeView={databaseView}
+            lens={{
+              active: topologyLens !== 'all' || Boolean(normalizedTopologyQuery),
+              label: topologyLensLabel(topologyLens),
+              query: topologyQuery.trim(),
+              totalNodes: session?.canvas.nodes.length ?? 0,
+              visibleNodes: visibleNodeIds?.size ?? session?.canvas.nodes.length ?? 0
+            }}
+            onChangeView={setDatabaseView}
+            onClose={() => setDatabaseOpen(false)}
+            onSelectNode={selectDatabaseNode}
+            session={session}
+            visibleNodeIds={visibleNodeIds}
+          />
+        ) : null}
       </main>
 
       <footer className="studio-footer">

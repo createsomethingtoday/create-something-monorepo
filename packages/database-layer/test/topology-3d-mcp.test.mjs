@@ -20,6 +20,7 @@ test('topology 3d MCP runtime exposes declared tools and resources', async () =>
   assert.ok(tools.has('topology3d_group_explain'));
   assert.ok(tools.has('topology3d_atlas_context_read'));
   assert.ok(tools.has('topology3d_atlas_story_read'));
+  assert.ok(tools.has('topology3d_client_overlay_context_read'));
 
   const resources = new Set(runtime.resourcesList().map((resource) => resource.uri));
   assert.ok(resources.has('topology3d://create-something/internal/context'));
@@ -28,6 +29,8 @@ test('topology 3d MCP runtime exposes declared tools and resources', async () =>
   assert.ok(resources.has('topology3d://create-something/internal/atlas-session'));
   assert.ok(resources.has('topology3d://create-something/internal/atlas-story'));
   assert.ok(resources.has('topology3d://create-something/internal/atlas-node/{atlasNodeId}'));
+  assert.ok(resources.has('topology3d://create-something/internal/client-overlays'));
+  assert.ok(resources.has('topology3d://create-something/internal/client-overlay/{clientSlug}'));
 });
 
 test('topology 3d MCP runtime can read insights and navigate context', async () => {
@@ -48,25 +51,65 @@ test('topology 3d MCP runtime can read insights and navigate context', async () 
   assert.equal(context.counts.visibleNodes, 12);
   assert.ok(context.nodes.every((node) => node.group?.id === 'client-overlays'));
 
+  const clientNode = context.nodes.find((node) => node.clientOverlay);
+  assert.ok(clientNode);
+
   const focused = runtime.callTool('topology3d_node_focus', {
-    nodeId: context.nodes[0].id,
+    nodeId: clientNode.id,
     lensId: 'business'
   });
 
-  assert.equal(focused.selected, context.nodes[0].id);
-  assert.equal(focused.state.selectedNodeId, context.nodes[0].id);
-  assert.equal(focused.substrate.recordId, context.nodes[0].id);
+  assert.equal(focused.selected, clientNode.id);
+  assert.equal(focused.state.selectedNodeId, clientNode.id);
+  assert.equal(focused.substrate.recordId, clientNode.id);
   assert.ok(focused.substrate.apiPath.startsWith('/api/substrate/topology/internal/records/'));
   assert.ok(focused.substrate.mcpUri.startsWith('substrate://topology/internal/records/'));
   assert.ok(focused.lensViews.business.groupId);
-  assert.equal(focused.atlas.topologyNode.id, context.nodes[0].id);
-  assert.equal(focused.atlas.atlasNode.atlasId, context.nodes[0].id);
+  assert.equal(focused.atlas.topologyNode.id, clientNode.id);
+  assert.equal(focused.atlas.atlasNode.atlasId, clientNode.id);
 
   const exported = runtime.callTool('topology3d_selection_export', { limit: 5 });
-  assert.equal(exported.substrate.recordId, context.nodes[0].id);
-  assert.equal(exported.handoff.substrateRecordId, context.nodes[0].id);
+  assert.equal(exported.substrate.recordId, clientNode.id);
+  assert.equal(exported.handoff.substrateRecordId, clientNode.id);
   assert.equal(exported.handoff.substrateMcpUri, exported.substrate.mcpUri);
   assert.equal(exported.handoff.receiptId, exported.substrate.receiptId);
+  assert.equal(exported.handoff.clientOverlayAgentCommand, 'databaseLayer.clientOverlays.get');
+  assert.ok(exported.handoff.clientOverlayTopology3dResourceUri);
+});
+
+test('topology 3d MCP runtime lazy-loads client overlay context for view switching', async () => {
+  const runtime = createTopology3dRuntime();
+  const overlay = runtime.callTool('topology3d_client_overlay_context_read', {
+    clientSlug: 'outerfields'
+  });
+
+  assert.equal(overlay.clientOverlay.clientSlug, 'outerfields');
+  assert.equal(overlay.clientOverlay.packages.length, 3);
+  assert.equal(overlay.handoff.clientOverlayMcpUri, 'substrate://client-overlays/outerfields');
+  assert.equal(overlay.handoff.clientOverlayAgentCommand, 'databaseLayer.clientOverlays.get');
+  assert.match(overlay.boundary, /Read-only client overlay context/);
+
+  const listResource = runtime.readResource('topology3d://create-something/internal/client-overlays');
+  const detailResource = runtime.readResource('topology3d://create-something/internal/client-overlay/outerfields');
+  assert.ok(listResource.overlays.some((candidate) => candidate.clientSlug === 'outerfields'));
+  assert.equal(detailResource.clientOverlay.clientSlug, 'outerfields');
+
+  const context = runtime.callTool('topology3d_context_set', {
+    lensId: 'business',
+    groupId: 'client-overlays',
+    search: 'outerfields'
+  });
+  const clientNode = context.nodes.find((node) => node.clientOverlay?.clientSlug === 'outerfields');
+  assert.ok(clientNode);
+
+  const focused = runtime.callTool('topology3d_node_focus', {
+    nodeId: clientNode.id,
+    lensId: 'business'
+  });
+  const selectedOverlay = runtime.callTool('topology3d_client_overlay_context_read');
+
+  assert.equal(focused.node.clientOverlay.clientSlug, 'outerfields');
+  assert.equal(selectedOverlay.clientOverlay.clientSlug, 'outerfields');
 });
 
 test('topology 3d MCP runtime composes topology and Atlas context', async () => {
@@ -112,10 +155,11 @@ test('topology 3d MCP runtime explains groups with directional context', async (
   assert.ok(explanation.directionalLinks.topLensLinks.length > 0);
   assert.ok(explanation.directionalLinks.inbound.length > 0);
   assert.ok(explanation.directionalLinks.outbound.length > 0);
-  assert.notEqual(
+  assert.equal(
     explanation.improvementCandidates.some((candidate) => candidate.id === 'substrate-operator-contract'),
-    explanation.completedImprovements.some((candidate) => candidate.id === 'substrate-operator-contract')
+    false
   );
+  assert.ok(explanation.completedImprovements.some((candidate) => candidate.id === 'substrate-operator-contract'));
 });
 
 test('topology 3d MCP JSON-RPC handler returns structured tool content', async () => {

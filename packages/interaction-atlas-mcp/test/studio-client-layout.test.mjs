@@ -5,8 +5,11 @@ import {
   agentActivityFromSessionChange,
   detailModeForZoom,
   focusedStoryNodeSummaries,
+  intersectNodeIdSets,
+  storyPresenterNodeIds,
   tidyNodeUpdates
 } from '../dist/studio/client/layout.js';
+import { fastTopologyGraph } from '../dist/studio/client/FastTopologyCanvas.js';
 
 function makeNode(overrides) {
   return {
@@ -85,6 +88,58 @@ test('agent activity detects remote agent changes and ignores operator-only edit
   );
 
   assert.equal(operatorOnly, null);
+});
+
+test('story presenter node ids keep the guided canvas slice small', () => {
+  const session = makeSession([
+    makeNode({ id: 'root' }),
+    makeNode({ id: 'worker' }),
+    makeNode({ id: 'policy' }),
+    makeNode({ id: 'unfocused' })
+  ]);
+  session.canvas.edges = [
+    { id: 'edge-root-worker', label: 'runs', source: 'root', target: 'worker' },
+    { id: 'edge-worker-policy', label: 'governed by', source: 'worker', target: 'policy' },
+    { id: 'edge-root-unfocused', label: 'mentions', source: 'root', target: 'unfocused' }
+  ];
+  session.story = {
+    active: true,
+    activeStepId: 'step-1',
+    callouts: [],
+    dimUnfocused: true,
+    focusEdgeIds: ['edge-worker-policy'],
+    focusNodeIds: ['root', 'worker'],
+    questions: [],
+    steps: []
+  };
+
+  assert.deepEqual([...storyPresenterNodeIds(session)].sort(), ['policy', 'root', 'worker']);
+  assert.deepEqual([...intersectNodeIdSets(new Set(['root', 'worker']), new Set(['worker']))], [
+    'worker'
+  ]);
+});
+
+test('fast topology graph keeps hidden nodes and dangling edges out of the CanvasKernel projection', () => {
+  const session = makeSession([
+    makeNode({ id: 'root' }),
+    makeNode({ id: 'visible-worker' }),
+    makeNode({ id: 'hidden-worker' })
+  ]);
+  session.canvas.edges = [
+    { id: 'visible-edge', label: 'runs', source: 'root', target: 'visible-worker' },
+    { id: 'hidden-edge', label: 'mentions', source: 'root', target: 'hidden-worker' }
+  ];
+
+  const graph = fastTopologyGraph(session, new Set(['root', 'visible-worker']));
+
+  assert.deepEqual(
+    graph.nodes.map((node) => node.id),
+    ['root', 'visible-worker']
+  );
+  assert.deepEqual(
+    graph.edges.map((edge) => edge.id),
+    ['visible-edge']
+  );
 });
 
 test('focused story node summaries preserve walkthrough detail context', () => {
