@@ -1,0 +1,18 @@
+{
+  "schema_version": "multi-agent-evidence-receipt.v1",
+  "run_id": "CRE-1154-reviewed-single-pass",
+  "role": "worker",
+  "work_unit_id": "CRE-1154-worker",
+  "linear": { "issue": "CRE-1154" },
+  "status": "passed",
+  "commands": [{ "command": "corepack pnpm --filter @create-something/symphony test", "exit_code": 0, "summary": "Symphony tests passed." }],
+  "changed_paths": ["packages/symphony/src/work-unit-contract.js"],
+  "evidence": "Contract foundation is valid.",
+  "next_decision": "Run the reviewed single-pass behavior slice.",
+  "metrics": {
+    "duration_ms": 10,
+    "retry_count": 0,
+    "human_intervention_count": 0,
+    "tokens": { "input": 1, "output": 1, "total": 2 }
+  }
+}

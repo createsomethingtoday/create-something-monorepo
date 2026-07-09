@@ -1,0 +1,16 @@
+{
+  "schema_version": "multi-agent-work-unit.v1",
+  "id": "CRE-1154-reviewer",
+  "linear": { "issue": "CRE-1154" },
+  "lane": "review",
+  "role": "reviewer",
+  "tier": ["Database", "Automation", "Judgment"],
+  "goal": "Independently review the worker patch and proof without changing the workspace.",
+  "scope": { "packages": ["@create-something/symphony"], "paths": ["packages/symphony/**", "scripts/reviewed-agent-loop-pilot.mjs", "scripts/test/reviewed-agent-loop-pilot.test.mjs", "automation/agent-contracts/**", "package.json"] },
+  "locks": { "packages": ["@create-something/symphony"], "paths": ["packages/symphony/**", "scripts/reviewed-agent-loop-pilot.mjs", "scripts/test/reviewed-agent-loop-pilot.test.mjs", "automation/agent-contracts/**", "package.json"], "mode": "read" },
+  "allowed_commands": ["git diff --check", "git diff --stat", "git status --short", "git diff HEAD -- packages/symphony scripts/reviewed-agent-loop-pilot.mjs scripts/test/reviewed-agent-loop-pilot.test.mjs automation/agent-contracts package.json"],
+  "verification": [{ "command": "git diff --check", "evidence": "The reviewed patch has no whitespace errors and the reviewer made no edits." }],
+  "evidence": { "target": "Aggregate reviewed-run receipt for the supervisor-owned Linear CRE-1154 comment", "required_artifacts": ["review findings or explicit no-findings decision", "unchanged repository fingerprint", "token and time metrics"] },
+  "stop_conditions": ["Stop before editing any file.", "Stop before applying findings or deciding promotion."],
+  "promotion_gate": { "batch_agents": false, "production_mutation": false, "merge_or_deploy": false }
+}

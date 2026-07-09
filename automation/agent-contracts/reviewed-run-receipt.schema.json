@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://createsomething.agency/schemas/multi-agent-reviewed-run-receipt.v1.json",
+  "title": "CREATE SOMETHING Reviewed Agent Run Receipt",
+  "type": "object",
+  "required": ["schema_version", "run_id", "linear", "status", "stages", "reviewer_guard", "changed_paths", "metrics", "next_decision"],
+  "properties": {
+    "schema_version": { "const": "multi-agent-reviewed-run-receipt.v1" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "linear": { "type": "object", "required": ["issue"] },
+    "status": { "enum": ["passed", "failed", "blocked"] },
+    "stages": { "type": "array", "minItems": 3, "maxItems": 3 },
+    "reviewer_guard": {
+      "type": "object",
+      "required": ["sandbox", "before", "after", "unchanged"],
+      "properties": {
+        "sandbox": { "const": "read-only" },
+        "before": { "type": "string", "minLength": 1 },
+        "after": { "type": "string", "minLength": 1 },
+        "unchanged": { "const": true }
+      }
+    },
+    "changed_paths": { "type": "array" },
+    "metrics": {
+      "type": "object",
+      "required": ["elapsed_ms", "stage_duration_ms", "retry_count", "human_intervention_count", "tokens"]
+    },
+    "next_decision": { "type": "string", "minLength": 1 }
+  }
+}

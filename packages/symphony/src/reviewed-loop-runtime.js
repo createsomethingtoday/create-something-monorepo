@@ -1,0 +1,233 @@
+import { execFile, spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { promisify } from 'node:util';
+
+import { CodexAppServerClient } from './codex-client.js';
+
+const execFileAsync = promisify(execFile);
+
+function split_zero(value) {
+  return value.split('\0').filter(Boolean);
+}
+
+async function git(cwd, args, encoding = 'utf8') {
+  const { stdout } = await execFileAsync('git', args, {
+    cwd,
+    encoding,
+    maxBuffer: 1024 * 1024 * 20,
+  });
+  return stdout;
+}
+
+export async function repository_fingerprint(cwd) {
+  const [status, diff, cached, untrackedRaw] = await Promise.all([
+    git(cwd, ['status', '--porcelain=v1', '-z']),
+    git(cwd, ['diff', '--binary', 'HEAD']),
+    git(cwd, ['diff', '--cached', '--binary', 'HEAD']),
+    git(cwd, ['ls-files', '--others', '--exclude-standard', '-z']),
+  ]);
+  const hash = createHash('sha256');
+  hash.update(status);
+  hash.update(diff);
+  hash.update(cached);
+  for (const path of split_zero(untrackedRaw).sort()) {
+    hash.update(path);
+    hash.update(await readFile(resolve(cwd, path)));
+  }
+  return hash.digest('hex');
+}
+
+export async function repository_changed_paths(cwd) {
+  const [tracked, untracked] = await Promise.all([
+    git(cwd, ['diff', '--name-only', '-z', 'HEAD']),
+    git(cwd, ['ls-files', '--others', '--exclude-standard', '-z']),
+  ]);
+  return [...new Set([...split_zero(tracked), ...split_zero(untracked)])].sort();
+}
+
+async function repository_change_snapshot(cwd) {
+  const paths = await repository_changed_paths(cwd);
+  const entries = await Promise.all(paths.map(async (path) => {
+    const hash = createHash('sha256');
+    hash.update(await git(cwd, ['diff', '--binary', 'HEAD', '--', path]));
+    try {
+      hash.update(await readFile(resolve(cwd, path)));
+    } catch (error) {
+      if (error?.code !== 'ENOENT') throw error;
+      hash.update('<deleted>');
+    }
+    return [path, hash.digest('hex')];
+  }));
+  return new Map(entries);
+}
+
+function changed_paths_between(before, after) {
+  return [...new Set([...before.keys(), ...after.keys()])]
+    .filter((path) => before.get(path) !== after.get(path))
+    .sort();
+}
+
+async function run_command(command, cwd, env) {
+  const started = Date.now();
+  const child = spawn('bash', ['-lc', command], {
+    cwd,
+    env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.on('data', (chunk) => { stdout += String(chunk); });
+  child.stderr.on('data', (chunk) => { stderr += String(chunk); });
+  const exit_code = await new Promise((resolve, reject) => {
+    child.once('error', reject);
+    child.once('exit', (code) => resolve(code ?? 1));
+  });
+  return {
+    command,
+    exit_code,
+    output: `${stdout}${stderr}`.trim(),
+    duration_ms: Date.now() - started,
+  };
+}
+
+async function read_rollout_usage(client, logger) {
+  try {
+    const snapshot = await client.read_thread();
+    const path = snapshot?.thread?.path;
+    if (typeof path !== 'string' || path.trim() === '') return null;
+    const lines = (await readFile(path, 'utf8')).trimEnd().split('\n').reverse();
+    for (const line of lines) {
+      let entry;
+      try {
+        entry = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      const total = entry?.type === 'event_msg' && entry?.payload?.type === 'token_count'
+        ? entry.payload?.info?.total_token_usage
+        : null;
+      if (!total) continue;
+      const input = Number(total.input_tokens ?? total.inputTokens ?? 0);
+      const output = Number(total.output_tokens ?? total.outputTokens ?? 0);
+      const aggregate = Number(total.total_tokens ?? total.totalTokens ?? input + output);
+      if ([input, output, aggregate].every(Number.isFinite)) {
+        return { input, output, total: aggregate };
+      }
+    }
+  } catch (error) {
+    logger.warn('reviewed loop could not recover Codex rollout usage', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+  return null;
+}
+
+function stage_prompt(issue, role, work_unit, prior_receipts) {
+  return [
+    `You are the ${role} stage for ${issue.identifier}: ${issue.title}.`,
+    issue.description ? `Issue description:\n${issue.description}` : '',
+    `Work-unit contract:\n${JSON.stringify(work_unit, null, 2)}`,
+    prior_receipts.length
+      ? `Prior stage receipts:\n${JSON.stringify(prior_receipts, null, 2)}`
+      : 'There are no prior stage receipts.',
+    role === 'reviewer'
+      ? 'Inspect the worker patch and evidence. Do not edit any file. Return concrete findings or state that no actionable findings remain.'
+      : role === 'integrator'
+        ? 'Apply only actionable reviewer findings, keep the patch scoped, and leave the workspace ready for the declared verification.'
+        : 'Implement the smallest defensible change required by the issue and work-unit contract.',
+    'Do not mutate Linear or any other external system. Evidence targets describe supervisor handoff, not stage-level write permission.',
+    'Finish with a concise evidence summary. Do not claim promotion or deployment authority.',
+  ].filter(Boolean).join('\n\n');
+}
+
+function sandbox_config(config, sandbox) {
+  const read_only = sandbox === 'read-only';
+  return {
+    ...config,
+    codex: {
+      ...config.codex,
+      approval_policy: read_only ? 'never' : config.codex.approval_policy,
+      thread_sandbox: read_only ? 'read-only' : 'workspace-write',
+      turn_sandbox_policy: { type: read_only ? 'readOnly' : 'workspaceWrite' },
+    },
+  };
+}
+
+export function create_codex_stage_executor(options) {
+  const { issue, workspace_path, config, logger, env = process.env } = options;
+  return async function execute_stage({ role, run_id, work_unit, sandbox, prior_receipts }) {
+    const started_at = Date.now();
+    const before_changes = await repository_change_snapshot(workspace_path);
+    const usage = { input: 0, output: 0, total: 0 };
+    let human_intervention_count = 0;
+    const client = new CodexAppServerClient({
+      config: sandbox_config(config, sandbox),
+      cwd: workspace_path,
+      logger,
+      env,
+      on_event(event) {
+        if (event.usage) {
+          usage.input = event.usage.input_tokens;
+          usage.output = event.usage.output_tokens;
+          usage.total = event.usage.total_tokens;
+        }
+        if (event.event === 'turn_input_required') human_intervention_count += 1;
+      },
+    });
+    let final_message = '';
+    try {
+      await client.start_session();
+      const turn = await client.run_turn(
+        stage_prompt(issue, role, work_unit, prior_receipts),
+        `${issue.identifier} ${role}`,
+      );
+      final_message = turn.text?.trim() ?? '';
+      if (!final_message) {
+        throw new Error(`${role} stage completed without agent evidence.`);
+      }
+      if (usage.total === 0) {
+        const recovered = await read_rollout_usage(client, logger);
+        if (recovered) Object.assign(usage, recovered);
+      }
+    } finally {
+      await client.close();
+    }
+
+    const commands = [];
+    for (const verification of work_unit.verification) {
+      const result = await run_command(verification.command, workspace_path, env);
+      commands.push({
+        command: result.command,
+        exit_code: result.exit_code,
+        summary: result.exit_code === 0
+          ? verification.evidence
+          : result.output || `Command exited ${result.exit_code}.`,
+      });
+    }
+    const passed = commands.every((entry) => entry.exit_code === 0);
+    const after_changes = await repository_change_snapshot(workspace_path);
+    const stage_paths = changed_paths_between(before_changes, after_changes);
+    return {
+      schema_version: 'multi-agent-evidence-receipt.v1',
+      run_id,
+      role,
+      work_unit_id: work_unit.id,
+      linear: { issue: issue.identifier },
+      status: passed ? 'passed' : 'failed',
+      commands,
+      changed_paths: stage_paths,
+      evidence: final_message || `${role} stage completed without a final message.`,
+      next_decision: passed
+        ? `${role} stage may hand off to the next reviewed-loop decision.`
+        : `${role} verification failed; stop and repair before continuing.`,
+      metrics: {
+        duration_ms: Date.now() - started_at,
+        retry_count: 0,
+        human_intervention_count,
+        tokens: usage,
+      },
+    };
+  };
+}

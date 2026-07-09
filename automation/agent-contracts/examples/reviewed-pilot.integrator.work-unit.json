@@ -1,0 +1,20 @@
+{
+  "schema_version": "multi-agent-work-unit.v1",
+  "id": "CRE-1154-integrator",
+  "linear": { "issue": "CRE-1154" },
+  "lane": "review",
+  "role": "integrator",
+  "tier": ["Database", "Automation", "Judgment"],
+  "goal": "Apply only validated reviewer findings and leave the bounded pilot green for operator promotion.",
+  "scope": { "packages": ["@create-something/symphony"], "paths": ["packages/symphony/**", "scripts/reviewed-agent-loop-pilot.mjs", "scripts/test/reviewed-agent-loop-pilot.test.mjs", "automation/agent-contracts/**", "package.json"] },
+  "locks": { "packages": ["@create-something/symphony"], "paths": ["packages/symphony/**", "scripts/reviewed-agent-loop-pilot.mjs", "scripts/test/reviewed-agent-loop-pilot.test.mjs", "automation/agent-contracts/**", "package.json"], "mode": "write" },
+  "allowed_commands": ["corepack pnpm --filter @create-something/symphony test", "node --test scripts/test/reviewed-agent-loop-pilot.test.mjs", "git diff --check"],
+  "verification": [
+    { "command": "corepack pnpm --filter @create-something/symphony test", "evidence": "The Symphony regression suite passes after integration." },
+    { "command": "node --test scripts/test/reviewed-agent-loop-pilot.test.mjs", "evidence": "The reviewed pilot CLI tests pass after integration." },
+    { "command": "git diff --check", "evidence": "The integrated patch has no whitespace errors." }
+  ],
+  "evidence": { "target": "Aggregate reviewed-run receipt for the supervisor-owned Linear CRE-1154 comment", "required_artifacts": ["integration decision", "commands and exit codes", "final changed paths", "token and time metrics"] },
+  "stop_conditions": ["Stop before applying speculative findings.", "Stop before merge, deployment, batch, or daemon promotion."],
+  "promotion_gate": { "batch_agents": false, "production_mutation": false, "merge_or_deploy": false }
+}

@@ -72,6 +72,8 @@ Automation owns the repeatable execution path:
 - `pnpm agent:solo-loop`
 - `pnpm agent:loop-pilot`
 - `pnpm agent:loop-pilot:dispatch`
+- `pnpm agent:loop-pilot:reviewed:check`
+- `pnpm agent:loop-pilot:reviewed -- --issue CRE-1154 --json`
 - `pnpm symphony:code-quality:once`
 - `pnpm symphony:policy:once`
 - `pnpm agent:legibility:verify`
@@ -201,14 +203,16 @@ Why this is the right first loop:
   automatic merge or release promotion
 
 The operator should review one `In Progress` Linear issue with the `code-quality`
-label, confirm it is mechanical and bounded, then run:
+label, confirm it is mechanical and bounded, verify its three contracts, then run:
 
 ```bash
-pnpm agent:loop-pilot:dispatch
+pnpm agent:loop-pilot:reviewed:check -- --issue CRE-1154 --json
+pnpm agent:loop-pilot:reviewed -- --issue CRE-1154 --json
 ```
 
-Stop after that one pass. Record the receipt and inspect whether the worker left
-a reviewable diff, a no-op, or a blocked note.
+Stop after that one pass. Inspect the worker, reviewer, integrator, unchanged
+reviewer fingerprint, aggregate metrics, and preserved workspace before any
+promotion decision.
 
 ## What not to build yet
 

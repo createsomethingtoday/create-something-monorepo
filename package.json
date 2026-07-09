@@ -98,6 +98,8 @@
     "agent:legibility:verify": "node --check scripts/agent-legibility-check.mjs && node --check scripts/agent-legibility-map.mjs && pnpm agent:legibility:test && pnpm agent:legibility:check -- --format json && pnpm agent:legibility:map -- --format json > /dev/null",
     "agent:loop-pilot": "node scripts/agent-loop-pilot.mjs",
     "agent:loop-pilot:dispatch": "node scripts/agent-loop-pilot.mjs --dispatch",
+    "agent:loop-pilot:reviewed": "node scripts/reviewed-agent-loop-pilot.mjs --dispatch",
+    "agent:loop-pilot:reviewed:check": "node scripts/reviewed-agent-loop-pilot.mjs",
     "agent:solo-loop": "node scripts/agent-solo-loop.mjs",
     "agent:solo-loop:json": "node scripts/agent-solo-loop.mjs --json",
     "agent:solo-loop:starter": "node scripts/agent-solo-loop.mjs --starter",

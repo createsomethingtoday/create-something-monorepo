@@ -43,6 +43,23 @@ Run a workflow once from the repo root:
 pnpm symphony:code-quality:once
 ```
 
+Run the contract-native reviewed pilot against one exact active Linear issue:
+
+```bash
+pnpm agent:loop-pilot:reviewed:check -- --issue CRE-1154 --json
+pnpm agent:loop-pilot:reviewed -- --issue CRE-1154 --json
+```
+
+Set `SYMPHONY_CODEX_COMMAND` to an account-authenticated app-server command when
+the ambient `codex` binary is not the runtime you intend to exercise. Explicit
+app-server errors and failed turn completions fail the reviewed run.
+
+The reviewed path starts separate worker, reviewer, and integrator Codex
+sessions in one isolated workspace. The reviewer receives a read-only sandbox,
+and repository fingerprints before and after review must match. The command
+preserves the workspace, writes an aggregate receipt under
+`output/agent-loop-pilot/`, and comments Linear without marking the issue done.
+
 Use Infisical for Linear credentials when running against live work:
 
 ```bash
