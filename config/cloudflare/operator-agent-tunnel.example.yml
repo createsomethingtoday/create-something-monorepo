@@ -1,0 +1,9 @@
+tunnel: create-something-operator-agent
+
+ingress:
+  - hostname: operator-agent.createsomething.agency
+    service: http://127.0.0.1:19932
+    originRequest:
+      connectTimeout: 10s
+      noHappyEyeballs: true
+  - service: http_status:404

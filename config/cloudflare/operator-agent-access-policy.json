@@ -1,0 +1,40 @@
+{
+  "id": "operator-agent-local-gateway-access",
+  "hostname": "operator-agent.createsomething.agency",
+  "tunnelName": "create-something-operator-agent",
+  "localOriginDefault": "http://127.0.0.1:19932",
+  "access": {
+    "applicationName": "CREATE SOMETHING Operator Agent Gateway",
+    "sessionDuration": "12h",
+    "allowedIdentities": ["micah@createsomething.io"],
+    "denyByDefault": true,
+    "requireCloudflareAccess": true
+  },
+  "origin": {
+    "command": "pnpm operator-agent:gateway",
+    "host": "127.0.0.1",
+    "port": 19932,
+    "runEndpoint": "/v1/run",
+    "healthEndpoint": "/health",
+    "writeModesExposed": false
+  },
+  "infisical": {
+    "environment": "prod",
+    "path": "/operator-agent/local-gateway",
+    "secrets": ["OPERATOR_AGENT_GATEWAY_TOKEN", "OPERATOR_AGENT_TUNNEL_TOKEN"]
+  },
+  "cloudflareApi": {
+    "environment": "prod",
+    "path": "/",
+    "preferredSecret": "CLOUDFLARE_ACCESS_API_TOKEN",
+    "requiredPermissions": ["Account: Access Apps and Policies: Edit"]
+  },
+  "operatorRules": [
+    "Keep the gateway origin bound to 127.0.0.1.",
+    "Expose only the operator-agent gateway port through the tunnel.",
+    "Protect the public hostname with Cloudflare Access; do not add a bypass rule.",
+    "Store gateway and tunnel tokens in Infisical only.",
+    "Expose no write modes through the HTTP gateway until the MCP/identity policy path is reviewed.",
+    "Stop the local tunnel replica when public access is no longer needed."
+  ]
+}
