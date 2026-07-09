@@ -194,7 +194,7 @@
             </span>
             Unlimited
           {:else}
-            {submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT} this month
+            {submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT} in 30 days
           {/if}
         </Badge>
       {/if}
@@ -265,7 +265,7 @@
             <span class="stat-value">{submissionData.totalSubmitted}</span>
           </div>
           <div class="stat-row">
-            <span>This Month:</span>
+            <span>Rolling 30 days:</span>
             <span
               class="stat-value"
               class:warning={submissionData.warningLevel === 'caution'}
@@ -345,7 +345,7 @@
               <p class="submission-summary">
                 <strong>{submissionData.publishedCount}</strong> published
                 <span aria-hidden="true">·</span>
-                <strong>{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}</strong> used this month
+                <strong>{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}</strong> used in 30 days
                 <span aria-hidden="true">·</span>
                 <strong>{submissionData.isWhitelisted ? '∞' : submissionData.remainingSubmissions}</strong>
                 remaining
@@ -405,7 +405,7 @@
               <span class="status-value">{submissionData.publishedCount}</span>
             </div>
             <div class="status-item">
-              <span class="status-label">This Month</span>
+              <span class="status-label">Rolling 30 Days</span>
               <span
                 class="status-value"
                 class:warning={submissionData.warningLevel === 'caution'}

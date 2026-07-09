@@ -1,12 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 	import { Button, Card } from '$lib/components';
 	import { AlertCircle, Home, ChevronLeft } from 'lucide-svelte';
-
-	function handleGoHome() {
-		goto('/dashboard');
-	}
 
 	function handleGoBack() {
 		history.back();
@@ -55,13 +50,13 @@
 					{:else}
 						An error occurred while processing your request.
 					{/if}
-				</p>
+			</p>
 
 			<div class="error-actions">
-				<Button variant="default" onclick={handleGoHome}>
+				<a class="dashboard-link" href="/dashboard">
 					<Home size={16} />
 					Go to Dashboard
-				</Button>
+				</a>
 				<Button variant="secondary" onclick={handleGoBack}>
 					<ChevronLeft size={16} />
 					Go Back
@@ -138,5 +133,35 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-xs);
+	}
+
+	.dashboard-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		height: 2.5rem;
+		padding: 0.5rem 1.05rem;
+		border-radius: 0.75rem;
+		border: 1px solid color-mix(in srgb, var(--color-info) 82%, #ffffff);
+		background: color-mix(in srgb, var(--color-info) 92%, #ffffff);
+		color: #ffffff;
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		letter-spacing: -0.01em;
+		text-decoration: none;
+		transition:
+			background-color var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.dashboard-link:hover {
+		background: color-mix(in srgb, var(--color-info) 90%, #ffffff 10%);
+		border-color: color-mix(in srgb, var(--color-info) 76%, #ffffff 24%);
+	}
+
+	.dashboard-link:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-focus) 22%, transparent);
 	}
 </style>

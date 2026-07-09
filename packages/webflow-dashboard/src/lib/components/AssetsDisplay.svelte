@@ -212,13 +212,13 @@
     });
 
     if (action.handler === 'view') {
-      if (openingViewAssetId) return;
+      if (openingEditAssetId) return;
       onView?.(asset.id);
       return;
     }
 
     if (action.handler === 'edit') {
-      if (openingEditAssetId || openingViewAssetId) return;
+      if (openingEditAssetId) return;
       onEdit?.(asset.id);
       return;
     }
@@ -228,13 +228,13 @@
 
   function runSecondaryAction(asset: Asset, action: AssetActionDescriptor) {
     if (action.handler === 'view') {
-      if (openingViewAssetId) return;
+      if (openingEditAssetId) return;
       onView?.(asset.id);
       return;
     }
 
     if (action.handler === 'edit') {
-      if (openingEditAssetId || openingViewAssetId) return;
+      if (openingEditAssetId) return;
       onEdit?.(asset.id);
       return;
     }
@@ -249,8 +249,8 @@
   }
 
   function isActionDisabled(action: AssetActionDescriptor) {
-    if (action.handler === 'view') return openingViewAssetId !== null || openingEditAssetId !== null;
-    if (action.handler === 'edit') return openingEditAssetId !== null || openingViewAssetId !== null;
+    if (action.handler === 'view') return openingEditAssetId !== null;
+    if (action.handler === 'edit') return openingEditAssetId !== null;
     return false;
   }
 
@@ -286,6 +286,28 @@
         asset.activeOfferVisibility ||
         asset.activeOfferPrice !== undefined
     );
+  }
+
+  function getAssetDetailHref(id: string) {
+    return `/assets/${id}`;
+  }
+
+  function handleLinkedActionClick(
+    event: MouseEvent,
+    asset: Asset,
+    action: AssetActionDescriptor,
+    source: 'primary' | 'secondary'
+  ) {
+    if (isActionDisabled(action)) {
+      event.preventDefault();
+      return;
+    }
+
+    if (source === 'primary') {
+      runPrimaryAction(asset, action);
+    } else {
+      runSecondaryAction(asset, action);
+    }
   }
 </script>
 
@@ -516,9 +538,9 @@
                         <AssetTableRow
                           {asset}
                           {showPerformance}
-                          isViewDisabled={openingViewAssetId !== null || openingEditAssetId !== null}
+                          isViewDisabled={openingEditAssetId !== null}
                           isViewLoading={openingViewAssetId === asset.id}
-                          isEditDisabled={openingEditAssetId !== null || openingViewAssetId !== null}
+                          isEditDisabled={openingEditAssetId !== null}
                           isEditLoading={openingEditAssetId === asset.id}
                           {onView}
                           {onPreloadView}
@@ -564,7 +586,22 @@
                     <article class="asset-card-mobile">
                       <div class="mobile-header-row">
                         <div class="mobile-asset-meta">
-                          <h4 class="mobile-asset-name">{asset.name}</h4>
+                          <h4 class="mobile-asset-name">
+                            <a
+                              class="mobile-asset-name-link"
+                              href={getAssetDetailHref(asset.id)}
+                              aria-disabled={openingEditAssetId !== null}
+                              onmouseenter={() => onPreloadView?.(asset.id)}
+                              onfocus={() => onPreloadView?.(asset.id)}
+                              onclick={(event) => {
+                                if (openingEditAssetId !== null) {
+                                  event.preventDefault();
+                                  return;
+                                }
+                                onView?.(asset.id);
+                              }}>{asset.name}</a
+                            >
+                          </h4>
                           <p class="mobile-asset-type">{asset.type}</p>
                           {#if hasActiveOffer(asset)}
                             <div class="mobile-offer-badge">
@@ -612,6 +649,19 @@
                       </div>
 
                       <div class="mobile-actions">
+                        {#if actionConfig.primary.handler === 'view'}
+                          <a
+                            class="mobile-action-link mobile-action-link-secondary"
+                            href={getAssetDetailHref(asset.id)}
+                            aria-disabled={isActionDisabled(actionConfig.primary)}
+                            onmouseenter={() => preloadViewAction(asset, actionConfig.primary)}
+                            onfocus={() => preloadViewAction(asset, actionConfig.primary)}
+                            onclick={(event) =>
+                              handleLinkedActionClick(event, asset, actionConfig.primary, 'primary')}
+                          >
+                            {actionConfig.primary.label}
+                          </a>
+                        {:else}
                         <Button
                           size="sm"
                           variant={actionConfig.primary.handler === 'edit'
@@ -629,7 +679,20 @@
                             {actionConfig.primary.label}
                           {/if}
                         </Button>
+                        {/if}
                         {#each actionConfig.secondary as action}
+                          {#if action.handler === 'view'}
+                            <a
+                              class="mobile-action-link mobile-action-link-outline"
+                              href={getAssetDetailHref(asset.id)}
+                              aria-disabled={isActionDisabled(action)}
+                              onmouseenter={() => preloadViewAction(asset, action)}
+                              onfocus={() => preloadViewAction(asset, action)}
+                              onclick={(event) => handleLinkedActionClick(event, asset, action, 'secondary')}
+                            >
+                              {action.label}
+                            </a>
+                          {:else}
                           <Button
                             size="sm"
                             variant={action.handler === 'archive' ? 'destructive' : 'outline'}
@@ -645,6 +708,7 @@
                               {action.label}
                             {/if}
                           </Button>
+                          {/if}
                         {/each}
                       </div>
                     </article>
@@ -1142,6 +1206,22 @@
     color: var(--color-fg-primary);
   }
 
+  .mobile-asset-name-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .mobile-asset-name-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.16rem;
+  }
+
+  .mobile-asset-name-link:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
   .mobile-asset-type {
     margin: 0;
     font-size: var(--text-caption);
@@ -1177,6 +1257,49 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-xs);
+  }
+
+  .mobile-action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.15rem;
+    padding: 0.25rem 0.85rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-shell-border-default);
+    font-size: var(--text-caption);
+    font-weight: var(--font-medium);
+    color: var(--color-fg-primary);
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background-color var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard),
+      color var(--duration-micro) var(--ease-standard);
+  }
+
+  .mobile-action-link-secondary {
+    background: var(--color-bg-surface);
+  }
+
+  .mobile-action-link-outline {
+    background: transparent;
+  }
+
+  .mobile-action-link:hover {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-shell-border-strong);
+  }
+
+  .mobile-action-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-focus) 22%, transparent);
+  }
+
+  .mobile-action-link[aria-disabled='true'] {
+    pointer-events: none;
+    opacity: 0.5;
   }
 
   .button-spinner {

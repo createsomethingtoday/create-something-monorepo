@@ -13,6 +13,7 @@ import { createSessionHandoff, setSession, generateSessionToken, checkRateLimit 
 export const load: PageServerLoad = async ({ url, platform, cookies, getClientAddress }) => {
 	const token = url.searchParams.get('token');
 	const handoff = url.searchParams.get('handoff');
+	const sentEmail = url.searchParams.get('email')?.trim() || null;
 	const sessions = platform?.env?.SESSIONS;
 
 	// If no token, show the verify page (user may paste token manually) or
@@ -22,13 +23,15 @@ export const load: PageServerLoad = async ({ url, platform, cookies, getClientAd
 			return {
 				status: 'session-created' as const,
 				error: null,
-				handoffUrl: `/auth/complete?handoff=${encodeURIComponent(handoff)}`
+				handoffUrl: `/auth/complete?handoff=${encodeURIComponent(handoff)}`,
+				sentEmail
 			};
 		}
 
 		return {
 			status: 'no-token' as const,
-			error: null
+			error: null,
+			sentEmail
 		};
 	}
 

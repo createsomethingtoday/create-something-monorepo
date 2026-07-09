@@ -70,8 +70,13 @@
 		});
 	}
 
-	function handleView(label = 'view_details') {
-		if (isViewDisabled) return;
+	const assetHref = $derived(`/assets/${assetId}`);
+
+	function handleView(event: MouseEvent, label = 'view_details') {
+		if (isViewDisabled) {
+			event.preventDefault();
+			return;
+		}
 
 		trackOverflowAction(label);
 		onView?.(assetId);
@@ -112,7 +117,9 @@
 	function getMenuItems(): HTMLElement[] {
 		if (!dropdownRef) return [];
 		return Array.from(
-			dropdownRef.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)')
+			dropdownRef.querySelectorAll<HTMLElement>(
+				'[role="menuitem"]:not(:disabled):not([aria-disabled="true"])'
+			)
 		);
 	}
 
@@ -210,54 +217,60 @@
 		onkeydown={handleMenuKeydown}
 	>
 		{#each actions as action (action.handler + action.label)}
-			<button
-				type="button"
-				class="dropdown-item"
-				class:dropdown-item-danger={action.handler === 'archive'}
-				class:dropdown-item-loading={
-					(action.handler === 'view' && isViewLoading) ||
-					(action.handler === 'edit' && isEditLoading)
-				}
-				onmouseenter={() => action.handler === 'view' && preloadView()}
-				onfocus={() => action.handler === 'view' && preloadView()}
-				onclick={() =>
-					action.handler === 'view'
-						? handleView(action.label.toLowerCase().replace(/\s+/g, '_'))
-						: action.handler === 'edit'
-							? handleEdit()
-							: handleArchive()}
-				disabled={
-					(action.handler === 'archive' && isArchiving) ||
-					(action.handler === 'view' && isViewDisabled) ||
-					(action.handler === 'edit' && isEditDisabled)
-				}
-				role="menuitem"
-			>
-				{#if action.handler === 'view'}
+			{#if action.handler === 'view'}
+				<a
+					href={assetHref}
+					class="dropdown-item"
+					class:dropdown-item-loading={isViewLoading}
+					aria-disabled={isViewDisabled}
+					tabindex={isViewDisabled ? -1 : undefined}
+					onmouseenter={preloadView}
+					onfocus={preloadView}
+					onclick={(event) => handleView(event, action.label.toLowerCase().replace(/\s+/g, '_'))}
+					role="menuitem"
+				>
 					{#if isViewLoading}
 						<LoaderCircle size={16} class="spinner" />
 					{:else}
 						<Eye size={16} />
 					{/if}
-				{:else if action.handler === 'edit'}
+					{#if isViewLoading}
+						Opening...
+					{:else}
+						{action.label}
+					{/if}
+				</a>
+			{:else}
+				<button
+					type="button"
+					class="dropdown-item"
+					class:dropdown-item-danger={action.handler === 'archive'}
+					class:dropdown-item-loading={action.handler === 'edit' && isEditLoading}
+					onclick={() => (action.handler === 'edit' ? handleEdit() : handleArchive())}
+					disabled={
+						(action.handler === 'archive' && isArchiving) ||
+						(action.handler === 'edit' && isEditDisabled)
+					}
+					role="menuitem"
+				>
+					{#if action.handler === 'edit'}
 					{#if isEditLoading}
 						<LoaderCircle size={16} class="spinner" />
 					{:else}
 						<Pencil size={16} />
 					{/if}
-				{:else}
+					{:else}
 					<Archive size={16} />
-				{/if}
-				{#if action.handler === 'archive' && isArchiving}
+					{/if}
+					{#if action.handler === 'archive' && isArchiving}
 					Archiving...
-				{:else if action.handler === 'view' && isViewLoading}
+					{:else if action.handler === 'edit' && isEditLoading}
 					Opening...
-				{:else if action.handler === 'edit' && isEditLoading}
-					Opening...
-				{:else}
+					{:else}
 					{action.label}
-				{/if}
-			</button>
+					{/if}
+				</button>
+			{/if}
 		{/each}
 	</div>
 {/if}
@@ -316,6 +329,7 @@
 		border: none;
 		cursor: pointer;
 		text-align: left;
+		text-decoration: none;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
@@ -335,6 +349,11 @@
 	}
 
 	.dropdown-item:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.dropdown-item[aria-disabled='true'] {
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
