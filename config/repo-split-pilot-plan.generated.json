@@ -3,7 +3,7 @@
   "generatedBy": "scripts/repo-split-pilot-plan.mjs",
   "sourceRegistry": "config/repo-ownership-registry.generated.json",
   "summary": {
-    "registrySurfaceCount": 183,
+    "registrySurfaceCount": 181,
     "candidateCount": 14,
     "recommendedPilot": "apps/marketplace-template-submission-cloud",
     "approvalRequiredForMutation": true
@@ -28,10 +28,10 @@
     {
       "surfacePath": "apps/marketplace-template-submission-cloud",
       "packageName": "@create-something/marketplace-template-submission-cloud",
-      "ownership": "mirrored",
-      "authorityConfidence": "medium",
-      "relationshipType": "mirror-reconciliation",
-      "syncMode": "mirror-redundancy",
+      "ownership": "standalone-reference",
+      "authorityConfidence": "low",
+      "relationshipType": "authority-readback",
+      "syncMode": "marketplace-config",
       "referencedRepositories": [
         "createsomethingtoday/webflow-library-submission-form"
       ],
@@ -51,7 +51,6 @@
         "Only after approval, create a scoped migration issue and branch."
       ],
       "cautions": [
-        "Treat this as a sync or mirror relationship until the authority direction is explicit.",
         "Marketplace/config references may be registration dependencies rather than code ownership."
       ]
     },

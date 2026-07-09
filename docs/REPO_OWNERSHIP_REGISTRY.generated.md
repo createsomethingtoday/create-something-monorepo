@@ -5,11 +5,11 @@
 
 ## Summary
 
-- Total surfaces: 183
-- mirrored: 2
+- Total surfaces: 181
+- mirrored: 1
 - mixed: 7
-- monorepo: 169
-- standalone-reference: 2
+- monorepo: 167
+- standalone-reference: 3
 - unclear: 3
 
 ## How Agents Should Use This
@@ -45,7 +45,7 @@
 | `createsomethingtoday/tiktok_scraper` | `reference`, `repository-metadata` | none | docs/half-dozen-time-spent-summary-client-facing.md:53<br>docs/half-dozen-time-spent-summary-updated.md:60 |
 | `createsomethingtoday/v0-viralytics` | `reference` | none | docs/half-dozen-time-spent-summary-client-facing.md:41<br>docs/half-dozen-time-spent-summary-updated.md:47 |
 | `createsomethingtoday/viberate` | `reference` | none | docs/half-dozen-time-spent-summary-client-facing.md:41<br>docs/half-dozen-time-spent-summary-updated.md:49 |
-| `createsomethingtoday/webflow-library-submission-form` | `marketplace-config`, `mirror-redundancy`, `reference`, `repository-metadata` | `apps/marketplace-template-submission-cloud` | apps/marketplace-template-submission-cloud/README.md:5<br>docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md:12<br>docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md:122 |
+| `createsomethingtoday/webflow-library-submission-form` | `marketplace-config`, `mirror-redundancy`, `reference`, `repository-metadata` | `apps/marketplace-template-submission-cloud` | docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md:12<br>docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md:122<br>docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md:23 |
 | `Half-Dozen/c3-management-trello` | `reference` | none | docs/half-dozen-time-spent-summary-client-facing.md:75<br>docs/half-dozen-time-spent-summary-updated.md:89 |
 | `Half-Dozen/kickstand-monitoring` | `reference`, `repository-metadata` | none | docs/half-dozen-time-spent-summary-client-facing.md:29<br>docs/half-dozen-time-spent-summary-updated.md:32 |
 
@@ -56,7 +56,7 @@
 | `apps/atlas-studio-desktop` | `@create-something/atlas-studio-desktop` |  | `monorepo` |  |
 | `apps/bettermode-marketplace-creator-agent` | `@create-something/bettermode-marketplace-creator-agent` |  | `monorepo` |  |
 | `apps/even-operator-brief` | `@create-something/even-operator-brief` |  | `monorepo` |  |
-| `apps/marketplace-template-submission-cloud` | `@create-something/marketplace-template-submission-cloud` |  | `mirrored` | Treat this as a sync or mirror relationship until the authority direction is explicit.<br>Marketplace/config references may be registration dependencies rather than code ownership. |
+| `apps/marketplace-template-submission-cloud` | `@create-something/marketplace-template-submission-cloud` |  | `standalone-reference` | Marketplace/config references may be registration dependencies rather than code ownership. |
 | `apps/webflow-dashboard-cloud` | `@create-something/webflow-dashboard-cloud` | product | `monorepo` |  |
 | `apps/webflow-marketplace-category-cloud` | `@create-something/webflow-marketplace-category-cloud` |  | `monorepo` |  |
 | `packages/abundance-jobs-mcp` | `@create-something/abundance-jobs-mcp` |  | `monorepo` | Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction. |
@@ -74,9 +74,7 @@
 | `packages/agents/coordination` | `@create-something/agent-coordination` | labs | `monorepo` |  |
 | `packages/airtable-primary-tags-worker` | `@create-something/airtable-primary-tags-worker` |  | `monorepo` |  |
 | `packages/app-governance-db` | `@create-something/app-governance-db` |  | `monorepo` |  |
-| `packages/app-governance-db/dashboard` | `app-governance-dashboard` |  | `monorepo` | Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction. |
 | `packages/app-governance-db/worker` | `app-governance-db-worker` |  | `monorepo` |  |
-| `packages/app-governance-desktop` | `app-governance-desktop` |  | `monorepo` |  |
 | `packages/ascii-renderer` | `@create-something/ascii-renderer` | labs | `monorepo` |  |
 | `packages/bettermode-creator-mcp` | `@create-something/bettermode-creator-mcp` |  | `monorepo` |  |
 | `packages/bettermode-creator-mcp/worker` | `bettermode-creator-mcp-worker` |  | `monorepo` | Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction. |

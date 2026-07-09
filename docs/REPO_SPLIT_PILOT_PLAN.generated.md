@@ -5,7 +5,7 @@
 
 ## Summary
 
-- Registry surfaces: 183
+- Registry surfaces: 181
 - Split/reconciliation candidates: 14
 - Recommended first pilot: `apps/marketplace-template-submission-cloud`
 - Mutation approval required: yes
@@ -14,7 +14,7 @@
 
 | Rank | Surface | Action | Evidence Relationship | Gates |
 | --- | --- | --- | --- | --- |
-| 1 | `apps/marketplace-template-submission-cloud` | Pilot repo reconciliation | mirror-reconciliation; createsomethingtoday/webflow-library-submission-form | No repository creation, push, deletion, or transfer without explicit approval.<br>No deploy ownership, Webflow Cloud, Airtable, marketplace, or route changes without explicit approval and rollback notes. |
+| 1 | `apps/marketplace-template-submission-cloud` | Pilot repo reconciliation | authority-readback; createsomethingtoday/webflow-library-submission-form | No repository creation, push, deletion, or transfer without explicit approval.<br>No deploy ownership, Webflow Cloud, Airtable, marketplace, or route changes without explicit approval and rollback notes. |
 | 2 | `packages/agency/clients/outerfields` | Harden existing subtree sync contract | sync-contract-hardening; createsomethingtoday/outerfields-presentations | No repository creation, push, deletion, or transfer without explicit approval. |
 | 20 | `packages/agency/clients/outerfields/mcp-remote` | Read back standalone authority | authority-readback; createsomethingtoday/outerfields-presentations | No repository creation, push, deletion, or transfer without explicit approval. |
 | 20 | `packages/dotfiles` | Read back standalone authority | authority-readback; createsomethingtoday/repo | No repository creation, push, deletion, or transfer without explicit approval. |
@@ -33,8 +33,8 @@
 
 ### apps/marketplace-template-submission-cloud
 
-- Ownership: `mirrored` (medium confidence)
-- Sync mode: `mirror-redundancy`
+- Ownership: `standalone-reference` (low confidence)
+- Sync mode: `marketplace-config`
 - Referenced repos: `createsomethingtoday/webflow-library-submission-form`
 - Recommendation: Pilot repo reconciliation
 - Reason: Existing redundancy repo and app boundary make this the strongest first pilot, but deployment and Airtable/Webflow authority must remain gated.

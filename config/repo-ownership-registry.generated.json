@@ -1,14 +1,14 @@
 {
   "version": 1,
   "generatedBy": "scripts/repo-ownership-registry.mjs",
-  "sourceRoot": "/private/tmp/cre-1137-root-preservation-20260709",
+  "sourceRoot": "/private/tmp/cre-1137-agent-os",
   "summary": {
-    "totalSurfaces": 183,
+    "totalSurfaces": 181,
     "ownership": {
-      "mirrored": 2,
+      "mirrored": 1,
       "mixed": 7,
-      "monorepo": 169,
-      "standalone-reference": 2,
+      "monorepo": 167,
+      "standalone-reference": 3,
       "unclear": 3
     }
   },
@@ -772,13 +772,6 @@
       ],
       "evidence": [
         {
-          "path": "apps/marketplace-template-submission-cloud/README.md",
-          "line": 5,
-          "relationship": "mirror-redundancy",
-          "surface": "apps/marketplace-template-submission-cloud",
-          "text": "The app also owns the first Cloud migration slice for the archived Library submission flow: `/libraries/submit` renders a Library intake form, `POST /api/intake/library` validates a Library creator/name through the repo-owned validation worker, emits a `Marketplace Library Submis"
-        },
-        {
           "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
           "line": 12,
           "relationship": "reference",
@@ -854,6 +847,13 @@
           "relationship": "marketplace-config",
           "surface": "apps/marketplace-template-submission-cloud",
           "text": "| Marketplace Library submission app         | `apps/marketplace-template-submission-cloud`, `createsomethingtoday/webflow-library-submission-form` | Standalone Webflow Cloud app deployed by CLI or repo-backed Cloud import                 | Airtable Automation webhooks, D1 captur"
+        },
+        {
+          "path": "docs/WEBFLOW_SURFACE_OWNERSHIP_RUNTIME_MAP.md",
+          "line": 267,
+          "relationship": "mirror-redundancy",
+          "surface": null,
+          "text": "- Standalone redundancy repo: `createsomethingtoday/webflow-library-submission-form`"
         }
       ]
     },
@@ -975,9 +975,9 @@
       "kind": "app",
       "lane": null,
       "private": true,
-      "ownership": "mirrored",
-      "authorityConfidence": "medium",
-      "syncMode": "mirror-redundancy",
+      "ownership": "standalone-reference",
+      "authorityConfidence": "low",
+      "syncMode": "marketplace-config",
       "repository": null,
       "workspaceDependencies": [],
       "context": {
@@ -987,13 +987,6 @@
         "agentWiki": false
       },
       "externalReferences": [
-        {
-          "repo": "createsomethingtoday/webflow-library-submission-form",
-          "path": "apps/marketplace-template-submission-cloud/README.md",
-          "line": 5,
-          "relationship": "mirror-redundancy",
-          "text": "The app also owns the first Cloud migration slice for the archived Library submission flow: `/libraries/submit` renders a Library intake form, `POST /api/intake/library` validates a Library creator/name through the repo-owned validation worker, emits a `Marketplace Library Submis"
-        },
         {
           "repo": "createsomethingtoday/webflow-library-submission-form",
           "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
@@ -1020,7 +1013,6 @@
         "createsomethingtoday/webflow-library-submission-form"
       ],
       "cautions": [
-        "Treat this as a sync or mirror relationship until the authority direction is explicit.",
         "Marketplace/config references may be registration dependencies rather than code ownership."
       ]
     },
@@ -1547,35 +1539,6 @@
       "cautions": []
     },
     {
-      "path": "packages/app-governance-db/dashboard",
-      "name": "app-governance-dashboard",
-      "kind": "package",
-      "lane": null,
-      "private": true,
-      "ownership": "monorepo",
-      "authorityConfidence": "high",
-      "syncMode": "none",
-      "repository": null,
-      "workspaceDependencies": [
-        {
-          "group": "dependencies",
-          "name": "@create-something/canon",
-          "spec": "workspace:*"
-        }
-      ],
-      "context": {
-        "agents": false,
-        "understanding": false,
-        "readme": false,
-        "agentWiki": false
-      },
-      "externalReferences": [],
-      "referencedRepositories": [],
-      "cautions": [
-        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
-      ]
-    },
-    {
       "path": "packages/app-governance-db/worker",
       "name": "app-governance-db-worker",
       "kind": "package",
@@ -1590,27 +1553,6 @@
         "agents": false,
         "understanding": false,
         "readme": false,
-        "agentWiki": false
-      },
-      "externalReferences": [],
-      "referencedRepositories": [],
-      "cautions": []
-    },
-    {
-      "path": "packages/app-governance-desktop",
-      "name": "app-governance-desktop",
-      "kind": "package",
-      "lane": null,
-      "private": true,
-      "ownership": "monorepo",
-      "authorityConfidence": "high",
-      "syncMode": "none",
-      "repository": null,
-      "workspaceDependencies": [],
-      "context": {
-        "agents": false,
-        "understanding": false,
-        "readme": true,
         "agentWiki": false
       },
       "externalReferences": [],
@@ -1785,11 +1727,6 @@
       "workspaceDependencies": [
         {
           "group": "dependencies",
-          "name": "@create-something/canvas-kernel",
-          "spec": "workspace:*"
-        },
-        {
-          "group": "dependencies",
           "name": "@create-something/tufte",
           "spec": "workspace:^"
         }
@@ -1870,7 +1807,7 @@
       "context": {
         "agents": false,
         "understanding": false,
-        "readme": true,
+        "readme": false,
         "agentWiki": false
       },
       "externalReferences": [],
