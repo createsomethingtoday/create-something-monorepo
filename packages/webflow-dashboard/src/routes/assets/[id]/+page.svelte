@@ -295,7 +295,7 @@
       source,
       destination_host: extractHost(url)
     });
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   onMount(() => {

@@ -37,8 +37,7 @@
       });
 
       if (response.ok) {
-        // Redirect to verify page (same as original Next.js behavior)
-        goto('/verify');
+        goto(`/verify?email=${encodeURIComponent(email.trim())}`);
       } else {
         const data = (await response.json()) as { error?: string };
         error = data.error || 'Login failed. Please check your email and try again.';

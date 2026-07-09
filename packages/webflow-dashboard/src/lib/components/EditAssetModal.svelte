@@ -214,6 +214,7 @@
       selectedScope = '';
       error = null;
       nameError = null;
+      nameWarning = null;
       isCheckingName = false;
     }
   });
@@ -222,6 +223,7 @@
   let isArchiving = $state(false);
   let error = $state<string | null>(null);
   let nameError = $state<string | null>(null);
+  let nameWarning = $state<string | null>(null);
   let isCheckingName = $state(false);
   let nameCheckTimeout: ReturnType<typeof setTimeout> | null = null;
   let showArchiveConfirm = $state(false);
@@ -297,15 +299,18 @@
   async function checkNameUniqueness(name: string) {
     if (!canEditName || name === originalName) {
       nameError = null;
+      nameWarning = null;
       return;
     }
 
     if (!name.trim()) {
       nameError = 'Name is required';
+      nameWarning = null;
       return;
     }
 
     isCheckingName = true;
+    nameWarning = null;
     try {
       const response = await fetch('/api/assets/check-name', {
         method: 'POST',
@@ -319,8 +324,11 @@
 
       const data = (await response.json()) as { available: boolean };
       nameError = data.available ? null : 'An asset with this name already exists';
+      nameWarning = null;
     } catch {
       nameError = null;
+      nameWarning =
+        'Could not verify name availability. You can still save; the server will validate it.';
     } finally {
       isCheckingName = false;
     }
@@ -836,6 +844,8 @@
             <span class="field-hint checking">Checking availability...</span>
           {:else if nameError}
             <span class="field-hint error">{nameError}</span>
+          {:else if nameWarning}
+            <span class="field-hint warning">{nameWarning}</span>
           {:else if formData.name !== originalName && formData.name.trim()}
             <span class="field-hint success">Name is available</span>
           {/if}
@@ -1320,6 +1330,10 @@
 
   .field-hint.error {
     color: var(--color-error);
+  }
+
+  .field-hint.warning {
+    color: var(--color-warning-ink);
   }
 
   .field-hint.success {

@@ -1,9 +1,9 @@
 <script lang="ts">
   /**
-   * DataFreshnessIndicator - Shows that financial data is from a weekly snapshot
+   * DataFreshnessIndicator - Shows the expected financial-data sync schedule
    *
    * Use this component wherever cumulative financial data (revenue, purchases) is displayed
-   * to set clear expectations about data freshness and update schedule.
+   * to set clear expectations about the expected update schedule.
    *
    * Variants:
    * - 'inline': Compact inline badge for table headers and stat cards
@@ -61,7 +61,7 @@
     showTooltip = false;
   }
 
-  // Calculate next Monday 4 PM UTC
+  // Calculate the expected Monday 4 PM UTC sync schedule.
   function getNextUpdateInfo(): { lastUpdate: string; nextUpdate: string; daysUntil: number } {
     const now = new Date();
     const currentDay = now.getUTCDay();
@@ -111,15 +111,15 @@
   <div class="freshness-full">
     <div class="freshness-header">
       <Clock size={14} />
-      <span class="freshness-label">Weekly Snapshot</span>
+      <span class="freshness-label">Scheduled Snapshot</span>
     </div>
     <p class="freshness-detail">
-      Expected latest snapshot {updateInfo.lastUpdate} • Next scheduled update {updateInfo.nextUpdate}
+      Expected latest scheduled snapshot {updateInfo.lastUpdate} • Next scheduled update {updateInfo.nextUpdate}
     </p>
     {#if showSchedule}
       <p class="freshness-schedule">
         <Info size={12} />
-        Data syncs every Monday at 4 PM UTC
+        Schedule: Mondays at 4 PM UTC. Actual source freshness may vary.
       </p>
     {/if}
   </div>
@@ -142,17 +142,20 @@
       <button class="tooltip-close" onclick={closeTooltip}>
         <X size={12} />
       </button>
-      <div class="tooltip-title">Weekly Snapshot</div>
-      <div class="tooltip-detail">Expected latest snapshot {updateInfo.lastUpdate}</div>
+      <div class="tooltip-title">Scheduled Snapshot</div>
+      <div class="tooltip-detail">Expected latest scheduled snapshot {updateInfo.lastUpdate}</div>
       <div class="tooltip-detail">Next scheduled update {updateInfo.nextUpdate}</div>
-      <div class="tooltip-schedule">Syncs every Monday at 4 PM UTC</div>
+      <div class="tooltip-schedule">Schedule: Mondays at 4 PM UTC. Actual source freshness may vary.</div>
     </div>
   {/if}
 {:else}
   <!-- inline variant -->
-  <span class="freshness-badge" title="Data syncs weekly on Mondays at 4 PM UTC">
+  <span
+    class="freshness-badge"
+    title="Scheduled Mondays at 4 PM UTC. Actual source freshness may vary."
+  >
     <Clock size={10} />
-    <span>Weekly Snapshot</span>
+    <span>Scheduled Snapshot</span>
   </span>
 {/if}
 

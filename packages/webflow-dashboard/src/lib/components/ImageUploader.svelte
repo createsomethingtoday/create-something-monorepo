@@ -238,9 +238,16 @@
 			</div>
 		</div>
 	{:else}
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
+		<input
+			bind:this={fileInput}
+			type="file"
+			{accept}
+			onchange={handleFileSelect}
+			{disabled}
+			class="file-input"
+		/>
+		<button
+			type="button"
 			class="dropzone"
 			class:drag-over={isDragOver}
 			class:disabled
@@ -249,16 +256,8 @@
 			ondragleave={handleDragLeave}
 			ondrop={handleDrop}
 			onclick={handleClick}
+			disabled={disabled || isUploading}
 		>
-			<input
-				bind:this={fileInput}
-				type="file"
-				{accept}
-				onchange={handleFileSelect}
-				{disabled}
-				class="file-input"
-			/>
-
 		{#if isUploading}
 			<div class="upload-progress">
 				<div class="progress-bar-container">
@@ -276,7 +275,7 @@
 			</p>
 			<p class="dropzone-hint">{description}</p>
 		{/if}
-		</div>
+		</button>
 	{/if}
 
 	{#if error}
@@ -302,11 +301,15 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		width: 100%;
 		padding: var(--space-lg);
 		border: 2px dashed var(--color-border-default);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
+		color: inherit;
 		cursor: pointer;
+		font: inherit;
+		text-align: center;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
@@ -323,6 +326,11 @@
 	.dropzone.disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.dropzone:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.dropzone.uploading {

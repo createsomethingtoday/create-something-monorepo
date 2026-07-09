@@ -18,6 +18,7 @@
 		error: string | null;
 		retryAfter?: number;
 		handoffUrl?: string;
+		sentEmail?: string | null;
 	}
 
 	interface VerifyResponse {
@@ -43,6 +44,7 @@
 
 	const serverStatus = $derived(data.status);
 	const serverError = $derived(data.error);
+	const sentEmail = $derived(data.sentEmail);
 	let status = $state<UIStatus>('verifying');
 	let errorMessage = $state<string | null>(null);
 	let fallbackUrl = $state<string | null>(null);
@@ -363,9 +365,19 @@
 			</div>
 		{:else if status === 'no-token'}
 			<div class="status-message">
-				<Lock size={48} />
-				<h1>Enter verification token</h1>
-				<p class="subtitle">Paste your verification token from the email</p>
+				{#if sentEmail}
+					<CheckCircle2 size={48} />
+					<h1>Check your inbox</h1>
+					<p class="subtitle">
+						We sent a sign-in email to <strong>{sentEmail}</strong>. Open the link in that
+						email to continue.
+					</p>
+					<p class="manual-token-copy">Have a token instead? Paste it below.</p>
+				{:else}
+					<Lock size={48} />
+					<h1>Enter verification token</h1>
+					<p class="subtitle">Paste your verification token from the email</p>
+				{/if}
 				<form class="token-form" onsubmit={handleSubmit}>
 					<input
 						type="text"
@@ -450,6 +462,12 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		margin: 0;
+	}
+
+	.manual-token-copy {
+		margin: var(--space-xs) 0 0;
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
 	}
 
 	.spinner {

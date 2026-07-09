@@ -225,9 +225,26 @@
 	}
 
 	function handleClick() {
-		if (!disabled && value.length < maxImages && uploadQueue.length === 0) {
+		if (!disabled && value.length < maxImages && !hasActiveUploads()) {
 			fileInput?.click();
 		}
+	}
+
+	function hasActiveUploads() {
+		return uploadQueue.some((item) => item.status === 'pending' || item.status === 'uploading');
+	}
+
+	function retryUpload(item: UploadItem) {
+		if (disabled || hasActiveUploads()) return;
+		item.status = 'pending';
+		item.progress = 0;
+		item.error = undefined;
+		uploadQueue = [...uploadQueue];
+		void processUploadQueue();
+	}
+
+	function dismissUpload(item: UploadItem) {
+		uploadQueue = uploadQueue.filter((queuedItem) => queuedItem !== item);
 	}
 </script>
 
@@ -253,6 +270,17 @@
 							</div>
 						{:else if item.status === 'error'}
 							<span class="upload-error">{item.error}</span>
+							<div class="upload-error-actions">
+								<Button
+									variant="outline"
+									size="sm"
+									onclick={() => retryUpload(item)}
+									disabled={disabled || hasActiveUploads()}>Retry</Button
+								>
+								<Button variant="ghost" size="sm" onclick={() => dismissUpload(item)}
+									>Dismiss</Button
+								>
+							</div>
 						{:else if item.status === 'complete'}
 							<span class="upload-success">✓ Uploaded</span>
 						{/if}
@@ -282,9 +310,17 @@
 	{/if}
 
 	{#if value.length < maxImages}
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
+		<input
+			bind:this={fileInput}
+			type="file"
+			accept="image/webp"
+			multiple
+			onchange={handleFileSelect}
+			disabled={disabled}
+			class="file-input"
+		/>
+		<button
+			type="button"
 			class="dropzone"
 			class:drag-over={isDragOver}
 			class:disabled
@@ -292,17 +328,8 @@
 			ondragleave={handleDragLeave}
 			ondrop={handleDrop}
 			onclick={handleClick}
+			disabled={disabled || hasActiveUploads()}
 		>
-			<input
-				bind:this={fileInput}
-				type="file"
-				accept="image/webp"
-				multiple
-				onchange={handleFileSelect}
-				disabled={disabled}
-				class="file-input"
-			/>
-
 		<Upload class="upload-icon" size={32} />
 		<p class="dropzone-text">
 			{isDragOver ? 'Drop images here' : 'Drag & drop or click to upload'}
@@ -310,7 +337,7 @@
 		<p class="dropzone-hint">
 			WebP images only • Max {maxImages} images • 10MB per image
 		</p>
-		</div>
+		</button>
 	{/if}
 
 	{#if value.length < minImages}
@@ -406,6 +433,12 @@
 		color: var(--color-success);
 	}
 
+	.upload-error-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-xs);
+	}
+
 	.image-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -465,11 +498,15 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		width: 100%;
 		padding: var(--space-lg);
 		border: 2px dashed var(--color-border-default);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
+		color: inherit;
 		cursor: pointer;
+		font: inherit;
+		text-align: center;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
@@ -486,6 +523,11 @@
 	.dropzone.disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.dropzone:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.file-input {

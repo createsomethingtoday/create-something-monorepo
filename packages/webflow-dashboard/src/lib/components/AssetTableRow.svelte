@@ -41,6 +41,7 @@
 	let imageError = $state(false);
 
 	const actionConfig = $derived(getAssetActionConfig(asset.status));
+	const assetHref = $derived(`/assets/${asset.id}`);
 	const cleanedStatus = $derived(normalizeAssetStatus(asset.status));
 	const showMetrics = $derived(!['Upcoming', 'Rejected'].includes(cleanedStatus));
 	const isSearchSuppressed = $derived(isTemplateSearchSuppressed(asset.searchVisibility));
@@ -55,8 +56,11 @@
 		)
 	);
 
-	function handleView() {
-		if (isViewDisabled) return;
+	function handleView(event: MouseEvent) {
+		if (isViewDisabled) {
+			event.preventDefault();
+			return;
+		}
 		onView?.(asset.id);
 	}
 
@@ -81,11 +85,11 @@
 
 <TableRow class="asset-table-row">
 	<TableCell class="thumbnail-cell">
-		<button
-			type="button"
+		<a
+			href={assetHref}
 			class="asset-thumbnail-link"
 			class:loading={isViewLoading}
-			disabled={isViewDisabled}
+			aria-disabled={isViewDisabled}
 			onmouseenter={preloadView}
 			onfocus={preloadView}
 			onclick={handleView}
@@ -107,14 +111,14 @@
 					<span>{asset.name.charAt(0).toUpperCase()}</span>
 				</div>
 			{/if}
-		</button>
+		</a>
 	</TableCell>
 	<TableCell class="asset-title-cell">
-		<button
-			type="button"
+		<a
+			href={assetHref}
 			class="asset-name-link"
 			class:loading={isViewLoading}
-			disabled={isViewDisabled}
+			aria-disabled={isViewDisabled}
 			onmouseenter={preloadView}
 			onfocus={preloadView}
 			onclick={handleView}
@@ -145,7 +149,7 @@
 					<Badge variant="secondary">Recovery used</Badge>
 				</span>
 			{/if}
-		</button>
+		</a>
 	</TableCell>
 	<TableCell class="date-cell">
 		<div class="date-stack">
@@ -219,6 +223,7 @@
 		border: none;
 		cursor: pointer;
 		text-align: left;
+		text-decoration: none;
 	}
 
 	.asset-thumbnail-link {
@@ -227,6 +232,7 @@
 		border: none;
 		padding: 0;
 		cursor: pointer;
+		text-decoration: none;
 	}
 
 	.asset-thumbnail-link:focus-visible,
@@ -235,8 +241,8 @@
 		outline-offset: 2px;
 	}
 
-	.asset-thumbnail-link:disabled,
-	.asset-name-link:disabled {
+	.asset-thumbnail-link[aria-disabled='true'],
+	.asset-name-link[aria-disabled='true'] {
 		cursor: wait;
 		opacity: 0.65;
 	}
