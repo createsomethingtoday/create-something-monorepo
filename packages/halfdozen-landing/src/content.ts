@@ -98,6 +98,8 @@ export const testimonials = [
 
 export const assetDefaults = {
   heroCard: '/assets/hero-motion-card.png',
+  heroMotion: '/assets/hero-motion.mp4',
+  heroMotionPoster: '/assets/hero-motion-poster.jpg',
   eventPhoto: '/assets/live-event-photo.png',
   testimonialPhoto: '/assets/testimonial-crowd.png'
 };

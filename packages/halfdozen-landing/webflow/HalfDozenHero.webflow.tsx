@@ -5,12 +5,12 @@ import './globals';
 
 export default declareComponent(HeroSection, {
   name: 'Half Dozen Hero',
-  description: 'Hero section with navigation, headline, brand proof, social links, and live-event imagery.',
+  description: 'Hero section with navigation, Figma-authored motion, brand proof, and social links.',
   group: 'Half Dozen',
   options: { ssr: true },
   props: {
-    heroCard: props.Text({ name: 'Hero image URL', defaultValue: '/assets/hero-motion-card.png' }),
-    eventPhoto: props.Text({ name: 'Event photo URL', defaultValue: '/assets/live-event-photo.png' }),
+    heroMotion: props.Text({ name: 'Hero motion video URL', defaultValue: '/assets/hero-motion.mp4' }),
+    heroMotionPoster: props.Text({ name: 'Hero motion poster URL', defaultValue: '/assets/hero-motion-poster.jpg' }),
     eyebrow: props.Text({
       name: 'Left quote',
       defaultValue:

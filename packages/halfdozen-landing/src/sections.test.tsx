@@ -20,6 +20,7 @@ describe('Half Dozen landing components', () => {
     expect(html).toContain('Request consultation');
     expect(html).not.toContain('consultion');
     expect(html).toContain('business can grow');
+    expect(html).toContain('/assets/hero-motion.mp4');
   });
 
   it('keeps each section renderable as an independent Webflow-ready component', () => {
