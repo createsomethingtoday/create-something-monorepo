@@ -12,9 +12,9 @@ fi
 
 # FZF: Fuzzy finder with muted functional accents
 export FZF_DEFAULT_OPTS="
-  --color=bg+:#000000,bg:#000000,spinner:#44aa44,hl:#44aa44
-  --color=fg:#ffffff,header:#666666,info:#666666,pointer:#44aa44
-  --color=marker:#44aa44,fg+:#ffffff,prompt:#ffffff,hl+:#66cc66
+  --color=bg+:#000000,bg:#000000,spinner:#aaaaaa,hl:#ffffff
+  --color=fg:#ffffff,header:#666666,info:#666666,pointer:#ffffff
+  --color=marker:#aaaaaa,fg+:#ffffff,prompt:#ffffff,hl+:#ffffff
   --layout=reverse
   --border=none
   --height=40%
@@ -28,8 +28,8 @@ export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 # Navigation
 # ─────────────────────────────────────────────────────────────
 
-# Project directory (update this path)
-PROJECTS_DIR="$HOME/Documents/Github"
+# Project directory
+PROJECTS_DIR="$HOME/Code"
 
 # Quick project jump with fzf
 p() {
@@ -77,10 +77,10 @@ alias lt='eza --tree --level=2 --icons'
 # ─────────────────────────────────────────────────────────────
 
 # CREATE SOMETHING monorepo
-alias cs='cd "$HOME/Documents/Github/Create Something/create-something-monorepo"'
+alias cs='cd "$HOME/Code/create-something-monorepo"'
 
 # WORKWAY
-alias ww='cd "$HOME/Documents/Github/WORKWAY"'
+alias ww='cd "$HOME/Code/WORKWAY"'
 
 # To Do (Taskwarrior threshold)
 alias td='cd "$HOME/Desktop/To Do"'
@@ -89,20 +89,42 @@ alias td='cd "$HOME/Desktop/To Do"'
 # Claude Code
 # ─────────────────────────────────────────────────────────────
 
-alias cc='claude --dangerously-skip-permissions'
+alias cc='cd "$HOME/Code/create-something-monorepo" && claude --dangerously-skip-permissions'
+alias ccp='claude --permission-mode plan'
+
+# ─────────────────────────────────────────────────────────────
+# Herdr
+# ─────────────────────────────────────────────────────────────
+
+alias herd='cd "$HOME/Code/create-something-monorepo" && herdr --session create-something'
+alias herdr-cs='cd "$HOME/Code/create-something-monorepo" && herdr --session create-something'
+alias herdr-status='herdr status'
+
+# ─────────────────────────────────────────────────────────────
+# Zellij
+# ─────────────────────────────────────────────────────────────
+
+export ZELLIJ_SOCKET_DIR="${ZELLIJ_SOCKET_DIR:-/tmp/zellij}"
+mkdir -p "$ZELLIJ_SOCKET_DIR" >/dev/null 2>&1
+
+alias zj='zellij'
+alias zj-cs='cd "$HOME/Code/create-something-monorepo" && zellij attach create-something'
+alias zj-board='cd "$HOME/Code/create-something-monorepo" && pnpm zellij:board'
+alias zj-board-watch='cd "$HOME/Code/create-something-monorepo" && pnpm zellij:board -- --watch'
+alias zj-claude='cd "$HOME/Code/create-something-monorepo" && pnpm zellij:claude -- --name claude'
 
 # ─────────────────────────────────────────────────────────────
 # Minimal Prompt
 # ─────────────────────────────────────────────────────────────
 
-# Directory only, green arrow
-PROMPT='%F{white}%1~%f %F{green}→%f '
+# Directory only, white arrow
+PROMPT='%F{white}%1~%f %F{white}→%f '
 
 # Git info (optional - uncomment if you want branch in prompt)
 # autoload -Uz vcs_info
 # precmd() { vcs_info }
 # zstyle ':vcs_info:git:*' formats '%F{666666}(%b)%f '
-# PROMPT='%F{white}%1~%f ${vcs_info_msg_0_}%F{green}→%f '
+# PROMPT='%F{white}%1~%f ${vcs_info_msg_0_}%F{white}→%f '
 
 # Infisical-backed shell secrets cache
 INFISICAL_SHELL_SECRETS="$HOME/.config/create-something/infisical-shell-secrets.zsh"

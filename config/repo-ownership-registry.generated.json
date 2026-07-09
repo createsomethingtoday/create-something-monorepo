@@ -1,0 +1,6095 @@
+{
+  "version": 1,
+  "generatedBy": "scripts/repo-ownership-registry.mjs",
+  "sourceRoot": "/private/tmp/cre-1137-agent-os",
+  "summary": {
+    "totalSurfaces": 181,
+    "ownership": {
+      "mirrored": 1,
+      "mixed": 7,
+      "monorepo": 167,
+      "standalone-reference": 3,
+      "unclear": 3
+    }
+  },
+  "gitRemotes": [
+    {
+      "name": "origin",
+      "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+      "repo": "createsomethingtoday/create-something-monorepo",
+      "kind": "fetch"
+    },
+    {
+      "name": "origin",
+      "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+      "repo": "createsomethingtoday/create-something-monorepo",
+      "kind": "push"
+    },
+    {
+      "name": "wf-bl-app-form",
+      "url": "/Volumes/LaCie/Webflow/wf-bl-app-form-cloud",
+      "repo": null,
+      "kind": "fetch"
+    },
+    {
+      "name": "wf-bl-app-form",
+      "url": "/Volumes/LaCie/Webflow/wf-bl-app-form-cloud",
+      "repo": null,
+      "kind": "push"
+    }
+  ],
+  "externalRepositories": [
+    {
+      "repo": "create-something/agents",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [
+        "packages/playbook-mcp",
+        "packages/playbook-mcp/worker"
+      ],
+      "evidence": [
+        {
+          "path": "packages/playbook-mcp/README.md",
+          "line": 141,
+          "relationship": "reference",
+          "surface": "packages/playbook-mcp",
+          "text": "- `POST /create-something/agents/mcp-registry-sweep/run`"
+        },
+        {
+          "path": "packages/playbook-mcp/README.md",
+          "line": 182,
+          "relationship": "reference",
+          "surface": "packages/playbook-mcp",
+          "text": "curl -X POST \"https://playbook.mcp.createsomething.ltd/create-something/agents/mcp-registry-sweep/run\" \\"
+        },
+        {
+          "path": "packages/playbook-mcp/worker/index.ts",
+          "line": 84,
+          "relationship": "reference",
+          "surface": "packages/playbook-mcp/worker",
+          "text": "const MCP_REGISTRY_SWEEP_ROUTE = '/create-something/agents/mcp-registry-sweep/run';"
+        }
+      ]
+    },
+    {
+      "repo": "create-something/auth.json",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [
+        "packages/learn"
+      ],
+      "evidence": [
+        {
+          "path": "packages/learn/src/auth/storage.ts",
+          "line": 4,
+          "relationship": "reference",
+          "surface": "packages/learn",
+          "text": "* Persists authentication tokens to ~/.create-something/auth.json"
+        }
+      ]
+    },
+    {
+      "repo": "create-something/create-something-monorepo",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [
+        "packages/notion-tools",
+        "packages/simulation",
+        "packages/triad-audit"
+      ],
+      "evidence": [
+        {
+          "path": "packages/notion-tools/package.json",
+          "line": 26,
+          "relationship": "reference",
+          "surface": "packages/notion-tools",
+          "text": "\"url\": \"https://github.com/create-something/create-something-monorepo.git\","
+        },
+        {
+          "path": "packages/simulation/package.json",
+          "line": 33,
+          "relationship": "reference",
+          "surface": "packages/simulation",
+          "text": "\"url\": \"https://github.com/create-something/create-something-monorepo\""
+        },
+        {
+          "path": "packages/triad-audit/package.json",
+          "line": 67,
+          "relationship": "reference",
+          "surface": "packages/triad-audit",
+          "text": "\"url\": \"https://github.com/create-something/create-something-monorepo.git\","
+        },
+        {
+          "path": "packages/triad-audit/package.json",
+          "line": 72,
+          "relationship": "reference",
+          "surface": "packages/triad-audit",
+          "text": "\"url\": \"https://github.com/create-something/create-something-monorepo/issues\""
+        }
+      ]
+    },
+    {
+      "repo": "create-something/ground",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [
+        "packages/agency"
+      ],
+      "evidence": [
+        {
+          "path": "packages/agency/src/lib/community/monitors/github.ts",
+          "line": 15,
+          "relationship": "reference",
+          "surface": "packages/agency",
+          "text": "'create-something/ground',"
+        },
+        {
+          "path": "packages/ground/.github/workflows/ground-check.yml",
+          "line": 22,
+          "relationship": "reference",
+          "surface": null,
+          "text": "uses: create-something/ground@v1"
+        },
+        {
+          "path": "packages/ground/.ground.example.yml",
+          "line": 4,
+          "relationship": "reference",
+          "surface": null,
+          "text": "# Documentation: https://github.com/create-something/ground"
+        },
+        {
+          "path": "packages/ground/action.yml",
+          "line": 69,
+          "relationship": "reference",
+          "surface": null,
+          "text": "curl -sSL https://github.com/create-something/ground/releases/latest/download/ground-$(uname -s)-$(uname -m) -o /tmp/ground"
+        }
+      ]
+    },
+    {
+      "repo": "create-something/internal",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [],
+      "evidence": [
+        {
+          "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+          "line": 41,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `topology3d://create-something/internal/artifact` | Complete generated 3D topology artifact. |"
+        },
+        {
+          "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+          "line": 42,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `topology3d://create-something/internal/lenses` | Lens labels, groups, counts, and meanings. |"
+        },
+        {
+          "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+          "line": 43,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `topology3d://create-something/internal/state` | Current local MCP session view state. |"
+        },
+        {
+          "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+          "line": 44,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `topology3d://create-something/internal/context` | Resolved context snapshot for the active view. |"
+        },
+        {
+          "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+          "line": 45,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `topology3d://create-something/internal/node/{nodeId}` | Single topology node with adjacent edges and lens memberships. |"
+        },
+        {
+          "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+          "line": 46,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `topology3d://create-something/internal/insights` | Generated observations, caveats, completed improvements, and open improvement candidates. |"
+        },
+        {
+          "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+          "line": 47,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `topology3d://create-something/internal/atlas-session` | Exported Atlas Studio session associated with this topology projection. |"
+        },
+        {
+          "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+          "line": 48,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `topology3d://create-something/internal/atlas-story` | Atlas story, callouts, questions, and guided navigation steps. |"
+        },
+        {
+          "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+          "line": 49,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `topology3d://create-something/internal/atlas-node/{atlasNodeId}` | Single Atlas canvas node joined back to its topology node and adjacent Atlas edges. |"
+        }
+      ]
+    },
+    {
+      "repo": "create-something/monorepo",
+      "relationships": [
+        "repository-metadata"
+      ],
+      "surfaces": [
+        "packages/codebase-vector-database"
+      ],
+      "evidence": [
+        {
+          "path": "packages/codebase-vector-database/test/chunk.test.ts",
+          "line": 80,
+          "relationship": "repository-metadata",
+          "surface": "packages/codebase-vector-database",
+          "text": "{ repository: 'create-something/monorepo', ref: 'main', commitSha: 'abc123' },"
+        },
+        {
+          "path": "packages/codebase-vector-database/test/chunk.test.ts",
+          "line": 83,
+          "relationship": "repository-metadata",
+          "surface": "packages/codebase-vector-database",
+          "text": "expect(text).toContain('Repository: create-something/monorepo');"
+        }
+      ]
+    },
+    {
+      "repo": "create-something/no-hardcoded-colors",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [
+        "packages/triad-audit"
+      ],
+      "evidence": [
+        {
+          "path": "packages/triad-audit/src/generators/rule-generator.ts",
+          "line": 23,
+          "relationship": "reference",
+          "surface": "packages/triad-audit",
+          "text": "/** Rule name for eslint config (e.g., 'create-something/no-hardcoded-colors') */"
+        }
+      ]
+    },
+    {
+      "repo": "create-something/templates",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [
+        "packages/agency"
+      ],
+      "evidence": [
+        {
+          "path": "packages/agency/src/lib/community/monitors/github.ts",
+          "line": 16,
+          "relationship": "reference",
+          "surface": "packages/agency",
+          "text": "'create-something/templates',"
+        }
+      ]
+    },
+    {
+      "repo": "create-something/triad-audit",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [
+        "packages/triad-audit"
+      ],
+      "evidence": [
+        {
+          "path": "packages/triad-audit/action.yml",
+          "line": 3,
+          "relationship": "reference",
+          "surface": "packages/triad-audit",
+          "text": "#   - uses: create-something/triad-audit@v1"
+        },
+        {
+          "path": "packages/triad-audit/README.md",
+          "line": 192,
+          "relationship": "reference",
+          "surface": "packages/triad-audit",
+          "text": "- uses: create-something/triad-audit@v1"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/c3-trello-chat",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [],
+      "evidence": [
+        {
+          "path": "docs/half-dozen-time-spent-summary-client-facing.md",
+          "line": 75,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| Repositories | `Half-Dozen/c3-management-trello`, `createsomethingtoday/c3-trello-chat` |"
+        },
+        {
+          "path": "docs/half-dozen-time-spent-summary-updated.md",
+          "line": 89,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| Repos | `Half-Dozen/c3-management-trello` + `createsomethingtoday/c3-trello-chat` |"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/claude-plugins",
+      "relationships": [
+        "marketplace-config",
+        "reference"
+      ],
+      "surfaces": [
+        "packages/io"
+      ],
+      "evidence": [
+        {
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 25,
+          "relationship": "reference",
+          "surface": null,
+          "text": "- `createsomethingtoday/claude-plugins`: exists, public, default branch `main`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_PILOT_READBACK_2026-07-09.md",
+          "line": 25,
+          "relationship": "reference",
+          "surface": null,
+          "text": "- `createsomethingtoday/claude-plugins`: exists, public, default branch `main`"
+        },
+        {
+          "path": "packages/io/src/lib/config/plugins.ts",
+          "line": 3,
+          "relationship": "marketplace-config",
+          "surface": "packages/io",
+          "text": "// Slugs must match marketplace.json in createsomethingtoday/claude-plugins"
+        },
+        {
+          "path": "packages/io/src/routes/plugins/UNDERSTANDING.md",
+          "line": 139,
+          "relationship": "marketplace-config",
+          "surface": "packages/io",
+          "text": "- Add marketplace: `/plugin marketplace add createsomethingtoday/claude-plugins`"
+        },
+        {
+          "path": "packages/io/src/routes/plugins/UNDERSTANDING.md",
+          "line": 260,
+          "relationship": "marketplace-config",
+          "surface": "packages/io",
+          "text": "3. Slug must match marketplace.json entry in `createsomethingtoday/claude-plugins`"
+        },
+        {
+          "path": "packages/io/src/routes/plugins/UNDERSTANDING.md",
+          "line": 279,
+          "relationship": "marketplace-config",
+          "surface": "packages/io",
+          "text": "- **Claude Code Marketplace**: Plugins must be registered in `createsomethingtoday/claude-plugins` repo"
+        },
+        {
+          "path": "packages/io/src/routes/plugins/UNDERSTANDING.md",
+          "line": 98,
+          "relationship": "marketplace-config",
+          "surface": "packages/io",
+          "text": "- Slugs in config MUST match marketplace.json in `createsomethingtoday/claude-plugins` repo"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/ground",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [
+        "packages/motion-studio"
+      ],
+      "evidence": [
+        {
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 26,
+          "relationship": "reference",
+          "surface": null,
+          "text": "- `createsomethingtoday/ground` resolves as `createsomethingtoday/GROUND`, public, default branch `main`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_PILOT_READBACK_2026-07-09.md",
+          "line": 26,
+          "relationship": "reference",
+          "surface": null,
+          "text": "- `createsomethingtoday/ground`: exists as `createsomethingtoday/GROUND`, public, default branch `main`"
+        },
+        {
+          "path": "packages/motion-studio/src/commercials/ground/SCRIPT.md",
+          "line": 8,
+          "relationship": "reference",
+          "surface": "packages/motion-studio",
+          "text": "**Product**: Ground MCP - github.com/createsomethingtoday/ground"
+        },
+        {
+          "path": "packages/motion-studio/src/commercials/ground/spec.ts",
+          "line": 22,
+          "relationship": "reference",
+          "surface": "packages/motion-studio",
+          "text": "url: 'github.com/createsomethingtoday/ground',"
+        },
+        {
+          "path": "packages/motion-studio/src/commercials/ground/spec.ts",
+          "line": 5,
+          "relationship": "reference",
+          "surface": "packages/motion-studio",
+          "text": "* Product: github.com/createsomethingtoday/ground"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/GROUND",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [],
+      "evidence": [
+        {
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 26,
+          "relationship": "reference",
+          "surface": null,
+          "text": "- `createsomethingtoday/ground` resolves as `createsomethingtoday/GROUND`, public, default branch `main`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_PILOT_READBACK_2026-07-09.md",
+          "line": 26,
+          "relationship": "reference",
+          "surface": null,
+          "text": "- `createsomethingtoday/ground`: exists as `createsomethingtoday/GROUND`, public, default branch `main`"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/men-amongst-mountains",
+      "relationships": [
+        "deploy-source",
+        "reference",
+        "repository-metadata"
+      ],
+      "surfaces": [],
+      "evidence": [
+        {
+          "path": "docs/half-dozen-time-spent-summary-client-facing.md",
+          "line": 63,
+          "relationship": "repository-metadata",
+          "surface": null,
+          "text": "| Repository | `createsomethingtoday/men-amongst-mountains` |"
+        },
+        {
+          "path": "docs/half-dozen-time-spent-summary-updated.md",
+          "line": 72,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| Repo | `createsomethingtoday/men-amongst-mountains` |"
+        },
+        {
+          "path": "docs/half-dozen-time-spent-summary-updated.md",
+          "line": 81,
+          "relationship": "deploy-source",
+          "surface": null,
+          "text": "Deployment mapping: `therevivalists.halfdozen.co` -> Vercel project `men-amongst-mountains` -> GitHub repo `createsomethingtoday/men-amongst-mountains`."
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/outerfields-presentations",
+      "relationships": [
+        "reference",
+        "repository-metadata",
+        "subtree-sync"
+      ],
+      "surfaces": [
+        "packages/agency/clients/outerfields",
+        "packages/agency/clients/outerfields/mcp-remote"
+      ],
+      "evidence": [
+        {
+          "path": ".github/workflows/outerfields-presentations-sync.yml",
+          "line": 35,
+          "relationship": "subtree-sync",
+          "surface": "packages/agency/clients/outerfields",
+          "text": "git subtree pull --prefix packages/agency/clients/outerfields/src/routes/presentations https://github.com/createsomethingtoday/outerfields-presentations.git"
+        },
+        {
+          "path": ".github/workflows/outerfields-presentations-sync.yml",
+          "line": 37,
+          "relationship": "reference",
+          "surface": null,
+          "text": "\"https://github.com/createsomethingtoday/outerfields-presentations.git\" \\"
+        },
+        {
+          "path": ".github/workflows/outerfields-presentations-sync.yml",
+          "line": 51,
+          "relationship": "repository-metadata",
+          "surface": null,
+          "text": "Source repository: `createsomethingtoday/outerfields-presentations`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 24,
+          "relationship": "reference",
+          "surface": null,
+          "text": "- `createsomethingtoday/outerfields-presentations`: exists, public, default branch `main`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_PILOT_READBACK_2026-07-09.md",
+          "line": 18,
+          "relationship": "repository-metadata",
+          "surface": null,
+          "text": "- Repository: `createsomethingtoday/outerfields-presentations`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_PILOT_READBACK_2026-07-09.md",
+          "line": 19,
+          "relationship": "reference",
+          "surface": null,
+          "text": "- URL: `https://github.com/createsomethingtoday/outerfields-presentations`"
+        },
+        {
+          "path": "packages/agency/clients/outerfields/mcp-remote/DEPLOYMENT.md",
+          "line": 149,
+          "relationship": "reference",
+          "surface": "packages/agency/clients/outerfields/mcp-remote",
+          "text": "- `createsomethingtoday/outerfields-presentations` (write)"
+        },
+        {
+          "path": "packages/agency/clients/outerfields/mcp-remote/DEPLOYMENT.md",
+          "line": 164,
+          "relationship": "reference",
+          "surface": "packages/agency/clients/outerfields/mcp-remote",
+          "text": "- `PRESENTATIONS_REPO` (default: `createsomethingtoday/outerfields-presentations`)"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/repo",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [
+        "packages/dotfiles"
+      ],
+      "evidence": [
+        {
+          "path": "packages/dotfiles/UNDERSTANDING.md",
+          "line": 256,
+          "relationship": "reference",
+          "surface": "packages/dotfiles",
+          "text": "git remote set-url origin git@github.com:createsomethingtoday/repo.git"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/shadcn_ar_tool",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [],
+      "evidence": [
+        {
+          "path": "docs/half-dozen-time-spent-summary-client-facing.md",
+          "line": 41,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| Repositories | `createsomethingtoday/v0-viralytics`, `createsomethingtoday/shadcn_ar_tool`, `createsomethingtoday/viberate` |"
+        },
+        {
+          "path": "docs/half-dozen-time-spent-summary-updated.md",
+          "line": 48,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `createsomethingtoday/shadcn_ar_tool` | 219 | 24 | 2025-05-22 - 2025-12-15 | 47.44 | 53.39 |"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/shivworks-network",
+      "relationships": [
+        "reference",
+        "standalone"
+      ],
+      "surfaces": [
+        "packages/agency"
+      ],
+      "evidence": [
+        {
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 250,
+          "relationship": "reference",
+          "surface": "packages/agency",
+          "text": "href: 'https://github.com/createsomethingtoday/shivworks-network',"
+        },
+        {
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 384,
+          "relationship": "standalone",
+          "surface": "packages/agency",
+          "text": "'Contributor access to createsomethingtoday/shivworks-network, which is the standalone application repository.',"
+        },
+        {
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 42,
+          "relationship": "standalone",
+          "surface": "packages/agency",
+          "text": "detail: 'createsomethingtoday/shivworks-network is the self-contained application repo.'"
+        },
+        {
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 420,
+          "relationship": "reference",
+          "surface": "packages/agency",
+          "text": "scope: 'Contributor access to createsomethingtoday/shivworks-network',"
+        },
+        {
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 448,
+          "relationship": "reference",
+          "surface": "packages/agency",
+          "text": "'git clone https://github.com/createsomethingtoday/shivworks-network.git\\ncd shivworks-network\\npnpm install\\ninfisical login\\ninfisical init\\ninfisical run --env=dev --path=/ -- pnpm dev'"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/shivworks-network.",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [
+        "packages/agency"
+      ],
+      "evidence": [
+        {
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 210,
+          "relationship": "reference",
+          "surface": "packages/agency",
+          "text": "title: 'Invite the named recipient to createsomethingtoday/shivworks-network.',"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/tiktok_scraper",
+      "relationships": [
+        "reference",
+        "repository-metadata"
+      ],
+      "surfaces": [],
+      "evidence": [
+        {
+          "path": "docs/half-dozen-time-spent-summary-client-facing.md",
+          "line": 53,
+          "relationship": "repository-metadata",
+          "surface": null,
+          "text": "| Repository | `createsomethingtoday/tiktok_scraper` |"
+        },
+        {
+          "path": "docs/half-dozen-time-spent-summary-updated.md",
+          "line": 60,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| Repo | `createsomethingtoday/tiktok_scraper` |"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/v0-viralytics",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [],
+      "evidence": [
+        {
+          "path": "docs/half-dozen-time-spent-summary-client-facing.md",
+          "line": 41,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| Repositories | `createsomethingtoday/v0-viralytics`, `createsomethingtoday/shadcn_ar_tool`, `createsomethingtoday/viberate` |"
+        },
+        {
+          "path": "docs/half-dozen-time-spent-summary-updated.md",
+          "line": 47,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `createsomethingtoday/v0-viralytics` | 85 | 6 | 2025-05-02 - 2025-05-17 | 12.88 | 16.63 |"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/viberate",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [],
+      "evidence": [
+        {
+          "path": "docs/half-dozen-time-spent-summary-client-facing.md",
+          "line": 41,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| Repositories | `createsomethingtoday/v0-viralytics`, `createsomethingtoday/shadcn_ar_tool`, `createsomethingtoday/viberate` |"
+        },
+        {
+          "path": "docs/half-dozen-time-spent-summary-updated.md",
+          "line": 49,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| `createsomethingtoday/viberate` | 6 | 1 | 2025-07-17 - 2025-07-17 | 0.3 | 0.8 |"
+        }
+      ]
+    },
+    {
+      "repo": "createsomethingtoday/webflow-library-submission-form",
+      "relationships": [
+        "marketplace-config",
+        "mirror-redundancy",
+        "reference",
+        "repository-metadata"
+      ],
+      "surfaces": [
+        "apps/marketplace-template-submission-cloud"
+      ],
+      "evidence": [
+        {
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 12,
+          "relationship": "reference",
+          "surface": null,
+          "text": "2. Promote `createsomethingtoday/webflow-library-submission-form` as the authority for the standalone Library submission app after a reconciliation branch lands."
+        },
+        {
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 122,
+          "relationship": "marketplace-config",
+          "surface": "apps/marketplace-template-submission-cloud",
+          "text": "- Package/surface: `apps/marketplace-template-submission-cloud` and `createsomethingtoday/webflow-library-submission-form`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 23,
+          "relationship": "reference",
+          "surface": null,
+          "text": "- `createsomethingtoday/webflow-library-submission-form`: exists, private, default branch `main`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 3,
+          "relationship": "marketplace-config",
+          "surface": "apps/marketplace-template-submission-cloud",
+          "text": "This note continues the repo split pilot for `apps/marketplace-template-submission-cloud` and `createsomethingtoday/webflow-library-submission-form`."
+        },
+        {
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 99,
+          "relationship": "reference",
+          "surface": null,
+          "text": "Create a branch in `createsomethingtoday/webflow-library-submission-form` only after deciding to promote it as the Library authority."
+        },
+        {
+          "path": "docs/REPO_SPLIT_PILOT_READBACK_2026-07-09.md",
+          "line": 11,
+          "relationship": "repository-metadata",
+          "surface": null,
+          "text": "- Repository: `createsomethingtoday/webflow-library-submission-form`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_PILOT_READBACK_2026-07-09.md",
+          "line": 12,
+          "relationship": "reference",
+          "surface": null,
+          "text": "- URL: `https://github.com/createsomethingtoday/webflow-library-submission-form`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_PILOT_READBACK_2026-07-09.md",
+          "line": 33,
+          "relationship": "reference",
+          "surface": null,
+          "text": "gh repo clone createsomethingtoday/webflow-library-submission-form /tmp/cs-repo-split-pilot-webflow-library -- --depth 1"
+        },
+        {
+          "path": "docs/REPO_SPLIT_RECONCILIATION_BRANCH_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 10,
+          "relationship": "reference",
+          "surface": null,
+          "text": "Draft PR: `https://github.com/createsomethingtoday/webflow-library-submission-form/pull/1`"
+        },
+        {
+          "path": "docs/REPO_SPLIT_RECONCILIATION_BRANCH_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 5,
+          "relationship": "reference",
+          "surface": null,
+          "text": "Standalone repo: `createsomethingtoday/webflow-library-submission-form`"
+        },
+        {
+          "path": "docs/WEBFLOW_SURFACE_OWNERSHIP_RUNTIME_MAP.md",
+          "line": 181,
+          "relationship": "marketplace-config",
+          "surface": "apps/marketplace-template-submission-cloud",
+          "text": "| Marketplace Library submission app         | `apps/marketplace-template-submission-cloud`, `createsomethingtoday/webflow-library-submission-form` | Standalone Webflow Cloud app deployed by CLI or repo-backed Cloud import                 | Airtable Automation webhooks, D1 captur"
+        },
+        {
+          "path": "docs/WEBFLOW_SURFACE_OWNERSHIP_RUNTIME_MAP.md",
+          "line": 267,
+          "relationship": "mirror-redundancy",
+          "surface": null,
+          "text": "- Standalone redundancy repo: `createsomethingtoday/webflow-library-submission-form`"
+        }
+      ]
+    },
+    {
+      "repo": "Half-Dozen/c3-management-trello",
+      "relationships": [
+        "reference"
+      ],
+      "surfaces": [],
+      "evidence": [
+        {
+          "path": "docs/half-dozen-time-spent-summary-client-facing.md",
+          "line": 75,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| Repositories | `Half-Dozen/c3-management-trello`, `createsomethingtoday/c3-trello-chat` |"
+        },
+        {
+          "path": "docs/half-dozen-time-spent-summary-updated.md",
+          "line": 89,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| Repos | `Half-Dozen/c3-management-trello` + `createsomethingtoday/c3-trello-chat` |"
+        }
+      ]
+    },
+    {
+      "repo": "Half-Dozen/kickstand-monitoring",
+      "relationships": [
+        "reference",
+        "repository-metadata"
+      ],
+      "surfaces": [],
+      "evidence": [
+        {
+          "path": "docs/half-dozen-time-spent-summary-client-facing.md",
+          "line": 29,
+          "relationship": "repository-metadata",
+          "surface": null,
+          "text": "| Repository | `Half-Dozen/kickstand-monitoring` |"
+        },
+        {
+          "path": "docs/half-dozen-time-spent-summary-updated.md",
+          "line": 32,
+          "relationship": "reference",
+          "surface": null,
+          "text": "| Repo | `Half-Dozen/kickstand-monitoring` |"
+        }
+      ]
+    }
+  ],
+  "surfaces": [
+    {
+      "path": "apps/atlas-studio-desktop",
+      "name": "@create-something/atlas-studio-desktop",
+      "kind": "app",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "apps/bettermode-marketplace-creator-agent",
+      "name": "@create-something/bettermode-marketplace-creator-agent",
+      "kind": "app",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "apps/even-operator-brief",
+      "name": "@create-something/even-operator-brief",
+      "kind": "app",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "apps/marketplace-template-submission-cloud",
+      "name": "@create-something/marketplace-template-submission-cloud",
+      "kind": "app",
+      "lane": null,
+      "private": true,
+      "ownership": "standalone-reference",
+      "authorityConfidence": "low",
+      "syncMode": "marketplace-config",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "createsomethingtoday/webflow-library-submission-form",
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 122,
+          "relationship": "marketplace-config",
+          "text": "- Package/surface: `apps/marketplace-template-submission-cloud` and `createsomethingtoday/webflow-library-submission-form`"
+        },
+        {
+          "repo": "createsomethingtoday/webflow-library-submission-form",
+          "path": "docs/REPO_SPLIT_AUTHORITY_RECOMMENDATION_WEBFLOW_LIBRARY_2026-07-09.md",
+          "line": 3,
+          "relationship": "marketplace-config",
+          "text": "This note continues the repo split pilot for `apps/marketplace-template-submission-cloud` and `createsomethingtoday/webflow-library-submission-form`."
+        },
+        {
+          "repo": "createsomethingtoday/webflow-library-submission-form",
+          "path": "docs/WEBFLOW_SURFACE_OWNERSHIP_RUNTIME_MAP.md",
+          "line": 181,
+          "relationship": "marketplace-config",
+          "text": "| Marketplace Library submission app         | `apps/marketplace-template-submission-cloud`, `createsomethingtoday/webflow-library-submission-form` | Standalone Webflow Cloud app deployed by CLI or repo-backed Cloud import                 | Airtable Automation webhooks, D1 captur"
+        }
+      ],
+      "referencedRepositories": [
+        "createsomethingtoday/webflow-library-submission-form"
+      ],
+      "cautions": [
+        "Marketplace/config references may be registration dependencies rather than code ownership."
+      ]
+    },
+    {
+      "path": "apps/webflow-dashboard-cloud",
+      "name": "@create-something/webflow-dashboard-cloud",
+      "kind": "app",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "apps/webflow-marketplace-category-cloud",
+      "name": "@create-something/webflow-marketplace-category-cloud",
+      "kind": "app",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/abundance-jobs-mcp",
+      "name": "@create-something/abundance-jobs-mcp",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/abundance-jobs-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/abundance-jobs-mcp"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/abundance-jobs-mcp/worker",
+      "name": "abundance-jobs-mcp-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/abundance-jobs-mcp",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/agency",
+      "name": "@create-something/agency",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/canvas-kernel",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/delivery-schema",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-authz",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/tufte",
+          "spec": "workspace:^"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "create-something/ground",
+          "path": "packages/agency/src/lib/community/monitors/github.ts",
+          "line": 15,
+          "relationship": "reference",
+          "text": "'create-something/ground',"
+        },
+        {
+          "repo": "create-something/templates",
+          "path": "packages/agency/src/lib/community/monitors/github.ts",
+          "line": 16,
+          "relationship": "reference",
+          "text": "'create-something/templates',"
+        },
+        {
+          "repo": "createsomethingtoday/shivworks-network.",
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 210,
+          "relationship": "reference",
+          "text": "title: 'Invite the named recipient to createsomethingtoday/shivworks-network.',"
+        },
+        {
+          "repo": "createsomethingtoday/shivworks-network",
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 250,
+          "relationship": "reference",
+          "text": "href: 'https://github.com/createsomethingtoday/shivworks-network',"
+        },
+        {
+          "repo": "createsomethingtoday/shivworks-network",
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 384,
+          "relationship": "standalone",
+          "text": "'Contributor access to createsomethingtoday/shivworks-network, which is the standalone application repository.',"
+        },
+        {
+          "repo": "createsomethingtoday/shivworks-network",
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 42,
+          "relationship": "standalone",
+          "text": "detail: 'createsomethingtoday/shivworks-network is the self-contained application repo.'"
+        },
+        {
+          "repo": "createsomethingtoday/shivworks-network",
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 420,
+          "relationship": "reference",
+          "text": "scope: 'Contributor access to createsomethingtoday/shivworks-network',"
+        },
+        {
+          "repo": "createsomethingtoday/shivworks-network",
+          "path": "packages/agency/src/lib/delivery/shivworks-context.ts",
+          "line": 448,
+          "relationship": "reference",
+          "text": "'git clone https://github.com/createsomethingtoday/shivworks-network.git\\ncd shivworks-network\\npnpm install\\ninfisical login\\ninfisical init\\ninfisical run --env=dev --path=/ -- pnpm dev'"
+        }
+      ],
+      "referencedRepositories": [
+        "create-something/ground",
+        "create-something/templates",
+        "createsomethingtoday/shivworks-network",
+        "createsomethingtoday/shivworks-network."
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/agency/clients/cato-supply-insights-review",
+      "name": "@create-something/cato-supply-insights-review",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/agency/clients/jandjhomehealth",
+      "name": "@create-something/jandjhomehealth",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/agency/clients/outerfields",
+      "name": "@create-something/outerfields",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "mirrored",
+      "authorityConfidence": "medium",
+      "syncMode": "subtree",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "createsomethingtoday/outerfields-presentations",
+          "path": ".github/workflows/outerfields-presentations-sync.yml",
+          "line": 35,
+          "relationship": "subtree-sync",
+          "text": "git subtree pull --prefix packages/agency/clients/outerfields/src/routes/presentations https://github.com/createsomethingtoday/outerfields-presentations.git"
+        }
+      ],
+      "referencedRepositories": [
+        "createsomethingtoday/outerfields-presentations"
+      ],
+      "cautions": [
+        "Treat this as a sync or mirror relationship until the authority direction is explicit."
+      ]
+    },
+    {
+      "path": "packages/agency/clients/outerfields/mcp-remote",
+      "name": "@outerfields/pcn-mcp-remote",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "standalone-reference",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "createsomethingtoday/outerfields-presentations",
+          "path": "packages/agency/clients/outerfields/mcp-remote/DEPLOYMENT.md",
+          "line": 149,
+          "relationship": "reference",
+          "text": "- `createsomethingtoday/outerfields-presentations` (write)"
+        },
+        {
+          "repo": "createsomethingtoday/outerfields-presentations",
+          "path": "packages/agency/clients/outerfields/mcp-remote/DEPLOYMENT.md",
+          "line": 164,
+          "relationship": "reference",
+          "text": "- `PRESENTATIONS_REPO` (default: `createsomethingtoday/outerfields-presentations`)"
+        }
+      ],
+      "referencedRepositories": [
+        "createsomethingtoday/outerfields-presentations"
+      ],
+      "cautions": []
+    },
+    {
+      "path": "packages/agency/clients/outerfields/mcp-server",
+      "name": "@outerfields/pcn-tools",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/agency/clients/the-stack",
+      "name": "@create-something/the-stack",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/agency/workers/dental-agent-router",
+      "name": "@create-something/dental-agent-router",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/agency/workers/social-poster",
+      "name": "social-poster-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/agent-kit",
+      "name": "@createsomething/agent-kit",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/agent-kit"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/agent-kit"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/agents/coordination",
+      "name": "@create-something/agent-coordination",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/airtable-primary-tags-worker",
+      "name": "@create-something/airtable-primary-tags-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/app-governance-db",
+      "name": "@create-something/app-governance-db",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/app-governance-db"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/app-governance-db"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/app-governance-db/worker",
+      "name": "app-governance-db-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/ascii-renderer",
+      "name": "@create-something/ascii-renderer",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/bettermode-creator-mcp",
+      "name": "@create-something/bettermode-creator-mcp",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/bettermode-creator-mcp/worker",
+      "name": "bettermode-creator-mcp-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/bundle-scanner",
+      "name": "@create-something/bundle-scanner",
+      "kind": "package",
+      "lane": "labs",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/bundle-scanner-core",
+      "name": "@create-something/bundle-scanner-core",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/calm-operator-ink-bridge",
+      "name": "@create-something/calm-operator-ink-bridge",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/calm-operator-ink-firmware",
+      "name": "@create-something/calm-operator-ink-firmware",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/canon",
+      "name": "@create-something/canon",
+      "kind": "package",
+      "lane": "product",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/tufte",
+          "spec": "workspace:^"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/canon-tokens",
+      "name": "@createsomething/canon-tokens",
+      "kind": "package",
+      "lane": "product",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo",
+          "directory": "packages/canon-tokens"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/canon-tokens"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/canvas-kernel",
+      "name": "@create-something/canvas-kernel",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/check-asset-name-worker",
+      "name": "@create-something/check-asset-name-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/clearway",
+      "name": "@create-something/clearway",
+      "kind": "package",
+      "lane": "labs",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/clearway/workers/notifier",
+      "name": "@court-reserve/notifier-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/clearway/workers/realtime",
+      "name": "@court-reserve/realtime-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/clearway/workers/router",
+      "name": "@create-something/court-reserve-router",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/cloudflare-sdk",
+      "name": "@create-something/cloudflare-sdk",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/codebase-vector-database",
+      "name": "@create-something/codebase-vector-database",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/bundle-scanner-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "create-something/monorepo",
+          "path": "packages/codebase-vector-database/test/chunk.test.ts",
+          "line": 80,
+          "relationship": "repository-metadata",
+          "text": "{ repository: 'create-something/monorepo', ref: 'main', commitSha: 'abc123' },"
+        },
+        {
+          "repo": "create-something/monorepo",
+          "path": "packages/codebase-vector-database/test/chunk.test.ts",
+          "line": 83,
+          "relationship": "repository-metadata",
+          "text": "expect(text).toContain('Repository: create-something/monorepo');"
+        }
+      ],
+      "referencedRepositories": [
+        "create-something/monorepo"
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/community-mcp",
+      "name": "@create-something/community-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/observability",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/composio-bridge",
+      "name": "@create-something/composio-bridge",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/composio-bridge"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/composio-bridge"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/composio-toolkit-mcp",
+      "name": "@create-something/composio-toolkit-mcp",
+      "kind": "package",
+      "lane": "platform",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/composio-bridge",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/concierge-chat",
+      "name": "@create-something/concierge-chat",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/create-something-mcp",
+      "name": "@create-something/mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/create-something-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/create-something-mcp"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/playbook-mcp",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/create-something-mcp/worker",
+      "name": "create-something-mcp-worker",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/cs-mcp-hub",
+      "name": "@create-something/cs-mcp-hub",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/cs-mcp-hub-notion-bridge",
+      "name": "@create-something/cs-mcp-hub-notion-bridge",
+      "kind": "package",
+      "lane": "platform",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/cs-mcp-hub-remote",
+      "name": "@create-something/cs-mcp-hub-remote",
+      "kind": "package",
+      "lane": "platform",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-authz",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/cs-telemetry-mcp/worker",
+      "name": "cs-telemetry-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/database-layer",
+      "name": "@create-something/database-layer",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/database-layer"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/database-layer"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canvas-kernel",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": true
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction.",
+        "Generated agent wiki is orientation only; verify against source artifacts before claims."
+      ]
+    },
+    {
+      "path": "packages/database-layer/worker",
+      "name": "@create-something/database-layer-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/database-layer",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/delivery-schema",
+      "name": "@create-something/delivery-schema",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/dotfiles",
+      "name": "@create-something/dotfiles",
+      "kind": "package",
+      "lane": "labs",
+      "private": true,
+      "ownership": "standalone-reference",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "createsomethingtoday/repo",
+          "path": "packages/dotfiles/UNDERSTANDING.md",
+          "line": 256,
+          "relationship": "reference",
+          "text": "git remote set-url origin git@github.com:createsomethingtoday/repo.git"
+        }
+      ],
+      "referencedRepositories": [
+        "createsomethingtoday/repo"
+      ],
+      "cautions": []
+    },
+    {
+      "path": "packages/eslint-plugin-canon",
+      "name": "@create-something/eslint-plugin-canon",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/gmail-notion-mcp",
+      "name": "@create-something/gmail-notion-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/gmail-notion-mcp/worker",
+      "name": "gmail-notion-mcp-worker",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/composio-bridge",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/ground/npm",
+      "name": "@createsomething/ground-mcp",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo",
+          "directory": "packages/ground"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/ground"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/gsap-validation-worker",
+      "name": "@create-something/gsap-validation-worker",
+      "kind": "package",
+      "lane": "labs",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/half-dozen-youtube-sync",
+      "name": "@create-something/half-dozen-youtube-sync",
+      "kind": "package",
+      "lane": "clients",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/half-dozen-youtube-sync"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/half-dozen-youtube-sync"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/observability",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/half-dozen-youtube-sync/worker",
+      "name": "halfdozen-youtube-sync-worker",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker",
+      "name": "halfdozen-agent-analyzer-telemetry-mcp",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/halfdozen-blondish-sync-mcp",
+      "name": "@create-something/halfdozen-blondish-sync-mcp",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/halfdozen-dm-mcp",
+      "name": "@create-something/halfdozen-dm-mcp",
+      "kind": "package",
+      "lane": "clients",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/halfdozen-dm-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/halfdozen-dm-mcp"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/composio-bridge",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-dm-mcp/worker",
+      "name": "halfdozen-dm-mcp-worker",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/composio-bridge",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-gmail-sync",
+      "name": "@create-something/halfdozen-gmail-sync",
+      "kind": "package",
+      "lane": "clients",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-gmail-sync/worker",
+      "name": "halfdozen-gmail-sync-worker",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-landing",
+      "name": "@create-something/halfdozen-landing",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/halfdozen-notion-mcp",
+      "name": "@create-something/halfdozen-notion-mcp",
+      "kind": "package",
+      "lane": "clients",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/halfdozen-notion-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/halfdozen-notion-mcp"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-notion-mcp/worker",
+      "name": "halfdozen-notion-mcp-worker",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-operator-notion-mcp",
+      "name": "@create-something/halfdozen-operator-notion-mcp",
+      "kind": "package",
+      "lane": "clients",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/composio-bridge",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-operator-notion-mcp/worker",
+      "name": "halfdozen-operator-notion-mcp-worker",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/composio-bridge",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-telemetry-mcp/worker",
+      "name": "halfdozen-telemetry-mcp",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-zoom-sync",
+      "name": "@create-something/halfdozen-zoom-sync",
+      "kind": "package",
+      "lane": "clients",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/halfdozen-zoom-sync"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/halfdozen-zoom-sync"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/composio-bridge",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-zoom-sync/worker",
+      "name": "halfdozen-zoom-sync-worker",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/composio-bridge",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/halfdozen-zoom-transcript-sync",
+      "name": "@create-something/halfdozen-zoom-transcript-sync",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/harness",
+      "name": "@create-something/harness",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:^"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/harness-mcp",
+      "name": "@create-something/harness-mcp",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/observability",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/huggingface-spaces/motion-ontology",
+      "name": "@createsomething/motion-ontology-space",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/huggingface-spaces/subtractive-triad-ts",
+      "name": "@createsomething/subtractive-triad-space",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/hydra-db-recall-mcp",
+      "name": "@create-something/hydra-db-recall-mcp",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/hydra-db-recall-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/hydra-db-recall-mcp"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/hydra-db-recall-mcp/worker",
+      "name": "hydra-db-recall-mcp-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/hydra-db-recall-mcp",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/identity-worker",
+      "name": "@create-something/identity-worker",
+      "kind": "package",
+      "lane": "platform",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-authz",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/policy-os-engine",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/interaction-atlas-mcp",
+      "name": "@create-something/interaction-atlas-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canvas-kernel",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-authz",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/observability",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/playbook-mcp",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/policy-os-engine",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/io",
+      "name": "@create-something/io",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "syncMode": "marketplace-config",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/render-pipeline",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/spritz",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/tufte",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "devDependencies",
+          "name": "@create-something/eslint-plugin-canon",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "createsomethingtoday/claude-plugins",
+          "path": "packages/io/src/lib/config/plugins.ts",
+          "line": 3,
+          "relationship": "marketplace-config",
+          "text": "// Slugs must match marketplace.json in createsomethingtoday/claude-plugins"
+        },
+        {
+          "repo": "createsomethingtoday/claude-plugins",
+          "path": "packages/io/src/routes/plugins/UNDERSTANDING.md",
+          "line": 139,
+          "relationship": "marketplace-config",
+          "text": "- Add marketplace: `/plugin marketplace add createsomethingtoday/claude-plugins`"
+        },
+        {
+          "repo": "createsomethingtoday/claude-plugins",
+          "path": "packages/io/src/routes/plugins/UNDERSTANDING.md",
+          "line": 260,
+          "relationship": "marketplace-config",
+          "text": "3. Slug must match marketplace.json entry in `createsomethingtoday/claude-plugins`"
+        },
+        {
+          "repo": "createsomethingtoday/claude-plugins",
+          "path": "packages/io/src/routes/plugins/UNDERSTANDING.md",
+          "line": 279,
+          "relationship": "marketplace-config",
+          "text": "- **Claude Code Marketplace**: Plugins must be registered in `createsomethingtoday/claude-plugins` repo"
+        },
+        {
+          "repo": "createsomethingtoday/claude-plugins",
+          "path": "packages/io/src/routes/plugins/UNDERSTANDING.md",
+          "line": 98,
+          "relationship": "marketplace-config",
+          "text": "- Slugs in config MUST match marketplace.json in `createsomethingtoday/claude-plugins` repo"
+        }
+      ],
+      "referencedRepositories": [
+        "createsomethingtoday/claude-plugins"
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction.",
+        "Marketplace/config references may be registration dependencies rather than code ownership."
+      ]
+    },
+    {
+      "path": "packages/io/workers/bundle-scanner-api",
+      "name": "@create-something/bundle-scanner-api",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/bundle-scanner-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/io/workers/webflow-validation",
+      "name": "@create-something/webflow-validation",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/judgment-layer",
+      "name": "@create-something/judgment-layer",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/judgment-layer"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/judgment-layer"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/policy-os-engine",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/landing-page-filter",
+      "name": "@create-something/landing-page-filter",
+      "kind": "package",
+      "lane": "labs",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/learn",
+      "name": "@createsomething/learn",
+      "kind": "package",
+      "lane": "product",
+      "private": false,
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/learn"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/learn"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "create-something/auth.json",
+          "path": "packages/learn/src/auth/storage.ts",
+          "line": 4,
+          "relationship": "reference",
+          "text": "* Persists authentication tokens to ~/.create-something/auth.json"
+        }
+      ],
+      "referencedRepositories": [
+        "create-something/auth.json"
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning."
+      ]
+    },
+    {
+      "path": "packages/lms",
+      "name": "@create-something/lms",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/spritz",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/tufte",
+          "spec": "workspace:^"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/loom-mcp-remote",
+      "name": "@create-something/loom-mcp-remote",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/loom/npm",
+      "name": "@createsomething/loom-mcp",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo",
+          "directory": "packages/loom"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/loom"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/ltd",
+      "name": "@create-something/ltd",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/tufte",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/ltd/workers/arena-curator",
+      "name": "arena-curator",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/ltd/workers/arena-sync",
+      "name": "@create-something/arena-sync-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/maverick",
+      "name": "@create-something/maverick",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/maverick-admin",
+      "name": "@create-something/maverick-admin",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/mcp-authz",
+      "name": "@create-something/mcp-authz",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/policy-os-engine",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/mcp-core",
+      "name": "@create-something/mcp-core",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/mcp-core"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/mcp-core"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/meetings",
+      "name": "@create-something/meetings",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/meetings-mcp/worker",
+      "name": "meetings-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/motion-studio",
+      "name": "@create-something/motion-studio",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "peerDependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "createsomethingtoday/ground",
+          "path": "packages/motion-studio/src/commercials/ground/SCRIPT.md",
+          "line": 8,
+          "relationship": "reference",
+          "text": "**Product**: Ground MCP - github.com/createsomethingtoday/ground"
+        },
+        {
+          "repo": "createsomethingtoday/ground",
+          "path": "packages/motion-studio/src/commercials/ground/spec.ts",
+          "line": 22,
+          "relationship": "reference",
+          "text": "url: 'github.com/createsomethingtoday/ground',"
+        },
+        {
+          "repo": "createsomethingtoday/ground",
+          "path": "packages/motion-studio/src/commercials/ground/spec.ts",
+          "line": 5,
+          "relationship": "reference",
+          "text": "* Product: github.com/createsomethingtoday/ground"
+        }
+      ],
+      "referencedRepositories": [
+        "createsomethingtoday/ground"
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/notion-agent",
+      "name": "@create-something/notion-agent",
+      "kind": "package",
+      "lane": "clients",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/notion-tools",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/notion-agent/workers/scheduler",
+      "name": "@create-something/notion-agent-scheduler",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/notion-sync-mcp",
+      "name": "@create-something/notion-sync-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/notion-sync-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/notion-sync-mcp"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/notion-tools",
+      "name": "@create-something/notion-tools",
+      "kind": "package",
+      "lane": "clients",
+      "private": false,
+      "ownership": "unclear",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/create-something/create-something-monorepo.git",
+          "directory": "packages/notion-tools"
+        },
+        "repo": "create-something/create-something-monorepo",
+        "directory": "packages/notion-tools"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "create-something/create-something-monorepo",
+          "path": "packages/notion-tools/package.json",
+          "line": 26,
+          "relationship": "reference",
+          "text": "\"url\": \"https://github.com/create-something/create-something-monorepo.git\","
+        }
+      ],
+      "referencedRepositories": [
+        "create-something/create-something-monorepo"
+      ],
+      "cautions": [
+        "Ownership evidence is incomplete or stale; treat this as a drill-down prompt.",
+        "Repository metadata points at create-something/create-something-monorepo; verify whether this is a stale namespace."
+      ]
+    },
+    {
+      "path": "packages/notion-worker-experiments",
+      "name": "@create-something/notion-worker-experiments",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/observability",
+      "name": "@create-something/observability",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/observability"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/observability"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/ona-agents",
+      "name": "@create-something/ona-agents",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/orchestration",
+      "name": "@create-something/orchestration",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/harness",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/pi-halfdozen",
+      "name": "@create-something/pi-halfdozen",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/pi-policy-os",
+      "name": "@create-something/pi-policy-os",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/pi-policy-os"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/pi-policy-os"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/pi-three-tier-framework",
+      "name": "@create-something/pi-three-tier-framework",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/pi-three-tier-framework"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/pi-three-tier-framework"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/pi-webflow",
+      "name": "@create-something/pi-webflow",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/playbook-mcp",
+      "name": "@create-something/playbook-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/playbook-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/playbook-mcp"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "create-something/agents",
+          "path": "packages/playbook-mcp/README.md",
+          "line": 141,
+          "relationship": "reference",
+          "text": "- `POST /create-something/agents/mcp-registry-sweep/run`"
+        },
+        {
+          "repo": "create-something/agents",
+          "path": "packages/playbook-mcp/README.md",
+          "line": 182,
+          "relationship": "reference",
+          "text": "curl -X POST \"https://playbook.mcp.createsomething.ltd/create-something/agents/mcp-registry-sweep/run\" \\"
+        }
+      ],
+      "referencedRepositories": [
+        "create-something/agents"
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning."
+      ]
+    },
+    {
+      "path": "packages/playbook-mcp/worker",
+      "name": "playbook-mcp-worker",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/observability",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "create-something/agents",
+          "path": "packages/playbook-mcp/worker/index.ts",
+          "line": 84,
+          "relationship": "reference",
+          "text": "const MCP_REGISTRY_SWEEP_ROUTE = '/create-something/agents/mcp-registry-sweep/run';"
+        }
+      ],
+      "referencedRepositories": [
+        "create-something/agents"
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/policy-os-engine",
+      "name": "@create-something/policy-os-engine",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/quickbooks-notion-mcp",
+      "name": "@create-something/quickbooks-notion-mcp",
+      "kind": "package",
+      "lane": "clients",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/relay",
+      "name": "@create-something/relay",
+      "kind": "package",
+      "lane": "platform",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": true,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/render-pipeline",
+      "name": "@create-something/render-pipeline",
+      "kind": "package",
+      "lane": "product",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:^"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/scanner-worker",
+      "name": "@create-something/scanner-worker",
+      "kind": "package",
+      "lane": "labs",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/schedule-mcp",
+      "name": "@create-something/schedule-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/schedule-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/schedule-mcp"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/schedule-mcp/worker",
+      "name": "schedule-mcp-worker",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/schedule-mcp/workers/notifier",
+      "name": "schedule-notifier",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/search",
+      "name": "@create-something/search",
+      "kind": "package",
+      "lane": "labs",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/seeing",
+      "name": "@createsomething/seeing",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/seeing"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/seeing"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/seeing/scaffold",
+      "name": "my-task-tracker",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/simulation",
+      "name": "@create-something/simulation",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "unclear",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/create-something/create-something-monorepo"
+        },
+        "repo": "create-something/create-something-monorepo",
+        "directory": null
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "create-something/create-something-monorepo",
+          "path": "packages/simulation/package.json",
+          "line": 33,
+          "relationship": "reference",
+          "text": "\"url\": \"https://github.com/create-something/create-something-monorepo\""
+        }
+      ],
+      "referencedRepositories": [
+        "create-something/create-something-monorepo"
+      ],
+      "cautions": [
+        "Ownership evidence is incomplete or stale; treat this as a drill-down prompt.",
+        "Repository metadata points at create-something/create-something-monorepo; verify whether this is a stale namespace."
+      ]
+    },
+    {
+      "path": "packages/social-agent",
+      "name": "@create-something/social-agent",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/social-mcp",
+      "name": "@create-something/social-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/observability",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/space",
+      "name": "@create-something/space",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/tufte",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/space/workers/agentic-executor",
+      "name": "@create-something/agentic-executor",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/observability",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/space/workers/motion-extractor",
+      "name": "@create-something/motion-extractor-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/space/workers/nba-proxy",
+      "name": "@create-something/nba-proxy",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/spotify-mcp",
+      "name": "@create-something/spotify-mcp",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/spotify-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/spotify-mcp"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/spotify-mcp/worker",
+      "name": "spotify-mcp-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/spotify-mcp",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/spritz",
+      "name": "@create-something/spritz",
+      "kind": "package",
+      "lane": "product",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "devDependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:^"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/substrate-mcp",
+      "name": "@create-something/substrate-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/substrate-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/substrate-mcp"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/substrate-mcp/worker",
+      "name": "substrate-mcp-worker",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/symphony",
+      "name": "@create-something/symphony",
+      "kind": "package",
+      "lane": "platform",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/symphony"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/symphony"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/template-form-uploads-worker",
+      "name": "@create-something/template-form-uploads-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/tend",
+      "name": "@create-something/tend",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/simulation",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/three-tier-framework-mcp",
+      "name": "@create-something/three-tier-framework-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/three-tier-framework-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/three-tier-framework-mcp"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/three-tier-framework-mcp/worker",
+      "name": "three-tier-framework-mcp-worker",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/tools/pencil-balance",
+      "name": "@create-something/pencil-balance",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/triad-audit",
+      "name": "@createsomething/triad-audit",
+      "kind": "package",
+      "lane": "labs",
+      "private": false,
+      "ownership": "unclear",
+      "authorityConfidence": "low",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/create-something/create-something-monorepo.git",
+          "directory": "packages/triad-audit"
+        },
+        "repo": "create-something/create-something-monorepo",
+        "directory": "packages/triad-audit"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:^"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [
+        {
+          "repo": "create-something/triad-audit",
+          "path": "packages/triad-audit/action.yml",
+          "line": 3,
+          "relationship": "reference",
+          "text": "#   - uses: create-something/triad-audit@v1"
+        },
+        {
+          "repo": "create-something/create-something-monorepo",
+          "path": "packages/triad-audit/package.json",
+          "line": 67,
+          "relationship": "reference",
+          "text": "\"url\": \"https://github.com/create-something/create-something-monorepo.git\","
+        },
+        {
+          "repo": "create-something/create-something-monorepo",
+          "path": "packages/triad-audit/package.json",
+          "line": 72,
+          "relationship": "reference",
+          "text": "\"url\": \"https://github.com/create-something/create-something-monorepo/issues\""
+        },
+        {
+          "repo": "create-something/triad-audit",
+          "path": "packages/triad-audit/README.md",
+          "line": 192,
+          "relationship": "reference",
+          "text": "- uses: create-something/triad-audit@v1"
+        },
+        {
+          "repo": "create-something/no-hardcoded-colors",
+          "path": "packages/triad-audit/src/generators/rule-generator.ts",
+          "line": 23,
+          "relationship": "reference",
+          "text": "/** Rule name for eslint config (e.g., 'create-something/no-hardcoded-colors') */"
+        }
+      ],
+      "referencedRepositories": [
+        "create-something/create-something-monorepo",
+        "create-something/no-hardcoded-colors",
+        "create-something/triad-audit"
+      ],
+      "cautions": [
+        "Ownership evidence is incomplete or stale; treat this as a drill-down prompt.",
+        "Repository metadata points at create-something/create-something-monorepo; verify whether this is a stale namespace.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/tufte",
+      "name": "@create-something/tufte",
+      "kind": "package",
+      "lane": "product",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/ui-preview-mcp",
+      "name": "@create-something/ui-preview-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/observability",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-app-review-mcp",
+      "name": "@create-something/webflow-app-review-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/webflow-app-review-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/webflow-app-review-mcp"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-app-review-mcp/worker",
+      "name": "webflow-app-review-mcp-worker",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-apps-admin",
+      "name": "@create-something/webflow-apps-admin",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-apps-admin/dashboard",
+      "name": "@create-something/webflow-apps-audit-dashboard",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-apps-admin/workers/audit-agent",
+      "name": "@create-something/webflow-apps-audit-agent",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-automation",
+      "name": "@create-something/webflow-automation",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-automation/worker",
+      "name": "webflow-onboarding-sync-worker",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-components",
+      "name": "@create-something/webflow-components",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/delivery-schema",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-dashboard",
+      "name": "@create-something/webflow-dashboard",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/canon",
+          "spec": "workspace:^"
+        },
+        {
+          "group": "dependencies",
+          "name": "@create-something/webflow-dashboard-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-dashboard-core",
+      "name": "@create-something/webflow-dashboard-core",
+      "kind": "package",
+      "lane": "product",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-intake",
+      "name": "@create-something/webflow-intake",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-mcp",
+      "name": "@create-something/webflow-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/observability",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-mcp/worker",
+      "name": "webflow-mcp-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/webflow-mcp",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-review",
+      "name": "@create-something/webflow-review",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-review/extension",
+      "name": "@create-something/webflow-review-extension",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-review/workers/orchestrator",
+      "name": "@create-something/webflow-review-orchestrator",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-review/workers/queue-consumer",
+      "name": "@create-something/webflow-review-queue-consumer",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-reviewer-exceptions-mcp",
+      "name": "@create-something/webflow-reviewer-exceptions-mcp",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/webflow-reviewer-exceptions-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/webflow-reviewer-exceptions-mcp"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-reviewer-exceptions-mcp/worker",
+      "name": "webflow-reviewer-exceptions-mcp-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-site-analyzer-mcp",
+      "name": "@create-something/webflow-site-analyzer-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/webflow-site-analyzer-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/webflow-site-analyzer-mcp"
+      },
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/observability",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-site-analyzer-mcp/worker",
+      "name": "webflow-site-analyzer-mcp-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/webflow-site-analyzer-mcp",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-site-analyzer-mcp/workers/remote",
+      "name": "webflow-site-analyzer-mcp-remote",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-template-analyzer",
+      "name": "@create-something/webflow-template-analyzer",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-template-analyzer/cloudflare",
+      "name": "webflow-template-analyzer-cloudflare",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-template-review-mcp",
+      "name": "@create-something/webflow-template-review-mcp",
+      "kind": "package",
+      "lane": "services",
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": {
+        "raw": {
+          "type": "git",
+          "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+          "directory": "packages/webflow-template-review-mcp"
+        },
+        "repo": "createsomethingtoday/create-something-monorepo",
+        "directory": "packages/webflow-template-review-mcp"
+      },
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-template-review-mcp/worker",
+      "name": "webflow-template-review-mcp-worker",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/webflow-template-search",
+      "name": "@create-something/webflow-template-search",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-template-validation",
+      "name": "@create-something/webflow-template-validation",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-template-validation/extension",
+      "name": "@create-something/webflow-template-validation-extension",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/webflow-template-validation/worker",
+      "name": "@create-something/webflow-template-validation-worker",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/wf-search-category",
+      "name": "@create-something/wf-search-category",
+      "kind": "package",
+      "lane": "services",
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": []
+    },
+    {
+      "path": "packages/zendesk-mcp",
+      "name": "@create-something/zendesk-mcp",
+      "kind": "package",
+      "lane": null,
+      "private": false,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": true,
+        "understanding": true,
+        "readme": true,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "path": "packages/zendesk-mcp/worker",
+      "name": "zendesk-mcp-worker",
+      "kind": "package",
+      "lane": null,
+      "private": true,
+      "ownership": "monorepo",
+      "authorityConfidence": "high",
+      "syncMode": "none",
+      "repository": null,
+      "workspaceDependencies": [
+        {
+          "group": "dependencies",
+          "name": "@create-something/mcp-core",
+          "spec": "workspace:*"
+        }
+      ],
+      "context": {
+        "agents": false,
+        "understanding": false,
+        "readme": false,
+        "agentWiki": false
+      },
+      "externalReferences": [],
+      "referencedRepositories": [],
+      "cautions": [
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    }
+  ]
+}

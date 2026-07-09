@@ -15,6 +15,7 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 - `bootstrap-gitpod-ona` - prepare Gitpod/Ona or other fresh workspaces so repo-owned Codex skills are installed and verified
 - `canon-design-review` - Canon-aligned critique and polish for UI work
 - `canon-public-surface` - public-page and landing-page polish without generic SaaS drift
+- `claude-agent-cli-handoff` - route bounded work to the local Claude CLI when Claude owns the needed tools or connectors
 - `debug-feedback-loop` - repro-first debugging for bugs, failing checks, flaky behavior, and performance regressions
 - `deep-module-design` - interface and module design using leverage, locality, tests, and tier ownership
 - `intent-mapping` - decision, scope, validation, and handoff capture before ambiguous or long-running work
@@ -32,6 +33,7 @@ Invoke these explicitly in Codex when you want the repo's judgment layer:
 Use $bootstrap-gitpod-ona to prepare this Gitpod workspace before coding.
 Use $canon-design-review on this component.
 Use $canon-public-surface to tighten this hero and CTA.
+Use $claude-agent-cli-handoff to package this Airtable update for Claude CLI.
 Use $debug-feedback-loop to diagnose this failing check before patching.
 Use $deep-module-design before refactoring this workflow interface.
 Use $intent-mapping before turning this ambiguous request into implementation work.

@@ -43,6 +43,54 @@ asking the user.
 Prefer concrete choices over abstract discussion. Good questions ask for a
 decision that changes the work.
 
+## Map Mode
+
+Use map mode when one intent-mapping session reveals more decision work than a
+single agent session should hold, or when the work is shared, delegated,
+long-running, production-bound, or explicitly needs many grilling sessions.
+Map mode is the Linear-native way to orchestrate that breadth; do not install a
+second tracker or copy an external issue workflow wholesale.
+
+Stay out of map mode when the way is already clear enough to produce one Intent
+Packet. In that case, finish the packet and let the user correct it before
+implementation starts.
+
+When map mode is needed:
+
+1. Create or use one Linear issue as the map. Its body is an index, not the
+   source of every answer.
+2. Name the destination first. The destination fixes scope, non-goals, and stop
+   conditions.
+3. Use these map sections: `Destination`, `Notes`, `Decisions so far`, `Not yet
+specified`, and `Out of scope`.
+4. Create child or linked Linear issues only for questions that are sharp enough
+   to state now. Each issue should resolve one decision and fit in one agent
+   session.
+5. Put unclear future work in `Not yet specified` as fog, not as premature
+   tickets. Graduate fog into tickets only when the question becomes precise.
+6. Use Linear-native parent, relation, assignment, and blocking fields where
+   available. If a native relationship is unavailable, link the map and child
+   issues explicitly in their descriptions.
+7. Treat the frontier as the open, unblocked, unclaimed child issues. Claim one
+   frontier issue before working it.
+8. Never resolve more than one map ticket in a single session. Record the answer
+   on that ticket, close it, then append only a short pointer to the map's
+   `Decisions so far`.
+9. If a ticket turns out to sit beyond the destination, close it as out of scope
+   and link it from the map's `Out of scope` section instead of treating it as a
+   decision on the route.
+
+Ticket types are:
+
+- `Grilling`: human-in-the-loop decision work, one question at a time.
+- `Research`: agent-driven reading of docs, code, logs, or external sources.
+- `Prototype`: a cheap artifact created to make a decision concrete.
+- `Task`: manual or agent work that must happen before a decision can be made.
+
+Charting a map is one session of work. Stop after the map and first frontier are
+created; do not also start resolving tickets unless the user explicitly asks to
+continue and the next ticket has been claimed.
+
 ## Tier Mapping
 
 Classify the work before recommending a lane:

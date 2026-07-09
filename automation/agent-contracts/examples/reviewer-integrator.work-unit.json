@@ -1,0 +1,52 @@
+{
+  "schema_version": "multi-agent-work-unit.v1",
+  "id": "CRE-1131-reviewer-integrator-contract",
+  "linear": {
+    "issue": "CRE-1131",
+    "map_issue": "CRE-1130"
+  },
+  "lane": "review",
+  "role": "integrator",
+  "tier": ["Database", "Judgment"],
+  "goal": "Review a worker diff and decide whether the proof is sufficient for a single-pass Symphony pilot.",
+  "scope": {
+    "packages": ["@create-something/symphony"],
+    "paths": [
+      "automation/agent-contracts/**",
+      "packages/symphony/src/work-unit-contract.js",
+      "packages/symphony/test/work-unit-contract.test.mjs"
+    ]
+  },
+  "locks": {
+    "packages": [],
+    "paths": [
+      "automation/agent-contracts/examples/*.evidence-receipt.json"
+    ],
+    "mode": "write"
+  },
+  "allowed_commands": [
+    "git diff --check",
+    "node scripts/agent-work-unit-verify.mjs automation/agent-contracts/examples/code-quality.evidence-receipt.json",
+    "node --test packages/symphony/test/work-unit-contract.test.mjs"
+  ],
+  "verification": [
+    {
+      "command": "node scripts/agent-work-unit-verify.mjs automation/agent-contracts/examples/code-quality.evidence-receipt.json",
+      "evidence": "Reviewer evidence receipt is structurally valid."
+    }
+  ],
+  "evidence": {
+    "target": "Linear CRE-1131 comment",
+    "required_artifacts": ["review decision", "commands run", "residual risk"]
+  },
+  "stop_conditions": [
+    "Stop before editing the worker patch during review.",
+    "Stop if proof requires production access.",
+    "Stop if the next decision would enable unattended daemon behavior."
+  ],
+  "promotion_gate": {
+    "batch_agents": false,
+    "production_mutation": false,
+    "merge_or_deploy": false
+  }
+}

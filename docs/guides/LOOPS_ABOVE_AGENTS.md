@@ -28,6 +28,16 @@ digests, many small read/triage passes, interactive coding, or sub-agents that
 collect evidence for a stronger supervising agent. The loop still owns signal,
 policy, verification, proof, rollback, and the next decision.
 
+For CREATE SOMETHING Atlas/Topology/Substrate work, native Codex subagents are
+the default fan-out executor. Zellij is the visible terminal/session substrate
+for Claude, Ornith, or other non-Codex terminal workers when Codex needs
+command-level read/send control. Claude remains Webflow-work only.
+
+Do not promote Zellij from cockpit to orchestration authority just because a
+task can be split across agents. A Zellij lane is justified only after the same
+non-Codex workflow has repeated enough that startup, monitoring, and readback are
+the bottleneck. Until then, prefer one Codex-supervised loop with explicit
+receipts over more visible panes.
 ## Definition
 
 A CREATE SOMETHING loop is a repeatable operating circuit with seven parts:
@@ -106,10 +116,32 @@ automation is invented.
 | Intent mapping loop | Convert fuzzy or long-running work into a durable execution packet      | skill: `intent-mapping`                                       | issue description, Linear comment, or starter prompt | active          |
 | Code-quality loop   | Run a bounded Symphony pass on reviewed Linear `code-quality` work      | `pnpm agent:loop-pilot` then `pnpm agent:loop-pilot:dispatch` | Linear issue and workspace path                      | pilot           |
 | Fast context loop   | Use Spark-style fast sub-agents for recurring digests, triage, and prep | Codex automation, operator schedule, or reviewed dispatch     | local receipt, Linear comment, or handoff packet     | design-ready    |
+| Atlas/Topology loop | Navigate generated Substrate topology, Atlas story context, and handoffs | `pnpm substrate:agent-wiki:check` plus topology handoff packet | Linear issue, topology export, or local goal packet   | active          |
 | Policy loop         | Repair or align policy artifacts and governance docs                    | `pnpm symphony:policy:once`                                   | Linear issue, policy check output                    | pilot           |
 | Skill feedback loop | Keep repo-owned skills tested and behaviorally legible                  | `pnpm agent:skills:test`                                      | package README, PR, Linear closeout                  | active          |
 | Cleanup loop        | Keep docs, architecture, quality grades, and policy integrity fresh     | see `RECURRING_CLEANUP_LOOPS.md`                              | targeted fix or Linear follow-up                     | design-ready    |
 
+## Zellij cockpit threshold
+
+Zellij is useful when the loop needs programmatic terminal access to a worker
+that Codex does not own directly. It is not useful when the only problem is that
+the task feels large.
+
+Use Zellij when all of these are true:
+
+- the worker is non-Codex, such as Claude, Ornith, Pi, OpenCode, or a local
+  harness
+- visible send/read/notify behavior changes the quality or latency of the loop
+- the worker can return a receipt, transcript, patch candidate, or bounded
+  handoff that Codex can inspect
+- the workflow is repeated enough that startup friction is a real cost
+
+Do not build a Zellij team launcher when one of these is true:
+
+- native Codex subagents can gather the evidence with less surface area
+- Linear/work-unit receipts already provide enough durable coordination
+- the proposed team would add a second done authority
+- the workflow is still exploratory and has not repeated across real work
 ## Fast executor profile
 
 Spark-style executors are useful when low latency lets the operator keep the

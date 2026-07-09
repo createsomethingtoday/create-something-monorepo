@@ -28,7 +28,7 @@ The browser is the chassis — the structural frame that connects everything. Li
 Glass Design System translated into Firefox CSS:
 
 - **Root Chrome** — Pure black chassis
-- **Tab Bar** — Muted inactive, elevated active (mirrors WezTerm pattern)
+- **Tab Bar** — Muted inactive, elevated active (mirrors terminal pattern)
 - **URL Bar** — Surface background, glass glow on focus
 - **Zen Sidebar** — Workspace panel with Canon interactive states
 - **Toolbar Buttons** — Muted until hovered (tool disappears)
@@ -96,7 +96,7 @@ Add `!important` to rules if styles don't take effect (Zen's own styles may comp
 
 ## Color Palette
 
-Canon-compliant colors (identical to WezTerm and neomutt):
+Canon-compliant colors (aligned with Zellij and neomutt):
 
 | Purpose | Token | Value |
 |---------|-------|-------|
@@ -110,7 +110,7 @@ Canon-compliant colors (identical to WezTerm and neomutt):
 | Muted text | `--color-fg-muted` | `rgba(255,255,255,0.46)` |
 | Border | `--color-border-default` | `rgba(255,255,255,0.1)` |
 | Error | `--color-error` | `#d44d4d` |
-| Success | `--color-success` | `#44aa44` |
+| Success | `--color-success` | `#ffffff` |
 | Warning | `--color-warning` | `#aa8844` |
 | Info | `--color-info` | `#5082b9` |
 

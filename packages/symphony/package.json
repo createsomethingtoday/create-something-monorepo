@@ -21,7 +21,8 @@
     "./cli": "./src/cli.js",
     "./config": "./src/config.js",
     "./orchestrator": "./src/orchestrator.js",
-    "./tracker/linear": "./src/tracker/linear.js"
+    "./tracker/linear": "./src/tracker/linear.js",
+    "./work-unit-contract": "./src/work-unit-contract.js"
   },
   "bin": {
     "symphony": "./src/cli.js"

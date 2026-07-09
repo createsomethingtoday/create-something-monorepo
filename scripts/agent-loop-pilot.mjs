@@ -15,6 +15,11 @@ const args = new Set(process.argv.slice(2));
 const dispatch = args.has('--dispatch');
 const json = args.has('--json');
 const CODE_QUALITY_WORKFLOW = 'automation/symphony/code-quality/WORKFLOW.md';
+export const agentWorkUnitContractPaths = [
+  'automation/agent-contracts/examples/code-quality.work-unit.json',
+  'automation/agent-contracts/examples/reviewer-integrator.work-unit.json',
+  'automation/agent-contracts/examples/code-quality.evidence-receipt.json'
+];
 const MODEL_API_KEY_ENV_NAMES = new Set([
   'AI_GATEWAY_API_KEY',
   'ANTHROPIC_API_KEY',
@@ -227,7 +232,17 @@ async function main() {
   );
 
   steps.push(
-    runStep('symphony-tests', 'Run Symphony package tests', 'pnpm', [
+    runStep(
+      'work-unit-contracts',
+      'Check multi-agent work-unit and evidence contracts',
+      'node',
+      ['scripts/agent-work-unit-verify.mjs', ...agentWorkUnitContractPaths]
+    )
+  );
+
+  steps.push(
+    runStep('symphony-tests', 'Run Symphony package tests', 'corepack', [
+      'pnpm',
       '--filter',
       '@create-something/symphony',
       'test'
@@ -289,8 +304,8 @@ async function main() {
         runStep(
           'symphony-dispatch',
           'Dispatch one bounded Symphony code-quality pass',
-          'pnpm',
-          ['symphony:code-quality:once'],
+          'corepack',
+          ['pnpm', 'symphony:code-quality:once'],
           { env: accountEnv.env, includeOutput: true }
         )
       );

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { buildAccountBasedLoopEnv, isModelApiKeyEnvName } from '../agent-loop-pilot.mjs';
+import { agentWorkUnitContractPaths } from '../agent-loop-pilot.mjs';
 
 test('isModelApiKeyEnvName detects OpenAI and common model provider API keys', () => {
   assert.equal(isModelApiKeyEnvName('OPENAI_API_KEY'), true);
@@ -37,4 +38,12 @@ test('buildAccountBasedLoopEnv strips model API keys but preserves coordination 
   assert.equal(env.LINEAR_API_KEY, 'linear-test');
   assert.equal(env.INFISICAL_TOKEN, 'infisical-test');
   assert.equal(env.PATH, '/usr/bin');
+});
+
+test('agent loop pilot verifies the multi-agent work-unit contract examples before dispatch', () => {
+  assert.deepEqual(agentWorkUnitContractPaths, [
+    'automation/agent-contracts/examples/code-quality.work-unit.json',
+    'automation/agent-contracts/examples/reviewer-integrator.work-unit.json',
+    'automation/agent-contracts/examples/code-quality.evidence-receipt.json'
+  ]);
 });

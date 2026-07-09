@@ -231,3 +231,7 @@ pnpm dify:agent:smoke -- --agent-id <clone-id>
 ```
 
 Run the matching Langfuse eval before marking a clone published.
+
+## Deployment Checklist
+
+Before publishing templates from `docs/guides/DIFY_POLICY_OS_TEMPLATE_PACK.md`, verify each entry against the Template Requirements section to ensure all agents meet SDK Graduation Lane criteria. Review smoke cases in Recommended Smoke Cases before client intake.

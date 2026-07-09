@@ -7,16 +7,17 @@ Less, but better.
 ### 1. Install dependencies
 
 ```bash
-brew install --cask wezterm
+brew install herdr
+brew install zellij
 brew install zoxide fzf eza fd
 brew install --cask font-jetbrains-mono
 ```
 
-### 2. Configure WezTerm
+### 2. Configure Zellij
 
 ```bash
-mkdir -p ~/.config/wezterm
-cp wezterm.lua ~/.config/wezterm/wezterm.lua
+mkdir -p /tmp/zellij
+export ZELLIJ_SOCKET_DIR=/tmp/zellij
 ```
 
 ### 3. Configure shell
@@ -42,17 +43,30 @@ Edit `~/.zshrc` and update:
 | `e` | Open current dir in Cursor |
 | `recent` | Browse recent directories |
 | `cs` | Jump to CREATE SOMETHING monorepo |
+| `herd` | Launch or attach the CREATE SOMETHING Herdr session |
+| `herdr-status` | Show Herdr client/server status |
+| `zj` | Run Zellij |
+| `zj-cs` | Attach the CREATE SOMETHING Zellij session |
+| `zj-board` | Show the repo-managed Zellij agent board |
+| `zj-board-watch` | Watch the Zellij agent board |
+| `zj-claude` | Start the default Claude worker lane in Zellij |
+| `cc` | Explicit full-permission Claude Code alias |
 
-### Pane Management
+### Agent Session Management
+
+Zellij is the cockpit for visible worker sessions. It owns attach/detach,
+session persistence, pane output capture, JSON streaming, and bounded input.
+Codex remains the operator and repo-truth surface. Use Codex browser/computer-use
+for browser proof, and use Zellij for worker terminal sessions.
 
 | Shortcut | Action |
 |----------|--------|
-| `Cmd+D` | Split pane horizontal |
-| `Cmd+Shift+D` | Split pane vertical |
-| `Cmd+Shift+H/J/K/L` | Navigate panes (vim-style) |
-| `Cmd+Shift+Arrow` | Resize panes |
-| `Cmd+W` | Close pane |
-| `Cmd+K` | Clear screen |
+| `Ctrl-b v` | Split pane right |
+| `Ctrl-b -` | Split pane down |
+| `Ctrl-b h/j/k/l` | Focus panes |
+| `Ctrl-b c` | New tab |
+| `Ctrl-b w` | Workspace picker |
+| `Ctrl-b q` | Detach Herdr client |
 
 ### File Listing (eza)
 
@@ -68,9 +82,9 @@ Every element justifies its existence:
 
 - **Pure black background** (#000000)
 - **Pure white text** (#ffffff)
-- **Functional accents only** (green=success, red=error)
+- **Functional accents only** (white/gray structure, blue/amber/red semantics)
 - **No decoration**, no gradients, no blur
-- **Single config file**, fully readable
+- **Small config file**, fully readable
 
 The terminal is a tool. It should disappear.
 
@@ -79,7 +93,7 @@ The terminal is a tool. It should disappear.
 The FZF theme matches your brand:
 - Background: #000000
 - Foreground: #ffffff
-- Highlights: #34c759 (success green)
+- Highlights: #ffffff / #aaaaaa for structure, #4477aa / #aa8844 / #cc4444 for semantics
 - Info/Comments: #666666
 
 After a day of use, `z workway` will take you directly there.

@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export interface InstallOptions {
 	tier: 'solo' | 'team' | 'org';
 	force: boolean;
-	skipWezterm: boolean;
+	skipZellij: boolean;
 	skipClaude: boolean;
 	skipBeads: boolean;
 	skipMcp: boolean;
@@ -39,9 +39,9 @@ export async function installKit(options: InstallOptions): Promise<void> {
 
 	const steps: InstallStep[] = [
 		{
-			name: 'WezTerm configuration',
-			enabled: !options.skipWezterm,
-			install: async () => installWezterm(home, options.force)
+			name: 'Zellij configuration',
+			enabled: !options.skipZellij,
+			install: async () => installZellij(home)
 		},
 		{
 			name: 'Claude Code settings',
@@ -76,15 +76,17 @@ export async function installKit(options: InstallOptions): Promise<void> {
 	}
 }
 
-async function installWezterm(home: string, force: boolean): Promise<void> {
-	const targetDir = join(home, '.config', 'wezterm');
-	const sourceDir = join(__dirname, '..', 'configs', 'wezterm');
-
-	if (existsSync(targetDir) && !force) {
-		throw new Error('WezTerm config exists (use --force to overwrite)');
+async function installZellij(home: string): Promise<void> {
+	const targetDir = join(home, '.config', 'zellij');
+	const sourceDir = join(__dirname, '..', 'configs', 'zellij');
+	const socketDir = '/tmp/zellij';
+	if (!existsSync(targetDir)) {
+		mkdirSync(targetDir, { recursive: true });
 	}
-
-	copyDir(sourceDir, targetDir);
+	if (!existsSync(socketDir)) {
+		mkdirSync(socketDir, { recursive: true });
+	}
+	copyDir(sourceDir, targetDir, true);
 }
 
 async function installClaudeCode(home: string, force: boolean): Promise<void> {

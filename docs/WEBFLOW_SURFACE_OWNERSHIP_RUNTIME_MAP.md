@@ -178,6 +178,8 @@ flowchart LR
 | Creator dashboard Cloud port               | `apps/webflow-dashboard-cloud`, `packages/webflow-dashboard-core`  | Next.js 15 on Webflow Cloud/OpenNext                                                     | Airtable base `appMoIgXMTTTNIc3p`, R2 `UPLOADS`, KV `SESSIONS`, optional D1 `DB` | Active migration target               | This is the current authenticated dashboard path. Keep shared domain logic in `webflow-dashboard-core`; avoid adding new creator-critical work only to the older SvelteKit dashboard. |
 | Legacy/source dashboard                    | `packages/webflow-dashboard`                                       | SvelteKit on Cloudflare                                                                  | Airtable, KV, R2, analytics APIs                                                 | Reference and possible legacy runtime | Treat as parity reference for the Cloud port. The parity matrix intentionally supersedes older conflicting readiness docs.                                                            |
 | Marketplace template submission app        | `apps/marketplace-template-submission-cloud`                       | Webflow Cloud iframe on `webflow.com/templates/submit-a-template`                        | Airtable Automation webhooks, upload worker, Turnstile, sandbox/autofill output  | Active public submission surface      | The parent Webflow page owns the hero and iframe shell; the app owns creator/template form flow, validation, uploads, and webhook envelope.                                           |
+| Marketplace Library submission app         | `apps/marketplace-template-submission-cloud`, `createsomethingtoday/webflow-library-submission-form` | Standalone Webflow Cloud app deployed by CLI or repo-backed Cloud import                 | Airtable Automation webhooks, D1 capture, upload worker, validation worker       | Active migration target               | Library apps do not need a Webflow page mount. Keep the GitHub repo as redundancy and route/link/embed `webflow.com/libraries/submit` only after deployment and Airtable dry-run evidence. |
+| Marketplace validation utility            | `packages/check-asset-name-worker`                                 | Cloudflare Worker replacement for `check-asset-name.vercel.app`                          | Airtable Assets and creator/library user tables                                  | Migration utility                     | Provides repo-owned template and Library validation endpoints. Do not treat this alone as a migrated Library submission app; it covers validation checks used by public Webflow forms. |
 | Webflow Code Components governance console | `packages/webflow-components`, `config/webflow/control-plane.json` | Webflow Code Components, published origin `https://governed-workflow-console.webflow.io` | Cloudflare/D1 context endpoint, repo policy, Linear evidence                     | Active governance UI path             | Webflow renders the console only. Approval endpoints must stay empty on public previews unless routed through a trusted authenticated operator proxy.                                 |
 | Bundle scanner Code Component              | `packages/bundle-scanner`, `packages/bundle-scanner-core`          | React app and Webflow Code Component                                                     | Local browser scan state, scanner-core policy rules                              | Active internal adjunct               | Useful for app bundle review. It is not a durable compliance system unless findings are mirrored into Airtable/Linear or a review MCP.                                                |
 | Webflow template search worker             | `packages/webflow-template-search`                                 | Cloudflare Worker + D1                                                                   | D1 search index synced from Airtable assets/categories/tags                      | Active utility                        | Search/admin sync depends on correct D1 binding and `SYNC_ADMIN_TOKEN`. Keep marketplace search separate from reviewer judgment.                                                      |
@@ -195,7 +197,7 @@ flowchart LR
 | Webflow Way Validator                     | `packages/webflow-template-validation`   | Next.js companion app, Designer extension, Cloudflare Worker `validation-worker`                    | Published-site checks and future Designer checks                             | Active validation surface                     | Current MVP emphasizes published-site Typography/Styles/Naming. Components/Variables need Webflow Apps SDK scope and should remain explicitly marked when not verified.      |
 | GSAP validation worker                    | `packages/gsap-validation-worker`        | Cloudflare Worker + Workflow `gsap-validation-workflow`                                             | Crawled published-site code and GSAP usage checks                            | Active focused validator                      | Used for template compliance checks around GSAP/IX behavior. Keep CORS origins and async workflow binding aligned with consuming dashboards/forms.                           |
 | Early Webflow review system               | `packages/webflow-review`                | Cloudflare Workers, Chrome extension, snippet, console scripts                                      | D1 review records, queues, browser API findings                              | Legacy/prototype reference                    | Useful historical implementation for hidden-content testing and snippet ideas. Do not treat as the canonical current reviewer hub unless it is re-promoted.                  |
-| Webflow validation API                    | `packages/io/workers/webflow-validation` | Cloudflare Worker `webflow-validation`, custom route `webflow-api.createsomething.io/*`             | Airtable validation tables and webhook proxy                                 | Active legacy/public API                      | Provides template/library/app validation aliases. Keep CORS origin list conservative because it is directly callable from Webflow properties.                                |
+| Webflow validation API                    | `packages/io/workers/webflow-validation` | Cloudflare Worker `webflow-validation`, custom route `webflow-api.createsomething.io/*`             | Airtable validation tables and webhook proxy                                 | Active legacy/public API                      | Provides template/library/app validation aliases. Library name checks must be scoped to Library assets to avoid template-name false positives. Keep CORS origin list conservative because it is directly callable from Webflow properties. |
 
 ## Automation And Operations Surfaces
 
@@ -255,6 +257,37 @@ Operational implications:
 - The iframe and parent page communicate with `ts-submission:*` postMessage events for resize, UTM transfer, and scrolling.
 - The parent Webflow page owns hero and mount position; the embedded app owns the form state machine.
 - Analyzer suggestions are assistance, not reviewer approval.
+
+### Marketplace Library Submission
+
+Entry points:
+
+- Public Library page: `webflow.com/libraries`
+- Legacy public Library submit page: `webflow.com/libraries/submit`
+- Standalone redundancy repo: `createsomethingtoday/webflow-library-submission-form`
+- Legacy validation APIs referenced by the archived submit flow: `/api/checkLibraryname`, `/api/checkLibraryemail`, `/api/checkLibraryuser`
+
+Runtime dependencies:
+
+- Airtable API key/base ID
+- Airtable Assets table with `Library📚` asset type values
+- Creator or Library-user table with confirmed Library submission permission fields
+- Repo-owned validation worker: `packages/check-asset-name-worker`
+- Legacy validation alias worker: `packages/io/workers/webflow-validation`
+- Library submission UI route: `apps/marketplace-template-submission-cloud` `/libraries/submit`
+- Standalone Library app route: `webflow-library-submission-form` `/libraries/submit`
+- Library submission API route: `apps/marketplace-template-submission-cloud` `/api/intake/library`
+- Library thumbnail upload kind: `POST /api/intake/upload` with `kind=library-thumbnail`
+
+Operational implications:
+
+- The public Library pages may still load, but the implementation path is archived and should not be treated as an active Webflow Cloud submission surface.
+- `packages/check-asset-name-worker` now owns Library validation parity for name, email, and user checks.
+- `apps/marketplace-template-submission-cloud` now owns the Library submission form at `/libraries/submit`, plus the Library submission webhook envelope and D1 capture route at `/api/intake/library`.
+- The standalone `webflow-library-submission-form` repo mirrors this app for redundancy, GitHub-backed Webflow Cloud import, and direct CLI deployment.
+- Library name availability must scope Airtable checks to `Library📚` assets so template names do not block Library submissions.
+- Before routing production Library submit traffic to the worker, confirm `check-asset-name` returns `canSubmitLibraries: true` for one approved creator email.
+- A complete Library migration still needs a production Webflow Cloud app URL, confirmed Airtable Automation branch mapping, one approved dry run, and reviewer handoff evidence. Public page routing is optional legacy continuity, not the deployment boundary.
 
 ### Template Review Hub
 
@@ -329,7 +362,7 @@ Operational implications:
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Active production or production-candidate | `apps/webflow-dashboard-cloud`, `apps/marketplace-template-submission-cloud`, `packages/webflow-components`, `packages/webflow-template-review-mcp`, `packages/webflow-app-review-mcp`, `packages/webflow-template-analyzer`, `packages/webflow-template-validation`, `packages/webflow-mcp`, `packages/webflow-template-search` |
 | Active internal/admin                     | `packages/webflow-apps-admin`, `packages/bundle-scanner`, `packages/bundle-scanner-core`, `packages/webflow-automation`, `packages/webflow-intake`                                                                                                                                                                                                                     |
-| Utility or embedded scripts               | `packages/landing-page-filter`, `packages/wf-search-category`, `packages/gsap-validation-worker`, `packages/io/workers/webflow-validation`                                                                                                                                                                                                                             |
+| Utility or embedded scripts               | `packages/check-asset-name-worker`, `packages/landing-page-filter`, `packages/wf-search-category`, `packages/gsap-validation-worker`, `packages/io/workers/webflow-validation`                                                                                                                                                                                          |
 | Legacy/reference                          | `packages/webflow-dashboard`, `packages/webflow-review`, `packages/webflow-site-analyzer-mcp`                                                                                                                                                                                                                                                                          |
 
 ## Follow-Up Implications
@@ -352,6 +385,7 @@ pnpm --filter @create-something/webflow-dashboard-core check
 pnpm --filter @create-something/webflow-dashboard-core test
 pnpm --filter @create-something/webflow-template-review-mcp test
 pnpm --filter @create-something/webflow-app-review-mcp test
+pnpm --filter @create-something/check-asset-name-worker test
 pnpm --filter @create-something/webflow-template-search test
 pnpm webflow:governance:verify
 pnpm dify:mcp:intake:check

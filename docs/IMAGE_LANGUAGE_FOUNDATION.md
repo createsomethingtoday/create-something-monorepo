@@ -172,6 +172,12 @@ Clear-style receipts, state rows, decision panels, artifact cards, policy gates,
 owners, tests, and proof rails. Use the isometric cube as a small system
 signature only when useful. The image should feel mapped, tested, governed,
 validated, and handed off.
+For `.agency` article and internal marketing visuals, push this into a polished
+operating workspace rather than a teaching diagram: layered white panels,
+small icons, status rows, owner panels, evidence tables, proof summaries,
+timestamp-like receipts, dotted connectors, subtle shadows, and isometric
+system objects. The visual should feel like a client-safe product proof surface,
+not a flat explanatory slide.
 
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains, stock
 photography, generic premium desk scenes, random decorative objects, fake

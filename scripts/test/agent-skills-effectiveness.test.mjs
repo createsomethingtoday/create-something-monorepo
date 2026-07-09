@@ -75,6 +75,33 @@ const skills = [
   }
 ];
 
+const codexOnlySkills = [
+  {
+    name: 'claude-agent-cli-handoff',
+    codex: 'packages/dotfiles/codex/skills/claude-agent-cli-handoff/SKILL.md',
+    expectations: [
+      /claude --print --output-format json/,
+      /claude --bg/,
+      /--mcp-config/,
+      /Slack/,
+      /Google/,
+      /Datadog/,
+      /Amplitude/,
+      /Claude tools expected:/,
+      /source-of-truth tool/i,
+      /Handoff Packet/,
+      /Airtable Write Guardrails/,
+      /Template Archive Packet/,
+      /Readback evidence required:/,
+      /Do not claim live control from local transcript visibility/i,
+      /Asset table/,
+      /Creator table or email table/,
+      /Stop conditions:/,
+      /Completion Bar/
+    ]
+  }
+];
+
 const intentMappingBehaviorFixtures = [
   {
     name: 'ambiguous workflow improvement',
@@ -107,6 +134,24 @@ const intentMappingBehaviorFixtures = [
       /solo-loop \| claim-worktree \| PR\/promotion \| research\/no-edit/,
       /one concrete outcome/i,
       /observable done condition/i
+    ]
+  },
+  {
+    name: 'multi-session wayfinding',
+    prompt: 'Use intent mapping as an orchestrator for many grilling sessions.',
+    expectedBehaviors: [
+      /Map Mode/,
+      /Linear-native way to orchestrate/i,
+      /Destination/,
+      /Decisions so far/,
+      /Not yet specified/,
+      /Out of scope/,
+      /frontier/i,
+      /Never resolve more than one map ticket in a single session/i,
+      /Grilling/,
+      /Research/,
+      /Prototype/,
+      /Task/
     ]
   }
 ];
@@ -154,6 +199,17 @@ test('adapted skills retain the behavioral contracts that make them effective', 
   }
 });
 
+test('Codex-only skills retain their local runtime handoff contracts', () => {
+  for (const skill of codexOnlySkills) {
+    assert(existsSync(path.join(REPO_ROOT, skill.codex)), `${skill.codex} missing`);
+    const body = assertSkillFrontmatter(skill.name, skill.codex);
+
+    for (const expectation of skill.expectations) {
+      assert.match(body, expectation, `${skill.codex} missing ${expectation}`);
+    }
+  }
+});
+
 test('skills remain wired into Codex installation and Pi discovery docs', () => {
   const codexReadme = read('packages/dotfiles/codex/README.md');
   const piSystem = read('.pi/APPEND_SYSTEM.md');
@@ -168,6 +224,10 @@ test('skills remain wired into Codex installation and Pi discovery docs', () => 
   for (const skill of skills) {
     assert.match(codexReadme, new RegExp(`\\b${skill.name}\\b`));
     assert.match(piSystem, new RegExp(`/skill:${skill.name}\\b`));
+  }
+
+  for (const skill of codexOnlySkills) {
+    assert.match(codexReadme, new RegExp(`\\b${skill.name}\\b`));
   }
 
   assert.match(piPolicyReadme, /\/skill:debug-feedback-loop/);
@@ -236,7 +296,7 @@ test('repo-owned Codex skill installer links the adapted skills', (t) => {
 
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 
-  for (const skill of skills) {
+  for (const skill of [...skills, ...codexOnlySkills]) {
     const linkedPath = path.join(codexHome, 'skills', skill.name);
     assert(lstatSync(linkedPath).isSymbolicLink(), `${linkedPath} is not a symlink`);
     assert.match(result.stdout, new RegExp(`Linked ${skill.name}\\b`));

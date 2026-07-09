@@ -1,0 +1,23 @@
+{
+  "schema_version": "multi-agent-evidence-receipt.v1",
+  "work_unit_id": "CRE-1145-atlas-topology-scout",
+  "linear": {
+    "issue": "CRE-1145"
+  },
+  "status": "passed",
+  "commands": [
+    {
+      "command": "pnpm substrate:agent-wiki:check",
+      "exit_code": 0,
+      "summary": "Generated Atlas/Substrate agent wiki was current before scout handoff."
+    },
+    {
+      "command": "node scripts/agent-work-unit-verify.mjs automation/agent-contracts/examples/atlas-topology-scout.work-unit.json",
+      "exit_code": 0,
+      "summary": "Verifier accepted the Atlas/Topology scout work-unit example."
+    }
+  ],
+  "changed_paths": [],
+  "evidence": "Example receipt shape for a read-only Atlas/Topology scout. A real scout receipt should name the selected lens, group, node, or operating slice plus inspected source artifact paths and the next governed workflow if writes are needed.",
+  "next_decision": "Use this receipt shape when dispatching native Codex subagents to inspect bounded Atlas/Topology/Substrate slices."
+}

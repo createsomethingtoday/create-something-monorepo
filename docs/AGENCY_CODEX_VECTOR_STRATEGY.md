@@ -12,11 +12,18 @@ making one workflow safe to delegate before agents, automations, contractors, or
 internal operators touch customer trust, revenue, production, credentials, or
 regulated decisions.
 
+CREATE SOMETHING itself is the proof business for this claim: it is operated as
+an agent-run-with-receipts company first, then that operating system is installed
+for client workflows. See [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md).
+
 The commercial default remains **Policy OS** (**Skills + MCP**), with
 **MCP-only** as a narrow entry wedge.
 
 - Delegated Work Control is the durable category: what can run, what waits, what
   stops, who owns the decision, and what evidence proves the work.
+- The CREATE SOMETHING database layer is now the owned operating substrate:
+  Cloudflare-native records, Atlas maps, source bindings, workflow actions,
+  proof receipts, and API/MCP/agent access.
 - Workflow Trust Layer is the current `.agency` service language for one
   workflow at a time.
 - MCP remains the chassis: trust boundaries, connectivity, policy artifacts.
@@ -25,6 +32,9 @@ The commercial default remains **Policy OS** (**Skills + MCP**), with
 - MCP contracts and policy artifacts stay portable across all agent harnesses.
 - Dify remains the preferred client/operator surface when visual workflow
   editing, app publishing, MCP server cards, or non-engineer inspection matter.
+- Notion remains a workspace, review, capture, and distribution surface. It is
+  not the canonical operating database once a workflow has been transferred
+  into the CREATE SOMETHING database layer and audited as ready.
 - OpenAI Agents SDK is a graduation lane for workflows that require code-owned
   orchestration, approval pauses, durable state, traces, evals, and CI-backed
   golden tasks.
@@ -56,7 +66,12 @@ Competitive moat emphasis:
 
 - Hard-to-copy elements lead all positioning: workflow-boundary mapping, custom
   MCP creation, auth/security boundary design, policy artifacts,
-  approval/escalation runbooks, receipt patterns, and monthly tuning.
+  approval/escalation runbooks, receipt patterns, the custom database layer,
+  and monthly tuning.
+- The database-layer proof should be experienced, not only claimed: a public
+  read-only demo should let a visitor filter safe records, select a row, inspect
+  its Atlas binding, see the related action or receipt, and understand what an
+  API/MCP/agent can do under policy.
 
 ## Delivery Targets
 
