@@ -50,6 +50,10 @@ pnpm agent:loop-pilot:reviewed:check -- --issue CRE-1154 --json
 pnpm agent:loop-pilot:reviewed -- --issue CRE-1154 --json
 ```
 
+Set `SYMPHONY_CODEX_COMMAND` to an account-authenticated app-server command when
+the ambient `codex` binary is not the runtime you intend to exercise. Explicit
+app-server errors and failed turn completions fail the reviewed run.
+
 The reviewed path starts separate worker, reviewer, and integrator Codex
 sessions in one isolated workspace. The reviewer receives a read-only sandbox,
 and repository fingerprints before and after review must match. The command

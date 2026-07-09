@@ -37,6 +37,12 @@ export function buildAccountBasedLoopEnv(source = process.env) {
   return { env, removedKeys: removedKeys.sort() };
 }
 
+export function applyReviewedCodexCommandOverride(config, env = process.env) {
+  const command = env.SYMPHONY_CODEX_COMMAND?.trim();
+  if (!command) return config;
+  return { ...config, codex: { ...config.codex, command } };
+}
+
 export function parseArgs(argv) {
   const args = argv.slice(2).filter((arg) => arg !== '--');
   const output = { issue: null, dispatch: false, json: false };
@@ -57,7 +63,8 @@ function usage() {
   pnpm agent:loop-pilot:reviewed -- --issue CRE-1154 [--json]
 
 Runs exactly one contract-validated worker -> read-only reviewer -> integrator
-pilot. The live command preserves its workspace and comments Linear with proof.`);
+pilot. The live command preserves its workspace and comments Linear with proof.
+Set SYMPHONY_CODEX_COMMAND to override the account-authenticated app-server command.`);
 }
 
 async function loadJson(path) {
@@ -84,7 +91,10 @@ async function main() {
   const cwd = process.cwd();
   const logger = new MemoryLogger();
   const definition = await load_workflow_definition(WORKFLOW_PATH, cwd);
-  const config = resolve_service_config(definition, cwd, process.env);
+  const config = applyReviewedCodexCommandOverride(
+    resolve_service_config(definition, cwd, process.env),
+    process.env,
+  );
   validate_dispatch_config(config);
   const tracker = new LinearTrackerClient(config, logger);
   const workspace_manager = new WorkspaceManager(config, logger);

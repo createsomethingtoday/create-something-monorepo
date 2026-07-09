@@ -64,6 +64,11 @@ pnpm agent:loop-pilot:reviewed:check -- --issue CRE-1154 --json
 pnpm agent:loop-pilot:reviewed -- --issue CRE-1154 --json
 ```
 
+The reviewed command accepts `SYMPHONY_CODEX_COMMAND` as an explicit
+account-authenticated app-server command override. Use it when the Codex runtime
+on `PATH` is stale or differs from the operator-approved runtime; failed turns
+are rejected even if the app-server subsequently emits `turn/completed`.
+
 The readiness command validates the exact active `code-quality` issue and all
 three work-unit contracts without creating a workspace. The live command uses
 account-authenticated Codex, preserves the inspected workspace, writes a

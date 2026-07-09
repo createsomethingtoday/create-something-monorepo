@@ -162,6 +162,15 @@ export class CodexAppServerClient {
         });
         return turn_result;
     }
+    async read_thread() {
+        if (!this.started || !this.thread_id) {
+            throw new Error('start_session() must be called before read_thread().');
+        }
+        return this.request('thread/read', {
+            threadId: this.thread_id,
+            includeTurns: true,
+        });
+    }
     async close() {
         for (const [id, pending] of this.pending) {
             if (pending.timer)
@@ -289,6 +298,24 @@ export class CodexAppServerClient {
             });
             return;
         }
+        if (method === 'error') {
+            const turn_id = typeof params?.turnId === 'string' ? params.turnId : null;
+            const thread_id = typeof params?.threadId === 'string' ? params.threadId : null;
+            const details = asObject(params?.error);
+            const error_message = typeof details?.message === 'string' ? details.message : 'Codex turn failed.';
+            if (this.active_turn && thread_id === this.active_turn.thread_id && params?.willRetry !== true) {
+                const error = new SymphonyError('turn_failed', error_message);
+                this.emit({
+                    ...base,
+                    event: 'turn_failed',
+                    thread_id,
+                    turn_id,
+                    message: error_message,
+                });
+                this.reject_active_turn(error);
+                return;
+            }
+        }
         if (method.includes('requestUserInput') || method.includes('inputRequired')) {
             if (typeof message.id === 'number') {
                 this.respond(message.id, { error: 'turn_input_required' });
@@ -358,6 +385,23 @@ export class CodexAppServerClient {
         if (method === 'turn/completed') {
             const turn = asObject(params?.turn);
             const turn_id = String(turn?.id ?? this.active_turn?.turn_id ?? '');
+            const turn_status = typeof turn?.status === 'string' ? turn.status : null;
+            const turn_error = asObject(turn?.error);
+            if (this.active_turn && (turn_status === 'failed' || turn_error)) {
+                const message = typeof turn_error?.message === 'string'
+                    ? turn_error.message
+                    : `Codex turn completed with status=${turn_status ?? 'failed'}.`;
+                const error = new SymphonyError('turn_failed', message);
+                this.emit({
+                    ...base,
+                    event: 'turn_failed',
+                    thread_id: this.thread_id,
+                    turn_id: turn_id || null,
+                    message,
+                });
+                this.reject_active_turn(error);
+                return;
+            }
             const final_text = (this.last_agent_message_id ? this.agent_messages.get(this.last_agent_message_id) : null) ??
                 [...this.agent_messages.values()].join('');
             if (this.active_turn) {

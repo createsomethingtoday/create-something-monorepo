@@ -70,6 +70,38 @@ async function run_command(command, cwd, env) {
   };
 }
 
+async function read_rollout_usage(client, logger) {
+  try {
+    const snapshot = await client.read_thread();
+    const path = snapshot?.thread?.path;
+    if (typeof path !== 'string' || path.trim() === '') return null;
+    const lines = (await readFile(path, 'utf8')).trimEnd().split('\n').reverse();
+    for (const line of lines) {
+      let entry;
+      try {
+        entry = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      const total = entry?.type === 'event_msg' && entry?.payload?.type === 'token_count'
+        ? entry.payload?.info?.total_token_usage
+        : null;
+      if (!total) continue;
+      const input = Number(total.input_tokens ?? total.inputTokens ?? 0);
+      const output = Number(total.output_tokens ?? total.outputTokens ?? 0);
+      const aggregate = Number(total.total_tokens ?? total.totalTokens ?? input + output);
+      if ([input, output, aggregate].every(Number.isFinite)) {
+        return { input, output, total: aggregate };
+      }
+    }
+  } catch (error) {
+    logger.warn('reviewed loop could not recover Codex rollout usage', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+  return null;
+}
+
 function stage_prompt(issue, role, work_unit, prior_receipts) {
   return [
     `You are the ${role} stage for ${issue.identifier}: ${issue.title}.`,
@@ -129,6 +161,13 @@ export function create_codex_stage_executor(options) {
         `${issue.identifier} ${role}`,
       );
       final_message = turn.text?.trim() ?? '';
+      if (!final_message) {
+        throw new Error(`${role} stage completed without agent evidence.`);
+      }
+      if (usage.total === 0) {
+        const recovered = await read_rollout_usage(client, logger);
+        if (recovered) Object.assign(usage, recovered);
+      }
     } finally {
       await client.close();
     }

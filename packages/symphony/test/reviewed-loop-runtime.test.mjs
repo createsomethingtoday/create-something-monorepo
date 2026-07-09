@@ -40,9 +40,11 @@ function reviewerWorkUnit() {
 test('Codex stage executor honors read-only sandbox and returns verified metrics', async (t) => {
   const workspace = await mkdtemp(join(tmpdir(), 'reviewed-loop-runtime-'));
   const logPath = join(tmpdir(), `reviewed-loop-runtime-${process.pid}-${Date.now()}.json`);
+  const rolloutPath = join(tmpdir(), `reviewed-loop-runtime-rollout-${process.pid}-${Date.now()}.jsonl`);
   t.after(async () => {
     await rm(workspace, { recursive: true, force: true });
     await rm(logPath, { force: true });
+    await rm(rolloutPath, { force: true });
   });
 
   await git(workspace, ['init', '--quiet']);
@@ -51,6 +53,17 @@ test('Codex stage executor honors read-only sandbox and returns verified metrics
   await writeFile(join(workspace, 'README.md'), 'baseline\n', 'utf8');
   await git(workspace, ['add', 'README.md']);
   await git(workspace, ['commit', '--quiet', '-m', 'baseline']);
+  await writeFile(
+    rolloutPath,
+    `${JSON.stringify({
+      type: 'event_msg',
+      payload: {
+        type: 'token_count',
+        info: { total_token_usage: { input_tokens: 12, output_tokens: 8, total_tokens: 20 } },
+      },
+    })}\n`,
+    'utf8',
+  );
 
   const fakeCodexPath = join(workspace, 'fake-codex.mjs');
   await writeFile(
@@ -68,12 +81,16 @@ rl.on('line', (line) => {
   }
   if (message.method === 'initialize') return send({ id: message.id, result: { ok: true } });
   if (message.method === 'thread/start') return send({ id: message.id, result: { thread: { id: 'thread-reviewer' } } });
+  if (message.method === 'thread/read') return send({ id: message.id, result: { thread: { path: process.env.FAKE_CODEX_ROLLOUT } } });
   if (message.method === 'turn/start') {
     appendFileSync(process.env.FAKE_CODEX_LOG, JSON.stringify({ sandbox: message.params.sandboxPolicy }) + '\\n');
     send({ id: message.id, result: { turn: { id: 'turn-reviewer' } } });
+    if (process.env.FAKE_CODEX_FAIL === '1') {
+      send({ method: 'error', params: { error: { message: 'model unavailable' }, willRetry: false, threadId: 'thread-reviewer', turnId: 'turn-reviewer' } });
+      return send({ method: 'turn/completed', params: { turn: { id: 'turn-reviewer', status: 'failed', error: { message: 'model unavailable' } } } });
+    }
     send({ id: 99, method: 'item/commandExecution/requestApproval', params: {} });
     send({ method: 'item/started', params: { item: { id: 'msg-reviewer', type: 'agentMessage', text: '' } } });
-    send({ method: 'thread/tokenUsage/updated', params: { input_tokens: 12, output_tokens: 8, total_tokens: 20 } });
     send({ method: 'item/completed', params: { item: { id: 'msg-reviewer', type: 'agentMessage', text: 'No actionable findings.' } } });
     setTimeout(() => send({ method: 'turn/completed', params: { turn: { id: 'turn-reviewer' } } }), 20);
   }
@@ -101,7 +118,7 @@ rl.on('line', (line) => {
     workspace_path: workspace,
     config,
     logger: new MemoryLogger(),
-    env: { ...process.env, FAKE_CODEX_LOG: logPath },
+    env: { ...process.env, FAKE_CODEX_LOG: logPath, FAKE_CODEX_ROLLOUT: rolloutPath },
   });
   const receipt = await execute({
     role: 'reviewer',
@@ -126,4 +143,27 @@ rl.on('line', (line) => {
     { sandbox: { type: 'readOnly' } },
     { approval: { decision: 'decline' } },
   ]);
+
+  const executeFailure = create_codex_stage_executor({
+    issue: { identifier: 'CRE-1154', title: 'Pilot reviewed loop', description: 'Bounded test.' },
+    workspace_path: workspace,
+    config,
+    logger: new MemoryLogger(),
+    env: {
+      ...process.env,
+      FAKE_CODEX_FAIL: '1',
+      FAKE_CODEX_LOG: logPath,
+      FAKE_CODEX_ROLLOUT: rolloutPath,
+    },
+  });
+  await assert.rejects(
+    executeFailure({
+      role: 'reviewer',
+      run_id: 'CRE-1154-reviewed-single-pass-failed',
+      work_unit: unit,
+      sandbox: 'read-only',
+      prior_receipts: [],
+    }),
+    (error) => error?.code === 'turn_failed' && error.message.includes('model unavailable'),
+  );
 });
