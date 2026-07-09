@@ -2262,7 +2262,7 @@ function AtlasStudio(): React.ReactElement {
     const viewportWidth = canvasStageRef.current?.clientWidth ?? window.innerWidth;
     const result = await requestJson<{
       session: AtlasSession;
-      updates: Array<{ id: string; width: number; x: number; y: number }>;
+      updates: Array<{ height?: number; id: string; width: number; x: number; y: number }>;
     }>(`/api/sessions/${encodeURIComponent(sessionId)}/tidy`, {
       body: JSON.stringify({ viewportWidth }),
       method: 'POST'

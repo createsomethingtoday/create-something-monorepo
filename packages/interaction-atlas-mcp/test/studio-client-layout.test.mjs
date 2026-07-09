@@ -142,6 +142,32 @@ test('fast topology graph keeps hidden nodes and dangling edges out of the Canva
   );
 });
 
+test('fast topology graph displays large sessions through the readable board projection', () => {
+  const nodes = Array.from({ length: 120 }, (_, index) =>
+    makeNode({
+      height: 142,
+      id: `worker-${index}`,
+      kind: 'system',
+      label: `Worker ${index}`,
+      notes: `packages/example-${index} | worker | Automation`,
+      width: 280,
+      x: 80,
+      y: 120 + index * 34
+    })
+  );
+  const session = makeSession(nodes);
+
+  const graph = fastTopologyGraph(session, null);
+  const first = graph.nodes.find((node) => node.id === 'worker-0');
+
+  assert.equal(graph.nodes.length, 120);
+  assert.equal(first?.height, 64);
+  assert.equal(first?.width, 176);
+  assert.notEqual(first?.x, 80);
+  assert.notEqual(first?.y, 120);
+});
+
+
 test('focused story node summaries preserve walkthrough detail context', () => {
   const session = makeSession([
     makeNode({

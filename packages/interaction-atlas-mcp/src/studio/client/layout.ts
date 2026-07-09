@@ -8,6 +8,7 @@ type ActivitySummary = {
 };
 
 type TidyUpdate = {
+  height?: number;
   id: string;
   width: number;
   x: number;
@@ -16,6 +17,20 @@ type TidyUpdate = {
 
 type TidyLayoutOptions = {
   viewportWidth?: number;
+};
+
+export type LargeTopologyLayoutNode = TidyUpdate & {
+  section: TopologyBoardSectionKey;
+};
+
+export type LargeTopologySectionSummary = {
+  count: number;
+  height: number;
+  key: TopologyBoardSectionKey;
+  label: string;
+  width: number;
+  x: number;
+  y: number;
 };
 
 export type StoryFocusedNodeSummary = {
@@ -59,12 +74,14 @@ const VISUAL_COLUMNS: Array<{ kinds: AtlasCanvasNodeKind[]; x: number; y: number
 ];
 
 const COLUMN_GAP = 64;
-const LARGE_MAP_THRESHOLD = 96;
+export const LARGE_MAP_THRESHOLD = 96;
 const LARGE_TOPOLOGY_MINIMAP_LIMIT = 180;
-const LARGE_MAP_CARD_WIDTH = 232;
-const LARGE_MAP_CARD_HEIGHT = 124;
-const LARGE_MAP_CARD_GAP_X = 26;
-const LARGE_MAP_CARD_GAP_Y = 24;
+const LARGE_MAP_CARD_WIDTH = 176;
+const LARGE_MAP_CARD_HEIGHT = 64;
+const LARGE_MAP_CARD_GAP_X = 14;
+const LARGE_MAP_CARD_GAP_Y = 14;
+const LARGE_MAP_SECTION_GAP_X = 132;
+const LARGE_MAP_SECTION_GAP_Y = 156;
 
 type TopologySurface =
   | 'repo'
@@ -85,16 +102,15 @@ export type TopologyBoardSectionKey = 'core' | 'runtime' | 'agent_plane' | 'judg
 type BoardSection = {
   columns: number;
   key: TopologyBoardSectionKey;
+  label: string;
   rank: number;
-  x: number;
-  y: number;
 };
 
 const BOARD_SECTIONS: Record<TopologyBoardSectionKey, BoardSection> = {
-  core: { columns: 3, key: 'core', rank: 0, x: 84, y: 168 },
-  runtime: { columns: 5, key: 'runtime', rank: 1, x: 940, y: 168 },
-  agent_plane: { columns: 4, key: 'agent_plane', rank: 2, x: 2308, y: 168 },
-  judgment: { columns: 4, key: 'judgment', rank: 3, x: 3402, y: 168 }
+  core: { columns: 5, key: 'core', label: 'Core records', rank: 0 },
+  runtime: { columns: 7, key: 'runtime', label: 'Runtime workers', rank: 1 },
+  agent_plane: { columns: 6, key: 'agent_plane', label: 'MCP / Agents', rank: 2 },
+  judgment: { columns: 6, key: 'judgment', label: 'Policy / Canon', rank: 3 }
 };
 
 const SURFACE_RANK: Record<TopologySurface, number> = {
@@ -210,7 +226,68 @@ export function topologyBoardSectionForNode(node: AtlasCanvasNode): TopologyBoar
   return 'core';
 }
 
-function largeMapNodeUpdates(session: AtlasSession): TidyUpdate[] {
+export function largeTopologyLayoutNodes(session: AtlasSession): LargeTopologyLayoutNode[] {
+  const sectionCounts = new Map<TopologyBoardSectionKey, number>();
+  for (const node of session.canvas.nodes) {
+    const section = topologyBoardSectionForNode(node);
+    sectionCounts.set(section, (sectionCounts.get(section) ?? 0) + 1);
+  }
+
+  const sectionMetrics = new Map<
+    TopologyBoardSectionKey,
+    { columns: number; height: number; rows: number; width: number; x: number; y: number }
+  >();
+  const orderedSections = (Object.values(BOARD_SECTIONS) as BoardSection[]).sort(
+    (a, b) => a.rank - b.rank
+  );
+  const sectionWidth = (columns: number) =>
+    columns * LARGE_MAP_CARD_WIDTH + Math.max(0, columns - 1) * LARGE_MAP_CARD_GAP_X;
+  const sectionHeight = (rows: number) =>
+    rows * LARGE_MAP_CARD_HEIGHT + Math.max(0, rows - 1) * LARGE_MAP_CARD_GAP_Y;
+
+  for (const section of orderedSections) {
+    const count = sectionCounts.get(section.key) ?? 0;
+    const baselineColumns = section.columns;
+    const columns = Math.max(
+      baselineColumns,
+      Math.min(12, Math.ceil(Math.sqrt(Math.max(1, count) * 1.8)))
+    );
+    const rows = Math.max(1, Math.ceil(Math.max(1, count) / columns));
+    sectionMetrics.set(section.key, {
+      columns,
+      height: sectionHeight(rows),
+      rows,
+      width: sectionWidth(columns),
+      x: 0,
+      y: 0
+    });
+  }
+
+  const topY = 176;
+  const leftX = 96;
+  const core = sectionMetrics.get('core');
+  const runtime = sectionMetrics.get('runtime');
+  const agent = sectionMetrics.get('agent_plane');
+  const judgment = sectionMetrics.get('judgment');
+  if (core) {
+    core.x = leftX;
+    core.y = topY;
+  }
+  if (runtime) {
+    runtime.x = leftX + (core?.width ?? 0) + LARGE_MAP_SECTION_GAP_X;
+    runtime.y = topY;
+  }
+  const secondRowY =
+    topY + Math.max(core?.height ?? 0, runtime?.height ?? 0) + LARGE_MAP_SECTION_GAP_Y;
+  if (agent) {
+    agent.x = leftX;
+    agent.y = secondRowY;
+  }
+  if (judgment) {
+    judgment.x = leftX + (agent?.width ?? 0) + LARGE_MAP_SECTION_GAP_X;
+    judgment.y = secondRowY;
+  }
+
   const sectionIndexes = new Map<TopologyBoardSectionKey, number>();
   const ordered = [...session.canvas.nodes].sort((a, b) => {
     const aSection = BOARD_SECTIONS[topologyBoardSectionForNode(a)];
@@ -228,26 +305,86 @@ function largeMapNodeUpdates(session: AtlasSession): TidyUpdate[] {
   });
 
   return ordered.flatMap((node) => {
-    const section = BOARD_SECTIONS[topologyBoardSectionForNode(node)];
-    const index = sectionIndexes.get(section.key) ?? 0;
-    sectionIndexes.set(section.key, index + 1);
+    const sectionKey = topologyBoardSectionForNode(node);
+    const section = sectionMetrics.get(sectionKey);
+    if (!section) return [];
+
+    const index = sectionIndexes.get(sectionKey) ?? 0;
+    sectionIndexes.set(sectionKey, index + 1);
 
     const column = index % section.columns;
     const row = Math.floor(index / section.columns);
     const next = {
+      height: LARGE_MAP_CARD_HEIGHT,
       id: node.id,
+      section: sectionKey,
       width: LARGE_MAP_CARD_WIDTH,
       x: section.x + column * (LARGE_MAP_CARD_WIDTH + LARGE_MAP_CARD_GAP_X),
       y: section.y + row * (LARGE_MAP_CARD_HEIGHT + LARGE_MAP_CARD_GAP_Y)
     };
 
+    return [next];
+  });
+}
+
+function largeMapNodeUpdates(session: AtlasSession): TidyUpdate[] {
+  const nodesById = new Map(session.canvas.nodes.map((node) => [node.id, node]));
+  return largeTopologyLayoutNodes(session).flatMap((next) => {
+    const node = nodesById.get(next.id);
+    if (!node) return [];
     const hasChanged =
       Math.abs(node.x - next.x) > 1 ||
       Math.abs(node.y - next.y) > 1 ||
+      Math.abs((node.height || 0) - (next.height ?? 0)) > 1 ||
       Math.abs((node.width || 0) - next.width) > 1;
 
-    return hasChanged ? [next] : [];
+    if (!hasChanged) return [];
+    const { section: _section, ...update } = next;
+    return [update];
   });
+}
+
+export function largeTopologySectionSummaries(
+  session: AtlasSession
+): LargeTopologySectionSummary[] {
+  const nodes = largeTopologyLayoutNodes(session);
+  const summaries = new Map<TopologyBoardSectionKey, LargeTopologySectionSummary>();
+  for (const node of nodes) {
+    const section = BOARD_SECTIONS[node.section];
+    const current = summaries.get(node.section);
+    const right = node.x + node.width;
+    const bottom = node.y + (node.height ?? LARGE_MAP_CARD_HEIGHT);
+    if (!current) {
+      summaries.set(node.section, {
+        count: 1,
+        height: node.height ?? LARGE_MAP_CARD_HEIGHT,
+        key: node.section,
+        label: section.label,
+        width: node.width,
+        x: node.x,
+        y: node.y
+      });
+      continue;
+    }
+
+    const x = Math.min(current.x, node.x);
+    const y = Math.min(current.y, node.y);
+    summaries.set(node.section, {
+      ...current,
+      count: current.count + 1,
+      height: Math.max(current.y + current.height, bottom) - y,
+      width: Math.max(current.x + current.width, right) - x,
+      x,
+      y
+    });
+  }
+
+  return (Object.values(BOARD_SECTIONS) as BoardSection[])
+    .sort((a, b) => a.rank - b.rank)
+    .flatMap((section) => {
+      const summary = summaries.get(section.key);
+      return summary ? [summary] : [];
+    });
 }
 
 function estimatedNodeHeight(node: AtlasCanvasNode, width: number): number {
