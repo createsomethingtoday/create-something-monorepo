@@ -1,6 +1,14 @@
 # App Governance Database (`app-governance-db`)
 
-The database layer for **App Review · Governance & Transparency**. A Cloudflare D1 canonical store with an MCP boundary, replacing Airtable-as-source-of-truth for governance findings. Airtable (`app1Q0o9xw2Zny7gw`) remains a human workspace / projection target, not the durable record.
+The database-layer instance for **App Review · Governance & Transparency**. A Cloudflare D1 canonical store with an MCP boundary, replacing Airtable-as-source-of-truth for governance findings. Airtable (`app1Q0o9xw2Zny7gw`) remains a human workspace / projection target, not the durable record.
+
+This package is the first realized instance of the broader CREATE SOMETHING
+database-layer direction documented in
+`docs/CREATE_SOMETHING_DATABASE_LAYER.md`. Keep reusable concepts such as
+source records, Atlas bindings, workflow actions, workflow runs, receipts, auth,
+API/MCP parity, and dashboard interaction extractable from app-review-specific
+concepts such as marketplace apps, findings, categories, reviewer
+notifications, and Webflow governance sync.
 
 Docs by audience: `OPERATORS.md` (the core team running the system) · `TRIAGE_RUNBOOK.md` (agents) · this README (developers).
 
@@ -10,11 +18,111 @@ Narrative context lives in the Slack canvas [App Review · Governance & Transpar
 
 | Tier | Implementation |
 |------|----------------|
-| **Database** | D1 `app-governance-db` (`65e0fa00-e934-47b6-a154-baccd09afa1c`) — findings, items, categories, links, notifications, sync cursors, append-only events |
+| **Database** | D1 `app-governance-db` (`65e0fa00-e934-47b6-a154-baccd09afa1c`) — findings, items, categories, links, notifications, sync cursors, append-only events, source-record import ledgers, source-record relations/bindings, Atlas canvases/nodes/edges, workflow runs, receipts |
 | **Automation** | Worker `app-governance-db` at `app-governance.mcp.createsomething.agency` — MCP tools over `/mcp` and `/sse`, bearer-auth (`MCP_API_KEY`) |
 | **Judgment** | Categorization taxonomy (canvas §1–§8 + triage-ops), `decision_needed` flags, `verified_by_reviewer`, notification queue reviewed before delivery |
 
-Atlas-backed: `sources`, `categories`, and `findings` carry `atlas_canvas_id` / `atlas_node_id` references so every record pins to the Atlas canvas/node it serves (initial mapping: tracker canvas `F0BB96552KG`).
+Atlas-backed: `sources`, `source_records`, `categories`, and `findings` carry `atlas_canvas_id` / `atlas_node_id` references so every record pins to the Atlas canvas/node it serves (initial mapping: tracker canvas `F0BB96552KG`). `source_record_relations` and `source_record_atlas_bindings` preserve row-to-row topology and multi-map provenance. `atlas_canvases`, `atlas_nodes`, `atlas_edges`, `workflow_runs`, and `workflow_receipts` are the first-class database-layer map/runtime contract: SvelteFlow, desktop Studio, and other UIs consume these records rather than owning the source of truth.
+
+## Distribution boundary
+
+The canonical product is the Cloudflare-hosted database layer:
+
+- D1 is the durable state owner.
+- The Worker at `https://app-governance.mcp.createsomething.agency/mcp` is the agent/API boundary.
+- The dashboard at `https://app-governance-dash.createsomething.agency` is the operator UI.
+
+The Tauri package in `packages/app-governance-desktop` is not a second product
+or a second state model. It is an optional operator shell for native affordances
+such as keychain storage, tray actions, notifications, and local script
+execution. It must open or enhance the Cloudflare surfaces above; it must not
+fork dashboard UI, source records, Atlas maps, workflow actions, receipts, or
+review state into desktop-only storage.
+
+## Notion-to-Atlas migration contract
+
+CREATE SOMETHING's own Notion transfer is the product dogfood path. The database layer treats Notion rows as source evidence first, not as Atlas nodes immediately:
+
+1. Record rows into `source_records` with `governance_record_source_records`.
+2. Inspect `governance_source_hygiene` and resolve `missing_substrate`, `duplicate`, or `blocked` identity states before projection.
+3. Attach `substrate_id`, `canonical_type`, and Atlas bindings with `governance_update_source_record_mapping`.
+4. Record source relation properties with `governance_record_source_record_relations` when the connector can see explicit Notion relations, then run `governance_extract_source_record_relations` for fallback payload/title/alias evidence. Explicit/imported evidence and inferred evidence are separated by `evidence_kind`, `confidence`, and `reason`.
+5. Project clean records into `atlas_canvases` / `atlas_nodes` / `atlas_edges` and preserve receipts with `governance_record_workflow_receipt`.
+
+`source_import_runs` records each batch, cursor, retry-after, rate-limit, and error condition. This is what makes Notion import resumable and agent-safe: a failed or rate-limited pass leaves a database receipt and a cursor/backoff state instead of depending on chat memory.
+
+The dashboard `/sources` route is the operator view for this migration. It now surfaces the Notion transfer readiness verdict, blocker counts, latest import warnings, source-update queue, and client-map coverage from D1 so the MCP/API completion audit and the human close-loop view agree.
+
+Explicit Notion relation import is handled by:
+
+```bash
+node packages/app-governance-db/scripts/sync-notion-relations.mjs --dry-run
+node packages/app-governance-db/scripts/sync-notion-relations.mjs --write
+```
+
+The runner reads captured `source_records` from the app-governance MCP, queries
+matching Notion data sources through `createsomething-notion`, extracts Notion
+relation properties, normalizes page IDs, and writes explicit relations through
+`governance_record_source_record_relations`. It orients client relations as
+`client owns record`; other relation properties become `references`,
+`depends_on`, `blocks`, or `corresponds_to` based on property name and record
+types.
+
+When the direct `createsomething-notion` MCP bearer is stale, use the installed
+Notion connector as a read surface and save its SQL query output into a connector
+export bundle:
+
+```bash
+pnpm --filter @create-something/app-governance-db notion:connector-plan
+pnpm --filter @create-something/app-governance-db notion:connector-plan -- --format json > /tmp/notion-connector-export.json
+```
+
+The manifest lives at
+`packages/app-governance-db/config/notion-connector-relation-sources.json`.
+It covers the CREATE SOMETHING Notion graph sources expected by the transfer
+readiness audit: `Clients`, `Engagements`, `Workstreams`, `Tasks / Actions`,
+`Evidence`, `Decisions`, `Risks / Blockers`, `Deliverables`,
+`Delivery Milestones`, `Agents`, and `MCP Services`. The planner prints the SQL
+each agent should run through the installed Notion connector and an empty bundle
+shape to fill with returned rows. Queries use the connector's
+`collection://...` table names, not display-name aliases:
+
+```json
+{
+  "connector_exports": [
+    {
+      "name": "Engagements",
+      "data_source_id": "collection://d3873b66-762c-4f3a-bd9e-97267f58faf5",
+      "relation_properties": ["Client", "Workstreams", "Tasks / Actions", "Deliverables", "Evidence", "Services used"],
+      "rows": [
+        {
+          "url": "https://app.notion.com/359fa8740b1581058193e9cfbc5f2f6e",
+          "Name": "Cato Supply - Webflow Insights CMS build",
+          "Client": "[\"https://app.notion.com/359fa8740b15816799c3d05f8b892ea3\"]"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Then run:
+
+```bash
+node packages/app-governance-db/scripts/sync-notion-relations.mjs \
+  --connector-export /path/to/notion-connector-export.json \
+  --dry-run
+
+node packages/app-governance-db/scripts/sync-notion-relations.mjs \
+  --connector-export /path/to/notion-connector-export.json \
+  --write
+```
+
+The connector export path still reads current `source_records` from the
+app-governance MCP, normalizes compact/dashed/full Notion page URLs, and writes
+through `governance_record_source_record_relations`. `relation_properties` is
+required for connector SQL rows so people/user/file JSON arrays are not treated
+as page relations.
 
 ### Why agent-mediated sync
 
@@ -45,6 +153,44 @@ Slack channels/canvas ──(Slack MCP, read)──▶ Claude Code agent ──(
 | `governance_list_notifications` | The outbox (`status=queued`) |
 | `governance_mark_notification` | Record delivery outcome |
 | `governance_list_categories` | The taxonomy (§1–§8 + triage-ops) |
+| `governance_record_apps` | Upsert Webflow Apps admin snapshots and detect listing drift |
+| `governance_list_apps` | List synced marketplace apps and recent drift |
+| `governance_set_cursor` | Set a high-water mark for non-item sync mechanisms |
+| `governance_record_source_records` | Idempotently record row-level source records from Notion or another database source |
+| `governance_list_source_records` | Inspect source records and identity/migration filters, including missing Substrate IDs |
+| `governance_source_hygiene` | Summarize source-record migration health, recent import runs, cursors, and backoff state |
+| `governance_get_notion_transfer_audit` | Audit CREATE SOMETHING Notion transfer coverage across expected databases: captured rows, identity coverage, Atlas projection, source-level binding/relation coverage, row-level unbound records, relation islands, and reviewed gap counts |
+| `governance_get_notion_transfer_readiness` | Return an explicit ready/not-ready verdict with blockers, warnings, review counts, source-update action counts, and client-map coverage for completion audits |
+| `governance_list_notion_transfer_readiness_blockers` | List the exact rows/actions behind the readiness blockers: unreviewed binding gaps, unreviewed relation islands, and open source-update actions |
+| `governance_plan_notion_transfer_blocker_reviews` | Group readiness blockers into proposal-only review batches by source and canonical type without reviewing, waiving, resolving, or binding records |
+| `governance_create_notion_transfer_blocker_review_handoff` | Create a workflow-action handoff for one blocker group while leaving source records, reviews, bindings, and relations untouched |
+| `governance_update_notion_transfer_blocker_review_handoff_status` | Move a blocker-group handoff between proposed, running, and blocked with receipt/event logging and no source-record mutation |
+| `governance_get_notion_transfer_blocker_review_handoff` | Read the exact current blocker rows behind a blocker-group handoff action for agent execution context |
+| `governance_upsert_source_record_transfer_review` | Review, waive, or mark source-record transfer gaps that require source updates before client Atlas rollout |
+| `governance_list_source_record_transfer_reviews` | List transfer reviews and kind-specific open binding/relation gap candidates; use `open_gaps_only` plus optional `review_kind` to work the Notion transfer queue |
+| `governance_materialize_source_update_actions` | Turn reviewed `needs_source_update` transfer reviews into idempotent Atlas workflow actions for agent/API-managed repair handoff |
+| `governance_list_source_update_workflow_actions` | Read the source-update action queue with transfer review state, source-record context, row-level gap flags, and latest receipt evidence |
+| `governance_update_source_update_workflow_action_status` | Move a source-update action between `proposed`, `running`, and `blocked` with dashboard-parity validation, receipt logging, and event audit |
+| `governance_record_source_update_result` | Evidence-gated close-loop command: record source-truth proof, complete/block the action, and resolve or keep open the transfer review without mutating Notion or creating Atlas bindings |
+| `governance_update_source_record_mapping` | Resolve a source row's canonical identity and Atlas bindings before projection |
+| `governance_resolve_source_record_identities` | Derive stable Substrate IDs for imported rows that lack explicit canonical IDs |
+| `governance_project_source_records_to_atlas` | Project resolved source records into a source-led Atlas map |
+| `governance_record_source_record_relations` | Idempotently record explicit source-record relations from Notion relation properties, manual corrections, or connector-owned dependency data |
+| `governance_extract_source_record_relations` | Build the source-record relation ledger from payload references, client aliases, and title correspondence with confidence/reason evidence |
+| `governance_project_client_workflow_canvases` | Derive client-specific Atlas canvases from source records, direct client evidence, and bounded relation-expanded match evidence; supports client-scoped projection for API/MCP-safe repairs |
+| `governance_list_doc_locations` | List governed documentation locations |
+| `governance_subscribe` | Subscribe a target to doc/category/source notifications |
+| `governance_list_subscriptions` | List notification subscriptions |
+| `governance_record_doc_change` | Record governed-doc drift and queue review |
+| `governance_flag_misalignment` | Create a finding from a doc/submission mismatch |
+| `governance_upsert_atlas_canvas` | Create/update canonical Atlas canvases, nodes, and edges |
+| `governance_list_atlas_canvases` | List database-layer workflow maps with node/edge counts |
+| `governance_get_atlas_canvas` | Fetch a canvas with nodes, edges, runs, and receipts |
+| `governance_get_workflow_runtime` | Fetch executable workflow runtime state: node readiness, dependencies, latest runs, bindings, receipts, open runs, and next runnable nodes |
+| `governance_upsert_workflow_action` | Create/update a workflow action or policy gate for proposed, approved, blocked, running, or completed work |
+| `governance_list_workflow_actions` | List workflow actions by canvas, node, run, owner, status, or gate kind |
+| `governance_record_workflow_run` | Create/update a workflow run lifecycle record without requiring a receipt |
+| `governance_record_workflow_receipt` | Record proof/decision/handoff/sync/error evidence for a workflow run |
 
 Every write logs to the append-only `events` table with the acting agent's identifier.
 
@@ -75,6 +221,29 @@ Governed documentation (`webflow/openapi-internal`, local checkout `~/Code/opena
 
 The programmatic loop: `governance_flag_misalignment` (submission behavior contradicts or falls outside a governed doc) creates a finding, links the doc location, and queues notifications to every subscriber whose scope matches. Apps-Admin drift (`governance_record_apps`) notifies `source` subscribers the same way. Delivery outcomes are recorded via `governance_mark_notification`; every write is audited in `events`. Notifications + events together are the receipts.
 
+## Atlas Studio session import
+
+Local Atlas Studio sessions can be converted into canonical D1 records before
+remote promotion:
+
+```bash
+node packages/app-governance-db/scripts/import-atlas-session.mjs \
+  "$HOME/Library/Application Support/CREATE SOMETHING/Atlas Studio/sessions/<session-id>.json" \
+  --no-transaction \
+  > /tmp/atlas-import.sql
+
+wrangler d1 execute app-governance-db --remote --file=/tmp/atlas-import.sql
+```
+
+The importer upserts the canvas, nodes, and edges, creates a deterministic
+`workflow_runs` sync record, and replaces that import run's receipts with the
+current import/observation set. Agents can retry a transfer without duplicating
+the canonical map or observation receipts.
+
+Use the default transactional output for local SQLite smoke tests. Use
+`--no-transaction` for remote D1 imports because `wrangler d1 execute --file`
+rejects explicit `BEGIN`/`COMMIT` wrappers.
+
 ## Connecting Claude Code
 
 ```bash
@@ -94,4 +263,19 @@ pnpm deploy                     # wraps scripts/run-wrangler.mjs
 infisical run -- sh -c 'echo "$APP_GOVERNANCE_MCP_KEY" | npx wrangler secret put MCP_API_KEY'
 ```
 
-Migrations are plain SQL in `migrations/`; apply with `wrangler d1 execute app-governance-db --remote --file=migrations/0001_init.sql` (0001 and 0002 are already applied to production).
+Migrations are plain SQL in `migrations/`; apply in order with `wrangler d1 execute app-governance-db --remote --file=migrations/<nnnn_name>.sql`. `0006_atlas_workflows.sql` adds the canonical Atlas/workflow runtime tables used by the `/atlas` dashboard view and Atlas MCP tools. `0007_source_record_imports.sql` adds the row-level source-record ledger and import-run tables used by the `/sources` dashboard view and Notion migration MCP tools.
+
+Dashboard deploys are separate because the dashboard is a SvelteKit Worker with
+static assets:
+
+```bash
+cd packages/app-governance-db/dashboard
+pnpm deploy                     # builds SvelteKit and deploys app-governance-dashboard
+```
+
+Dashboard writes intentionally mirror MCP writes for the source-update loop:
+starting, blocking, reopening, and recording proof all write `workflow_actions`,
+`workflow_receipts`, and `events`. Recording proof also marks the related
+`source_record_transfer_reviews` row `resolved`. None of those dashboard actions
+mutate Notion or create `source_record_atlas_bindings`; raw gap counts stay
+visible until the underlying source/map state is actually repaired.

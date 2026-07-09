@@ -61,8 +61,8 @@ export class PresenceHub {
 
 export class AppGovernanceMCP extends McpAgent<Env> {
   server = new McpServer({
-    name: 'app-governance-db',
-    version: '1.1.0',
+  name: 'app-governance-db',
+  version: '1.8.11',
   }) as unknown as McpAgent<Env>['server'];
 
   async init() {
@@ -179,7 +179,7 @@ export default {
         JSON.stringify(
           {
             name: 'app-governance-db',
-            version: '1.1.0',
+            version: '1.8.11',
             description:
               'App Governance & Transparency database layer — D1-canonical findings, Slack-synced items, categorization, notifications, audit. Atlas-backed.',
             auth: {

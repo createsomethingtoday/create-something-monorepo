@@ -244,31 +244,31 @@
 <style>
 	.shell-inner { max-width: 1320px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 	.hero { margin-bottom: 2rem; }
-	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: rgba(255,255,255,0.6); }
-	.hero p { max-width: 72ch; color: rgba(255,255,255,0.74); }
+	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-fg-tertiary); }
+	.hero p { max-width: 72ch; color: var(--color-fg-secondary); }
 	.subnav { display: flex; gap: 1rem; margin-top: 1rem; }
 	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
-	.subnav a[aria-current='page'] { border-color: rgba(255,255,255,0.5); }
+	.subnav a[aria-current='page'] { border-color: var(--color-focus); }
 	.layout { display: grid; grid-template-columns: minmax(320px, 420px) 1fr; gap: 1.5rem; align-items: start; }
-	.editor, .records { border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; background: rgba(255,255,255,0.03); padding: 1.25rem; }
+	.editor, .records { border: 1px solid var(--color-border-default); border-radius: 20px; background: var(--color-hover); padding: 1.25rem; }
 	.form-grid { display: grid; grid-template-columns: 1fr; gap: 0.85rem; }
-	label span { display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.6); margin-bottom: 0.35rem; }
-	input, select { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.03); color: inherit; padding: 0.75rem 0.9rem; font: inherit; }
+	label span { display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-fg-tertiary); margin-bottom: 0.35rem; }
+	input, select { width: 100%; border-radius: 12px; border: 1px solid var(--color-border-default); background: var(--color-hover); color: inherit; padding: 0.75rem 0.9rem; font: inherit; }
 	.toggles { display: flex; flex-direction: column; gap: 0.75rem; margin: 1rem 0; }
 	.toggles label { display: flex; align-items: center; gap: 0.65rem; }
 	.actions, .toolbar, .records-header { display: flex; gap: 0.75rem; align-items: center; }
 	.records-header { justify-content: space-between; margin-bottom: 1rem; }
-	button { border: 0; border-radius: 999px; padding: 0.75rem 1rem; font: inherit; font-weight: 600; background: #f3f1e8; color: #111; }
+	button { border: 0; border-radius: 999px; padding: 0.75rem 1rem; font: inherit; font-weight: 600; background: var(--color-clear-porcelain-soft); color: var(--color-bg-surface); }
 	.table-wrap { overflow-x: auto; }
 	table { width: 100%; border-collapse: collapse; }
-	th, td { padding: 0.95rem 0.8rem; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,0.08); }
+	th, td { padding: 0.95rem 0.8rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border-default); }
 	tbody tr { cursor: pointer; }
-	tbody tr:hover { background: rgba(255,255,255,0.03); }
-	.muted { color: rgba(255,255,255,0.58); font-size: 0.85rem; margin-top: 0.25rem; }
-	.good { color: #8fd19e; }
-	.bad { color: #ff9d9d; }
-	.success { color: #8fd19e; margin-top: 1rem; }
-	.error { color: #ff9d9d; margin-top: 1rem; }
+	tbody tr:hover { background: var(--color-hover); }
+	.muted { color: var(--color-fg-tertiary); font-size: 0.85rem; margin-top: 0.25rem; }
+	.good { color: var(--color-success); }
+	.bad { color: var(--color-error); }
+	.success { color: var(--color-success); margin-top: 1rem; }
+	.error { color: var(--color-error); margin-top: 1rem; }
 	@media (max-width: 980px) {
 		.layout { grid-template-columns: 1fr; }
 		.records-header, .toolbar { flex-direction: column; align-items: stretch; }

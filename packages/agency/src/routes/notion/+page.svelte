@@ -67,7 +67,7 @@
     {
       question: 'What role should Notion play in AI workflow systems?',
       answer:
-        'Notion should be the PM and operator-facing review layer while canonical state, Linear engineering state, and external system records keep their own ownership.'
+        'Notion should be the PM, capture, and operator-facing review layer. When a workflow needs API/MCP operation, source rows transfer into Substrate, the CREATE SOMETHING database layer, while Linear engineering state and external system records keep their own ownership.'
     },
     {
       question: 'When should Notion Workers or MCP be used?',
@@ -141,7 +141,8 @@
       label: 'Boundary',
       icon: 'check',
       title: 'Source of truth',
-      detail: 'What Notion owns, what Linear owns, and what production systems own.'
+      detail:
+        'What Notion owns, what transfers to Substrate, and what production systems own.'
     },
     {
       label: 'Automation',
@@ -167,7 +168,7 @@
   titleLevel="h1"
   eyebrow="Notion Review Workspace"
   title="Notion workspaces for reviewable automation."
-  description="CREATE SOMETHING maps Notion as the PM and operator layer around one workflow: what people inspect, what the workspace owns, what stays in source systems, and which automation path is safe to test first."
+  description="CREATE SOMETHING maps Notion as the PM, capture, and operator layer around one workflow: what people inspect, what transfers into Substrate, what stays in source systems, and which automation path is safe to test first."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -225,7 +226,7 @@
 <PerformanceCtaBand
   eyebrow="Map the workspace"
   title="Bring the Notion surface that needs an operating boundary."
-  description="I’ll map what Notion should own, what the workflow should keep elsewhere, and which automation path is safe to test first."
+  description="I’ll map what Notion should own, what should transfer into Substrate, what stays elsewhere, and which automation path is safe to test first."
   items={ctaItems}
 >
   {#snippet actions()}

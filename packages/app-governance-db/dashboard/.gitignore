@@ -1,0 +1,5 @@
+.dev.vars
+node_modules
+.svelte-kit
+.wrangler
+build

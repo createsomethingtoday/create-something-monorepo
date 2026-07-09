@@ -12,6 +12,7 @@ import { createWritebackProposal, exportWritebackProposalHandoffForSession, revi
 import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, getSessionPath, listSessions, readSession, removeNode, updateNode, updateEdge, updateNodes } from './store.js';
 import { activateStoryApiStep, addStoryApiQuestion, advanceStoryApiStep, clearStory, focusStory, getStory, storySessionPayload } from './story-api.js';
 import { tidyNodeUpdates } from './client/layout.js';
+import { readSharedCanvasState, updateSharedCanvasState } from './canvas-state.js';
 import { buildAtlasDatabaseHealth } from './database-health.js';
 const gzipAsync = promisify(gzip);
 async function readJson(request) {
@@ -229,6 +230,16 @@ export async function startStudioServer(options) {
             const sessionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)$/);
             if (method === 'GET' && sessionMatch) {
                 sendJson(response, 200, await readSession(decodeURIComponent(sessionMatch[1] ?? ''), cwd));
+                return;
+            }
+            const canvasStateMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/canvas-state$/);
+            if (method === 'GET' && canvasStateMatch) {
+                sendJson(response, 200, await readSharedCanvasState(decodeURIComponent(canvasStateMatch[1] ?? ''), cwd));
+                return;
+            }
+            if (method === 'PUT' && canvasStateMatch) {
+                const body = await readJson(request);
+                sendJson(response, 200, await updateSharedCanvasState(decodeURIComponent(canvasStateMatch[1] ?? ''), body, cwd));
                 return;
             }
             const databaseHealthMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/database-health$/);

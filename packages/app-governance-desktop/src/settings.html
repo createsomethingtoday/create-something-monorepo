@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>App Governance — Settings</title>
+	<style>
+		:root {
+			color-scheme: dark;
+		}
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			padding: 28px;
+			background: #000000;
+			color: #ffffff;
+			font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+			font-size: 14px;
+			line-height: 1.5;
+		}
+		h1 {
+			font-size: 16px;
+			font-weight: 600;
+			margin: 0 0 4px;
+		}
+		p.hint {
+			margin: 0 0 20px;
+			color: rgba(255, 255, 255, 0.46);
+			font-size: 12px;
+		}
+		label {
+			display: block;
+			margin-bottom: 6px;
+			color: rgba(255, 255, 255, 0.7);
+			font-size: 12px;
+		}
+		.field {
+			margin-top: 14px;
+		}
+		input {
+			width: 100%;
+			padding: 8px 10px;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 6px;
+			background: rgba(255, 255, 255, 0.05);
+			color: #ffffff;
+			font-family: ui-monospace, SFMono-Regular, monospace;
+			font-size: 13px;
+			outline: none;
+		}
+		input:focus { border-color: rgba(255, 255, 255, 0.5); }
+		button {
+			margin-top: 14px;
+			padding: 8px 16px;
+			border: 1px solid rgba(255, 255, 255, 0.3);
+			border-radius: 6px;
+			background: #ffffff;
+			color: #000000;
+			font-size: 13px;
+			font-weight: 600;
+			cursor: pointer;
+		}
+		button:hover { background: rgba(255, 255, 255, 0.85); }
+		#status {
+			margin-top: 14px;
+			font-size: 12px;
+			min-height: 18px;
+			color: rgba(255, 255, 255, 0.46);
+		}
+		#status.ok { color: #44aa44; }
+		#status.err { color: #cc4444; }
+	</style>
+</head>
+<body>
+	<h1>App Governance</h1>
+	<p class="hint">
+		Paste your operator MCP key (Infisical: <code>APP_GOVERNANCE_MCP_KEY_&lt;NAME&gt;</code>).
+		It is stored in the macOS keychain — service <code>app-governance</code>, account <code>mcp-key</code>.
+	</p>
+
+	<div class="field">
+		<label for="key">Operator MCP key</label>
+		<input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="paste key" />
+		<button id="save-key">Save Key</button>
+	</div>
+
+	<div class="field">
+		<label for="repo-dir">Monorepo checkout path</label>
+		<input id="repo-dir" type="text" autocomplete="off" spellcheck="false" placeholder="~/Code/create-something-monorepo" />
+		<button id="save-repo-dir">Save Repo Path</button>
+	</div>
+
+	<div id="status"></div>
+
+	<script>
+		const invoke = window.__TAURI__.core.invoke;
+		const statusEl = document.getElementById('status');
+		const keyEl = document.getElementById('key');
+		const repoDirEl = document.getElementById('repo-dir');
+
+		function setStatus(msg, cls) {
+			statusEl.textContent = msg;
+			statusEl.className = cls || '';
+		}
+
+		async function refreshPresence() {
+			try {
+				const [present, repoDir] = await Promise.all([
+					invoke('get_key_present'),
+					invoke('get_repo_dir')
+				]);
+				if (repoDir) {
+					repoDirEl.value = repoDir;
+				}
+				if (present) {
+					setStatus('A key is stored in the keychain. Saving replaces existing settings.', 'ok');
+				} else {
+					setStatus('No key stored yet.');
+				}
+			} catch (e) {
+				setStatus(String(e), 'err');
+			}
+		}
+
+		document.getElementById('save-key').addEventListener('click', async () => {
+			try {
+				await invoke('save_key', { key: keyEl.value });
+				keyEl.value = '';
+				setStatus('Saved. Presence notifications will pick it up shortly.', 'ok');
+			} catch (e) {
+				setStatus(String(e), 'err');
+			}
+		});
+
+		document.getElementById('save-repo-dir').addEventListener('click', async () => {
+			try {
+				const repoDir = await invoke('save_repo_dir', { repoDir: repoDirEl.value });
+				repoDirEl.value = repoDir;
+				setStatus('Saved. Tray scripts will use this checkout path.', 'ok');
+			} catch (e) {
+				setStatus(String(e), 'err');
+			}
+		});
+
+		refreshPresence();
+	</script>
+</body>
+</html>

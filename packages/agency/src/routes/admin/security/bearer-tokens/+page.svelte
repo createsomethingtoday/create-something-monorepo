@@ -200,25 +200,25 @@
 <style>
 	.shell-inner { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 	.hero { margin-bottom: 2rem; }
-	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: rgba(255,255,255,0.6); }
-	.hero p { max-width: 70ch; color: rgba(255,255,255,0.75); }
+	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-fg-tertiary); }
+	.hero p { max-width: 70ch; color: var(--color-fg-secondary); }
 	.subnav { display: flex; gap: 1rem; margin-top: 1rem; }
 	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
-	.subnav a[aria-current='page'] { border-color: rgba(255,255,255,0.5); }
+	.subnav a[aria-current='page'] { border-color: var(--color-focus); }
 	.toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
-	.toolbar input, td input { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.03); color: inherit; padding: 0.75rem 0.9rem; }
-	.toolbar button, td button { border: 0; border-radius: 999px; padding: 0.75rem 1rem; font: inherit; font-weight: 600; background: #f3f1e8; color: #111; }
-	.table-wrap { overflow-x: auto; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; background: rgba(255,255,255,0.03); }
+	.toolbar input, td input { width: 100%; border-radius: 12px; border: 1px solid var(--color-border-default); background: var(--color-hover); color: inherit; padding: 0.75rem 0.9rem; }
+	.toolbar button, td button { border: 0; border-radius: 999px; padding: 0.75rem 1rem; font: inherit; font-weight: 600; background: var(--color-clear-porcelain-soft); color: var(--color-bg-surface); }
+	.table-wrap { overflow-x: auto; border: 1px solid var(--color-border-default); border-radius: 20px; background: var(--color-hover); }
 	table { width: 100%; border-collapse: collapse; }
-	th, td { padding: 1rem; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,0.08); }
-	.muted { color: rgba(255,255,255,0.58); font-size: 0.85rem; margin-top: 0.25rem; }
-	.allowed { color: #8fd19e; }
-	.blocked { color: #ff9d9d; }
+	th, td { padding: 1rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border-default); }
+	.muted { color: var(--color-fg-tertiary); font-size: 0.85rem; margin-top: 0.25rem; }
+	.allowed { color: var(--color-success); }
+	.blocked { color: var(--color-error); }
 	.checks { display: flex; flex-wrap: wrap; gap: 0.5rem; min-width: 260px; }
 	.checks button { padding: 0.45rem 0.8rem; }
-	.check-on { background: #8fd19e; color: #0b1f11; }
-	.check-off { background: rgba(255,255,255,0.08); color: #fff; }
+	.check-on { background: var(--color-success); color: var(--color-bg-pure); }
+	.check-off { background: var(--color-border-default); color: var(--color-fg-primary); }
 	form { display: flex; gap: 0.5rem; min-width: 280px; }
-	.success { color: #8fd19e; }
-	.error { color: #ff9d9d; }
+	.success { color: var(--color-success); }
+	.error { color: var(--color-error); }
 </style>

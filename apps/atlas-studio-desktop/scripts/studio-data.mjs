@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
@@ -46,10 +46,27 @@ if (!args.length || args.includes('--help') || args.includes('-h')) {
   process.exit(0);
 }
 
+function packageManagerEnv() {
+  const nvmVersionsDir = path.join(os.homedir(), '.nvm', 'versions', 'node');
+  const nvmBinDirs = existsSync(nvmVersionsDir)
+    ? readdirSync(nvmVersionsDir)
+        .map((version) => path.join(nvmVersionsDir, version, 'bin'))
+        .filter((binDir) => existsSync(path.join(binDir, 'pnpm')))
+        .sort()
+        .reverse()
+    : [];
+  const pathPrefix = [...nvmBinDirs, '/opt/homebrew/bin', '/usr/local/bin'].filter(Boolean);
+
+  return {
+    ...process.env,
+    PATH: [...pathPrefix, process.env.PATH || ''].join(':')
+  };
+}
+
 if (!existsSync(CLI_PATH)) {
   const build = spawnSync('pnpm', ['--filter', '@create-something/interaction-atlas-mcp', 'build'], {
     cwd: WORKSPACE_ROOT,
-    env: process.env,
+    env: packageManagerEnv(),
     stdio: 'inherit'
   });
 
@@ -61,7 +78,7 @@ if (!existsSync(CLI_PATH)) {
 const child = spawn('node', [CLI_PATH, ...args], {
   cwd: WORKSPACE_ROOT,
   env: {
-    ...process.env,
+    ...packageManagerEnv(),
     CREATE_SOMETHING_ATLAS_HOME: ATLAS_HOME
   },
   stdio: 'inherit'

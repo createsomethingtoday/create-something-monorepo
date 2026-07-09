@@ -1,3 +1,4 @@
+import type { SharedCanvasState } from '@create-something/canvas-kernel/shared-canvas-state';
 export type AtlasCanvasNodeKind = 'actor' | 'human' | 'ai' | 'system' | 'data' | 'constraint' | 'touchpoint';
 export type AtlasCanvasNodeStatus = 'run' | 'wait' | 'stop' | 'unknown';
 export type AtlasSessionActor = 'operator' | 'agent' | 'system';
@@ -194,6 +195,7 @@ export type AtlasSession = {
     productLinks?: AtlasGovernanceProductLink[];
     observations: AtlasObservation[];
     story?: AtlasStoryState;
+    canvasState?: SharedCanvasState;
     proposals?: AtlasWritebackProposal[];
     suggestions: AtlasSuggestion[];
 };

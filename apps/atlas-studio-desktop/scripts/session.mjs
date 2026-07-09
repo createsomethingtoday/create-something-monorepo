@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process';
+import { existsSync, readdirSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -27,9 +29,26 @@ if (process.argv.includes('--help') || process.argv.includes('-h')) {
   process.exit(0);
 }
 
+function packageManagerEnv() {
+  const nvmVersionsDir = path.join(os.homedir(), '.nvm', 'versions', 'node');
+  const nvmBinDirs = existsSync(nvmVersionsDir)
+    ? readdirSync(nvmVersionsDir)
+        .map((version) => path.join(nvmVersionsDir, version, 'bin'))
+        .filter((binDir) => existsSync(path.join(binDir, 'pnpm')))
+        .sort()
+        .reverse()
+    : [];
+  const pathPrefix = [...nvmBinDirs, '/opt/homebrew/bin', '/usr/local/bin'].filter(Boolean);
+
+  return {
+    ...process.env,
+    PATH: [...pathPrefix, process.env.PATH || ''].join(':')
+  };
+}
+
 const child = spawn('pnpm', ['--filter', '@create-something/atlas-studio-desktop', 'dev'], {
   cwd: WORKSPACE_ROOT,
-  env: process.env,
+  env: packageManagerEnv(),
   stdio: 'inherit'
 });
 

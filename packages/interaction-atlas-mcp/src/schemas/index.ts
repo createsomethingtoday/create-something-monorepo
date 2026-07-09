@@ -70,6 +70,30 @@ export const AtlasStudioSessionIdSchema = z.object({
   session_id: z.string().min(1)
 });
 
+const AtlasStudioCanvasViewportSchema = z.object({
+  x: z.number().optional(),
+  y: z.number().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  zoom: z.number().optional(),
+  limit: z.number().int().min(1).max(2000).optional(),
+  lod: z.enum(['detail', 'compact', 'skeleton']).optional()
+});
+
+export const AtlasStudioCanvasStateGetSchema = z.object({
+  session_id: z.string().min(1)
+});
+
+export const AtlasStudioCanvasStateSetSchema = z.object({
+  session_id: z.string().min(1),
+  lens: z.string().min(1).optional().describe('Canvas lens such as all, core, runtime, agent_plane, or judgment.'),
+  query: z.string().optional().describe('Search query applied to the visible canvas set.'),
+  selected_node_id: z.string().min(1).nullable().optional(),
+  focused_node_ids: z.array(z.string().min(1)).optional(),
+  story_step_id: z.string().min(1).nullable().optional(),
+  viewport: AtlasStudioCanvasViewportSchema.optional()
+});
+
 export const AtlasStudioObserveSchema = z.object({
   session_id: z.string().min(1),
   text: z.string().min(1),

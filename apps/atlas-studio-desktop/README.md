@@ -8,6 +8,25 @@ The desktop app starts the local Atlas Studio server internally, opens the canva
 ~/Library/Application Support/CREATE SOMETHING/Atlas Studio
 ```
 
+## Product Contract
+
+Atlas workflow state is database-layer state. The desktop app is a local-first
+client over the same Atlas sessions, API routes, MCP tools, and agent-managed
+app-data store; it is not a separate desktop-only vault.
+
+- **Database**: sessions, canvases, nodes, edges, bindings, proposals, story state, and receipts.
+- **Automation**: local API server plus MCP/CLI tools that create, inspect, heal, propose, and export the same records.
+- **Judgment**: proposal review, approval status, handoff notes, and policy-bound writeback decisions.
+
+The database layer must be comprehensive enough to operate the mapped workflow:
+each node is an executable unit with dependencies, owner or agent, binding
+health, proof coverage, run/wait/stop gate, and receipts. The UI is a map plus
+database console over that run contract; API/MCP/agent surfaces manage the same
+state.
+
+SvelteFlow is the current renderer for the workflow canvas. The durable contract
+is the Atlas graph/session record model exposed through API/MCP/agent surfaces.
+
 ## Codex Browser Portal
 
 For Codex-led client calls, prefer the browser portal. It keeps chat on the left and the
