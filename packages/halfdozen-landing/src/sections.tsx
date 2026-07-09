@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { assetDefaults, clients, keepUpItems, navItems, services, testimonials } from './content';
+import { assetDefaults, clientRows, clients, keepUpItems, navItems, services, testimonials } from './content';
 
 export type HalfDozenAssetProps = Partial<typeof assetDefaults>;
 
@@ -7,6 +7,59 @@ export type HeroProps = HalfDozenAssetProps & {
   eyebrow?: string;
   description?: string;
 };
+
+function useViewportVideo(restartOnEnter = false, threshold = 0.05) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const initialRect = video.getBoundingClientRect();
+    const initiallyVisibleHeight = Math.max(
+      0,
+      Math.min(initialRect.bottom, window.innerHeight) - Math.max(initialRect.top, 0)
+    );
+    let isIntersecting = initiallyVisibleHeight / Math.max(initialRect.height, 1) >= threshold;
+
+    const syncPlayback = () => {
+      const shouldPlay = !reduceMotion.matches && isIntersecting && document.visibilityState === 'visible';
+
+      if (reduceMotion.matches && video.readyState > 0) video.currentTime = 0;
+      if (restartOnEnter && !isIntersecting && video.readyState > 0 && video.currentTime !== 0) video.currentTime = 0;
+      if (shouldPlay && video.paused) {
+        void video.play().catch(() => undefined);
+      } else if (!shouldPlay && !video.paused) {
+        video.pause();
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const nextIntersecting = (entry?.intersectionRatio ?? 0) >= threshold;
+        if (restartOnEnter && nextIntersecting && !isIntersecting && video.readyState > 0) video.currentTime = 0;
+        isIntersecting = nextIntersecting;
+        syncPlayback();
+      },
+      { threshold }
+    );
+
+    observer.observe(video);
+    document.addEventListener('visibilitychange', syncPlayback);
+    reduceMotion.addEventListener('change', syncPlayback);
+    syncPlayback();
+
+    return () => {
+      observer.disconnect();
+      video.pause();
+      document.removeEventListener('visibilitychange', syncPlayback);
+      reduceMotion.removeEventListener('change', syncPlayback);
+    };
+  }, [restartOnEnter, threshold]);
+
+  return videoRef;
+}
 
 export function HalfDozenLogo({ inverted = false }: { inverted?: boolean }) {
   return (
@@ -45,58 +98,10 @@ export function HeroSection({
   eyebrow = 'A system is an interconnected set of elements that is coherently organized in a way that achieves something.',
   description = 'Half Dozen is a strategic solutions partner helping teams in live events build better systems and do more with less.'
 }: HeroProps) {
-  const sectionRef = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const motionVideo = section.querySelector<HTMLVideoElement>('.hd-hero__motion-video');
-    let frame = 0;
-
-    const setProgress = () => {
-      frame = 0;
-
-      if (reduceMotion.matches) {
-        motionVideo?.pause();
-        if (motionVideo) motionVideo.currentTime = 0;
-        section.style.setProperty('--hd-hero-motion-zoom', '1');
-        section.style.setProperty('--hd-hero-motion-y', '0px');
-        return;
-      }
-
-      void motionVideo?.play().catch(() => undefined);
-
-      const rect = section.getBoundingClientRect();
-      const travel = Math.max(window.innerHeight * 0.95, 680);
-      const progress = Math.min(1, Math.max(0, -rect.top / travel));
-      const eased = 1 - Math.pow(1 - progress, 3);
-
-      section.style.setProperty('--hd-hero-motion-zoom', (1 + eased * 0.16).toFixed(4));
-      section.style.setProperty('--hd-hero-motion-y', `${Math.round(eased * -54)}px`);
-    };
-
-    const schedule = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(setProgress);
-    };
-
-    setProgress();
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
-    reduceMotion.addEventListener('change', schedule);
-
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
-      reduceMotion.removeEventListener('change', schedule);
-    };
-  }, []);
+  const videoRef = useViewportVideo();
 
   return (
-    <section className="hd-section hd-hero" id="work" ref={sectionRef}>
+    <section className="hd-section hd-hero" id="work">
       <HalfDozenHeader />
       <div className="hd-hero__headline">
         <h1 className="hd-hero__title">
@@ -110,6 +115,7 @@ export function HeroSection({
         <span className="hd-hero__motion" aria-hidden="true">
           <video
             className="hd-hero__motion-video"
+            ref={videoRef}
             autoPlay
             muted
             loop
@@ -142,15 +148,40 @@ export function HeroSection({
   );
 }
 
-export function ClientsSection() {
+export function ClientsSection({
+  heroFullbleedMotion = assetDefaults.heroFullbleedMotion,
+  heroFullbleedPoster = assetDefaults.heroFullbleedPoster
+}: HalfDozenAssetProps) {
+  const videoRef = useViewportVideo(true, 0.25);
+
   return (
     <section className="hd-section hd-clients" id="clients">
+      <span className="hd-clients__motion" aria-hidden="true">
+        <video
+          className="hd-clients__motion-video"
+          ref={videoRef}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={heroFullbleedPoster}
+        >
+          <source src={heroFullbleedMotion} type="video/mp4" />
+        </video>
+      </span>
       <h2>Our Clients</h2>
       <div className="hd-client-cloud" aria-label="Client list">
-        {clients.map((client, index) => (
-          <span className="hd-client" key={client}>
-            {client}
-            <i className={`hd-client-chip hd-client-chip--${(index % 6) + 1}`} aria-hidden="true" />
+        {clientRows.map((row, rowIndex) => (
+          <span className="hd-client-row" key={`row-${rowIndex}`}>
+            {row.map((client) => (
+              <span className="hd-client" key={client}>
+                {client}
+                <i
+                  className={`hd-client-chip hd-client-chip--${(clients.indexOf(client) % 6) + 1}`}
+                  aria-hidden="true"
+                />
+              </span>
+            ))}
           </span>
         ))}
       </div>
@@ -290,7 +321,7 @@ export function HalfDozenLanding(props: HalfDozenAssetProps) {
   return (
     <main className="hd-page">
       <HeroSection {...props} />
-      <ClientsSection />
+      <ClientsSection {...props} />
       <LogoTicker />
       <DetailsSection />
       <ContentCtaSection />

@@ -1,11 +1,21 @@
 import { declareComponent } from '@webflow/react';
+import { props } from '@webflow/data-types';
 import { ClientsSection } from '../src/sections';
 import './globals';
 
 export default declareComponent(ClientsSection, {
   name: 'Half Dozen Clients',
-  description: 'Client cloud section from the Half Dozen landing page.',
+  description: 'Figma-authored scroll transition, client cloud, and motion-aware media playback.',
   group: 'Half Dozen',
   options: { ssr: true },
-  props: {}
+  props: {
+    heroFullbleedMotion: props.Text({
+      name: 'Full-bleed motion video URL',
+      defaultValue: '/assets/hero-fullbleed-motion.mp4'
+    }),
+    heroFullbleedPoster: props.Text({
+      name: 'Full-bleed motion poster URL',
+      defaultValue: '/assets/hero-fullbleed-poster.jpg'
+    })
+  }
 });

@@ -18,6 +18,15 @@ export const clients = [
   'Stereo Punks'
 ];
 
+export const clientRows = [
+  clients.slice(0, 3),
+  clients.slice(3, 5),
+  clients.slice(5, 7),
+  clients.slice(7, 10),
+  clients.slice(10, 12),
+  clients.slice(12, 15)
+];
+
 export const services = [
   {
     number: '01',
@@ -100,6 +109,8 @@ export const assetDefaults = {
   heroCard: '/assets/hero-motion-card.png',
   heroMotion: '/assets/hero-motion.mp4',
   heroMotionPoster: '/assets/hero-motion-poster.jpg',
+  heroFullbleedMotion: '/assets/hero-fullbleed-motion.mp4',
+  heroFullbleedPoster: '/assets/hero-fullbleed-poster.jpg',
   eventPhoto: '/assets/live-event-photo.png',
   testimonialPhoto: '/assets/testimonial-crowd.png'
 };
