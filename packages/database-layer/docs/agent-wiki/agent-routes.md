@@ -12,6 +12,32 @@ Use these routes before falling back to raw JSON scans.
 - Use this generated wiki for orientation, then verify canonical status in the JSON artifacts.
 - Use the active Linear issue for durable evidence when this lane is shared, delegated, long-running, production-bound, or handoff-sensitive.
 
+## Historical Context Route
+
+Use local agent history only when the question depends on earlier decisions,
+attempts, failures, regressions, or rationale. Keep the lookup read-only and
+disable refresh for the normal orientation path:
+
+```bash
+ctx status
+ctx search "<question>" --refresh off --verbose
+ctx show event <ctx-event-id> --window 5
+ctx locate event <ctx-event-id>
+```
+
+Inspect the cited event or session before relying on a search snippet. When
+history affects the answer, cite the provider, `ctx_session_id`,
+`ctx_event_id`, and source path or cursor when available. Verify current
+claims against the JSON artifacts, package source, Linear, or the owning live
+system; current authoritative evidence wins when history disagrees. If `ctx`
+is unavailable, state that historical search was unavailable and continue with
+the current authoritative sources.
+
+Treat `~/.ctx` and retrieved transcripts as private local history. Do not copy
+secrets, large transcript excerpts, or private paths into generated pages,
+Linear, receipts, or user-facing reports. History can explain or inform a
+proposal, but it cannot authorize mutation or satisfy a receipt contract.
+
 ## Important Records
 
 | Path | Substrate record | Atlas node | Tier | Surface |
@@ -57,5 +83,6 @@ Use these routes before falling back to raw JSON scans.
 
 - Stop before mutating Cloudflare, Atlas production, Dify Studio, Notion, client systems, or other third-party state.
 - Stop when generated markdown disagrees with topology, management, readiness, or Atlas artifacts.
+- Stop when agent history conflicts with a current source artifact; treat the history as stale until the owning source resolves the discrepancy.
 - Stop when a slice requires production approval and no owning promotion workflow is attached.
 - Stop when a question depends on customer priority, revenue priority, or roadmap truth not present in the artifacts.

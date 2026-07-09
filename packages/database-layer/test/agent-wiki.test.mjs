@@ -20,6 +20,9 @@ test('agent wiki is generated from current Atlas/Substrate artifacts', () => {
   assert.match(index, /\[data\/create-something-internal-topology\.json\]\(\.\.\/\.\.\/data\/create-something-internal-topology\.json\)/);
   assert.match(index, /Management resources/);
   assert.match(index, /Business recommendation lanes/);
+  assert.match(index, /Historical Context/);
+  assert.match(index, /private local history/);
+  assert.match(index, /not a source of truth or a\s+receipt/);
 
   const business = fs.readFileSync(path.join(wikiDir, 'business-recommendations.md'), 'utf8');
   assert.match(business, /Business Recommendations/);
@@ -29,6 +32,10 @@ test('agent wiki is generated from current Atlas/Substrate artifacts', () => {
   const routes = fs.readFileSync(path.join(wikiDir, 'agent-routes.md'), 'utf8');
   assert.doesNotMatch(routes, /CRE-1068/);
   assert.match(routes, /active Linear issue/);
+  assert.match(routes, /ctx search "<question>" --refresh off --verbose/);
+  assert.match(routes, /ctx show event <ctx-event-id> --window 5/);
+  assert.match(routes, /ctx_session_id/);
+  assert.match(routes, /ctx_event_id/);
   assert.match(routes, /Stop before mutating Cloudflare/);
 });
 
