@@ -1,7 +1,7 @@
 import React from 'react';
 import { TemplateGrid } from '../grid/TemplateGrid';
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 
 export interface TemplateSearchResultsProps {

@@ -1,4 +1,4 @@
-export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 export type TemplatePathKind =
   | 'auto'
@@ -117,6 +117,11 @@ export function normalizeTemplateSort(
     case 'price_desc':
     case 'price-desc':
       return 'price_desc';
+    case 'best_selling':
+    case 'best-selling':
+    case 'best_sellers':
+    case 'best-sellers':
+      return 'best_selling';
     case 'popular':
     case 'popularity-score':
     case 'popularity-score-desc':

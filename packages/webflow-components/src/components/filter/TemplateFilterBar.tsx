@@ -9,7 +9,7 @@ import React, {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 type SortDisplay = 'auto' | 'dropdown' | 'segmented';
 
@@ -146,6 +146,7 @@ const facetsPayloadCache = new Map<string, { timestamp: number; data: FacetsPayl
 
 const SORT_OPTIONS: Array<{ value: TemplateSort; label: string }> = [
   { value: 'popular', label: 'Popular' },
+  { value: 'best_selling', label: 'Best Sellers' },
   { value: 'newest', label: 'Newest' },
   { value: 'price_asc', label: 'Price: Low to High' },
   { value: 'price_desc', label: 'Price: High to Low' },
@@ -734,6 +735,11 @@ function normalizeSort(value: string | null, fallback: TemplateSort = 'popular')
     case 'price_desc':
     case 'price-desc':
       return 'price_desc';
+    case 'best_selling':
+    case 'best-selling':
+    case 'best_sellers':
+    case 'best-sellers':
+      return 'best_selling';
     case 'popular':
     case 'popularity-score':
     case 'popularity-score-desc':

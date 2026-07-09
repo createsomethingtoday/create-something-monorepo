@@ -3,7 +3,7 @@ import { TemplateSearchBox } from './TemplateSearchBox';
 import { TemplateSearchResults } from './TemplateSearchResults';
 import { TemplateSearchSidebar } from './TemplateSearchSidebar';
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 
 interface SearchFilters {
@@ -416,6 +416,7 @@ const SEARCH_PAGE_STYLES = `
 
 const SORT_LABELS: Record<TemplateSort, string> = {
   popular: 'Popular',
+  best_selling: 'Best Sellers',
   newest: 'Newest',
   price_asc: 'Price: Low to High',
   price_desc: 'Price: High to Low',
@@ -433,6 +434,11 @@ function normalizeSort(value: string | null | undefined, fallback: TemplateSort 
     case 'price_desc':
     case 'price-desc':
       return 'price_desc';
+    case 'best_selling':
+    case 'best-selling':
+    case 'best_sellers':
+    case 'best-sellers':
+      return 'best_selling';
     case 'popular':
     case 'popularity-score':
     case 'popularity-score-desc':

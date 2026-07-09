@@ -74,7 +74,7 @@ interface ApiResponse {
 
 // ─── Filter / route state ─────────────────────────────────────────────────────
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 
 interface FilterState {
@@ -267,6 +267,11 @@ function normalizeSort(value: string | null | undefined, fallback: TemplateSort 
     case 'price_desc':
     case 'price-desc':
       return 'price_desc';
+    case 'best_selling':
+    case 'best-selling':
+    case 'best_sellers':
+    case 'best-sellers':
+      return 'best_selling';
     case 'popular':
     case 'popularity-score':
     case 'popularity-score-desc':
