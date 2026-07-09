@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import type {
   AtlasCanvasNode,
@@ -13,6 +13,11 @@ import {
   type CanvasKernelProjection,
   type CanvasKernelViewport
 } from '@create-something/canvas-kernel';
+import {
+  LARGE_MAP_THRESHOLD,
+  largeTopologyLayoutNodes,
+  largeTopologySectionSummaries
+} from './layout.js';
 
 type FastNode = Pick<
   AtlasCanvasNode,
@@ -77,17 +82,21 @@ export function fastTopologyGraph(
   session: AtlasSession,
   visibleNodeIds: Set<string> | null
 ): FastTopologyGraph {
+  const projectedLargeMapNodes =
+    session.canvas.nodes.length >= LARGE_MAP_THRESHOLD
+      ? new Map(largeTopologyLayoutNodes(session).map((node) => [node.id, node]))
+      : null;
   const nodes = session.canvas.nodes
     .filter((node) => !visibleNodeIds || visibleNodeIds.has(node.id))
     .map((node) => ({
-      height: node.height,
+      height: projectedLargeMapNodes?.get(node.id)?.height ?? node.height,
       id: node.id,
       kind: node.kind,
       label: node.label,
       status: node.status,
-      width: node.width,
-      x: node.x,
-      y: node.y
+      width: projectedLargeMapNodes?.get(node.id)?.width ?? node.width,
+      x: projectedLargeMapNodes?.get(node.id)?.x ?? node.x,
+      y: projectedLargeMapNodes?.get(node.id)?.y ?? node.y
     }));
   const nodeIds = new Set(nodes.map((node) => node.id));
   const edges = session.canvas.edges
@@ -111,19 +120,54 @@ export function FastTopologyCanvas({
     () => fastTopologyGraph(session, visibleNodeIds),
     [session, visibleNodeIds]
   );
+  const [viewport, setViewport] = useState<CanvasKernelViewport>({ x: 0, y: 0, zoom: 1 });
+  const sectionSummaries = useMemo(
+    () =>
+      session.canvas.nodes.length >= LARGE_MAP_THRESHOLD && !visibleNodeIds
+        ? largeTopologySectionSummaries(session)
+        : [],
+    [session, visibleNodeIds]
+  );
+  const handleViewportChange = useCallback(
+    (next: CanvasKernelViewport) => {
+      setViewport(next);
+      onViewportChange?.(next);
+    },
+    [onViewportChange]
+  );
 
   return (
-    <CanvasKernel
-      activeNodeIds={activeNodeIds}
-      ariaLabel="CREATE SOMETHING canvas"
-      fitRequest={fitRequest}
-      focusRequest={focusRequest}
-      onNodeSelect={onNodeSelect}
-      onPaneClick={onPaneClick}
-      onViewportChange={onViewportChange}
-      palette={ATLAS_CANVAS_PALETTE}
-      projection={projection}
-      selectedNodeId={selectedNodeId}
-    />
+    <>
+      <CanvasKernel
+        activeNodeIds={activeNodeIds}
+        ariaLabel="CREATE SOMETHING canvas"
+        fitRequest={fitRequest}
+        focusRequest={focusRequest}
+        onNodeSelect={onNodeSelect}
+        onPaneClick={onPaneClick}
+        onViewportChange={handleViewportChange}
+        palette={ATLAS_CANVAS_PALETTE}
+        projection={projection}
+        selectedNodeId={selectedNodeId}
+      />
+      {sectionSummaries.length ? (
+        <div aria-hidden="true" className="large-topology-section-labels">
+          {sectionSummaries.map((section) => (
+            <span
+              className={`large-topology-section-label section-${section.key}`}
+              key={section.key}
+              style={{
+                left: section.x * viewport.zoom + viewport.x,
+                minWidth: Math.max(116, section.width * viewport.zoom),
+                top: (section.y - 38) * viewport.zoom + viewport.y
+              }}
+            >
+              <strong>{section.label}</strong>
+              <em>{section.count}</em>
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </>
   );
 }

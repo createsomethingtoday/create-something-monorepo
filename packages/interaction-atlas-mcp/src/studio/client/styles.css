@@ -1347,6 +1347,58 @@ input::placeholder {
   pointer-events: none;
 }
 
+.large-topology-section-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.large-topology-section-label {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  max-width: 18rem;
+  border: 0.5px solid rgba(206, 206, 198, 0.42);
+  border-radius: 4px;
+  background: linear-gradient(rgba(206, 206, 198, 0.16) 0 100%), rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 22px rgba(10, 14, 25, 0.035);
+  color: rgba(10, 14, 25, 0.78);
+  padding: 0.22rem 0.34rem;
+  transform: translateY(-0.16rem);
+  white-space: nowrap;
+}
+
+.large-topology-section-label strong {
+  overflow: hidden;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.large-topology-section-label em {
+  flex: none;
+  color: var(--muted);
+  font-size: 0.6rem;
+  font-style: normal;
+  line-height: 1;
+}
+
+.large-topology-section-label.section-runtime,
+.large-topology-section-label.section-agent_plane {
+  border-color: rgba(10, 14, 25, 0.16);
+}
+
+.large-topology-section-label.section-judgment {
+  border-color: rgba(30, 60, 44, 0.18);
+}
+
 .fast-node-label {
   position: absolute;
   display: block;

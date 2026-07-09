@@ -86,7 +86,16 @@ type GraphVertexBuffers = {
 const FAST_MIN_ZOOM = 0.08;
 const FAST_MAX_ZOOM = 1.5;
 const FAST_LABEL_LIMIT = 180;
+const FAST_OVERVIEW_LABEL_LIMIT = 48;
+const FAST_OVERVIEW_NODE_THRESHOLD = 220;
+const FAST_OVERVIEW_ZOOM = 0.2;
 const FAST_VIEW_PADDING = 84;
+
+export type CanvasKernelDrawPlan = {
+  labelLimit: number;
+  renderEdges: boolean;
+  mode: 'overview' | 'map';
+};
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -127,6 +136,19 @@ function viewportForNodes(
     x: width / 2 - centerX * zoom,
     y: height / 2 - centerY * zoom,
     zoom
+  };
+}
+
+export function canvasKernelDrawPlan(
+  nodeCount: number,
+  edgeCount: number,
+  zoom: number
+): CanvasKernelDrawPlan {
+  const overview = nodeCount >= FAST_OVERVIEW_NODE_THRESHOLD && zoom < FAST_OVERVIEW_ZOOM;
+  return {
+    labelLimit: overview ? FAST_OVERVIEW_LABEL_LIMIT : FAST_LABEL_LIMIT,
+    mode: overview ? 'overview' : 'map',
+    renderEdges: !overview || edgeCount <= nodeCount
   };
 }
 
@@ -198,24 +220,39 @@ function graphVertexBuffers(
   activeNodeIds: Set<string>,
   palette: CanvasKernelPalette,
   width: number,
-  height: number
+  height: number,
+  drawPlan: CanvasKernelDrawPlan
 ): GraphVertexBuffers {
   const nodeById = new Map(projection.nodes.map((node) => [node.id, node]));
   const edgeVertices: number[] = [];
-  for (const edge of projection.edges) {
-    const source = nodeById.get(edge.source);
-    const target = nodeById.get(edge.target);
-    if (!source || !target) continue;
-    pushVertex(
-      edgeVertices,
-      clipPoint(source.x + source.width / 2, source.y + source.height / 2, viewport, width, height),
-      palette.edge
-    );
-    pushVertex(
-      edgeVertices,
-      clipPoint(target.x + target.width / 2, target.y + target.height / 2, viewport, width, height),
-      palette.edge
-    );
+  if (drawPlan.renderEdges) {
+    for (const edge of projection.edges) {
+      const source = nodeById.get(edge.source);
+      const target = nodeById.get(edge.target);
+      if (!source || !target) continue;
+      pushVertex(
+        edgeVertices,
+        clipPoint(
+          source.x + source.width / 2,
+          source.y + source.height / 2,
+          viewport,
+          width,
+          height
+        ),
+        palette.edge
+      );
+      pushVertex(
+        edgeVertices,
+        clipPoint(
+          target.x + target.width / 2,
+          target.y + target.height / 2,
+          viewport,
+          width,
+          height
+        ),
+        palette.edge
+      );
+    }
   }
 
   const nodeRings: number[] = [];
@@ -409,7 +446,8 @@ function renderGraphWebgpu(
   activeNodeIds: Set<string>,
   palette: CanvasKernelPalette,
   width: number,
-  height: number
+  height: number,
+  drawPlan: CanvasKernelDrawPlan
 ): void {
   const { edgeVertices, nodeFaces, nodeRings, nodeStripes } = graphVertexBuffers(
     projection,
@@ -418,7 +456,8 @@ function renderGraphWebgpu(
     activeNodeIds,
     palette,
     width,
-    height
+    height,
+    drawPlan
   );
   const context = state.context as { getCurrentTexture: () => { createView: () => unknown } };
   const device = state.device as {
@@ -464,7 +503,8 @@ function renderGraphCanvas2d(
   activeNodeIds: Set<string>,
   palette: CanvasKernelPalette,
   width: number,
-  height: number
+  height: number,
+  drawPlan: CanvasKernelDrawPlan
 ): void {
   const canvas = context.canvas;
   const pixelRatio = Math.max(1, canvas.width / Math.max(1, width));
@@ -475,17 +515,25 @@ function renderGraphCanvas2d(
   context.fillRect(0, 0, width, height);
 
   const nodeById = new Map(projection.nodes.map((node) => [node.id, node]));
-  context.strokeStyle = colorToCss(palette.edge);
-  context.lineWidth = 1;
-  context.beginPath();
-  for (const edge of projection.edges) {
-    const source = nodeById.get(edge.source);
-    const target = nodeById.get(edge.target);
-    if (!source || !target) continue;
-    context.moveTo((source.x + source.width / 2) * viewport.zoom + viewport.x, (source.y + source.height / 2) * viewport.zoom + viewport.y);
-    context.lineTo((target.x + target.width / 2) * viewport.zoom + viewport.x, (target.y + target.height / 2) * viewport.zoom + viewport.y);
+  if (drawPlan.renderEdges) {
+    context.strokeStyle = colorToCss(palette.edge);
+    context.lineWidth = 1;
+    context.beginPath();
+    for (const edge of projection.edges) {
+      const source = nodeById.get(edge.source);
+      const target = nodeById.get(edge.target);
+      if (!source || !target) continue;
+      context.moveTo(
+        (source.x + source.width / 2) * viewport.zoom + viewport.x,
+        (source.y + source.height / 2) * viewport.zoom + viewport.y
+      );
+      context.lineTo(
+        (target.x + target.width / 2) * viewport.zoom + viewport.x,
+        (target.y + target.height / 2) * viewport.zoom + viewport.y
+      );
+    }
+    context.stroke();
   }
-  context.stroke();
 
   for (const node of projection.nodes) {
     const left = node.x * viewport.zoom + viewport.x;
@@ -561,6 +609,10 @@ export function CanvasKernel({
   const [size, setSize] = useState({ height: 1, width: 1 });
   const [viewport, setViewport] = useState<CanvasKernelViewport>({ x: 0, y: 0, zoom: 1 });
   const [renderBackend, setRenderBackend] = useState<CanvasKernelRenderBackend>('unavailable');
+  const drawPlan = useMemo(
+    () => canvasKernelDrawPlan(projection.nodes.length, projection.edges.length, viewport.zoom),
+    [projection.edges.length, projection.nodes.length, viewport.zoom]
+  );
   const projectionKey = useMemo(
     () => `${projection.nodes.map((node) => node.id).join('|')}::${projection.edges.length}`,
     [projection]
@@ -615,7 +667,17 @@ export function CanvasKernel({
         return;
       }
       canvas2dRef.current = context;
-      renderGraphCanvas2d(context, projection, viewport, selectedNodeId, activeNodeIds, palette, size.width, size.height);
+      renderGraphCanvas2d(
+        context,
+        projection,
+        viewport,
+        selectedNodeId,
+        activeNodeIds,
+        palette,
+        size.width,
+        size.height,
+        drawPlan
+      );
       setRenderBackend('canvas-2d');
     };
 
@@ -625,7 +687,17 @@ export function CanvasKernel({
       if (webgpu) {
         webgpuRef.current = webgpu;
         try {
-          renderGraphWebgpu(webgpu, projection, viewport, selectedNodeId, activeNodeIds, palette, size.width, size.height);
+          renderGraphWebgpu(
+            webgpu,
+            projection,
+            viewport,
+            selectedNodeId,
+            activeNodeIds,
+            palette,
+            size.width,
+            size.height,
+            drawPlan
+          );
           setRenderBackend('webgpu');
           return;
         } catch {
@@ -639,7 +711,7 @@ export function CanvasKernel({
     return () => {
       cancelled = true;
     };
-  }, [activeNodeIds, palette, projection, selectedNodeId, size.height, size.width, viewport]);
+  }, [activeNodeIds, drawPlan, palette, projection, selectedNodeId, size.height, size.width, viewport]);
 
   const onPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -708,8 +780,8 @@ export function CanvasKernel({
     }
     return projection.nodes
       .filter((node) => viewport.zoom > 0.22 || node.id === selectedNodeId || activeNodeIds.has(node.id))
-      .slice(0, FAST_LABEL_LIMIT);
-  }, [activeNodeIds, projection.nodes, selectedNodeId, viewport.zoom]);
+      .slice(0, drawPlan.labelLimit);
+  }, [activeNodeIds, drawPlan.labelLimit, projection.nodes, selectedNodeId, viewport.zoom]);
 
   return (
     <div
@@ -717,6 +789,7 @@ export function CanvasKernel({
       className="fast-topology-canvas"
       data-atlas-renderer="canvas-kernel"
       data-edge-count={projection.edges.length}
+      data-render-mode={drawPlan.mode}
       data-node-count={projection.nodes.length}
       data-render-backend={renderBackend}
       data-viewport={`${Math.round(viewport.x)},${Math.round(viewport.y)},${viewport.zoom.toFixed(4)}`}
