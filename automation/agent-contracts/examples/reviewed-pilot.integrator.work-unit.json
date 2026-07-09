@@ -14,7 +14,7 @@
     { "command": "node --test scripts/test/reviewed-agent-loop-pilot.test.mjs", "evidence": "The reviewed pilot CLI tests pass after integration." },
     { "command": "git diff --check", "evidence": "The integrated patch has no whitespace errors." }
   ],
-  "evidence": { "target": "Linear CRE-1154 comment", "required_artifacts": ["integration decision", "commands and exit codes", "final changed paths", "token and time metrics"] },
+  "evidence": { "target": "Aggregate reviewed-run receipt for the supervisor-owned Linear CRE-1154 comment", "required_artifacts": ["integration decision", "commands and exit codes", "final changed paths", "token and time metrics"] },
   "stop_conditions": ["Stop before applying speculative findings.", "Stop before merge, deployment, batch, or daemon promotion."],
   "promotion_gate": { "batch_agents": false, "production_mutation": false, "merge_or_deploy": false }
 }

@@ -47,6 +47,28 @@ export async function repository_changed_paths(cwd) {
   return [...new Set([...split_zero(tracked), ...split_zero(untracked)])].sort();
 }
 
+async function repository_change_snapshot(cwd) {
+  const paths = await repository_changed_paths(cwd);
+  const entries = await Promise.all(paths.map(async (path) => {
+    const hash = createHash('sha256');
+    hash.update(await git(cwd, ['diff', '--binary', 'HEAD', '--', path]));
+    try {
+      hash.update(await readFile(resolve(cwd, path)));
+    } catch (error) {
+      if (error?.code !== 'ENOENT') throw error;
+      hash.update('<deleted>');
+    }
+    return [path, hash.digest('hex')];
+  }));
+  return new Map(entries);
+}
+
+function changed_paths_between(before, after) {
+  return [...new Set([...before.keys(), ...after.keys()])]
+    .filter((path) => before.get(path) !== after.get(path))
+    .sort();
+}
+
 async function run_command(command, cwd, env) {
   const started = Date.now();
   const child = spawn('bash', ['-lc', command], {
@@ -115,6 +137,7 @@ function stage_prompt(issue, role, work_unit, prior_receipts) {
       : role === 'integrator'
         ? 'Apply only actionable reviewer findings, keep the patch scoped, and leave the workspace ready for the declared verification.'
         : 'Implement the smallest defensible change required by the issue and work-unit contract.',
+    'Do not mutate Linear or any other external system. Evidence targets describe supervisor handoff, not stage-level write permission.',
     'Finish with a concise evidence summary. Do not claim promotion or deployment authority.',
   ].filter(Boolean).join('\n\n');
 }
@@ -134,9 +157,9 @@ function sandbox_config(config, sandbox) {
 
 export function create_codex_stage_executor(options) {
   const { issue, workspace_path, config, logger, env = process.env } = options;
-  const baseline_paths = repository_changed_paths(workspace_path);
   return async function execute_stage({ role, run_id, work_unit, sandbox, prior_receipts }) {
     const started_at = Date.now();
+    const before_changes = await repository_change_snapshot(workspace_path);
     const usage = { input: 0, output: 0, total: 0 };
     let human_intervention_count = 0;
     const client = new CodexAppServerClient({
@@ -184,9 +207,8 @@ export function create_codex_stage_executor(options) {
       });
     }
     const passed = commands.every((entry) => entry.exit_code === 0);
-    const initial_paths = await baseline_paths;
-    const current_paths = await repository_changed_paths(workspace_path);
-    const stage_paths = current_paths.filter((path) => !initial_paths.includes(path));
+    const after_changes = await repository_change_snapshot(workspace_path);
+    const stage_paths = changed_paths_between(before_changes, after_changes);
     return {
       schema_version: 'multi-agent-evidence-receipt.v1',
       run_id,
@@ -195,7 +217,7 @@ export function create_codex_stage_executor(options) {
       linear: { issue: issue.identifier },
       status: passed ? 'passed' : 'failed',
       commands,
-      changed_paths: role === 'reviewer' ? [] : stage_paths,
+      changed_paths: stage_paths,
       evidence: final_message || `${role} stage completed without a final message.`,
       next_decision: passed
         ? `${role} stage may hand off to the next reviewed-loop decision.`

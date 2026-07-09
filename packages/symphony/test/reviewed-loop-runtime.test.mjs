@@ -37,7 +37,7 @@ function reviewerWorkUnit() {
   };
 }
 
-test('Codex stage executor honors read-only sandbox and returns verified metrics', async (t) => {
+test('Codex stage executor enforces read-only review and stage-specific receipts', async (t) => {
   const workspace = await mkdtemp(join(tmpdir(), 'reviewed-loop-runtime-'));
   const logPath = join(tmpdir(), `reviewed-loop-runtime-${process.pid}-${Date.now()}.json`);
   const rolloutPath = join(tmpdir(), `reviewed-loop-runtime-rollout-${process.pid}-${Date.now()}.jsonl`);
@@ -83,6 +83,9 @@ rl.on('line', (line) => {
   if (message.method === 'thread/start') return send({ id: message.id, result: { thread: { id: 'thread-reviewer' } } });
   if (message.method === 'thread/read') return send({ id: message.id, result: { thread: { path: process.env.FAKE_CODEX_ROLLOUT } } });
   if (message.method === 'turn/start') {
+    const role = message.params.title.split(' ').at(-1);
+    if (process.env.FAKE_CODEX_MUTATE_ROLE === role) appendFileSync(role + '.txt', role + '\\n');
+    appendFileSync(process.env.FAKE_CODEX_LOG, JSON.stringify({ prompt: message.params.input[0].text }) + '\\n');
     appendFileSync(process.env.FAKE_CODEX_LOG, JSON.stringify({ sandbox: message.params.sandboxPolicy }) + '\\n');
     send({ id: message.id, result: { turn: { id: 'turn-reviewer' } } });
     if (process.env.FAKE_CODEX_FAIL === '1') {
@@ -139,7 +142,8 @@ rl.on('line', (line) => {
   ]);
   assert.deepEqual(receipt.metrics.tokens, { input: 12, output: 8, total: 20 });
   const protocolLog = (await readFile(logPath, 'utf8')).trim().split('\n').map(JSON.parse);
-  assert.deepEqual(protocolLog, [
+  assert.match(protocolLog[0].prompt, /Do not mutate Linear or any other external system/u);
+  assert.deepEqual(protocolLog.slice(1), [
     { sandbox: { type: 'readOnly' } },
     { approval: { decision: 'decline' } },
   ]);
@@ -166,4 +170,45 @@ rl.on('line', (line) => {
     }),
     (error) => error?.code === 'turn_failed' && error.message.includes('model unavailable'),
   );
+
+  const executeStages = create_codex_stage_executor({
+    issue: { identifier: 'CRE-1154', title: 'Pilot reviewed loop', description: 'Bounded test.' },
+    workspace_path: workspace,
+    config,
+    logger: new MemoryLogger(),
+    env: {
+      ...process.env,
+      FAKE_CODEX_LOG: logPath,
+      FAKE_CODEX_MUTATE_ROLE: 'worker',
+      FAKE_CODEX_ROLLOUT: rolloutPath,
+    },
+  });
+  const workerUnit = {
+    ...unit,
+    id: 'CRE-1154-worker',
+    role: 'worker',
+    locks: { ...unit.locks, mode: 'write' },
+  };
+  const integratorUnit = {
+    ...workerUnit,
+    id: 'CRE-1154-integrator',
+    role: 'integrator',
+  };
+  const workerReceipt = await executeStages({
+    role: 'worker',
+    run_id: 'CRE-1154-reviewed-single-pass-stage-paths',
+    work_unit: workerUnit,
+    sandbox: 'workspace-write',
+    prior_receipts: [],
+  });
+  const integratorReceipt = await executeStages({
+    role: 'integrator',
+    run_id: 'CRE-1154-reviewed-single-pass-stage-paths',
+    work_unit: integratorUnit,
+    sandbox: 'workspace-write',
+    prior_receipts: [workerReceipt],
+  });
+
+  assert.deepEqual(workerReceipt.changed_paths, ['worker.txt']);
+  assert.deepEqual(integratorReceipt.changed_paths, []);
 });

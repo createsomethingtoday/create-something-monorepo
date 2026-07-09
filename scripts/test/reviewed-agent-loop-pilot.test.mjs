@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
@@ -42,4 +43,17 @@ test('reviewed pilot CLI applies an explicit Codex app-server command override',
     },
   );
   assert.equal(applyReviewedCodexCommandOverride(config, {}).codex.command, 'codex app-server');
+});
+
+test('reviewer contract permits scoped semantic patch inspection without write access', async () => {
+  const contract = JSON.parse(await readFile(
+    'automation/agent-contracts/examples/reviewed-pilot.reviewer.work-unit.json',
+    'utf8',
+  ));
+
+  assert.equal(contract.locks.mode, 'read');
+  assert.match(contract.evidence.target, /supervisor-owned Linear CRE-1154 comment/u);
+  assert.ok(contract.allowed_commands.includes(
+    'git diff HEAD -- packages/symphony scripts/reviewed-agent-loop-pilot.mjs scripts/test/reviewed-agent-loop-pilot.test.mjs automation/agent-contracts package.json',
+  ));
 });
