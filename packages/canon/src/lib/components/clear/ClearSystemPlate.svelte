@@ -225,7 +225,22 @@
 				</defs>
 				<rect width="100" height="80" fill="url(#clear-system-plate-grid)" opacity="0.5" />
 				<rect class="clear-system-plate__viewport" x="11" y="18" width="78" height="51" rx="1.1" />
-				<path class="clear-system-plate__plane" d="M 13 60 C 30 52 47 51 61 57 S 81 63 88 55" />
+				<g class="clear-system-plate__instrumentation" aria-hidden="true">
+					<path d="M 15 20 H 27" />
+					<path d="M 15 20 V 27" />
+					<path d="M 83 67 H 70" />
+					<path d="M 83 67 V 60" />
+					<path d="M 14.5 57 H 18.5" />
+					<path d="M 14.5 45 H 18.5" />
+					<path d="M 14.5 33 H 18.5" />
+					<path d="M 31 68 V 64" />
+					<path d="M 47 68 V 64" />
+					<path d="M 63 68 V 64" />
+					<path d="M 79 68 V 64" />
+					<text x="15" y="17.2">scan window / 04</text>
+					<text x="69.5" y="72.6">frame 016ms</text>
+				</g>
+				<path class="clear-system-plate__plane" d="M 12 61 C 27 53 43 52 58 56 S 75 62 88 55" />
 				<g class="clear-system-plate__particles" aria-hidden="true">
 					{#each graphParticles as particle}
 						<circle cx={particle[0]} cy={particle[1]} r={particle[2]} />
@@ -520,43 +535,55 @@
 	}
 
 	.clear-system-plate__viewport {
-		fill: rgb(255 255 255 / 0.24);
-		stroke: rgb(10 14 25 / 0.16);
+		fill: rgb(255 255 255 / 0.18);
+		stroke: rgb(10 14 25 / 0.2);
 		stroke-width: 0.18;
+	}
+
+	.clear-system-plate__instrumentation path {
+		fill: none;
+		stroke: rgb(10 14 25 / 0.22);
+		stroke-width: 0.16;
+		stroke-linecap: square;
+	}
+
+	.clear-system-plate__instrumentation text {
+		fill: rgb(10 14 25 / 0.48);
+		font-size: 1.28px;
 	}
 
 	.clear-system-plate__plane {
 		fill: none;
-		stroke: rgb(0 72 255 / 0.13);
-		stroke-width: 5.8;
+		stroke: rgb(0 72 255 / 0.09);
+		stroke-width: 5.4;
 		stroke-linecap: round;
 	}
 
 	.clear-system-plate__particles circle {
-		fill: rgb(10 14 25 / 0.26);
+		fill: rgb(10 14 25 / 0.22);
 	}
 
 	.clear-system-plate__edge {
 		fill: none;
-		stroke: rgb(10 14 25 / 0.28);
-		stroke-width: 0.4;
+		stroke: rgb(10 14 25 / 0.24);
+		stroke-width: 0.36;
 		stroke-linecap: round;
 		stroke-linejoin: round;
 	}
 
 	.clear-system-plate__edge--signal {
-		stroke: var(--color-clear-cobalt, #0048ff);
-		stroke-width: 0.48;
+		stroke: rgb(0 72 255 / 0.78);
+		stroke-width: 0.44;
 	}
 
 	.clear-system-plate__edge--success {
-		stroke: #2d8f43;
-		stroke-width: 0.46;
+		stroke: rgb(45 143 67 / 0.7);
+		stroke-width: 0.42;
 	}
 
 	.clear-system-plate__edge--warning {
-		stroke: #b07100;
-		stroke-width: 0.46;
+		stroke: rgb(176 113 0 / 0.68);
+		stroke-width: 0.42;
 	}
 
 	.clear-system-plate__node-halo {
@@ -583,18 +610,18 @@
 	}
 
 	.clear-system-plate__node--signal {
-		fill: var(--color-clear-cobalt, #0048ff);
-		stroke: var(--color-clear-cobalt, #0048ff);
+		fill: rgb(0 72 255 / 0.92);
+		stroke: rgb(0 72 255 / 0.92);
 	}
 
 	.clear-system-plate__node--success {
-		fill: #2d8f43;
-		stroke: #2d8f43;
+		fill: rgb(45 143 67 / 0.92);
+		stroke: rgb(45 143 67 / 0.92);
 	}
 
 	.clear-system-plate__node--warning {
-		fill: #d79300;
-		stroke: #b07100;
+		fill: rgb(215 147 0 / 0.9);
+		stroke: rgb(176 113 0 / 0.9);
 	}
 
 	.clear-system-plate__node--active {
