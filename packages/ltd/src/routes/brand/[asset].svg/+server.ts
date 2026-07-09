@@ -17,14 +17,7 @@ const CUBE_OPACITY = {
 
 const WORDMARK_DEFS = `<defs>
     <style>
-      @font-face {
-        font-family: 'Wordmark';
-        src:
-          url('https://ona.com/fonts/ABCDiatype-Bold.woff2') format('woff2'),
-          url('https://ona.com/fonts/ABCDiatype-Bold.woff') format('woff');
-        font-weight: 700;
-      }
-      .wm { font-family: 'Wordmark', 'ABC Diatype', system-ui, sans-serif; font-weight: 700; letter-spacing: 0; }
+      .wm { font-family: Arial, Helvetica, sans-serif; font-weight: 700; letter-spacing: 0; }
     </style>
   </defs>`;
 
@@ -101,7 +94,7 @@ const assets: Record<string, (params: { light?: boolean }) => string> = {
   <path d="${CUBE_PATHS.right}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.right}"/>
 </svg>`,
 
-	// Wordmark white (for dark backgrounds) - text with embedded font
+	// Wordmark white (for dark backgrounds) - local/system font stack
 	'wordmark-white': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 32">
   ${WORDMARK_DEFS}
   <text x="0" y="24" class="wm" fill="#FFFFFF" font-size="26">CREATE SOMETHING</text>

@@ -86,7 +86,7 @@
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="ltd" localItems={quickAccessItems} />
 
-<div class="min-h-screen flex flex-col ltd-clear-shell">
+<div class="min-h-screen flex flex-col ltd-clear-shell property-performance">
 	{#if !isCanonRoute}
 		<Navigation
 			logo="CREATE SOMETHING"

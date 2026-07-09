@@ -63,9 +63,9 @@ AI-assisted task when present, human judgment point, stop condition, and receipt
 surface. Publish raw SVG/Atlas output only when it meets the same quality bar as
 the generated export.
 
-Style: Canon Clear image language. Use Ona.com as the communication foundation:
-plain claim, calm hierarchy, compact proof, governed execution, visible evidence,
-and restrained action states. Translate that foundation into CREATE SOMETHING artifact language: system maps, MCP boundaries, policy gates, receipts,
+Style: CREATE SOMETHING Performance Lab image language:
+plain claim, decisive hierarchy, compact proof, governed execution, visible evidence,
+readiness states, and restrained action states. Translate that foundation into CREATE SOMETHING artifact language: system maps, MCP boundaries, policy gates, receipts,
 validation proof, owners, and handoff state. Prefer porcelain `#f9f9f9`, white
 panels, onyx `#0a0e19`, quiet grey `#636363`, thin `#e1e1e1` borders, 4-8px
 radii, compact proof panels, receipt grids, state rows, decision panels, and a

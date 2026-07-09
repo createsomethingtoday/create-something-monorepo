@@ -82,9 +82,9 @@
         the framework after the outcome is clear.
       </p>
       <p class="recognition-intro">
-        The Ona-derived UI direction supports the same voice rule: use fewer claims, clearer
-        states, visible proof, and direct next actions. Do not copy Ona's brand; copy the discipline
-        of making the work obvious.
+        The Performance Lab UI direction supports the same voice rule: use fewer claims, clearer
+        states, visible proof, readiness cues, and direct next actions. Do not copy third-party
+        brands; use the discipline of making the work obvious.
       </p>
 
       <div class="recognition-box p-6 my-8">

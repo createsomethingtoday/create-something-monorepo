@@ -50,10 +50,10 @@ published: true
 ## Clear Communication Navigation
 
 `Navigation` and `Footer` both accept `visualStyle?: 'classic' | 'clear'`. The default is
-`classic` to preserve existing callers while the Ona-derived clear system rolls out.
+`classic` to preserve existing callers while the Performance Lab clear system rolls out.
 
 Use `clear` when the page must serve a buyer or operator who needs immediate orientation before
-brand atmosphere. The clear style follows the Ona-derived communication layer: frosted light shell,
+brand atmosphere. The clear style follows the Performance Lab communication layer: frosted light shell,
 compact readable links, crisp dividers, restrained active states, direct dark CTA, and no decorative
 navigation complexity.
 

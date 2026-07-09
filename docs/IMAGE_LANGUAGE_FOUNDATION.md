@@ -160,15 +160,18 @@ TASTE packet: <3 to 7 approved references by title/source and the specific
 communication pattern to borrow>. Use the references for judgment only. Do not
 copy source assets, brand marks, fonts, layouts, campaign language, or images.
 
-Style: Canon Clear image language. Ona is the communication reference; CREATE
-SOMETHING owns the artifact language. Use a calm proof surface with a plain
-claim, compact evidence, governed action states, and a visible handoff. Prefer
+Style: CREATE SOMETHING Performance Lab image language on Canon Clear. The
+visual should make delegated work feel trained, tested, governed, and proven
+before it runs. CREATE SOMETHING owns the artifact language. Use a calm proof surface with a plain claim, compact
+evidence, governed action states, readiness cues, and a visible handoff. Prefer
 porcelain `#f9f9f9`, white panels, onyx `#0a0e19`, quiet grey `#636363`, thin
 `#e1e1e1` borders, 4-8px radii, and restrained semantic accents: ocean
-`#0048ff`, moss `#1e3c2c`, and stop `#c41e3a`. Build the composition from
+`#0048ff`, moss `#1e3c2c`, stop `#c41e3a`, and performance pressure only when
+it marks readiness, stress, or a decision point. Build the composition from
 Clear-style receipts, state rows, decision panels, artifact cards, policy gates,
-owners, and proof rails. Use the isometric cube as a small system signature only
-when useful. The image should feel mapped, governed, validated, and handed off.
+owners, tests, and proof rails. Use the isometric cube as a small system
+signature only when useful. The image should feel mapped, tested, governed,
+validated, and handed off.
 
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains, stock
 photography, generic premium desk scenes, random decorative objects, fake

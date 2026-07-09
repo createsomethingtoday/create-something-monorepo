@@ -22,7 +22,7 @@ All text in the Canon system meets WCAG AA contrast requirements. The minimum ra
 
 ### Clear Proof and Status Surfaces
 
-Ona-derived clear surfaces often show workflow state, receipts, validation gates, and approval
+Performance Lab clear surfaces often show workflow state, receipts, validation gates, and approval
 boundaries. Do not communicate those states with color alone.
 
 Every proof or status surface must include:

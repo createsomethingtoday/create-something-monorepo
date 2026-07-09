@@ -1,5 +1,30 @@
 <script lang="ts">
-	import { SEO } from '@create-something/canon';
+	import {
+		PerformanceLabBand,
+		SEO,
+		type PerformanceLabMetric
+	} from '@create-something/canon';
+
+	const standardReadiness: PerformanceLabMetric[] = [
+		{
+			label: 'Clarity',
+			value: 'Visible',
+			detail: 'Offer, audience, trust signal, and next action resolve in the first viewport.',
+			tone: 'signal'
+		},
+		{
+			label: 'Proof',
+			value: 'Attached',
+			detail: 'Every material claim points to an artifact, result, source, or operating boundary.',
+			tone: 'growth'
+		},
+		{
+			label: 'Pressure',
+			value: 'Reviewed',
+			detail: 'Mobile, failure, permission, and recovery states are checked before release.',
+			tone: 'pressure'
+		}
+	];
 </script>
 
 <SEO
@@ -23,6 +48,13 @@
 		</p>
 	</div>
 </section>
+
+<PerformanceLabBand
+	title="Standards must survive contact."
+	description="The system is ready only when the rule is visible, the proof is attached, and the pressured state has been reviewed."
+	metrics={standardReadiness}
+	ariaLabel="Performance Lab interface standards"
+/>
 
 <!-- Core Standards -->
 <section class="py-16 px-6">
@@ -71,11 +103,11 @@
 <!-- Clear Communication UI Standards -->
 <section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8">Clear Communication UI</h2>
+		<h2 class="mb-8">Performance Lab UI</h2>
 		<p class="opacity-70-canon leading-relaxed mb-8">
-			Use Ona's design/UI/UX as the communication reference: light operational surfaces,
-			compact navigation, crisp borders, readable hierarchy, visible proof, and direct action.
-			CREATE SOMETHING keeps its own claims, artifacts, and governance language.
+			Use CREATE SOMETHING Performance Lab as the active design reference: light operational
+			surfaces, disciplined dark proof rooms, compact navigation, crisp borders, readable
+			hierarchy, visible proof, readiness states, and direct action.
 		</p>
 
 		<div class="space-y-8">

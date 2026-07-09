@@ -151,7 +151,7 @@
 </a>
 
 <style>
-  /* Card container: clear Ona panel, retained for legacy paper grids. */
+  /* Card container: Performance Lab clear panel, retained for legacy paper grids. */
   .paper-card {
     background: var(--color-clear-panel, #ffffff);
     border: 1px solid var(--color-clear-border, #e1e1e1);

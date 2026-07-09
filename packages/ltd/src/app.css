@@ -3,8 +3,8 @@
   Property: .ltd (Philosophy / Canon)
 
   Imports shared Canon tokens and enhancement modules.
-  Aligned with the Ona clear-communication reference used by .agency
-  while retaining .ltd canon content and navigation.
+  Aligned with the CREATE SOMETHING Performance Lab system while retaining .ltd
+  canon content and navigation.
 */
 
 /* Import shared Canon Design System (must precede @tailwind) */
@@ -18,6 +18,7 @@
 @import '@create-something/canon/styles/cards.css';
 @import '@create-something/canon/styles/grid-patterns.css';
 @import '@create-something/canon/styles/interactions.css';
+@import '@create-something/canon/styles/performance.css';
 
 /* Tailwind CSS directives */
 @tailwind base;
@@ -38,10 +39,10 @@
   /* Shared clear-shell typography */
   --font-heading: var(--font-sans);
   --font-display: var(--font-sans);
-  --font-serif: 'Martina Plantijn', Georgia, serif;
+  --font-serif: Georgia, "Times New Roman", serif;
   --color-focus: rgba(167, 184, 255, 0.72);
 
-  /* Ona clear-communication surface mapping for existing property routes */
+  /* Performance Lab readability surface mapping for existing property routes */
   --color-bg-pure: var(--color-clear-panel, #ffffff);
   --color-bg-elevated: var(--color-clear-porcelain, #f9f9f9);
   --color-bg-surface: var(--color-clear-porcelain-soft, #f2f2f2);
@@ -77,7 +78,7 @@
 }
 
 /* ==========================================================================
-   Navigation - Stack Sans Notch logo
+   Navigation - Canon display stack
    ========================================================================== */
 
 .nav-logo {

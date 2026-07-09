@@ -1,6 +1,6 @@
 import type { ArenaBlock } from '$lib/integrations/arena';
 
-export const DEFAULT_ONA_CANDIDATE_QUERIES = [
+export const DEFAULT_PERFORMANCE_LAB_CANDIDATE_QUERIES = [
 	'background agents interface',
 	'minimal developer tool interface',
 	'mission control software agents',
@@ -8,21 +8,21 @@ export const DEFAULT_ONA_CANDIDATE_QUERIES = [
 	'agent workflow proof'
 ] as const;
 
-export const ONA_OPERATOR_ACTIONS = [
+export const PERFORMANCE_LAB_OPERATOR_ACTIONS = [
 	'approve',
 	'reject',
 	'redirect',
 	'need_evidence'
 ] as const;
 
-export type OnaOperatorAction = (typeof ONA_OPERATOR_ACTIONS)[number];
+export type PerformanceLabOperatorAction = (typeof PERFORMANCE_LAB_OPERATOR_ACTIONS)[number];
 
-export interface OnaCandidateDecision {
-	defaultAction: OnaOperatorAction;
-	actions: OnaOperatorAction[];
+export interface PerformanceLabCandidateDecision {
+	defaultAction: PerformanceLabOperatorAction;
+	actions: PerformanceLabOperatorAction[];
 }
 
-export interface OnaCandidateCard {
+export interface PerformanceLabCandidateCard {
 	id: string;
 	arenaId: number;
 	title: string;
@@ -34,7 +34,7 @@ export interface OnaCandidateCard {
 	summary: string;
 	reasons: string[];
 	risks: string[];
-	decision: OnaCandidateDecision;
+	decision: PerformanceLabCandidateDecision;
 }
 
 interface SignalRule {
@@ -106,7 +106,7 @@ const RISK_SIGNALS: SignalRule[] = [
 	}
 ];
 
-export function rankOnaCandidates(blocks: ArenaBlock[], limit: number): OnaCandidateCard[] {
+export function rankPerformanceLabCandidates(blocks: ArenaBlock[], limit: number): PerformanceLabCandidateCard[] {
 	const seen = new Set<number>();
 
 	return blocks
@@ -115,13 +115,13 @@ export function rankOnaCandidates(blocks: ArenaBlock[], limit: number): OnaCandi
 			seen.add(block.id);
 			return ACCEPTED_CLASSES.has(block.class);
 		})
-		.map(scoreOnaCandidate)
+		.map(scorePerformanceLabCandidate)
 		.filter((candidate) => candidate.score > 0 || candidate.reasons.length > 0)
 		.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
 		.slice(0, limit);
 }
 
-export function scoreOnaCandidate(block: ArenaBlock): OnaCandidateCard {
+export function scorePerformanceLabCandidate(block: ArenaBlock): PerformanceLabCandidateCard {
 	const text = blockSearchText(block);
 	const reasons = collectSignals(text, POSITIVE_SIGNALS);
 	const risks = collectSignals(text, RISK_SIGNALS);
@@ -229,20 +229,20 @@ function classSignal(block: ArenaBlock): number {
 	}
 }
 
-function decisionFor(score: number, risks: string[]): OnaCandidateDecision {
+function decisionFor(score: number, risks: string[]): PerformanceLabCandidateDecision {
 	if (risks.includes('asset-copying risk')) {
-		return { defaultAction: 'reject', actions: [...ONA_OPERATOR_ACTIONS] };
+		return { defaultAction: 'reject', actions: [...PERFORMANCE_LAB_OPERATOR_ACTIONS] };
 	}
 
 	if (score >= 85 && risks.length === 0) {
-		return { defaultAction: 'approve', actions: [...ONA_OPERATOR_ACTIONS] };
+		return { defaultAction: 'approve', actions: [...PERFORMANCE_LAB_OPERATOR_ACTIONS] };
 	}
 
 	if (score >= 35) {
-		return { defaultAction: 'need_evidence', actions: [...ONA_OPERATOR_ACTIONS] };
+		return { defaultAction: 'need_evidence', actions: [...PERFORMANCE_LAB_OPERATOR_ACTIONS] };
 	}
 
-	return { defaultAction: 'redirect', actions: [...ONA_OPERATOR_ACTIONS] };
+	return { defaultAction: 'redirect', actions: [...PERFORMANCE_LAB_OPERATOR_ACTIONS] };
 }
 
 function clamp(value: number, min: number, max: number): number {

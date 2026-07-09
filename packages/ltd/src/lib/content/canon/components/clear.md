@@ -2,8 +2,8 @@
 category: "Canon"
 section: "Components"
 title: "Clear Components"
-description: "Ona-derived communication primitives for mapped, governed, proof-bearing work."
-lead: "Clear components turn Ona-level communication discipline into owned CREATE SOMETHING surfaces for workflow maps, policy states, receipts, validation gates, and operator handoff."
+description: "Performance Lab communication primitives for mapped, governed, proof-bearing work."
+lead: "Clear components turn Performance Lab discipline into owned CREATE SOMETHING surfaces for workflow maps, policy states, receipts, validation gates, and operator handoff."
 publishedAt: "2026-06-21"
 published: true
 ---

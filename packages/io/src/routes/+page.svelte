@@ -8,11 +8,13 @@
     ClearPageSection,
     ClearProofStrip,
     PapersGrid,
+    PerformanceLabBand,
     PropertyFunnel,
     SEO,
     type ClearCardItem,
     type ClearCtaItem,
-    type ClearDecisionItem
+    type ClearDecisionItem,
+    type PerformanceLabMetric
   } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
 
@@ -47,6 +49,27 @@
     { value: `${featuredExperiments.length}`, label: 'featured artifacts to inspect first' },
     { value: '3', label: 'database / automation / judgment layers' }
   ]);
+
+  const researchReadiness: PerformanceLabMetric[] = [
+    {
+      label: 'Claim',
+      value: 'Traced',
+      detail: 'The paper names the source workflow, artifact trail, and operating question.',
+      tone: 'signal'
+    },
+    {
+      label: 'Runtime',
+      value: 'Tested',
+      detail: 'Timing, state, and failure behavior are exercised when the claim depends on them.',
+      tone: 'pressure'
+    },
+    {
+      label: 'Handoff',
+      value: 'Scoped',
+      detail: 'The next route is research, practice, policy, or delivery with an explicit owner.',
+      tone: 'growth'
+    }
+  ];
 
   const heroSignals: ClearCardItem[] = [
     {
@@ -262,11 +285,18 @@
   {/snippet}
 </ClearPageSection>
 
+<PerformanceLabBand
+  title="Evidence earns the next move."
+  description="Research is ready to transfer when its claim is traced, runtime-dependent behavior is tested, and the receiving layer is explicit."
+  metrics={researchReadiness}
+  ariaLabel="Research readiness"
+/>
+
 <ClearDecisionPanel
   id="research-decision"
   eyebrow="Research decision path"
   title="Let the interaction show whether to read, test, or scope."
-  description="The Ona pattern works here when a small state change explains the next operating move better than another block of copy."
+  description="The Performance Lab pattern works here when a small state change explains the next operating move better than another block of copy."
   items={decisionStates}
   ariaLabel="Research decision path"
 />

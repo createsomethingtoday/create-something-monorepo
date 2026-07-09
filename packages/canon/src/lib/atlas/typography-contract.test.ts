@@ -51,7 +51,8 @@ describe('Atlas typography contract', () => {
 		expect(studioCss).toContain('font-family: var(--font-interface');
 		expect(studioCss).toContain('font-family: var(--font-topology-label');
 		expect(desktopShell).toContain('--font-interface');
-		expect(desktopShell).toContain('"ABC Diatype"');
+		expect(desktopShell).toContain('Arial, "Helvetica Neue", Helvetica');
+		expect(desktopShell).not.toContain('ona.com/fonts');
 		expect(desktopShell).not.toMatch(/font-family:\s*"ABCDiatype"/);
 	});
 });

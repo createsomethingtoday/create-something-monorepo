@@ -2147,45 +2147,45 @@
 	}
 </script>
 
-<section class="ona-system-shell" aria-labelledby="ona-system-title">
-	<div class="ona-system-hero ona-system-container">
-		<div class="ona-system-copy">
-			<p class="ona-system-eyebrow">Basketball Systems Lab</p>
-			<h1 id="ona-system-title">Run the league like a living system.</h1>
-			<p class="ona-system-lede">
+<section class="performance-system-shell" aria-labelledby="performance-system-title">
+	<div class="performance-system-hero performance-system-container">
+		<div class="performance-system-copy">
+			<p class="performance-system-eyebrow">Basketball Systems Lab</p>
+			<h1 id="performance-system-title">Run the league like a living system.</h1>
+			<p class="performance-system-lede">
 				A commissioner-mode strategy lab where each System runs through years of schedule policy,
 				labor trust, media value, fan attention, and competitive balance. Steer the model mid-season
 				and watch the receipts ripple forward.
 			</p>
-			<div class="ona-system-actions" aria-label="Prototype modes">
-				<a href="#lab" class="ona-system-action ona-system-action--primary">Open lab</a>
-				<a href="#board-report" class="ona-system-action ona-system-action--secondary"
+			<div class="performance-system-actions" aria-label="Prototype modes">
+				<a href="#lab" class="performance-system-action performance-system-action--primary">Open lab</a>
+				<a href="#board-report" class="performance-system-action performance-system-action--secondary"
 					>Read board report</a
 				>
 			</div>
 		</div>
 
-		<div class="ona-system-league-panel ona-system-panel" aria-label="League operating state">
-			<div class="ona-system-panel-header">
+		<div class="performance-system-league-panel performance-system-panel" aria-label="League operating state">
+			<div class="performance-system-panel-header">
 				<span>Year {viewedYear}</span>
 				<strong>Policy Window</strong>
 			</div>
-			<div class="ona-system-court">
-				<div class="ona-system-court-lines" aria-hidden="true">
-					<div class="ona-system-court-half"></div>
-					<div class="ona-system-court-key"></div>
-					<div class="ona-system-court-arc"></div>
-					<div class="ona-system-court-dot"></div>
+			<div class="performance-system-court">
+				<div class="performance-system-court-lines" aria-hidden="true">
+					<div class="performance-system-court-half"></div>
+					<div class="performance-system-court-key"></div>
+					<div class="performance-system-court-arc"></div>
+					<div class="performance-system-court-dot"></div>
 				</div>
-				<div class="ona-system-court-readout">
+				<div class="performance-system-court-readout">
 					<span>Current leader</span>
 					<strong>{viewedLeader.result.system.name}</strong>
 					<small>{activeEntry.decision}. {activeEntry.receipt}</small>
 				</div>
 			</div>
-			<div class="ona-system-metric-grid">
+			<div class="performance-system-metric-grid">
 				{#each activeEntry.metrics as metric}
-					<div class="ona-system-metric" data-tone={metric.tone}>
+					<div class="performance-system-metric" data-tone={metric.tone}>
 						<span>{metric.label}</span>
 						<strong>{metric.value}</strong>
 						<small>{metric.delta}</small>
@@ -2195,15 +2195,15 @@
 		</div>
 	</div>
 
-	<div id="lab" class="ona-system-lab-grid ona-system-container">
-		<aside class="ona-system-policy-rail ona-system-panel" aria-label="Policy controls">
-			<div class="ona-system-kicker">
+	<div id="lab" class="performance-system-lab-grid performance-system-container">
+		<aside class="performance-system-policy-rail performance-system-panel" aria-label="Policy controls">
+			<div class="performance-system-kicker">
 				<SlidersHorizontal size={18} strokeWidth={1.8} />
 				<span>System Console</span>
 			</div>
 			<h2>Choose the Systems and league pressure.</h2>
 
-			<div class="ona-system-mode-control" aria-label="Lab mode">
+			<div class="performance-system-mode-control" aria-label="Lab mode">
 				<button
 					type="button"
 					class:active={mode === 'single'}
@@ -2221,13 +2221,13 @@
 					Systems Race
 				</button>
 			</div>
-			<div class="ona-system-mode-note">
+			<div class="performance-system-mode-note">
 				<strong>{modeLabel}</strong>
 				<p>{modeRule}</p>
 			</div>
 
 			{#if mode === 'versus'}
-				<div class="ona-system-versus-control" aria-label="Versus control">
+				<div class="performance-system-versus-control" aria-label="Versus control">
 					<button
 						type="button"
 						class:active={versusControl === 'autonomous'}
@@ -2249,8 +2249,8 @@
 				</div>
 			{/if}
 
-			<div class="ona-system-game-turn" aria-label="Game turn">
-				<div class="ona-system-game-turn-header">
+			<div class="performance-system-game-turn" aria-label="Game turn">
+				<div class="performance-system-game-turn-header">
 					<div>
 						<span>{gameTurnLabel}</span>
 						<strong>{gameTurnTitle}</strong>
@@ -2268,7 +2268,7 @@
 						<span>{primaryRunActionLabel}</span>
 					</button>
 				</div>
-				<div class="ona-system-game-turn-lanes">
+				<div class="performance-system-game-turn-lanes">
 					{#each gameTurnLanes as lane}
 						<article>
 							<span>{lane.label}</span>
@@ -2277,7 +2277,7 @@
 						</article>
 					{/each}
 				</div>
-				<div class="ona-system-first-run-flow" aria-label="First run flow">
+				<div class="performance-system-first-run-flow" aria-label="First run flow">
 					{#each firstRunSteps as step}
 						<article data-status={step.status}>
 							<span>{step.label}</span>
@@ -2289,10 +2289,10 @@
 			</div>
 
 			<div
-				class="ona-system-competition-setup"
+				class="performance-system-competition-setup"
 				data-state={uploadedSystems.length > 0 ? 'custom' : 'stock'}
 			>
-				<div class="ona-system-timeline-header">
+				<div class="performance-system-timeline-header">
 					<Users size={17} strokeWidth={1.8} />
 					<span>Field setup</span>
 				</div>
@@ -2300,7 +2300,7 @@
 				<p>{uploadedCompetitionDetail}</p>
 
 				{#if uploadedSystems.length > 0}
-					<div class="ona-system-competition-roster" aria-label="Field entrants">
+					<div class="performance-system-competition-roster" aria-label="Field entrants">
 						{#each entrantReadiness as entrant}
 							<button
 								type="button"
@@ -2321,11 +2321,11 @@
 								</div>
 								<strong>{entrant.name}</strong>
 								<p>{entrant.detail}</p>
-								<div class="ona-system-competition-roster-meta">
+								<div class="performance-system-competition-roster-meta">
 									<small>{entrant.topWeights}</small>
 									<strong>Valid {entrant.score}</strong>
 								</div>
-								<div class="ona-system-competition-roster-gate">
+								<div class="performance-system-competition-roster-gate">
 									<div>
 										<span>{entrant.gateLabel}</span>
 										<small>{entrant.gateDetail}</small>
@@ -2336,7 +2336,7 @@
 						{/each}
 					</div>
 
-					<div class="ona-system-field-setup-lanes" aria-label="Uploaded field setup">
+					<div class="performance-system-field-setup-lanes" aria-label="Uploaded field setup">
 						{#each fieldSetupLanes as lane}
 							<article>
 								<span>{lane.label}</span>
@@ -2348,7 +2348,7 @@
 				{/if}
 
 				{#if mode === 'versus' && customEntrantsInRun.length > 0}
-					<div class="ona-system-competition-proof">
+					<div class="performance-system-competition-proof">
 						<span>{hasUploadedField ? 'In this field' : 'In this race'}</span>
 						<strong
 							>{customEntrantsInRun.length}
@@ -2364,7 +2364,7 @@
 					</div>
 				{/if}
 
-				<div class="ona-system-competition-actions">
+				<div class="performance-system-competition-actions">
 					<button type="button" onclick={raceUploadedSystems}>
 						<Play size={15} strokeWidth={2} />
 						<span>{competitionActionLabel}</span>
@@ -2374,7 +2374,7 @@
 			</div>
 
 			<div
-				class="ona-system-objective-brief"
+				class="performance-system-objective-brief"
 				data-status={match.challenge.status}
 				aria-label="Current objective"
 			>
@@ -2389,7 +2389,7 @@
 				</div>
 
 				{#if match.challenge.objectives.length > 0}
-					<div class="ona-system-objective-brief-list">
+					<div class="performance-system-objective-brief-list">
 						{#each match.challenge.objectives as objective}
 							<article data-status={objective.status}>
 								<span>{objective.label}</span>
@@ -2402,7 +2402,7 @@
 				{/if}
 			</div>
 
-			<div class="ona-system-run-summary" aria-label="Season run summary">
+			<div class="performance-system-run-summary" aria-label="Season run summary">
 				<div>
 					<span>Season run</span>
 					<strong>{viewedLeader.result.system.name}</strong>
@@ -2411,7 +2411,7 @@
 							.challenge.label}.
 					</p>
 				</div>
-				<div class="ona-system-run-lanes">
+				<div class="performance-system-run-lanes">
 					{#each runScoreLanes as lane}
 						<article>
 							<span>{lane.label}</span>
@@ -2422,20 +2422,20 @@
 				</div>
 			</div>
 
-			<div class="ona-system-control-group">
+			<div class="performance-system-control-group">
 				<span>Environment</span>
 				<select bind:value={selectedEnvironmentKey} aria-label="Environment">
 					{#each environments as environment}
 						<option value={environment.key}>{environment.name}</option>
 					{/each}
 				</select>
-				<div class="ona-system-environment-note">
+				<div class="performance-system-environment-note">
 					<strong>{selectedEnvironment.pressure}</strong>
 					<p>{selectedEnvironment.winCondition}</p>
 				</div>
 			</div>
 
-			<div class="ona-system-policy-list">
+			<div class="performance-system-policy-list">
 				{#each systems as system}
 					<button
 						type="button"
@@ -2452,9 +2452,9 @@
 
 			{#if mode === 'versus'}
 				{#if hasUploadedField}
-					<div class="ona-system-control-group">
+					<div class="performance-system-control-group">
 						<span>Uploaded Field</span>
-						<div class="ona-system-environment-note">
+						<div class="performance-system-environment-note">
 							<strong>{uploadedSystems.length} Systems are in this field.</strong>
 							<p>
 								All uploaded entrants run together. The selected System is the coach target when
@@ -2463,7 +2463,7 @@
 						</div>
 					</div>
 				{:else}
-					<div class="ona-system-control-group">
+					<div class="performance-system-control-group">
 						<span>Opponent System</span>
 						<select bind:value={opponentSystem} aria-label="Opponent System">
 							{#each systems.filter((system) => system.key !== selectedSystem) as system}
@@ -2475,16 +2475,16 @@
 			{/if}
 
 			<div
-				class="ona-system-scouting-report"
+				class="performance-system-scouting-report"
 				data-status={match.validation.status}
 				aria-label="Pre-run scouting report"
 			>
-				<div class="ona-system-scouting-header">
+				<div class="performance-system-scouting-header">
 					<span>Pre-run scout</span>
 					<strong>{scoutingLabel}</strong>
 					<p>{scoutingSummary}</p>
 				</div>
-				<div class="ona-system-scouting-list">
+				<div class="performance-system-scouting-list">
 					{#each scoutingRequirements as requirement}
 						<article data-status={requirement.status}>
 							<div>
@@ -2498,9 +2498,9 @@
 				</div>
 			</div>
 
-			<div class="ona-system-control-group">
+			<div class="performance-system-control-group">
 				<span>Comparison Horizon</span>
-				<div class="ona-system-option-row">
+				<div class="performance-system-option-row">
 					{#each horizonOptions as option}
 						<button
 							type="button"
@@ -2515,7 +2515,7 @@
 			</div>
 
 			{#if canSteer}
-				<div class="ona-system-steering-handoff" aria-label="Steering turn status">
+				<div class="performance-system-steering-handoff" aria-label="Steering turn status">
 					<span>Steering turn</span>
 					<strong>Live cockpit</strong>
 					<p>
@@ -2526,7 +2526,7 @@
 				</div>
 			{/if}
 
-			<details class="ona-system-advanced" bind:open={systemWorkbenchOpen}>
+			<details class="performance-system-advanced" bind:open={systemWorkbenchOpen}>
 				<summary>
 					<span>Enter a System</span>
 					<strong
@@ -2536,8 +2536,8 @@
 					>
 				</summary>
 
-				<div class="ona-system-builder">
-					<div class="ona-system-kicker">
+				<div class="performance-system-builder">
+					<div class="performance-system-kicker">
 						<SlidersHorizontal size={17} strokeWidth={1.8} />
 						<span>System Builder</span>
 					</div>
@@ -2558,7 +2558,7 @@
 						<textarea bind:value={builderThesis} aria-label="Builder System thesis" maxlength="180"
 						></textarea>
 					</label>
-					<div class="ona-system-builder-weights" aria-label="Builder scoring weights">
+					<div class="performance-system-builder-weights" aria-label="Builder scoring weights">
 						{#each builderWeightFields as field}
 							<article>
 								<label for={`builder-weight-${field.key}`}>
@@ -2578,35 +2578,35 @@
 							</article>
 						{/each}
 					</div>
-					<div class="ona-system-builder-status">
+					<div class="performance-system-builder-status">
 						<strong>{builderTotal}% allocated</strong>
 						<span>{builderMessage}</span>
 					</div>
-					<div class="ona-system-upload-actions">
+					<div class="performance-system-upload-actions">
 						<button type="button" onclick={addBuiltSystem}>Add built System</button>
 						<button type="button" onclick={previewBuiltSystemJson}>Preview JSON</button>
 						<button type="button" onclick={resetBuilder}>Reset builder</button>
 					</div>
 				</div>
 
-				<div class="ona-system-upload">
-					<div class="ona-system-kicker">
+				<div class="performance-system-upload">
+					<div class="performance-system-kicker">
 						<FileJson size={17} strokeWidth={1.8} />
 						<span>Entrant Import</span>
 					</div>
-					<div class="ona-system-draft-import" aria-label="Draft entrant from notes">
+					<div class="performance-system-draft-import" aria-label="Draft entrant from notes">
 						<label>
 							<span>Paste rough System notes</span>
 							<textarea bind:value={draftText} aria-label="Rough System notes" maxlength="420"
 							></textarea>
 						</label>
-						<div class="ona-system-draft-actions">
+						<div class="performance-system-draft-actions">
 							<button type="button" onclick={draftEntrantFromNotes}>Draft entrant JSON</button>
 							<span>{draftMessage}</span>
 						</div>
 					</div>
 					<textarea bind:value={uploadText} aria-label="System JSON definition"></textarea>
-					<div class="ona-system-upload-actions">
+					<div class="performance-system-upload-actions">
 						<label>
 							<input type="file" accept="application/json,.json" onchange={readSystemFile} />
 							<span>Import JSON file</span>
@@ -2615,7 +2615,7 @@
 						<button type="button" onclick={loadSampleSystem}>Sample System</button>
 					</div>
 					<div
-						class="ona-system-upload-status"
+						class="performance-system-upload-status"
 						data-state={uploadedSystems.length > 0 ? 'accepted' : 'idle'}
 					>
 						<strong>{uploadMessage}</strong>
@@ -2631,22 +2631,22 @@
 			</details>
 		</aside>
 
-		<div class="ona-system-map ona-system-panel" aria-label="Causal systems map">
-			<div class="ona-system-map-header">
+		<div class="performance-system-map performance-system-panel" aria-label="Causal systems map">
+			<div class="performance-system-map-header">
 				<div>
-					<p class="ona-system-eyebrow">Causal Map</p>
+					<p class="performance-system-eyebrow">Causal Map</p>
 					<h2>{viewedLeader.result.system.name}</h2>
 				</div>
-				<div class="ona-system-map-badge">
+				<div class="performance-system-map-badge">
 					<LineChart size={17} strokeWidth={1.8} />
 					<span>Year {viewedYear} of {match.years}</span>
 				</div>
 			</div>
 
-			<div class="ona-system-kickoff" aria-label="Run kickoff briefing">
-				<div class="ona-system-kickoff-header">
+			<div class="performance-system-kickoff" aria-label="Run kickoff briefing">
+				<div class="performance-system-kickoff-header">
 					<div>
-						<div class="ona-system-timeline-header">
+						<div class="performance-system-timeline-header">
 							<Route size={17} strokeWidth={1.8} />
 							<span>Kickoff brief</span>
 						</div>
@@ -2654,7 +2654,7 @@
 					</div>
 					<p>{modeRule}</p>
 				</div>
-				<div class="ona-system-kickoff-grid">
+				<div class="performance-system-kickoff-grid">
 					{#each kickoffBriefing as item}
 						<article>
 							<span>{item.label}</span>
@@ -2666,10 +2666,10 @@
 			</div>
 
 			{#if mode === 'versus'}
-				<div class="ona-system-live-standings" aria-label="Live standings">
-					<div class="ona-system-live-standings-header">
+				<div class="performance-system-live-standings" aria-label="Live standings">
+					<div class="performance-system-live-standings-header">
 						<div>
-							<div class="ona-system-timeline-header">
+							<div class="performance-system-timeline-header">
 								<BarChart3 size={17} strokeWidth={1.8} />
 								<span>Live standings</span>
 							</div>
@@ -2680,7 +2680,7 @@
 							the winner.
 						</p>
 					</div>
-					<div class="ona-system-live-callout" data-tone={activeDecisionMoment.tone}>
+					<div class="performance-system-live-callout" data-tone={activeDecisionMoment.tone}>
 						<div>
 							<span>Race call</span>
 							<strong>{raceMomentumSummary}</strong>
@@ -2692,7 +2692,7 @@
 							<p>{activeDecisionMoment.action}</p>
 						</div>
 					</div>
-					<div class="ona-system-live-standings-list">
+					<div class="performance-system-live-standings-list">
 						{#each raceMomentum as standing}
 							<article class:active={standing.active}>
 								<div>
@@ -2714,7 +2714,7 @@
 				</div>
 			{/if}
 
-			<div class="ona-system-rulebook" aria-label="Run rules">
+			<div class="performance-system-rulebook" aria-label="Run rules">
 				<article>
 					<span>Win condition</span>
 					<strong>{isSolo ? 'Clear challenge objectives' : 'Highest valid system score'}</strong>
@@ -2742,13 +2742,13 @@
 			</div>
 
 			<div
-				class="ona-system-challenge"
+				class="performance-system-challenge"
 				data-status={match.challenge.status}
 				aria-label="Run challenge"
 			>
-				<div class="ona-system-challenge-header">
+				<div class="performance-system-challenge-header">
 					<div>
-						<div class="ona-system-timeline-header">
+						<div class="performance-system-timeline-header">
 							<ShieldCheck size={17} strokeWidth={1.8} />
 							<span>{isSolo ? 'Single challenge' : 'Versus objective'}</span>
 						</div>
@@ -2758,7 +2758,7 @@
 				</div>
 
 				{#if match.challenge.objectives.length > 0}
-					<div class="ona-system-challenge-list">
+					<div class="performance-system-challenge-list">
 						{#each match.challenge.objectives as objective}
 							<article data-status={objective.status}>
 								<div>
@@ -2774,14 +2774,14 @@
 				{/if}
 			</div>
 
-			<div class="ona-system-playback" aria-label="Run playback">
+			<div class="performance-system-playback" aria-label="Run playback">
 				<div>
 					<span>Run playback</span>
 					<strong>Year {viewedYear} of {match.years}</strong>
 					<p>{activeEntry.eventReceipt} {activeEntry.receipt}</p>
 				</div>
-				<div class="ona-system-playback-panel">
-					<div class="ona-system-playback-controls">
+				<div class="performance-system-playback-panel">
+					<div class="performance-system-playback-controls">
 						<button
 							type="button"
 							disabled={viewedYear === 1}
@@ -2806,7 +2806,7 @@
 							Next
 						</button>
 					</div>
-					<div class="ona-system-playback-actions" aria-label="Watch run controls">
+					<div class="performance-system-playback-actions" aria-label="Watch run controls">
 						<button type="button" class:active={playbackRunning} onclick={togglePlayback}>
 							{#if playbackRunning}
 								<Pause size={15} strokeWidth={2} />
@@ -2828,7 +2828,7 @@
 				</div>
 			</div>
 
-			<div class="ona-system-turn-recap" data-status={turnRecapStatus} aria-label="Turn recap">
+			<div class="performance-system-turn-recap" data-status={turnRecapStatus} aria-label="Turn recap">
 				{#each turnRecap as lane}
 					<article>
 						<span>{lane.label}</span>
@@ -2838,7 +2838,7 @@
 				{/each}
 			</div>
 
-			<div class="ona-system-turn-recap ona-system-resource-bank" aria-label="Resource bank">
+			<div class="performance-system-turn-recap performance-system-resource-bank" aria-label="Resource bank">
 				{#each activeResourceLanes as resource}
 					<article data-tone={resource.critical ? 'red' : resource.tone}>
 						<span>{resource.label}</span>
@@ -2848,8 +2848,8 @@
 				{/each}
 			</div>
 
-			<div class="ona-system-compounding-trail" aria-label="Compounding trail">
-				<div class="ona-system-compounding-trail-header">
+			<div class="performance-system-compounding-trail" aria-label="Compounding trail">
+				<div class="performance-system-compounding-trail-header">
 					<div>
 						<span>Compounding trail</span>
 						<strong>{formatDelta(compoundingDelta)} through year {viewedYear}</strong>
@@ -2859,7 +2859,7 @@
 						turn{compoundingTrail.length === 1 ? '' : 's'} in this run.
 					</p>
 				</div>
-				<div class="ona-system-compounding-trail-list">
+				<div class="performance-system-compounding-trail-list">
 					{#each compoundingTrail as trail}
 						<article class:active={trail.active} class:steered={trail.steered}>
 							<span>Year {trail.year}</span>
@@ -2873,13 +2873,13 @@
 
 			{#if finalOutcomeVisible}
 				<div
-					class="ona-system-final-outcome"
+					class="performance-system-final-outcome"
 					data-status={finalOutcomeStatus}
 					aria-label="Final outcome"
 				>
-					<div class="ona-system-final-outcome-header">
+					<div class="performance-system-final-outcome-header">
 						<div>
-							<div class="ona-system-timeline-header">
+							<div class="performance-system-timeline-header">
 								<Trophy size={17} strokeWidth={1.8} />
 								<span>{isSolo ? 'Single result' : 'Versus result'}</span>
 							</div>
@@ -2891,7 +2891,7 @@
 							<span>Replay from year 1</span>
 						</button>
 					</div>
-					<div class="ona-system-final-outcome-lanes">
+					<div class="performance-system-final-outcome-lanes">
 						{#each finalOutcomeLanes as lane}
 							<article>
 								<span>{lane.label}</span>
@@ -2904,10 +2904,10 @@
 			{/if}
 
 			{#if mode === 'versus' && finalOutcomeVisible}
-				<div class="ona-system-field-standings" aria-label="Final field standings">
-					<div class="ona-system-field-standings-header">
+				<div class="performance-system-field-standings" aria-label="Final field standings">
+					<div class="performance-system-field-standings-header">
 						<div>
-							<div class="ona-system-timeline-header">
+							<div class="performance-system-timeline-header">
 								<Trophy size={17} strokeWidth={1.8} />
 								<span>Final standings</span>
 							</div>
@@ -2918,7 +2918,7 @@
 							explain why the field finished in this order.
 						</p>
 					</div>
-					<div class="ona-system-field-standings-list">
+					<div class="performance-system-field-standings-list">
 						{#each finalFieldStandings as standing}
 							<article class:active={standing.active}>
 								<div>
@@ -2936,10 +2936,10 @@
 				</div>
 			{/if}
 
-			<div class="ona-system-steering-cockpit" aria-label="Live steering cockpit">
-				<div class="ona-system-steering-cockpit-header">
+			<div class="performance-system-steering-cockpit" aria-label="Live steering cockpit">
+				<div class="performance-system-steering-cockpit-header">
 					<div>
-						<div class="ona-system-timeline-header">
+						<div class="performance-system-timeline-header">
 							<SlidersHorizontal size={17} strokeWidth={1.8} />
 							<span>{canSteer ? 'Live steering' : 'Autonomous run'}</span>
 						</div>
@@ -2956,7 +2956,7 @@
 
 				{#if canSteer}
 					<div
-						class="ona-system-next-turn"
+						class="performance-system-next-turn"
 						data-status={nextTurnPrompt.status}
 						aria-label="Next turn action"
 					>
@@ -2964,12 +2964,12 @@
 							<span>{nextTurnPrompt.label}</span>
 							<strong>{nextTurnPrompt.title}</strong>
 							<p>{nextTurnPrompt.detail}</p>
-							<div class="ona-system-next-turn-gate">
+							<div class="performance-system-next-turn-gate">
 								<span>{nextTurnPrompt.gateLabel}</span>
 								<small>{nextTurnPrompt.gateDetail}</small>
 							</div>
 						</div>
-						<div class="ona-system-next-turn-actions">
+						<div class="performance-system-next-turn-actions">
 							<button
 								type="button"
 								class="primary"
@@ -2996,7 +2996,7 @@
 						</div>
 					</div>
 
-					<div class="ona-system-decision-ledger" aria-label="Logged steering decisions">
+					<div class="performance-system-decision-ledger" aria-label="Logged steering decisions">
 						<div>
 							<span>Decision ledger</span>
 							<strong>
@@ -3009,7 +3009,7 @@
 							</p>
 						</div>
 						{#if decisionLedger.length > 0}
-							<div class="ona-system-decision-ledger-list">
+							<div class="performance-system-decision-ledger-list">
 								{#each decisionLedger as decision}
 									<article class:active={decision.active}>
 										<span>{decision.label}</span>
@@ -3021,13 +3021,13 @@
 						{/if}
 					</div>
 
-					<details class="ona-system-turn-disclosure">
+					<details class="performance-system-turn-disclosure">
 						<summary>
 							<span>Tune this turn</span>
 							<strong>{steeringPlanLabel}</strong>
 						</summary>
-						<div class="ona-system-turn-disclosure-body">
-							<div class="ona-system-steering-actions" aria-label="Steering policy choices">
+						<div class="performance-system-turn-disclosure-body">
+							<div class="performance-system-steering-actions" aria-label="Steering policy choices">
 								<button
 									type="button"
 									class:active={currentYearDecision !== null}
@@ -3058,7 +3058,7 @@
 								{/each}
 							</div>
 
-							<div class="ona-system-steering-season" aria-label="Steering season window">
+							<div class="performance-system-steering-season" aria-label="Steering season window">
 								{#each seasonPhases as phase}
 									<button
 										type="button"
@@ -3074,14 +3074,14 @@
 						</div>
 					</details>
 
-					<details class="ona-system-turn-disclosure ona-system-turn-disclosure--compare">
+					<details class="performance-system-turn-disclosure performance-system-turn-disclosure--compare">
 						<summary>
 							<span>Compare moves</span>
 							<strong>{selectedSteeringPhase.label} from year {viewedYear}</strong>
 						</summary>
-						<div class="ona-system-turn-disclosure-body">
-							<div class="ona-system-steering-previews" aria-label="Steering previews">
-								<div class="ona-system-steering-preview-grid">
+						<div class="performance-system-turn-disclosure-body">
+							<div class="performance-system-steering-previews" aria-label="Steering previews">
+								<div class="performance-system-steering-preview-grid">
 									{#each steeringPreviews as preview}
 										<button
 											type="button"
@@ -3101,7 +3101,7 @@
 								</div>
 							</div>
 
-							<div class="ona-system-steering-comparison" aria-label="Steering comparison">
+							<div class="performance-system-steering-comparison" aria-label="Steering comparison">
 								{#each steeringComparison as comparison}
 									<article>
 										<span>{comparison.label}</span>
@@ -3113,7 +3113,7 @@
 						</div>
 					</details>
 				{:else}
-					<div class="ona-system-steering-locked">
+					<div class="performance-system-steering-locked">
 						<strong>{match.winner.system.name}</strong>
 						<span>Winner is decided by final valid score after requirement gates.</span>
 					</div>
@@ -3121,10 +3121,10 @@
 			</div>
 
 			{#if mode === 'versus'}
-				<div class="ona-system-race-history" aria-label="Race history">
-					<div class="ona-system-race-history-header">
+				<div class="performance-system-race-history" aria-label="Race history">
+					<div class="performance-system-race-history-header">
 						<div>
-							<div class="ona-system-timeline-header">
+							<div class="performance-system-timeline-header">
 								<Trophy size={17} strokeWidth={1.8} />
 								<span>Race history</span>
 							</div>
@@ -3136,7 +3136,7 @@
 								: 'Compare the same two Systems across short, standard, and long horizons before choosing which run to watch.'}
 						</p>
 					</div>
-					<div class="ona-system-race-history-list">
+					<div class="performance-system-race-history-list">
 						{#each raceHistory as race}
 							<button
 								type="button"
@@ -3160,10 +3160,10 @@
 					</div>
 				</div>
 
-				<div class="ona-system-race-momentum" aria-label="Race momentum">
-					<div class="ona-system-race-momentum-header">
+				<div class="performance-system-race-momentum" aria-label="Race momentum">
+					<div class="performance-system-race-momentum-header">
 						<div>
-							<div class="ona-system-timeline-header">
+							<div class="performance-system-timeline-header">
 								<LineChart size={17} strokeWidth={1.8} />
 								<span>Race momentum</span>
 							</div>
@@ -3171,9 +3171,9 @@
 						</div>
 						<p>{raceMomentumDetail}</p>
 					</div>
-					<div class="ona-system-decision-moments" aria-label="Decision swing moments">
+					<div class="performance-system-decision-moments" aria-label="Decision swing moments">
 						<article
-							class="ona-system-decision-moment-feature"
+							class="performance-system-decision-moment-feature"
 							data-tone={activeDecisionMoment.tone}
 						>
 							<span>Year {activeDecisionMoment.year} swing / {activeDecisionMoment.label}</span>
@@ -3181,7 +3181,7 @@
 							<p>{activeDecisionMoment.detail}</p>
 							<small>{activeDecisionMoment.action}</small>
 						</article>
-						<div class="ona-system-decision-moment-list">
+						<div class="performance-system-decision-moment-list">
 							{#each decisionMoments as moment}
 								<button
 									type="button"
@@ -3198,7 +3198,7 @@
 							{/each}
 						</div>
 					</div>
-					<div class="ona-system-race-momentum-grid">
+					<div class="performance-system-race-momentum-grid">
 						{#each raceMomentum as item}
 							<article class:active={item.active}>
 								<div>
@@ -3217,7 +3217,7 @@
 							</article>
 						{/each}
 					</div>
-					<div class="ona-system-race-year-strip" aria-label="Race years">
+					<div class="performance-system-race-year-strip" aria-label="Race years">
 						{#each raceYearSnapshots as snapshot}
 							<button
 								type="button"
@@ -3236,7 +3236,7 @@
 				</div>
 			{/if}
 
-			<div class="ona-system-scoreboard" aria-label="System scores">
+			<div class="performance-system-scoreboard" aria-label="System scores">
 				{#each viewedStandings as standing, index}
 					<article class:active={standing.result.system.key === viewedLeader.result.system.key}>
 						<span>#{index + 1} in year {viewedYear} {standing.result.system.name}</span>
@@ -3250,7 +3250,7 @@
 				{/each}
 			</div>
 
-			<div class="ona-system-gate-impact" aria-label="Gate-adjusted result">
+			<div class="performance-system-gate-impact" aria-label="Gate-adjusted result">
 				<div>
 					<span>{viewedLeader.result.validationImpact.label}</span>
 					<strong>{viewedLeader.result.validationImpact.score.toFixed(1)}</strong>
@@ -3268,7 +3268,7 @@
 						<small>Applied before final ranking</small>
 					</article>
 				</div>
-				<div class="ona-system-gate-impact-list">
+				<div class="performance-system-gate-impact-list">
 					{#each viewedLeader.result.validationImpact.impacts.filter((impact) => impact.status !== 'pass') as impact}
 						<article data-status={impact.status}>
 							<span>{impact.label}</span>
@@ -3285,8 +3285,8 @@
 				</div>
 			</div>
 
-			<div class="ona-system-score-explain" aria-label="Winning score explanation">
-				<div class="ona-system-timeline-header">
+			<div class="performance-system-score-explain" aria-label="Winning score explanation">
+				<div class="performance-system-timeline-header">
 					<BarChart3 size={17} strokeWidth={1.8} />
 					<span>Raw year {viewedYear} score drivers for {viewedLeader.result.system.name}</span>
 				</div>
@@ -3301,7 +3301,7 @@
 				</div>
 			</div>
 
-			<div class="ona-system-map-stage">
+			<div class="performance-system-map-stage">
 				<svg
 					viewBox="0 0 720 480"
 					role="img"
@@ -3309,7 +3309,7 @@
 				>
 					<defs>
 						<marker
-							id="ona-system-arrow"
+							id="performance-system-arrow"
 							viewBox="0 0 10 10"
 							refX="9"
 							refY="5"
@@ -3320,23 +3320,23 @@
 							<path d="M 0 0 L 10 5 L 0 10 z" />
 						</marker>
 					</defs>
-					<rect x="22" y="22" width="676" height="436" rx="8" class="ona-system-court-boundary" />
-					<line x1="360" y1="22" x2="360" y2="458" class="ona-system-court-line" />
-					<circle cx="360" cy="240" r="74" class="ona-system-court-line" />
-					<path d="M 22 138 Q 156 240 22 342" class="ona-system-court-line" />
-					<path d="M 698 138 Q 564 240 698 342" class="ona-system-court-line" />
+					<rect x="22" y="22" width="676" height="436" rx="8" class="performance-system-court-boundary" />
+					<line x1="360" y1="22" x2="360" y2="458" class="performance-system-court-line" />
+					<circle cx="360" cy="240" r="74" class="performance-system-court-line" />
+					<path d="M 22 138 Q 156 240 22 342" class="performance-system-court-line" />
+					<path d="M 698 138 Q 564 240 698 342" class="performance-system-court-line" />
 					{#each edges as edge}
 						<path
 							d={edge.path}
-							class="ona-system-effect-edge"
-							marker-end="url(#ona-system-arrow)"
+							class="performance-system-effect-edge"
+							marker-end="url(#performance-system-arrow)"
 						/>
 					{/each}
 				</svg>
 
 				{#each activeEntry.nodes as node}
 					<div
-						class="ona-system-node"
+						class="performance-system-node"
 						data-tone={node.tone}
 						style={`--desktop-x: ${node.x}%; --desktop-y: ${node.y}%; --mobile-x: ${node.mx}%; --mobile-y: ${node.my}%;`}
 					>
@@ -3346,7 +3346,7 @@
 				{/each}
 			</div>
 
-			<div class="ona-system-projection-grid" aria-label="System projections">
+			<div class="performance-system-projection-grid" aria-label="System projections">
 				{#each match.projections as projection}
 					<article>
 						<span>{projection.label}</span>
@@ -3357,13 +3357,13 @@
 			</div>
 
 			<div
-				class="ona-system-validation"
+				class="performance-system-validation"
 				data-status={match.validation.status}
 				aria-label="Game requirement validation"
 			>
-				<div class="ona-system-validation-header">
+				<div class="performance-system-validation-header">
 					<div>
-						<div class="ona-system-timeline-header">
+						<div class="performance-system-timeline-header">
 							<ShieldCheck size={17} strokeWidth={1.8} />
 							<span>Requirement gate</span>
 						</div>
@@ -3373,11 +3373,11 @@
 					<p>{match.validation.summary}</p>
 				</div>
 
-				<div class="ona-system-validation-list">
+				<div class="performance-system-validation-list">
 					{#each surfacedRequirements as requirement}
 						<article data-status={requirement.status}>
 							<div>
-								<div class="ona-system-validation-card-header">
+								<div class="performance-system-validation-card-header">
 									<span>{requirement.label}</span>
 									<small>{formatRequirementStatus(requirement.status)}</small>
 								</div>
@@ -3389,8 +3389,8 @@
 				</div>
 			</div>
 
-			<div class="ona-system-timeline" aria-label="Compounding timeline">
-				<div class="ona-system-timeline-header">
+			<div class="performance-system-timeline" aria-label="Compounding timeline">
+				<div class="performance-system-timeline-header">
 					<Route size={17} strokeWidth={1.8} />
 					<span>Compounding receipts</span>
 				</div>
@@ -3411,9 +3411,9 @@
 		</div>
 	</div>
 
-	<div id="board-report" class="ona-system-report-band ona-system-container">
-		<div class="ona-system-report-intro">
-			<div class="ona-system-kicker">
+	<div id="board-report" class="performance-system-report-band performance-system-container">
+		<div class="performance-system-report-intro">
+			<div class="performance-system-kicker">
 				<BarChart3 size={18} strokeWidth={1.8} />
 				<span>Board Report</span>
 			</div>
@@ -3425,18 +3425,18 @@
 			</p>
 		</div>
 
-		<div class="ona-system-report-grid ona-system-report-grid--briefs">
+		<div class="performance-system-report-grid performance-system-report-grid--briefs">
 			{#each match.reports as report}
-				<article class="ona-system-report">
+				<article class="performance-system-report">
 					<span>{report.label}</span>
 					<h3>{report.title}</h3>
 					<p>{report.detail}</p>
 				</article>
 			{/each}
 		</div>
-		<div class="ona-system-receipt-ledger" aria-label="Simulation receipts">
+		<div class="performance-system-receipt-ledger" aria-label="Simulation receipts">
 			{#each match.ledger as entry}
-				<article class="ona-system-receipt">
+				<article class="performance-system-receipt">
 					<div>
 						<span>{entry.label}</span>
 						<p>{entry.detail}</p>
@@ -3447,7 +3447,7 @@
 		</div>
 	</div>
 
-	<div class="ona-system-strip ona-system-container" aria-label="System pillars">
+	<div class="performance-system-strip performance-system-container" aria-label="System pillars">
 		<div>
 			<Activity size={20} strokeWidth={1.8} />
 			<span>System state</span>

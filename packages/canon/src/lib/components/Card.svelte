@@ -87,7 +87,7 @@
     border: 1px solid var(--color-clear-border-strong, #cecece);
   }
 
-  /* Backward-compatible alias: render old glass cards as clear Ona panels. */
+  /* Backward-compatible alias: render old glass cards as Performance Lab clear panels. */
   .card-glass {
     background: var(--color-clear-panel, #ffffff);
     border: 1px solid var(--color-clear-border, #e1e1e1);

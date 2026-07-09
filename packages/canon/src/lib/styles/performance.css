@@ -2,9 +2,9 @@
   Canon Performance Excellence Layer
 
   Shared primitives for interfaces that need athletic precision, pressure,
-  rhythm, and evidence without leaving the Ona-derived clear communication
-  foundation. This layer is brand-safe: class and token names describe CREATE
-  SOMETHING behavior, not any third-party identity.
+  rhythm, research surfaces, and evidence inside the owned CREATE SOMETHING
+  Performance Lab system. This layer is brand-safe: class and token names
+  describe CREATE SOMETHING behavior, not any third-party identity.
 */
 
 .performance-shell {
@@ -31,7 +31,7 @@
 .performance-panel {
   border: 1px solid var(--color-performance-line);
   border-radius: var(--radius-performance-md);
-  background: color-mix(in srgb, var(--color-performance-panel) 72%, transparent);
+  background: var(--color-performance-panel);
   box-shadow: var(--shadow-performance-panel);
 }
 
@@ -84,8 +84,8 @@
 
 .performance-court-grid {
   background:
-    linear-gradient(90deg, rgba(17, 17, 17, 0.04) 1px, transparent 1px) 0 0 / 42px 42px,
-    #fcfbf7;
+    linear-gradient(90deg, rgba(9, 9, 9, 0.055) 1px, transparent 1px) 0 0 / 42px 42px,
+    var(--color-performance-paper);
 }
 
 .performance-pressure-rail {
@@ -104,7 +104,7 @@
 
 .property-performance :where(.clear-page-section--hero) {
   background:
-    linear-gradient(90deg, rgba(17, 17, 17, 0.035) 1px, transparent 1px) 0 0 / 4.25rem 4.25rem,
+    linear-gradient(90deg, rgba(9, 9, 9, 0.045) 1px, transparent 1px) 0 0 / 4.25rem 4.25rem,
     linear-gradient(180deg, var(--color-performance-panel) 0%, var(--color-performance-paper) 100%);
 }
 
@@ -126,7 +126,7 @@
   border-color: var(--color-performance-line);
   border-radius: var(--radius-performance-md);
   background: var(--color-performance-panel);
-  box-shadow: var(--property-performance-panel-shadow);
+  box-shadow: none;
 }
 
 .property-performance :where(
@@ -151,8 +151,7 @@
 
 .property-performance :where(.clear-card-grid__icon, .clear-proof-strip__icon, .clear-pillar__number) {
   border-color: var(--color-performance-line);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--color-performance-court) 16%, white), white);
+  background: var(--color-performance-paper);
 }
 
 .property-performance :where(.clear-page-section .btn-primary, .btn-primary) {

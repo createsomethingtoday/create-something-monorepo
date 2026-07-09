@@ -43,7 +43,7 @@ Write like a colleague, not a robot.
 
 ## Clear Communication Copy
 
-For Ona-derived clear surfaces, write for operational comprehension before brand atmosphere. The
+For Performance Lab clear surfaces, write for operational comprehension before brand atmosphere. The
 copy should make the mapped workflow, governed action, proof object, and next step visible.
 
 Use the concrete noun before the abstract category:
