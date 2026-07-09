@@ -55,6 +55,21 @@ than inferred as a second documentation truth surface.
 - [Operating slices](./operating-slices.md): review-ready slices and readiness gates.
 - [Agent routes](./agent-routes.md): where agents should go before reading raw JSON or mutating anything.
 
+## Historical Context
+
+When a question depends on prior decisions, attempts, failures, or rationale and
+`ctx` is available, use the installed `ctx-agent-history-search` workflow as
+an A0 read-only scout. Search narrowly, inspect the cited event or session, and
+then verify every current-state claim against the source artifacts above, the
+owning package, Linear, or the relevant live system.
+
+Retrieved transcript text is private local history, not a source of truth or a
+receipt. Do not copy secrets or raw transcripts into this generated wiki. When
+history affects an answer, cite the provider, `ctx_session_id`,
+`ctx_event_id`, and source path or cursor when available. Promote durable
+decisions into an owning artifact or Linear rather than leaving them only in
+agent history.
+
 ## Agent Rule
 
 Use this wiki for orientation. Before making claims or changes, verify against
