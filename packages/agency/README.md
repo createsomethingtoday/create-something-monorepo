@@ -305,6 +305,14 @@ Implementation surface:
 - `src/lib/components/PublicAtlasStoryCanvas.svelte` wraps Canon's
   `AtlasStoryCanvas` with `.agency` starter-map selection and renders the static
   story artifact without invoking the mapping agent.
+- `src/lib/components/PublicSubstrateCanvas.svelte` mounts the shared
+  `@create-something/canvas-kernel` renderer directly on `.agency` so the public
+  proof object is a live canvas over the CREATE SOMETHING operating projection,
+  not a detached illustration.
+- `src/lib/atlas/public-substrate-canvas.ts` owns the public-safe operating
+  projection for that live canvas: signal queue, Substrate graph, agent queue,
+  decision gate, stop boundary, client delivery lane, receipt graph, and the
+  `.agency` surface itself.
 - `src/lib/components/PublicAtlasFlow.svelte` wraps Canon's `AtlasFlow` so the
   editable renderer stays reusable while `.agency` owns intake state.
 - `src/lib/components/PublicAtlasCanvas.svelte` renders the selector and persists
@@ -333,6 +341,10 @@ Renderer rule:
 
 - The interactive Svelte Atlas flow is the primary renderer for workflow
   education, intake, editing, accessibility, and agent-operable maps.
+- The homepage proof object is the transparent operating canvas:
+  `PublicSubstrateCanvas.svelte` mounts the shared `@create-something/canvas-kernel`
+  renderer and shows a public projection of the real Substrate/Atlas/receipt
+  operating model instead of a story-only abstraction.
 - Static story canvases are the fallback for marketing, articles, social cards,
   and non-JS presentation.
 - Sigma/Cosmograph are reserved for large read-only network exploration. Do not

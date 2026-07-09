@@ -10,7 +10,7 @@
     type ClearPlatformHeroProof
   } from '@create-something/canon';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
-  import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
+  import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
@@ -159,14 +159,7 @@
     description="Atlas turns the current process into a clear map: which signals matter, where work moves, what AI can handle, where people approve, and what proof records the outcome."
   >
     {#snippet after()}
-      <PublicAtlasStoryCanvas
-        starterId="marketplace-review-queue"
-        storyId="home-support-recovery-atlas-story"
-        eyebrow="Workflow map"
-        title="The map comes before the automation."
-        description="This read-only Atlas canvas shows the workflow in plain language: signals, systems, allowed actions, decision owner, stop point, and proof trail."
-        compact
-      />
+      <PublicSubstrateCanvas />
     {/snippet}
   </ClearPageSection>
 

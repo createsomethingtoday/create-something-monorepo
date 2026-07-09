@@ -41,6 +41,14 @@ const agencyStoryCanvasWrapper = readFileSync(
 	new URL('../src/lib/components/PublicAtlasStoryCanvas.svelte', import.meta.url),
 	'utf8'
 );
+const agencySubstrateCanvasWrapper = readFileSync(
+	new URL('../src/lib/components/PublicSubstrateCanvas.svelte', import.meta.url),
+	'utf8'
+);
+const agencySubstrateCanvasModule = readFileSync(
+	new URL('../src/lib/atlas/public-substrate-canvas.ts', import.meta.url),
+	'utf8'
+);
 const agencyEditableCanvas = readFileSync(
 	new URL('../src/lib/components/PublicAtlasCanvas.svelte', import.meta.url),
 	'utf8'
@@ -113,11 +121,11 @@ test('services route keeps one public Atlas map and removes the example canvas',
 	assert.equal(servicesRoute.includes('<ClearCardGrid'), false);
 });
 
-test('home route uses the read-only story canvas as a proof object', () => {
-	assert.ok(homeRoute.includes('<PublicAtlasStoryCanvas'));
-	assert.ok(homeRoute.includes('starterId="marketplace-review-queue"'));
-	assert.ok(homeRoute.includes('storyId="home-support-recovery-atlas-story"'));
-	assert.ok(homeRoute.includes('eyebrow="Workflow map"'));
+test('home route uses the shared canvas kernel as a transparent proof object', () => {
+	assert.ok(homeRoute.includes('<PublicSubstrateCanvas'));
+	assert.ok(homeRoute.includes("from '$lib/components/PublicSubstrateCanvas.svelte'"));
+	assert.ok(homeRoute.includes('Map the work before AI runs it.'));
+	assert.equal(homeRoute.includes('<PublicAtlasStoryCanvas'), false);
 	assert.equal(homeRoute.includes('<PublicAtlasCanvas'), false);
 });
 
@@ -229,6 +237,17 @@ test('agency story canvas is a Canon wrapper over local starter maps', () => {
 	assert.ok(canonPackage.includes('"./atlas/headless"'));
 });
 
+test('agency public Substrate canvas mounts the shared canvas kernel', () => {
+	assert.ok(agencySubstrateCanvasWrapper.includes("import('@create-something/canvas-kernel')"));
+	assert.ok(agencySubstrateCanvasWrapper.includes('kernel.CanvasKernel'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('data-public-substrate-canvas'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('The operating graph is the experience.'));
+	assert.ok(agencySubstrateCanvasModule.includes("from '@create-something/canvas-kernel'"));
+	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROJECTION'));
+	assert.ok(agencySubstrateCanvasModule.includes("'agency_canvas'"));
+	assert.ok(agencySubstrateCanvasModule.includes("'receipt_graph'"));
+});
+
 test('agency editable Atlas flow is a Canon wrapper over local intake state', () => {
 	assert.ok(agencyFlowComponent.includes("from '@create-something/canon/atlas'"));
 	assert.ok(agencyFlowComponent.includes("from '@create-something/canon/atlas/headless'"));
@@ -252,6 +271,9 @@ test('agency README documents story canvas route usage contract', () => {
 
 test('agency README documents the current interactive Atlas renderer contract', () => {
 	assert.ok(agencyReadme.includes('interactive Svelte Atlas flow'));
+	assert.ok(agencyReadme.includes('`PublicSubstrateCanvas.svelte`'));
+	assert.ok(agencyReadme.includes('`@create-something/canvas-kernel` renderer'));
+	assert.ok(agencyReadme.includes('transparent operating canvas'));
 	assert.equal(agencyReadme.includes('React Flow is the primary renderer'), false);
 });
 
