@@ -40,8 +40,8 @@ export function HalfDozenHeader() {
 }
 
 export function HeroSection({
-  heroCard = assetDefaults.heroCard,
-  eventPhoto = assetDefaults.eventPhoto,
+  heroMotion = assetDefaults.heroMotion,
+  heroMotionPoster = assetDefaults.heroMotionPoster,
   eyebrow = 'A system is an interconnected set of elements that is coherently organized in a way that achieves something.',
   description = 'Half Dozen is a strategic solutions partner helping teams in live events build better systems and do more with less.'
 }: HeroProps) {
@@ -52,30 +52,29 @@ export function HeroSection({
     if (!section) return;
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const motionVideo = section.querySelector<HTMLVideoElement>('.hd-hero__motion-video');
     let frame = 0;
 
     const setProgress = () => {
       frame = 0;
 
       if (reduceMotion.matches) {
-        section.style.setProperty('--hd-hero-card-zoom', '1');
-        section.style.setProperty('--hd-hero-card-y', '0px');
-        section.style.setProperty('--hd-hero-photo-zoom', '1');
-        section.style.setProperty('--hd-hero-photo-y', '0px');
-        section.style.setProperty('--hd-hero-title-y', '0px');
+        motionVideo?.pause();
+        if (motionVideo) motionVideo.currentTime = 0;
+        section.style.setProperty('--hd-hero-motion-zoom', '1');
+        section.style.setProperty('--hd-hero-motion-y', '0px');
         return;
       }
+
+      void motionVideo?.play().catch(() => undefined);
 
       const rect = section.getBoundingClientRect();
       const travel = Math.max(window.innerHeight * 0.95, 680);
       const progress = Math.min(1, Math.max(0, -rect.top / travel));
       const eased = 1 - Math.pow(1 - progress, 3);
 
-      section.style.setProperty('--hd-hero-card-zoom', (1 + eased * 0.16).toFixed(4));
-      section.style.setProperty('--hd-hero-card-y', `${Math.round(eased * 28)}px`);
-      section.style.setProperty('--hd-hero-photo-zoom', (1 + eased * 0.28).toFixed(4));
-      section.style.setProperty('--hd-hero-photo-y', `${Math.round(eased * -86)}px`);
-      section.style.setProperty('--hd-hero-title-y', `${Math.round(eased * -42)}px`);
+      section.style.setProperty('--hd-hero-motion-zoom', (1 + eased * 0.16).toFixed(4));
+      section.style.setProperty('--hd-hero-motion-y', `${Math.round(eased * -54)}px`);
     };
 
     const schedule = () => {
@@ -100,7 +99,7 @@ export function HeroSection({
     <section className="hd-section hd-hero" id="work" ref={sectionRef}>
       <HalfDozenHeader />
       <div className="hd-hero__headline">
-        <h1>
+        <h1 className="hd-hero__title">
           <span>
             <span>Cut the Noise</span>
           </span>
@@ -108,8 +107,18 @@ export function HeroSection({
             <span>Make it Count</span>
           </span>
         </h1>
-        <span className="hd-hero__card">
-          <img src={heroCard} alt="Half Dozen live event system visual" />
+        <span className="hd-hero__motion" aria-hidden="true">
+          <video
+            className="hd-hero__motion-video"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={heroMotionPoster}
+          >
+            <source src={heroMotion} type="video/mp4" />
+          </video>
         </span>
       </div>
       <div className="hd-hero__meta">
@@ -129,9 +138,6 @@ export function HeroSection({
           </div>
         </div>
       </div>
-      <span className="hd-hero__photo-frame">
-        <img className="hd-hero__photo" src={eventPhoto} alt="DJ performing at a live event" />
-      </span>
     </section>
   );
 }
