@@ -1,0 +1,435 @@
+{
+  "version": 1,
+  "generatedBy": "scripts/repo-split-pilot-plan.mjs",
+  "sourceRegistry": "config/repo-ownership-registry.generated.json",
+  "summary": {
+    "registrySurfaceCount": 183,
+    "candidateCount": 14,
+    "recommendedPilot": "apps/marketplace-template-submission-cloud",
+    "approvalRequiredForMutation": true
+  },
+  "recommendedOrder": [
+    "apps/marketplace-template-submission-cloud",
+    "packages/agency/clients/outerfields",
+    "packages/agency/clients/outerfields/mcp-remote",
+    "packages/dotfiles",
+    "packages/agency",
+    "packages/codebase-vector-database",
+    "packages/io",
+    "packages/learn",
+    "packages/motion-studio",
+    "packages/playbook-mcp",
+    "packages/playbook-mcp/worker",
+    "packages/notion-tools",
+    "packages/simulation",
+    "packages/triad-audit"
+  ],
+  "candidates": [
+    {
+      "surfacePath": "apps/marketplace-template-submission-cloud",
+      "packageName": "@create-something/marketplace-template-submission-cloud",
+      "ownership": "mirrored",
+      "authorityConfidence": "medium",
+      "relationshipType": "mirror-reconciliation",
+      "syncMode": "mirror-redundancy",
+      "referencedRepositories": [
+        "createsomethingtoday/webflow-library-submission-form"
+      ],
+      "relationshipSummary": "createsomethingtoday/webflow-library-submission-form",
+      "workspaceDependencyCount": 0,
+      "action": "Pilot repo reconciliation",
+      "rank": 1,
+      "reason": "Existing redundancy repo and app boundary make this the strongest first pilot, but deployment and Airtable/Webflow authority must remain gated.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "No deploy ownership, Webflow Cloud, Airtable, marketplace, or route changes without explicit approval and rollback notes."
+      ],
+      "nextSteps": [
+        "Read back current standalone repo contents and default branch.",
+        "Compare app path against standalone repo without modifying either side.",
+        "Decide authority direction: monorepo authoritative, standalone authoritative, or mirror-only redundancy.",
+        "Only after approval, create a scoped migration issue and branch."
+      ],
+      "cautions": [
+        "Treat this as a sync or mirror relationship until the authority direction is explicit.",
+        "Marketplace/config references may be registration dependencies rather than code ownership."
+      ]
+    },
+    {
+      "surfacePath": "packages/agency/clients/outerfields",
+      "packageName": "@create-something/outerfields",
+      "ownership": "mirrored",
+      "authorityConfidence": "medium",
+      "relationshipType": "sync-contract-hardening",
+      "syncMode": "subtree",
+      "referencedRepositories": [
+        "createsomethingtoday/outerfields-presentations"
+      ],
+      "relationshipSummary": "createsomethingtoday/outerfields-presentations",
+      "workspaceDependencyCount": 0,
+      "action": "Harden existing subtree sync contract",
+      "rank": 2,
+      "reason": "Existing subtree workflow is proven prior art; improve registry/docs before changing sync direction.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval."
+      ],
+      "nextSteps": [
+        "Document source repo, target prefix, sync command, and PR review gate.",
+        "Add freshness/check evidence if the current sync has no deterministic verifier.",
+        "Keep subtree direction unchanged until an explicit authority decision exists."
+      ],
+      "cautions": [
+        "Treat this as a sync or mirror relationship until the authority direction is explicit."
+      ]
+    },
+    {
+      "surfacePath": "packages/agency/clients/outerfields/mcp-remote",
+      "packageName": "@outerfields/pcn-mcp-remote",
+      "ownership": "standalone-reference",
+      "authorityConfidence": "low",
+      "relationshipType": "authority-readback",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "createsomethingtoday/outerfields-presentations"
+      ],
+      "relationshipSummary": "createsomethingtoday/outerfields-presentations",
+      "workspaceDependencyCount": 0,
+      "action": "Read back standalone authority",
+      "rank": 20,
+      "reason": "Standalone-looking evidence exists, but confidence is low until the referenced repository and deploy path are verified.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval."
+      ],
+      "nextSteps": [
+        "Read the cited evidence paths.",
+        "Verify whether referenced repos are authority, mirror, marketplace contract, historical report, or placeholder.",
+        "Update the registry evidence before any split action."
+      ],
+      "cautions": []
+    },
+    {
+      "surfacePath": "packages/dotfiles",
+      "packageName": "@create-something/dotfiles",
+      "ownership": "standalone-reference",
+      "authorityConfidence": "low",
+      "relationshipType": "authority-readback",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "createsomethingtoday/repo"
+      ],
+      "relationshipSummary": "createsomethingtoday/repo",
+      "workspaceDependencyCount": 0,
+      "action": "Read back standalone authority",
+      "rank": 20,
+      "reason": "Standalone-looking evidence exists, but confidence is low until the referenced repository and deploy path are verified.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval."
+      ],
+      "nextSteps": [
+        "Read the cited evidence paths.",
+        "Verify whether referenced repos are authority, mirror, marketplace contract, historical report, or placeholder.",
+        "Update the registry evidence before any split action."
+      ],
+      "cautions": []
+    },
+    {
+      "surfacePath": "packages/agency",
+      "packageName": "@create-something/agency",
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "relationshipType": "ownership-disambiguation",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "create-something/ground",
+        "create-something/templates",
+        "createsomethingtoday/shivworks-network",
+        "createsomethingtoday/shivworks-network."
+      ],
+      "relationshipSummary": "create-something/ground, create-something/templates, createsomethingtoday/shivworks-network, createsomethingtoday/shivworks-network.",
+      "workspaceDependencyCount": 5,
+      "action": "Disambiguate ownership evidence",
+      "rank": 30,
+      "reason": "Multiple repo signals exist; read back source authority before migration or cleanup.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "Resolve workspace dependencies through publish, vendor, or monorepo-retained contract before standalone extraction.",
+        "Verify authority from cited evidence before treating the surface as a split candidate."
+      ],
+      "nextSteps": [
+        "Read the cited evidence paths.",
+        "Verify whether referenced repos are authority, mirror, marketplace contract, historical report, or placeholder.",
+        "Update the registry evidence before any split action."
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "surfacePath": "packages/codebase-vector-database",
+      "packageName": "@create-something/codebase-vector-database",
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "relationshipType": "ownership-disambiguation",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "create-something/monorepo"
+      ],
+      "relationshipSummary": "create-something/monorepo",
+      "workspaceDependencyCount": 1,
+      "action": "Disambiguate ownership evidence",
+      "rank": 30,
+      "reason": "Multiple repo signals exist; read back source authority before migration or cleanup.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "Resolve workspace dependencies through publish, vendor, or monorepo-retained contract before standalone extraction.",
+        "Verify authority from cited evidence before treating the surface as a split candidate."
+      ],
+      "nextSteps": [
+        "Read the cited evidence paths.",
+        "Verify whether referenced repos are authority, mirror, marketplace contract, historical report, or placeholder.",
+        "Update the registry evidence before any split action."
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "surfacePath": "packages/io",
+      "packageName": "@create-something/io",
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "relationshipType": "ownership-disambiguation",
+      "syncMode": "marketplace-config",
+      "referencedRepositories": [
+        "createsomethingtoday/claude-plugins"
+      ],
+      "relationshipSummary": "createsomethingtoday/claude-plugins",
+      "workspaceDependencyCount": 5,
+      "action": "Disambiguate ownership evidence",
+      "rank": 30,
+      "reason": "Multiple repo signals exist; read back source authority before migration or cleanup.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "No deploy ownership, Webflow Cloud, Airtable, marketplace, or route changes without explicit approval and rollback notes.",
+        "Resolve workspace dependencies through publish, vendor, or monorepo-retained contract before standalone extraction.",
+        "Verify authority from cited evidence before treating the surface as a split candidate."
+      ],
+      "nextSteps": [
+        "Read the cited evidence paths.",
+        "Verify whether referenced repos are authority, mirror, marketplace contract, historical report, or placeholder.",
+        "Update the registry evidence before any split action."
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction.",
+        "Marketplace/config references may be registration dependencies rather than code ownership."
+      ]
+    },
+    {
+      "surfacePath": "packages/learn",
+      "packageName": "@createsomething/learn",
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "relationshipType": "ownership-disambiguation",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "create-something/auth.json"
+      ],
+      "relationshipSummary": "create-something/auth.json",
+      "workspaceDependencyCount": 0,
+      "action": "Disambiguate ownership evidence",
+      "rank": 30,
+      "reason": "Multiple repo signals exist; read back source authority before migration or cleanup.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "Verify authority from cited evidence before treating the surface as a split candidate."
+      ],
+      "nextSteps": [
+        "Read the cited evidence paths.",
+        "Verify whether referenced repos are authority, mirror, marketplace contract, historical report, or placeholder.",
+        "Update the registry evidence before any split action."
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning."
+      ]
+    },
+    {
+      "surfacePath": "packages/motion-studio",
+      "packageName": "@create-something/motion-studio",
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "relationshipType": "ownership-disambiguation",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "createsomethingtoday/ground"
+      ],
+      "relationshipSummary": "createsomethingtoday/ground",
+      "workspaceDependencyCount": 1,
+      "action": "Disambiguate ownership evidence",
+      "rank": 30,
+      "reason": "Multiple repo signals exist; read back source authority before migration or cleanup.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "Resolve workspace dependencies through publish, vendor, or monorepo-retained contract before standalone extraction.",
+        "Verify authority from cited evidence before treating the surface as a split candidate."
+      ],
+      "nextSteps": [
+        "Read the cited evidence paths.",
+        "Verify whether referenced repos are authority, mirror, marketplace contract, historical report, or placeholder.",
+        "Update the registry evidence before any split action."
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "surfacePath": "packages/playbook-mcp",
+      "packageName": "@create-something/playbook-mcp",
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "relationshipType": "ownership-disambiguation",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "create-something/agents"
+      ],
+      "relationshipSummary": "create-something/agents",
+      "workspaceDependencyCount": 0,
+      "action": "Disambiguate ownership evidence",
+      "rank": 30,
+      "reason": "Multiple repo signals exist; read back source authority before migration or cleanup.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "Verify authority from cited evidence before treating the surface as a split candidate."
+      ],
+      "nextSteps": [
+        "Read the cited evidence paths.",
+        "Verify whether referenced repos are authority, mirror, marketplace contract, historical report, or placeholder.",
+        "Update the registry evidence before any split action."
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning."
+      ]
+    },
+    {
+      "surfacePath": "packages/playbook-mcp/worker",
+      "packageName": "playbook-mcp-worker",
+      "ownership": "mixed",
+      "authorityConfidence": "low",
+      "relationshipType": "ownership-disambiguation",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "create-something/agents"
+      ],
+      "relationshipSummary": "create-something/agents",
+      "workspaceDependencyCount": 2,
+      "action": "Disambiguate ownership evidence",
+      "rank": 30,
+      "reason": "Multiple repo signals exist; read back source authority before migration or cleanup.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "Resolve workspace dependencies through publish, vendor, or monorepo-retained contract before standalone extraction.",
+        "Verify authority from cited evidence before treating the surface as a split candidate."
+      ],
+      "nextSteps": [
+        "Read the cited evidence paths.",
+        "Verify whether referenced repos are authority, mirror, marketplace contract, historical report, or placeholder.",
+        "Update the registry evidence before any split action."
+      ],
+      "cautions": [
+        "Multiple ownership signals exist; verify authority before migrating or cleaning.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    },
+    {
+      "surfacePath": "packages/notion-tools",
+      "packageName": "@create-something/notion-tools",
+      "ownership": "unclear",
+      "authorityConfidence": "low",
+      "relationshipType": "metadata-hygiene",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "create-something/create-something-monorepo"
+      ],
+      "relationshipSummary": "create-something/create-something-monorepo",
+      "workspaceDependencyCount": 0,
+      "action": "Fix metadata before split planning",
+      "rank": 50,
+      "reason": "Stale or incomplete repository metadata should be corrected before treating this as a split candidate.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "Verify authority from cited evidence before treating the surface as a split candidate."
+      ],
+      "nextSteps": [
+        "Confirm whether the referenced repository namespace is stale.",
+        "Patch package metadata only after verifying current intended source repo."
+      ],
+      "cautions": [
+        "Ownership evidence is incomplete or stale; treat this as a drill-down prompt.",
+        "Repository metadata points at create-something/create-something-monorepo; verify whether this is a stale namespace."
+      ]
+    },
+    {
+      "surfacePath": "packages/simulation",
+      "packageName": "@create-something/simulation",
+      "ownership": "unclear",
+      "authorityConfidence": "low",
+      "relationshipType": "metadata-hygiene",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "create-something/create-something-monorepo"
+      ],
+      "relationshipSummary": "create-something/create-something-monorepo",
+      "workspaceDependencyCount": 0,
+      "action": "Fix metadata before split planning",
+      "rank": 50,
+      "reason": "Stale or incomplete repository metadata should be corrected before treating this as a split candidate.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "Verify authority from cited evidence before treating the surface as a split candidate."
+      ],
+      "nextSteps": [
+        "Confirm whether the referenced repository namespace is stale.",
+        "Patch package metadata only after verifying current intended source repo."
+      ],
+      "cautions": [
+        "Ownership evidence is incomplete or stale; treat this as a drill-down prompt.",
+        "Repository metadata points at create-something/create-something-monorepo; verify whether this is a stale namespace."
+      ]
+    },
+    {
+      "surfacePath": "packages/triad-audit",
+      "packageName": "@createsomething/triad-audit",
+      "ownership": "unclear",
+      "authorityConfidence": "low",
+      "relationshipType": "metadata-hygiene",
+      "syncMode": "none",
+      "referencedRepositories": [
+        "create-something/create-something-monorepo",
+        "create-something/no-hardcoded-colors",
+        "create-something/triad-audit"
+      ],
+      "relationshipSummary": "create-something/create-something-monorepo, create-something/no-hardcoded-colors, create-something/triad-audit",
+      "workspaceDependencyCount": 1,
+      "action": "Fix metadata before split planning",
+      "rank": 50,
+      "reason": "Stale or incomplete repository metadata should be corrected before treating this as a split candidate.",
+      "approvalGates": [
+        "No repository creation, push, deletion, or transfer without explicit approval.",
+        "Resolve workspace dependencies through publish, vendor, or monorepo-retained contract before standalone extraction.",
+        "Verify authority from cited evidence before treating the surface as a split candidate."
+      ],
+      "nextSteps": [
+        "Confirm whether the referenced repository namespace is stale.",
+        "Patch package metadata only after verifying current intended source repo."
+      ],
+      "cautions": [
+        "Ownership evidence is incomplete or stale; treat this as a drill-down prompt.",
+        "Repository metadata points at create-something/create-something-monorepo; verify whether this is a stale namespace.",
+        "Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction."
+      ]
+    }
+  ]
+}

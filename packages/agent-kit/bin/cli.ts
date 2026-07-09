@@ -20,7 +20,7 @@ program
 	.version('1.0.0')
 	.option('-k, --key <license>', 'License key (ak_xxxxx)')
 	.option('-f, --force', 'Overwrite existing configuration')
-	.option('--skip-wezterm', 'Skip WezTerm configuration')
+	.option('--skip-zellij', 'Skip Zellij configuration')
 	.option('--skip-claude', 'Skip Claude Code configuration')
 	.option('--skip-beads', 'Skip Beads configuration')
 	.option('--skip-mcp', 'Skip MCP server templates')
@@ -55,7 +55,7 @@ program
 			const installOptions: InstallOptions = {
 				tier: license.tier,
 				force: options.force || false,
-				skipWezterm: options.skipWezterm || false,
+				skipZellij: options.skipZellij || false,
 				skipClaude: options.skipClaude || false,
 				skipBeads: options.skipBeads || false,
 				skipMcp: options.skipMcp || false

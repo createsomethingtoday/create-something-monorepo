@@ -24,12 +24,20 @@ Repo-owned Codex assets:
 - `skills/` - CREATE SOMETHING Codex skills and guardrails
 - `README.md` - installation and usage notes for Codex skills
 
-### wezterm/
+### zellij/
 
-Terminal emulator configuration:
-- Canon color scheme
-- Custom key bindings
-- Tab and pane management
+Terminal/session substrate for Codex-supervised visible workers:
+- Persistent agent lanes
+- Pane capture and JSON stream control
+- Repo-managed agent board
+
+### herdr/
+
+AI-agent multiplexer configuration:
+- Persistent Claude, Codex, Pi, logs, and local-server panes
+- Agent state rollups and session restore integrations
+- CLI/socket control surface that agents can inspect and manage
+- Linear remains the durable tracked-work and evidence surface
 
 ### beads/
 

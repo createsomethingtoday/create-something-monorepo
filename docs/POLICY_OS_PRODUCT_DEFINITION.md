@@ -7,6 +7,10 @@
 
 **Policy OS** is the canonical paid CREATE SOMETHING package for governed AI execution.
 
+It packages the operating model described in
+[AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md): agents run the
+work, receipts prove the work, and humans govern exceptions.
+
 It combines:
 
 - custom MCP connectivity

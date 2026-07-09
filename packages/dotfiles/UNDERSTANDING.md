@@ -14,7 +14,7 @@ This is where Zuhandenheit (ready-to-hand) manifests in terminal tooling. When c
 |------------|----------------|
 | **Beads** | Agent-native task management |
 | **Neomutt** | Email as communication, not inbox management |
-| **WezTerm** | Terminal emulator with Canon aesthetics |
+| **Zellij** | Terminal/session substrate for visible agent lanes |
 | **Neovim** | Text editing aligned with Canon principles |
 | **Claude Code** | AI-native development environment |
 
@@ -35,9 +35,8 @@ packages/dotfiles/
 │   ├── settings.json           → MCP servers, permissions
 │   ├── mcp-templates/          → Pre-configured MCP servers
 │   └── harness-templates/      → Multi-session work templates
-├── wezterm/
-│   ├── wezterm.lua             → Main configuration
-│   └── colors/                 → Canon color schemes
+├── zellij/
+│   └── README.md               → Zellij agent cockpit commands
 ├── beads/
 │   ├── config.yaml             → Beads configuration
 │   └── README.md               → Usage patterns
@@ -70,9 +69,10 @@ packages/dotfiles/
 2. **`claude-code/mcp-templates/`** — Pre-configured integrations
 3. **`claude-code/harness-templates/`** — Multi-session workflows
 
-**For Terminal (WezTerm)**:
-1. **`wezterm/wezterm.lua`** — Main configuration
-2. **`wezterm/colors/`** — Canon color schemes
+**For Terminal (Zellij)**:
+1. **`zellij/README.md`** — Agent cockpit commands
+2. **`herdr/config.toml`** — Terminal-native agent multiplexer fallback
+3. **`tmux/tmux.conf`** — Non-agent session, pane, and window management
 
 **For Email (Neomutt)**:
 1. **`neomutt/neomuttrc`** — Entry point
@@ -89,7 +89,7 @@ The same grammar across all tools:
 
 | Key | Action | Tools |
 |-----|--------|-------|
-| `j/k` | Navigate down/up | Neomutt, Nvim, WezTerm (copy mode) |
+| `j/k` | Navigate down/up | Neomutt, Nvim, tmux copy mode |
 | `h/l` | Back/Forward (or collapse/expand) | Neomutt, Nvim |
 | `gg/G` | First/Last | Neomutt, Nvim |
 | `Ctrl-d/u` | Half-page down/up | Neomutt, Nvim |
@@ -109,7 +109,7 @@ All tools use the Canon palette:
 | **Tertiary** | De-emphasized | `color245` (60% white) |
 | **Muted** | Inactive/read | `color240` (40% white) |
 | **Border** | Separators | `color236` (10% white) |
-| **Success** | Completed/good | `color71` (#44aa44) |
+| **Success** | Completed/good | `color15` (white) |
 | **Error** | Failed/urgent | `color167` (#cc4444) |
 | **Warning** | Flagged/due | `color136` (#aa8844) |
 | **Info** | Links/metadata | `color67` (#4477aa) |
@@ -142,17 +142,19 @@ Multi-session autonomous work templates:
 
 **Usage**: `harness start claude-code/harness-templates/feature.yaml`
 
-## WezTerm Configuration
+## Zellij Configuration
 
-Terminal emulator with Canon aesthetics:
+Terminal/session substrate for visible agent lanes:
 
 **Features**:
-- Canon color scheme (pure black background, semantic colors)
-- Custom key bindings (Cmd+T new tab, Cmd+W close, etc.)
-- Tab and pane management
-- Font: JetBrains Mono (monospace with ligatures)
+- Background sessions for Claude, Ornith, logs, and local servers
+- Pane output capture with `dump-screen`
+- JSON render streams with `subscribe --format json`
+- Bounded input through `paste` and `send-keys`
+- Repo-managed lane registry and board
 
-**Config**: `wezterm/wezterm.lua`
+**Config**: `zellij/README.md`
+**Guide**: `docs/guides/ZELLIJ_AGENT_COCKPIT.md`
 
 ## Beads Configuration
 
@@ -227,7 +229,7 @@ The `scripts/install.sh` script:
 
 **Symlinks created**:
 ```
-~/.config/wezterm/ → packages/dotfiles/wezterm/
+~/.config/zellij/config.kdl → packages/dotfiles/zellij/config.kdl
 ~/.config/neomutt/ → packages/dotfiles/neomutt/
 ~/.config/nvim/ → packages/dotfiles/nvim/
 ~/.config/beads/ → packages/dotfiles/beads/
@@ -310,8 +312,8 @@ dotfiles (Configuration) ◄── "Do tools recede?"     │
 | Install dotfiles | `pnpm --filter=dotfiles install-dotfiles` |
 | Configure Claude Code MCP | `claude-code/mcp-templates/` |
 | Set up email account | `neomutt/accounts/` |
-| Customize terminal colors | `wezterm/colors/` |
-| Add keybinding | `neomutt/bindings/` or `wezterm/wezterm.lua` |
+| Customize terminal colors | `zellij/config.kdl` |
+| Add keybinding | `neomutt/bindings/`, `tmux/tmux.conf`, or `zellij/config.kdl` |
 | Configure Beads | `beads/config.yaml` |
 
 ## Subtractive Triad Application

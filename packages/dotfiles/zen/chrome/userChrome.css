@@ -57,7 +57,7 @@
   --cs-focus: rgba(255, 255, 255, 0.5);
 
   /* Semantic */
-  --cs-success: #44aa44;
+  --cs-success: #ffffff;
   --cs-error: #d44d4d;
   --cs-warning: #aa8844;
   --cs-info: #5082b9;
@@ -107,7 +107,7 @@
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 2: TAB BAR — Minimal Hierarchy
    Active tab: primary. Inactive: muted. Nothing else.
-   Mirrors the WezTerm tab bar Canon pattern.
+   Mirrors the terminal tab bar Canon pattern.
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* Tab bar container */

@@ -68,30 +68,56 @@ if ! command -v bd &> /dev/null; then
 fi
 
 # ─────────────────────────────────────────────────────────────
-# WezTerm
+# Zellij
 # ─────────────────────────────────────────────────────────────
 
 echo ""
-echo "Installing WezTerm configuration..."
+echo "Preparing Zellij agent cockpit..."
 
-# Backup existing wezterm config
-if [ -d ~/.config/wezterm ] && [ ! -L ~/.config/wezterm ]; then
-    echo "  Backing up existing wezterm config to ~/.config/wezterm.backup"
-    mv ~/.config/wezterm ~/.config/wezterm.backup
-elif [ -L ~/.config/wezterm ]; then
-    rm ~/.config/wezterm
+mkdir -p /tmp/zellij
+mkdir -p ~/.config/zellij
+echo "  Created /tmp/zellij socket directory"
+ln -sf "$DOTFILES_DIR/zellij/config.kdl" ~/.config/zellij/config.kdl
+echo "  Symlinked Zellij config -> ~/.config/zellij/config.kdl"
+
+if ! command -v zellij &> /dev/null; then
+    echo ""
+    echo "  Zellij not found. Install with:"
+    echo "    brew install zellij"
+    echo ""
 fi
 
-# Symlink wezterm config
-ln -sf "$DOTFILES_DIR/wezterm" ~/.config/wezterm
-echo "  Symlinked wezterm → ~/.config/wezterm"
+# ─────────────────────────────────────────────────────────────
+# Herdr (AI-agent multiplexer)
+# ─────────────────────────────────────────────────────────────
 
-# Check if wezterm is installed
-if ! command -v wezterm &> /dev/null; then
+echo ""
+echo "Installing Herdr configuration..."
+
+mkdir -p ~/.config/herdr
+
+if [ -f ~/.config/herdr/config.toml ] && [ ! -L ~/.config/herdr/config.toml ]; then
+    echo "  Backing up existing Herdr config to ~/.config/herdr/config.toml.backup"
+    mv ~/.config/herdr/config.toml ~/.config/herdr/config.toml.backup
+elif [ -L ~/.config/herdr/config.toml ]; then
+    rm ~/.config/herdr/config.toml
+fi
+
+ln -sf "$DOTFILES_DIR/herdr/config.toml" ~/.config/herdr/config.toml
+echo "  Symlinked Herdr config -> ~/.config/herdr/config.toml"
+
+if command -v herdr &> /dev/null; then
+    if command -v claude &> /dev/null; then
+        herdr integration install claude
+    fi
+    if command -v codex &> /dev/null; then
+        herdr integration install codex
+    fi
+    herdr server reload-config >/dev/null 2>&1 || true
+else
     echo ""
-    echo "  WezTerm not found. Install with:"
-    echo "    macOS: brew install --cask wezterm"
-    echo "    Linux: https://wezfurlong.org/wezterm/install/linux.html"
+    echo "  Herdr not found. Install with:"
+    echo "    brew install herdr"
     echo ""
 fi
 
@@ -321,7 +347,7 @@ echo "     - gt rig add csm /path/to/create-something-monorepo"
 echo "     - gt start (launches tmux sessions)"
 echo "  4. Launch tools to verify:"
 echo "     - neomutt (email)"
-echo "     - wezterm (terminal)"
+echo "     - ghostty (terminal)"
 echo "     - tmux (session persistence)"
 echo "     - claude (AI development)"
 echo ""

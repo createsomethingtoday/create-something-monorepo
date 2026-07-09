@@ -1,0 +1,158 @@
+// CREATE SOMETHING Zellij cockpit
+
+simplified_ui true
+pane_frames true
+default_layout "compact"
+default_mode "normal"
+mouse_mode true
+copy_on_select true
+scroll_buffer_size 10000
+show_release_notes false
+show_startup_tips false
+advanced_mouse_actions false
+mouse_hover_effects false
+
+themes {
+    create_something {
+        fg 255 255 255
+        bg 0 0 0
+        black 0 0 0
+        white 255 255 255
+        red 204 68 68
+        green 170 170 170
+        yellow 170 136 68
+        blue 68 119 170
+        magenta 170 68 136
+        orange 170 136 68
+        cyan 68 170 170
+
+        text_unselected {
+            base 170 170 170
+            background 0 0 0
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        text_selected {
+            base 255 255 255
+            background 17 17 17
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        ribbon_unselected {
+            base 170 170 170
+            background 0 0 0
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        ribbon_selected {
+            base 255 255 255
+            background 17 17 17
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        table_title {
+            base 255 255 255
+            background 0 0 0
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        table_cell_unselected {
+            base 170 170 170
+            background 0 0 0
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        table_cell_selected {
+            base 255 255 255
+            background 17 17 17
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        list_unselected {
+            base 170 170 170
+            background 0 0 0
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        list_selected {
+            base 255 255 255
+            background 17 17 17
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        frame_unselected {
+            base 68 68 68
+            background 0 0 0
+            emphasis_0 68 68 68
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        frame_selected {
+            base 255 255 255
+            background 0 0 0
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        frame_highlight {
+            base 170 136 68
+            background 0 0 0
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        exit_code_success {
+            base 170 170 170
+            background 0 0 0
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        exit_code_error {
+            base 204 68 68
+            background 0 0 0
+            emphasis_0 255 255 255
+            emphasis_1 68 119 170
+            emphasis_2 170 170 170
+            emphasis_3 170 136 68
+        }
+        multiplayer_user_colors {
+            player_1 255 255 255
+            player_2 68 119 170
+            player_3 170 170 170
+            player_4 170 136 68
+            player_5 204 68 68
+            player_6 68 170 170
+            player_7 170 68 136
+            player_8 102 102 102
+            player_9 255 255 255
+            player_10 68 68 68
+        }
+    }
+}
+
+theme "create_something"
+theme_dark "create_something"
+theme_light "create_something"

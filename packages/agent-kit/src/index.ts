@@ -2,7 +2,7 @@
  * @createsomething/agent-kit
  *
  * Complete AI development environment.
- * WezTerm, Claude Code, Beads, MCP servers—all configured and ready.
+ * Zellij, Claude Code, Beads, MCP servers-all configured and ready.
  */
 
 export { validateLicense, type LicenseValidation } from './validate.js';

@@ -1,12 +1,28 @@
 # @create-something/substrate-mcp
 
-**Substrate** — the agent-native data layer. Replaces Notion with MCP-managed workspaces where teams interact through agents, not UI. Structured data in D1, files in R2, connectivity through MCP.
+**Substrate** — the first-class CREATE SOMETHING database-layer runtime
+direction. It combines Cloudflare D1/R2 records, API/MCP access, Atlas topology,
+workflow actions/runs/receipts, audit state, and a fast operator-facing database
+UI.
+
+Current product direction is documented in
+`../../docs/CREATE_SOMETHING_DATABASE_LAYER.md`. `packages/app-governance-db`
+is the first realized instance of the direction; Substrate is the reusable
+runtime target. Its generic workspace/record model must be reconciled with the
+newer app-governance patterns before production extraction: source records,
+Atlas bindings, workflow actions, workflow runs, receipts,
+transfer/readiness reviews, and meticulous front-end database interaction.
 
 ## The Paradigm
 
-> Why does a human need to see rows in a table when an agent can just answer their question?
+> Why should a human trust an agent-managed database unless the records,
+> bindings, actions, and receipts are visible when they need to inspect them?
 
-Notion collapses Database, Automation, and Judgment into one opinionated UI. Substrate separates them cleanly through MCP:
+Notion collapses Database, Automation, and Judgment into one opinionated
+workspace. Substrate should separate them through API/MCP while still providing
+a fast, Canon-aligned operator UI. Obsidian is the local-feel baseline for the
+operator path: fast navigation, instant filtering over the active working set,
+stable object URLs, and almost no perceived interface drag.
 
 | Tier | MCP Primitive | What It Does |
 |------|---------------|--------------|
@@ -14,7 +30,30 @@ Notion collapses Database, Automation, and Judgment into one opinionated UI. Sub
 | **Automation** | Tools | CRUD, queries, search, relations, file upload/download |
 | **Judgment** | Prompts | Role-based perspectives, data modeling, audits |
 
-The UI becomes the conversation. Each team member's agent connects to the shared data and interprets it through their role's lens.
+The UI is not optional. Agents should be able to operate the shared data, and
+humans should be able to inspect the same state through a fast database
+experience: filtered rows, selected records, Atlas bindings, relations, actions,
+runs, receipts, and audit history. The UI is a projection over the record model,
+not a second state owner.
+
+## System Design Bar
+
+Substrate should be the best database experience CREATE SOMETHING can design
+for mapped AI workflows, not merely an internal admin table.
+
+| Principle | Requirement |
+|-----------|-------------|
+| **Topology is data** | Atlas canvases, nodes, edges, source bindings, relations, and geometry are durable records first. SvelteFlow, desktop, and browser views render those records. |
+| **Execution is inspectable** | Actions propose what should happen, runs record what happened, and receipts explain why the current state is trustworthy. |
+| **Judgment is attached** | Approvals, waivers, stop reasons, owners, policy gates, and handoff notes live beside the affected record. |
+| **UI is a fast projection** | The interface should feel closer to Obsidian than a heavy SaaS workspace: local filtering, direct record movement, stable layout, keyboard-friendly selection, and small refreshes. |
+| **API/MCP parity** | Any state visible in the UI must be readable through API/MCP, and any agent mutation must be visible in the UI/audit trail. |
+| **Cloudflare-native durability** | D1 owns relational state; R2 owns files and large evidence; Workers expose API/MCP boundaries; local desktop enhances the same state. |
+
+Performance claims must stay evidence-backed. Until benchmarked, the bar is a
+budget: Obsidian-like responsiveness for loaded working sets, Cloudflare-backed
+durability for shared state, and API/MCP access without a separate agent-only
+schema.
 
 ## Architecture
 
@@ -32,14 +71,22 @@ Team Member → Agent (Claude) → substrate-mcp → D1 (data) + R2 (files)
 - **Audit Log** — Every mutation tracked for trust
 - **Dashboard** — Read-only HTML views for trust and verification
 
-## Dashboard (Trust Layer)
+## Database UI (Trust Layer)
 
-The agent manages the data; the dashboard proves it. Read-only HTML views that auto-refresh every 60 seconds.
+The agent can manage the data; the UI proves it. Read-only HTML views that
+auto-refresh every 60 seconds are the minimum trust layer. The broader CREATE
+SOMETHING database layer needs a richer front-end experience, similar in
+discipline to the app-governance dashboard and faster in feel: dense records,
+quick filtering, selection state, source bindings, map context, workflow
+actions/runs, receipts, direct URLs, and keyboard-friendly movement.
 
 | URL | What It Shows |
 |-----|---------------|
 | `/dashboard` | All workspaces, tables, records, audit log (admin overview / demo) |
 | `/dashboard/{workspace_id}` | Single workspace view (shareable with clients / team members) |
+| `/records/{record_id}` | Direct record inspection with bindings, actions, receipts, and audit context |
+| `/atlas/{canvas_id}` | Map view rendered from durable Atlas records |
+| `/actions` | Workflow action/run queue with policy and receipt state |
 
 ### Share Links
 
@@ -204,8 +251,8 @@ pnpm --filter=substrate-mcp start
 | Entry point | `README.md`, `src/index.ts` |
 | Boot command | `pnpm --filter=substrate-mcp dev` for local iteration, or `pnpm --filter=substrate-mcp start` after `pnpm --filter=substrate-mcp build` for the compiled stdio server |
 | Smoke command | `pnpm --filter=substrate-mcp typecheck && pnpm --filter=substrate-mcp build` |
-| Validation surfaces | typecheck output, stdio startup, Cloudflare-backed tool responses, dashboard views at `/dashboard` and `/dashboard/{workspace_id}`, D1 audit log rows, R2 file metadata |
-| UI validation path | `/dashboard` for fleet state or `/dashboard/{workspace_id}` for a single workspace trust view |
+| Validation surfaces | typecheck output, stdio startup, Cloudflare-backed tool responses, database UI views at `/dashboard`, `/dashboard/{workspace_id}`, direct record/Atlas/action URLs, D1 audit log rows, R2 file metadata |
+| UI validation path | `/dashboard` for fleet state, `/dashboard/{workspace_id}` for a single workspace trust view, and direct object URLs for record/action/receipt inspection |
 | Escalation rule | Stop if MCP responses and dashboard state diverge, or if auth, D1, or R2 behavior depends on secrets or Cloudflare bindings that are unavailable in the current local environment. |
 
 ## MCP Primitives

@@ -179,6 +179,18 @@ The launcher starts or reuses a detached local server, stores sessions in `~/Lib
 
 Use `pnpm atlas:desktop:studio ...` for terminal or agent mutations against the same app-data session store. Use the macOS app launcher only when the operator asks for a standalone desktop window.
 
+For Atlas/Substrate repo orientation, use the generated native agent wiki before
+reading raw topology JSON:
+
+```bash
+pnpm substrate:agent-wiki:check
+```
+
+Start at `packages/database-layer/docs/agent-wiki/README.md`. The wiki is a
+projection over Substrate topology, management-surface, readiness, organization
+review, diagnostics, and Atlas session artifacts; those generated JSON artifacts
+remain the source of truth.
+
 For the CREATE SOMETHING Template System canvas, run the read-only production primitive self-heal before assuming the map is current:
 
 ```bash

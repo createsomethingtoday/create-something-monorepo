@@ -1,0 +1,76 @@
+{
+  "schema_version": "multi-agent-work-unit.v1",
+  "id": "CRE-1145-atlas-topology-scout",
+  "linear": {
+    "issue": "CRE-1145",
+    "map_issue": "CRE-1068"
+  },
+  "lane": "review",
+  "role": "scout",
+  "tier": ["Database", "Automation", "Judgment"],
+  "goal": "Inspect one bounded Atlas/Topology/Substrate slice and return a read-only handoff packet for the supervising Codex loop.",
+  "scope": {
+    "packages": ["@create-something/database-layer"],
+    "paths": [
+      "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+      "docs/guides/LOOPS_ABOVE_AGENTS.md",
+      "packages/database-layer/docs/agent-wiki/**",
+      "packages/database-layer/data/create-something-internal-topology.json",
+      "packages/database-layer/data/create-something-internal-topology.3d.json",
+      "packages/database-layer/data/create-something-operating-slice-review.json",
+      "packages/database-layer/data/create-something-operating-slice-readiness.json"
+    ]
+  },
+  "locks": {
+    "packages": ["@create-something/database-layer"],
+    "paths": [
+      "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+      "packages/database-layer/docs/agent-wiki/**",
+      "packages/database-layer/data/*.json"
+    ],
+    "mode": "read"
+  },
+  "allowed_commands": [
+    "pnpm substrate:agent-wiki:check",
+    "sed -n '1,240p' docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+    "sed -n '1,240p' packages/database-layer/docs/agent-wiki/README.md",
+    "sed -n '1,240p' packages/database-layer/docs/agent-wiki/agent-routes.md",
+    "sed -n '1,240p' packages/database-layer/docs/agent-wiki/operating-slices.md",
+    "node scripts/agent-work-unit-verify.mjs automation/agent-contracts/examples/atlas-topology-scout.work-unit.json"
+  ],
+  "verification": [
+    {
+      "command": "pnpm substrate:agent-wiki:check",
+      "evidence": "Generated Atlas/Substrate agent wiki is current before the scout uses it for orientation."
+    },
+    {
+      "command": "node scripts/agent-work-unit-verify.mjs automation/agent-contracts/examples/atlas-topology-scout.work-unit.json",
+      "evidence": "The Atlas/Topology scout work unit remains structurally valid."
+    }
+  ],
+  "evidence": {
+    "target": "Linear CRE-1145 comment or supervising Codex handoff",
+    "required_artifacts": [
+      "topologyId",
+      "atlasCanvasId",
+      "selected lens/group/node or operating slice",
+      "visible node and edge counts when available",
+      "source artifact paths inspected",
+      "commands run with exit codes",
+      "finding, blocker, or no-op recommendation",
+      "next governed workflow if writes are needed"
+    ]
+  },
+  "stop_conditions": [
+    "Stop before writing Atlas records, Atlas story state, or Substrate source records.",
+    "Stop before mutating Cloudflare, Dify Studio, Notion, Webflow, Airtable, Slack, client systems, secrets, Linear state, or production review status.",
+    "Stop if generated wiki markdown disagrees with topology, readiness, management, or Atlas JSON artifacts.",
+    "Stop if the question depends on customer priority, revenue priority, or roadmap truth not present in the artifacts.",
+    "Stop if the worker needs Claude for CREATE SOMETHING work; Claude remains Webflow-work only."
+  ],
+  "promotion_gate": {
+    "batch_agents": false,
+    "production_mutation": false,
+    "merge_or_deploy": false
+  }
+}

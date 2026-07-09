@@ -26,7 +26,7 @@ Define a Git-light delivery workflow for AI agents in the monorepo so DEV and pr
 7. Production deploys from unpushed or unreviewed local state MUST NOT occur except under explicit human-directed incident response or emergency authorization.
 8. Worktrees SHOULD remain the default isolation mechanism for long-running or parallel agent work, but worktree use does not imply that a commit is required before DEV iteration.
 9. When a deploy path already runs through direct Wrangler or equivalent runtime commands, the deploy command MAY run without Git metadata, but provenance MUST still be attached to Linear and to any PR or release record used for production promotion.
-10. Rollback MUST remain human-controlled and MUST point to the last known-good deployed state, a revert commit, or an approved immutable release artifact.
+10. Rollback MUST remain human-controlled and MUST point to the last known-good deployed state, a revert commit, or an approved immutable release artifact, except for the narrow CREATE SOMETHING internal production-lab auto-rollback case governed by `policy.operator-agent-production-lab.v1`.
 11. Commit count, push count, or an agent completion message MUST NOT be used as a deploy trigger, promotion trigger, or readiness signal.
 12. Non-terminal DEV and preview deploy checkpoints SHOULD be captured as Linear comments and MUST be summarized when the issue is completed or promoted.
 13. Production-relevant agentic work SHOULD close with commit, push, merge, production deploy, and post-deploy verification unless the task is explicitly exploratory, draft/review-only, blocked on external access, or scoped to non-production evidence.

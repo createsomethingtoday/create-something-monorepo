@@ -12,8 +12,11 @@ Read in this order when you need broad repo context:
 2. [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md) — living claim and citation report generated from `docs/thesis/claims.yaml`
 3. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
 4. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
-5. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
-6. [policies/README.md](./policies/README.md) — versioned policy artifacts
+5. [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md) — agent-run-with-receipts operating charter
+6. [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md) — reusable database-layer product direction
+7. [packages/database-layer/docs/agent-wiki/business-recommendations.md](../packages/database-layer/docs/agent-wiki/business-recommendations.md) — generated operating lanes for CREATE SOMETHING business recommendations
+8. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
+9. [policies/README.md](./policies/README.md) — versioned policy artifacts
 
 ## Navigation by task
 
@@ -23,6 +26,9 @@ Read in this order when you need broad repo context:
 - [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md)
 - [thesis/README.md](./thesis/README.md)
 - [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md)
+- [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md)
+- [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md)
+- [packages/database-layer/docs/agent-wiki/business-recommendations.md](../packages/database-layer/docs/agent-wiki/business-recommendations.md)
 - [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md)
 - [AGENCY_BUSINESS_HEALTH_DASHBOARD.md](./AGENCY_BUSINESS_HEALTH_DASHBOARD.md)
 - [PARTNER_STACK_LEAD_PACKET.md](./PARTNER_STACK_LEAD_PACKET.md)
@@ -31,6 +37,8 @@ Read in this order when you need broad repo context:
 - [guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md](./guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md)
 - [AGENCY_CONTENT_ASSET_PERFORMANCE_REVIEW_2026-05-25.md](./AGENCY_CONTENT_ASSET_PERFORMANCE_REVIEW_2026-05-25.md)
 - [IMAGE_LANGUAGE_FOUNDATION.md](./IMAGE_LANGUAGE_FOUNDATION.md)
+- [CREATE_SOMETHING_PERFORMANCE_LAB_DESIGN_LANGUAGE.md](./CREATE_SOMETHING_PERFORMANCE_LAB_DESIGN_LANGUAGE.md)
+- [PERFORMANCE_LAB_FONT_COLOR_REVIEW_2026-07-09.md](./PERFORMANCE_LAB_FONT_COLOR_REVIEW_2026-07-09.md)
 - [CLOUDFLARE_PARTNER_LEAD_PACKET.md](./CLOUDFLARE_PARTNER_LEAD_PACKET.md)
 - [DIFY_PARTNER_AFFILIATE_LEAD_PACKET.md](./DIFY_PARTNER_AFFILIATE_LEAD_PACKET.md)
 - [DIFY_AFFILIATE_CONTENT_CHANNEL_PLAN.md](./DIFY_AFFILIATE_CONTENT_CHANNEL_PLAN.md)
@@ -54,6 +62,10 @@ Read in this order when you need broad repo context:
 ### Architecture and control planes
 
 - [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md)
+- [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md)
+- [CANON_DATABASE_LAYER_DESIGN.md](./CANON_DATABASE_LAYER_DESIGN.md)
+- [guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md](./guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md)
+- [packages/database-layer/docs/agent-wiki/business-recommendations.md](../packages/database-layer/docs/agent-wiki/business-recommendations.md)
 - [MCP_HUB_CONTROL_PLANE.md](./MCP_HUB_CONTROL_PLANE.md)
 - [HUB_CODEX_MCP_VISUALIZATION.md](./HUB_CODEX_MCP_VISUALIZATION.md)
 - [HUB_EXECUTION_GOVERNANCE_PLAN.md](./HUB_EXECUTION_GOVERNANCE_PLAN.md)
@@ -79,6 +91,8 @@ Read in this order when you need broad repo context:
 - [guides/CODING_AGENT_HARNESS_PATTERN.md](./guides/CODING_AGENT_HARNESS_PATTERN.md)
 - [guides/SOLO_OPERATOR_AGENT_LOOP.md](./guides/SOLO_OPERATOR_AGENT_LOOP.md)
 - [guides/HERMES_AGENT_LOOP_EVALUATION.md](./guides/HERMES_AGENT_LOOP_EVALUATION.md)
+- [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md)
+- [guides/ZELLIJ_AGENT_COCKPIT.md](./guides/ZELLIJ_AGENT_COCKPIT.md)
 - [guides/OPERATOR_AGENT_SYSTEM.md](./guides/OPERATOR_AGENT_SYSTEM.md)
 - [guides/OPERATOR_AGENT_PUBLIC_ACCESS.md](./guides/OPERATOR_AGENT_PUBLIC_ACCESS.md)
 - [guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md](./guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md)
@@ -191,6 +205,7 @@ docs/
 - **Working with Notion Workers or Notion API migrations**:
   [PARTNER_STACK_LEAD_PACKET.md](./PARTNER_STACK_LEAD_PACKET.md),
   [PARTNER_AFFILIATE_SURFACE_REVIEW_2026-05-17.md](./PARTNER_AFFILIATE_SURFACE_REVIEW_2026-05-17.md),
+  [CANON_DATABASE_LAYER_DESIGN.md](./CANON_DATABASE_LAYER_DESIGN.md),
   [guides/NOTION_WORKERS_AND_CLI_2026.md](./guides/NOTION_WORKERS_AND_CLI_2026.md),
   [guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md](./guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md),
   [guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md](./guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md),
