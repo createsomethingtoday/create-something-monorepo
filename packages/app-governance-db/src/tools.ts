@@ -1315,7 +1315,7 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
         params.push(changed_since);
       }
       const sql = `SELECT * FROM apps ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY last_seen_at DESC LIMIT ?`;
-      params.push(limit);
+      params.push(limit ?? 100);
       const result = await db.prepare(sql).bind(...params).all();
       return json(result.results);
     },
