@@ -3443,6 +3443,7 @@ describe('webflow-template-search worker', () => {
             'sync-record-id': 'recAgentflow',
             name: 'Agentflow',
             slug: 'agentflow-website-template',
+            'reviewer-pick-reason-featured-templates': 'Strong interaction polish and clear buyer-fit execution.',
             'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/agentflow-updated.webp' },
           },
         },
@@ -3461,9 +3462,14 @@ describe('webflow-template-search worker', () => {
       });
 
       const afterRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
-      const afterPayload = (await afterRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      const afterPayload = (await afterRefresh.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; reviewer_pick_reason: string | null }>;
+      };
       expect(afterPayload.items[0]?.thumbnail_image_url).toBe(
         'https://cdn.prod.website-files.com/site/agentflow-updated.webp',
+      );
+      expect(afterPayload.items[0]?.reviewer_pick_reason).toBe(
+        'Strong interaction polish and clear buyer-fit execution.',
       );
     } finally {
       fetchMock.mockRestore();
@@ -3539,6 +3545,7 @@ describe('webflow-template-search worker', () => {
         thumbnailImageUrl: `https://cdn.prod.website-files.com/site/batch-${suffix}.webp`,
         thumbnailImageSecondaryUrl: null,
         carouselImageUrls: [],
+        reviewerPickReason: null,
         price: null,
         isFree: null,
       };
@@ -4207,6 +4214,82 @@ describe('webflow-template-search worker', () => {
         expect.objectContaining({
           id: 'recRecentPayly',
           template_slug: 'recent-payly-website-template',
+        }),
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('sweeps missing recent publishes even when a bulk edit hits the stale fetch limit', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-23T14:30:00.000Z'));
+    // A bulk Airtable edit floods one 15-minute LMT window with 100+ records so
+    // the run hits MAX_STALE_INCREMENTAL_FETCH_RECORDS_PER_RUN. The sweep must
+    // still index a fresh publish whose LMT sits far behind the backlog.
+    const bulkEditedAssets = Array.from({ length: 100 }, (_, index) => ({
+      id: `recBulk${String(index).padStart(3, '0')}`,
+      fields: {
+        '📅LMT': new Date(Date.parse('2026-06-23T10:00:00.000Z') + (index + 1) * 1000).toISOString(),
+      },
+    }));
+    const recentPublishedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recRecentBulkSweep',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Recent Bulk Sweep',
+        '🚀📅Published Date': '2026-06-22',
+        '🥞CMS Slug': 'recent-bulk-sweep-website-template',
+        '🥞CMS Slug (formula)': 'recent-bulk-sweep-website-template',
+        '🔗Listing URL': 'https://webflow.com/templates/html/recent-bulk-sweep-website-template',
+        '🔗Website URL': 'https://webflow.com/templates/html/recent-bulk-sweep-website-template',
+        '📅LMT': '2026-06-23T14:04:12.000Z',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [recentPublishedAsset],
+      incrementalAssets: bulkEditedAssets,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-06-23T10:00:00.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        cursor: string;
+        fetched_records: number;
+        indexed_records: number;
+        removed_records: number;
+        recent_published_records?: number;
+      };
+      expect(syncPayload).toMatchObject({
+        cursor: '2026-06-23T10:01:20.000Z',
+        fetched_records: 81,
+        indexed_records: 1,
+        removed_records: 80,
+        recent_published_records: 1,
+      });
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=Recent%20Bulk%20Sweep'), env);
+      const payload = (await search.json()) as { items: Array<{ id: string; template_slug: string }> };
+      expect(payload.items).toEqual([
+        expect.objectContaining({
+          id: 'recRecentBulkSweep',
+          template_slug: 'recent-bulk-sweep-website-template',
         }),
       ]);
     } finally {

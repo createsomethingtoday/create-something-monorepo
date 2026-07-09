@@ -127,6 +127,7 @@ const UPSERT_TEMPLATE_SQL = `
     is_free,
     is_featured,
     is_landing_page,
+    reviewer_pick_reason,
     popularity_score,
     unique_viewers,
     cumulative_purchases,
@@ -140,7 +141,7 @@ const UPSERT_TEMPLATE_SQL = `
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -214,6 +215,7 @@ const UPSERT_TEMPLATE_SQL = `
     is_free = excluded.is_free,
     is_featured = excluded.is_featured,
     is_landing_page = excluded.is_landing_page,
+    reviewer_pick_reason = template_documents.reviewer_pick_reason,
     popularity_score = excluded.popularity_score,
     unique_viewers = excluded.unique_viewers,
     cumulative_purchases = excluded.cumulative_purchases,
@@ -539,6 +541,7 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.isFree ? 1 : 0,
         document.isFeatured ? 1 : 0,
         document.isLandingPage ? 1 : 0,
+        null,
         document.popularityScore,
         document.uniqueViewers,
         document.cumulativePurchases,
@@ -725,6 +728,7 @@ export async function updateTemplateImagesFromWebflow(
             `UPDATE template_documents
              SET template_slug = COALESCE(?, template_slug),
                  listing_url = COALESCE(?, listing_url),
+                 reviewer_pick_reason = ?,
                  thumbnail_image_url = ?,
                  thumbnail_image_secondary_url = ?,
                  carousel_image_urls_json = ?,
@@ -733,6 +737,7 @@ export async function updateTemplateImagesFromWebflow(
                AND (
                  (? IS NOT NULL AND NOT (template_slug IS ?))
                  OR (? IS NOT NULL AND NOT (listing_url IS ?))
+                 OR NOT (reviewer_pick_reason IS ?)
                  OR NOT (thumbnail_image_url IS ?)
                  OR NOT (thumbnail_image_secondary_url IS ?)
                  OR NOT (carousel_image_urls_json IS ?)
@@ -741,6 +746,7 @@ export async function updateTemplateImagesFromWebflow(
           .bind(
             record.templateSlug,
             record.listingUrl,
+            record.reviewerPickReason,
             record.thumbnailImageUrl,
             record.thumbnailImageSecondaryUrl,
             carouselImageUrlsJson,
@@ -750,6 +756,7 @@ export async function updateTemplateImagesFromWebflow(
             record.templateSlug,
             record.listingUrl,
             record.listingUrl,
+            record.reviewerPickReason,
             record.thumbnailImageUrl,
             record.thumbnailImageSecondaryUrl,
             carouselImageUrlsJson,
@@ -766,6 +773,7 @@ export async function updateTemplateImagesFromWebflow(
             `UPDATE template_documents
              SET template_slug = COALESCE(?, template_slug),
                  listing_url = COALESCE(?, listing_url),
+                 reviewer_pick_reason = ?,
                  thumbnail_image_url = ?,
                  thumbnail_image_secondary_url = ?,
                  carousel_image_urls_json = ?,
@@ -784,6 +792,7 @@ export async function updateTemplateImagesFromWebflow(
                AND (
                  (? IS NOT NULL AND NOT (template_slug IS ?))
                  OR (? IS NOT NULL AND NOT (listing_url IS ?))
+                 OR NOT (reviewer_pick_reason IS ?)
                  OR NOT (thumbnail_image_url IS ?)
                  OR NOT (thumbnail_image_secondary_url IS ?)
                  OR NOT (carousel_image_urls_json IS ?)
@@ -792,6 +801,7 @@ export async function updateTemplateImagesFromWebflow(
           .bind(
             record.templateSlug,
             record.listingUrl,
+            record.reviewerPickReason,
             record.thumbnailImageUrl,
             record.thumbnailImageSecondaryUrl,
             carouselImageUrlsJson,
@@ -805,12 +815,75 @@ export async function updateTemplateImagesFromWebflow(
             record.templateSlug,
             record.listingUrl,
             record.listingUrl,
+            record.reviewerPickReason,
             record.thumbnailImageUrl,
             record.thumbnailImageSecondaryUrl,
             carouselImageUrlsJson,
           ),
       );
       pushTemplateOfferUpdateByName(db, statements, record, syncedAt);
+    }
+  }
+
+  return runStatementBatches(db, statements, options);
+}
+
+export async function updateTemplateReviewerPickReasonsFromWebflow(
+  db: D1Database,
+  records: WebflowTemplateImageRecord[],
+  syncedAt: string,
+  options: { onBatch?: BatchProgress } = {},
+): Promise<number> {
+  const recordsWithReasons = records.filter((record) => record.reviewerPickReason);
+  if (recordsWithReasons.length === 0) return 0;
+
+  const statements: D1PreparedStatement[] = [];
+
+  for (const record of recordsWithReasons) {
+    if (record.id) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET reviewer_pick_reason = ?,
+                 synced_at = ?
+             WHERE id = ?
+               AND NOT (reviewer_pick_reason IS ?)`,
+          )
+          .bind(record.reviewerPickReason, syncedAt, record.id, record.reviewerPickReason),
+      );
+      continue;
+    }
+
+    if (record.templateSlug) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET reviewer_pick_reason = ?,
+                 synced_at = ?
+             WHERE template_slug = ?
+               AND (SELECT COUNT(*) FROM template_documents WHERE template_slug = ?) = 1
+               AND NOT (reviewer_pick_reason IS ?)`,
+          )
+          .bind(record.reviewerPickReason, syncedAt, record.templateSlug, record.templateSlug, record.reviewerPickReason),
+      );
+      continue;
+    }
+
+    if (record.name) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET reviewer_pick_reason = ?,
+                 synced_at = ?
+             WHERE name = ?
+               AND (SELECT COUNT(*) FROM template_documents WHERE name = ?) = 1
+               AND NOT (reviewer_pick_reason IS ?)`,
+          )
+          .bind(record.reviewerPickReason, syncedAt, record.name, record.name, record.reviewerPickReason),
+      );
     }
   }
 

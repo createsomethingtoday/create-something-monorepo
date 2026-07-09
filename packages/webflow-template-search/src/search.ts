@@ -45,6 +45,8 @@ function sortClause(sort: TemplateSort, options: { textRankTieBreaker?: boolean 
       return `CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) ASC, COALESCE(d.popularity_score, 0) DESC, ${tieBreaker}`;
     case 'price_desc':
       return `CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) DESC, COALESCE(d.popularity_score, 0) DESC, ${tieBreaker}`;
+    case 'best_selling':
+      return `COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.popularity_score, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
     default:
       return `COALESCE(d.popularity_score, 0) DESC, COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
   }
@@ -101,6 +103,7 @@ const GRID_ITEM_SELECT_COLUMNS = [
   'd.template_type',
   'd.is_free',
   'd.is_featured',
+  'd.reviewer_pick_reason',
   'd.popularity_score',
   'd.unique_viewers',
   'd.cumulative_purchases',
@@ -642,6 +645,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       price: row.price,
       is_free: typeof row.price === 'number' ? row.price === 0 : row.is_free === 1,
       is_featured: row.is_featured === 1,
+      reviewer_pick_reason: row.reviewer_pick_reason,
       template_type: row.template_type,
       popularity_score: row.popularity_score,
       unique_viewers: row.unique_viewers,

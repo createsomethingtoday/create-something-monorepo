@@ -32,6 +32,7 @@ import {
   updateCreatorAvatarsFromWebflow,
   updateTemplateDocumentImages,
   updateTemplateImagesFromWebflow,
+  updateTemplateReviewerPickReasonsFromWebflow,
   upsertSlugAliases,
   upsertTemplateDocuments,
 } from './db.js';
@@ -932,13 +933,17 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     if (boundedCursor) windowEnd = new Date(boundedCursor);
   }
 
-  if (!hitStaleFetchLimit) {
-    const recentPublishedAssets = await fetchChangedRecentPublishedAssets(env, now, assets);
-    await heartbeat();
-    if (recentPublishedAssets.length > 0) {
-      assets.push(...recentPublishedAssets);
-      recentPublishedRecords = recentPublishedAssets.length;
-    }
+  // The sweep must also run while the stale fetch limit is being hit: a bulk
+  // Airtable edit rewrites LMT across the whole table and puts the cursor into
+  // a multi-hour crawl, which is exactly when a fresh publish lands behind the
+  // backlog. The sweep is already bounded (recent publishes only, capped at
+  // RECENT_PUBLISHED_SWEEP_LIMIT, filtered to missing-or-stale rows), so it
+  // stays affordable on every run.
+  const recentPublishedAssets = await fetchChangedRecentPublishedAssets(env, now, assets);
+  await heartbeat();
+  if (recentPublishedAssets.length > 0) {
+    assets.push(...recentPublishedAssets);
+    recentPublishedRecords = recentPublishedAssets.length;
   }
 
   const toUpsert: TemplateDocumentInput[] = [];
@@ -1176,6 +1181,31 @@ async function runImageUrlRefresh(env: Env, heartbeat: SyncHeartbeat): Promise<I
 
 export async function refreshImages(env: Env): Promise<ImageRefreshSummary> {
   return runWithSyncJobLock(env, 'image_refresh', (heartbeat) => runImageUrlRefresh(env, heartbeat));
+}
+
+export async function refreshReviewerPickReasons(env: Env): Promise<{
+  mode: 'reviewer_pick_refresh';
+  started_at: string;
+  finished_at: string;
+  fetched_records: number;
+  reviewer_pick_records: number;
+  refreshed_records: number;
+}> {
+  const startedAt = nowIso();
+  const templateImages = await fetchWebflowTemplateImages(env);
+  const reviewerPickRecords = templateImages.filter((record) => record.reviewerPickReason);
+  const refreshedRecords = await updateTemplateReviewerPickReasonsFromWebflow(env.DB, reviewerPickRecords, startedAt);
+
+  if (refreshedRecords > 0) await bumpPublicSearchCacheVersion(env.DB, 'reviewer_pick_refresh');
+
+  return {
+    mode: 'reviewer_pick_refresh',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    fetched_records: templateImages.length,
+    reviewer_pick_records: reviewerPickRecords.length,
+    refreshed_records: refreshedRecords,
+  };
 }
 
 function filterCreatorLookupMap(lookups: LookupMaps, creatorNames: string[]): Map<string, CreatorLookupValue> {

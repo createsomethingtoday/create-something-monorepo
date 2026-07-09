@@ -21,6 +21,7 @@ import {
   pruneMissingTemplateImages,
   refreshCreatorProfiles,
   refreshImages,
+  refreshReviewerPickReasons,
   syncTemplateRecordsByIds,
   syncTemplates,
 } from './sync.js';
@@ -247,6 +248,13 @@ async function handleImageRefresh(request: Request, env: Env, ctx: ExecutionCont
   }
 
   return jsonResponse(request, env, await refreshImages(env));
+}
+
+async function handleReviewerPickRefresh(request: Request, env: Env): Promise<Response> {
+  const authError = validateAdminToken(request, env);
+  if (authError) return authError;
+
+  return jsonResponse(request, env, await refreshReviewerPickReasons(env));
 }
 
 async function parseRecordIds(request: Request): Promise<string[]> {
@@ -481,6 +489,10 @@ export default {
 
       if (url.pathname === '/api/templates/admin/refresh-images' && request.method === 'POST') {
         return await handleImageRefresh(request, env, ctx);
+      }
+
+      if (url.pathname === '/api/templates/admin/refresh-reviewer-picks' && request.method === 'POST') {
+        return await handleReviewerPickRefresh(request, env);
       }
 
       if (url.pathname === '/api/templates/admin/backfill-creators' && request.method === 'POST') {

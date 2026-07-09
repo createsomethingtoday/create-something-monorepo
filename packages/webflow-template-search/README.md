@@ -12,6 +12,7 @@ Cloudflare Worker and D1 search index for the Webflow template marketplace.
 - `POST /api/templates/admin/sync-records`
 - `GET /api/templates/admin/sync-status`
 - `POST /api/templates/admin/refresh-images`
+- `POST /api/templates/admin/refresh-reviewer-picks`
 - `POST /api/templates/admin/backfill-images`
 - `POST /api/templates/webhooks/webflow`
 

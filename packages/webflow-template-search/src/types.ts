@@ -1,5 +1,5 @@
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
-export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
 export type TemplateSearchView = 'full' | 'grid';
 export type AliasType = 'child_category';
 
@@ -207,6 +207,7 @@ export interface SearchItem {
   price: number | null;
   is_free: boolean;
   is_featured: boolean;
+  reviewer_pick_reason: string | null;
   template_type: string | null;
   popularity_score: number | null;
   unique_viewers: number | null;
@@ -347,6 +348,7 @@ export interface DocumentRow {
   is_free: number;
   is_featured: number;
   is_landing_page: number;
+  reviewer_pick_reason: string | null;
   popularity_score: number | null;
   unique_viewers: number | null;
   cumulative_purchases: number | null;
