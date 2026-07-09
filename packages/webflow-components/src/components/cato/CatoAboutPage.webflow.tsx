@@ -55,6 +55,11 @@ export default declareComponent(CatoAboutPage, {
       defaultValue: '',
       tooltip: 'Optional JSON array of Cato values: title, description, iconUrl.',
     }),
+    teamMembersJson: props.Text({
+      name: 'Team Members JSON',
+      defaultValue: '',
+      tooltip: 'Optional full Team Members API response or array. Items are filtered by Type for optional team sections.',
+    }),
     leadershipJson: props.Text({
       name: 'Leadership JSON',
       defaultValue: '',
@@ -64,6 +69,15 @@ export default declareComponent(CatoAboutPage, {
       name: 'Board JSON',
       defaultValue: '',
       tooltip: 'Optional JSON array of board members: name, role, bio, imageUrl, linkedinUrl.',
+    }),
+    teamMembersEndpointUrl: props.Text({
+      name: 'Team Members Endpoint URL',
+      defaultValue: '',
+      tooltip: 'Optional public endpoint returning Team Members items. Do not use a private Webflow API URL that requires a token.',
+    }),
+    fetchTeamMembers: props.Boolean({
+      name: 'Fetch Endpoint Team Members',
+      defaultValue: false,
     }),
     assetBasePath: props.Text({
       name: 'Asset Base Path',

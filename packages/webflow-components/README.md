@@ -18,11 +18,19 @@ npm install
 
 ## Publish to Webflow
 
+Before sharing, run the Webflow Code Component freshness gate in `docs/guides/WEBFLOW_EXPORT_FIRST_AGENT_WORKFLOW.md`:
+
+1. Confirm this package is the declared source authority for the target Webflow library.
+2. `git fetch` the owning remote and confirm the local branch is current with the intended upstream.
+3. Stop if unrelated dirty files touch component source, `.webflow.tsx` declarations, manifests, or generated bundles.
+4. Confirm the target workspace, library ID, and expected live base before upload.
+5. Treat stale, ambiguous, or moved live target state as a reconciliation task, not permission to overwrite.
+
 ```bash
-npx webflow library share
+WEBFLOW_LIBRARY_SHARE_APPROVED=1 pnpm run share
 ```
 
-This will prompt for Workspace authentication and upload the component library.
+This runs `pnpm run share:preflight` before prompting for Workspace authentication and uploading the component library. The share command uploads local source; it does not pull production or resolve conflicts. Actual Webflow library sharing requires explicit approval and post-share Designer or published-page readback evidence. Set `WEBFLOW_LIBRARY_SHARE_APPROVED=1` only after that approval has been granted. If an approved share intentionally includes scoped dirty package files, set `WEBFLOW_LIBRARY_SHARE_ALLOW_DIRTY=1`; this still refuses branches that are behind upstream.
 
 ## Verify Locally
 
@@ -233,7 +241,7 @@ Use `webflow.cato.json` when sharing Cato-only components into the Cato Supply w
 
 ```bash
 pnpm --dir packages/webflow-components run bundle:cato
-pnpm --dir packages/webflow-components run share:cato
+WEBFLOW_LIBRARY_SHARE_APPROVED=1 pnpm --dir packages/webflow-components run share:cato
 ```
 
 The `share:cato` script intentionally clears `WEBFLOW_WORKSPACE_API_TOKEN` so the Webflow CLI opens the workspace-selection OAuth flow. Select **Cato Supply** in the browser prompt. Do not rely on the package `.env` token unless it was just verified to resolve to `workspace/cato-supply`.
@@ -609,6 +617,8 @@ npm run typecheck
 # Publish to Webflow
 npm run share
 ```
+
+Do not run `npm run share` from a stale or ambiguous checkout. Refresh the owning repo, confirm the target Webflow workspace/library, and verify the expected base before sharing. Use `WEBFLOW_LIBRARY_SHARE_ALLOW_DIRTY=1` only when the dirty files are the reviewed share scope.
 
 ## Architecture
 

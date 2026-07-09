@@ -19,10 +19,24 @@ export default declareComponent(CatoBoardOfDirectorsPage, {
       defaultValue:
         'Cato is guided by leaders with healthcare, technology, impact investing, operating, and growth experience so hospitals can rely on stronger supply pathways when disruption hits.',
     }),
+    teamMembersJson: props.Text({
+      name: 'Team Members JSON',
+      defaultValue: '',
+      tooltip: 'Optional full Team Members API response or array. Items are filtered to Board Member and Both.',
+    }),
     boardJson: props.Text({
       name: 'Board JSON',
       defaultValue: '',
       tooltip: 'Optional JSON array of board members: name, role, bio, imageUrl, linkedinUrl.',
+    }),
+    teamMembersEndpointUrl: props.Text({
+      name: 'Team Members Endpoint URL',
+      defaultValue: '',
+      tooltip: 'Optional public endpoint returning Team Members items. Do not use a private Webflow API URL that requires a token.',
+    }),
+    fetchTeamMembers: props.Boolean({
+      name: 'Fetch Endpoint Team Members',
+      defaultValue: false,
     }),
     assetBasePath: props.Text({
       name: 'Asset Base Path',

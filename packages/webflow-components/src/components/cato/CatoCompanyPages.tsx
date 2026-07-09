@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 export type CatoCompanyLinkMode = 'webflow' | 'export';
 
@@ -24,7 +25,11 @@ export interface CatoTeamMember {
   role: string;
   bio?: string;
   imageUrl?: string;
+  imageAlt?: string;
   linkedinUrl?: string;
+  type?: string;
+  order?: number;
+  slug?: string;
 }
 
 export interface CatoCaseStudyResult {
@@ -57,8 +62,11 @@ export interface CatoAboutPageProps {
   missionText?: string;
   metricsJson?: string;
   valuesJson?: string;
+  teamMembersJson?: string;
   leadershipJson?: string;
   boardJson?: string;
+  teamMembersEndpointUrl?: string;
+  fetchTeamMembers?: boolean;
   assetBasePath?: string;
   showMission?: boolean;
   showTeam?: boolean;
@@ -67,7 +75,10 @@ export interface CatoAboutPageProps {
 export interface CatoLeadershipPageProps {
   title?: string;
   summary?: string;
+  teamMembersJson?: string;
   leadershipJson?: string;
+  teamMembersEndpointUrl?: string;
+  fetchTeamMembers?: boolean;
   assetBasePath?: string;
   ctaLabel?: string;
   ctaHref?: string;
@@ -76,7 +87,10 @@ export interface CatoLeadershipPageProps {
 export interface CatoBoardOfDirectorsPageProps {
   title?: string;
   summary?: string;
+  teamMembersJson?: string;
   boardJson?: string;
+  teamMembersEndpointUrl?: string;
+  fetchTeamMembers?: boolean;
   assetBasePath?: string;
   ctaLabel?: string;
   ctaHref?: string;
@@ -151,19 +165,56 @@ const DEFAULT_VALUES: CatoValueItem[] = [
 
 const DEFAULT_LEADERSHIP: CatoTeamMember[] = [
   {
-    name: 'Ryan Zackon',
-    role: 'President & Chief Executive Officer',
-    bio: 'Ryan leads Cato as it helps healthcare teams strengthen supply continuity across volatile sourcing conditions. Photo and full approved bio forthcoming from Cato.',
+    name: 'Lainy Jahnke',
+    role: 'Chief Operating Officer, Co-Founder',
+    type: 'Leadership Team',
+    order: 1,
+    imageUrl: 'https://cdn.prod.website-files.com/692466b3d9fea5a1522377f7/692863dff0b80335329330b4_lainy%20(1).webp',
+    imageAlt: 'Lainy Jahnke headshot',
+    linkedinUrl: 'https://www.linkedin.com/in/lainy-jahnke/',
+    slug: 'lainy-jahnke-2',
+    bio: '<p>Lainy is an operations leader with deep experience managing critical supply chain programs under pressure. With grit and vision, she has scaled organizations from small teams to hundreds of people, and previously directed a $22M operations budget for the U.S. Department of Defense. At Cato, Lainy leads operations and ensures delivery across the healthcare supply chain network.</p>',
   },
   {
-    name: 'Lainy Jahnke',
-    role: 'Chief Operating Officer, Co-Founder & Board Member',
-    bio: 'Operations leader with experience scaling organizations and guiding Cato customer delivery, management discipline, and supply continuity programs.',
+    name: 'Toby Ryan',
+    role: 'Chief of Staff, Co-Founder',
+    type: 'Leadership Team',
+    order: 2,
+    imageUrl: 'https://cdn.prod.website-files.com/692466b3d9fea5a1522377f7/69258d509a9a68b48fb42105_toby.webp',
+    imageAlt: 'Toby Ryan headshot',
+    linkedinUrl: 'https://www.linkedin.com/in/toby-ryan/',
+    slug: 'toby-ryan',
+    bio: '<p>Toby is an entrepreneurial operator with a proven track record of delivering groundbreaking global health and safety solutions for multiple Fortune 500 companies. He specializes in high-stakes implementations where precision and speed determine success. At Cato, Toby drives execution and cross-team alignment.</p>',
   },
   {
     name: 'Ethan Weinberg',
     role: 'VP, Supply Chain, Co-Founder',
-    bio: 'Supply chain executive who has sourced and delivered medical supplies across broad SKU sets and supplier pathways.',
+    type: 'Leadership Team',
+    order: 3,
+    imageUrl: 'https://cdn.prod.website-files.com/692466b3d9fea5a1522377f7/692863e9d536e0083d9660b1_ethan%20(1).webp',
+    imageAlt: 'Ethan Weinberg headshot',
+    linkedinUrl: 'https://www.linkedin.com/in/ethanweinberg1/',
+    slug: 'ethan-weinberg',
+    bio: '<p id="">Ethan is a supply chain executive who builds systems that perform in times of crisis. He has sourced and delivered over 32 million units of medical supplies across 1000+ SKUs, leading large-scale operations during COVID-19, disaster relief efforts, and international humanitarian aid missions. At Cato, Ethan manages sourcing strategy, partnerships, and pioneers a multi-agent AI system that will redefine healthcare procurement.</p>',
+  },
+  {
+    name: 'Ryan Zackon',
+    role: 'President & Chief Executive Officer',
+    type: 'Both',
+    order: 5,
+    imageUrl: 'https://cdn.prod.website-files.com/692466b3d9fea5a1522377f7/6a4be8fcf01d87d956a44c73_6a4be8204d1e9fa14eeccb81_ryan-zackon-headshot.png',
+    imageAlt: 'Ryan Zackon headshot',
+    slug: 'ryan-zackon',
+    bio: '<p>Ryan Zackon is a hands-on leader with a keen ability to transform, turnaround, and scale businesses into highly profitable and empowered organizations while driving overall shareholder value and vibrant workplace culture. A proven leader in the consumer, retail, supply chain, and e-commerce (DTC) sectors, Zackon&#39;s track record of success spans more than 55 countries across both the public and private sectors.</p><p>In July 2026, Zackon joined Cato Healthcare Supply Inc., a leading healthcare supply chain and procurement solutions company serving healthcare systems nationwide, as President and CEO. In this role, he is focused on accelerating growth, expanding healthcare procurement capabilities, deepening strategic supplier partnerships, enhancing healthcare logistics performance, investing in technology-enabled solutions, and strengthening Cato&#39;s position as a trusted partner to healthcare providers nationwide.</p><p>Prior to joining Cato, Zackon served as Chief Executive Officer of Nano Hearing Aids, where he led the company&#39;s strategic repositioning and operational turnaround amid significant regulatory and market changes. Zackon steered the company from monthly six-figure losses to a place on the 2025 Inc. 5000 list of fastest growing companies in America.</p><p>He previously served as Chief Executive Officer of Hairmax, overseeing the restructuring and global expansion of the medical device brand. Prior to Hairmax, Zackon was responsible for the development and execution of an ambitious “buy and build” strategy in the health and wellness space, ultimately leading to the successful initial public offering of Smart For Life, Inc. (NASDAQ: SMFL). During Zackon&#39;s tenure as CEO, the company successfully closed multiple M&amp;A transactions utilizing various financial instruments to access capital, culminating in the creation of an entity with annualized revenue in excess of $100 million.</p><p>Earlier in his career, Zackon held leadership positions at Twinlab Consolidated Holdings and Reliable Health Care Logistics, building deep expertise in healthcare operations, distribution, and global supply chains.</p><p>Zackon is also a recurring guest lecturer at the Johns Hopkins University School of Advanced International Studies (SAIS), where he speaks on geopolitics, global supply chains, and currency dynamics. He earned a bachelor&#39;s degree in psychology from The Ohio State University and is bilingual in English and French.</p>',
+  },
+  {
+    name: 'Nicole Scarbrough',
+    role: 'Executive Operations Leader',
+    type: 'Leadership Team',
+    imageUrl: 'https://cdn.prod.website-files.com/692466b3d9fea5a1522377f7/6a4ffa952879cb8d19e05590_Nicole%20Scarbrough%20Headshot%20Smiling%20White%20Suit.PNG',
+    imageAlt: 'Nicole Scarbrough headshot',
+    slug: 'nicole-scarbrough',
+    bio: '<p>Nicole is an executive operations leader with over 15 years of experience supporting founders, C-suite executives, executive vice presidents, and regional leadership across startup, growth-stage, and national organizations. She is a trusted strategic partner known for optimizing executive operations, strengthening organizational effectiveness, and driving cross-functional initiatives. At Cato, Nicole oversees critical executive operations, manages board administration, supports the company&#39;s multi-state licensing expansion, and helps ensure compliance across legal, operational, and corporate functions, enabling leadership to focus on the company&#39;s continued growth.</p>',
   },
 ];
 
@@ -171,27 +222,56 @@ const DEFAULT_BOARD: CatoTeamMember[] = [
   {
     name: 'Bala Iyer',
     role: 'Board Chair',
-    bio: 'Veteran technology operator with experience overseeing acquisitions, divestitures, and growth-stage company strategy.',
-  },
-  {
-    name: 'Andy James',
-    role: 'Board Member',
-    bio: 'Technology-forward leader with decades of experience guiding healthcare, impact, and growth initiatives.',
+    type: 'Board Member',
+    order: 2,
+    imageUrl: 'https://cdn.prod.website-files.com/692466b3d9fea5a1522377f7/692863f6de1e2f0929879e3e_Bala%20(1).webp',
+    imageAlt: 'Bala Iyer headshot',
+    linkedinUrl: 'https://www.linkedin.com/in/bala-iyer-2453736/',
+    slug: 'bala-iyer',
+    bio: '<p>A veteran of the technology industry, Iyer has overseen more than 100 acquisitions and divestitures worth more than $40 billion as well as equity and debt financing initiatives exceeding $10 billion. He has served on nine public company boards since 2001 and earned recognition from the National Association of Corporate Directors (NACD) Directorship 100 for exemplary leadership. Previously, Iyer served as CFO of Conexant Systems and VLSI Technologies.</p>',
   },
   {
     name: 'Heather Matzke-Hamlin',
     role: 'Board Member',
-    bio: 'Finance and transformation leader with experience guiding accounting, auditing, and acquisition integration teams.',
+    type: 'Board Member',
+    order: 3,
+    imageUrl: 'https://cdn.prod.website-files.com/692466b3d9fea5a1522377f7/6928640b6ea4b46f7af3f386_Heather%20(1).webp',
+    imageAlt: 'Heather Matzke-Hamlin headshot',
+    linkedinUrl: 'https://www.linkedin.com/in/heathermatzke-hamlin/',
+    slug: 'heather-matzke-hamlin',
+    bio: '<p>Matzke-Hamlin has a history of successfully leading accounting and auditing teams to achieve organizational transformation, acquisition integration, and strong corporate governance. She is currently a consultant, assisting companies with technical accounting and governance projects. Previously, she served as Chief Accounting Officer at both Clarivate Plc and IHS Markit and as Chief Audit Executive for a $2 billion technology company. She began her career in public accounting, serving large multinational clients.</p>',
   },
   {
     name: 'John Courtney',
     role: 'Board Member',
-    bio: 'Operating partner and growth executive with experience scaling teams, operations, and technology-led businesses.',
+    type: 'Board Member',
+    order: 4,
+    imageUrl: 'https://cdn.prod.website-files.com/692466b3d9fea5a1522377f7/692f2da62d8fd0d8d2f26f4f_johncourtney.webp',
+    imageAlt: 'John Courtney headshot',
+    linkedinUrl: 'https://www.linkedin.com/in/john-courtney-3a2289/',
+    slug: 'john-courtney',
+    bio: '<p>Currently an operating partner at InTandem Capital, Courtney’s career includes leadership roles such as head of operations for eBay’s Asia Pacific business and Chief Information Officer at Clayton Holdings. His global expertise spans technology partnerships and corporate strategy.</p>',
+  },
+  {
+    name: 'Ryan Zackon',
+    role: 'President & Chief Executive Officer',
+    type: 'Both',
+    order: 5,
+    imageUrl: 'https://cdn.prod.website-files.com/692466b3d9fea5a1522377f7/6a4be8fcf01d87d956a44c73_6a4be8204d1e9fa14eeccb81_ryan-zackon-headshot.png',
+    imageAlt: 'Ryan Zackon headshot',
+    slug: 'ryan-zackon',
+    bio: '<p>Ryan Zackon is a hands-on leader with a keen ability to transform, turnaround, and scale businesses into highly profitable and empowered organizations while driving overall shareholder value and vibrant workplace culture. A proven leader in the consumer, retail, supply chain, and e-commerce (DTC) sectors, Zackon&#39;s track record of success spans more than 55 countries across both the public and private sectors.</p><p>In July 2026, Zackon joined Cato Healthcare Supply Inc., a leading healthcare supply chain and procurement solutions company serving healthcare systems nationwide, as President and CEO. In this role, he is focused on accelerating growth, expanding healthcare procurement capabilities, deepening strategic supplier partnerships, enhancing healthcare logistics performance, investing in technology-enabled solutions, and strengthening Cato&#39;s position as a trusted partner to healthcare providers nationwide.</p><p>Prior to joining Cato, Zackon served as Chief Executive Officer of Nano Hearing Aids, where he led the company&#39;s strategic repositioning and operational turnaround amid significant regulatory and market changes. Zackon steered the company from monthly six-figure losses to a place on the 2025 Inc. 5000 list of fastest growing companies in America.</p><p>He previously served as Chief Executive Officer of Hairmax, overseeing the restructuring and global expansion of the medical device brand. Prior to Hairmax, Zackon was responsible for the development and execution of an ambitious “buy and build” strategy in the health and wellness space, ultimately leading to the successful initial public offering of Smart For Life, Inc. (NASDAQ: SMFL). During Zackon&#39;s tenure as CEO, the company successfully closed multiple M&amp;A transactions utilizing various financial instruments to access capital, culminating in the creation of an entity with annualized revenue in excess of $100 million.</p><p>Earlier in his career, Zackon held leadership positions at Twinlab Consolidated Holdings and Reliable Health Care Logistics, building deep expertise in healthcare operations, distribution, and global supply chains.</p><p>Zackon is also a recurring guest lecturer at the Johns Hopkins University School of Advanced International Studies (SAIS), where he speaks on geopolitics, global supply chains, and currency dynamics. He earned a bachelor&#39;s degree in psychology from The Ohio State University and is bilingual in English and French.</p>',
   },
   {
     name: 'Tiffani Shaw',
     role: 'Board Member',
-    bio: 'Impact investing and operating leader focused on improving health, well-being, and institutional growth.',
+    type: 'Board Member',
+    order: 6,
+    imageUrl: 'https://cdn.prod.website-files.com/692466b3d9fea5a1522377f7/692f2e2415ff4b8fb1bd4397_tiffani.webp',
+    imageAlt: 'Tiffani Shaw headshot',
+    linkedinUrl: 'https://www.linkedin.com/in/tiffani-shaw/',
+    slug: 'tiffani-shaw',
+    bio: '<p>Shaw serves as CEO of Stead Impact Ventures, an impact investing company focused on improving health and well-being globally. She previously served as Chief of Staff for the CEO at Clarivate, a global publicly traded company. She spent 25 years in the public sector, most recently as Executive Vice President and Chief Operating Officer of the University of Iowa Center for Advancement.</p>',
   },
 ];
 
@@ -569,22 +649,6 @@ const CATO_COMPANY_CSS = `
     font-size: 1.2rem;
     line-height: 1.55;
   }
-  .cato-company .about_lottie-wrap {
-    position: relative;
-    min-height: 11rem;
-    display: grid;
-    place-items: center;
-  }
-  .cato-company .about_lottie {
-    width: min(100%, 44rem);
-    min-height: 10rem;
-    border: 1px solid rgba(10, 69, 46, .1);
-    border-radius: 1rem;
-    background:
-      radial-gradient(circle at 18% 45%, rgba(66, 197, 143, .2), transparent 26%),
-      radial-gradient(circle at 78% 35%, rgba(84, 226, 254, .18), transparent 24%),
-      linear-gradient(135deg, rgba(10, 69, 46, .08), rgba(251, 249, 244, .92));
-  }
   .cato-company .u-bg-slot {
     position: absolute;
     inset: 0;
@@ -672,24 +736,26 @@ const CATO_COMPANY_CSS = `
     gap: 2rem;
   }
   .cato-company .team_card {
-    display: flex;
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
     align-items: center;
-    gap: 1.25rem;
+    gap: 1rem;
     height: 100%;
-    border: 1px solid transparent;
-    border-radius: 1rem;
-    background: transparent;
-    padding: 1rem;
+    border: 1px solid rgba(10, 69, 46, .12);
+    border-radius: .75rem;
+    background: rgba(255,255,255,.2);
+    padding: .85rem;
     text-align: left;
-    transition: border-color .5s cubic-bezier(.19, 1, .22, 1), background-color .5s cubic-bezier(.19, 1, .22, 1);
+    transition: border-color .35s cubic-bezier(.19, 1, .22, 1), background-color .35s cubic-bezier(.19, 1, .22, 1), box-shadow .35s cubic-bezier(.19, 1, .22, 1);
   }
   .cato-company .team_card:hover {
     border-color: var(--cato-border);
-    background-color: rgba(255,255,255,.42);
+    background-color: rgba(255,255,255,.38);
+    box-shadow: 0 .75rem 2rem rgba(10, 69, 46, .08);
   }
   .cato-company .team_card-image {
-    width: 8.125rem;
-    height: 8.125rem;
+    width: 7rem;
+    height: 7rem;
     aspect-ratio: 1;
     flex: 0 0 auto;
     border: 1px solid var(--cato-border);
@@ -711,7 +777,8 @@ const CATO_COMPANY_CSS = `
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: .7rem;
+    min-width: 0;
   }
   .cato-company .team_card-details-wrap {
     display: flex;
@@ -720,51 +787,98 @@ const CATO_COMPANY_CSS = `
   }
   .cato-company .team_card h3,
   .cato-company .team_card h4 {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
+    font-weight: 600;
     line-height: 1.2;
   }
   .cato-company .team_card p {
     color: rgba(40, 39, 35, .66);
-    font-size: 1rem;
-    line-height: 1.45;
+    font-size: .95rem;
+    line-height: 1.35;
   }
   .cato-company .cato-team-read-bio {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: auto;
     border: 0;
+    border-bottom: 1px solid rgba(10, 69, 46, .24);
+    border-radius: 0;
     background: transparent;
     color: var(--cato-green);
-    padding: 0;
+    padding: 0 0 .08rem;
     font: inherit;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
     cursor: pointer;
+    transition: color .2s ease, border-color .2s ease;
+  }
+  .cato-company .cato-team-read-bio:hover {
+    border-color: currentColor;
+    color: var(--cato-green-mid);
+  }
+  .cato-company .cato-team-read-bio-icon {
+    width: 1rem;
+    height: 1rem;
+    transition: transform .2s ease;
+  }
+  .cato-company .cato-team-read-bio:hover .cato-team-read-bio-icon,
+  .cato-company .team_card:hover .cato-team-read-bio-icon {
+    transform: translateX(.12rem);
   }
   .cato-company .team_modal {
     position: fixed;
     inset: 0;
-    z-index: 999;
+    z-index: 2147483000;
     display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
+    place-items: center;
+    padding: clamp(1rem, 3vw, 2rem);
     overflow: auto;
+    background: rgba(40, 39, 35, .42);
   }
   .cato-company .team_modal.is-open {
+    display: grid;
+  }
+  .cato-company .team_modal > .padding-global {
+    position: relative;
+    z-index: 1;
     display: flex;
+    width: 100%;
+    min-height: 100%;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .cato-company .team_modal .container-small {
+    width: min(100%, 46rem);
+    margin-right: auto;
+    margin-left: auto;
   }
   .cato-company .team_modal-content {
     position: relative;
     z-index: 1;
     display: flex;
-    width: min(100%, 42rem);
+    width: 100%;
+    max-height: calc(100vh - 3rem);
     flex-direction: column;
     gap: 2rem;
-    border-radius: 1.5rem;
+    overflow: auto;
+    border: 1px solid rgba(10, 69, 46, .12);
+    border-radius: 1rem;
     background-color: #fff;
-    padding: 3rem;
-    box-shadow: 0 2rem 5rem rgba(0,0,0,.18);
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    box-shadow: 0 2rem 5rem rgba(0,0,0,.22);
   }
   .cato-company .team_modal-top-wrap {
     display: flex;
     align-items: center;
     gap: 1.25rem;
+    padding-right: 2.5rem;
+  }
+  .cato-company .team_modal-content .team_card-image {
+    width: 7.5rem;
+    height: 7.5rem;
   }
   .cato-company .team_modal-close-button {
     position: absolute;
@@ -785,10 +899,12 @@ const CATO_COMPANY_CSS = `
     display: block;
   }
   .cato-company .team_modal-bg {
-    position: absolute;
+    position: fixed;
     inset: 0;
+    z-index: 0;
     border: 0;
-    background-color: rgba(0,0,0,.22);
+    background: transparent;
+    cursor: pointer;
   }
   .cato-company-team-grid {
     display: grid;
@@ -967,9 +1083,25 @@ const CATO_COMPANY_CSS = `
     .cato-company .padding-global { padding-left: 1rem; padding-right: 1rem; }
     .cato-company .padding-section-medium.is-about-hero { padding-top: 5rem; }
     .cato-company .team_cms-list { grid-template-columns: 1fr; }
-    .cato-company .team_card { align-items: flex-start; }
-    .cato-company .team_card-image { width: 6.5rem; height: 6.5rem; }
-    .cato-company .team_modal-content { padding: 1.5rem; }
+    .cato-company .team_card {
+      grid-template-columns: 5.75rem minmax(0, 1fr);
+      align-items: flex-start;
+    }
+    .cato-company .team_card-image { width: 5.75rem; height: 5.75rem; }
+    .cato-company .team_modal { place-items: start center; }
+    .cato-company .team_modal > .padding-global {
+      min-height: auto;
+      align-items: flex-start;
+    }
+    .cato-company .team_modal-content {
+      max-height: calc(100vh - 2rem);
+      padding: 1.25rem;
+    }
+    .cato-company .team_modal-top-wrap {
+      align-items: flex-start;
+      padding-right: 2.25rem;
+    }
+    .cato-company .team_modal-content .team_card-image { width: 5.5rem; height: 5.5rem; }
     .cato-company-section-head,
     .cato-company-cta { align-items: flex-start; flex-direction: column; }
     .cato-company-detail-header { padding: 4rem 1rem; }
@@ -1000,6 +1132,190 @@ function parseJsonArray<T>(json: string | undefined, fallback: T[]): T[] {
   }
 }
 
+type CatoTeamGroup = 'leadership' | 'board';
+
+const TEAM_TYPE_IDS: Record<string, string> = {
+  '72d1f715caf524ef1ccad0f01f4483b4': 'Leadership Team',
+  '6319b950e246fe2e75f029a26f942eb0': 'Board Member',
+  b611c7f779873dca0854edd623ff287f: 'Both',
+};
+
+function parseJsonValue(json: string | undefined): unknown {
+  if (!json?.trim()) return undefined;
+  try {
+    return JSON.parse(json);
+  } catch {
+    return undefined;
+  }
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
+}
+
+function pickRecordValue(record: Record<string, unknown>, keys: string[]): unknown {
+  for (const key of keys) {
+    if (record[key] !== undefined && record[key] !== null) return record[key];
+  }
+  return undefined;
+}
+
+function textValue(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function numberValue(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function imageValue(value: unknown): { url: string; alt?: string } {
+  if (typeof value === 'string') return { url: value.trim() };
+  const record = asRecord(value);
+  if (!record) return { url: '' };
+  const url = textValue(pickRecordValue(record, ['url', 'src', 'href']));
+  const alt = textValue(pickRecordValue(record, ['alt', 'description']));
+  return { url, alt: alt || undefined };
+}
+
+function normalizeTeamType(value: unknown): string {
+  const type = textValue(value);
+  return TEAM_TYPE_IDS[type] || type;
+}
+
+function teamItemsFromPayload(payload: unknown): unknown[] {
+  if (Array.isArray(payload)) return payload;
+  const record = asRecord(payload);
+  if (!record) return [];
+  const items = pickRecordValue(record, ['items', 'collectionItems', 'teamMembers', 'data', 'records']);
+  return Array.isArray(items) ? items : [];
+}
+
+export function normalizeCatoTeamMember(raw: unknown): CatoTeamMember | null {
+  const item = asRecord(raw);
+  if (!item) return null;
+  if (item.isArchived === true || item.isDraft === true) return null;
+
+  const fieldDataRecord = asRecord(item.fieldData) || asRecord(item.field_data);
+  const source = fieldDataRecord || item;
+  if (source.isArchived === true || source.isDraft === true) return null;
+
+  const name = textValue(pickRecordValue(source, ['name', 'member-name', 'Member Name', 'memberName']));
+  const role = textValue(pickRecordValue(source, ['role', 'job-position', 'Job Position', 'jobPosition', 'title', 'Title']));
+  if (!name || !role) return null;
+
+  const image = imageValue(pickRecordValue(source, ['profile-image', 'Profile Image', 'profileImage', 'image', 'Image', 'imageUrl', 'image-url', 'headshot', 'Headshot', 'photo', 'Photo']));
+  const type = normalizeTeamType(pickRecordValue(source, ['type', 'Type', 'team-type', 'Team Type', 'teamType', 'category', 'Category', 'group', 'Group']));
+  const order = numberValue(pickRecordValue(source, ['order', 'Order', 'sortOrder', 'sort-order']));
+
+  return {
+    name,
+    role,
+    bio: textValue(pickRecordValue(source, ['bio', 'Bio', 'biography', 'Biography', 'description', 'Description'])),
+    imageUrl: image.url,
+    imageAlt: image.alt,
+    linkedinUrl: textValue(pickRecordValue(source, ['linkedin-link', 'LinkedIn Link', 'linkedinUrl', 'linkedin-url', 'linkedin', 'LinkedIn'])),
+    type,
+    order,
+    slug: textValue(pickRecordValue(source, ['slug', 'Slug'])),
+  };
+}
+
+export function normalizeCatoTeamMembers(payload: unknown): CatoTeamMember[] {
+  return teamItemsFromPayload(payload)
+    .map(normalizeCatoTeamMember)
+    .filter((member): member is CatoTeamMember => Boolean(member))
+    .sort(compareTeamMembers);
+}
+
+function compareTeamMembers(a: CatoTeamMember, b: CatoTeamMember): number {
+  const aOrder = a.order ?? Number.MAX_SAFE_INTEGER;
+  const bOrder = b.order ?? Number.MAX_SAFE_INTEGER;
+  if (aOrder !== bOrder) return aOrder - bOrder;
+  return a.name.localeCompare(b.name);
+}
+
+export function filterCatoTeamMembers(members: CatoTeamMember[], group: CatoTeamGroup): CatoTeamMember[] {
+  const matches = members.filter((member) => {
+    const type = (member.type || '').toLowerCase();
+    if (!type) return false;
+    if (type === 'both') return true;
+    if (group === 'leadership') return type.includes('leadership');
+    return type.includes('board');
+  });
+  return matches.sort(compareTeamMembers);
+}
+
+function resolveTeamMembers({
+  group,
+  specificJson,
+  teamMembersJson,
+  fallback,
+}: {
+  group: CatoTeamGroup;
+  specificJson?: string;
+  teamMembersJson?: string;
+  fallback: CatoTeamMember[];
+}): CatoTeamMember[] {
+  const specificMembers = normalizeCatoTeamMembers(parseJsonValue(specificJson));
+  if (specificMembers.length) return specificMembers;
+
+  const allMembers = normalizeCatoTeamMembers(parseJsonValue(teamMembersJson));
+  const groupedMembers = filterCatoTeamMembers(allMembers, group);
+  return groupedMembers.length ? groupedMembers : fallback;
+}
+
+function useTeamMembers({
+  group,
+  specificJson,
+  teamMembersJson,
+  endpointUrl,
+  fetchEndpointItems,
+  fallback,
+}: {
+  group: CatoTeamGroup;
+  specificJson?: string;
+  teamMembersJson?: string;
+  endpointUrl?: string;
+  fetchEndpointItems?: boolean;
+  fallback: CatoTeamMember[];
+}): CatoTeamMember[] {
+  const initialMembers = React.useMemo(
+    () => resolveTeamMembers({ group, specificJson, teamMembersJson, fallback }),
+    [fallback, group, specificJson, teamMembersJson]
+  );
+  const [members, setMembers] = React.useState(initialMembers);
+
+  React.useEffect(() => {
+    setMembers(initialMembers);
+  }, [initialMembers]);
+
+  React.useEffect(() => {
+    const url = endpointUrl?.trim();
+    if (!fetchEndpointItems || !url || typeof fetch === 'undefined') return;
+
+    let cancelled = false;
+    fetch(url)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload) => {
+        if (cancelled || !payload) return;
+        const groupedMembers = filterCatoTeamMembers(normalizeCatoTeamMembers(payload), group);
+        if (groupedMembers.length) setMembers(groupedMembers);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [endpointUrl, fetchEndpointItems, group]);
+
+  return members;
+}
+
 function cleanHtml(html: string | undefined): string {
   if (!html?.trim()) return '<p>No content has been added yet.</p>';
   return html
@@ -1007,6 +1323,13 @@ function cleanHtml(html: string | undefined): string {
     .replace(/\son\w+="[^"]*"/gi, '')
     .replace(/\son\w+='[^']*'/gi, '')
     .replace(/\sjavascript:/gi, '');
+}
+
+function plainTextFromHtml(html: string | undefined): string {
+  return cleanHtml(html)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function assetUrl(path: string | CatoImageValue | undefined, assetBasePath?: string): string {
@@ -1131,9 +1454,6 @@ function TeamPageHero({
                 </p>
                 <ExportButton href={ctaHref} label={ctaLabel} />
               </div>
-              <div data-anim-load="fade" className="about_lottie-wrap" aria-hidden="true">
-                <div className="about_lottie" />
-              </div>
             </div>
           </div>
         </div>
@@ -1149,16 +1469,17 @@ function TeamPageHero({
 
 function PersonCard({ person, assetBasePath }: { person: CatoTeamMember; assetBasePath?: string }) {
   const image = assetUrl(person.imageUrl, assetBasePath);
+  const bio = plainTextFromHtml(person.bio);
 
   return (
     <article className="cato-company-card cato-company-person">
       <div className="cato-company-person-image" aria-hidden={!image}>
-        {image ? <img src={image} alt={person.name} loading="lazy" /> : <span>{initials(person.name)}</span>}
+        {image ? <img src={image} alt={person.imageAlt || person.name} loading="lazy" /> : <span>{initials(person.name)}</span>}
       </div>
       <div className="cato-company-person-body">
         <h3>{person.name}</h3>
         <p>{person.role}</p>
-        {person.bio ? <p>{person.bio}</p> : null}
+        {bio ? <p>{bio}</p> : null}
         {person.linkedinUrl ? (
           <a className="cato-company-button" data-variant="text" href={person.linkedinUrl} target="_blank" rel="noreferrer">
             LinkedIn
@@ -1172,12 +1493,52 @@ function PersonCard({ person, assetBasePath }: { person: CatoTeamMember; assetBa
 function TeamProfileCard({ person, assetBasePath }: { person: CatoTeamMember; assetBasePath?: string }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const image = assetUrl(person.imageUrl, assetBasePath);
+  const modal = (
+    <div data-team="modal" className={`team_modal${isOpen ? ' is-open' : ''}`} role="dialog" aria-modal="true" aria-label={`${person.name} bio`}>
+      <div className="padding-global padding-section-large">
+        <div className="container-small">
+          <div className="team_modal-content">
+            <div className="team_modal-top-wrap">
+              {image ? (
+                <img src={image} loading="lazy" alt={person.imageAlt || person.name} className="team_card-image" />
+              ) : (
+                <div className="team_card-image cato-team-card-initials" aria-hidden="true">
+                  {initials(person.name)}
+                </div>
+              )}
+              <div className="team_card-text-wrap">
+                <div className="team_card-details-wrap">
+                  <h4 className="heading-style-h6">{person.name}</h4>
+                  <p>{person.role}</p>
+                </div>
+              </div>
+            </div>
+            <div className="w-richtext">
+              {person.bio ? <RichText html={person.bio} /> : null}
+              {person.linkedinUrl ? (
+                <p>
+                  <a href={person.linkedinUrl} target="_blank" rel="noreferrer">
+                    LinkedIn
+                  </a>
+                </p>
+              ) : null}
+            </div>
+            <button type="button" data-team="modal-close" className="team_modal-close-button" aria-label="Close bio" onClick={() => setIsOpen(false)}>
+              <CloseIcon />
+            </button>
+          </div>
+        </div>
+      </div>
+      <button type="button" data-team="modal-close" className="team_modal-bg" aria-label="Close bio" onClick={() => setIsOpen(false)} />
+    </div>
+  );
+  const renderedModal = typeof document === 'undefined' ? modal : createPortal(modal, document.body);
 
   return (
     <div role="listitem" className="team_cms-item w-dyn-item">
       <article data-team="modal-trigger" className="team_card">
         {image ? (
-          <img src={image} loading="lazy" alt={person.name} className="team_card-image" />
+          <img src={image} loading="lazy" alt={person.imageAlt || person.name} className="team_card-image" />
         ) : (
           <div className="team_card-image cato-team-card-initials" aria-hidden="true">
             {initials(person.name)}
@@ -1190,54 +1551,17 @@ function TeamProfileCard({ person, assetBasePath }: { person: CatoTeamMember; as
           </div>
           <button
             type="button"
-            className="button w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd is-parent w-inline-block cato-team-read-bio"
+            className="cato-team-read-bio"
             aria-haspopup="dialog"
             aria-expanded={isOpen}
             onClick={() => setIsOpen(true)}
           >
-            <span className="button_text w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd">Read bio</span>
-            <span className="button_spacer w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd" />
-            <ArrowIcon className="button_icon w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd" />
+            <span>Read bio</span>
+            <ArrowIcon className="cato-team-read-bio-icon" />
           </button>
         </div>
-        <div data-team="modal" className={`team_modal${isOpen ? ' is-open' : ''}`} role="dialog" aria-modal="true" aria-label={`${person.name} bio`}>
-          <div className="padding-global padding-section-large">
-            <div className="container-small">
-              <div className="team_modal-content">
-                <div className="team_modal-top-wrap">
-                  {image ? (
-                    <img src={image} loading="lazy" alt={person.name} className="team_card-image" />
-                  ) : (
-                    <div className="team_card-image cato-team-card-initials" aria-hidden="true">
-                      {initials(person.name)}
-                    </div>
-                  )}
-                  <div className="team_card-text-wrap">
-                    <div className="team_card-details-wrap">
-                      <h4 className="heading-style-h6">{person.name}</h4>
-                      <p>{person.role}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="w-richtext">
-                  <p>{person.bio || 'Approved biography is forthcoming from Cato.'}</p>
-                  {person.linkedinUrl ? (
-                    <p>
-                      <a href={person.linkedinUrl} target="_blank" rel="noreferrer">
-                        LinkedIn
-                      </a>
-                    </p>
-                  ) : null}
-                </div>
-                <button type="button" data-team="modal-close" className="team_modal-close-button" aria-label="Close bio" onClick={() => setIsOpen(false)}>
-                  <CloseIcon />
-                </button>
-              </div>
-            </div>
-          </div>
-          <button type="button" data-team="modal-close" className="team_modal-bg" aria-label="Close bio" onClick={() => setIsOpen(false)} />
-        </div>
       </article>
+      {renderedModal}
     </div>
   );
 }
@@ -1311,16 +1635,33 @@ export function CatoAboutPage({
   missionText = 'We believe a resilient supply chain contributes to a healthier world. Cato exists to help ensure access to safe, reliable, and cost-effective medical supplies.\n\nAt its core, Cato has a practical mission: ensure dependable access to the supplies required for continuous care delivery. We broaden sourcing options so providers can maintain continuity in volatile markets and focus resources where they matter most: the patient.',
   metricsJson,
   valuesJson,
+  teamMembersJson,
   leadershipJson,
   boardJson,
+  teamMembersEndpointUrl,
+  fetchTeamMembers = false,
   assetBasePath,
   showMission = true,
   showTeam = false,
 }: CatoAboutPageProps) {
   const metrics = parseJsonArray<CatoImpactMetric>(metricsJson, DEFAULT_METRICS);
   const values = parseJsonArray<CatoValueItem>(valuesJson, DEFAULT_VALUES);
-  const leadership = parseJsonArray<CatoTeamMember>(leadershipJson, DEFAULT_LEADERSHIP);
-  const board = parseJsonArray<CatoTeamMember>(boardJson, DEFAULT_BOARD);
+  const leadership = useTeamMembers({
+    group: 'leadership',
+    specificJson: leadershipJson,
+    teamMembersJson,
+    endpointUrl: teamMembersEndpointUrl,
+    fetchEndpointItems: fetchTeamMembers,
+    fallback: DEFAULT_LEADERSHIP,
+  });
+  const board = useTeamMembers({
+    group: 'board',
+    specificJson: boardJson,
+    teamMembersJson,
+    endpointUrl: teamMembersEndpointUrl,
+    fetchEndpointItems: fetchTeamMembers,
+    fallback: DEFAULT_BOARD,
+  });
   const missionImage = assetUrl('images/mission-bg-img.webp', assetBasePath);
 
   return (
@@ -1440,12 +1781,22 @@ export function CatoAboutPage({
 export function CatoLeadershipPage({
   title = 'Meet the team helping hospitals protect supply continuity',
   summary = 'Cato combines healthcare procurement experience, supplier network discipline, and operator-led execution to help supply chain teams respond when standard channels cannot keep pace.',
+  teamMembersJson,
   leadershipJson,
+  teamMembersEndpointUrl,
+  fetchTeamMembers = false,
   assetBasePath,
   ctaLabel = 'Contact Us',
   ctaHref = '/contact-us',
 }: CatoLeadershipPageProps) {
-  const leadership = parseJsonArray<CatoTeamMember>(leadershipJson, DEFAULT_LEADERSHIP);
+  const leadership = useTeamMembers({
+    group: 'leadership',
+    specificJson: leadershipJson,
+    teamMembersJson,
+    endpointUrl: teamMembersEndpointUrl,
+    fetchEndpointItems: fetchTeamMembers,
+    fallback: DEFAULT_LEADERSHIP,
+  });
 
   return (
     <div className="cato-company cato-company-shell">
@@ -1459,12 +1810,22 @@ export function CatoLeadershipPage({
 export function CatoBoardOfDirectorsPage({
   title = 'Governance built for resilient healthcare supply',
   summary = 'Cato is guided by leaders with healthcare, technology, impact investing, operating, and growth experience so hospitals can rely on stronger supply pathways when disruption hits.',
+  teamMembersJson,
   boardJson,
+  teamMembersEndpointUrl,
+  fetchTeamMembers = false,
   assetBasePath,
   ctaLabel = 'Contact Us',
   ctaHref = '/contact-us',
 }: CatoBoardOfDirectorsPageProps) {
-  const board = parseJsonArray<CatoTeamMember>(boardJson, DEFAULT_BOARD);
+  const board = useTeamMembers({
+    group: 'board',
+    specificJson: boardJson,
+    teamMembersJson,
+    endpointUrl: teamMembersEndpointUrl,
+    fetchEndpointItems: fetchTeamMembers,
+    fallback: DEFAULT_BOARD,
+  });
 
   return (
     <div className="cato-company cato-company-shell">

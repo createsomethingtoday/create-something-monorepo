@@ -45,6 +45,7 @@ interface ApiItem {
   price: number | null;
   is_free: boolean;
   is_featured: boolean;
+  reviewer_pick_reason: string | null;
   template_type: string | null;
   popularity_score: number | null;
   unique_viewers: number | null;

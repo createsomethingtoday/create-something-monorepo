@@ -18,6 +18,8 @@ export interface CatoNavigationProps extends CatoInsightsDataProps {
   aboutHref?: string;
   leadershipLink?: CatoInsightLinkProp;
   leadershipHref?: string;
+  boardLink?: CatoInsightLinkProp;
+  boardHref?: string;
   solutionsLink?: CatoInsightLinkProp;
   solutionsHref?: string;
   technologyLink?: CatoInsightLinkProp;
@@ -33,9 +35,20 @@ export interface CatoNavigationProps extends CatoInsightsDataProps {
   caseStudiesHref?: string;
   riskRadarLink?: CatoInsightLinkProp;
   riskRadarHref?: string;
+  aboutLabel?: string;
+  whoWeAreLabel?: string;
+  leadershipLabel?: string;
+  boardLabel?: string;
+  solutionsLabel?: string;
+  technologyLabel?: string;
+  insightsLabel?: string;
+  caseStudiesLabel?: string;
+  riskRadarLabel?: string;
   productSearchLink?: CatoInsightLinkProp;
   productSearchHref?: string;
   productSearchLabel?: string;
+  mobileMenuLabel?: string;
+  mobileMenuCloseLabel?: string;
   introKicker?: string;
   heading?: string;
   summary?: string;
@@ -62,7 +75,10 @@ const CATO_NAV_CSS = `
     --cato-nav-border: var(--border-color--border-primary, rgba(40,39,35,.12));
     --cato-nav-soft: var(--background-color--background-secondary, #fbf9f4);
     --cato-nav-green: var(--base-color-green--green-900, #0a452e);
-    --cato-nav-green-mid: var(--base-color-green--green-800, #125a3b);
+    --cato-nav-green-mid: var(--base-color-green--green-800, #0d5b3c);
+    --cato-nav-blue: var(--base-color-blue--blue-500, #0a3e71);
+    --cato-nav-blue-mid: var(--base-color-blue--blue-700, #072c50);
+    --cato-nav-blue-soft: var(--base-color-blue--blue-300, #5b7ea0);
     --cato-nav-white: var(--base-color-charcoal--white, #ffffff);
     position: relative;
     z-index: 50;
@@ -71,7 +87,7 @@ const CATO_NAV_CSS = `
     border-bottom: 1px solid rgba(40,39,35,.06);
     font-family: "Inter Variable", Inter, Arial, sans-serif;
   }
-  .cato-nav-shell[data-fixed="true"] {
+  .cato-nav-shell[data-fixed=true] {
     position: sticky;
     top: 0;
   }
@@ -82,11 +98,11 @@ const CATO_NAV_CSS = `
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 2.5rem;
+    gap: 2rem;
     width: min(100%, 80rem);
-    min-height: 5.5rem;
+    min-height: 5rem;
     margin: 0 auto;
-    padding: 1.25rem 2.5rem;
+    padding: .95rem 2.5rem;
   }
   .cato-nav a {
     color: inherit;
@@ -132,7 +148,7 @@ const CATO_NAV_CSS = `
   .cato-nav__links {
     display: flex;
     align-items: center;
-    gap: 2rem;
+    gap: 1.5rem;
     padding: .25rem;
     border-radius: .75rem;
   }
@@ -155,7 +171,7 @@ const CATO_NAV_CSS = `
   }
   .cato-nav__link:hover,
   .cato-nav__trigger:hover,
-  .cato-nav__dropdown[data-open="true"] > .cato-nav__trigger,
+  .cato-nav__dropdown[data-open=true] > .cato-nav__trigger,
   .cato-nav__dropdown:focus-within > .cato-nav__trigger {
     color: var(--cato-nav-text);
     background: var(--cato-nav-soft);
@@ -167,7 +183,7 @@ const CATO_NAV_CSS = `
     transition: transform .18s ease;
   }
   .cato-nav__dropdown:hover > .cato-nav__trigger .cato-nav__caret,
-  .cato-nav__dropdown[data-open="true"] > .cato-nav__trigger .cato-nav__caret,
+  .cato-nav__dropdown[data-open=true] > .cato-nav__trigger .cato-nav__caret,
   .cato-nav__dropdown:focus-within > .cato-nav__trigger .cato-nav__caret {
     transform: rotate(180deg);
   }
@@ -201,7 +217,7 @@ const CATO_NAV_CSS = `
     height: .85rem;
   }
   .cato-nav__dropdown:hover > .cato-nav__dropdown-menu,
-  .cato-nav__dropdown[data-open="true"] > .cato-nav__dropdown-menu,
+  .cato-nav__dropdown[data-open=true] > .cato-nav__dropdown-menu,
   .cato-nav__dropdown:focus-within > .cato-nav__dropdown-menu {
     opacity: 1;
     transform: translate3d(0, 0, 0);
@@ -234,13 +250,13 @@ const CATO_NAV_CSS = `
   .cato-nav__mega-panel::before {
     content: "";
     position: absolute;
-    top: -2rem;
+    top: -.85rem;
     left: 0;
     right: 0;
-    height: 2rem;
+    height: .85rem;
   }
   .cato-nav__dropdown:hover > .cato-nav__mega-panel,
-  .cato-nav__dropdown[data-open="true"] > .cato-nav__mega-panel,
+  .cato-nav__dropdown[data-open=true] > .cato-nav__mega-panel,
   .cato-nav__dropdown:focus-within > .cato-nav__mega-panel {
     opacity: 1;
     transform: translate3d(0, 0, 0);
@@ -250,7 +266,7 @@ const CATO_NAV_CSS = `
     border-top-color: rgba(40,39,35,.06);
   }
   .cato-nav__mega-panel .cato-cc-mega-inner {
-    min-height: 23rem;
+    min-height: 18.5rem;
   }
   .cato-nav__actions {
     display: flex;
@@ -266,13 +282,13 @@ const CATO_NAV_CSS = `
     min-height: 3.25rem;
     border-radius: .5rem;
     color: var(--cato-nav-white) !important;
-    background: linear-gradient(135deg, #2f70b7, #245a9f 64%, #1f4e8b);
+    background: linear-gradient(105deg, var(--cato-nav-blue), var(--cato-nav-blue-soft) 49%, var(--cato-nav-blue-mid));
     padding: .8rem 1rem;
     font-weight: 700;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 .7rem 1.35rem rgba(31,78,139,.12);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 .7rem 1.35rem rgba(10,62,113,.14);
   }
   .cato-nav__cta:hover {
-    background: linear-gradient(135deg, #2a65a7, #214f8c 64%, #1a4276);
+    background: linear-gradient(105deg, var(--cato-nav-blue-mid), var(--cato-nav-blue) 52%, #041a2f);
   }
   .cato-nav__cta svg {
     width: 1rem;
@@ -303,7 +319,7 @@ const CATO_NAV_CSS = `
       justify-content: stretch;
       display: none;
     }
-    .cato-nav__center[data-open="true"] {
+    .cato-nav__center[data-open=true] {
       display: block;
     }
     .cato-nav__links {
@@ -331,6 +347,17 @@ const CATO_NAV_CSS = `
       box-shadow: none;
       margin: .35rem 0 .75rem;
     }
+    .cato-nav__dropdown-menu {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: .25rem 0 .65rem;
+    }
+    .cato-nav__dropdown-item {
+      padding: .95rem 1.25rem;
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
     .cato-nav__mega-panel {
       display: block;
     }
@@ -346,6 +373,22 @@ const CATO_NAV_CSS = `
     }
     .cato-nav__menu-button {
       display: inline-flex;
+    }
+  }
+  @media (max-width: 767px) {
+    .cato-nav__dropdown-item {
+      font-size: 1rem;
+      padding: .85rem 1.05rem;
+    }
+    .cato-nav__mega-panel .cato-cc-mega-link {
+      padding: .85rem 1.05rem;
+    }
+    .cato-nav__mega-panel .cato-cc-mega-link strong {
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+    .cato-nav__mega-panel .cato-cc-mega-link span {
+      display: none;
     }
   }
 `;
@@ -366,7 +409,12 @@ function hrefForPage(
 }
 
 function displayHref(value: string | undefined, fallback: string) {
-  return value && value.trim() ? value.trim() : fallback;
+  const cleaned = value?.trim();
+  return cleaned && cleaned !== '#' ? cleaned : fallback;
+}
+
+function displayLabel(value: string | undefined, fallback: string) {
+  return value?.trim() || fallback;
 }
 
 function resolveLink(
@@ -374,7 +422,7 @@ function resolveLink(
   href: string | undefined,
   fallback: string
 ) {
-  const resolvedHref = link?.href?.trim() || displayHref(href, fallback);
+  const resolvedHref = displayHref(link?.href, displayHref(href, fallback));
   const target = link?.target || undefined;
   return {
     href: resolvedHref,
@@ -428,6 +476,8 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
   aboutHref,
   leadershipLink,
   leadershipHref,
+  boardLink,
+  boardHref,
   solutionsLink,
   solutionsHref,
   technologyLink,
@@ -438,9 +488,20 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
   caseStudiesHref,
   riskRadarLink,
   riskRadarHref = 'https://app.catosupply.com/risk_radar/',
+  aboutLabel,
+  whoWeAreLabel,
+  leadershipLabel,
+  boardLabel,
+  solutionsLabel,
+  technologyLabel,
+  insightsLabel,
+  caseStudiesLabel,
+  riskRadarLabel,
   productSearchLink,
   productSearchHref = 'https://app.catosupply.com/product_search/',
   productSearchLabel = 'Product Search',
+  mobileMenuLabel = 'Menu',
+  mobileMenuCloseLabel = 'Close',
   fixed = false,
   showInsightsMegaMenu = true,
   linkMode = 'webflow',
@@ -464,6 +525,11 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
     leadershipLink,
     leadershipHref,
     hrefForPage('leadership.html', linkMode, pathPrefix)
+  );
+  const resolvedBoardLink = resolveLink(
+    boardLink,
+    boardHref,
+    hrefForPage('board-of-directors.html', linkMode, pathPrefix)
   );
   const resolvedSolutionsLink = resolveLink(
     solutionsLink,
@@ -496,6 +562,19 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
     'https://app.catosupply.com/product_search/'
   );
   const logoSrc = logoImage?.src || '';
+  const labels = {
+    about: displayLabel(aboutLabel, 'About Us'),
+    whoWeAre: displayLabel(whoWeAreLabel, 'Who We Are'),
+    leadership: displayLabel(leadershipLabel, 'Leadership'),
+    board: displayLabel(boardLabel, 'Board of Directors'),
+    solutions: displayLabel(solutionsLabel, 'Solutions'),
+    technology: displayLabel(technologyLabel, 'Technology'),
+    insights: displayLabel(insightsLabel, 'Insights'),
+    caseStudies: displayLabel(caseStudiesLabel, 'Case Studies'),
+    riskRadar: displayLabel(riskRadarLabel, 'Risk Radar'),
+    mobileMenu: displayLabel(mobileMenuLabel, 'Menu'),
+    mobileMenuClose: displayLabel(mobileMenuCloseLabel, 'Close')
+  };
   const clearCloseTimer = () => {
     if (closeTimerRef.current) {
       clearTimeout(closeTimerRef.current);
@@ -560,7 +639,7 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
                 aria-haspopup="true"
                 aria-expanded={openDropdown === 'about'}
               >
-                <span>About Us</span>
+                <span>{labels.about}</span>
                 <CaretIcon />
               </a>
               <div className="cato-nav__dropdown-menu">
@@ -570,7 +649,7 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
                   rel={resolvedAboutLink.rel}
                   className="cato-nav__dropdown-item"
                 >
-                  Who We Are
+                  {labels.whoWeAre}
                 </a>
                 <a
                   href={resolvedLeadershipLink.href}
@@ -578,7 +657,15 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
                   rel={resolvedLeadershipLink.rel}
                   className="cato-nav__dropdown-item"
                 >
-                  Leadership
+                  {labels.leadership}
+                </a>
+                <a
+                  href={resolvedBoardLink.href}
+                  target={resolvedBoardLink.target}
+                  rel={resolvedBoardLink.rel}
+                  className="cato-nav__dropdown-item"
+                >
+                  {labels.board}
                 </a>
                 <a
                   href={resolvedSolutionsLink.href}
@@ -586,7 +673,7 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
                   rel={resolvedSolutionsLink.rel}
                   className="cato-nav__dropdown-item"
                 >
-                  Solutions
+                  {labels.solutions}
                 </a>
                 <a
                   href={resolvedTechnologyLink.href}
@@ -594,7 +681,7 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
                   rel={resolvedTechnologyLink.rel}
                   className="cato-nav__dropdown-item"
                 >
-                  Technology
+                  {labels.technology}
                 </a>
               </div>
             </div>
@@ -615,7 +702,7 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
                 aria-haspopup="true"
                 aria-expanded={openDropdown === 'insights'}
               >
-                <span>Insights</span>
+                <span>{labels.insights}</span>
                 <CaretIcon />
               </a>
               {showInsightsMegaMenu ? (
@@ -636,7 +723,7 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
               rel={resolvedCaseStudiesLink.rel}
               className="cato-nav__link"
             >
-              Case Studies
+              {labels.caseStudies}
             </a>
             <a
               href={resolvedRiskRadarLink.href}
@@ -644,7 +731,7 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
               rel={resolvedRiskRadarLink.rel}
               className="cato-nav__link"
             >
-              Risk Radar
+              {labels.riskRadar}
             </a>
           </div>
         </div>
@@ -665,7 +752,7 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
           >
-            Menu
+            {menuOpen ? labels.mobileMenuClose : labels.mobileMenu}
           </button>
         </div>
       </nav>

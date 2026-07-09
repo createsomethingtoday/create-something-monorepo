@@ -91,6 +91,32 @@ export const TEMPLATE_DETAIL_STYLES = `
   line-height: 1.58;
 }
 
+.wfdt-reviewer-pick {
+  max-width: 680px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(20, 110, 245, 0.22);
+  border-radius: 4px;
+  background: rgba(20, 110, 245, 0.06);
+}
+
+.wfdt-reviewer-pick-kicker {
+  margin: 0;
+  color: #146ef5;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.wfdt-reviewer-pick-copy {
+  margin: 7px 0 0;
+  color: #1f1f1f;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
 .wfdt-meta-row {
   display: flex;
   flex-wrap: wrap;

@@ -38,6 +38,11 @@ export default declareComponent(TemplateDetailHero, {
     creatorLink: props.Link({ name: 'Creator URL' }),
     creatorAvatar: props.Image({ name: 'Creator Avatar' }),
     summary: props.Text({ name: 'Summary', defaultValue: '' }),
+    reviewerPickReason: props.Text({
+      name: 'Reviewer Pick Reason',
+      defaultValue: '',
+      tooltip: 'Bind to Templates CMS field: Reviewer Pick Reason (featured templates). Empty values hide the callout.',
+    }),
     publishedDate: props.Text({
       name: 'Updated Date',
       defaultValue: '',

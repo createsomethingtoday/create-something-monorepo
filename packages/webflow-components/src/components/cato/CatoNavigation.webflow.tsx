@@ -5,7 +5,7 @@ import { CatoNavigation } from './CatoNavigation';
 export default declareComponent(CatoNavigation, {
   name: 'Cato Navigation',
   description:
-    'Cato primary navigation with About, Leadership, Insights mega menu, Case Studies, Risk Radar, and Product Search.',
+    'Cato primary navigation with About, Leadership, Board of Directors, Insights mega menu, Case Studies, Risk Radar, and Product Search.',
   group: 'Cato Supply',
   options: {
     applyTagSelectors: false
@@ -32,6 +32,16 @@ export default declareComponent(CatoNavigation, {
       name: 'About URL Fallback',
       defaultValue: ''
     }),
+    aboutLabel: props.Text({
+      name: 'About Label',
+      defaultValue: 'About Us',
+      tooltip: 'Visible text for the About trigger, including the mobile menu.'
+    }),
+    whoWeAreLabel: props.Text({
+      name: 'Who We Are Label',
+      defaultValue: 'Who We Are',
+      tooltip: 'Visible text for the About dropdown item, including the mobile menu.'
+    }),
     leadershipLink: props.Link({
       name: 'Leadership Link',
       tooltip:
@@ -41,6 +51,25 @@ export default declareComponent(CatoNavigation, {
       name: 'Leadership URL Fallback',
       defaultValue: ''
     }),
+    leadershipLabel: props.Text({
+      name: 'Leadership Label',
+      defaultValue: 'Leadership',
+      tooltip: 'Visible text for the Leadership link, including the mobile menu.'
+    }),
+    boardLink: props.Link({
+      name: 'Board of Directors Link',
+      tooltip:
+        'Preferred: select the dedicated Board of Directors page. Board of Directors URL remains the fallback.'
+    }),
+    boardHref: props.Text({
+      name: 'Board of Directors URL Fallback',
+      defaultValue: ''
+    }),
+    boardLabel: props.Text({
+      name: 'Board of Directors Label',
+      defaultValue: 'Board of Directors',
+      tooltip: 'Visible text for the Board of Directors link, including the mobile menu.'
+    }),
     solutionsLink: props.Link({
       name: 'Solutions Link',
       tooltip: 'Preferred: select the Solutions page. Solutions URL remains the fallback.'
@@ -48,6 +77,11 @@ export default declareComponent(CatoNavigation, {
     solutionsHref: props.Text({
       name: 'Solutions URL Fallback',
       defaultValue: ''
+    }),
+    solutionsLabel: props.Text({
+      name: 'Solutions Label',
+      defaultValue: 'Solutions',
+      tooltip: 'Visible text for the Solutions link, including the mobile menu.'
     }),
     technologyLink: props.Link({
       name: 'Technology Link',
@@ -57,6 +91,11 @@ export default declareComponent(CatoNavigation, {
       name: 'Technology URL Fallback',
       defaultValue: ''
     }),
+    technologyLabel: props.Text({
+      name: 'Technology Label',
+      defaultValue: 'Technology',
+      tooltip: 'Visible text for the Technology link, including the mobile menu.'
+    }),
     insightsLink: props.Link({
       name: 'Insights Link',
       tooltip:
@@ -65,6 +104,11 @@ export default declareComponent(CatoNavigation, {
     insightsHref: props.Text({
       name: 'Insights URL Fallback',
       defaultValue: ''
+    }),
+    insightsLabel: props.Text({
+      name: 'Insights Label',
+      defaultValue: 'Insights',
+      tooltip: 'Visible text for the Insights trigger, including the mobile menu.'
     }),
     insightsHomeLink: props.Link({
       name: 'Mega Menu Intro CTA Link',
@@ -90,6 +134,11 @@ export default declareComponent(CatoNavigation, {
       name: 'Case Studies URL Fallback',
       defaultValue: ''
     }),
+    caseStudiesLabel: props.Text({
+      name: 'Case Studies Label',
+      defaultValue: 'Case Studies',
+      tooltip: 'Visible text for the Case Studies link, including the mobile menu.'
+    }),
     riskRadarLink: props.Link({
       name: 'Risk Radar Link',
       tooltip: 'Optional Webflow link override. Risk Radar URL remains the fallback.'
@@ -97,6 +146,11 @@ export default declareComponent(CatoNavigation, {
     riskRadarHref: props.Text({
       name: 'Risk Radar URL Fallback',
       defaultValue: 'https://app.catosupply.com/risk_radar/'
+    }),
+    riskRadarLabel: props.Text({
+      name: 'Risk Radar Label',
+      defaultValue: 'Risk Radar',
+      tooltip: 'Visible text for the Risk Radar link, including the mobile menu.'
     }),
     productSearchLink: props.Link({
       name: 'Product Search Link',
@@ -109,6 +163,14 @@ export default declareComponent(CatoNavigation, {
     productSearchLabel: props.Text({
       name: 'Product Search Label',
       defaultValue: 'Product Search'
+    }),
+    mobileMenuLabel: props.Text({
+      name: 'Mobile Menu Button Label',
+      defaultValue: 'Menu'
+    }),
+    mobileMenuCloseLabel: props.Text({
+      name: 'Mobile Menu Close Label',
+      defaultValue: 'Close'
     }),
     introKicker: props.Text({
       name: 'Mega Menu Intro Kicker',
@@ -182,6 +244,26 @@ export default declareComponent(CatoNavigation, {
       name: 'Categories JSON',
       defaultValue: '',
       tooltip: 'Optional JSON array overriding the default Cato Insights mega-menu categories.'
+    }),
+    resiliencyCategoryLabel: props.Text({
+      name: 'Resiliency Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Resiliency Report Alerts in the mega menu.'
+    }),
+    researchCategoryLabel: props.Text({
+      name: 'Research Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Industry Research in the mega menu.'
+    }),
+    resourcesCategoryLabel: props.Text({
+      name: 'Resources Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Resource Library in the mega menu.'
+    }),
+    newsroomCategoryLabel: props.Text({
+      name: 'Newsroom Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Newsroom in the mega menu.'
     }),
     itemsJson: props.Text({
       name: 'Items JSON',

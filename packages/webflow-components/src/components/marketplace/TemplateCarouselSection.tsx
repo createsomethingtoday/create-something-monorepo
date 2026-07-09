@@ -24,6 +24,7 @@ interface ApiItem {
   template_slug: string;
   name: string;
   url: string | null;
+  preview_url: string | null;
   creator_name: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
@@ -32,6 +33,7 @@ interface ApiItem {
   thumbnail_image_secondary_url: string | null;
   price: number | null;
   is_free: boolean;
+  reviewer_pick_reason: string | null;
   popularity_score: number | null;
   published_date: string | null;
 }
@@ -76,6 +78,8 @@ export interface TemplateCarouselSectionProps {
   showCta?: boolean;
   /** Show a compact result count in the section header. */
   showCount?: boolean;
+  /** Open a reviewer preview modal from featured template card clicks instead of navigating immediately. */
+  openFeaturedDetailsModal?: boolean;
   /** Track CTA, carousel navigation, template clicks, and creator clicks through wf_analytics and a custom DOM event. */
   enableAnalytics?: boolean;
   /** Experiment role used by Marketplace Landing Experiment Gate selectors. */
@@ -312,6 +316,242 @@ const CAROUSEL_STYLES = `
   line-height: 1.4;
 }
 
+.tmcarousel-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(8, 8, 8, 0.62);
+}
+
+.tmcarousel-modal {
+  width: min(1120px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.26);
+}
+
+.tmcarousel-modal-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  max-height: calc(100vh - 48px);
+}
+
+.tmcarousel-modal-preview {
+  min-width: 0;
+  padding: 18px;
+  background: #f4f4f4;
+  overflow: auto;
+}
+
+.tmcarousel-modal-browser {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.tmcarousel-modal-browserbar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 12px;
+  border-bottom: 1px solid #d9d9d9;
+  background: #ffffff;
+}
+
+.tmcarousel-modal-browserdot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #c8c8c8;
+}
+
+.tmcarousel-modal-frame {
+  display: block;
+  width: 100%;
+  height: min(62vh, 620px);
+  border: 0;
+  background: #ffffff;
+}
+
+.tmcarousel-modal-image {
+  display: block;
+  width: 100%;
+  height: min(62vh, 620px);
+  object-fit: cover;
+  background: #eeeeee;
+}
+
+.tmcarousel-modal-side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: auto;
+  padding: 24px;
+}
+
+.tmcarousel-modal-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.tmcarousel-modal-kicker {
+  margin: 0 0 8px;
+  color: #146ef5;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.tmcarousel-modal-title {
+  margin: 0;
+  color: #080808;
+  font-size: 26px;
+  font-weight: 650;
+  line-height: 1.12;
+}
+
+.tmcarousel-modal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  color: #5f5f5f;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.tmcarousel-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #080808;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.tmcarousel-modal-close:hover,
+.tmcarousel-modal-button:hover {
+  border-color: #a8a8a8;
+}
+
+.tmcarousel-modal-close:focus-visible,
+.tmcarousel-modal-button:focus-visible,
+.tmcarousel-modal-link:focus-visible {
+  outline: 2px solid #146ef5;
+  outline-offset: 2px;
+}
+
+.tmcarousel-modal-reason {
+  margin: 0 0 22px;
+  padding: 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #f8f8f8;
+}
+
+.tmcarousel-modal-reason-label {
+  margin: 0 0 6px;
+  color: #5f5f5f;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.tmcarousel-modal-reason-text {
+  margin: 0;
+  color: #080808;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.tmcarousel-modal-phone {
+  width: min(218px, 100%);
+  margin: 0 0 22px;
+  overflow: hidden;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.tmcarousel-modal-phone iframe {
+  display: block;
+  width: 390px;
+  height: 520px;
+  border: 0;
+  transform: scale(0.56);
+  transform-origin: top left;
+}
+
+.tmcarousel-modal-phone-label {
+  margin: 0 0 8px;
+  color: #5f5f5f;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.tmcarousel-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.tmcarousel-modal-button,
+.tmcarousel-modal-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #080808;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 570;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.tmcarousel-modal-link[data-primary="true"] {
+  border-color: #146ef5;
+  background: #146ef5;
+  color: #ffffff;
+}
+
+.tmcarousel-modal-link[data-primary="true"]:hover {
+  background: #0f55d9;
+}
+
+.tmcarousel-modal-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 @keyframes tmcarousel-shimmer {
   0% { background-position: -600px 0; }
   100% { background-position: 600px 0; }
@@ -345,6 +585,43 @@ const CAROUSEL_STYLES = `
   }
 
   .tmcarousel-nav {
+    display: none;
+  }
+
+  .tmcarousel-modal-backdrop {
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .tmcarousel-modal,
+  .tmcarousel-modal-grid {
+    max-height: calc(100vh - 24px);
+  }
+
+  .tmcarousel-modal-grid {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .tmcarousel-modal-preview {
+    padding: 12px;
+  }
+
+  .tmcarousel-modal-frame,
+  .tmcarousel-modal-image {
+    height: 360px;
+  }
+
+  .tmcarousel-modal-side {
+    padding: 18px;
+  }
+
+  .tmcarousel-modal-title {
+    font-size: 22px;
+  }
+
+  .tmcarousel-modal-phone,
+  .tmcarousel-modal-phone-label {
     display: none;
   }
 }
@@ -446,6 +723,17 @@ function primaryThumbnailUrl(item: ApiItem): string | null {
   return item.thumbnail_image_url ?? item.thumbnail_image_secondary_url;
 }
 
+function isTemplateDetailAnchor(anchor: HTMLAnchorElement, item: ApiItem): boolean {
+  const href = anchor.getAttribute('href') ?? '';
+  if (!href || href === '#') return false;
+  if (item.url && href === item.url) return true;
+  return href.includes(`/templates/html/${item.template_slug}`);
+}
+
+function canUseFeaturedModal(enabled: boolean, preset: TemplateCarouselPreset, scope: TemplateScope): boolean {
+  return enabled && (preset === 'curated_by_webflow' || scope === 'featured');
+}
+
 function buildApiUrl(
   base: string,
   options: {
@@ -488,6 +776,157 @@ const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
   </div>
 );
 
+const FeaturedTemplatePreviewModal: React.FC<{
+  item: ApiItem;
+  index: number;
+  total: number;
+  apiBase: string;
+  onClose: () => void;
+  onNavigate: (direction: -1 | 1) => void;
+  onViewDetails: () => void;
+}> = ({ item, index, total, apiBase, onClose, onNavigate, onViewDetails }) => {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const primaryImageUrl = primaryThumbnailUrl(item);
+  const proxiedImageUrl = primaryImageUrl ? proxyImageUrl(primaryImageUrl, apiBase) : null;
+  const price = formatPrice(item);
+  const hasPrevious = index > 0;
+  const hasNext = index < total - 1;
+  const reviewerReason = item.reviewer_pick_reason?.trim();
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, [item.id]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+      if (event.key === 'ArrowLeft' && hasPrevious) {
+        event.preventDefault();
+        onNavigate(-1);
+      }
+      if (event.key === 'ArrowRight' && hasNext) {
+        event.preventDefault();
+        onNavigate(1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasNext, hasPrevious, onClose, onNavigate]);
+
+  return (
+    <div className="tmcarousel-modal-backdrop" role="presentation" onMouseDown={(event) => {
+      if (event.target === event.currentTarget) onClose();
+    }}>
+      <div
+        className="tmcarousel-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tmcarousel-modal-title"
+      >
+        <div className="tmcarousel-modal-grid">
+          <div className="tmcarousel-modal-preview">
+            <div className="tmcarousel-modal-browser">
+              <div className="tmcarousel-modal-browserbar" aria-hidden="true">
+                <span className="tmcarousel-modal-browserdot" />
+                <span className="tmcarousel-modal-browserdot" />
+                <span className="tmcarousel-modal-browserdot" />
+              </div>
+              {item.preview_url ? (
+                <iframe
+                  className="tmcarousel-modal-frame"
+                  src={item.preview_url}
+                  title={`${item.name} preview`}
+                  loading="lazy"
+                />
+              ) : proxiedImageUrl ? (
+                <img className="tmcarousel-modal-image" src={proxiedImageUrl} alt={item.name} loading="lazy" />
+              ) : (
+                <div className="tmcarousel-modal-image" aria-label={`${item.name} preview unavailable`} />
+              )}
+            </div>
+          </div>
+
+          <aside className="tmcarousel-modal-side">
+            <div className="tmcarousel-modal-top">
+              <div>
+                <p className="tmcarousel-modal-kicker">Reviewer pick</p>
+                <h3 id="tmcarousel-modal-title" className="tmcarousel-modal-title">{item.name}</h3>
+                <div className="tmcarousel-modal-meta">
+                  {item.creator_name && <span>{item.creator_name}</span>}
+                  {price && <span>{price}</span>}
+                  <span>{index + 1} of {total}</span>
+                </div>
+              </div>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                className="tmcarousel-modal-close"
+                aria-label="Close template preview"
+                onClick={onClose}
+              >
+                x
+              </button>
+            </div>
+
+            <section className="tmcarousel-modal-reason" aria-label={`${item.name} reviewer pick reason`}>
+              <p className="tmcarousel-modal-reason-label">Why this is featured</p>
+              <p className="tmcarousel-modal-reason-text">
+                {reviewerReason || 'Selected by Marketplace review for the current featured collection.'}
+              </p>
+            </section>
+
+            {item.preview_url && (
+              <>
+                <p className="tmcarousel-modal-phone-label">Mobile preview</p>
+                <div className="tmcarousel-modal-phone" aria-hidden="true">
+                  <iframe src={item.preview_url} title="" loading="lazy" />
+                </div>
+              </>
+            )}
+
+            <div className="tmcarousel-modal-actions">
+              <button
+                type="button"
+                className="tmcarousel-modal-button"
+                disabled={!hasPrevious}
+                onClick={() => onNavigate(-1)}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="tmcarousel-modal-button"
+                disabled={!hasNext}
+                onClick={() => onNavigate(1)}
+              >
+                Next
+              </button>
+              {item.url && (
+                <a
+                  className="tmcarousel-modal-link"
+                  data-primary="true"
+                  href={item.url}
+                  onClick={onViewDetails}
+                >
+                  View details
+                </a>
+              )}
+              {item.preview_url && (
+                <a className="tmcarousel-modal-link" href={item.preview_url} target="_blank" rel="noopener noreferrer">
+                  Open preview
+                </a>
+              )}
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = ({
   apiBase: apiBaseProp = '',
   preset = 'curated_by_webflow',
@@ -505,6 +944,7 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
   query = '',
   showCta = true,
   showCount = false,
+  openFeaturedDetailsModal = false,
   enableAnalytics = true,
   experimentRole = 'treatment',
 }) => {
@@ -539,6 +979,9 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
   const [totalItems, setTotalItems] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeModalIndex, setActiveModalIndex] = useState<number | null>(null);
+  const featuredModalEnabled = canUseFeaturedModal(openFeaturedDetailsModal, preset, scope);
+  const activeModalItem = activeModalIndex === null ? null : items[activeModalIndex] ?? null;
 
   const loadItems = useCallback(
     async (signal?: AbortSignal) => {
@@ -617,12 +1060,73 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
     [scroll, trackSectionEvent],
   );
 
+  const openDetailsModal = useCallback(
+    (index: number) => {
+      const item = items[index];
+      if (!item) return;
+      setActiveModalIndex(index);
+      trackSectionEvent('Marketplace Landing Section - Featured Preview Opened', {
+        template_id: item.id,
+        template_slug: item.template_slug,
+        template_name: item.name,
+        template_position: index + 1,
+        reviewer_pick_reason_present: Boolean(item.reviewer_pick_reason?.trim()),
+      });
+    },
+    [items, trackSectionEvent],
+  );
+
+  const closeDetailsModal = useCallback(() => {
+    if (activeModalItem) {
+      trackSectionEvent('Marketplace Landing Section - Featured Preview Closed', {
+        template_id: activeModalItem.id,
+        template_slug: activeModalItem.template_slug,
+      });
+    }
+    setActiveModalIndex(null);
+  }, [activeModalItem, trackSectionEvent]);
+
+  const navigateDetailsModal = useCallback(
+    (direction: -1 | 1) => {
+      setActiveModalIndex((current) => {
+        if (current === null) return current;
+        const next = current + direction;
+        if (next < 0 || next >= items.length) return current;
+        const item = items[next];
+        trackSectionEvent('Marketplace Landing Section - Featured Preview Navigated', {
+          navigation_direction: direction === 1 ? 'next' : 'previous',
+          template_id: item.id,
+          template_slug: item.template_slug,
+          template_position: next + 1,
+        });
+        return next;
+      });
+    },
+    [items, trackSectionEvent],
+  );
+
+  const onModalViewDetails = useCallback(() => {
+    if (!activeModalItem || activeModalIndex === null) return;
+    trackSectionEvent('Marketplace Landing Section - Featured Preview Detail Clicked', {
+      template_id: activeModalItem.id,
+      template_slug: activeModalItem.template_slug,
+      template_name: activeModalItem.name,
+      template_position: activeModalIndex + 1,
+      link_url: activeModalItem.url,
+    });
+  }, [activeModalIndex, activeModalItem, trackSectionEvent]);
+
   const onItemClickCapture = useCallback(
     (item: ApiItem, index: number, event: React.MouseEvent<HTMLDivElement>) => {
       const target = event.target instanceof Element ? event.target : null;
       const anchor = target?.closest('a');
       if (!anchor) return;
       const isCreatorClick = anchor.classList.contains('tmcard-creator-link');
+      if (featuredModalEnabled && !isCreatorClick && isTemplateDetailAnchor(anchor as HTMLAnchorElement, item)) {
+        event.preventDefault();
+        openDetailsModal(index);
+        return;
+      }
       trackSectionEvent(
         isCreatorClick
           ? 'Marketplace Landing Section - Creator Clicked'
@@ -637,7 +1141,7 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
         },
       );
     },
-    [trackSectionEvent],
+    [featuredModalEnabled, openDetailsModal, trackSectionEvent],
   );
 
   return (
@@ -777,6 +1281,18 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
           <div className="tmcarousel-status">No templates found.</div>
         )}
       </div>
+
+      {featuredModalEnabled && activeModalItem && activeModalIndex !== null && (
+        <FeaturedTemplatePreviewModal
+          item={activeModalItem}
+          index={activeModalIndex}
+          total={items.length}
+          apiBase={apiBase}
+          onClose={closeDetailsModal}
+          onNavigate={navigateDetailsModal}
+          onViewDetails={onModalViewDetails}
+        />
+      )}
     </section>
   );
 };

@@ -30,9 +30,9 @@ export default declareComponent(CatoInsightsArchiveShell, {
       defaultValue: true
     }),
     showSubscribe: props.Boolean({
-      name: 'Show Subscribe Block',
+      name: 'Show Hero Subscribe Element',
       defaultValue: true,
-      tooltip: 'Only renders on categories configured with subscribe support.'
+      tooltip: 'Turns the hero card into the email-alert signup element on archives with subscribe support.'
     }),
     showItems: props.Boolean({
       name: 'Show Archive Items',

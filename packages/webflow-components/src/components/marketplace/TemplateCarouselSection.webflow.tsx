@@ -89,6 +89,12 @@ export default declareComponent(TemplateCarouselSection, {
       name: 'Show Result Count',
       defaultValue: false,
     }),
+    openFeaturedDetailsModal: props.Boolean({
+      name: 'Enable Featured Preview Modal',
+      defaultValue: false,
+      tooltip:
+        'For featured carousel sections, open a reviewer preview modal from template card clicks before sending shoppers to the detail page.',
+    }),
     enableAnalytics: props.Boolean({
       name: 'Enable Analytics',
       defaultValue: true,

@@ -28,6 +28,7 @@ export interface TemplateDetailHeroProps {
   creatorLink?: TemplateDetailLink;
   creatorAvatar?: TemplateDetailImage;
   summary?: string;
+  reviewerPickReason?: string;
   publishedDate?: string;
   price?: string;
   isFree?: boolean;
@@ -127,9 +128,23 @@ function targetForHref(href: string, target?: string): string | undefined {
   return isExternalUrl(href) ? '_blank' : undefined;
 }
 
-function formatTemplateTitle(name: string): string {
+const GENERIC_TITLE_CATEGORIES = new Set(['template', 'templates', 'website template', 'website templates']);
+
+function firstSpecificCategoryLabel(categoryNames?: string, categoryName?: string): string {
+  const explicitLabels = splitCategoryList(categoryNames);
+  const labels = explicitLabels.length ? explicitLabels : splitCategoryList(categoryName);
+  for (const label of labels) {
+    const displayLabel = displayCategoryLabel(label);
+    if (!GENERIC_TITLE_CATEGORIES.has(displayLabel.trim().toLowerCase())) return displayLabel;
+  }
+  return '';
+}
+
+function formatTemplateTitle(name: string, categoryNames?: string, categoryName?: string): string {
   const label = name.trim() || 'Template name';
-  return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
+  if (/\bwebsite\s+template$/i.test(label)) return label;
+  const categoryLabel = firstSpecificCategoryLabel(categoryNames, categoryName);
+  return categoryLabel ? `${label} - ${categoryLabel} Website Template` : `${label} - Website Template`;
 }
 
 function cleanCategoryListItem(value: string): string {
@@ -296,6 +311,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   creatorLink,
   creatorAvatar,
   summary = '',
+  reviewerPickReason = '',
   publishedDate = '',
   price = '',
   isFree = false,
@@ -363,7 +379,12 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     height: `${previewDimensions.height}px`,
     transform: `translateX(-50%) scale(${previewScale})`,
   };
-  const titleLabel = useMemo(() => formatTemplateTitle(templateName), [templateName]);
+  const cleanReviewerPickReason = reviewerPickReason.trim();
+  const titleLabel = useMemo(() => formatTemplateTitle(templateName, categoryNames, categoryName), [
+    categoryName,
+    categoryNames,
+    templateName,
+  ]);
   const offer = useMemo(
     () =>
       resolveTemplateDetailOffer({
@@ -426,6 +447,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
       has_preview_iframe: Boolean(previewIframeHref),
       has_browser_preview: Boolean(browserPreview.href),
       has_designer_preview: Boolean(designerPreview.href),
+      has_reviewer_pick_reason: Boolean(cleanReviewerPickReason),
       category_count: breadcrumbCategories.length,
       category_links_provided: Boolean(
         splitCategoryList(categoryLinks).some(usableHref) ||
@@ -441,6 +463,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     breadcrumbCategories.length,
     categoryLink,
     categoryLinks,
+    cleanReviewerPickReason,
     creatorName,
     designerPreview.href,
     enableAnalytics,
@@ -686,6 +709,12 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
             <div className="wfdt-hero-identity">
               <h1 className="wfdt-title">{titleLabel}</h1>
               {summary ? <p className="wfdt-summary">{summary}</p> : null}
+              {cleanReviewerPickReason ? (
+                <aside className="wfdt-reviewer-pick" aria-label="Reviewer pick">
+                  <p className="wfdt-reviewer-pick-kicker">Reviewer pick</p>
+                  <p className="wfdt-reviewer-pick-copy">{cleanReviewerPickReason}</p>
+                </aside>
+              ) : null}
               <div className="wfdt-meta-row">
                 {creatorName ? (
                   <a className="wfdt-creator-link" href={creatorHref}>

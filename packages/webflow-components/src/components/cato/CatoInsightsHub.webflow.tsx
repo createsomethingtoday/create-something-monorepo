@@ -13,7 +13,7 @@ export default declareComponent(CatoInsightsHub, {
   props: {
     title: props.Text({
       name: 'Hero Title',
-      defaultValue: 'Supply Chain Insights for Outstanding Patient Care'
+      defaultValue: 'Supply Chain Insights to Protect Clinical Continuity'
     }),
     summary: props.Text({
       name: 'Hero Summary',
@@ -21,20 +21,21 @@ export default declareComponent(CatoInsightsHub, {
     }),
     featuredPanelLabel: props.Text({
       name: 'Panel Label',
-      defaultValue: 'Featured now'
+      defaultValue: '',
+      tooltip: 'Optional eyebrow above the featured report card. Leave blank to match the current Insights hero.'
     }),
     featuredPanelTitle: props.Text({
       name: 'Panel Title',
-      defaultValue: 'Relevant disruptions and strategic resources.'
+      defaultValue: "Medline's West Coast Medical-Surgical Hub Fire"
     }),
     featuredPanelSummary: props.Text({
       name: 'Panel Summary',
       defaultValue:
-        'Use this area to feature the market signals, research, and company updates that matter most from a business perspective.'
+        "A June 11th fire destroyed Medline's primary med-surg hub for Northern and Central California, disrupting roughly 335 high-volume SKUs."
     }),
     featuredPanelCta: props.Text({
       name: 'Panel CTA',
-      defaultValue: 'Access these reports'
+      defaultValue: 'Access Report'
     }),
     featuredPanelLink: props.Link({
       name: 'Panel CTA Link',
@@ -43,7 +44,7 @@ export default declareComponent(CatoInsightsHub, {
     }),
     previewEyebrow: props.Text({
       name: 'Preview Eyebrow',
-      defaultValue: 'Insights hub'
+      defaultValue: ''
     }),
     previewTitle: props.Text({
       name: 'Preview Title',
@@ -60,17 +61,17 @@ export default declareComponent(CatoInsightsHub, {
     }),
     showFilterRail: props.Boolean({
       name: 'Show Filter Rail',
-      defaultValue: false,
+      defaultValue: true,
       tooltip: 'Optional review layout with browse-by-type filters.'
+    }),
+    showPreviewHeader: props.Boolean({
+      name: 'Show Preview Header',
+      defaultValue: true,
+      tooltip: 'Optional headline block above the latest insights grid.'
     }),
     showCmsModel: props.Boolean({
       name: 'Show CMS Model Notes',
       defaultValue: false
-    }),
-    filterRailNote: props.Text({
-      name: 'Filter Rail Note',
-      defaultValue:
-        'Use these filters to scan current reports, research, and newsroom updates by content type.'
     }),
     insightsHomeLink: props.Link({
       name: 'Insights Home Link',
@@ -88,6 +89,42 @@ export default declareComponent(CatoInsightsHub, {
     newsroomLink: props.Link({
       name: 'Newsroom Link',
       tooltip: 'Preferred: select the Newsroom page used by category cards and filters.'
+    }),
+    resiliencyCardTitle: props.Text({
+      name: 'Resiliency Card Title',
+      defaultValue: 'Supply volatility tracking.'
+    }),
+    resiliencyCardSummary: props.Text({
+      name: 'Resiliency Card Summary',
+      defaultValue: 'Access market signals for active supply disruptions.'
+    }),
+    resiliencyCardCta: props.Text({
+      name: 'Resiliency Card CTA',
+      defaultValue: 'Explore alerts'
+    }),
+    researchCardTitle: props.Text({
+      name: 'Research Card Title',
+      defaultValue: 'Procurement strategy unpacked.'
+    }),
+    researchCardSummary: props.Text({
+      name: 'Research Card Summary',
+      defaultValue: 'Explore supply chain resilience best practices.'
+    }),
+    researchCardCta: props.Text({
+      name: 'Research Card CTA',
+      defaultValue: 'Browse research'
+    }),
+    newsroomCardTitle: props.Text({
+      name: 'Newsroom Card Title',
+      defaultValue: 'Newsroom'
+    }),
+    newsroomCardSummary: props.Text({
+      name: 'Newsroom Card Summary',
+      defaultValue: 'Follow Cato launches, events, press notes, and milestones.'
+    }),
+    newsroomCardCta: props.Text({
+      name: 'Newsroom Card CTA',
+      defaultValue: 'Visit newsroom'
     }),
     categoriesJson: props.Text({
       name: 'Categories JSON',
