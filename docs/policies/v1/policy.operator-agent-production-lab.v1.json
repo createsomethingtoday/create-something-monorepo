@@ -1,0 +1,130 @@
+{
+  "policy_id": "policy.operator-agent-production-lab.v1",
+  "version": 1,
+  "status": "draft",
+  "artifact_classes": [
+    "agent_loop",
+    "production_lab",
+    "autonomy_gate",
+    "receipt"
+  ],
+  "scope": {
+    "allows_create_something_internal_production_lab": true,
+    "allows_client_production": false,
+    "default_target": "create-something-internal-production"
+  },
+  "autonomy_levels": {
+    "A0": {
+      "name": "read_only_scout",
+      "writes_allowed": false,
+      "deploys_allowed": false
+    },
+    "A1": {
+      "name": "local_patch",
+      "writes_allowed": true,
+      "deploys_allowed": false
+    },
+    "A2": {
+      "name": "self_heal",
+      "writes_allowed": true,
+      "deploys_allowed": false
+    },
+    "A3": {
+      "name": "production_lab_deploy",
+      "writes_allowed": true,
+      "deploys_allowed": true,
+      "target": "create-something-internal-production"
+    },
+    "A4": {
+      "name": "operator_required",
+      "writes_allowed": false,
+      "deploys_allowed": false
+    }
+  },
+  "production_lab_autonomy": {
+    "allowed_risk_levels": [
+      "low",
+      "medium"
+    ],
+    "requires": [
+      "create_something_internal_production_target",
+      "reversible_action",
+      "known_rollback_path",
+      "named_validation_commands",
+      "pre_action_receipt",
+      "post_action_receipt",
+      "post_deploy_or_live_verification_when_production_touched"
+    ],
+    "blocks": [
+      "client_production",
+      "high_or_critical_risk",
+      "secrets_or_credentials",
+      "billing_settings",
+      "account_access",
+      "data_deletion",
+      "irreversible_third_party_side_effect",
+      "unknown_rollback_path",
+      "missing_validation"
+    ]
+  },
+  "auto_rollback": {
+    "allowed": true,
+    "scope": "same_agent_same_internal_production_deploy",
+    "requires": [
+      "post_deploy_verification_failed",
+      "recorded_rollback_path",
+      "rollback_targets_current_deploy",
+      "rollback_is_reversible",
+      "rollback_evidence_recorded",
+      "post_rollback_verification"
+    ],
+    "blocks": [
+      "client_production",
+      "missing_rollback_command",
+      "untested_rollback_path",
+      "destructive_rollback",
+      "credential_or_billing_change",
+      "data_deletion",
+      "post_rollback_verification_unavailable"
+    ],
+    "notify_operator_after": [
+      "rollback_executed",
+      "rollback_failed",
+      "rollback_escalated"
+    ]
+  },
+  "sub_agent_policy": {
+    "profiles_are_policy_bound": true,
+    "requires": [
+      "scope",
+      "allowed_actions",
+      "forbidden_actions",
+      "required_context",
+      "verifier",
+      "evidence_target"
+    ]
+  },
+  "evidence": {
+    "local_receipt_dir": ".cache/operator-agent-system",
+    "shared_work_target": "linear_comment",
+    "promotion_target": "pr_or_release_record",
+    "required_fields": [
+      "loop",
+      "mode",
+      "autonomy_level",
+      "target",
+      "risk",
+      "signal",
+      "context",
+      "policy",
+      "sub_agent",
+      "action",
+      "validation",
+      "production_evidence",
+      "rollback",
+      "rollback_evidence",
+      "outcome",
+      "next_decision"
+    ]
+  }
+}
