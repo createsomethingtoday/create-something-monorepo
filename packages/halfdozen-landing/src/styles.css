@@ -177,10 +177,8 @@ button:focus-visible {
 
 .hd-hero {
   isolation: isolate;
-  min-height: clamp(960px, 68vw, 1060px);
+  min-height: 982px;
   padding-bottom: 42px;
-  --hd-hero-motion-zoom: 1;
-  --hd-hero-motion-y: 0px;
 }
 
 .hd-hero__headline {
@@ -212,10 +210,6 @@ button:focus-visible {
   max-width: none;
   aspect-ratio: 1512 / 918;
   pointer-events: none;
-  transform: translate3d(0, var(--hd-hero-motion-y), 0) scale(var(--hd-hero-motion-zoom));
-  transform-origin: center 46%;
-  transition: transform 80ms linear;
-  will-change: transform;
 }
 
 .hd-hero__motion-video {
@@ -239,8 +233,6 @@ button:focus-visible {
   font-size: 11px;
   line-height: 1.35;
   text-transform: capitalize;
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .hd-hero__meta p {
@@ -284,10 +276,32 @@ button:focus-visible {
 }
 
 .hd-clients {
+  isolation: isolate;
+  min-height: 1422px;
+  overflow: hidden;
   display: grid;
+  align-content: start;
   justify-items: center;
-  padding: 0 clamp(22px, 4vw, 60px) 115px;
-  margin-top: -18px;
+  padding: 786px clamp(22px, 4vw, 60px) 95px;
+}
+
+.hd-clients__motion {
+  position: absolute;
+  bottom: 686px;
+  left: 50%;
+  z-index: 0;
+  display: block;
+  width: min(1512px, 100vw);
+  aspect-ratio: 1512 / 918;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.hd-clients__motion-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .hd-clients h2,
@@ -301,13 +315,24 @@ button:focus-visible {
   line-height: 1;
 }
 
+.hd-clients h2,
 .hd-client-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 26px 35px;
-  max-width: 880px;
+  position: relative;
+  z-index: 1;
+}
+
+.hd-client-cloud {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
   margin-top: 58px;
+}
+
+.hd-client-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 35px;
 }
 
 .hd-client {
@@ -904,6 +929,15 @@ button:focus-visible {
     top: 730px;
   }
 
+  .hd-clients {
+    min-height: 1200px;
+    padding-top: 620px;
+  }
+
+  .hd-clients__motion {
+    bottom: 630px;
+  }
+
   .hd-content-cta,
   .hd-testimonial {
     grid-template-columns: 1fr;
@@ -984,12 +1018,25 @@ button:focus-visible {
   }
 
   .hd-clients {
+    min-height: auto;
     margin-top: 0;
-    padding-bottom: 70px;
+    padding: 260px 22px 70px;
+  }
+
+  .hd-clients__motion {
+    top: -100px;
+    bottom: auto;
+    width: 116vw;
   }
 
   .hd-client-cloud {
-    gap: 20px;
+    width: 100%;
+    gap: 18px;
+  }
+
+  .hd-client-row {
+    flex-wrap: wrap;
+    gap: 18px 22px;
   }
 
   .hd-client {
