@@ -6,12 +6,16 @@ Updated: 2026-06-22
 
 ## Original Visuals
 
-### dify-mcp-control-plane.svg
+### dify-mcp-control-plane.png
 
-- Path: `/images/articles/dify-mcp-control-plane/dify-mcp-control-plane.svg`
+- Path: `/images/articles/dify-mcp-control-plane/dify-mcp-control-plane.png`
 - Owner: CREATE SOMETHING
 - Usage: Article architecture diagram for the Dify, MCP, and Policy OS control plane.
 - Refresh cadence: Review with article updates.
+- Source brief: `packages/agency/static/images/articles/dify-mcp-control-plane/dify-mcp-control-plane.svg`
+- Model: OpenAI `gpt-image-2`
+- Generated: 2026-07-06
+- SHA-256: `7d010069810f6804db2b165a967e23d26e5d722a461e3eaf4e04a69567516518`
 
 ## Collected Screenshots
 

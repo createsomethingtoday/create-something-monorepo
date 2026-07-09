@@ -21,7 +21,8 @@
     "./cli": "./src/cli.js",
     "./config": "./src/config.js",
     "./orchestrator": "./src/orchestrator.js",
-    "./tracker/linear": "./src/tracker/linear.js"
+    "./tracker/linear": "./src/tracker/linear.js",
+    "./work-unit-contract": "./src/work-unit-contract.js"
   },
   "bin": {
     "symphony": "./src/cli.js"
@@ -31,7 +32,8 @@
   ],
   "scripts": {
     "check": "for f in src/*.js src/tracker/*.js test/*.mjs; do node --check \"$f\"; done",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "work-unit:verify": "node ../../scripts/agent-work-unit-verify.mjs"
   },
   "dependencies": {
     "liquidjs": "^10.25.0",

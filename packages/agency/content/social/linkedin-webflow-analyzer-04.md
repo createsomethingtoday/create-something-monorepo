@@ -4,7 +4,7 @@
 **Target:** LinkedIn (Personal - Micah)
 **Type:** Longform post + product screenshot or static frame
 **Asset:** `packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.png`
-**Source Asset:** `packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.svg`
+**Source Asset:** `packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.png`
 **Graphic Brief:** `packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill-brief.md`
 **CTA:** createsomething.io/papers/webflow-analyzer-productization
 

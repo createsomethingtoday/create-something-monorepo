@@ -25,6 +25,10 @@ const productsRoute = readFileSync(
 	new URL('../src/routes/products/+page.svelte', import.meta.url),
 	'utf8'
 );
+const databaseRoute = readFileSync(
+	new URL('../src/routes/database/+page.svelte', import.meta.url),
+	'utf8'
+);
 const signalProductRoute = readFileSync(
 	new URL('../src/routes/products/signal/+page.svelte', import.meta.url),
 	'utf8'
@@ -113,12 +117,11 @@ test('services route keeps one public Atlas map and removes the example canvas',
 	assert.equal(servicesRoute.includes('<ClearCardGrid'), false);
 });
 
-test('home route uses the read-only story canvas as a proof object', () => {
-	assert.ok(homeRoute.includes('<PublicAtlasStoryCanvas'));
-	assert.ok(homeRoute.includes('starterId="marketplace-review-queue"'));
-	assert.ok(homeRoute.includes('storyId="home-support-recovery-atlas-story"'));
-	assert.ok(homeRoute.includes('eyebrow="Workflow map"'));
-	assert.equal(homeRoute.includes('<PublicAtlasCanvas'), false);
+test('home route uses the same public Atlas canvas kernel as a proof object', () => {
+	assert.ok(homeRoute.includes('<PublicAtlasCanvas'));
+	assert.ok(homeRoute.includes('mode="proof"'));
+	assert.ok(homeRoute.includes('flowId="home-atlas-proof-flow"'));
+	assert.equal(homeRoute.includes('<PublicSubstrateCanvas'), false);
 });
 
 test('methodology route uses a read-only story canvas to explain the method', () => {
@@ -140,9 +143,25 @@ test('stack route uses a read-only story canvas to explain the boundary', () => 
 test('products route exposes the governance product contract surfaces', () => {
 	assert.ok(productsRoute.includes("from '@create-something/canon/governance'"));
 	assert.ok(productsRoute.includes('listGovernanceProducts'));
-	assert.ok(productsRoute.includes('Atlas connects Signal, Decision, and Proof.'));
+	assert.ok(productsRoute.includes('Signal, Decision, Map, and Proof'));
 	assert.ok(productsRoute.includes("href: product.id === 'atlas' ? '/atlas' : `/products/${product.id}`"));
 	assert.equal(productsRoute.includes('<PublicAtlasCanvas'), false);
+});
+
+test('database route reveals Atlas Topology and Substrate as inspectable specs', () => {
+	assert.ok(databaseRoute.includes('eyebrow="Spec reveal"'));
+	assert.ok(databaseRoute.includes('Substrate'));
+	assert.ok(databaseRoute.includes('Topology'));
+	assert.ok(databaseRoute.includes('Atlas'));
+	assert.ok(databaseRoute.includes("role: 'Record truth'"));
+	assert.ok(databaseRoute.includes("role: 'Relationship graph'"));
+	assert.ok(databaseRoute.includes("role: 'Operator map'"));
+	assert.ok(databaseRoute.includes('What went into it'));
+	assert.ok(databaseRoute.includes('Database / Automation / Judgment'));
+	assert.ok(databaseRoute.includes('Filter records'));
+	assert.ok(databaseRoute.includes('Atlas binding'));
+	assert.ok(databaseRoute.includes('Workflow action'));
+	assert.ok(databaseRoute.includes('Proof receipt'));
 });
 
 test('Signal Decision and Proof product pages attach back to Atlas and each other', () => {
@@ -187,13 +206,17 @@ test('editable Atlas flow uses stable overridable ids instead of fixed DOM ids',
 	assert.ok(agencyEditableCanvas.includes("export let flowId = 'public-atlas-flow'"));
 	assert.ok(agencyEditableCanvas.includes('{flowId}'));
 	assert.ok(canonFlowComponent.includes("export let flowId = 'public-atlas-flow'"));
-	assert.ok(canonFlowComponent.includes("from '@xyflow/svelte'"));
-	assert.ok(canonFlowComponent.includes('<SvelteFlow'));
-	assert.ok(canonFlowComponent.includes('id={flowId}'));
-	assert.ok(canonFlowComponent.includes('{initialViewport}'));
-	assert.ok(canonFlowComponent.includes('proOptions'));
-	assert.ok(canonFlowComponent.includes('hideAttribution: true'));
+	assert.ok(canonFlowComponent.includes("from '@create-something/canvas-kernel'"));
+	assert.ok(canonFlowComponent.includes("import('@create-something/canvas-kernel')"));
+	assert.ok(canonFlowComponent.includes('data-flow-id={flowId}'));
+	assert.ok(canonFlowComponent.includes('data-move-handler'));
+	assert.ok(canonFlowComponent.includes('viewport: initialViewport'));
+	assert.ok(canonFlowComponent.includes('fitRequest'));
 	assert.ok(canonFlowComponent.includes('aria-label="Atlas workflow map"'));
+	assert.equal(canonFlowComponent.includes("from '@xyflow/svelte'"), false);
+	assert.equal(canonFlowComponent.includes('<SvelteFlow'), false);
+	assert.equal(canonFlowComponent.includes('proOptions'), false);
+	assert.equal(canonFlowComponent.includes('hideAttribution: true'), false);
 	assert.equal(canonFlowComponent.includes('public-atlas-flow__surface'), false);
 	assert.equal(canonFlowComponent.includes('<svg'), false);
 	assert.equal(canonFlowComponent.includes('\n\t\t\tfitView\n'), false);
@@ -220,6 +243,8 @@ test('agency editable Atlas flow is a Canon wrapper over local intake state', ()
 	assert.ok(agencyFlowComponent.includes("from '@create-something/canon/atlas'"));
 	assert.ok(agencyFlowComponent.includes("from '@create-something/canon/atlas/headless'"));
 	assert.ok(agencyFlowComponent.includes('<AtlasFlow'));
+	assert.ok(agencyFlowComponent.includes('{readOnly}'));
+	assert.ok(agencyFlowComponent.includes('{showControls}'));
 	assert.ok(canonAtlasIndex.includes("export { default as AtlasFlow } from './AtlasFlow.svelte';"));
 	assert.equal(agencyFlowComponent.includes("import './PublicAtlasFlow.css'"), false);
 });
@@ -230,7 +255,8 @@ test('agency README documents story canvas route usage contract', () => {
 	assert.ok(agencyReadme.includes('Pass an explicit `flowId`'));
 	assert.ok(agencyReadme.includes('Keep the story canvas before the editable canvas'));
 	assert.ok(agencyReadme.includes('`@create-something/canon/atlas/headless` owns'));
-	assert.ok(agencyReadme.includes('`@create-something/canon/atlas` owns the Svelte'));
+	assert.ok(agencyReadme.includes('`@create-something/canon/atlas` owns the Svelte adapters'));
+	assert.ok(agencyReadme.includes('`@create-something/canvas-kernel`'));
 	assert.ok(agencyReadme.includes('`AtlasFlow`'));
 	assert.ok(agencyReadme.includes('`/`, `/atlas`, and'));
 	assert.ok(agencyReadme.includes('`/methodology`, `/stack`, and `/products` can use the'));
@@ -238,8 +264,9 @@ test('agency README documents story canvas route usage contract', () => {
 });
 
 test('agency README documents the current interactive Atlas renderer contract', () => {
-	assert.ok(agencyReadme.includes('interactive Svelte Atlas flow'));
+	assert.ok(agencyReadme.includes('Atlas canvas kernel is the primary renderer'));
 	assert.equal(agencyReadme.includes('React Flow is the primary renderer'), false);
+	assert.equal(agencyReadme.includes('interactive Svelte Atlas flow'), false);
 });
 
 test('layout keeps privacy prompt compact on Atlas proof-heavy routes', () => {

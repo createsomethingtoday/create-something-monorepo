@@ -4,7 +4,7 @@
 **Target:** LinkedIn (Personal - Micah)
 **Type:** Longform post + static graphic
 **Asset:** `packages/agency/static/social/linkedin-governed-reviewer-lane.png`
-**Source Asset:** `packages/agency/static/social/linkedin-governed-reviewer-lane.svg`
+**Source Asset:** `packages/agency/static/social/linkedin-governed-reviewer-lane.png`
 **CTA:** Soft inbound conversation
 
 ---

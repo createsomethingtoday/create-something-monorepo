@@ -10,7 +10,7 @@
     type ClearPlatformHeroProof
   } from '@create-something/canon';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
-  import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
+  import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
@@ -128,7 +128,7 @@
   title="AI Workflow Systems | CREATE SOMETHING .agency"
   description="CREATE SOMETHING builds AI workflow systems for business operations: one messy handoff becomes Signals, Decisions, Proof, connected tools, approvals, stop conditions, and an audit trail."
   keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   {services}
   {faqItems}
@@ -159,14 +159,7 @@
     description="Atlas turns the current process into a clear map: which signals matter, where work moves, what AI can handle, where people approve, and what proof records the outcome."
   >
     {#snippet after()}
-      <PublicAtlasStoryCanvas
-        starterId="marketplace-review-queue"
-        storyId="home-support-recovery-atlas-story"
-        eyebrow="Workflow map"
-        title="The map comes before the automation."
-        description="This read-only Atlas canvas shows the workflow in plain language: signals, systems, allowed actions, decision owner, stop point, and proof trail."
-        compact
-      />
+      <PublicAtlasCanvas mode="proof" flowId="home-atlas-proof-flow" />
     {/snippet}
   </ClearPageSection>
 

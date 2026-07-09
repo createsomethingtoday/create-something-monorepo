@@ -4,6 +4,7 @@ export type MarketingPageCluster =
 	| 'core-services'
 	| 'conversion'
 	| 'atlas'
+	| 'database-layer'
 	| 'stack-boundary'
 	| 'workflow-tool-stack'
 	| 'dify'
@@ -177,6 +178,26 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 			lastmod: '2026-06-21'
 		},
 		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+	},
+	{
+		path: '/database',
+		cluster: 'database-layer',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Teams evaluating the Substrate system design behind CREATE SOMETHING workflows.',
+		funnelStage: 'evaluate',
+		intent:
+			'Let visitors inspect a safe sample of the Substrate database-layer record model before booking.',
+		primaryAction: 'Inspect records',
+		requiredTerms: ['Substrate', 'database layer', 'records', 'Atlas', 'MCP', 'receipts'],
+		requiredLinks: ['/products', '/stack'],
+		schema: 'faq',
+		search: {
+			changefreq: 'weekly',
+			priority: '0.82',
+			lastmod: '2026-07-07'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
 	},
 	{
 		path: '/stack',

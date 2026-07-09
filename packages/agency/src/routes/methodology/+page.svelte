@@ -69,7 +69,7 @@
   title="How It Works | CREATE SOMETHING .agency"
   description="CREATE SOMETHING removes duplication, excess, and disconnection before turning a workflow into a controlled operating path."
   keywords="how CREATE SOMETHING works, workflow control layer, controlled workflow, first controlled connection, automation audit, Subtractive Triad"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   breadcrumbs={[
     { name: 'Home', url: '/' },

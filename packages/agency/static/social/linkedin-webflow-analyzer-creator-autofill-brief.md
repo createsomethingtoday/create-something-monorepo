@@ -3,7 +3,8 @@
 ## Deliverables
 
 - PNG: `packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.png`
-- Source SVG: `packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.svg`
+- Source brief: `packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.svg`
+- Publishable image: `packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.png`
 
 ## Use
 

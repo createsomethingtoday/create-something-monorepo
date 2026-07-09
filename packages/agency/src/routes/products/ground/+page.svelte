@@ -18,7 +18,7 @@
 	title="Ground MCP | Grounded AI Code Analysis"
 	description="Stop AI agent hallucinations in code analysis. An MCP server that requires verification before claims. Find duplicates, dead code, and orphans with evidence."
 	keywords="MCP, Model Context Protocol, agent code analysis, AI agents, duplicate detection, dead code, Claude, Cursor, VS Code, Copilot"
-	ogImage="/og-image.svg"
+	ogImage="/og-image.png"
 	propertyName="agency"
 />
 

@@ -3,7 +3,8 @@
 ## Deliverables
 
 - PNG: `packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.png`
-- Source SVG: `packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.svg`
+- Source brief: `packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.svg`
+- Publishable image: `packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.png`
 
 ## Use
 

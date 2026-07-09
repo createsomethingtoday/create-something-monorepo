@@ -151,7 +151,7 @@
   title="Proof Graph for App Governance | CREATE SOMETHING .agency"
   description="Proof is the ledger surface for app governance: evidence, decisions, outcomes, receipts, rollback notes, and audit trails attached to Atlas."
   keywords="app governance proof graph, workflow ledger, decision receipts, audit trail, Atlas governance proof"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
 />

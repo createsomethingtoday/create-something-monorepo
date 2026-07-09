@@ -1,7 +1,7 @@
 {
   "name": "@createsomething/agent-kit",
   "version": "1.0.0",
-  "description": "Complete AI development environment. WezTerm, Claude Code, Beads, MCP servers—all configured and ready.",
+  "description": "Complete AI development environment. Zellij, Claude Code, Beads, MCP servers-all configured and ready.",
   "type": "module",
   "bin": {
     "agent-kit": "./dist/bin/cli.js"
@@ -19,7 +19,7 @@
     "ai",
     "development",
     "dotfiles",
-    "wezterm",
+    "zellij",
     "mcp"
   ],
   "author": "CREATE SOMETHING <hello@createsomething.agency>",

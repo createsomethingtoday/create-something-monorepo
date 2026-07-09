@@ -193,8 +193,10 @@ For component-level usage rules, see
 ## Atlas Graph And Story Primitives
 
 Canon owns the reusable Atlas graph/story contract at
-`@create-something/canon/atlas/headless` and the Svelte Atlas renderers at
-`@create-something/canon/atlas`.
+`@create-something/canon/atlas/headless` and the Svelte Atlas adapters at
+`@create-something/canon/atlas`. The adapters render through
+`@create-something/canvas-kernel`, the same canvas foundation used by Atlas
+Studio, Topology, and Substrate.
 
 Use this package for:
 
@@ -204,9 +206,9 @@ Use this package for:
   contract for humans, agents, and renderer adapters
 - `createPublicAtlasStoryArtifact(...)` for deterministic static chapters,
   accessibility summaries, article visuals, and social cards
-- `AtlasStoryCanvas` as the read-only Svelte renderer for the story artifact
-- `AtlasFlow` as the editable Svelte workflow-map renderer for the same graph
-  contract
+- `AtlasStoryCanvas` as the read-only Svelte adapter for the story artifact
+- `AtlasFlow` as the editable Svelte adapter for the same graph contract and
+  shared canvas kernel
 
 Property packages should supply their own starter maps, booking behavior,
 persistence, agent mutation path, and production integrations. Do not fork the

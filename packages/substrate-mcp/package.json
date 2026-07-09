@@ -1,7 +1,7 @@
 {
   "name": "@create-something/substrate-mcp",
   "version": "0.1.0",
-  "description": "Substrate — the agent-native data layer. Replaces Notion with MCP-managed workspaces where teams interact through agents, not UI.",
+  "description": "Substrate — the first-class CREATE SOMETHING database-layer runtime direction: Cloudflare records, API/MCP access, Atlas topology, receipts, and fast operator UI.",
   "type": "module",
   "createSomething": {
     "agentLegibilityContract": true,

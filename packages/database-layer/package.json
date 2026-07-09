@@ -1,0 +1,90 @@
+{
+  "name": "@create-something/database-layer",
+  "version": "0.1.0",
+  "description": "CREATE SOMETHING reusable database-layer contracts, sample records, Atlas bindings, actions, receipts, and public demo data.",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "database",
+    "surface": "library",
+    "entrypoints": [
+      "src/index.ts"
+    ],
+    "boot": "pnpm build",
+    "smoke": "pnpm typecheck && pnpm build"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./agent-config-coverage.json": "./data/create-something-agent-config-coverage.json",
+    "./atlas-coverage.json": "./data/create-something-atlas-coverage.json",
+    "./business-operating-recommendations.json": "./data/create-something-business-operating-recommendations.json",
+    "./client-overlay-coverage.json": "./data/create-something-client-overlay-coverage.json",
+    "./internal-topology.3d.json": "./data/create-something-internal-topology.3d.json",
+    "./internal-topology.json": "./data/create-something-internal-topology.json",
+    "./internal-topology-3d.json": "./data/create-something-internal-topology.3d.json",
+    "./internal-topology-completion-report.json": "./data/create-something-internal-topology-completion-report.json",
+    "./management-surface.json": "./data/create-something-management-surface.json",
+    "./operating-slice-readiness.json": "./data/create-something-operating-slice-readiness.json",
+    "./operating-slice-review.json": "./data/create-something-operating-slice-review.json",
+    "./organization-review.json": "./data/create-something-organization-review.json",
+    "./performance-contract.json": "./data/create-something-performance-contract.json",
+    "./runtime-binding-coverage.json": "./data/create-something-runtime-binding-coverage.json",
+    "./topology-diagnostics.json": "./data/create-something-topology-diagnostics.json"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "refresh": "node scripts/refresh-operating-topology.mjs",
+    "refresh:install": "node scripts/refresh-operating-topology.mjs --install-atlas-session",
+    "refresh:quick": "node scripts/refresh-operating-topology.mjs --skip-tests",
+    "agent-configs:generate": "node scripts/generate-agent-config-coverage.mjs",
+    "atlas-coverage:generate": "node scripts/generate-atlas-coverage.mjs",
+    "business-recommendations:generate": "node scripts/generate-business-operating-recommendations.mjs",
+    "client-overlays:generate": "node scripts/generate-client-overlay-coverage.mjs",
+    "management-surface:generate": "node scripts/generate-management-surface.mjs",
+    "operating-slice-readiness:generate": "node scripts/generate-operating-slice-readiness.mjs",
+    "operating-slices:generate": "node scripts/generate-operating-slice-review.mjs",
+    "organization-review:generate": "node scripts/generate-organization-review.mjs",
+    "performance:generate": "node scripts/generate-performance-contract.mjs",
+    "runtime-bindings:generate": "node scripts/generate-runtime-binding-coverage.mjs",
+    "topology-diagnostics:generate": "node scripts/generate-topology-diagnostics.mjs",
+    "worker-state:generate": "node scripts/generate-worker-state.mjs",
+    "worker:smoke": "pnpm --filter @create-something/database-layer-worker smoke",
+    "agent-wiki:generate": "node scripts/generate-agent-wiki.mjs",
+    "agent-wiki:check": "node scripts/generate-agent-wiki.mjs --check",
+    "topology:generate": "node scripts/generate-internal-topology.mjs",
+    "topology:3d:generate": "node scripts/generate-topology-3d.mjs",
+    "topology:summary": "node scripts/summarize-internal-topology.mjs",
+    "topology:report": "node scripts/report-internal-topology.mjs",
+    "topology:atlas-session": "node scripts/export-internal-atlas-session.mjs",
+    "topology:3d:mcp": "node scripts/topology-3d-mcp.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@create-something/canvas-kernel": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "database-layer",
+    "atlas",
+    "cloudflare-d1",
+    "mcp",
+    "ai-native"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/database-layer"
+  }
+}

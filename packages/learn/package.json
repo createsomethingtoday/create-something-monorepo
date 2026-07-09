@@ -1,7 +1,7 @@
 {
   "name": "@createsomething/learn",
   "version": "0.4.0",
-  "description": "CREATE SOMETHING Learning MCP Server - Learn Codex by building an MCP",
+  "description": "CREATE SOMETHING Learning MCP Server - Learn in the Codex app by creating your first business MCP",
   "type": "module",
   "bin": {
     "learn": "./dist/cli.js",

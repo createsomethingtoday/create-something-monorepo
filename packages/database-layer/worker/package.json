@@ -1,0 +1,19 @@
+{
+  "name": "@create-something/database-layer-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node ../scripts/generate-worker-state.mjs",
+    "dev": "node ../scripts/generate-worker-state.mjs && node ../../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../scripts/generate-worker-state.mjs && node ../../../scripts/run-wrangler.mjs deploy",
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {
+    "@create-something/database-layer": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260621.1",
+    "wrangler": "^4.103.0"
+  }
+}

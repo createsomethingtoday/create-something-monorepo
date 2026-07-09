@@ -14,6 +14,7 @@ We make one business workflow safe to delegate.
 |------|-----|
 | **AI workflow systems** | Public category: business workflows with connected tools, scoped AI tasks, approvals, stop conditions, and audit trails. |
 | **Delegated Work Control** | Internal thesis layer: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
+| **Substrate / CREATE SOMETHING database layer** | Product substrate: custom Cloudflare-native records, Atlas maps, actions, runs, receipts, and source bindings managed by API, MCP, agents, and fast operator UI. |
 | **Workflow Trust Layer** | Internal service-language layer for governed execution around a workflow. |
 | **Policy OS** | Canonical paid package for governed execution, approval rules, runbooks, golden tasks, and recurring tuning. |
 | **MCP-only** | Constrained discovery or compliance entry path, not the default paid offer. |
@@ -31,6 +32,18 @@ Do not reposition `.agency` as a generic AI agency, prompt shop, model reseller,
 or Webflow implementation shop. The durable claim is:
 
 > CREATE SOMETHING makes delegated work trustworthy.
+
+The database-layer claim can now be public when it is grounded in visible proof:
+
+> CREATE SOMETHING runs workflows on Substrate, its own custom database layer:
+> Atlas maps, source records, actions, runs, decisions, receipts, and
+> agent-accessible APIs in one Cloudflare-native operating substrate.
+
+Do not frame this as a generic Notion replacement. The useful comparison is
+narrower and stronger: Notion is a flexible workspace for everyone; the CREATE
+SOMETHING database layer is shaped for AI workflow operation, API robustness,
+MCP/agent control, source-truth transfer, and an Obsidian-like operator path
+over shared Cloudflare-backed records.
 
 ## Ona Foundation
 
@@ -57,7 +70,10 @@ Use this order:
 3. State the operating loop: Signals, Decisions, and Proof.
 4. Show the proof object: an Atlas map, decision inbox, delivery record, or
    audit trail.
-5. Explain the stack only after the workflow boundary is visible.
+5. Show a safe database interaction when the page claims the custom database
+   layer: filtered records, source bindings, action state, receipts, or an Atlas
+   node detail.
+6. Explain the stack only after the workflow boundary is visible.
 
 Prefer public words like:
 
@@ -74,6 +90,12 @@ Prefer public words like:
 - audit trail
 - evidence
 - runbook
+- database layer
+- source record
+- receipt
+- API
+- MCP
+- agent-managed
 
 Avoid public words and frames like:
 
@@ -90,6 +112,8 @@ Avoid public words and frames like:
 - MCP-first thesis
 - delegated work control as a headline
 - workflow trust layer as a first-viewport headline
+- Notion replacement as the headline
+- faster than Notion as an unsupported performance claim
 
 Those terms can remain in internal strategy docs when they are useful for
 planning, but they should not be the way a visitor learns the offer.
@@ -102,6 +126,21 @@ Validation:
   approved plain-language replacements, then reruns the audit.
 - Add a rule to `scripts/check-public-copy.mjs` when a phrase becomes a private
   planning term instead of public language.
+
+### Canon Debt Contract
+
+Use Canon tokens for owned UI color and motion values. Raw `rgba()`, hex colors,
+and ad hoc transition timing are allowed only when a surface has a documented
+exception or a token does not yet exist.
+
+The first managed surface is the operator security route family:
+`src/routes/admin/security/**`.
+
+Validation:
+
+- Run `pnpm canon:check` before changing managed operator UI.
+- Add a new managed scope to `scripts/check-canon-debt.mjs` when a route family
+  is tokenized and ready to stay guarded.
 
 ### Marketing Page Portfolio
 
@@ -154,6 +193,47 @@ The durable SEO/AEO strategy is:
   longer connected to a commercial next step.
 - Treat AI-answer visibility as a byproduct of clear, expert, well-structured
   pages rather than a separate content gimmick.
+
+### Database Layer Marketing Proof
+
+When the database layer becomes a public proof surface, marketing should use
+real product states, not generic database imagery.
+
+Design and image implementation must follow Canon first:
+
+- `packages/canon/README.md` for Clear components, Atlas graph/story
+  primitives, and Ona-derived communication rules.
+- `docs/IMAGE_LANGUAGE_FOUNDATION.md` for generated image, screenshot, TASTE,
+  prompt, and review-gate requirements.
+- `docs/CANON_DATABASE_LAYER_DESIGN.md` for dense database UI, source records,
+  bindings, receipts, and fast operator interaction.
+
+Approved proof objects:
+
+- Atlas map with a selected node and source-record drawer.
+- Database table showing source, owner, status, binding health, and receipts.
+- API/MCP contract excerpt paired with the visible operator state it controls.
+- Transfer-readiness summary: expected sources, captured records, projection
+  gaps, reviewed gaps, and open actions.
+- Client-safe workflow map showing Signal -> Decision -> Proof attachments.
+
+Images should feel like product screenshots or annotated operating artifacts.
+Avoid floating database icons, abstract server rooms, generic AI mesh art, and
+decorative screenshots that cannot be traced back to a real workflow state.
+
+Public interaction requirement:
+
+- A visitor should be able to inspect a safe sample database layer on the front
+  end before booking: filter records, select a row, see its Atlas binding, see
+  the related action or receipt, and understand what an agent/API could do.
+- The demo must be read-only and sample-backed unless the visitor is in an
+  authenticated workspace.
+- The interaction should feel fast: instant local filtering, stable row heights,
+  keyboard-friendly navigation, deterministic loading, and direct URLs for
+  records and map nodes.
+- The product identity is system-design quality: topology as records,
+  execution as inspectable actions/runs, judgment as attached receipts, and UI
+  as a projection over API/MCP-readable state.
 
 Validation:
 
@@ -289,9 +369,10 @@ Implementation surface:
 
 - `@create-something/canon/atlas/headless` owns the reusable Atlas node, edge,
   canvas, readiness, graph-artifact, and story-artifact contract.
-- `@create-something/canon/atlas` owns the Svelte `AtlasStoryCanvas` and
-  `AtlasFlow` renderers that adapt the headless contract into read-only story
-  and editable map surfaces.
+- `@create-something/canon/atlas` owns the Svelte adapters for
+  `AtlasStoryCanvas` and `AtlasFlow`; those adapters render through
+  `@create-something/canvas-kernel` so `.agency`, Atlas Studio, Topology, and
+  Substrate compound on the same canvas foundation.
 - `createPublicAtlasGraphArtifact(...)` and
   `createPublicAtlasStoryArtifact(...)` are imported from Canon when `.agency`
   needs renderer-independent graph or story output.
@@ -305,7 +386,7 @@ Implementation surface:
   `AtlasStoryCanvas` with `.agency` starter-map selection and renders the static
   story artifact without invoking the mapping agent.
 - `src/lib/components/PublicAtlasFlow.svelte` wraps Canon's `AtlasFlow` so the
-  editable renderer stays reusable while `.agency` owns intake state.
+  shared kernel renderer stays reusable while `.agency` owns intake state.
 - `src/lib/components/PublicAtlasCanvas.svelte` renders the selector and persists
   the chosen map into booking context; it is the `.agency` intake surface.
 - `test/public-atlas-starter-maps.test.ts` verifies coverage and policy-boundary
@@ -330,8 +411,8 @@ Story-canvas usage contract:
 
 Renderer rule:
 
-- The interactive Svelte Atlas flow is the primary renderer for workflow
-  education, intake, editing, accessibility, and agent-operable maps.
+- The Atlas canvas kernel is the primary renderer for workflow education,
+  intake, editing, accessibility, and agent-operable maps.
 - Static story canvases are the fallback for marketing, articles, social cards,
   and non-JS presentation.
 - Sigma/Cosmograph are reserved for large read-only network exploration. Do not

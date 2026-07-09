@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "check": "tsc --noEmit",
+    "smoke:library": "tsx scripts/library-submission-preflight.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },

@@ -27,6 +27,8 @@
 		text: string;
 	};
 
+	type PublicAtlasCanvasMode = 'interactive' | 'proof';
+
 	type AgentResponse = {
 		reply: string;
 		canvas: PublicAtlasCanvas;
@@ -45,11 +47,15 @@
 		agentMode?: 'model' | 'fallback';
 	};
 
+	const DEFAULT_PUBLIC_ATLAS_STARTER_ID = 'marketplace-review-queue';
+
 	export let compact = false;
+	export let mode: PublicAtlasCanvasMode = 'interactive';
 	export let bookingHref = '/book';
 	export let flowId = 'public-atlas-flow';
+	export let starterId = DEFAULT_PUBLIC_ATLAS_STARTER_ID;
 
-	let canvas = createPublicAtlasCanvas();
+	let canvas = createPublicAtlasCanvasFromStarter(DEFAULT_PUBLIC_ATLAS_STARTER_ID);
 	let selectedNodeId = 'data_workflow';
 	let selectedSourceId = 'data_workflow';
 	let agentInput = '';
@@ -83,6 +89,16 @@
 		{ label: 'Approval', text: 'The approval point is...' },
 		{ label: 'Risk', text: 'The riskiest handoff is...' }
 	];
+	$: isProofMode = mode === 'proof';
+	$: atlasEyebrow = isProofMode
+		? 'Workflow map / Signal / Decision / Proof'
+		: 'Public Atlas canvas';
+	$: atlasTitle = isProofMode
+		? 'Map the workflow before AI runs it.'
+		: 'Turn one workflow into a map before booking.';
+	$: atlasDescription = isProofMode
+		? 'This is the same Atlas canvas used in onboarding: a safe sample map showing what can run, what waits for an owner, what must stop, and what proof stays attached.'
+		: 'Chat with the constrained mapping agent, shape the canvas, then carry the summary into the mapping session. This public agent can only edit this prospect map.';
 
 	function initialUsage(tier: AgentResponse['usage']['tier']): AgentResponse['usage'] {
 		const limits = PUBLIC_ATLAS_LIMITS[tier];
@@ -131,7 +147,7 @@
 	}
 
 	function persistCanvas() {
-		if (!browser) return;
+		if (!browser || isProofMode) return;
 		window.localStorage.setItem(PUBLIC_ATLAS_STORAGE_KEYS.canvas, JSON.stringify(canvas));
 		window.localStorage.setItem(
 			PUBLIC_ATLAS_STORAGE_KEYS.meta,
@@ -264,6 +280,7 @@
 
 	function moveNode(nodeId: string, position: { x: number; y: number }) {
 		selectNode(nodeId);
+		if (isProofMode) return;
 		updateNode(nodeId, position);
 	}
 
@@ -338,6 +355,13 @@
 	}
 
 	onMount(() => {
+		if (isProofMode) {
+			canvas = createPublicAtlasCanvasFromStarter(starterId);
+			selectedNodeId = canvas.nodes[0]?.id ?? 'data_workflow';
+			selectedSourceId = canvas.nodes.find((node) => node.id === 'data_workflow')?.id ?? selectedNodeId;
+			hydrated = true;
+			return;
+		}
 		const raw = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.canvas);
 		if (raw) {
 			try {
@@ -352,21 +376,23 @@
 		hydrated = true;
 	});
 
-	$: if (browser && hydrated) {
+	$: if (browser && hydrated && !isProofMode) {
 		canvas;
 		persistCanvas();
 	}
 
 </script>
 
-<section class="public-atlas" class:compact={compact} aria-label="Public Atlas workflow canvas">
+<section
+	class="public-atlas"
+	class:compact={compact}
+	class:proof-mode={isProofMode}
+	aria-label="Public Atlas workflow canvas"
+>
 	<div class="atlas-copy">
-		<span>Public Atlas canvas</span>
-		<h3>Turn one workflow into a map before booking.</h3>
-		<p>
-			Chat with the constrained mapping agent, shape the canvas, then carry the summary into the
-			mapping session. This public agent can only edit this prospect map.
-		</p>
+		<span>{atlasEyebrow}</span>
+		<h3>{atlasTitle}</h3>
+		<p>{atlasDescription}</p>
 	</div>
 
 	<div class="atlas-layout">
@@ -395,27 +421,29 @@
 							<span>{readiness.score}</span>
 							<small>/100</small>
 						</div>
-						<div class="add-node-menu">
-							<button
-								type="button"
-								class="add-node-trigger"
-								aria-expanded={addMenuOpen}
-								aria-controls="public-atlas-add-menu"
-								onclick={() => (addMenuOpen = !addMenuOpen)}
-							>
-								Add node
-							</button>
-							{#if addMenuOpen}
-								<div id="public-atlas-add-menu" class="add-node-options">
-									{#each PUBLIC_ATLAS_LANES as lane}
-										<button type="button" onclick={() => addNodeFromMenu(lane.kind)}>
-											<strong>{lane.label}</strong>
-											<small>{lane.description}</small>
-										</button>
-									{/each}
-								</div>
-							{/if}
-						</div>
+						{#if !isProofMode}
+							<div class="add-node-menu">
+								<button
+									type="button"
+									class="add-node-trigger"
+									aria-expanded={addMenuOpen}
+									aria-controls="public-atlas-add-menu"
+									onclick={() => (addMenuOpen = !addMenuOpen)}
+								>
+									Add node
+								</button>
+								{#if addMenuOpen}
+									<div id="public-atlas-add-menu" class="add-node-options">
+										{#each PUBLIC_ATLAS_LANES as lane}
+											<button type="button" onclick={() => addNodeFromMenu(lane.kind)}>
+												<strong>{lane.label}</strong>
+												<small>{lane.description}</small>
+											</button>
+										{/each}
+									</div>
+								{/if}
+							</div>
+						{/if}
 					</div>
 				</div>
 
@@ -426,6 +454,7 @@
 						{selectedNodeId}
 						onMoveNode={moveNode}
 						onSelectNode={selectNode}
+						readOnly={isProofMode}
 					/>
 				</div>
 
@@ -454,6 +483,37 @@
 			</div>
 		</div>
 
+		{#if isProofMode}
+			<aside class="atlas-side">
+				<section class="proof-panel">
+					<div class="panel-title">
+						<span>{selectedNode?.kind ?? 'workflow'}</span>
+						<strong>{selectedNode?.label ?? 'Workflow map'}</strong>
+					</div>
+					<div class="proof-panel__body">
+						<p>{selectedNode?.notes ?? 'Select a node to inspect the owner, boundary, and proof state.'}</p>
+						<dl>
+							<div>
+								<dt>State</dt>
+								<dd data-status={selectedNode?.status ?? 'unknown'}>{selectedNode?.status ?? 'unknown'}</dd>
+							</div>
+							<div>
+								<dt>Canvas</dt>
+								<dd>{canvas.nodes.length} nodes / {canvas.edges.length} handoffs</dd>
+							</div>
+							<div>
+								<dt>Proof</dt>
+								<dd>Same Atlas canvas, read-only introduction, no prospect data writes.</dd>
+							</div>
+						</dl>
+						<div class="proof-panel__actions">
+							<a href="/services#atlas-warmup">Start Workflow Map</a>
+							<a href="/products">See proof</a>
+						</div>
+					</div>
+				</section>
+			</aside>
+		{:else}
 		<aside class="atlas-side">
 			<section class="agent-panel">
 				<div class="agent-hero">
@@ -623,6 +683,7 @@
 				</details>
 			</section>
 		</aside>
+		{/if}
 	</div>
 </section>
 
@@ -679,6 +740,7 @@
 	.agent-panel,
 	.inspector-panel,
 	.summary-panel,
+	.proof-panel,
 	.canvas-shell {
 		min-width: 0;
 	}
@@ -691,6 +753,7 @@
 	.starter-grid button,
 	.summary-actions button,
 	.summary-actions a,
+	.proof-panel__actions a,
 	.danger {
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 6px;
@@ -711,6 +774,7 @@
 	.agent-panel,
 	.inspector-panel,
 	.starter-panel,
+	.proof-panel,
 	.summary-panel {
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 8px;
@@ -952,6 +1016,7 @@
 
 	.agent-panel,
 	.inspector-panel,
+	.proof-panel,
 	.summary-panel {
 		display: grid;
 		gap: 0.8rem;
@@ -1146,6 +1211,7 @@
 	.agent-form button,
 	.summary-actions button,
 	.summary-actions a,
+	.proof-panel__actions a,
 	.danger {
 		display: inline-flex;
 		min-height: 2.55rem;
@@ -1158,9 +1224,77 @@
 	}
 
 	.agent-form button,
-	.summary-actions a {
+	.summary-actions a,
+	.proof-panel__actions a:first-child {
 		background: var(--color-clear-onyx, #0a0e19);
 		color: var(--color-clear-panel, #ffffff);
+	}
+
+	.proof-mode .atlas-layout {
+		grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.45fr);
+	}
+
+	.proof-mode .atlas-flow-viewport {
+		height: clamp(26rem, 52vh, 39rem);
+		min-height: 26rem;
+	}
+
+	.proof-panel__body {
+		display: grid;
+		gap: 0.9rem;
+		padding: 0 0.95rem 0.95rem;
+	}
+
+	.proof-panel__body p {
+		margin: 0;
+		color: var(--color-clear-grey, #636363);
+		line-height: 1.55;
+	}
+
+	.proof-panel__body dl {
+		display: grid;
+		gap: 0.7rem;
+		margin: 0;
+	}
+
+	.proof-panel__body dl div {
+		display: grid;
+		gap: 0.25rem;
+		padding-top: 0.7rem;
+		border-top: 1px solid var(--color-clear-border, #e1e1e1);
+	}
+
+	.proof-panel__body dt {
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.proof-panel__body dd {
+		margin: 0;
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 0.86rem;
+		font-weight: 650;
+		line-height: 1.42;
+	}
+
+	.proof-panel__body dd[data-status='run'] {
+		color: var(--color-clear-moss, #397554);
+	}
+
+	.proof-panel__body dd[data-status='wait'] {
+		color: #234bc1;
+	}
+
+	.proof-panel__body dd[data-status='stop'] {
+		color: #9d1b1b;
+	}
+
+	.proof-panel__actions {
+		display: grid;
+		gap: 0.5rem;
 	}
 
 	.agent-form .prompt-row button {

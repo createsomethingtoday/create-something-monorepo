@@ -129,7 +129,7 @@
   title="Micah Johnson | CREATE SOMETHING .agency"
   description="Micah Johnson builds workflow control layers for operator-owned outcomes: scoped actions, approval paths, evidence, and escalation surfaces for human judgment."
   keywords="Micah Johnson, workflow control layer, production automation, systems architecture, automation reliability, controlled workflows"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
 />
 

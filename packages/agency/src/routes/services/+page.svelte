@@ -70,7 +70,7 @@
   title="AI Workflow Systems | How I Work"
   description="How CREATE SOMETHING turns one messy business handoff into a reliable AI-assisted workflow with connected tools, approvals, stop conditions, and an audit trail."
   keywords="AI workflow systems, workflow mapping, AI interaction design, governed AI workflow, workflow pilot, production automation, agent reliability"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="agency"
   {services}
   {faqItems}

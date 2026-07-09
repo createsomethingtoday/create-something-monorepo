@@ -16,63 +16,51 @@
 		sans-serif;
 }
 
-.public-atlas-flow .svelte-flow,
-.public-atlas-flow .svelte-flow__container {
+.public-atlas-kernel,
+.public-atlas-flow .fast-topology-canvas {
 	width: 100%;
 	height: 100%;
 	min-height: inherit;
 }
 
-.public-atlas-flow .svelte-flow {
-	background-color: #fbfbf8;
-}
-
-.public-atlas-flow .svelte-flow__pane {
-	cursor: grab;
-}
-
-.public-atlas-flow .svelte-flow__pane:active {
-	cursor: grabbing;
-}
-
-.public-atlas-flow .svelte-flow__node {
-	border: 0;
-	background: transparent;
-	box-shadow: none;
-}
-
-.public-atlas-flow .svelte-flow__node:focus-visible {
-	outline: 2px solid rgba(10, 14, 25, 0.62);
-	outline-offset: 3px;
-}
-
-.public-atlas-flow .svelte-flow__edge-path {
-	stroke: #9f9b90;
-	stroke-width: 1.35;
-}
-
-.public-atlas-flow .svelte-flow__edge-text {
-	fill: #6f6f67;
-	font-size: 11px;
-	font-weight: 600;
-	paint-order: stroke;
-	stroke: #fbfbf8;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-	stroke-width: 7px;
-}
-
-.public-atlas-flow .svelte-flow__controls {
-	border: 1px solid rgba(10, 14, 25, 0.08);
-	border-radius: 7px;
-	box-shadow: 0 14px 32px rgba(10, 14, 25, 0.06);
+.public-atlas-flow .fast-topology-canvas {
+	position: relative;
 	overflow: hidden;
+	touch-action: none;
+	user-select: none;
 }
 
-.public-atlas-flow .svelte-flow__controls-button {
-	border-bottom-color: rgba(10, 14, 25, 0.08);
-	background: rgba(255, 255, 255, 0.92);
-	color: #0a0e19;
+.public-atlas-flow .fast-topology-canvas canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.public-atlas-flow .fast-topology-labels {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.public-atlas-flow .fast-node-label {
+	position: absolute;
+	overflow: hidden;
+	padding: 0.44rem 0.5rem 0.44rem 0.72rem;
+	border: 1px solid rgba(10, 14, 25, 0.13);
+	background: rgba(255, 255, 255, 0.9);
+	box-shadow: 0 8px 22px rgba(10, 14, 25, 0.06);
+	color: rgba(10, 14, 25, 0.86);
+	font-size: 0.72rem;
+	font-weight: 760;
+	line-height: 1.15;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.public-atlas-flow .fast-node-label.selected,
+.public-atlas-flow .fast-node-label.active {
+	border-color: rgba(10, 14, 25, 0.3);
+	background: #fff;
 }
 
 .public-atlas-kicker {
@@ -142,130 +130,25 @@
 	color: #c41e3a;
 }
 
-.public-atlas-flow-node {
-	box-sizing: border-box;
-	display: grid;
-	gap: 0.35rem;
-	width: 100%;
-	min-height: 7.5rem;
-	border: 1px solid rgba(10, 14, 25, 0.1);
+.public-atlas-fit {
+	position: absolute;
+	right: 0.75rem;
+	bottom: 0.75rem;
+	z-index: 5;
+	min-height: 2.35rem;
+	border: 1px solid rgba(10, 14, 25, 0.12);
 	border-radius: 7px;
-	background: #ffffff;
-	box-shadow: 0 14px 28px rgba(10, 14, 25, 0.055);
+	background: rgba(255, 255, 255, 0.9);
 	color: #0a0e19;
-	cursor: grab;
-	padding: 0.72rem;
-	text-align: left;
-	user-select: none;
-	transition:
-		border-color 140ms ease,
-		box-shadow 140ms ease,
-		transform 140ms ease;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.78rem;
+	font-weight: 760;
+	padding: 0.48rem 0.7rem;
+	box-shadow: 0 12px 26px rgba(10, 14, 25, 0.07);
 }
 
-.public-atlas-flow-node:hover {
-	border-color: rgba(10, 14, 25, 0.22);
-	box-shadow: 0 20px 38px rgba(10, 14, 25, 0.1);
-	transform: translateY(-1px);
-}
-
-.public-atlas-flow-node.selected {
-	border-color: #0a0e19;
-	box-shadow: 0 0 0 2px rgba(10, 14, 25, 0.08), 0 18px 38px rgba(10, 14, 25, 0.12);
-}
-
-.public-atlas-flow-node.status-run {
-	border-color: #cfe3d6;
-	background: #f8fcf9;
-}
-
-.public-atlas-flow-node.status-wait {
-	border-color: #d9ddf5;
-	background: #f8f7ff;
-}
-
-.public-atlas-flow-node.status-stop {
-	border-color: #f4cdd3;
-	background: #fff7f8;
-}
-
-.public-atlas-flow-node.status-unknown {
-	background: #ffffff;
-}
-
-.public-atlas-flow-node header {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 0.7rem;
-}
-
-.public-atlas-flow-node .kind {
-	color: #777770;
-	font-size: 0.64rem;
-	font-weight: 800;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-}
-
-.public-atlas-flow-node .status {
-	border-radius: 999px;
-	background: rgba(10, 14, 25, 0.05);
-	color: #6d6d66;
-	font-size: 0.66rem;
-	font-weight: 800;
-	padding: 0.22rem 0.45rem;
-	text-transform: uppercase;
-}
-
-.public-atlas-flow-node.status-run .status {
-	background: #e2f4e7;
-	color: #1e3c2c;
-}
-
-.public-atlas-flow-node.status-wait .status {
-	background: #e7ebff;
-	color: #0048ff;
-}
-
-.public-atlas-flow-node.status-stop .status {
-	background: #ffe1e7;
-	color: #c41e3a;
-}
-
-.public-atlas-flow-node strong {
-	display: block;
-	font-size: 0.9rem;
-	line-height: 1.12;
-}
-
-.public-atlas-flow-node .owner {
-	color: #707068;
-	font-size: 0.72rem;
-	font-weight: 700;
-}
-
-.public-atlas-flow-node small {
-	color: #696963;
-	font-size: 0.72rem;
-	line-height: 1.25;
-}
-
-.public-atlas-flow-node .public-atlas-flow-handle {
-	width: 7px;
-	height: 7px;
-	border: 1px solid #b8b8af;
-	background: #ffffff;
-}
-
-@media (max-width: 520px) {
-	.public-atlas-kicker {
-		max-width: calc(100% - 1.5rem);
-	}
-
-	.public-atlas-legend {
-		top: 3.85rem;
-		right: auto;
-		left: 0.75rem;
-	}
+.public-atlas-fit:focus-visible {
+	outline: 2px solid rgba(10, 14, 25, 0.76);
+	outline-offset: 2px;
 }
