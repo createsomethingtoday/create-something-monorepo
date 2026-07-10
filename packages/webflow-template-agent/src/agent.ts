@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { SYSTEM_PROMPT, surfaceNote } from './prompt.js';
-import { AGENT_TOOLS, TemplateToolExecutor, type SearchToolInput } from './tools.js';
+import { SYSTEM_PROMPT, pageGridNote, surfaceNote } from './prompt.js';
+import { AGENT_TOOLS, TemplateToolExecutor, type PageActionInput, type SearchToolInput } from './tools.js';
 import type { AgentSseEvent, ChatContext, ChatRequestMessage, Env } from './types.js';
 
 const MAX_LOOP_ITERATIONS = 6;
@@ -45,12 +45,15 @@ export async function runAgentTurn(
   if (knownItemsNote) system.push({ type: 'text', text: knownItemsNote });
   const surface = surfaceNote(context?.surface);
   if (surface) system.push({ type: 'text', text: surface });
+  const pageNote = pageGridNote(context?.has_page_grid);
+  if (pageNote) system.push({ type: 'text', text: pageNote });
 
   // The client renders text into one bubble per turn; separate the text blocks
   // that surround tool calls so sentences don't run together.
   let hasStreamedText = false;
 
   for (let iteration = 0; iteration < MAX_LOOP_ITERATIONS; iteration += 1) {
+    emit({ type: 'status', label: 'thinking' });
     let separatorPending = hasStreamedText;
     const stream = client.messages.stream({
       model,
@@ -114,10 +117,13 @@ async function executeTool(
   try {
     switch (toolUse.name) {
       case 'search_templates':
+        emit({ type: 'status', label: 'searching' });
         return await executor.searchTemplates(toolUse.input as SearchToolInput);
       case 'list_categories_and_styles':
+        emit({ type: 'status', label: 'searching' });
         return await executor.listCategoriesAndStyles();
       case 'display_results': {
+        emit({ type: 'status', label: 'curating' });
         const { payload, dropped } = executor.buildDisplayPayload(
           toolUse.input as Parameters<TemplateToolExecutor['buildDisplayPayload']>[0],
         );
@@ -133,6 +139,23 @@ async function executeTool(
           displayed: true,
           rendered_items: payload.items.length,
           ...(dropped.length > 0 ? { skipped_unknown_slugs: dropped } : {}),
+        });
+      }
+      case 'update_page': {
+        const { payload, unknownSlugs } = executor.buildPageAction(toolUse.input as PageActionInput);
+        if (!payload) {
+          return JSON.stringify({
+            applied: false,
+            error: 'Nothing to apply — provide at least one filter change or known highlight slug.',
+            ...(unknownSlugs.length > 0 ? { unknown_slugs: unknownSlugs } : {}),
+          });
+        }
+        emit({ type: 'page_action', payload });
+        return JSON.stringify({
+          applied: true,
+          highlighted: payload.highlight_slugs?.length ?? 0,
+          note: 'Dispatched to the page. If the user is not on a template listing page it has no visible effect.',
+          ...(unknownSlugs.length > 0 ? { ignored_unknown_slugs: unknownSlugs } : {}),
         });
       }
       default:

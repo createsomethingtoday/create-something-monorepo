@@ -88,6 +88,8 @@ function parseContext(raw: unknown): ChatContext | undefined {
   const knownTemplates = (raw as { known_templates?: unknown }).known_templates;
   const rawSurface = (raw as { surface?: unknown }).surface;
   const surface = rawSurface === 'compact' || rawSurface === 'immersive' ? rawSurface : undefined;
+  const rawGrid = (raw as { has_page_grid?: unknown }).has_page_grid;
+  const hasPageGrid = typeof rawGrid === 'boolean' ? rawGrid : undefined;
 
   const items = (Array.isArray(knownTemplates) ? knownTemplates : [])
     .filter(
@@ -99,8 +101,8 @@ function parseContext(raw: unknown): ChatContext | undefined {
     )
     .slice(0, 40);
 
-  if (items.length === 0 && !surface) return undefined;
-  return { known_templates: items, surface };
+  if (items.length === 0 && !surface && hasPageGrid === undefined) return undefined;
+  return { known_templates: items, surface, has_page_grid: hasPageGrid };
 }
 
 export default {

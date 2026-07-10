@@ -1,5 +1,12 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import type { ChatContext, DisplayPayload, Env, TemplateSearchItem, TemplateSearchResponse } from './types.js';
+import type {
+  ChatContext,
+  DisplayPayload,
+  Env,
+  PageActionPayload,
+  TemplateSearchItem,
+  TemplateSearchResponse,
+} from './types.js';
 
 // Closed vocabulary sourced from the Templates CMS Features collection.
 // Keeping it in the tool schema (enum + strict) makes hallucinated features
@@ -125,9 +132,47 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
       additionalProperties: false,
     },
   },
+  {
+    // Not strict: the Messages API caps strict tool schemas at 16 union-typed
+    // parameters across all tools, and search_templates/display_results use
+    // that budget. buildPageAction validates every field defensively instead.
+    name: 'update_page',
+    description:
+      'Update the marketplace page hosting this chat: set its template grid search/filters/sort, and/or highlight specific template cards in the grid. Omit any field to leave it unchanged. Use when the user asks to see results on the page, wants the page filtered, or when pointing at specific templates helps. Only slugs from earlier tool results will highlight. Only call this when the page context says a template grid is present.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        q: { type: 'string', description: 'Set the page search query. Empty string clears it.' },
+        category_group_slug: {
+          type: 'string',
+          description: 'Set the page category filter (slug from list_categories_and_styles). Empty string clears it.',
+        },
+        styles: { type: 'array', items: { type: 'string' }, description: 'Replace the page style filters.' },
+        free_only: { type: 'boolean', description: 'Toggle the page free-only filter.' },
+        sort: { type: 'string', enum: [...SORT_VALUES], description: 'Set the page sort.' },
+        clear_filters: { type: 'boolean', description: 'Reset all page filters before applying the rest.' },
+        highlight_slugs: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Template slugs to highlight in the page grid (pulse + scroll into view).',
+        },
+      },
+      additionalProperties: false,
+    },
+  },
 ];
 
 // ── Tool executors ────────────────────────────────────────────────────────────
+
+export interface PageActionInput {
+  q?: string | null;
+  category_group_slug?: string | null;
+  styles?: string[] | null;
+  free_only?: boolean | null;
+  sort?: string | null;
+  clear_filters?: boolean | null;
+  highlight_slugs?: string[] | null;
+}
 
 export interface SearchToolInput {
   q?: string | null;
@@ -241,6 +286,28 @@ export class TemplateToolExecutor {
       styles: (data.available_facets?.styles ?? []).map((style) => ({ name: style.name, slug: style.slug })),
       features: TEMPLATE_FEATURES,
     });
+  }
+
+  // Validates an update_page request. Highlight slugs are filtered against the
+  // verified-template registry; returns null when the request is a no-op.
+  buildPageAction(input: PageActionInput): { payload: PageActionPayload | null; unknownSlugs: string[] } {
+    const unknownSlugs: string[] = [];
+    const highlights: string[] = [];
+    for (const slug of (input.highlight_slugs ?? []).slice(0, MAX_DISPLAY_ITEMS)) {
+      if (this.knownItems.has(slug)) highlights.push(slug);
+      else unknownSlugs.push(slug);
+    }
+
+    const payload: PageActionPayload = {};
+    if (input.q != null) payload.q = input.q;
+    if (input.category_group_slug != null) payload.category_group_slug = input.category_group_slug;
+    if (input.styles != null) payload.styles = input.styles.slice(0, 10);
+    if (input.free_only != null) payload.free_only = input.free_only;
+    if (input.sort != null && (SORT_VALUES as readonly string[]).includes(input.sort)) payload.sort = input.sort;
+    if (input.clear_filters) payload.clear_filters = true;
+    if (highlights.length > 0) payload.highlight_slugs = highlights;
+
+    return { payload: Object.keys(payload).length > 0 ? payload : null, unknownSlugs };
   }
 
   // Validates + enriches a display request. Unknown slugs are dropped (never

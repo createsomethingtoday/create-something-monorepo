@@ -200,3 +200,43 @@ describe('surface hints', () => {
     expect(surfaceNote(undefined)).toBeNull();
   });
 });
+
+describe('page actions', () => {
+  it('filters highlight slugs against the verified registry', () => {
+    const executor = new TemplateToolExecutor(ENV);
+    executor.seedFromContext({ known_templates: [searchItem('known')] });
+
+    const { payload, unknownSlugs } = executor.buildPageAction({
+      q: 'portfolio',
+      category_group_slug: null,
+      styles: ['dark-websites'],
+      free_only: null,
+      sort: 'best_selling',
+      clear_filters: null,
+      highlight_slugs: ['known', 'made-up'],
+    });
+
+    expect(payload).toEqual({
+      q: 'portfolio',
+      styles: ['dark-websites'],
+      sort: 'best_selling',
+      highlight_slugs: ['known'],
+    });
+    expect(unknownSlugs).toEqual(['made-up']);
+  });
+
+  it('returns null for a no-op request and drops invalid sorts', () => {
+    const executor = new TemplateToolExecutor(ENV);
+    const { payload, unknownSlugs } = executor.buildPageAction({
+      q: null,
+      category_group_slug: null,
+      styles: null,
+      free_only: null,
+      sort: 'sideways' as never,
+      clear_filters: null,
+      highlight_slugs: ['ghost'],
+    });
+    expect(payload).toBeNull();
+    expect(unknownSlugs).toEqual(['ghost']);
+  });
+});

@@ -27,9 +27,26 @@ export interface ChatContext {
   // Client viewport hint: 'compact' = narrow docked panel, 'immersive' = wide
   // fullscreen/inline canvas. Steers layout and item-count choices.
   surface?: ChatSurface;
+  // Whether the page hosting the chat has a live template grid the agent can
+  // drive via update_page (filters/sort/highlights).
+  has_page_grid?: boolean;
 }
 
 export type ChatSurface = 'compact' | 'immersive';
+
+// update_page tool output, forwarded to the client which applies it to the
+// host page's grid/filters via the marketplace components' shared URL-param +
+// templateFiltersChanged contract. Slugs are validated against the
+// conversation's verified-template registry before emission.
+export interface PageActionPayload {
+  q?: string | null;
+  category_group_slug?: string | null;
+  styles?: string[] | null;
+  free_only?: boolean | null;
+  sort?: string | null;
+  clear_filters?: boolean | null;
+  highlight_slugs?: string[];
+}
 
 // SSE events emitted to the client. `display` payloads are the generative-UI
 // contract: the model composes them via the display_results tool; the client
@@ -38,6 +55,11 @@ export type ChatSurface = 'compact' | 'immersive';
 export type AgentSseEvent =
   | { type: 'text_delta'; text: string }
   | { type: 'display'; payload: DisplayPayload }
+  // What the agent is doing right now — lets the client narrate waits
+  // truthfully instead of a generic "searching" label.
+  | { type: 'status'; label: 'thinking' | 'searching' | 'curating' }
+  // Apply filters/sort/highlights to the host page's template grid.
+  | { type: 'page_action'; payload: PageActionPayload }
   // Continuity snapshot: templates this conversation has verified via tools.
   // The client stores it and echoes it back as `context` on the next request.
   | { type: 'context'; payload: ChatContext }

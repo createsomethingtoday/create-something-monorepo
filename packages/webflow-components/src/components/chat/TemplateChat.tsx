@@ -27,9 +27,26 @@ interface DisplayPayload {
   followups?: string[];
 }
 
+// Filters/sort/highlights the agent wants applied to the host page's template
+// grid (via the marketplace components' URL-param + templateFiltersChanged
+// contract). Highlight slugs are already validated server-side.
+interface PageActionPayload {
+  q?: string | null;
+  category_group_slug?: string | null;
+  styles?: string[] | null;
+  free_only?: boolean | null;
+  sort?: string | null;
+  clear_filters?: boolean | null;
+  highlight_slugs?: string[];
+}
+
+type AgentStatus = 'thinking' | 'searching' | 'curating';
+
 type AgentSseEvent =
   | { type: 'text_delta'; text: string }
   | { type: 'display'; payload: DisplayPayload }
+  | { type: 'status'; label: AgentStatus }
+  | { type: 'page_action'; payload: PageActionPayload }
   // Continuity snapshot from the (stateless) agent worker: templates verified
   // by tools this conversation. Echoed back as `context` on the next request
   // so follow-up turns can compare/re-display without re-searching.
@@ -66,6 +83,15 @@ export interface TemplateChatProps {
 
 const DEFAULT_STARTERS =
   'A portfolio with bold animations, An online store for a clothing brand, A restaurant site with a menu, A SaaS landing page with a blog';
+
+const STATUS_LABELS: Record<AgentStatus, string> = {
+  thinking: 'Thinking',
+  searching: 'Searching templates',
+  curating: 'Curating picks',
+};
+
+const STORAGE_KEY = 'tmchat-session-v1';
+const MAX_PERSISTED_MESSAGES = 30;
 
 const CHAT_STYLES = `
 .tmchat-launcher {
@@ -117,8 +143,8 @@ const CHAT_STYLES = `
   border: 0; background: transparent; cursor: pointer; color: #404040;
   width: 30px; height: 30px; border-radius: 8px; font-size: 16px; line-height: 1;
   display: inline-flex; align-items: center; justify-content: center;
+  transition: background 120ms ease;
 }
-.tmchat-iconbtn { transition: background 120ms ease; }
 .tmchat-iconbtn:hover { background: #ececec; }
 .tmchat-iconbtn:active { background: #e0e0e0; }
 .tmchat-scroll {
@@ -129,20 +155,25 @@ const CHAT_STYLES = `
 .tmchat-msg, .tmchat-display, .tmchat-typing {
   animation: tmchat-rise 180ms cubic-bezier(0.2, 0, 0, 1) both;
 }
+@keyframes tmchat-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 /* Chips arrive one by one after the reply settles — the whole row popping in
    at once reads as a layout jump. Delay is set inline per chip. */
 .tmchat-followups .tmchat-chip { animation: tmchat-chip-in 240ms cubic-bezier(0.2, 0, 0, 1) both; }
 @keyframes tmchat-chip-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@keyframes tmchat-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .tmchat-grid > div, .tmchat-strip > div {
   animation: tmchat-card 260ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 @keyframes tmchat-card { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
-.tmchat-panel.immersive .tmchat-scroll { padding: 24px clamp(16px, 5vw, 56px) 32px; gap: 14px; }
 .tmchat-msg { max-width: 92%; white-space: pre-wrap; overflow-wrap: break-word; }
 .tmchat-panel.immersive .tmchat-msg { max-width: 680px; font-size: 15px; }
 .tmchat-msg.user { align-self: flex-end; background: #146ef5; color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; }
 .tmchat-msg.assistant { align-self: flex-start; background: #f5f5f5; padding: 9px 13px; border-radius: 14px 14px 14px 4px; }
+.tmchat-caret {
+  display: inline-block; width: 2px; height: 1em; margin-left: 2px;
+  background: currentColor; vertical-align: -0.15em;
+  animation: tmchat-blink 1s steps(2, start) infinite;
+}
+@keyframes tmchat-blink { 50% { opacity: 0; } }
 .tmchat-display { align-self: stretch; }
 .tmchat-display-title { font-weight: 600; margin: 4px 0 8px; font-size: 14px; }
 .tmchat-panel.immersive .tmchat-display-title { font-size: 16px; }
@@ -170,16 +201,26 @@ const CHAT_STYLES = `
 .tmchat-dots span:nth-child(2) { animation-delay: 0.15s; }
 .tmchat-dots span:nth-child(3) { animation-delay: 0.3s; }
 @keyframes tmchat-pulse { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
+.tmchat-jump {
+  position: absolute; bottom: 78px; left: 50%; transform: translateX(-50%); z-index: 3;
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid #e0e0e0; border-radius: 999px; background: #fff; color: #080808;
+  padding: 6px 12px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+  animation: tmchat-chip-in 200ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+.tmchat-jump:hover { background: #f5f5f5; }
 .tmchat-inputrow { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #ececec; background: #fff; }
 .tmchat-panel.immersive .tmchat-inputrow { padding: 14px clamp(16px, 5vw, 56px) 18px; }
+.tmchat-panel.immersive .tmchat-scroll { padding: 24px clamp(16px, 5vw, 56px) 32px; gap: 14px; }
 .tmchat-input {
-  flex: 1 1 auto; min-height: 40px; padding: 9px 12px;
-  border: 1px solid #e0e0e0; border-radius: 8px; font: inherit; resize: none;
+  flex: 1 1 auto; min-height: 40px; max-height: 120px; padding: 9px 12px;
+  border: 1px solid #e0e0e0; border-radius: 8px; font: inherit; resize: none; overflow-y: auto;
 }
 .tmchat-input:focus-visible { outline: 2px solid #146ef5; outline-offset: 1px; }
 .tmchat-send {
   border: 0; border-radius: 8px; background: #146ef5; color: #fff;
-  padding: 0 16px; font: inherit; font-weight: 600; cursor: pointer;
+  padding: 0 16px; font: inherit; font-weight: 600; cursor: pointer; align-self: flex-end; min-height: 40px;
   transition: background 140ms ease, transform 120ms ease;
 }
 .tmchat-send:active:not(:disabled) { transform: scale(0.97); }
@@ -192,9 +233,9 @@ const CHAT_STYLES = `
   .tmchat-grid, .tmchat-panel.immersive .tmchat-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tmchat-panel.entering, .tmchat-backdrop, .tmchat-dots span,
+  .tmchat-panel.entering, .tmchat-backdrop, .tmchat-dots span, .tmchat-caret,
   .tmchat-msg, .tmchat-display, .tmchat-typing, .tmchat-followups .tmchat-chip,
-  .tmchat-grid > div, .tmchat-strip > div { animation: none; }
+  .tmchat-jump, .tmchat-grid > div, .tmchat-strip > div { animation: none; }
   .tmchat-chip, .tmchat-send, .tmchat-launcher { transition: none; }
   .tmchat-chip:hover, .tmchat-launcher:hover, .tmchat-send:active:not(:disabled) { transform: none; }
 }
@@ -202,7 +243,13 @@ const CHAT_STYLES = `
 
 // Standardized 16px stroke icons (Feather-style geometry, currentColor) —
 // Unicode glyphs render inconsistently across platforms/fonts.
-function ChatIcon({ name }: { name: 'sparkle' | 'refresh' | 'expand' | 'collapse' | 'close' | 'send' }): React.ReactElement {
+function ChatIcon({
+  name,
+  size = 16,
+}: {
+  name: 'sparkle' | 'refresh' | 'expand' | 'collapse' | 'close' | 'down';
+  size?: number;
+}): React.ReactElement {
   const paths: Record<string, React.ReactNode> = {
     sparkle: <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" fill="currentColor" stroke="none" />,
     refresh: (
@@ -233,17 +280,17 @@ function ChatIcon({ name }: { name: 'sparkle' | 'refresh' | 'expand' | 'collapse
         <line x1="6" y1="6" x2="18" y2="18" />
       </>
     ),
-    send: (
+    down: (
       <>
-        <line x1="22" y1="2" x2="11" y2="13" />
-        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <polyline points="19 12 12 19 5 12" />
       </>
     ),
   };
   return (
     <svg
-      width="16"
-      height="16"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -273,6 +320,155 @@ function renderMessageText(content: string): React.ReactNode {
   const parts = content.split(/\*\*(.+?)\*\*/g);
   if (parts.length === 1) return content;
   return parts.map((part, index) => (index % 2 === 1 ? <strong key={index}>{part}</strong> : part));
+}
+
+// ── Session persistence (survive navigation/reload within the tab) ───────────
+
+interface PersistedSession {
+  messages: ChatMessage[];
+  followups: string[];
+  known: AgentTemplateItem[];
+  open: boolean;
+}
+
+function loadPersistedSession(): PersistedSession | null {
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<PersistedSession>;
+    if (!Array.isArray(parsed.messages)) return null;
+    return {
+      messages: parsed.messages.filter(
+        (message): message is ChatMessage =>
+          typeof message === 'object' &&
+          message !== null &&
+          (message.role === 'user' || message.role === 'assistant') &&
+          typeof message.content === 'string' &&
+          Array.isArray(message.displays),
+      ),
+      followups: Array.isArray(parsed.followups) ? parsed.followups.filter((f) => typeof f === 'string') : [],
+      known: Array.isArray(parsed.known) ? parsed.known.filter((item) => item && typeof item.template_slug === 'string') : [],
+      open: Boolean(parsed.open),
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ── Page control (agent drives the host page's grid/filters) ─────────────────
+
+// Detect the marketplace grid components on the host page. Used both to tell
+// the agent whether update_page is meaningful and to target highlights.
+function pageHasTemplateGrid(): boolean {
+  if (typeof document === 'undefined') return false;
+  return Boolean(document.querySelector('[data-template-slug], .tmgrid-grid, .tmsearch-page'));
+}
+
+// Apply an agent page action through the marketplace components' shared
+// contract: write URL params, then dispatch templateFiltersChanged so
+// TemplateGrid / sidebar / heading re-read and re-fetch.
+function applyPageAction(payload: PageActionPayload): void {
+  if (typeof window === 'undefined') return;
+  const hasFilterChange =
+    Boolean(payload.clear_filters) ||
+    payload.q != null ||
+    payload.category_group_slug != null ||
+    payload.styles != null ||
+    payload.free_only != null ||
+    payload.sort != null;
+
+  if (hasFilterChange) {
+    const url = new URL(window.location.href);
+    if (payload.clear_filters) {
+      for (const key of ['q', 'query', 'search', 'category', 'category_group_slug', 'subcategory', 'child_category_slug', 'styles', 'tags', 'types', 'free_only', 'sort', 'page']) {
+        url.searchParams.delete(key);
+      }
+    }
+    if (payload.q != null) {
+      url.searchParams.delete('query');
+      url.searchParams.delete('search');
+      if (payload.q) url.searchParams.set('q', payload.q);
+      else url.searchParams.delete('q');
+    }
+    if (payload.category_group_slug != null) {
+      url.searchParams.delete('subcategory');
+      url.searchParams.delete('child_category_slug');
+      url.searchParams.delete('category_group_slug');
+      if (payload.category_group_slug) url.searchParams.set('category', payload.category_group_slug);
+      else url.searchParams.delete('category');
+    }
+    if (payload.styles != null) {
+      url.searchParams.delete('styles');
+      for (const style of payload.styles) url.searchParams.append('styles', style);
+    }
+    if (payload.free_only != null) {
+      if (payload.free_only) url.searchParams.set('free_only', 'true');
+      else url.searchParams.delete('free_only');
+    }
+    if (payload.sort) url.searchParams.set('sort', payload.sort);
+    url.searchParams.delete('page');
+    window.history.replaceState({}, '', url.toString());
+
+    const params = url.searchParams;
+    const splitList = (key: string) =>
+      params.getAll(key).flatMap((value) => value.split(',')).map((value) => value.trim()).filter(Boolean);
+    const detail = {
+      q: (params.get('q') ?? '').trim(),
+      categoryGroupSlug: params.get('category'),
+      childCategorySlug: params.get('subcategory'),
+      styles: splitList('styles'),
+      tags: splitList('tags'),
+      types: splitList('types'),
+      freeOnly: (params.get('free_only') ?? '').toLowerCase() === 'true',
+      sort: params.get('sort') ?? 'popular',
+      href: url.toString(),
+      source: 'TemplateChat',
+      updatedAt: Date.now(),
+    };
+    (window as unknown as Record<string, unknown>).__templateMarketplaceFilters = detail;
+    window.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
+    document.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
+  }
+
+  if (payload.highlight_slugs?.length) {
+    // The grid re-fetches after a filter change; retry until the cards exist.
+    highlightPageTemplates(payload.highlight_slugs, 0);
+  }
+}
+
+function highlightPageTemplates(slugs: string[], attempt: number): void {
+  if (typeof document === 'undefined' || slugs.length === 0) return;
+  const found = slugs
+    .map((slug) => document.querySelector<HTMLElement>(`[data-template-slug="${CSS.escape(slug)}"]`))
+    .filter((el): el is HTMLElement => Boolean(el));
+
+  if (found.length === 0) {
+    if (attempt < 16) window.setTimeout(() => highlightPageTemplates(slugs, attempt + 1), 500);
+    return;
+  }
+
+  const reduced = prefersReducedMotion();
+  for (const el of found) {
+    // Inline styles + WAAPI: chat styles can't reach the grid's isolated root.
+    const previousOutline = el.style.outline;
+    const previousOffset = el.style.outlineOffset;
+    el.style.outline = '3px solid #146ef5';
+    el.style.outlineOffset = '4px';
+    window.setTimeout(() => {
+      el.style.outline = previousOutline;
+      el.style.outlineOffset = previousOffset;
+    }, 5200);
+    if (!reduced && typeof el.animate === 'function') {
+      el.animate(
+        [
+          { boxShadow: '0 0 0 3px rgba(20,110,245,0.35), 0 0 0 6px rgba(20,110,245,0.18)' },
+          { boxShadow: '0 0 0 3px rgba(20,110,245,0.35), 0 0 0 16px rgba(20,110,245,0)' },
+        ],
+        { duration: 1300, iterations: 4, easing: 'ease-out' },
+      );
+    }
+  }
+  found[0]?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
 }
 
 function DisplayArtifact({ payload }: { payload: DisplayPayload }): React.ReactElement {
@@ -333,20 +529,30 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   defaultImmersive = false,
 }) => {
   const isInline = variant === 'inline';
-  const [open, setOpen] = useState(isInline || defaultOpen);
+  const [persisted] = useState<PersistedSession | null>(() =>
+    typeof window === 'undefined' ? null : loadPersistedSession(),
+  );
+  const [open, setOpen] = useState(isInline || defaultOpen || Boolean(persisted?.open));
   const [immersive, setImmersive] = useState(defaultImmersive);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(persisted?.messages ?? []);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
-  const [followups, setFollowups] = useState<string[]>([]);
+  const [followups, setFollowups] = useState<string[]>(persisted?.followups ?? []);
+  const [status, setStatus] = useState<AgentStatus>('thinking');
+  const [working, setWorking] = useState(false);
+  const [atBottom, setAtBottom] = useState(true);
+  const [retryText, setRetryText] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
+  const atBottomRef = useRef(true);
+  const workingRef = useRef(false);
+  const warmedRef = useRef(false);
   // Templates verified by the agent's tools this conversation, keyed by slug.
   // Echoed back with each request so the stateless worker can compare or
   // re-display earlier results instead of "forgetting" them between turns.
-  const knownTemplatesRef = useRef(new Map<string, AgentTemplateItem>());
+  const knownTemplatesRef = useRef(new Map<string, AgentTemplateItem>(persisted?.known.map((item) => [item.template_slug, item])));
 
   const starters = starterPrompts
     .split(/[,\n]/)
@@ -354,7 +560,59 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     .filter(Boolean)
     .slice(0, 6);
 
+  const setWorkingState = useCallback((value: boolean) => {
+    if (workingRef.current !== value) {
+      workingRef.current = value;
+      setWorking(value);
+    }
+  }, []);
+
+  // Warm the worker (edge cold start + upstream TLS) before the first message.
+  const warmUp = useCallback(() => {
+    if (warmedRef.current || !apiBase) return;
+    warmedRef.current = true;
+    fetch(`${apiBase.replace(/\/+$/, '')}/health`).catch(() => {});
+  }, [apiBase]);
+
   useEffect(() => {
+    if (open) warmUp();
+  }, [open, warmUp]);
+
+  // Persist settled conversation state so the chat survives navigation/reload.
+  useEffect(() => {
+    if (streaming || typeof window === 'undefined') return;
+    try {
+      const state: PersistedSession = {
+        messages: messages.slice(-MAX_PERSISTED_MESSAGES),
+        followups,
+        known: Array.from(knownTemplatesRef.current.values()).slice(-40),
+        open: isInline ? false : open,
+      };
+      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Storage unavailable (private mode, iframe policy) — chat still works.
+    }
+  }, [messages, followups, open, streaming, isInline]);
+
+  // Stick-to-bottom: only auto-follow when the reader is already at the end.
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    atBottomRef.current = near;
+    setAtBottom(near);
+  }, []);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    atBottomRef.current = true;
+    setAtBottom(true);
+    el.scrollTo({ top: el.scrollHeight, behavior: prefersReducedMotion() ? 'auto' : behavior });
+  }, []);
+
+  useEffect(() => {
+    if (!atBottomRef.current) return;
     // Instant follow while streaming — queueing smooth scrolls on every SSE
     // delta fights the scroller and janks. Smooth only for discrete changes.
     scrollRef.current?.scrollTo({
@@ -366,6 +624,14 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open, immersive]);
+
+  // Auto-grow the input with its content (1 -> ~4 rows).
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [input]);
 
   // FLIP the docked panel <-> immersive transition: measure before the layout
   // change (in the toggle handler), then play a single compositor-friendly
@@ -397,6 +663,42 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     );
   }, [immersive]);
 
+  // Immersive is a modal: lock the page scroll behind the backdrop.
+  useEffect(() => {
+    if (!immersive || typeof document === 'undefined') return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [immersive]);
+
+  // Keep Tab focus inside the immersive dialog.
+  useEffect(() => {
+    if (!immersive) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const root = panelRef.current;
+      if (!root) return;
+      const focusables = root.querySelectorAll<HTMLElement>(
+        'button, a[href], textarea, input, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (event.shiftKey && (active === first || !root.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [immersive]);
+
   // Esc collapses the immersive state first, then closes a floating panel.
   useEffect(() => {
     if (!open) return;
@@ -407,7 +709,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, immersive, isInline]);
+  }, [open, immersive, isInline, setImmersiveAnimated]);
 
   useEffect(() => () => streamAbortRef.current?.abort(), []);
 
@@ -421,19 +723,31 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     setMessages([]);
     setFollowups([]);
     setInput('');
+    setRetryText(null);
+    try {
+      window.sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore storage errors.
+    }
     inputRef.current?.focus();
   }, []);
 
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, baseOverride?: ChatMessage[]) => {
       const trimmed = text.trim();
       if (!trimmed || streaming || !apiBase) return;
 
       setFollowups([]);
       setInput('');
+      setRetryText(null);
       setStreaming(true);
+      setStatus('thinking');
+      setWorkingState(true);
+      atBottomRef.current = true;
+      setAtBottom(true);
 
-      const history = [...messages, { role: 'user' as const, content: trimmed, displays: [] }];
+      const base = baseOverride ?? messages;
+      const history = [...base, { role: 'user' as const, content: trimmed, displays: [] }];
       setMessages([...history, { role: 'assistant', content: '', displays: [] }]);
 
       const controller = new AbortController();
@@ -460,6 +774,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               // Wide canvases (immersive, or an inline panel rendered wide)
               // fit larger galleries; the agent sizes displays accordingly.
               surface: immersive || (panelRef.current?.clientWidth ?? 0) >= 720 ? 'immersive' : 'compact',
+              // Whether the agent can drive this page's grid via update_page.
+              has_page_grid: pageHasTemplateGrid(),
             },
           }),
         });
@@ -495,16 +811,23 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             }
 
             if (event.type === 'text_delta') {
+              setWorkingState(false);
               appendToAssistant((message) => ({ ...message, content: message.content + event.text }));
+            } else if (event.type === 'status') {
+              setStatus(event.label);
+              setWorkingState(true);
             } else if (event.type === 'display') {
               for (const entry of event.payload.items) knownTemplatesRef.current.set(entry.template_slug, entry.item);
               appendToAssistant((message) => ({ ...message, displays: [...message.displays, event.payload] }));
               if (event.payload.followups?.length) setFollowups(event.payload.followups);
+            } else if (event.type === 'page_action') {
+              applyPageAction(event.payload);
             } else if (event.type === 'context') {
               for (const item of event.payload.known_templates ?? []) {
                 if (item?.template_slug) knownTemplatesRef.current.set(item.template_slug, item);
               }
             } else if (event.type === 'error') {
+              setRetryText(trimmed);
               appendToAssistant((message) => ({
                 ...message,
                 content: message.content || `Sorry — ${event.message}`,
@@ -514,23 +837,25 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         }
       } catch (error) {
         if (!controller.signal.aborted) {
+          setRetryText(trimmed);
           appendToAssistant((message) => ({
             ...message,
-            content: message.content || 'Sorry — I hit a connection problem. Please try again.',
+            content: message.content || 'Sorry — I hit a connection problem.',
           }));
         }
       } finally {
+        setWorkingState(false);
         setStreaming(false);
       }
     },
-    [apiBase, messages, streaming, immersive],
+    [apiBase, messages, streaming, immersive, setWorkingState],
   );
 
   if (!open) {
     return (
       <>
         <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
-        <button type="button" className="tmchat-launcher" onClick={() => setOpen(true)}>
+        <button type="button" className="tmchat-launcher" onMouseEnter={warmUp} onClick={() => setOpen(true)}>
           <ChatIcon name="sparkle" /> {launcherLabel}
         </button>
       </>
@@ -540,6 +865,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const panelClass = `tmchat-panel entering${immersive ? ' immersive' : isInline ? ' inline' : ''}`;
   const showConversationChips = !streaming && followups.length > 0;
   const showStarterChips = !streaming && messages.length === 0 && starters.length > 0;
+  const showRetry = !streaming && retryText !== null;
+  const lastIndex = messages.length - 1;
 
   return (
     <>
@@ -579,7 +906,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           </div>
         </div>
 
-        <div ref={scrollRef} className="tmchat-scroll">
+        <div ref={scrollRef} className="tmchat-scroll" onScroll={handleScroll}>
           <div className="tmchat-msg assistant">{welcomeMessage}</div>
           {showStarterChips ? (
             <div className="tmchat-followups">
@@ -599,21 +926,41 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           {messages.map((message, index) => (
             <React.Fragment key={index}>
               {message.content ? (
-                <div className={`tmchat-msg ${message.role}`}>{renderMessageText(message.content)}</div>
+                <div className={`tmchat-msg ${message.role}`}>
+                  {renderMessageText(message.content)}
+                  {streaming && index === lastIndex && message.role === 'assistant' && !working ? (
+                    <span className="tmchat-caret" aria-hidden="true" />
+                  ) : null}
+                </div>
               ) : null}
               {message.displays.map((payload, displayIndex) => (
                 <DisplayArtifact key={displayIndex} payload={payload} />
               ))}
             </React.Fragment>
           ))}
-          {streaming ? (
+          {streaming && working ? (
             <div className="tmchat-typing" aria-live="polite">
-              Searching templates
+              {STATUS_LABELS[status]}
               <span className="tmchat-dots">
                 <span />
                 <span />
                 <span />
               </span>
+            </div>
+          ) : null}
+          {showRetry ? (
+            <div className="tmchat-followups">
+              <button
+                type="button"
+                className="tmchat-chip"
+                onClick={() => {
+                  if (!retryText) return;
+                  const base = messages.slice(0, -2);
+                  void send(retryText, base);
+                }}
+              >
+                Try again
+              </button>
             </div>
           ) : null}
           {showConversationChips ? (
@@ -632,6 +979,12 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             </div>
           ) : null}
         </div>
+
+        {!atBottom && messages.length > 0 ? (
+          <button type="button" className="tmchat-jump" onClick={() => scrollToBottom('smooth')}>
+            <ChatIcon name="down" size={14} /> Latest
+          </button>
+        ) : null}
 
         <div className="tmchat-inputrow">
           <textarea

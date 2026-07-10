@@ -5,7 +5,7 @@ import { TemplateChat } from './TemplateChat';
 export default declareComponent(TemplateChat, {
   name: 'Template Chat',
   description:
-    'Conversational template discovery. A floating chat assistant that searches the marketplace with capability-aware filters (features, ecommerce, memberships, CMS) and renders recommendations as template cards with follow-up suggestions. Requires the template agent endpoint.',
+    'Conversational template discovery. A floating chat assistant that searches the marketplace with capability-aware filters (features, ecommerce, memberships, CMS) and renders recommendations as template cards with follow-up suggestions. On listing pages it can also drive the page: apply filters/sort to the template grid and highlight specific cards. Requires the template agent endpoint.',
   group: 'Marketplace',
   props: {
     apiBase: props.Text({

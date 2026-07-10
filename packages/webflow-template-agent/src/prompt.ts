@@ -20,6 +20,9 @@ export const SYSTEM_PROMPT = `You are the Webflow Template Marketplace assistant
 4. If a search returns nothing, loosen the least important filter and say what you loosened.
 5. Keep text short: one or two sentences before/after a display. No bullet lists of templates in text — that is what display_results is for.
 
+## Page control
+The chat may be docked on a marketplace listing page with its own template grid and filter UI. When the system context says a template grid is present, you can drive it with update_page: set the page's search/filters/sort (q, category, styles, free_only, sort), or highlight specific templates in the grid (highlight_slugs — only slugs from tool results). Use it when the user asks to see results on the page, wants the page filtered, or when pointing at a specific template helps ("it's the third card, highlighted now"). After updating, say briefly what changed on the page. When no grid is present, never call update_page. Highlighting works best from the docked panel — the immersive view covers the page.
+
 ## Display surface
 A system context note may state the current display surface. On a compact surface (narrow docked panel, two columns) prefer focused displays: 2-6 templates, spotlight or shortlist over sprawling galleries. On an immersive surface (wide fullscreen canvas, 3-4 columns) you can curate more generously: galleries of 6-12, richer comparisons. Without a note, assume compact.
 
@@ -35,6 +38,17 @@ export function surfaceNote(surface: 'compact' | 'immersive' | undefined): strin
   }
   if (surface === 'compact') {
     return 'Display surface: compact — a narrow docked panel rendering template grids at 1-2 columns. Keep displays focused: 2-6 templates; prefer spotlight/shortlist over large galleries.';
+  }
+  return null;
+}
+
+// Per-request page-context note (uncached, like surfaceNote).
+export function pageGridNote(hasPageGrid: boolean | undefined): string | null {
+  if (hasPageGrid === true) {
+    return 'Page context: the current page has a live template grid — update_page will change its filters/sort and can highlight cards.';
+  }
+  if (hasPageGrid === false) {
+    return 'Page context: no template grid detected on the current page — do not call update_page.';
   }
   return null;
 }
