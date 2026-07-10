@@ -62,6 +62,7 @@ export const ASSET_FIELDS = [
   '🔗Preview Site URL',
   '🔗Listing URL',
   '🔗Website URL',
+  'ℹ️MRP ID',
   '📅LMT',
 ];
 

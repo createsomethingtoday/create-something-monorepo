@@ -131,6 +131,7 @@ export interface TemplateDocumentInput {
   listingUrl: string | null;
   previewUrl: string | null;
   websiteUrl: string | null;
+  mrpId: string | null;
   creatorName: string | null;
   creatorRecordId: string | null;
   creatorSlug: string | null;
@@ -204,6 +205,7 @@ export interface SearchItem {
   url: string | null;
   preview_url: string | null;
   website_url: string | null;
+  purchase_url: string | null;
   creator_name: string | null;
   creator_slug: string | null;
   creator_profile_url: string | null;
@@ -344,6 +346,7 @@ export interface DocumentRow {
   listing_url: string | null;
   preview_url: string | null;
   website_url: string | null;
+  mrp_id: string | null;
   creator_name: string | null;
   creator_slug: string | null;
   creator_profile_url: string | null;

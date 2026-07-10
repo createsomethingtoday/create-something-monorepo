@@ -30,6 +30,9 @@ export interface ChatContext {
   // Whether the page hosting the chat has a live template grid the agent can
   // drive via update_page (filters/sort/highlights).
   has_page_grid?: boolean;
+  // Slugs the previous turn asked to highlight whose cards never rendered on
+  // the page (the grid's active filters/sort exclude them).
+  highlight_misses?: string[];
 }
 
 export type ChatSurface = 'compact' | 'immersive';
@@ -93,6 +96,8 @@ export interface TemplateSearchItem {
   /** Published .webflow.io site. Frameable on *.webflow.com — the chat
    *  component uses it for in-panel live previews. */
   website_url: string | null;
+  /** Direct marketplace checkout deep link (rid = template MRP id). */
+  purchase_url?: string | null;
   creator_name: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;

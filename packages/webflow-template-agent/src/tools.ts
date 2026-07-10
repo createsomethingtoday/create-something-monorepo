@@ -147,7 +147,7 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
     // that budget. buildPageAction validates every field defensively instead.
     name: 'update_page',
     description:
-      'Update the marketplace page hosting this chat: set its template grid search/filters/sort, and/or highlight specific template cards in the grid. Omit any field to leave it unchanged. Use when the user asks to see results on the page, wants the page filtered, or when pointing at specific templates helps. Only slugs from earlier tool results will highlight. Only call this when the page context says a template grid is present.',
+      'Update the marketplace page hosting this chat: set its template grid search/filters/sort, and/or highlight specific template cards in the grid. Omit any field to leave it unchanged. Use when the user asks to see results on the page, wants the page filtered, or when pointing at specific templates helps. Only slugs from earlier tool results will highlight, and only cards currently rendered in the grid can pulse/scroll into view: if the active page filters/sort would exclude the targets, set matching filters (q/category/styles/types/sort) in the same call so their cards render. Only call this when the page context says a template grid is present.',
     input_schema: {
       type: 'object',
       properties: {

@@ -103,6 +103,7 @@ const UPSERT_TEMPLATE_SQL = `
     listing_url,
     preview_url,
     website_url,
+    mrp_id,
     creator_name,
     creator_record_id,
     creator_slug,
@@ -147,7 +148,7 @@ const UPSERT_TEMPLATE_SQL = `
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -155,6 +156,7 @@ const UPSERT_TEMPLATE_SQL = `
     listing_url = excluded.listing_url,
     preview_url = excluded.preview_url,
     website_url = excluded.website_url,
+    mrp_id = excluded.mrp_id,
     creator_name = excluded.creator_name,
     creator_record_id = excluded.creator_record_id,
     creator_slug = excluded.creator_slug,
@@ -529,6 +531,7 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.listingUrl,
         document.previewUrl,
         document.websiteUrl,
+        document.mrpId,
         document.creatorName,
         document.creatorRecordId,
         document.creatorSlug,

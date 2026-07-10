@@ -46,7 +46,14 @@ export async function runAgentTurn(
   const surface = surfaceNote(context?.surface);
   if (surface) system.push({ type: 'text', text: surface });
   const pageNote = pageGridNote(context?.has_page_grid);
+  const missNote =
+    context?.highlight_misses && context.highlight_misses.length > 0
+      ? 'Last turn these templates could NOT be highlighted on the page (their cards are not rendered under its current filters): ' +
+        context.highlight_misses.join(', ') +
+        '. To point them out, first update the page filters/search so they appear, or present them in chat instead. Do not claim they are visible on the page.'
+      : '';
   if (pageNote) system.push({ type: 'text', text: pageNote });
+  if (missNote) system.push({ type: 'text', text: missNote });
 
   // The client renders text into one bubble per turn; separate the text blocks
   // that surround tool calls so sentences don't run together.

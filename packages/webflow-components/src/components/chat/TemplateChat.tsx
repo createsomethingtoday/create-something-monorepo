@@ -19,6 +19,8 @@ interface AgentTemplateItem {
   url: string | null;
   /** Published .webflow.io site — frameable on *.webflow.com, used for live previews. */
   website_url?: string | null;
+  /** Direct marketplace checkout deep link — used by the preview Buy CTA. */
+  purchase_url?: string | null;
   creator_name: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
@@ -590,6 +592,11 @@ function applyPageAction(payload: PageActionPayload): void {
   }
 }
 
+// Slugs the agent asked to highlight whose cards never rendered on the page
+// (the grid's active filters/sort exclude them). Echoed to the agent on the
+// next turn so it corrects course instead of repeating a false claim.
+const pendingHighlightMisses = new Set<string>();
+
 function highlightPageTemplates(slugs: string[], attempt: number): void {
   if (typeof document === 'undefined' || slugs.length === 0) return;
   // One shadow-piercing sweep for all cards, then match requested slugs.
@@ -604,8 +611,11 @@ function highlightPageTemplates(slugs: string[], attempt: number): void {
 
   if (found.length === 0) {
     if (attempt < 16) window.setTimeout(() => highlightPageTemplates(slugs, attempt + 1), 500);
+    else for (const slug of slugs) pendingHighlightMisses.add(slug);
     return;
   }
+  const foundSlugs = new Set(found.map((el) => el.getAttribute('data-template-slug')));
+  for (const slug of slugs) if (!foundSlugs.has(slug)) pendingHighlightMisses.add(slug);
 
   const reduced = prefersReducedMotion();
   for (const el of found) {
@@ -937,10 +947,10 @@ function TemplatePreviewPane({
             Open site <ChatIcon name="external" size={12} />
           </a>
         ) : null}
-        {item.url ? (
+        {item.purchase_url || item.url ? (
           <a
             className="tmchat-preview-cta"
-            href={item.url}
+            href={item.purchase_url ?? item.url ?? '#'}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() =>
@@ -1356,6 +1366,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             messages: history.map((message) => ({ role: message.role, content: message.content })),
             context: {
               known_templates: Array.from(knownTemplatesRef.current.values()).slice(-40),
+              // Highlight failures from the previous turn (cards not rendered
+              // under the page's current filters) — keeps the agent honest.
+              highlight_misses: pendingHighlightMisses.size > 0 ? Array.from(pendingHighlightMisses) : undefined,
               // Wide canvases (immersive, or an inline panel rendered wide)
               // fit larger galleries; the agent sizes displays accordingly.
               surface: immersive || (panelRef.current?.clientWidth ?? 0) >= 720 ? 'immersive' : 'compact',
@@ -1365,6 +1378,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           }),
         });
         if (!response.ok || !response.body) throw new Error(`Agent unavailable (${response.status}).`);
+        pendingHighlightMisses.clear();
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();

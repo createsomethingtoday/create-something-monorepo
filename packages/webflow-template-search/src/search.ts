@@ -89,6 +89,7 @@ const GRID_ITEM_SELECT_COLUMNS = [
   'd.listing_url',
   'd.preview_url',
   'd.website_url',
+  'd.mrp_id',
   'd.creator_name',
   'd.creator_slug',
   'd.creator_profile_url',
@@ -655,6 +656,10 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       url: toTemplateUrl(row),
       preview_url: row.preview_url,
       website_url: row.website_url,
+      // Direct marketplace checkout deep link (skips the detail landing page).
+      purchase_url: row.mrp_id
+        ? `https://webflow.com/dashboard/marketplace-checkout/redirect?rtype=Template&rid=${row.mrp_id}&unauthSignup=true`
+        : null,
       creator_name: row.creator_name,
       creator_slug: publicCreatorSlug(row.creator_slug),
       creator_profile_url: publicCreatorProfileUrl(row.creator_profile_url, row.creator_slug),
