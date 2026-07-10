@@ -196,7 +196,7 @@ const CHAT_STYLES = `
    columns by default (thumbnails are the product — bigger reads better, and 4
    items make a clean 2x2). Sets of exactly 3 or 6+ go three-across so rows
    stay complete. */
-.tmchat-panel.immersive .tmchat-grid { grid-template-columns: repeat(2, minmax(0, 420px)); justify-content: center; gap: 20px; }
+.tmchat-panel.immersive .tmchat-grid { grid-template-columns: repeat(2, minmax(0, 420px)); justify-content: start; gap: 20px; }
 .tmchat-panel.immersive .tmchat-grid.wide { grid-template-columns: repeat(3, minmax(0, 380px)); gap: 16px; }
 .tmchat-panel.immersive .tmchat-grid.single { grid-template-columns: minmax(0, 420px); }
 .tmchat-strip { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
@@ -219,8 +219,9 @@ const CHAT_STYLES = `
 .tmchat-dots span:nth-child(2) { animation-delay: 0.15s; }
 .tmchat-dots span:nth-child(3) { animation-delay: 0.3s; }
 @keyframes tmchat-pulse { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
+.tmchat-scrollwrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .tmchat-jump {
-  position: absolute; bottom: 78px; left: 50%; transform: translateX(-50%); z-index: 3;
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 3;
   display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid #e0e0e0; border-radius: 999px; background: #fff; color: #080808;
   padding: 6px 12px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
@@ -229,8 +230,17 @@ const CHAT_STYLES = `
 }
 .tmchat-jump:hover { background: #f5f5f5; }
 .tmchat-inputrow { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #ececec; background: #fff; }
-.tmchat-panel.immersive .tmchat-inputrow { padding: 14px clamp(16px, 5vw, 56px) 18px; }
-.tmchat-panel.immersive .tmchat-scroll { padding: 24px clamp(16px, 5vw, 56px) 32px; gap: 14px; }
+/* Immersive (and wide inline panels): one centered content column (max 960px).
+   Header, conversation, and input share the same left/right rails so every
+   surface aligns. */
+.tmchat-panel.inline .tmchat-header { padding: 14px max(16px, calc((100% - 960px) / 2)); }
+.tmchat-panel.inline .tmchat-inputrow { padding: 12px max(16px, calc((100% - 960px) / 2)) 14px; }
+.tmchat-panel.inline .tmchat-scroll { padding: 16px max(16px, calc((100% - 960px) / 2)) 24px; }
+.tmchat-panel.inline .tmchat-preview-bar { padding: 10px max(16px, calc((100% - 960px) / 2)); }
+.tmchat-panel.immersive .tmchat-header { padding: 14px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)); }
+.tmchat-panel.immersive .tmchat-inputrow { padding: 14px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)) 18px; }
+.tmchat-panel.immersive .tmchat-scroll { padding: 24px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)) 32px; gap: 14px; }
+.tmchat-panel.immersive .tmchat-preview-bar { padding: 10px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)); }
 .tmchat-input {
   flex: 1 1 auto; min-height: 40px; max-height: 120px; padding: 9px 12px;
   border: 1px solid #e0e0e0; border-radius: 8px; font: inherit; resize: none; overflow-y: auto;
@@ -259,7 +269,6 @@ const CHAT_STYLES = `
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   padding: 10px 14px; border-bottom: 1px solid #ececec; background: #fff;
 }
-.tmchat-panel.immersive .tmchat-preview-bar { padding: 10px clamp(16px, 5vw, 56px); }
 .tmchat-preview-back {
   display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; color: #080808;
@@ -1461,6 +1470,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         </div>
 
         <div className="tmchat-body">
+        <div className="tmchat-scrollwrap">
         <div ref={scrollRef} className="tmchat-scroll" onScroll={handleScroll}>
           <div className="tmchat-msg assistant">{welcomeMessage}</div>
           {showStarterChips ? (
@@ -1540,6 +1550,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             <ChatIcon name="down" size={14} /> Latest
           </button>
         ) : null}
+        </div>
 
         <div className="tmchat-inputrow">
           <textarea
