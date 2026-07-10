@@ -195,6 +195,8 @@ resets are retried up to six times with search probes and backoff. Since every r
 durable cursor first and writes only changed values, a response lost after commit is safe to retry.
 The Worker also aborts the targeted Airtable lookup after 20 seconds so a slow source request is
 recorded as failed and releases the shared lease before the client retry begins.
+`Ctrl-C` is graceful: the CLI finishes any in-flight bounded batch, records the checkpoint, runs
+the final search probes/status readback, and exits before starting another write request.
 
 The CLI runs both queryless and FTS public search probes before work, every five batches by
 default, and after completion. It stops if either probe fails, returns no items, or exceeds ten

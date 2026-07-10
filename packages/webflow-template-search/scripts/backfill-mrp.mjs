@@ -38,6 +38,12 @@ const probeEvery = Number(valueAfter('--probe-every', '5'));
 if (!Number.isInteger(batchSize) || batchSize < 1 || batchSize > 50) throw new Error('--batch-size must be an integer from 1 to 50.');
 if (!Number.isInteger(probeEvery) || probeEvery < 1) throw new Error('--probe-every must be a positive integer.');
 
+let stopRequested = false;
+process.on('SIGINT', () => {
+  stopRequested = true;
+  console.log(JSON.stringify({ status: 'stop_requested', message: 'Finishing the in-flight batch before exit.' }));
+});
+
 async function adminRequest(method, searchParams = new URLSearchParams()) {
   const url = new URL('/api/templates/admin/backfill-mrp', workerUrl);
   url.search = searchParams.toString();
@@ -96,6 +102,7 @@ let restart = has('--restart');
 let lockWaitStartedAt = null;
 let transientAdminRetries = 0;
 for (;;) {
+  if (stopRequested) break;
   const params = new URLSearchParams({ batch_size: String(batchSize) });
   if (restart) params.set('restart', 'true');
   restart = false;
@@ -152,10 +159,11 @@ for (;;) {
     }),
   );
 
-  if (result.status === 'complete') break;
+  if (result.status === 'complete' || stopRequested) break;
   if (batch % probeEvery === 0) await assertSearchAvailable();
   await new Promise((resolve) => setTimeout(resolve, 250));
 }
 
 await assertSearchAvailable();
 console.log(JSON.stringify(await adminRequest('GET'), null, 2));
+if (stopRequested) console.log(JSON.stringify({ status: 'stopped_at_checkpoint' }));
