@@ -245,8 +245,11 @@ const CHAT_STYLES = `
 .tmchat-preview {
   position: absolute; inset: 0; z-index: 4;
   display: flex; flex-direction: column; background: #fff;
-  animation: tmchat-fade 180ms ease both;
+  animation: tmchat-preview-in 220ms cubic-bezier(0.2, 0, 0, 1) both;
 }
+@keyframes tmchat-preview-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.tmchat-preview.closing { animation: tmchat-preview-out 160ms cubic-bezier(0.4, 0, 1, 1) both; }
+@keyframes tmchat-preview-out { to { opacity: 0; transform: translateY(10px); } }
 .tmchat-preview-bar {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   padding: 10px 14px; border-bottom: 1px solid #ececec; background: #fff;
@@ -257,6 +260,7 @@ const CHAT_STYLES = `
   border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; color: #080808;
   padding: 7px 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
 }
+.tmchat-preview-back { transition: background 120ms ease; }
 .tmchat-preview-back:hover { background: #f5f5f5; }
 .tmchat-preview-meta { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
 .tmchat-preview-name { font-size: 14px; font-weight: 600; color: #080808; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -267,6 +271,7 @@ const CHAT_STYLES = `
   border: 0; background: #fff; color: #757575; padding: 7px 12px;
   font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
 }
+.tmchat-devicebtn { transition: background 140ms ease, color 140ms ease; }
 .tmchat-devicebtn + .tmchat-devicebtn { border-left: 1px solid #e0e0e0; }
 .tmchat-devicebtn.active { background: #f0f5ff; color: #146ef5; }
 .tmchat-preview-cta {
@@ -274,6 +279,7 @@ const CHAT_STYLES = `
   border-radius: 8px; background: #146ef5; color: #fff; padding: 8px 14px;
   font-family: inherit; font-size: 13px; font-weight: 600;
 }
+.tmchat-preview-cta { transition: background 140ms ease; }
 .tmchat-preview-cta:hover { background: #0f5cd0; }
 .tmchat-preview-open { display: inline-flex; align-items: center; gap: 5px; color: #757575; font-size: 12px; text-decoration: none; }
 .tmchat-preview-open:hover { color: #080808; }
@@ -288,7 +294,7 @@ const CHAT_STYLES = `
   border: 1px solid #d9d9d9; border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.14);
 }
 .tmchat-preview-loading {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
   color: #757575; font-size: 13px; pointer-events: none;
 }
 @media (max-width: 560px) {
@@ -301,8 +307,10 @@ const CHAT_STYLES = `
 @media (prefers-reduced-motion: reduce) {
   .tmchat-panel.entering, .tmchat-backdrop, .tmchat-dots span, .tmchat-caret,
   .tmchat-msg, .tmchat-display, .tmchat-typing, .tmchat-followups .tmchat-chip,
-  .tmchat-jump, .tmchat-grid > div, .tmchat-strip > div, .tmchat-preview { animation: none; }
-  .tmchat-chip, .tmchat-send, .tmchat-launcher { transition: none; }
+  .tmchat-jump, .tmchat-grid > div, .tmchat-strip > div, .tmchat-preview,
+  .tmchat-preview.closing { animation: none; }
+  .tmchat-chip, .tmchat-send, .tmchat-launcher, .tmchat-devicebtn,
+  .tmchat-preview-back, .tmchat-preview-cta { transition: none; }
   .tmchat-chip:hover, .tmchat-launcher:hover, .tmchat-send:active:not(:disabled) { transform: none; }
 }
 ` + TEMPLATE_CARD_STYLES;
@@ -739,16 +747,55 @@ function TemplatePreviewPane({
 }): React.ReactElement {
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [loaded, setLoaded] = useState(false);
+  const [closing, setClosing] = useState(false);
   const backRef = useRef<HTMLButtonElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     backRef.current?.focus();
   }, []);
 
+  // Exit gracefully: play the out animation, then unmount via onClose.
+  const requestClose = useCallback(() => {
+    if (closing) return;
+    if (prefersReducedMotion()) {
+      onClose();
+      return;
+    }
+    setClosing(true);
+  }, [closing, onClose]);
+
+  // The desktop <-> mobile width change can't interpolate (% <-> px snaps, and
+  // live-resizing an iframe reflows the embedded site every frame). Snap the
+  // layout, then settle the new frame in with a compositor-only fade so the
+  // change reads as intentional.
+  const switchDevice = (next: 'desktop' | 'mobile') => {
+    if (next === device) return;
+    setDevice(next);
+    onEvent?.('live_preview_device_changed', { template_slug: item.template_slug, device: next });
+    if (prefersReducedMotion()) return;
+    requestAnimationFrame(() => {
+      stageRef.current?.animate?.(
+        [
+          { opacity: 0.25, transform: 'scale(0.992)' },
+          { opacity: 1, transform: 'none' },
+        ],
+        { duration: 240, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+      );
+    });
+  };
+
   return (
-    <div className="tmchat-preview" role="region" aria-label={`Live preview of ${item.name}`}>
+    <div
+      className={`tmchat-preview${closing ? ' closing' : ''}`}
+      role="region"
+      aria-label={`Live preview of ${item.name}`}
+      onAnimationEnd={(event) => {
+        if (event.animationName === 'tmchat-preview-out') onClose();
+      }}
+    >
       <div className="tmchat-preview-bar">
-        <button ref={backRef} type="button" className="tmchat-preview-back" onClick={onClose}>
+        <button ref={backRef} type="button" className="tmchat-preview-back" onClick={requestClose}>
           <ChatIcon name="back" size={14} /> Back to chat
         </button>
         <div className="tmchat-preview-meta">
@@ -760,10 +807,7 @@ function TemplatePreviewPane({
             type="button"
             className={`tmchat-devicebtn${device === 'desktop' ? ' active' : ''}`}
             aria-pressed={device === 'desktop'}
-            onClick={() => {
-              setDevice('desktop');
-              onEvent?.('live_preview_device_changed', { template_slug: item.template_slug, device: 'desktop' });
-            }}
+            onClick={() => switchDevice('desktop')}
           >
             <ChatIcon name="desktop" size={14} /> Desktop
           </button>
@@ -771,10 +815,7 @@ function TemplatePreviewPane({
             type="button"
             className={`tmchat-devicebtn${device === 'mobile' ? ' active' : ''}`}
             aria-pressed={device === 'mobile'}
-            onClick={() => {
-              setDevice('mobile');
-              onEvent?.('live_preview_device_changed', { template_slug: item.template_slug, device: 'mobile' });
-            }}
+            onClick={() => switchDevice('mobile')}
           >
             <ChatIcon name="mobile" size={14} /> Mobile
           </button>
@@ -812,8 +853,17 @@ function TemplatePreviewPane({
           </a>
         ) : null}
       </div>
-      <div className={`tmchat-preview-stage${device === 'mobile' ? ' mobile' : ''}`}>
-        {!loaded ? <div className="tmchat-preview-loading">Loading live preview…</div> : null}
+      <div ref={stageRef} className={`tmchat-preview-stage${device === 'mobile' ? ' mobile' : ''}`}>
+        {!loaded ? (
+          <div className="tmchat-preview-loading" aria-live="polite">
+            Loading live preview
+            <span className="tmchat-dots">
+              <span />
+              <span />
+              <span />
+            </span>
+          </div>
+        ) : null}
         <iframe
           className="tmchat-preview-frame"
           src={item.website_url ?? undefined}
@@ -1069,8 +1119,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      if (preview) setPreview(null);
-      else if (immersive) setImmersiveAnimated(false);
+      if (preview) {
+        setPreview(null);
+        inputRef.current?.focus();
+      } else if (immersive) setImmersiveAnimated(false);
       else if (!isInline) setOpen(false);
     };
     document.addEventListener('keydown', onKeyDown);
@@ -1335,7 +1387,17 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
-      {immersive ? <div className="tmchat-backdrop" onClick={() => setImmersiveAnimated(false)} /> : null}
+      {immersive ? (
+        <div
+          className="tmchat-backdrop"
+          onClick={() => {
+            // Layered dismissal, matching Esc: leave the preview first, then
+            // the immersive state — never both in one click.
+            if (preview) setPreview(null);
+            else setImmersiveAnimated(false);
+          }}
+        />
+      ) : null}
       <div ref={panelRef} className={panelClass} role={isInline && !immersive ? undefined : 'dialog'} aria-label={title}>
         <div className="tmchat-header">
           <span className="tmchat-header-title">{title}</span>
@@ -1479,7 +1541,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         </div>
 
         {preview ? (
-          <TemplatePreviewPane key={preview.item.template_slug} item={preview.item} onEvent={handlePreviewEvent} onClose={() => setPreview(null)} />
+          <TemplatePreviewPane
+            key={preview.item.template_slug}
+            item={preview.item}
+            onEvent={handlePreviewEvent}
+            onClose={() => {
+              setPreview(null);
+              inputRef.current?.focus();
+            }}
+          />
         ) : null}
         </div>
       </div>
