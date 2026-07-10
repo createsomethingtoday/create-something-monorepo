@@ -31,7 +31,6 @@ const requiredFaqRoutes = new Set([
   '/products',
   '/dify',
   '/cloudflare',
-  '/notion',
   '/use-cases/business',
   '/use-cases/enterprise'
 ]);
@@ -40,12 +39,10 @@ const requiredDedicatedOgImages = new Map([
   ['/dify/mcp-control-plane', '/og/dify-mcp-control-plane.png'],
   ['/dify/n8n-vs-dify', '/og/dify-vs-n8n.png'],
   ['/cloudflare', '/og/cloudflare-lane.png'],
-  ['/notion', '/og/notion-lane.png'],
   ['/use-cases/enterprise', '/og/policy-os.png']
 ]);
 const requiredInPageArticleVisuals = new Map([
-  ['/dify/n8n-vs-dify', '/images/articles/dify-vs-n8n/dify-n8n-layer-map.png'],
-  ['/notion', '/images/articles/notion-ops-workspace/notion-operator-workspace.png']
+  ['/dify/n8n-vs-dify', '/images/articles/dify-vs-n8n/dify-n8n-layer-map.png']
 ]);
 
 for (const entry of routeEntries) {

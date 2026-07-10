@@ -12,6 +12,24 @@
 
   const fitCards: PerformanceCardItem[] = [
     {
+      eyebrow: 'Owned substrate',
+      icon: 'folder',
+      title: 'Substrate keeps the operating record.',
+      detail:
+        'Use Substrate for source records, workflow state, human review, decisions, receipts, and the API/MCP boundary the system owns.',
+      href: '/products',
+      points: ['Operating state', 'Human review', 'Receipts']
+    },
+    {
+      eyebrow: 'Agent environment',
+      icon: 'check',
+      title: 'OpenAI is the primary reasoning and agent environment.',
+      detail:
+        'Use OpenAI for reasoning and agent-operable delivery, with scoped tools, approval behavior, and grounded evidence. MCP contracts, policy, and evals preserve the route to Claude, open-weight and custom models.',
+      href: '/stack',
+      points: ['Reasoning layer', 'Agent delivery', 'Portable contracts']
+    },
+    {
       eyebrow: 'Agent surface',
       icon: 'settings',
       title: 'Dify shows the work.',
@@ -28,24 +46,6 @@
         'Use Cloudflare when the workflow needs owned runtime behavior, durable state, and rollback paths.',
       href: '/cloudflare',
       points: ['Workers and Pages', 'Durable state', 'Rollback path']
-    },
-    {
-      eyebrow: 'Workspace',
-      icon: 'document',
-      title: 'Notion keeps it reviewable.',
-      detail:
-        'Use Notion when operators need timelines, decisions, evidence, and human review around the workflow.',
-      href: '/notion',
-      points: ['Operator view', 'Decision log', 'Evidence surface']
-    },
-    {
-      eyebrow: 'Reasoning',
-      icon: 'check',
-      title: 'OpenAI is the primary reasoning and agent environment.',
-      detail:
-        'Use OpenAI where reasoning is useful, with scoped tools, approval behavior, and grounded evidence. MCP contracts, policy, and evals preserve the route to Claude, open-weight and custom models.',
-      href: '/stack',
-      points: ['Reasoning layer', 'Approval behavior', 'Grounded context']
     }
   ];
 
@@ -78,6 +78,12 @@
 
   const ctaItems: PerformanceCtaItem[] = [
     {
+      label: 'Agent environment',
+      icon: 'check',
+      title: 'OpenAI',
+      detail: 'Primary reasoning and agent delivery.'
+    },
+    {
       label: 'Agent surface',
       icon: 'settings',
       title: 'Dify',
@@ -88,12 +94,6 @@
       icon: 'folder',
       title: 'Cloudflare',
       detail: 'Owned route and state.'
-    },
-    {
-      label: 'Workspace',
-      icon: 'document',
-      title: 'Notion',
-      detail: 'Review and evidence.'
     }
   ];
 
@@ -101,7 +101,7 @@
     {
       question: 'What is the workflow tool stack?',
       answer:
-        'It is the practical tool map for one controlled workflow: visible app surface, runtime, workspace, reasoning layer, approval path, and evidence.'
+        'Substrate is the owned operating layer. OpenAI, Dify, and Cloudflare are the active external stack for agent work, visible workflow surfaces, and runtime.'
     },
     {
       question: 'Why not lead with vendor badges?',
@@ -111,15 +111,15 @@
     {
       question: 'How does this help a team choose the right path?',
       answer:
-        'The page starts with the workflow and then routes it toward the visible agent surface, runtime substrate, operator workspace, or broader stack boundary before implementation begins.'
+        'The page starts with the workflow, puts its operating state and review path in Substrate, then assigns a narrow job to OpenAI, Dify, or Cloudflare before implementation begins.'
     }
   ];
 </script>
 
 <SEO
   title="Workflow Tool Stack | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING maps one controlled workflow across the visible app surface, runtime, workspace, reasoning layer, approval path, and evidence trail."
-  keywords="workflow tool stack, AI workflow systems, Dify workflow systems, Cloudflare workflow runtime, Notion operating system, MCP tool boundary"
+  description="CREATE SOMETHING maps one controlled workflow across its owned Substrate layer and the active OpenAI, Dify, and Cloudflare stack."
+  keywords="workflow tool stack, AI workflow systems, Substrate database, OpenAI agents, Dify workflow systems, Cloudflare workflow runtime, MCP tool boundary"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
@@ -131,7 +131,7 @@
   titleLevel="h1"
   eyebrow="Workflow Tool Stack"
   title="Choose the right tool path for one controlled workflow."
-  description="Start with the workflow your team wants to delegate. CREATE SOMETHING maps the visible app surface, runtime, workspace, reasoning layer, approval path, and evidence before any tool gets more authority."
+  description="Start with the workflow your team wants to delegate. CREATE SOMETHING maps the owned operating state in Substrate, then the agent environment, visible app surface, runtime, approval path, and evidence before any external tool gets more authority."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -146,8 +146,8 @@
 <PerformancePageSection
   variant="white"
   eyebrow="Tool fit"
-  title="The workflow decides which tool gets a job."
-  description="Dify, Cloudflare, Notion, and OpenAI are useful when each one has a clear role, scoped authority, and evidence path."
+  title="Substrate owns the record. Each external platform gets one job."
+  description="OpenAI, Dify, and Cloudflare are the active external stack. Substrate keeps the workflow state, operator review, decisions, and evidence under CREATE SOMETHING control."
 >
   {#snippet after()}
     <PerformanceCardGrid items={fitCards} columns={4} ariaLabel="Workflow tool fit" />

@@ -20,11 +20,11 @@
         'Business ownership, approval authority, source accounts, data rights, and final operating decisions.'
     },
     {
-      eyebrow: 'I deliver',
+      eyebrow: 'Substrate records',
       icon: 'settings',
-      title: 'Maps, rules, evidence',
+      title: 'State, review, evidence',
       detail:
-        'Workflow maps, action contracts, control rules, release evidence, runbooks, and handoff notes.'
+        'Source records, Atlas bindings, actions, approvals, runs, receipts, and operator views stay in the owned system.'
     },
     {
       eyebrow: 'Vendors provide',
@@ -93,7 +93,7 @@
       eyebrow: 'Surface',
       icon: 'document',
       title: 'Operator brief',
-      detail: 'The visible state for Webflow, Dify, Linear, Notion, or a custom app.'
+      detail: 'The visible state in Substrate, Dify, or a client-owned application.'
     }
   ];
 
@@ -141,19 +141,20 @@
 
   const stackRoles: PerformanceCardItem[] = [
     {
+      eyebrow: 'Owned substrate',
+      icon: 'folder',
+      title: 'Substrate',
+      detail:
+        'The CREATE SOMETHING database and operator layer owns source records, Atlas bindings, workflow actions, approvals, runs, receipts, and API/MCP access.',
+      href: '/products'
+    },
+    {
       eyebrow: 'Runtime',
       icon: 'settings',
       title: 'Cloudflare',
       detail:
         'Workers, D1, Durable Objects, queues, and edge routes keep the workflow deployable while account ownership, billing, and rollback evidence stay explicit.',
       href: '/cloudflare'
-    },
-    {
-      eyebrow: 'Connectivity',
-      icon: 'plus',
-      title: 'Composio',
-      detail:
-        'OAuth, connect links, and standard app actions stay commodity when the durable value is the scoped action boundary, not the connector.'
     },
     {
       eyebrow: 'Agent surface',
@@ -164,40 +165,11 @@
       href: '/dify'
     },
     {
-      eyebrow: 'Workspace',
-      icon: 'folder',
-      title: 'Notion',
-      detail:
-        'PM visibility, client-readable evidence, template distribution, and human review around agent work without treating Notion as the source of truth for everything.',
-      href: '/notion'
-    },
-    {
       eyebrow: 'Reasoning',
       icon: 'info',
       title: 'OpenAI',
       detail:
-        'Reasoning and agent hosting become useful when surrounded by scoped tools, approval behavior, evals, and traceable context instead of hidden authority.'
-    },
-    {
-      eyebrow: 'Surface',
-      icon: 'document',
-      title: 'Webflow',
-      detail:
-        'Sites, templates, apps, forms, dashboards, and marketplace-facing operator experiences become controlled interfaces with readable handoff evidence.'
-    },
-    {
-      eyebrow: 'Ledger',
-      icon: 'check',
-      title: 'Linear',
-      detail:
-        'Tracked work, ownership, status, validation, release notes, and unresolved decisions become the shared evidence ledger for the next operator.'
-    },
-    {
-      eyebrow: 'Boundary',
-      icon: 'warning',
-      title: 'Infisical + Clerk',
-      detail:
-        'Secrets and identity stay out of prompts and handoff docs, with sign-in, token issuance, entitlement checks, and revocation separated before launch.'
+        'The primary reasoning and agent environment stays surrounded by scoped tools, approval behavior, evals, and traceable context instead of hidden authority.'
     }
   ];
 
@@ -229,7 +201,7 @@
 <SEO
   title="Stack Boundary | CREATE SOMETHING .agency"
   description="CREATE SOMETHING separates what your team owns, what vendors provide, and what the workflow needs before delegated work becomes production work."
-  keywords="delegated work control, workflow control layer, transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow"
+  keywords="delegated work control, workflow control layer, Substrate database, transparent AI stack, MCP stack, vendor boundaries, Cloudflare, Dify, OpenAI"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
@@ -319,15 +291,15 @@
 
 <PerformancePageSection
   variant="white"
-  eyebrow="Vendor roles"
-  title="Vendor names are receipts, not the explanation."
-  description="Each service earns a clear job. The connected tools are replaceable infrastructure; the proof is the map that shows what connects, what runs, what waits, what stops, who decides, and what the operator receives."
+  eyebrow="Owned system and active stack"
+  title="Substrate owns the system. Three external platforms earn one role each."
+  description="Substrate is the owned database and operator layer. OpenAI provides the primary agent environment, Dify provides visible agent applications, and Cloudflare provides the runtime. Their contracts remain inspectable and replaceable."
 >
   {#snippet after()}
     <PerformanceCardGrid
       items={stackRoles}
       columns={4}
-      ariaLabel="Vendor roles in the control layer stack"
+      ariaLabel="Substrate and the active OpenAI, Dify, Cloudflare stack"
     />
   {/snippet}
 </PerformancePageSection>

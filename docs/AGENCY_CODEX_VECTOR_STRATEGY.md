@@ -1,7 +1,7 @@
 # Agency Codex Vector Strategy
 
 > Date: February 16, 2026
-> Updated: June 26, 2026 (Delegated Work Control hierarchy)
+> Updated: July 9, 2026 (Substrate and active external stack)
 > Scope: CREATE SOMETHING `.agency` packaging and delivery model
 > Priority: Max differentiation
 
@@ -21,20 +21,22 @@ The commercial default remains **Policy OS** (**Skills + MCP**), with
 
 - Delegated Work Control is the durable category: what can run, what waits, what
   stops, who owns the decision, and what evidence proves the work.
-- The CREATE SOMETHING database layer is now the owned operating substrate:
+- **Substrate is the owned database and operator layer:**
   Cloudflare-native records, Atlas maps, source bindings, workflow actions,
-  proof receipts, and API/MCP/agent access.
+  human review, proof receipts, and API/MCP/agent access.
 - Workflow Trust Layer is the current `.agency` service language for one
   workflow at a time.
 - MCP remains the chassis: trust boundaries, connectivity, policy artifacts.
 - Outcomes are the product: execution quality, escalation policy, and continuous tuning.
-- Codex is the primary setup and demo vector, with Pi and Claude Code as co-equal delivery targets.
+- OpenAI Codex is the primary setup, demo, repository, and agent-operable delivery environment.
 - MCP contracts and policy artifacts stay portable across all agent harnesses.
-- Dify remains the preferred client/operator surface when visual workflow
+- Dify is the client/operator surface when visual workflow
   editing, app publishing, MCP server cards, or non-engineer inspection matter.
-- Notion remains a workspace, review, capture, and distribution surface. It is
-  not the canonical operating database once a workflow has been transferred
-  into the CREATE SOMETHING database layer and audited as ready.
+- Cloudflare is the runtime for Workers, Pages, D1, queues, state, and governed
+  tool routes.
+- **OpenAI, Dify, and Cloudflare are the active external stack.** Substrate
+  keeps operating state, human review, decisions, and evidence inside the owned
+  system rather than an external workspace.
 - OpenAI Agents SDK is a graduation lane for workflows that require code-owned
   orchestration, approval pauses, durable state, traces, evals, and CI-backed
   golden tasks.

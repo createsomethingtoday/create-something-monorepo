@@ -37,6 +37,9 @@ test('Canon publishes conviction without dependence as a discoverable operating 
 	assert.match(concept, /Use the best instrument\. Own the system\./);
 	assert.match(concept, /builds primarily with (?:\*\*)?OpenAI Codex(?:\*\*)?/i);
 	assert.match(concept, /not (?:an? )?official OpenAI partnership/i);
+	assert.match(concept, /Substrate is the owned database and operator layer/i);
+	assert.match(concept, /OpenAI, Dify, and Cloudflare are the active external stack/i);
+	assert.doesNotMatch(concept, /\bNotion\b/);
 
 	for (const ownedLayer of [
 		'data',
@@ -75,6 +78,15 @@ test('Canon publishes conviction without dependence as a discoverable operating 
 		assert.match(strategy, /Conviction [Ww]ithout [Dd]ependence/);
 		assert.match(strategy, /Model-opinionated in practice\. Model-portable by design\./);
 	}
+
+	for (const currentStackUrl of strategyUrls.slice(0, 2)) {
+		const currentStackSource = readFileSync(currentStackUrl, 'utf8');
+		assert.match(currentStackSource, /Substrate is\s+the owned database and operator layer/i);
+		assert.match(
+			currentStackSource,
+			/OpenAI, Dify,\s+and Cloudflare are the active external stack/i
+		);
+	}
 });
 
 test('generated MCP knowledge preserves the Canon doctrine and agency claim boundary', () => {
@@ -85,6 +97,8 @@ test('generated MCP knowledge preserves the Canon doctrine and agency claim boun
 	assert.match(generatedCanon, /Model-opinionated in practice\. Model-portable by design\./);
 	assert.match(generatedCanon, /Built primarily with OpenAI Codex\. Designed to outlast any model\./);
 	assert.match(generatedCanon, /not an official OpenAI partnership/i);
+	assert.match(generatedCanon, /Substrate is the owned database and operator layer/i);
+	assert.match(generatedCanon, /OpenAI, Dify, and Cloudflare are the active external stack/i);
 
 	assert.match(generatedPropertyDocs, /Conviction Without Dependence/);
 	assert.match(

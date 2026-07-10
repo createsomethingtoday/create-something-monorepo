@@ -84,6 +84,14 @@ own the system. Portability is proven when the same contracts, policies, golden
 tasks, and receipts can compare another model without erasing institutional
 learning.
 
+The current operating expression makes that ownership concrete. **Substrate is
+the owned database and operator layer** for source records, Atlas bindings,
+workflow actions, approvals, runs, receipts, and API/MCP access. **OpenAI, Dify,
+and Cloudflare are the active external stack:** OpenAI supplies the primary
+reasoning and agent environment, Dify supplies visible agent applications, and
+Cloudflare supplies the runtime. These platform roles can evolve without moving
+the operating record or human review boundary out of the owned system.
+
 The category hierarchy is:
 
 | Layer | Role |

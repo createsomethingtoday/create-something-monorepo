@@ -1,7 +1,7 @@
 <script lang="ts">
   import BrandLogo from '$lib/components/BrandLogo.svelte';
 
-  const vendorMarks = ['Cloudflare Workers', 'Composio', 'Dify', 'Notion', 'OpenAI', 'Linear'];
+  const vendorMarks = ['OpenAI', 'Dify', 'Cloudflare Workers'];
 
   const boundaryNotes = [
     {
@@ -10,11 +10,11 @@
     },
     {
       label: 'CREATE SOMETHING owns',
-      detail: 'Workflow contracts, action boundaries, runbooks, evidence, and handoff notes.'
+      detail: 'Substrate records, workflow contracts, action boundaries, runbooks, evidence, and handoff notes.'
     },
     {
       label: 'Vendors provide',
-      detail: 'Replaceable runtime, connectors, model hosts, identity, and operator surfaces.'
+      detail: 'Replaceable agent environment, app surface, and runtime.'
     }
   ];
 </script>
@@ -39,9 +39,9 @@
     <div class="boundary-connector" aria-hidden="true"></div>
 
     <div class="boundary-node boundary-node--core">
-      <span>CREATE SOMETHING control layer</span>
-      <strong>MCP contracts + control layer</strong>
-      <small>Rules, runbooks, receipts, operator handoff</small>
+      <span>CREATE SOMETHING Substrate</span>
+      <strong>Owned data + operator layer</strong>
+      <small>Records, actions, approvals, receipts, MCP</small>
     </div>
 
     <div class="boundary-connector" aria-hidden="true"></div>
@@ -53,7 +53,7 @@
           <BrandLogo name={mark} size={18} className="vendor-mark" />
         {/each}
       </div>
-      <small>Runtime, connectors, models, surfaces</small>
+      <small>Agent environment, app surface, runtime</small>
     </div>
   </div>
 
