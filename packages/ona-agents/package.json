@@ -2,7 +2,7 @@
   "name": "@create-something/ona-agents",
   "version": "0.1.0",
   "private": true,
-  "description": "Standalone Ona-styled operator chat frontend for CREATE SOMETHING Dify agents.",
+  "description": "Standalone Performance Lab operator chat frontend for CREATE SOMETHING Dify agents.",
   "createSomething": {
     "agentLegibilityContract": true,
     "tier": "judgment",
@@ -30,6 +30,7 @@
     "cf:typegen": "WRANGLER_LOG_PATH=../../.wrangler/logs/ona-agents CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler types"
   },
   "dependencies": {
+    "@create-something/canon": "workspace:*",
     "svelte": "^5.41.0"
   },
   "devDependencies": {

@@ -22,23 +22,25 @@
 	import Popover from '$lib/components/navigation/Popover.svelte';
 	import Tabs from '$lib/components/navigation/Tabs.svelte';
 	import Tooltip from '$lib/components/navigation/Tooltip.svelte';
-	import ClearActionFooter from '$lib/components/clear/ClearActionFooter.svelte';
-	import ClearArtifactCard from '$lib/components/clear/ClearArtifactCard.svelte';
-	import ClearContentHighlights from '$lib/components/clear/ClearContentHighlights.svelte';
-	import ClearDecisionPanel from '$lib/components/clear/ClearDecisionPanel.svelte';
-	import ClearErrorPage from '$lib/components/clear/ClearErrorPage.svelte';
-	import ClearLogoStrip from '$lib/components/clear/ClearLogoStrip.svelte';
-	import ClearMetadataRail from '$lib/components/clear/ClearMetadataRail.svelte';
-	import ClearPageSection from '$lib/components/clear/ClearPageSection.svelte';
-	import ClearPillarGrid from '$lib/components/clear/ClearPillarGrid.svelte';
-	import ClearPlatformHero from '$lib/components/clear/ClearPlatformHero.svelte';
-	import ClearProofStrip from '$lib/components/clear/ClearProofStrip.svelte';
-	import ClearQuoteMetricPanel from '$lib/components/clear/ClearQuoteMetricPanel.svelte';
-	import ClearReceiptGrid from '$lib/components/clear/ClearReceiptGrid.svelte';
-	import ClearSecurityPanel from '$lib/components/clear/ClearSecurityPanel.svelte';
-	import ClearStateRows from '$lib/components/clear/ClearStateRows.svelte';
-	import ClearUseCaseBand from '$lib/components/clear/ClearUseCaseBand.svelte';
-	import ClearWorkflowMiniArtifact from '$lib/components/clear/ClearWorkflowMiniArtifact.svelte';
+	import {
+		PerformanceActionFooter,
+		PerformanceArtifactCard,
+		PerformanceContentHighlights,
+		PerformanceDecisionPanel,
+		PerformanceErrorPage,
+		PerformanceLogoStrip,
+		PerformanceMetadataRail,
+		PerformancePageSection,
+		PerformancePillarGrid,
+		PerformancePlatformHero,
+		PerformanceProofStrip,
+		PerformanceQuoteMetricPanel,
+		PerformanceReceiptGrid,
+		PerformanceSecurityPanel,
+		PerformanceStateRows,
+		PerformanceUseCaseBand,
+		PerformanceWorkflowMiniArtifact
+	} from '$lib/components/performance';
 	import DataTable, { type DataTableColumn } from '$lib/components/data/DataTable.svelte';
 	import StatusBadge, { type StatusBadgeTone } from '$lib/components/data/StatusBadge.svelte';
 
@@ -65,7 +67,7 @@
 		{ id: 'evidence', label: 'Evidence' },
 		{ id: 'handoff', label: 'Handoff' }
 	];
-	const clearProofItems = [
+	const performanceProofItems = [
 		{ label: 'Policy', value: 'Attached' },
 		{ label: 'Gate', value: 'Passed' },
 		{ label: 'Rollback', value: 'Named' }
@@ -251,25 +253,25 @@
 			</div>
 		</section>
 	{:else}
-		<section class="clear-stack" aria-label="Clear visual evidence">
-			<ClearPlatformHero
+		<section class="performance-stack" aria-label="Performance visual evidence">
+			<PerformancePlatformHero
 				eyebrow="Governed workflow"
 				title="Map the action before the agent runs."
 				description="Name the object, approval rule, stop condition, and receipt before execution."
 			/>
-			<ClearPageSection
+			<PerformancePageSection
 				title="Proof stays beside the claim."
 				description="Each component keeps evidence, owner, and next action visible."
 			/>
-			<div class="clear-component-grid">
+			<div class="performance-component-grid">
 				<div>
-					<ClearArtifactCard eyebrow="Receipt" title="Workflow map" detail="Objects, tools, approvals, and stop states are named." />
+					<PerformanceArtifactCard eyebrow="Receipt" title="Workflow map" detail="Objects, tools, approvals, and stop states are named." />
 				</div>
-				<div class="clear-component-span-2">
-					<ClearProofStrip items={clearProofItems} />
+				<div class="performance-component-span-2">
+					<PerformanceProofStrip items={performanceProofItems} />
 				</div>
-				<div class="clear-component-span-2">
-					<ClearPillarGrid
+				<div class="performance-component-span-2">
+					<PerformancePillarGrid
 						items={[
 							{ title: 'Database', detail: 'State is named.' },
 							{ title: 'Automation', detail: 'Tool path is tested.' },
@@ -277,8 +279,8 @@
 						]}
 					/>
 				</div>
-				<div class="clear-component-span-2">
-					<ClearDecisionPanel
+				<div class="performance-component-span-2">
+					<PerformanceDecisionPanel
 						title="Decision state"
 						items={[
 							{
@@ -294,7 +296,7 @@
 					/>
 				</div>
 				<div>
-					<ClearStateRows
+					<PerformanceStateRows
 						eyebrow="Workflow"
 						title="Run state"
 						states={[
@@ -304,11 +306,11 @@
 						receipts={['visual-evidence', 'rollback-note']}
 					/>
 				</div>
-				<div class="clear-component-span-2">
-					<ClearReceiptGrid receipts={[{ number: '01', label: 'Validation', detail: 'Checks passed.' }]} />
+				<div class="performance-component-span-2">
+					<PerformanceReceiptGrid receipts={[{ number: '01', label: 'Validation', detail: 'Checks passed.' }]} />
 				</div>
 				<div>
-					<ClearContentHighlights
+					<PerformanceContentHighlights
 						title="Evidence highlights"
 						items={[
 							{ title: 'Run log', detail: 'Command output attached.' },
@@ -318,7 +320,7 @@
 					/>
 				</div>
 				<div>
-					<ClearMetadataRail
+					<PerformanceMetadataRail
 						eyebrow="Release"
 						title="Metadata"
 						groups={[
@@ -334,20 +336,20 @@
 						tags={['Canon', 'Visual evidence']}
 					/>
 				</div>
-				<div class="clear-component-span-2">
-					<ClearQuoteMetricPanel
+				<div class="performance-component-span-2">
+					<PerformanceQuoteMetricPanel
 						eyebrow="Proof"
 						quote="The system should stop when the write target is ambiguous."
 						source="Canon policy"
 						metrics={[{ label: 'Checks', value: '840/840' }]}
 					/>
 				</div>
-				<div class="clear-mini-artifact">
-					<ClearWorkflowMiniArtifact kind="decision" ariaLabel="Decision workflow miniature" />
+				<div class="performance-mini-artifact">
+					<PerformanceWorkflowMiniArtifact kind="decision" ariaLabel="Decision workflow miniature" />
 				</div>
 			</div>
-			<ClearLogoStrip eyebrow="Trusted by" items={[{ label: 'CREATE', detail: 'Verified' }, { label: 'Canon', detail: 'Ready' }]} />
-			<ClearSecurityPanel
+			<PerformanceLogoStrip eyebrow="Trusted by" items={[{ label: 'CREATE', detail: 'Verified' }, { label: 'Canon', detail: 'Ready' }]} />
+			<PerformanceSecurityPanel
 				eyebrow="Controls"
 				title="Security controls"
 				description="Access and approval stay visible."
@@ -360,14 +362,14 @@
 					{ label: 'rollback', value: 'named' }
 				]}
 			/>
-			<ClearUseCaseBand
+			<PerformanceUseCaseBand
 				title="Use cases"
 				items={[
 					{ title: 'Review', detail: 'Pause before production writes.' },
 					{ title: 'Handoff', detail: 'Attach receipts for the next operator.' }
 				]}
 			/>
-			<ClearErrorPage
+			<PerformanceErrorPage
 				status={503}
 				propertyLabel="Canon"
 				title="Recovery path"
@@ -375,10 +377,10 @@
 				primaryLabel="Return to Canon"
 				primaryHref="/visual-evidence/clear"
 			/>
-			<ClearActionFooter
+			<PerformanceActionFooter
 				title="Keep the proof attached."
 				description="The final action names the workflow, owner, and receipt."
-				items={clearProofItems}
+				items={performanceProofItems}
 			/>
 		</section>
 	{/if}
@@ -432,13 +434,13 @@
 		min-height: 14rem;
 	}
 
-	.clear-stack {
+	.performance-stack {
 		display: grid;
 		gap: 1.5rem;
 		margin-inline: -2rem;
 	}
 
-	.clear-component-grid {
+	.performance-component-grid {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 1rem;
@@ -446,15 +448,15 @@
 		margin-inline: auto;
 	}
 
-	.clear-component-grid > * {
+	.performance-component-grid > * {
 		min-width: 0;
 	}
 
-	.clear-component-span-2 {
+	.performance-component-span-2 {
 		grid-column: span 2;
 	}
 
-	.clear-mini-artifact {
+	.performance-mini-artifact {
 		display: grid;
 		min-height: 14rem;
 		place-items: center;
@@ -516,16 +518,16 @@
 			grid-template-columns: minmax(0, 1fr);
 		}
 
-		.clear-stack {
+		.performance-stack {
 			margin-inline: -1rem;
 		}
 
-		.clear-component-grid {
+		.performance-component-grid {
 			grid-template-columns: 1fr;
 			width: min(100% - 2rem, 72rem);
 		}
 
-		.clear-component-span-2 {
+		.performance-component-span-2 {
 			grid-column: span 1;
 		}
 	}

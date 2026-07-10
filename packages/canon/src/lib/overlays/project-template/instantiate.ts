@@ -429,9 +429,9 @@ function renderThemeCss(manifest: CanonProjectOverlayManifest): string {
 :root {
 \t--overlay-accent: var(--color-performance-signal, #0057b8);
 \t--overlay-accent-contrast: var(--color-performance-panel, #ffffff);
-\t--overlay-surface: var(--color-bg-surface, #ffffff);
-\t--overlay-surface-muted: var(--color-bg-subtle, #f6f7f9);
-\t--overlay-border: var(--color-border-default, #d9dde5);
+\t--overlay-surface: var(--color-performance-panel, #ffffff);
+\t--overlay-surface-muted: var(--color-performance-paper, #f3f3f0);
+\t--overlay-border: var(--color-performance-line, #d7d7d2);
 \t--overlay-proof: var(--color-performance-growth, #007a4d);
 \t--overlay-review: var(--color-performance-gold, #8b6b00);
 \t--overlay-block: var(--color-performance-risk, #c62026);
@@ -440,7 +440,7 @@ function renderThemeCss(manifest: CanonProjectOverlayManifest): string {
 }
 
 [data-canon-overlay='${manifest.id}'] {
-\tcolor: var(--color-fg-default, #111827);
+\tcolor: var(--color-performance-ink, #090909);
 \tbackground: var(--overlay-surface);
 }
 
@@ -464,22 +464,22 @@ function renderTokensJson(manifest: CanonProjectOverlayManifest) {
 		canonOverlay: {
 			accent: {
 				$type: 'color',
-				$value: '{color.clear.action}',
+				$value: '{color.performance.signal}',
 				$description: 'Project accent alias. Keep the underlying Canon token as the source of truth.'
 			},
 			surface: {
 				$type: 'color',
-				$value: '{color.bg.surface}',
+				$value: '{color.performance.panel}',
 				$description: 'Default overlay surface alias for web and app shells.'
 			},
 			proof: {
 				$type: 'color',
-				$value: '{color.clear.proof}',
+				$value: '{color.performance.ready}',
 				$description: 'Evidence and receipt state alias. Must be paired with text labels.'
 			},
 			radius: {
 				$type: 'dimension',
-				$value: '{radius.clear}',
+				$value: '{radius.performance.md}',
 				$description: 'Overlay radius alias. Do not introduce a project-specific radius scale.'
 			}
 		}

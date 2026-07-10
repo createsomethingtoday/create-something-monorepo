@@ -27,21 +27,21 @@ describe('Canon overlay quality gate', () => {
 
 		expect(() => assertCanonOverlayQualityGate(report)).not.toThrow();
 		expect(report.summary).toMatchObject({
-			requiredPropertySurfaces: 24,
-			coveredPropertySurfaces: 24,
-			totalOverlays: 24,
-			readyOverlays: 24,
+			requiredPropertySurfaces: 26,
+			coveredPropertySurfaces: 26,
+			totalOverlays: 26,
+			readyOverlays: 26,
 			notReadyOverlays: 0,
 			manifestDependencyIssues: 0,
-			candidateIntakes: 24,
+			candidateIntakes: 26,
 			projectLocalIntakes: 0
 		});
 		expect(report.manifestDependencyIssues).toEqual([]);
 
 		const rendered = renderCanonOverlayQualityGateReport(report);
 		expect(rendered).toContain('# Canon Overlay Quality Gate');
-		expect(rendered).toContain('Required property surfaces: 24');
-		expect(rendered).toContain('Ready overlays: 24');
+		expect(rendered).toContain('Required property surfaces: 26');
+		expect(rendered).toContain('Ready overlays: 26');
 		expect(rendered).toContain('Manifest dependency issues: 0');
 		expect(rendered).not.toContain('# Canon Property Overlay Coverage');
 
@@ -112,7 +112,7 @@ describe('Canon overlay quality gate', () => {
 		const report = await buildCanonOverlayQualityGateReport(repoRoot);
 		const fixtures = createCanonOverlayConsumerFixtures(report.inventory.entries);
 
-		expect(fixtures).toHaveLength(24);
+		expect(fixtures).toHaveLength(26);
 		expect(fixtures[0]?.source).toContain(
 			"import type { CanonProjectOverlayManifest } from '@create-something/canon/registry';"
 		);

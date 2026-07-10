@@ -291,9 +291,12 @@ function getPropertySurfaceExclusionReason(pkg: PackageInfo): string | undefined
 
 async function readOverlayManifestSummary(overlayPath: string) {
 	const source = await readFile(overlayPath, 'utf8');
-	const sourcePackage = source.match(/"sourcePackage":\s*"([^"]+)"/)?.[1];
-	const modalitiesBlock = source.match(/"targetModalities":\s*\[([\s\S]*?)\]/)?.[1] ?? '';
-	const targetModalities = Array.from(modalitiesBlock.matchAll(/"([^"]+)"/g))
+	const sourcePackage = source.match(
+		/(?:["']sourcePackage["']|sourcePackage)\s*:\s*["']([^"']+)["']/
+	)?.[1];
+	const modalitiesBlock =
+		source.match(/(?:["']targetModalities["']|targetModalities)\s*:\s*\[([\s\S]*?)\]/)?.[1] ?? '';
+	const targetModalities = Array.from(modalitiesBlock.matchAll(/["']([^"']+)["']/g))
 		.map((match) => match[1])
 		.filter((modality): modality is CanonRegistryModality =>
 			REQUIRED_MODALITIES.includes(modality as CanonRegistryModality)

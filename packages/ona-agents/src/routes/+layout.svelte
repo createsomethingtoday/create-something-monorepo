@@ -6,10 +6,10 @@
 
   $: accessTone =
     data.clerkAccess.status === 'allowed'
-      ? 'good'
+      ? 'ready'
       : data.clerkAccess.status === 'anonymous'
-        ? 'warn'
-        : 'danger';
+        ? 'review'
+        : 'stop';
   $: accessLabel =
     data.clerkAccess.status === 'allowed'
       ? 'Clerk active'
@@ -18,14 +18,14 @@
         : 'Access blocked';
 </script>
 
-<div class="app-shell">
+<div class="app-shell property-performance">
   <header class="app-nav">
     <div class="app-nav__inner">
-      <a class="brand-lockup" href="/agents" aria-label="Ona Agents">
-        <span class="cube-mark" aria-hidden="true"></span>
+      <a class="brand-lockup" href="/agents" aria-label="CREATE SOMETHING Agents">
+        <span class="cube-mark" aria-hidden="true"><span></span></span>
         <span>
-          <strong>Ona Agents</strong>
-          <small>CREATE SOMETHING operator surface</small>
+          <strong>CREATE SOMETHING Agents</strong>
+          <small>Performance Lab operator surface</small>
         </span>
       </a>
 
@@ -41,7 +41,9 @@
         <span class={`status-pill ${accessTone}`}>{accessLabel}</span>
         {#if data.clerkAccess.status === 'allowed'}
           <span class="session-meta">
-            {data.clerkAccess.email ?? data.clerkAccess.organizationRole ?? data.clerkAccess.subject}
+            {data.clerkAccess.email ??
+              data.clerkAccess.organizationRole ??
+              data.clerkAccess.subject}
           </span>
         {/if}
       </a>
@@ -58,9 +60,9 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    border-bottom: 1px solid var(--color-clear-border);
-    background: rgba(249, 249, 249, 0.92);
-    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--color-performance-line);
+    background: color-mix(in srgb, var(--color-performance-paper) 94%, transparent);
+    backdrop-filter: blur(12px);
   }
 
   .app-nav__inner {
@@ -68,7 +70,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    width: min(var(--content-width-clear), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance), calc(100% - 2.5rem));
     min-height: 4.9rem;
     margin-inline: auto;
     padding-block: 0.8rem;
@@ -95,29 +97,26 @@
 
   .brand-lockup small {
     margin-top: 0.18rem;
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-size: 0.78rem;
     line-height: 1.2;
   }
 
   .cube-mark {
-    position: relative;
-    width: 1.25rem;
-    height: 1.25rem;
+    display: grid;
+    width: 1.4rem;
+    height: 1.4rem;
+    place-items: center;
     transform: rotate(45deg);
-    border-radius: 2px;
-    background: var(--color-clear-onyx);
-    box-shadow:
-      inset 0.34rem -0.34rem 0 rgba(255, 255, 255, 0.12),
-      0 0 0 1px rgba(10, 14, 25, 0.08);
+    border: 1px solid var(--color-performance-ink);
+    background: var(--color-performance-ink);
   }
 
-  .cube-mark::after {
-    content: '';
-    position: absolute;
-    inset: 0.22rem;
-    border-radius: 1px;
-    background: linear-gradient(135deg, rgba(175, 193, 253, 0.5), rgba(255, 255, 255, 0));
+  .cube-mark span {
+    width: 0.46rem;
+    height: 0.46rem;
+    border: 1px solid var(--color-performance-panel);
+    background: var(--color-performance-signal);
   }
 
   nav {
@@ -126,23 +125,23 @@
     flex-wrap: wrap;
     align-items: center;
     padding: 0.28rem;
-    border: 1px solid var(--color-clear-border);
-    border-radius: var(--radius-clear-sm);
-    background: var(--color-clear-panel);
+    border: 1px solid var(--color-performance-line);
+    border-radius: var(--radius-performance-sm);
+    background: var(--color-performance-panel);
   }
 
   nav a {
     padding: 0.52rem 0.85rem;
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     text-decoration: none;
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-size: 0.95rem;
     line-height: 1;
   }
 
   nav a:hover {
-    background: var(--color-clear-porcelain);
-    color: var(--color-clear-onyx);
+    background: var(--color-performance-paper);
+    color: var(--color-performance-ink);
     opacity: 1;
   }
 
@@ -162,7 +161,7 @@
   .session-meta {
     max-width: 16rem;
     overflow: hidden;
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-size: 0.78rem;
     line-height: 1.15;
     text-overflow: ellipsis;
@@ -177,7 +176,7 @@
     .app-nav__inner {
       flex-direction: column;
       align-items: stretch;
-      width: min(100% - 1.5rem, var(--content-width-clear));
+      width: min(100% - 1.5rem, var(--content-width-performance));
     }
 
     nav {

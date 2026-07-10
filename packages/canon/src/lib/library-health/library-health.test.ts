@@ -37,9 +37,9 @@ describe('Canon library health', () => {
 			priority: 100
 		});
 		expect(report.overlays).toMatchObject({
-			total: 24,
-			ready: 24,
-			candidateIntakes: 24,
+			total: 26,
+			ready: 26,
+			candidateIntakes: 26,
 			projectLocalIntakes: 0
 		});
 		expect(report.modalities).toMatchObject({

@@ -1,7 +1,7 @@
 export const CANON_PROJECT_OVERLAY_MANIFEST = {
   "id": "overlay.ona-agents",
-  "name": "Ona Agents Overlay",
-  "owner": "ona-team",
+  "name": "Performance Agents Overlay",
+  "owner": "performance-lab",
   "sourcePackage": "@create-something/ona-agents",
   "sourcePath": "manifest.ts",
   "targetModalities": [
@@ -15,7 +15,8 @@ export const CANON_PROJECT_OVERLAY_MANIFEST = {
     "canon",
     "overlay",
     "project",
-    "ona",
+    "performance",
+    "safety",
     "agents",
     "chat",
     "sveltekit"
@@ -86,7 +87,7 @@ export const CANON_PROJECT_OVERLAY_MANIFEST = {
         "voice",
         "glasses"
       ],
-      "owner": "ona-team",
+      "owner": "performance-lab",
       "sourcePackage": "@create-something/ona-agents",
       "sourcePath": "canon-overlay/templates/surface-brief.md",
       "tags": [

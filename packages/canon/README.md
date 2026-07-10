@@ -41,12 +41,12 @@ import {
   Navigation,
   Footer,
   PerformanceLabBand,
-  ClearPageSection,
-  ClearDecisionPanel,
-  ClearProofStrip,
-  ClearStateRows,
-  ClearReceiptGrid,
-  ClearCtaBand
+  PerformancePageSection,
+  PerformanceDecisionPanel,
+  PerformanceProofStrip,
+  PerformanceStateRows,
+  PerformanceReceiptGrid,
+  PerformanceCtaBand
 } from '@create-something/canon';
 
 // Form components
@@ -245,7 +245,7 @@ project overlays, and modality-specific UI guidance.
 
 The registry classifies Canon artifacts as:
 
-- `component`: Svelte primitives such as `Button`, `Navigation`, and `ClearDecisionPanel`
+- `component`: Svelte primitives such as `Button`, `Navigation`, and `PerformanceDecisionPanel`
 - `token`: CSS and design-token sources
 - `template`: reusable compositions for governed workflows
 - `adapter`: renderer-independent contracts such as Atlas graph artifacts
@@ -558,15 +558,15 @@ property can inherit the discipline without copying third-party identity.
 | Smoke command | `pnpm check && pnpm test` |
 | Validation surfaces | `svelte-check`, `vitest`, `svelte-package`, `publint`, registry generated content in `@create-something/mcp` |
 | UI validation path | Downstream .ltd Canon docs and Canon-consuming property routes |
-| Escalation rule | Stop before changing Canon semantics, Clear/Atlas/governance contracts, or registry lifecycle without source-adjacent tests and public docs alignment. |
+| Escalation rule | Stop before changing Canon semantics, Performance/Atlas/governance contracts, or registry lifecycle without source-adjacent tests and public docs alignment. |
 
 Use the performance layer for labs, systems maps, operational dashboards, simulation surfaces, and
 high-stakes decision rooms where clarity needs more physical energy than a standard SaaS panel.
 
 ```svelte
-<Navigation visualStyle="clear" {...navProps} />
+<Navigation visualStyle="performance" {...navProps} />
 
-<ClearPageSection
+<PerformancePageSection
   variant="hero"
   layout="split"
   titleLevel="h1"
@@ -575,7 +575,7 @@ high-stakes decision rooms where clarity needs more physical energy than a stand
   description="Name the object, action, approval rule, stop condition, and receipt before an agent acts."
 />
 
-<ClearDecisionPanel
+<PerformanceDecisionPanel
   eyebrow="Decision path"
   title="Show whether to run, review, or stop."
   items={[
@@ -591,7 +591,7 @@ high-stakes decision rooms where clarity needs more physical energy than a stand
   ]}
 />
 
-<Footer visualStyle="clear" {...footerProps} />
+<Footer visualStyle="performance" {...footerProps} />
 ```
 
 ## Glass Design System

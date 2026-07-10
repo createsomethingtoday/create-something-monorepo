@@ -1,4 +1,4 @@
-# Ona Agents Overlay Templates
+# Performance Agents Overlay Templates
 
 Copy these templates into project surfaces and fill in project-specific details.
 

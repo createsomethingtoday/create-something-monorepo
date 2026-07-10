@@ -1,15 +1,9 @@
 {
   "id": "overlay.ona-agents",
-  "name": "Ona Agents Overlay",
-  "owner": "ona-team",
+  "name": "Performance Agents Overlay",
+  "owner": "performance-lab",
   "sourcePackage": "@create-something/ona-agents",
-  "targetModalities": [
-    "web",
-    "chat",
-    "app",
-    "voice",
-    "glasses"
-  ],
+  "targetModalities": ["web", "chat", "app", "voice", "glasses"],
   "registryItemIds": [
     "token.canon-core",
     "component.clear-decision-panel",

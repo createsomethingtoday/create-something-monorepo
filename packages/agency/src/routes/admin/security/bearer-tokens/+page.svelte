@@ -206,9 +206,9 @@
 	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
 	.subnav a[aria-current='page'] { border-color: var(--color-focus); }
 	.toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
-	.toolbar input, td input { width: 100%; border-radius: 12px; border: 1px solid var(--color-border-default); background: var(--color-hover); color: inherit; padding: 0.75rem 0.9rem; }
-	.toolbar button, td button { border: 0; border-radius: 999px; padding: 0.75rem 1rem; font: inherit; font-weight: 600; background: var(--color-clear-porcelain-soft); color: var(--color-bg-surface); }
-	.table-wrap { overflow-x: auto; border: 1px solid var(--color-border-default); border-radius: 20px; background: var(--color-hover); }
+	.toolbar input, td input { width: 100%; border-radius: var(--radius-performance-sm); border: 1px solid var(--color-performance-line); background: var(--color-performance-panel); color: inherit; padding: 0.75rem 0.9rem; }
+	.toolbar button, td button { border: 1px solid var(--color-performance-ink); border-radius: var(--radius-performance-sm); padding: 0.75rem 1rem; font: inherit; font-weight: 700; background: var(--color-performance-ink); color: var(--color-performance-panel); box-shadow: none; }
+	.table-wrap { overflow-x: auto; border: 1px solid var(--color-performance-line); border-radius: var(--radius-performance-md); background: var(--color-performance-panel); }
 	table { width: 100%; border-collapse: collapse; }
 	th, td { padding: 1rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border-default); }
 	.muted { color: var(--color-fg-tertiary); font-size: 0.85rem; margin-top: 0.25rem; }

@@ -26,7 +26,7 @@
 </svelte:head>
 
 {#if !data.accessAllowed || !selectedAgent}
-  <section class="access-shell clear-paper">
+  <section class="access-shell performance-paper">
     <div class="access-copy">
       <div class="eyebrow">Clerk Access</div>
       <h1 class="section-title">Sign in with Clerk to use Dify operator chat.</h1>
@@ -39,7 +39,7 @@
   </section>
 {:else}
   <section class="operator-chat-shell">
-    <aside class="rail clear-paper context-rail" aria-label="Agent context">
+    <aside class="rail performance-paper context-rail" aria-label="Agent context">
       <div class="rail-header">
         <a class="back-link" href="/agents">Agents</a>
         <div>
@@ -47,7 +47,7 @@
           <h1>{selectedAgent.label}</h1>
         </div>
         <span
-          class={`status-pill ${selectedAgent.credentialState === 'available' ? 'good' : 'warn'}`}
+          class={`status-pill ${selectedAgent.credentialState === 'available' ? 'ready' : 'review'}`}
         >
           {selectedAgent.credentialState === 'available' ? 'Key ready' : 'Needs key'}
         </span>
@@ -87,7 +87,7 @@
       </nav>
     </aside>
 
-    <section class="chat-panel clear-paper" aria-label="Operator conversation">
+    <section class="chat-panel performance-paper" aria-label="Operator conversation">
       <header class="chat-header">
         <div>
           <div class="eyebrow">Chat Rail</div>
@@ -167,14 +167,14 @@
       </form>
     </section>
 
-    <aside class="rail clear-paper proof-rail" aria-label="Proof and actions">
+    <aside class="rail performance-paper proof-rail" aria-label="Proof and actions">
       <div class="rail-header">
         <div>
           <div class="eyebrow">Proof Rail</div>
           <h2>Evidence and gates</h2>
         </div>
         <span
-          class={`status-pill ${selectedAgent.operatorState === 'production_verified' ? 'good' : 'warn'}`}
+          class={`status-pill ${selectedAgent.operatorState === 'production_verified' ? 'ready' : 'review'}`}
         >
           {selectedAgent.operatorStateLabel}
         </span>
@@ -187,7 +187,7 @@
 
       <div class="proof-list">
         {#if proofEvents.length === 0}
-          <div class="proof-item warn">
+          <div class="proof-item review">
             <span>Run proof</span>
             <strong>No Dify turn in this session yet.</strong>
             <p>{selectedAgent.smokeCommand}</p>
@@ -218,7 +218,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    width: min(var(--content-width-clear), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance), calc(100% - 2.5rem));
     margin: 2rem auto 0;
     padding: 1.1rem;
   }
@@ -280,7 +280,7 @@
   }
 
   .back-link {
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-family: var(--font-mono);
     font-size: 0.74rem;
     text-decoration: none;
@@ -302,15 +302,15 @@
     display: grid;
     gap: 0.45rem;
     padding: 0.85rem;
-    border: 1px solid var(--color-clear-border);
-    border-radius: var(--radius-clear-sm);
-    background: var(--color-clear-panel);
+    border: 1px solid var(--color-performance-line);
+    border-radius: var(--radius-performance-sm);
+    background: var(--color-performance-panel);
   }
 
   .context-list span,
   .policy-box span,
   .proof-item span {
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-family: var(--font-mono);
     font-size: 0.7rem;
     letter-spacing: 0;
@@ -325,7 +325,7 @@
   }
 
   .context-list div:nth-child(4) strong {
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-family: var(--font-mono);
     font-size: 0.78rem;
     font-weight: 400;
@@ -335,7 +335,7 @@
   .operator-note p,
   .proof-item p {
     margin: 0;
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-size: 0.9rem;
   }
 
@@ -345,22 +345,22 @@
     justify-content: space-between;
     gap: 0.6rem;
     padding: 0.7rem 0.8rem;
-    border: 1px solid var(--color-clear-border);
-    border-radius: var(--radius-clear-sm);
+    border: 1px solid var(--color-performance-line);
+    border-radius: var(--radius-performance-sm);
     text-decoration: none;
-    color: var(--color-clear-onyx);
-    background: var(--color-clear-panel);
+    color: var(--color-performance-ink);
+    background: var(--color-performance-panel);
   }
 
   .agent-switcher a:hover,
   .agent-switcher a.active {
-    border-color: var(--color-clear-border-strong);
-    background: var(--color-clear-porcelain);
+    border-color: var(--color-performance-line-strong);
+    background: var(--color-performance-paper);
     opacity: 1;
   }
 
   .agent-switcher small {
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-family: var(--font-mono);
     font-size: 0.68rem;
     text-transform: uppercase;
@@ -381,9 +381,9 @@
     margin: -0.95rem -0.95rem 0.1rem;
     background: linear-gradient(
       90deg,
-      var(--color-clear-pistachio),
-      var(--color-clear-pastel-blue),
-      var(--color-clear-candy-purple)
+      var(--color-performance-ready-soft),
+      var(--color-performance-signal-soft),
+      var(--color-performance-stop-soft)
     );
   }
 
@@ -408,10 +408,10 @@
 
   .secondary-button,
   .prompt-button {
-    border-radius: var(--radius-clear-sm);
-    background: var(--color-clear-panel);
-    color: var(--color-clear-onyx);
-    border-color: var(--color-clear-border);
+    border-radius: var(--radius-performance-sm);
+    background: var(--color-performance-panel);
+    color: var(--color-performance-ink);
+    border-color: var(--color-performance-line);
     box-shadow: none;
   }
 
@@ -434,32 +434,44 @@
     gap: 0.45rem;
     max-width: min(92%, 48rem);
     padding: 0.9rem 1rem;
-    border: 1px solid var(--color-clear-border);
+    border: 1px solid var(--color-performance-line);
     border-radius: 6px;
-    background: var(--color-clear-panel);
+    background: var(--color-performance-panel);
   }
 
   .message.user {
     justify-self: end;
-    background: color-mix(in srgb, var(--color-clear-pastel-blue) 22%, white);
-    border-color: color-mix(in srgb, var(--color-clear-pastel-blue) 65%, var(--color-clear-border));
+    background: color-mix(in srgb, var(--color-performance-signal-soft) 22%, white);
+    border-color: color-mix(
+      in srgb,
+      var(--color-performance-signal-soft) 65%,
+      var(--color-performance-line)
+    );
   }
 
   .message.blocked {
-    border-color: color-mix(in srgb, var(--color-clear-pastel-blue) 65%, var(--color-clear-border));
-    background: color-mix(in srgb, var(--color-clear-pastel-blue) 20%, white);
+    border-color: color-mix(
+      in srgb,
+      var(--color-performance-signal-soft) 65%,
+      var(--color-performance-line)
+    );
+    background: color-mix(in srgb, var(--color-performance-signal-soft) 20%, white);
   }
 
   .message.pending {
-    border-color: color-mix(in srgb, var(--color-clear-candy-purple) 70%, var(--color-clear-border));
-    background: color-mix(in srgb, var(--color-clear-candy-purple) 18%, white);
+    border-color: color-mix(
+      in srgb,
+      var(--color-performance-stop-soft) 70%,
+      var(--color-performance-line)
+    );
+    background: color-mix(in srgb, var(--color-performance-stop-soft) 18%, white);
   }
 
   .message-meta {
     display: flex;
     justify-content: space-between;
     gap: 0.7rem;
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-family: var(--font-mono);
     font-size: 0.7rem;
     text-transform: uppercase;
@@ -483,7 +495,7 @@
     padding: 0.55rem 0.7rem;
     font-size: 0.84rem;
     text-align: left;
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
   }
 
   .composer {
@@ -495,7 +507,7 @@
     width: 100%;
     min-height: 8rem;
     resize: vertical;
-    border-radius: var(--radius-clear-sm);
+    border-radius: var(--radius-performance-sm);
     padding: 0.9rem 1rem;
     line-height: 1.5;
   }
@@ -509,23 +521,35 @@
 
   .composer-error {
     margin: 0;
-    color: var(--color-clear-stop);
+    color: var(--color-performance-stop);
     font-size: 0.9rem;
   }
 
-  .proof-item.good {
-    border-color: color-mix(in srgb, var(--color-clear-fern) 18%, var(--color-clear-border));
-    background: color-mix(in srgb, var(--color-clear-pistachio) 42%, white);
+  .proof-item.ready {
+    border-color: color-mix(
+      in srgb,
+      var(--color-performance-ready) 18%,
+      var(--color-performance-line)
+    );
+    background: color-mix(in srgb, var(--color-performance-ready-soft) 42%, white);
   }
 
-  .proof-item.warn {
-    border-color: color-mix(in srgb, var(--color-clear-pastel-blue) 70%, var(--color-clear-border));
-    background: color-mix(in srgb, var(--color-clear-pastel-blue) 22%, white);
+  .proof-item.review {
+    border-color: color-mix(
+      in srgb,
+      var(--color-performance-review) 42%,
+      var(--color-performance-line)
+    );
+    background: color-mix(in srgb, var(--color-performance-review-soft) 55%, white);
   }
 
-  .proof-item.danger {
-    border-color: color-mix(in srgb, var(--color-clear-stop) 22%, var(--color-clear-border));
-    background: color-mix(in srgb, var(--color-clear-candy-purple) 25%, white);
+  .proof-item.stop {
+    border-color: color-mix(
+      in srgb,
+      var(--color-performance-stop) 22%,
+      var(--color-performance-line)
+    );
+    background: color-mix(in srgb, var(--color-performance-stop-soft) 25%, white);
   }
 
   @media (max-width: 1180px) {

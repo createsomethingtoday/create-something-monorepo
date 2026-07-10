@@ -1,8 +1,8 @@
-# Ona Agents
+# CREATE SOMETHING Agents
 
-Standalone Ona-styled operator chat frontend for CREATE SOMETHING Dify agents.
+Standalone Performance Lab operator chat frontend for CREATE SOMETHING Dify agents.
 
-This is not the Ona Core rollout environment. It is a CREATE SOMETHING-owned app that borrows Ona's clear operator-shell pattern for staff-only Dify agent work.
+The package path and Cloudflare project name remain stable for deployment compatibility, but the product surface now uses CREATE SOMETHING's owned Performance & Safety language. It is separate from the historical Ona Core rollout environment.
 
 This app is also separate from Abundance Concierge. It provides a staff-only roster and chat shell for the Dify agents listed in `src/lib/server/dify/agent-registry.ts`, with all Dify Service API calls proxied server-side.
 
