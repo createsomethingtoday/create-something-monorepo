@@ -1149,6 +1149,25 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     return () => document.removeEventListener('categoryFilterUpdated', onCat);
   }, [defaultSort]);
 
+  // Re-sync when another component drives the filters (e.g. TemplateChat's
+  // agent page actions). They update the URL via replaceState — no popstate —
+  // so without this the grid re-sorts while the bar's controls display stale
+  // state. Skip our own dispatches to avoid a feedback loop.
+  useEffect(() => {
+    const onExternalChange = (event: Event) => {
+      const source = (event as CustomEvent<{ source?: string }>).detail?.source;
+      if (source === 'TemplateFilterBar') return;
+      setFilters(readUrlFilters(defaultSort));
+      setRouteVersion((value) => value + 1);
+    };
+    window.addEventListener('templateFiltersChanged', onExternalChange);
+    document.addEventListener('templateFiltersChanged', onExternalChange);
+    return () => {
+      window.removeEventListener('templateFiltersChanged', onExternalChange);
+      document.removeEventListener('templateFiltersChanged', onExternalChange);
+    };
+  }, [defaultSort]);
+
   const applyFilter = useCallback((patch: Partial<LocalFilters>) => {
     setFilters((prev) => {
       const next = { ...prev, ...patch };
