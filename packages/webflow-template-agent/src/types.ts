@@ -42,6 +42,7 @@ export interface PageActionPayload {
   q?: string | null;
   category_group_slug?: string | null;
   styles?: string[] | null;
+  types?: string[] | null;
   free_only?: boolean | null;
   sort?: string | null;
   clear_filters?: boolean | null;

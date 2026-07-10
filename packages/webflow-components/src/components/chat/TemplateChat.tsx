@@ -44,6 +44,7 @@ interface PageActionPayload {
   q?: string | null;
   category_group_slug?: string | null;
   styles?: string[] | null;
+  types?: string[] | null;
   free_only?: boolean | null;
   sort?: string | null;
   clear_filters?: boolean | null;
@@ -485,6 +486,7 @@ function applyPageAction(payload: PageActionPayload): void {
     payload.q != null ||
     payload.category_group_slug != null ||
     payload.styles != null ||
+    payload.types != null ||
     payload.free_only != null ||
     payload.sort != null;
 
@@ -511,6 +513,10 @@ function applyPageAction(payload: PageActionPayload): void {
     if (payload.styles != null) {
       url.searchParams.delete('styles');
       for (const style of payload.styles) url.searchParams.append('styles', style);
+    }
+    if (payload.types != null) {
+      url.searchParams.delete('types');
+      for (const type of payload.types) url.searchParams.append('types', type);
     }
     if (payload.free_only != null) {
       if (payload.free_only) url.searchParams.set('free_only', 'true');

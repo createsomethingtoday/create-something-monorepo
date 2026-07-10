@@ -34,6 +34,8 @@ export const TEMPLATE_FEATURES = [
 ] as const;
 
 export const SORT_VALUES = ['popular', 'best_selling', 'newest', 'price_asc', 'price_desc'] as const;
+// Exact template_type facet values from the search API's Type filter.
+export const TEMPLATE_TYPES = ['Multi Layout', 'Multi Page', 'One Page'] as const;
 export const DISPLAY_LAYOUTS = ['gallery', 'carousel', 'spotlight', 'comparison', 'shortlist'] as const;
 
 const MAX_DISPLAY_ITEMS = 12;
@@ -65,6 +67,12 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
           items: { type: 'string', enum: [...TEMPLATE_FEATURES] },
           description: 'Required template features (AND semantics). Only these exact values exist.',
         },
+        types: {
+          type: ['array', 'null'],
+          items: { type: 'string', enum: [...TEMPLATE_TYPES] },
+          description:
+            'Template type (OR semantics): "Multi Layout" = several layout variations included, "Multi Page" = full multi-page site, "One Page" = single-page site.',
+        },
         has_ecommerce: { type: ['boolean', 'null'], description: 'Require a full online-store setup.' },
         has_membership: { type: ['boolean', 'null'], description: 'Require member login / gated content support.' },
         has_cms: { type: ['boolean', 'null'], description: 'Require CMS collections (blog, listings, dynamic content).' },
@@ -80,6 +88,7 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
         'category_group_slug',
         'styles',
         'features',
+        'types',
         'has_ecommerce',
         'has_membership',
         'has_cms',
@@ -148,6 +157,11 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
           description: 'Set the page category filter (slug from list_categories_and_styles). Empty string clears it.',
         },
         styles: { type: 'array', items: { type: 'string' }, description: 'Replace the page style filters.' },
+        types: {
+          type: 'array',
+          items: { type: 'string', enum: [...TEMPLATE_TYPES] },
+          description: 'Replace the page Type filters ("Multi Layout", "Multi Page", "One Page").',
+        },
         free_only: { type: 'boolean', description: 'Toggle the page free-only filter.' },
         sort: { type: 'string', enum: [...SORT_VALUES], description: 'Set the page sort.' },
         clear_filters: { type: 'boolean', description: 'Reset all page filters before applying the rest.' },
@@ -168,6 +182,7 @@ export interface PageActionInput {
   q?: string | null;
   category_group_slug?: string | null;
   styles?: string[] | null;
+  types?: string[] | null;
   free_only?: boolean | null;
   sort?: string | null;
   clear_filters?: boolean | null;
@@ -179,6 +194,7 @@ export interface SearchToolInput {
   category_group_slug?: string | null;
   styles?: string[] | null;
   features?: string[] | null;
+  types?: string[] | null;
   has_ecommerce?: boolean | null;
   has_membership?: boolean | null;
   has_cms?: boolean | null;
@@ -196,6 +212,7 @@ export function buildSearchUrl(base: string, input: SearchToolInput): string {
   if (input.category_group_slug) url.searchParams.set('category_group_slug', input.category_group_slug);
   for (const style of input.styles ?? []) url.searchParams.append('styles', style);
   for (const feature of input.features ?? []) url.searchParams.append('features', feature);
+  for (const type of input.types ?? []) url.searchParams.append('types', type);
   if (input.has_ecommerce) url.searchParams.set('has_ecommerce', 'true');
   if (input.has_membership) url.searchParams.set('has_membership', 'true');
   if (input.has_cms) url.searchParams.set('has_cms', 'true');
@@ -217,6 +234,7 @@ function itemSummary(item: TemplateSearchItem): Record<string, unknown> {
     has_ecommerce: item.has_ecommerce,
     has_membership: item.has_membership,
     has_cms: item.has_cms,
+    template_type: item.template_type,
     cumulative_purchases: item.cumulative_purchases,
     published_date: item.published_date,
   };
@@ -302,6 +320,9 @@ export class TemplateToolExecutor {
     if (input.q != null) payload.q = input.q;
     if (input.category_group_slug != null) payload.category_group_slug = input.category_group_slug;
     if (input.styles != null) payload.styles = input.styles.slice(0, 10);
+    if (input.types != null) {
+      payload.types = input.types.filter((value) => (TEMPLATE_TYPES as readonly string[]).includes(value)).slice(0, 3);
+    }
     if (input.free_only != null) payload.free_only = input.free_only;
     if (input.sort != null && (SORT_VALUES as readonly string[]).includes(input.sort)) payload.sort = input.sort;
     if (input.clear_filters) payload.clear_filters = true;
