@@ -195,8 +195,23 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
 
               let clip: { x: number; y: number; width: number; height: number } | undefined;
               if (full_page) {
-                // String form keeps the worker typecheckable without the DOM lib —
-                // this expression runs in the remote browser, not the Worker.
+                // Prime scroll-triggered reveals (Webflow IX2/GSAP elements start
+                // at opacity 0 until scrolled into view): step through the page so
+                // the animations fire, then return to the top before capturing.
+                // String-form evaluate keeps the worker typecheckable without the
+                // DOM lib — this code runs in the remote browser, not the Worker.
+                await page.evaluate(`(async () => {
+                  const step = Math.max(window.innerHeight, 400);
+                  const max = Math.min(document.documentElement.scrollHeight, ${SCREENSHOT_MAX_FULL_PAGE_HEIGHT});
+                  const steps = Math.min(Math.ceil(max / step), 16);
+                  for (let i = 1; i <= steps; i++) {
+                    window.scrollTo(0, i * step);
+                    await new Promise((r) => setTimeout(r, 250));
+                  }
+                  window.scrollTo(0, 0);
+                  await new Promise((r) => setTimeout(r, 500));
+                })()`);
+
                 const pageHeight = await page.evaluate('document.documentElement.scrollHeight');
                 clip = {
                   x: 0,
