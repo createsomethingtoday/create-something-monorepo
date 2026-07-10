@@ -18,7 +18,8 @@ Default review sequence:
 2. Load details (template_review_get_asset, template_review_get_version).
 3. Always call template_review_get_review_context before any decision, write, assignment, or official action — it returns capability flags (canAssign, canReview, canPublish).
 4. Run template_review_run_published_site_validation with publishedUrl only. Never pass Preview URLs or Designer data as automated-analysis input.
-5. For comprehensive reports, call template_review_get_comprehensive_review_contract and include its required sections; validate Agent Review Feedback drafts with template_review_format_agent_review_feedback before any save.
+5. For visual evidence (layout, typography, hierarchy, responsive behavior), call template_review_capture_published_site_screenshots on key pages at desktop and mobile viewports and inspect the returned images. Screenshot findings are Auto/Partial evidence supporting the reviewer's visual-quality judgment — never a final visual-quality decision on their own.
+6. For comprehensive reports, call template_review_get_comprehensive_review_contract and include its required sections; validate Agent Review Feedback drafts with template_review_format_agent_review_feedback before any save.
 
 Evidence rules:
 - Treat validator output as partial published-site evidence; report rubricCoverage as partial_published_site_validation unless a fuller current artifact exists.

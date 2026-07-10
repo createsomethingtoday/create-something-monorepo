@@ -1,11 +1,20 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { createClerkClient } from '@clerk/backend';
+import puppeteer from '@cloudflare/puppeteer';
 import { enableTelemetry } from '@create-something/mcp-core';
+import { z } from 'zod';
 
 import { misconfiguredResponse } from '../src/auth.js';
 import { AirtableClient } from '../src/airtable.js';
 import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
+import {
+  SCREENSHOT_MAX_FULL_PAGE_HEIGHT,
+  SCREENSHOT_NAVIGATION_TIMEOUT_MS,
+  buildCaptureTarget,
+  clampScreenshotQuality,
+  resolveViewports,
+} from '../src/published-site-screenshots.js';
 import {
   SCOPE_READ,
   SCOPE_WRITE,
@@ -25,6 +34,7 @@ import { registerTools } from '../src/tools.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
+  BROWSER?: Fetcher;
   TELEMETRY_DB?: D1Database;
   MCP_ACCOUNT_ID?: string;
   MCP_API_KEY?: string;
@@ -128,6 +138,121 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
       { allowWrites },
     );
     registerPrompts(this.server);
+    this.registerScreenshotTool();
+  }
+
+  /**
+   * Visual evidence pass via Cloudflare Browser Rendering — supersedes the
+   * Dify-era E2B sandbox execution. Read-only, same-origin by construction,
+   * returns JPEG image content blocks the model can inspect directly for
+   * layout, typography, and responsive behavior.
+   */
+  private registerScreenshotTool() {
+    this.server.tool(
+      'template_review_capture_published_site_screenshots',
+      'Read-only visual evidence: capture screenshots of one page of the published template site at desktop and/or mobile viewports using Cloudflare Browser Rendering. Use during comprehensive reviews to assess layout, typography, visual hierarchy, and responsive behavior. Same-origin only; findings from screenshots are Auto/Partial evidence, not a final visual-quality decision.',
+      {
+        published_url: z.string().url().describe('The published template site URL (https), e.g. from review context.'),
+        path: z.string().optional().describe('Optional site-relative path to capture (must start with "/"). Defaults to the published URL path.'),
+        viewports: z.array(z.enum(['desktop', 'mobile'])).optional().describe('Viewports to capture. Defaults to both desktop (1280x1600) and mobile (390x844).'),
+        full_page: z.boolean().optional().describe('Capture the full page height (capped at 4000px) instead of the viewport. Defaults to false.'),
+        quality: z.number().int().min(30).max(80).optional().describe('JPEG quality 30-80. Defaults to 60. Lower it if responses are too large.'),
+      },
+      async ({ published_url, path, viewports, full_page, quality }) => {
+        if (!this.env.BROWSER) {
+          return {
+            content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: { code: 'BROWSER_RENDERING_UNAVAILABLE', message: 'Browser Rendering binding is not configured for this deployment.' } }) }],
+            isError: true,
+          };
+        }
+
+        const target = buildCaptureTarget(published_url, path);
+        if (!target.ok) {
+          return {
+            content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: { code: 'INVALID_CAPTURE_TARGET', message: target.error } }) }],
+            isError: true,
+          };
+        }
+
+        const jpegQuality = clampScreenshotQuality(quality);
+        const resolvedViewports = resolveViewports(viewports);
+        const captures: Array<{ viewport: string; width: number; height: number; bytes: number; error?: string }> = [];
+        const content: Array<
+          | { type: 'text'; text: string }
+          | { type: 'image'; data: string; mimeType: string }
+        > = [];
+
+        const browser = await puppeteer.launch(this.env.BROWSER as never);
+        try {
+          for (const viewport of resolvedViewports) {
+            try {
+              const page = await browser.newPage();
+              await page.setViewport({ width: viewport.width, height: viewport.height });
+              await page.goto(target.url, {
+                waitUntil: 'networkidle0',
+                timeout: SCREENSHOT_NAVIGATION_TIMEOUT_MS,
+              });
+
+              let clip: { x: number; y: number; width: number; height: number } | undefined;
+              if (full_page) {
+                // String form keeps the worker typecheckable without the DOM lib —
+                // this expression runs in the remote browser, not the Worker.
+                const pageHeight = await page.evaluate('document.documentElement.scrollHeight');
+                clip = {
+                  x: 0,
+                  y: 0,
+                  width: viewport.width,
+                  height: Math.min(Number(pageHeight) || viewport.height, SCREENSHOT_MAX_FULL_PAGE_HEIGHT),
+                };
+              }
+
+              const shot = (await page.screenshot({
+                type: 'jpeg',
+                quality: jpegQuality,
+                ...(clip ? { clip, captureBeyondViewport: true } : {}),
+              })) as Buffer;
+              await page.close();
+
+              const bytes = shot.byteLength;
+              captures.push({ viewport: viewport.name, width: viewport.width, height: clip?.height ?? viewport.height, bytes });
+              content.push({ type: 'image', data: shot.toString('base64'), mimeType: 'image/jpeg' });
+            } catch (error) {
+              captures.push({
+                viewport: viewport.name,
+                width: viewport.width,
+                height: viewport.height,
+                bytes: 0,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+        } finally {
+          await browser.close().catch(() => {});
+        }
+
+        const anySuccess = captures.some((c) => !c.error);
+        content.unshift({
+          type: 'text',
+          text: JSON.stringify(
+            {
+              ok: anySuccess,
+              data: {
+                url: target.url,
+                jpegQuality,
+                fullPage: Boolean(full_page),
+                captures,
+                evidenceLabel: 'Auto/Partial',
+                note: 'Screenshots are review evidence for reviewer-supported visual assessment, not an official visual-quality decision.',
+              },
+            },
+            null,
+            2,
+          ),
+        });
+
+        return { content, ...(anySuccess ? {} : { isError: true }) };
+      },
+    );
   }
 }
 

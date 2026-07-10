@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/backend": "^3.11.2",
+    "@cloudflare/puppeteer": "^1.1.0",
     "@create-something/mcp-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "agents": "^0.3.10",
