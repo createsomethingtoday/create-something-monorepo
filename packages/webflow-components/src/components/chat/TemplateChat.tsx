@@ -51,8 +51,21 @@ export interface TemplateChatProps {
   placeholder?: string;
   /** Opening assistant message shown before the first user turn. */
   welcomeMessage?: string;
+  /**
+   * 'floating' — launcher button + docked panel (default).
+   * 'inline' — fills its parent element; drop it on a dedicated page section.
+   * Both can expand into the immersive fullscreen experience.
+   */
+  variant?: 'floating' | 'inline';
+  /** Comma-separated starter prompts shown before the first message. */
+  starterPrompts?: string;
   defaultOpen?: boolean;
+  /** Start in the immersive fullscreen state. */
+  defaultImmersive?: boolean;
 }
+
+const DEFAULT_STARTERS =
+  'A portfolio with bold animations, An online store for a clothing brand, A restaurant site with a menu, A SaaS landing page with a blog';
 
 const CHAT_STYLES = `
 .tmchat-launcher {
@@ -62,8 +75,14 @@ const CHAT_STYLES = `
   background: #146ef5; color: #fff;
   font-family: "WF Visual Sans Variable", "Inter", system-ui, sans-serif;
   font-size: 14px; font-weight: 600; box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  transition: background 160ms ease, transform 160ms ease;
 }
-.tmchat-launcher:hover { background: #0f5cd0; }
+.tmchat-launcher:hover { background: #0f5cd0; transform: translateY(-1px); }
+.tmchat-backdrop {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(8,8,8,0.44);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
 .tmchat-panel {
   position: fixed; right: 24px; bottom: 24px; z-index: 9001;
   display: flex; flex-direction: column;
@@ -73,30 +92,68 @@ const CHAT_STYLES = `
   font-family: "WF Visual Sans Variable", "Inter", system-ui, sans-serif;
   color: #080808; font-size: 14px; line-height: 1.45;
 }
+.tmchat-panel.entering { animation: tmchat-in 200ms ease; }
+@keyframes tmchat-in { from { opacity: 0; } to { opacity: 1; } }
+.tmchat-panel.inline {
+  position: relative; right: auto; bottom: auto; z-index: auto;
+  width: 100%; height: 100%; min-height: 560px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.tmchat-panel.immersive {
+  position: fixed; top: 24px; bottom: 24px; left: 0; right: 0; margin: 0 auto; z-index: 9001;
+  width: min(1120px, calc(100vw - 48px)); height: auto; min-height: 0;
+  border-radius: 16px; box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+}
 .tmchat-header {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 14px 16px; border-bottom: 1px solid #ececec; background: #fafafa;
 }
 .tmchat-header-title { font-weight: 600; font-size: 15px; }
-.tmchat-close { border: 0; background: transparent; cursor: pointer; font-size: 18px; line-height: 1; color: #404040; padding: 4px; }
-.tmchat-scroll { flex: 1 1 auto; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.tmchat-panel.immersive .tmchat-header-title { font-size: 16px; }
+.tmchat-header-actions { display: flex; align-items: center; gap: 2px; }
+.tmchat-iconbtn {
+  border: 0; background: transparent; cursor: pointer; color: #404040;
+  width: 30px; height: 30px; border-radius: 8px; font-size: 16px; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.tmchat-iconbtn:hover { background: #ececec; }
+.tmchat-scroll {
+  flex: 1 1 auto; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth;
+}
+.tmchat-panel.immersive .tmchat-scroll { padding: 24px clamp(16px, 5vw, 56px) 32px; gap: 14px; }
 .tmchat-msg { max-width: 92%; white-space: pre-wrap; overflow-wrap: break-word; }
+.tmchat-panel.immersive .tmchat-msg { max-width: 680px; font-size: 15px; }
 .tmchat-msg.user { align-self: flex-end; background: #146ef5; color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; }
 .tmchat-msg.assistant { align-self: flex-start; background: #f5f5f5; padding: 9px 13px; border-radius: 14px 14px 14px 4px; }
 .tmchat-display { align-self: stretch; }
 .tmchat-display-title { font-weight: 600; margin: 4px 0 8px; font-size: 14px; }
+.tmchat-panel.immersive .tmchat-display-title { font-size: 16px; }
 .tmchat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .tmchat-grid.single { grid-template-columns: 1fr; }
+.tmchat-panel.immersive .tmchat-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+.tmchat-panel.immersive .tmchat-grid.single { grid-template-columns: minmax(0, 420px); }
 .tmchat-strip { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
 .tmchat-strip > * { flex: 0 0 220px; }
+.tmchat-panel.immersive .tmchat-strip > * { flex-basis: 260px; }
 .tmchat-followups { display: flex; flex-wrap: wrap; gap: 8px; }
 .tmchat-chip {
   border: 1px solid #dbe6fb; border-radius: 999px; background: #f2f7ff;
   color: #0f5cd0; padding: 7px 12px; font-size: 13px; cursor: pointer; font-family: inherit;
+  transition: background 140ms ease;
 }
 .tmchat-chip:hover { background: #e3edfd; }
-.tmchat-typing { align-self: flex-start; color: #757575; font-size: 13px; }
+.tmchat-typing { align-self: flex-start; color: #757575; font-size: 13px; display: inline-flex; align-items: baseline; gap: 6px; }
+.tmchat-dots { display: inline-flex; gap: 3px; }
+.tmchat-dots span {
+  width: 4px; height: 4px; border-radius: 50%; background: #757575;
+  animation: tmchat-pulse 1.2s ease-in-out infinite;
+}
+.tmchat-dots span:nth-child(2) { animation-delay: 0.15s; }
+.tmchat-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes tmchat-pulse { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
 .tmchat-inputrow { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #ececec; background: #fff; }
+.tmchat-panel.immersive .tmchat-inputrow { padding: 14px clamp(16px, 5vw, 56px) 18px; }
 .tmchat-input {
   flex: 1 1 auto; min-height: 40px; padding: 9px 12px;
   border: 1px solid #e0e0e0; border-radius: 8px; font: inherit; resize: none;
@@ -107,9 +164,16 @@ const CHAT_STYLES = `
   padding: 0 16px; font: inherit; font-weight: 600; cursor: pointer;
 }
 .tmchat-send:disabled { background: #a9c6f7; cursor: default; }
+.tmchat-send.stop { background: #fff; color: #404040; border: 1px solid #e0e0e0; }
+.tmchat-send.stop:hover { background: #f5f5f5; }
 @media (max-width: 560px) {
   .tmchat-panel { right: 8px; bottom: 8px; width: calc(100vw - 16px); height: calc(100vh - 16px); }
-  .tmchat-grid { grid-template-columns: 1fr; }
+  .tmchat-panel.immersive { top: 0; bottom: 0; width: 100vw; border-radius: 0; }
+  .tmchat-grid, .tmchat-panel.immersive .tmchat-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tmchat-panel.entering, .tmchat-dots span { animation: none; }
+  .tmchat-scroll { scroll-behavior: auto; }
 }
 ` + TEMPLATE_CARD_STYLES;
 
@@ -178,25 +242,66 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   launcherLabel = 'Find your template',
   placeholder = 'Describe the site you want to build…',
   welcomeMessage = 'Hi! Tell me about the site you want to build — the business, the look you like, and anything it must support (store, blog, member logins…) — and I’ll find templates that fit.',
+  variant = 'floating',
+  starterPrompts = DEFAULT_STARTERS,
   defaultOpen = false,
+  defaultImmersive = false,
 }) => {
-  const [open, setOpen] = useState(defaultOpen);
+  const isInline = variant === 'inline';
+  const [open, setOpen] = useState(isInline || defaultOpen);
+  const [immersive, setImmersive] = useState(defaultImmersive);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [followups, setFollowups] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
   // Templates verified by the agent's tools this conversation, keyed by slug.
   // Echoed back with each request so the stateless worker can compare or
   // re-display earlier results instead of "forgetting" them between turns.
   const knownTemplatesRef = useRef(new Map<string, AgentTemplateItem>());
 
+  const starters = starterPrompts
+    .split(/[,\n]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages, streaming, open]);
 
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open, immersive]);
+
+  // Esc collapses the immersive state first, then closes a floating panel.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (immersive) setImmersive(false);
+      else if (!isInline) setOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, immersive, isInline]);
+
   useEffect(() => () => streamAbortRef.current?.abort(), []);
+
+  const stopStreaming = useCallback(() => {
+    streamAbortRef.current?.abort();
+  }, []);
+
+  const resetChat = useCallback(() => {
+    streamAbortRef.current?.abort();
+    knownTemplatesRef.current.clear();
+    setMessages([]);
+    setFollowups([]);
+    setInput('');
+    inputRef.current?.focus();
+  }, []);
 
   const send = useCallback(
     async (text: string) => {
@@ -306,19 +411,59 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     );
   }
 
+  const panelClass = `tmchat-panel entering${immersive ? ' immersive' : isInline ? ' inline' : ''}`;
+  const showConversationChips = !streaming && followups.length > 0;
+  const showStarterChips = !streaming && messages.length === 0 && starters.length > 0;
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
-      <div className="tmchat-panel" role="dialog" aria-label={title}>
+      {immersive ? <div className="tmchat-backdrop" onClick={() => setImmersive(false)} /> : null}
+      <div className={panelClass} role={isInline && !immersive ? undefined : 'dialog'} aria-label={title}>
         <div className="tmchat-header">
           <span className="tmchat-header-title">{title}</span>
-          <button type="button" className="tmchat-close" aria-label="Close chat" onClick={() => setOpen(false)}>
-            ×
-          </button>
+          <div className="tmchat-header-actions">
+            {messages.length > 0 ? (
+              <button type="button" className="tmchat-iconbtn" aria-label="New chat" title="New chat" onClick={resetChat}>
+                ↺
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="tmchat-iconbtn"
+              aria-label={immersive ? 'Exit fullscreen' : 'Expand to fullscreen'}
+              title={immersive ? 'Exit fullscreen' : 'Expand'}
+              onClick={() => setImmersive((current) => !current)}
+            >
+              {immersive ? '⤡' : '⤢'}
+            </button>
+            {!isInline || immersive ? (
+              <button
+                type="button"
+                className="tmchat-iconbtn"
+                aria-label="Close chat"
+                onClick={() => {
+                  if (immersive) setImmersive(false);
+                  if (!isInline) setOpen(false);
+                }}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <div ref={scrollRef} className="tmchat-scroll">
           <div className="tmchat-msg assistant">{welcomeMessage}</div>
+          {showStarterChips ? (
+            <div className="tmchat-followups">
+              {starters.map((suggestion) => (
+                <button key={suggestion} type="button" className="tmchat-chip" onClick={() => void send(suggestion)}>
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {messages.map((message, index) => (
             <React.Fragment key={index}>
               {message.content ? (
@@ -329,8 +474,17 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               ))}
             </React.Fragment>
           ))}
-          {streaming ? <div className="tmchat-typing">Searching templates…</div> : null}
-          {!streaming && followups.length > 0 ? (
+          {streaming ? (
+            <div className="tmchat-typing" aria-live="polite">
+              Searching templates
+              <span className="tmchat-dots">
+                <span />
+                <span />
+                <span />
+              </span>
+            </div>
+          ) : null}
+          {showConversationChips ? (
             <div className="tmchat-followups">
               {followups.map((suggestion) => (
                 <button key={suggestion} type="button" className="tmchat-chip" onClick={() => void send(suggestion)}>
@@ -343,6 +497,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
 
         <div className="tmchat-inputrow">
           <textarea
+            ref={inputRef}
             className="tmchat-input"
             rows={1}
             placeholder={placeholder}
@@ -355,9 +510,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               }
             }}
           />
-          <button type="button" className="tmchat-send" disabled={streaming || !input.trim()} onClick={() => void send(input)}>
-            Send
-          </button>
+          {streaming ? (
+            <button type="button" className="tmchat-send stop" onClick={stopStreaming}>
+              Stop
+            </button>
+          ) : (
+            <button type="button" className="tmchat-send" disabled={!input.trim()} onClick={() => void send(input)}>
+              Send
+            </button>
+          )}
         </div>
       </div>
     </>

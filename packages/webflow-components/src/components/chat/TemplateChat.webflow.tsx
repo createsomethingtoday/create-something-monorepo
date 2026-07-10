@@ -31,10 +31,28 @@ export default declareComponent(TemplateChat, {
       defaultValue:
         'Hi! Tell me about the site you want to build — the business, the look you like, and anything it must support (store, blog, member logins…) — and I’ll find templates that fit.',
     }),
+    variant: props.Variant({
+      name: 'Display Variant',
+      options: ['floating', 'inline'],
+      defaultValue: 'floating',
+      tooltip:
+        'Floating: launcher button + docked panel. Inline: fills its parent element — use for a dedicated page section. Both can expand to the immersive fullscreen state.',
+    }),
+    starterPrompts: props.Text({
+      name: 'Starter Prompts',
+      defaultValue:
+        'A portfolio with bold animations, An online store for a clothing brand, A restaurant site with a menu, A SaaS landing page with a blog',
+      tooltip: 'Comma-separated suggestion chips shown before the first message (max 6).',
+    }),
     defaultOpen: props.Boolean({
       name: 'Open By Default',
       defaultValue: false,
-      tooltip: 'Designer preview convenience — leave off in production.',
+      tooltip: 'Floating variant only — inline is always open.',
+    }),
+    defaultImmersive: props.Boolean({
+      name: 'Immersive By Default',
+      defaultValue: false,
+      tooltip: 'Start in the fullscreen immersive state.',
     }),
   },
 });
