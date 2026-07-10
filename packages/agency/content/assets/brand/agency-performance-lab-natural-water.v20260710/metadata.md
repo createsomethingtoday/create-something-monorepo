@@ -4,6 +4,7 @@
 > Owner: CREATE SOMETHING
 > Generated: 2026-07-10
 > Tracking issue: CRE-1183
+> Products extension: CRE-1185
 
 ## Direction
 
@@ -21,6 +22,7 @@ to the image model, copied, traced, or used as an image input.
 | `exports/performance-lab-controlled-flow-natural--v20260710.png` | FLOW / DIRECTION | `gpt-image-1.5` | approved after original-resolution inspection |
 | `exports/performance-lab-pressure-boundary-natural--v20260710.png` | PRESSURE / BOUNDARY | `gpt-image-1.5` | approved after original-resolution inspection |
 | `exports/performance-lab-trace-wake-natural--v20260710.png` | TRACE / PROOF | `gpt-image-1.5` | approved after original-resolution inspection |
+| `exports/product-system-natural.png` | PRODUCT SYSTEM / THREE OPERATING SURFACES | `gpt-image-1.5` | approved after original-resolution inspection |
 
 Exact structured prompts and generation flags are preserved in
 `source/generation-prompts--v20260710.jsonl`.
@@ -35,18 +37,21 @@ Exact structured prompts and generation flags are preserved in
 | `static/images/performance-lab/pressure-boundary-natural-mobile.webp` | Center-right 4:5 | 819 x 1024 | Pressure/boundary mobile |
 | `static/images/performance-lab/trace-wake-natural.webp` | Full 3:2 | 1536 x 1024 | Trace/wake desktop |
 | `static/images/performance-lab/trace-wake-natural-mobile.webp` | Center 4:5 | 819 x 1024 | Trace/wake mobile |
+| `static/images/performance-lab/product-system-natural.webp` | Full 3:2 | 1536 x 1024 | Products desktop |
+| `static/images/performance-lab/product-system-natural-mobile.webp` | Center-right 4:5 | 819 x 1024 | Products mobile |
 
 ## Production slot mapping
 
 | Existing role | Recommended replacement | Current `.agency` consumers | Shared Canon overlay |
 | --- | --- | --- | --- |
-| `controlled-flow` | `controlled-flow-natural` | `/products`, `/dify/mcp-control-plane` field study | `.space` opening via `controlledFlowMedia` |
+| `controlled-flow` | `controlled-flow-natural` | `/dify/mcp-control-plane` field study | `.space` opening via `controlledFlowMedia` |
 | `pressure-boundary` | `pressure-boundary-natural` | `/`, `/services`, `/book` | `.ltd` opening via `pressureBoundaryMedia` |
 | `trace-control-plane` | `trace-wake-natural` | `/services`, `/atlas`, `/dify/mcp-control-plane` | `.io` and `.learn` openings via `traceControlPlaneMedia` |
+| `product-system` | `product-system-natural` | `/products` opening | Products-specific campaign image; no shared Canon overlay |
 
-The static assets use new cache-safe names. Integration should update each role atomically across
-the `.agency` callers and the corresponding Canon media overlay rather than allowing properties to
-drift onto different generations.
+The static assets use new cache-safe names. Shared roles should update atomically across the
+`.agency` callers and their corresponding Canon media overlays. The Products-specific role remains
+property-owned so it can be distinct without changing another property's shared overlay.
 
 ## Inspection record
 
@@ -57,6 +62,9 @@ drift onto different generations.
 - [x] Controlled flow retains the concrete lane and directional turbulence.
 - [x] Pressure boundary retains the impact, visible boundary, and protected downstream side.
 - [x] Trace retains the source craft, direction, and persistent wake.
+- [x] Products retains three distinct bounded channel behaviors within one connected hydraulic system.
+- [x] Products desktop preserves substantial dark negative space on the left for white campaign copy.
+- [x] Products mobile crop preserves all three channel behaviors without introducing text or marks.
 
 ## Rights and use
 
