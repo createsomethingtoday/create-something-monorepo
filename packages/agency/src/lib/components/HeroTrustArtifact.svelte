@@ -17,16 +17,16 @@
       detail: ['Case, order, account', 'Shipment context']
     },
     {
-      icon: 'actions',
-      label: 'Action',
-      title: 'What it can do',
-      detail: ['Draft reply, add note', 'Assign owner']
-    },
-    {
       icon: 'states',
       label: 'Decision',
       title: 'What must pause',
       detail: ['Run, wait, or stop', 'Reason required']
+    },
+    {
+      icon: 'actions',
+      label: 'Action',
+      title: 'What it can do',
+      detail: ['Draft reply, add note', 'Assign owner']
     },
     {
       icon: 'receipts',
@@ -55,7 +55,7 @@
       <span>Delegation Card</span>
       <strong>Controlled delegation object</strong>
     </div>
-    <small>Signal / Decision / Proof</small>
+    <small>Signal / Decision / Action / Proof</small>
   </div>
 
   <div class="hero-trust-artifact__path" aria-label="Controlled workflow path">
@@ -105,7 +105,9 @@
     overflow: hidden;
     display: grid;
     gap: 0;
-    max-width: 35rem;
+    width: 100%;
+    max-width: none;
+    container-type: inline-size;
     border: 1px solid var(--color-performance-line-strong, #9c9c96);
     border-radius: var(--radius-performance-md, 4px);
     background: var(--color-performance-panel, #ffffff);
@@ -221,6 +223,22 @@
     border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 6px;
     background: #ffffff;
+  }
+
+  .hero-trust-artifact__signal:nth-child(1) {
+    border-top: 3px solid var(--color-performance-signal, #2563ff);
+  }
+
+  .hero-trust-artifact__signal:nth-child(2) {
+    border-top: 3px solid var(--color-performance-pressure, #ff6a00);
+  }
+
+  .hero-trust-artifact__signal:nth-child(3) {
+    border-top: 3px solid var(--color-performance-growth, #16a34a);
+  }
+
+  .hero-trust-artifact__signal:nth-child(4) {
+    border-top: 3px solid var(--color-performance-risk, #e11048);
   }
 
   .hero-trust-artifact__icon {
@@ -347,6 +365,47 @@
     border: 1px solid var(--color-performance-muted, #5e6268);
     border-radius: 2px;
     background: linear-gradient(135deg, transparent 0 66%, rgba(10, 14, 25, 0.08) 66% 100%);
+  }
+
+  @container (min-width: 52rem) {
+    .hero-trust-artifact__header {
+      grid-template-columns: minmax(18rem, 1fr) auto;
+      align-items: end;
+      padding: 1.25rem 1.35rem;
+    }
+
+    .hero-trust-artifact__header strong {
+      max-width: none;
+      font-size: clamp(1.65rem, 2.4cqw, 2.2rem);
+    }
+
+    .hero-trust-artifact__path {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+      padding: 0.75rem;
+    }
+
+    .hero-trust-artifact__signal {
+      min-height: 8.1rem;
+      padding: 0.88rem;
+    }
+
+    .hero-trust-artifact__decision,
+    .hero-trust-artifact__footer {
+      grid-template-columns: minmax(9rem, 0.28fr) minmax(0, 1fr);
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.35rem;
+    }
+
+    .hero-trust-artifact__footer div {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .hero-trust-artifact__footer strong {
+      min-width: 0;
+    }
   }
 
   @media (max-width: 640px) {

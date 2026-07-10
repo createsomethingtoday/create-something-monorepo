@@ -1,63 +1,56 @@
 <script lang="ts">
   import {
     Button,
+    PerformanceCampaignOpening,
     PerformanceCardGrid,
     PerformanceDecisionPanel,
     PerformancePageSection,
-    PerformancePlatformHero,
-    PerformanceStateRows,
+    PerformanceThesisConditions,
     SEO,
     NewsletterSignup,
     PropertyFunnel,
     type PerformanceCardItem,
+    type PerformanceCampaignProof,
+    type PerformanceCondition,
     type PerformanceDecisionItem,
-    type PerformancePlatformHeroMeta,
-    type PerformancePlatformHeroProof,
-    type PerformanceWorkflowState
   } from '@create-something/canon';
 
-  const heroProofItems: PerformancePlatformHeroProof[] = [
+  const heroProofItems: PerformanceCampaignProof[] = [
     {
-      value: 'Creation',
-      label: 'The moat is building governed connectivity, not consuming AI tools.'
+      label: 'Creation',
+      value: 'Governed connectivity'
     },
     {
-      value: 'Control',
-      label: 'Delegated work needs owners, approvals, stop points, and policy.'
+      label: 'Control',
+      value: 'Policy + owner'
     },
     {
-      value: 'Chassis',
-      label: 'MCP gives agents a controlled frame for touching real systems.'
+      label: 'Chassis',
+      value: 'MCP boundary'
     },
     {
-      value: 'Proof',
-      label: 'Every useful action leaves evidence another operator can inspect.'
+      label: 'Proof',
+      value: 'Inspectable receipt'
     }
   ];
 
-  const heroMetaItems: PerformancePlatformHeroMeta[] = [
-    { label: 'Property role', value: 'Philosophy layer' },
-    { label: 'Category', value: 'Delegated Work Control' },
-    { label: 'Method', value: 'Less, but better' }
-  ];
-
-  const creationStates: PerformanceWorkflowState[] = [
+  const creationStates: PerformanceCondition[] = [
     {
-      tone: 'run',
-      state: 'Build',
-      label: 'Create the connection',
+      tone: 'signal',
+      label: 'Build',
+      title: 'Create the connection',
       detail: 'Name the tool boundary, system owner, data shape, and action that should exist.'
     },
     {
-      tone: 'wait',
-      state: 'Govern',
-      label: 'Encode the judgment',
+      tone: 'pressure',
+      label: 'Govern',
+      title: 'Encode the judgment',
       detail: 'Turn taste, risk, and approval rules into policy artifacts an agent can follow.'
     },
     {
-      tone: 'stop',
-      state: 'Prove',
-      label: 'Leave the receipt',
+      tone: 'growth',
+      label: 'Prove',
+      title: 'Leave the receipt',
       detail: 'Keep the evidence, owner, outcome, and recovery path visible after the work runs.'
     }
   ];
@@ -238,30 +231,27 @@
   propertyName="ltd"
 />
 
-<PerformancePlatformHero
+<PerformanceCampaignOpening
   eyebrow="CREATE SOMETHING .ltd"
   title="The philosophy of automation infrastructure."
-  description="CREATE SOMETHING .ltd explains the creation moat: consuming AI tools is easy; building governed connectivity, policy, trust boundaries, and proof is the work."
-  proofItems={heroProofItems}
-  metaItems={heroMetaItems}
-  ariaLabel="CREATE SOMETHING .ltd philosophy overview"
+  lede="CREATE SOMETHING .ltd explains the creation moat: consuming AI tools is easy; building governed connectivity, policy, trust boundaries, and proof is the work."
+  media={{ src: '/og-image.png', alt: 'A governed automation system connecting policy, verification, ownership, and proof artifacts' }}
+  proof={heroProofItems}
 >
   {#snippet actions()}
     <Button href="/canon">Read The Canon</Button>
     <Button href="/standards" variant="secondary">Open Standards</Button>
   {/snippet}
 
-  {#snippet aside()}
-    <PerformanceStateRows
-      eyebrow="Creation loop"
-      title="Build, govern, prove"
-      states={creationStates}
-      receiptLabel="Operating receipts"
-      receipts={['MCP boundary', 'policy artifact', 'proof trail']}
-      ariaLabel="Automation infrastructure creation loop"
-    />
-  {/snippet}
-</PerformancePlatformHero>
+</PerformanceCampaignOpening>
+
+<PerformanceThesisConditions
+  eyebrow="Creation loop"
+  title="Build, govern, prove."
+  description="The philosophy becomes useful when it names the connection, encodes the judgment, and leaves proof another operator can inspect."
+  conditions={creationStates}
+  ariaLabel="Automation infrastructure creation loop"
+/>
 
 <PerformanceDecisionPanel
   id="canon-decision"

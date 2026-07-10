@@ -1,15 +1,18 @@
 <script lang="ts">
   import {
     Button,
-    PerformanceActionFooter,
+    PerformanceCampaignOpening,
+    PerformanceContrastChapter,
+    PerformanceConversionHandoff,
+    PerformanceFieldSequence,
     PerformancePageSection,
-    PerformancePlatformHero,
+    PerformanceThesisConditions,
     PerformanceWorkflowMiniArtifact,
-    PerformanceLabBand,
     SEO,
-    type PerformanceActionFooterItem,
-    type PerformancePlatformHeroProof,
-    type PerformanceLabMetric
+    type PerformanceCampaignProof,
+    type PerformanceCondition,
+    type PerformanceFieldStudyMetric,
+    type PerformanceFieldStudyProof
   } from '@create-something/canon';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
@@ -73,22 +76,22 @@
     }
   ];
 
-  const heroProofItems: PerformancePlatformHeroProof[] = [
+  const heroProofItems: PerformanceCampaignProof[] = [
     {
-      value: 'Signal',
-      label: 'Changes and requests\nenter one queue.'
+      label: 'Signal',
+      value: 'One queue'
     },
     {
-      value: 'Decision',
-      label: 'Judgment routes to\nthe right owner.'
+      label: 'Decision',
+      value: 'Named owner'
     },
     {
-      value: 'Map',
-      label: 'Context shows systems,\nrisk, and impact.'
+      label: 'Map',
+      value: 'Visible boundary'
     },
     {
-      value: 'Proof',
-      label: 'Evidence records the\nowner and outcome.'
+      label: 'Proof',
+      value: 'Attached receipt'
     }
   ];
 
@@ -119,32 +122,41 @@
     }
   ] as const;
 
-  const actionFooterItems: PerformanceActionFooterItem[] = [
-    { label: 'Signal', value: 'One workflow your team wants to delegate' },
-    { label: 'Decision', value: 'Owner, allowed actions, approval pauses, and stops' },
-    { label: 'Proof', value: 'A fixed-scope map and proof plan before any build commitment' }
-  ];
-
-  const labReadinessItems: PerformanceLabMetric[] = [
+  const labReadinessItems: PerformanceCondition[] = [
     {
       label: 'Mapped',
-      value: '7/7',
+      title: '7/7 coverage',
       detail: 'Actor, AI task, human task, system, artifact, constraint, touchpoint',
       tone: 'signal'
     },
     {
       label: 'Decision pressure',
-      value: 'Run / Wait / Stop',
+      title: 'Run / Wait / Stop',
       detail: 'Every action has an owner, approval pause, or stop condition',
       tone: 'pressure'
     },
     {
       label: 'Proof attached',
-      value: '3 receipts',
+      title: '3 receipts',
       detail: 'Workflow map, owner approval, proof record before build commitment',
       tone: 'growth'
     }
   ];
+
+  const flowStudyMetrics: PerformanceFieldStudyMetric[] = [
+    { label: 'Flow boundary', value: '1 controlled path', detail: 'Scope the first lane before adding authority.' },
+    { label: 'Decision gates', value: 'Run / Wait / Stop', detail: 'Every branch names who decides.' },
+    { label: 'Proof condition', value: 'Receipt required', detail: 'Every action leaves an inspectable wake.' }
+  ];
+
+  const flowStudyProof: PerformanceFieldStudyProof = {
+    id: 'PL-METHOD-20260710',
+    owner: 'CREATE SOMETHING',
+    state: 'PROVENANCE ATTACHED',
+    verified: '2026-07-10',
+    version: 'v1',
+    classification: 'Public method'
+  };
 </script>
 
 <SEO
@@ -158,39 +170,53 @@
 />
 
 <div class="home-pilot property-performance">
-  <PerformancePlatformHero
+  <PerformanceCampaignOpening
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Make one workflow safe to delegate."
-    description="CREATE SOMETHING turns one messy handoff into work that is mapped, tested, governed, and proven: Signals enter from the tools, Decisions route to the right owner, and Proof records approvals, stops, and outcomes."
-    proofItems={heroProofItems}
-    hideAsideOnMobile={true}
+    lede="CREATE SOMETHING turns one messy handoff into work that is mapped, tested, governed, and proven: Signals enter from the tools, Decisions route to the right owner, and Proof records approvals, stops, and outcomes."
+    media={{ src: '/images/performance-lab/controlled-flow.webp', mobileSrc: '/images/performance-lab/controlled-flow-mobile.webp', alt: 'Water moving through a controlled bifurcation in a transparent test channel' }}
+    proof={heroProofItems}
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>Map one workflow</Button>
       <Button href="/products" variant="secondary">See proof</Button>
     {/snippet}
+  </PerformanceCampaignOpening>
 
-    {#snippet aside()}
-      <HeroTrustArtifact />
-    {/snippet}
-  </PerformancePlatformHero>
-
-  <PerformanceLabBand
-    title="Train the workflow before it runs."
-    description="A workflow earns delegation through explicit coverage, decision pressure, and attached proof."
-    metrics={labReadinessItems}
+  <PerformanceFieldSequence
+    eyebrow="Performance principle"
+    title="Train the workflow under pressure."
+    description="One ordered field sequence keeps the operating principle, measured conditions, and receipt together."
+    studies={[{
+      image: '/images/performance-lab/pressure-boundary.webp',
+      mobileImage: '/images/performance-lab/pressure-boundary-mobile.webp',
+      alt: 'Black-and-white field study of water meeting a designed boundary.',
+      title: 'Train the system before it runs.',
+      description: 'Work moves. Governance gives it a channel: map the signal, route the decision, define the stop, and preserve the trace before authority expands.',
+      principle: 'Governance directs flow.',
+      metrics: flowStudyMetrics,
+      proof: flowStudyProof,
+      stage: 'metrics-moved'
+    }]}
   />
 
-  <PerformancePageSection
-    variant="white"
+  <PerformanceThesisConditions
+    title="Train the workflow before it runs."
+    description="A workflow earns delegation through explicit coverage, decision pressure, and attached proof."
+    conditions={labReadinessItems}
+  />
+
+  <PerformanceContrastChapter
     eyebrow="Workflow plan"
     title="Map the work before AI runs it."
     description="Atlas turns the current process into a clear map: which signals matter, where work moves, what AI can handle, where people approve, and what proof records the outcome."
+    intervention={{ label: 'Intervention 01', title: 'Atlas workflow map', detail: 'A shared canvas makes systems, authority, risk, and proof inspectable before implementation.' }}
+	artifactPlacement="full-width"
   >
-    {#snippet after()}
+    {#snippet artifact()}
       <PublicSubstrateCanvas />
     {/snippet}
-  </PerformancePageSection>
+  </PerformanceContrastChapter>
 
   <PerformancePageSection
     id="service-flow"
@@ -241,11 +267,12 @@
     {/snippet}
   </PerformancePageSection>
 
-  <PerformanceActionFooter
+  <PerformanceConversionHandoff
     eyebrow="Fixed-scope first step"
     title={agencyCoreMessaging.workflowCtaHeading}
     description="Start with a workflow map and proof plan. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear delegation boundary."
-    items={actionFooterItems}
+    handoff={{ owner: 'CREATE SOMETHING', authority: 'Operator approval', proof: 'Workflow map + proof plan', state: 'ready' }}
+    artifactPlacement="full-width"
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>
@@ -255,28 +282,14 @@
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
     {/snippet}
-  </PerformanceActionFooter>
+    {#snippet aside()}<HeroTrustArtifact />{/snippet}
+  </PerformanceConversionHandoff>
 </div>
 
 <style>
   .home-pilot {
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);
-  }
-
-  .home-pilot :global(.clear-platform-hero) {
-    background:
-      linear-gradient(90deg, rgba(10, 14, 25, 0.04) 1px, transparent 1px) 0 0 / 4.25rem 4.25rem,
-      linear-gradient(180deg, var(--color-performance-panel, #ffffff) 0%, #fbfbfb 100%);
-  }
-
-  .home-pilot :global(.clear-platform-hero__kicker),
-  .home-pilot :global(.clear-platform-hero__proof article) {
-    background: rgba(255, 255, 255, 0.86);
-  }
-
-  .home-pilot :global(.clear-platform-hero__proof span) {
-    white-space: pre-line;
   }
 
   .home-pilot :global(.home-process-section) {
@@ -393,17 +406,6 @@
   }
 
   @media (max-width: 640px) {
-    .home-pilot :global(.clear-platform-hero__proof) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.62rem;
-      margin-top: 1.4rem;
-    }
-
-    .home-pilot :global(.clear-platform-hero__proof article) {
-      min-height: 5.45rem;
-      padding: 0.72rem;
-    }
-
     .service-flow-artifacts {
       grid-template-columns: 1fr;
       border-bottom: 0;

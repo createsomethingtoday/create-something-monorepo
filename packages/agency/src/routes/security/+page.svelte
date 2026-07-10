@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -131,11 +131,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Access boundary"
   title="Map the workflow before you hand it credentials."
   description="Security is strongest when the workflow map names its objects, permissions, stop points, decision owner, and audit trail before any agent acts."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Security owner', authority: 'Identity + entitlement boundary', proof: 'Audit trail', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -143,4 +144,4 @@
     </Button>
     <Button href="mailto:legal@createsomething.io" variant="secondary">Security Contact</Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>

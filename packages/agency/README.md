@@ -212,11 +212,49 @@ Validation:
 - `pnpm seo:check` includes the marketing portfolio check so sitemap, schema,
   copy, and route strength drift fail together.
 
-### Readable Control
+### Performance Lab And Readable Control
 
-The public brand system is **Readable Control**.
+The public identity is **Performance Lab**: intelligent workflows should feel
+engineered for pressure, trained in the lab, tested under load, and proven in the
+field.
 
-Use:
+**Readable Control** is the calm proof substrate inside Performance Lab. It keeps
+maps, policy, state, owners, receipts, and recovery legible when campaign surfaces
+introduce human motion, material study, kinetic composition, and decisive type.
+
+Use the hybrid boundary:
+
+- Homepage, services, editorial, case-study, and social surfaces may use
+  original human motion, material studies, technical annotation, and temporal
+  composition.
+- Products, Atlas, proof, booking, and operator surfaces keep workflow evidence
+  primary and use the same energy through hierarchy, state, measurement, and
+  semantic motion.
+
+Marketing development starts from the source-controlled pattern baseline in
+[`docs/PERFORMANCE_LAB_FOUNDATION_AUDIT.md`](../../docs/PERFORMANCE_LAB_FOUNDATION_AUDIT.md),
+not from a blank route or a copied template. The default composition grammar is:
+
+1. a campaign opening built around an original field study;
+2. one thesis paired with three inspectable conditions;
+3. a sequential field-test or operating-proof chapter;
+4. one high-contrast principle break;
+5. an evidence index with real content and explicit empty states; and
+6. a conversion handoff that preserves context, owner, authority, and proof.
+
+Those six patterns are implemented by Canon as `PerformanceCampaignOpening`,
+`PerformanceThesisConditions`, `PerformanceFieldSequence`,
+`PerformanceContrastChapter`, `PerformanceEvidenceIndex`, and
+`PerformanceConversionHandoff`. The homepage, services, Dify control-plane,
+products, Atlas, and booking routes are the `.agency` reference set. Their
+copy, media, canvases, and forms stay local; shared composition and responsive
+behavior do not.
+
+Fleet and Evermind are private pattern references only. Do not copy their marks,
+copy, imagery, fonts, class names, Webflow runtime, or interaction bundles. Build
+the validated pattern in Canon and keep route content property-owned.
+
+Readable Control uses:
 
 - white or neutral document surfaces
 - near-black type
@@ -354,7 +392,9 @@ Implementation surface:
   not a detached illustration. Its visible language should follow the
   Ona/UNA communication foundation: one clear operating claim, Signal /
   Decision / Proof vocabulary, and implementation details hidden until they are
-  useful evidence.
+  useful evidence. On the homepage, keep this live operating surface in the
+  `PerformanceContrastChapter` full-width artifact placement so the initial fit
+  remains legible; compact proof objects may continue to use the inline default.
 - `src/lib/atlas/public-substrate-canvas.ts` owns the public-safe operating
   projection for that live canvas: signal queue, Substrate graph, agent queue,
   decision gate, stop boundary, client delivery lane, receipt graph, and the

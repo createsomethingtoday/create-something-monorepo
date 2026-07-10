@@ -17,10 +17,11 @@ Image generation supplies controlled variants and production assets. Atlas,
 SVGs, and Canon graph artifacts supply briefs, structure, and evidence state;
 they are not automatically the public-quality visual.
 
-The foundation is:
+The foundation has two coordinated modes:
 
-> Calm proof surfaces that show how AI work becomes mapped, governed,
-> validated, and handed off.
+> Campaign surfaces show intelligent work under pressure through original human
+> motion, material study, decisive typography, and technical annotation. Product
+> surfaces show how that work becomes mapped, governed, validated, and handed off.
 
 Generated images are preferred when they clarify the system and meet the review
 gate. They are not acceptable when they only create AI atmosphere.
@@ -61,6 +62,9 @@ Include:
 Prefer references that show:
 
 - clear hierarchy and literal offer language
+- human or system motion under visible load
+- kinetic crops, temporal sequence, and decisive scale contrast
+- material or prototype studies with measurement and annotation
 - light operational surfaces
 - compact navigation, task rows, or proof panels
 - visible receipts, metrics, logs, owners, or boundaries
@@ -72,7 +76,7 @@ Reject references that rely on:
 - decorative gradients
 - generic AI abstraction
 - simulated dashboards with no claim
-- spectacle without evidence
+- spectacle without evidence or a field-to-proof translation
 - copied brand marks, source assets, fonts, layouts, or campaign language
 
 ## Visual Grammar
@@ -82,13 +86,13 @@ marketing.
 
 | Element | Rule |
 | --- | --- |
-| Surface | Porcelain, white, or quiet near-black. Avoid noisy gradients and atmospheric backgrounds. |
-| Composition | One proof object first, then supporting labels, gates, or receipts. |
+| Surface | Campaign: optic white or near-black with field/material imagery. Product: porcelain, white, or quiet near-black proof surfaces. |
+| Composition | Campaign: one kinetic field or material study integrated with proof. Product: one proof object first, then labels, gates, or receipts. |
 | Structure | Maps, lanes, cards, state rows, policy gates, receipt panels, and handoff arrows. |
 | Color | Canon clear tokens first: onyx, porcelain, cobalt, moss, and stop red. |
 | Type | Short workflow nouns and state labels. Avoid category jargon. |
 | Brand signature | Use the isometric cube as a small system mark, not as decoration. |
-| Motion | Move only selection, state, progression, handoff, or proof reveal. |
+| Motion | Campaign motion may express load, sequence, intervention, and recovery. Product motion moves selection, state, progression, handoff, or proof reveal. |
 | Evidence | Real screenshots are evidence. Generated images are explanatory artifacts. Do not mix the two without labeling. |
 
 ## Core Image Families
@@ -97,6 +101,9 @@ Use repeatable families so generated assets become a recognizable system.
 
 | Family | Use When | Must Show |
 | --- | --- | --- |
+| Performance field study | Homepage, services, editorial, case study, or social needs visceral evidence of work under pressure | Original human or system motion, temporal cue, technical annotation, and a workflow meaning |
+| Material / prototype study | A service or article needs to make an agent, MCP, policy, or workflow feel engineered | Original material or abstract system object, version/measurement cues, and a named operating claim |
+| Editorial hybrid | A high-intent article needs campaign energy without losing proof | Original field/material image plus map, trace, receipt, policy, owner, or validation result |
 | Atlas story canvas | The visual explains workflow behavior, governance, case studies, offers, or agent behavior | Owner, artifact, automation route, human judgment point, stop boundary, receipt |
 | System map hero | A page needs to show the whole operating path | Input, systems touched, policy gate, execution path, proof output |
 | Database / Automation / Judgment diagram | The three-tier framework is the point | Resources, tools, prompts or policy, plus one concrete example |
@@ -160,10 +167,14 @@ TASTE packet: <3 to 7 approved references by title/source and the specific
 communication pattern to borrow>. Use the references for judgment only. Do not
 copy source assets, brand marks, fonts, layouts, campaign language, or images.
 
-Style: CREATE SOMETHING Performance Lab image language on Canon Clear. The
+Style: CREATE SOMETHING Performance Lab image language on its Readable Control
+substrate. The
 visual should make delegated work feel trained, tested, governed, and proven
-before it runs. CREATE SOMETHING owns the artifact language. Use a calm proof surface with a plain claim, compact
-evidence, governed action states, readiness cues, and a visible handoff. Prefer
+before it runs. CREATE SOMETHING owns the artifact language. Choose the surface
+mode deliberately. Campaign images may use original human motion, temporal
+composites, hard crops, material texture, asymmetric editorial layout, and
+technical annotation. Product images use a calm proof surface with a plain claim,
+compact evidence, governed action states, readiness cues, and a visible handoff. Prefer
 porcelain `#f9f9f9`, white panels, onyx `#0a0e19`, quiet grey `#636363`, thin
 `#e1e1e1` borders, 4-8px radii, and restrained semantic accents: ocean
 `#0048ff`, moss `#1e3c2c`, stop `#c41e3a`, and performance pressure only when
@@ -180,7 +191,8 @@ system objects. The visual should feel like a client-safe product proof surface,
 not a flat explanatory slide.
 
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains, stock
-photography, generic premium desk scenes, random decorative objects, fake
+photography, celebrity or athlete likenesses, sportswear marks or silhouettes,
+generic premium desk scenes, random decorative objects, fake
 dashboard evidence, unreadable labels, client secrets, private prompts, PHI,
 vendor endorsement, and watermarks.
 ```

@@ -1,12 +1,17 @@
 <script lang="ts">
   import {
     Button,
+    PerformanceCampaignOpening,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
+    PerformanceEvidenceIndex,
+    PerformanceFieldSequence,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
-    type PerformanceCtaItem
+    type PerformanceEvidenceItem,
+    type PerformanceFieldStudyMetric,
+    type PerformanceFieldStudyProof
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -130,26 +135,29 @@
     }
   ];
 
-  const ctaItems: PerformanceCtaItem[] = [
-    {
-      label: 'Surface',
-      icon: 'settings',
-      title: 'Dify app',
-      detail: 'The user-facing place where the workflow runs.'
-    },
-    {
-      label: 'Boundary',
-      icon: 'folder',
-      title: 'MCP card',
-      detail: 'The tool contract and access description.'
-    },
-    {
-      label: 'Rule',
-      icon: 'check',
-      title: 'Policy OS',
-      detail: 'The allowed, approval, blocked, and evidence behavior.'
-    }
+  const contractEvidence: PerformanceEvidenceItem[] = contractBundleCards.map((item, index) => ({
+    id: `DIFY-CONTROL-${String(index + 1).padStart(2, '0')}`,
+    kind: item.eyebrow ?? 'Contract',
+    title: item.title,
+    detail: item.detail,
+    state: 'verified',
+    date: 'Jul 10, 2026'
+  }));
+
+  const traceStudyMetrics: PerformanceFieldStudyMetric[] = [
+    { label: 'Surface', value: 'Dify', detail: 'The workflow remains visible to the operator.' },
+    { label: 'Boundary', value: 'MCP + policy', detail: 'Capability and approval stay independently inspectable.' },
+    { label: 'Trace', value: 'Receipt attached', detail: 'Outcome, owner, and recovery travel with the action.' }
   ];
+
+  const traceStudyProof: PerformanceFieldStudyProof = {
+    id: 'ARTICLE-DIFY-MCP-CONTROL-PLANE',
+    owner: 'CREATE SOMETHING',
+    state: 'PUBLIC GUIDANCE',
+    verified: '2026-07-10',
+    version: '2026-07-10',
+    classification: 'Public article'
+  };
 </script>
 
 <SEO
@@ -165,13 +173,12 @@
   propertyName="agency"
 />
 
-<PerformancePageSection
-  variant="hero"
-  layout="split"
-  titleLevel="h1"
+<PerformanceCampaignOpening
   eyebrow="Dify + MCP Control Plane"
   title="Dify is the surface. MCP is the boundary. Policy OS is the operating rule."
-  description="The fastest path to serious Dify adoption is not another generic chatbot. It is a visible Dify app with scoped MCP tools, repo-owned manifests, eval gates, and an approval layer the operator can inspect."
+  lede="The fastest path to serious Dify adoption is not another generic chatbot. It is a visible Dify app with scoped MCP tools, repo-owned manifests, eval gates, and an approval layer the operator can inspect."
+  media={{ src: '/images/performance-lab/trace-control-plane.webp', mobileSrc: '/images/performance-lab/trace-control-plane-mobile.webp', alt: 'Water moving through clear channels, a mechanical gate, and a settled trace' }}
+  proof={[{ label: 'Surface', value: 'Dify' }, { label: 'Boundary', value: 'MCP' }, { label: 'Rule', value: 'Policy OS' }]}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowTeardownHref}>
@@ -180,15 +187,23 @@
     <Button href="/dify" variant="secondary">Back To Dify</Button>
   {/snippet}
 
-  {#snippet aside()}
-    <PerformanceCardGrid
-      items={layerCards}
-      columns={1}
-      density="compact"
-      ariaLabel="Dify MCP control plane layers"
-    />
-  {/snippet}
-</PerformancePageSection>
+</PerformanceCampaignOpening>
+
+<PerformanceFieldSequence
+  eyebrow="Control-plane field study"
+  title="Every action leaves a wake."
+  studies={[{
+    image: '/images/performance-lab/controlled-flow.webp',
+    mobileImage: '/images/performance-lab/controlled-flow-mobile.webp',
+    alt: 'Water moving through a controlled laboratory channel.',
+    title: 'Flow. Gate. Trace.',
+    description: 'The app surface, capability boundary, and operating rule stay distinct. Work can move through the system because every intervention and outcome remains inspectable.',
+    principle: 'Every intervention remains inspectable.',
+    metrics: traceStudyMetrics,
+    proof: traceStudyProof,
+    stage: 'receipt-settled'
+  }]}
+/>
 
 <PerformancePageSection
   variant="white"
@@ -217,21 +232,13 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformancePageSection
+<PerformanceEvidenceIndex
   id="contract-bundle"
-  variant="white"
   eyebrow="Contract bundle"
   title="The control plane becomes real when the bundle is reviewable."
   description="Dify provides the visible workflow surface, but the operating boundary should travel as artifacts: MCP capability, agent behavior, outcome success, golden tasks, and a runbook."
->
-  {#snippet after()}
-    <PerformanceCardGrid
-      items={contractBundleCards}
-      columns={4}
-      ariaLabel="Dify control plane contract bundle"
-    />
-  {/snippet}
-</PerformancePageSection>
+  items={contractEvidence}
+/>
 
 <PerformancePageSection
   id="adoption"
@@ -245,11 +252,11 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Next step"
   title="Use the control-plane article to qualify the next action."
   description="Readers can take the governance checklist, request a workflow map, or book the mapping session once the Dify workflow and decision owner are clear."
-  items={ctaItems}
+  handoff={{ owner: 'Workflow operator', authority: 'Approval before writes', proof: 'Contract bundle + eval receipt', state: 'ready' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -264,4 +271,4 @@
       Read Contract Bundle Paper
     </Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>

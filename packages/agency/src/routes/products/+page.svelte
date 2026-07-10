@@ -1,14 +1,17 @@
 <script lang="ts">
   import {
     Button,
+    PerformanceCampaignOpening,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceContrastChapter,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     PerformanceProofStrip,
+    PerformanceThesisConditions,
     PerformanceWorkflowMiniArtifact,
     SEO,
     type PerformanceCardItem,
-    type PerformanceCtaItem,
+    type PerformanceCondition,
     type PerformanceProofItem
   } from '@create-something/canon';
   import { listGovernanceProducts, type GovernanceProduct } from '@create-something/canon/governance';
@@ -97,24 +100,24 @@
     }
   ];
 
-  const ctaItems: PerformanceCtaItem[] = [
+  const productProtocol: PerformanceCondition[] = [
     {
-      label: 'Signal',
-      icon: 'plus',
-      title: 'Identify the first source',
-      detail: 'Name the signal source before expanding authority.'
+      label: 'Map',
+      title: 'Objects / owners / gates',
+      detail: 'Atlas holds the workflow boundary before an operating surface acts.',
+      tone: 'signal'
     },
     {
-      label: 'Decision',
-      icon: 'check',
-      title: 'Define the decision path',
-      detail: 'Decide who acts, what can run, what waits, and what must stop.'
+      label: 'State',
+      title: 'Run / Wait / Stop',
+      detail: 'Signal and Decision keep intervention legible without collapsing authority.',
+      tone: 'pressure'
     },
     {
       label: 'Proof',
-      icon: 'settings',
-      title: 'Add the proof layer',
-      detail: 'Turn the workflow into approval states, blocked states, receipts, and operator briefs.'
+      title: 'Receipt + recovery',
+      detail: 'Proof preserves outcome, owner, evidence, and the path back.',
+      tone: 'growth'
     }
   ];
 
@@ -174,13 +177,12 @@
   {faqItems}
 />
 
-<PerformancePageSection
-  variant="hero"
-  layout="split"
-  titleLevel="h1"
+<PerformanceCampaignOpening
   eyebrow="Product system"
   title="One map. Three operating surfaces."
-  description="Atlas maps the workflow. Signal watches what changes. Decision routes the judgment. Proof preserves the record. Together they make AI work inspectable before it becomes autonomous."
+  lede="Atlas maps the workflow. Signal watches what changes. Decision routes the judgment. Proof preserves the record. Together they make AI work inspectable before it becomes autonomous."
+  media={{ src: '/images/performance-lab/controlled-flow.webp', mobileSrc: '/images/performance-lab/controlled-flow-mobile.webp', alt: 'Controlled water flow splitting into visible operating paths' }}
+  proof={[{ label: 'Atlas', value: 'Map' }, { label: 'Signal', value: 'Watch' }, { label: 'Decision', value: 'Route' }, { label: 'Proof', value: 'Record' }]}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -190,8 +192,15 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
+</PerformanceCampaignOpening>
 
-  {#snippet aside()}
+<PerformanceContrastChapter
+  eyebrow="System anatomy"
+  title="One governed flow. Four inspectable surfaces."
+  description="The product system stays cohesive because every surface owns one part of the operating path."
+  intervention={{ label: 'Product system', title: 'Atlas / Signal / Decision / Proof', detail: 'Map the work, watch the change, route the judgment, preserve the record.' }}
+>
+  {#snippet artifact()}
     <aside class="product-system-artifact" aria-label="CREATE SOMETHING product system">
       <div class="product-system-artifact__header">
         <span>AI workflow system</span>
@@ -218,7 +227,15 @@
       </div>
     </aside>
   {/snippet}
-</PerformancePageSection>
+</PerformanceContrastChapter>
+
+<PerformanceThesisConditions
+  eyebrow="Product protocol"
+  title="One governed flow. Four inspectable surfaces."
+  description="The product system directs work through a map, signal, decision, and receipt without hiding ownership inside one interface."
+  conditions={productProtocol}
+  ariaLabel="Product system protocol"
+/>
 
 <PerformancePageSection
   variant="white"
@@ -292,11 +309,11 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Apply the proof"
   title="Apply the proof to the workflow your team still protects by hand."
   description="I’ll map the first workflow, identify the safest signal source, define who decides, and name what proof the control layer should leave behind."
-  items={ctaItems}
+  handoff={{ owner: 'Workflow owner', authority: 'Human approval', proof: 'Map + state + receipt', state: 'ready' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -306,7 +323,7 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>
 
 <style>
   .product-system-artifact {

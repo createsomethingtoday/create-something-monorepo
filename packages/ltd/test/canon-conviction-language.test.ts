@@ -72,6 +72,10 @@ test('Canon publishes conviction without dependence as a discoverable operating 
 	assert.match(standards, /Platform Conviction Standard/);
 	assert.match(standards, /model routing, fallback, and rollback/i);
 	assert.match(standards, /\/canon\/concepts\/conviction-without-dependence/);
+	assert.match(standards, /PerformancePageSection/);
+	assert.match(standards, /titleLevel="h1"/);
+	assert.match(standards, /title="Make standards visible\."/);
+	assert.doesNotMatch(standards, /<section class="pt-24 pb-16/);
 
 	for (const strategyUrl of strategyUrls) {
 		const strategy = readFileSync(strategyUrl, 'utf8');

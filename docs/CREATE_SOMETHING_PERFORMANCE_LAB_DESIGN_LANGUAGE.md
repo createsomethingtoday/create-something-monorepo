@@ -7,6 +7,11 @@
 
 CREATE SOMETHING should use **Performance Lab** as the house design language.
 
+The operative definition is:
+
+> Performance Lab is the visual language of intelligent systems trained for
+> pressure: engineered in the lab, tested under load, and proven in the field.
+
 The public experience should make delegated work feel trained, tested,
 governed, and proven before it runs. The internal reference is elite
 performance-product discipline: research, prototypes, pressure testing,
@@ -26,13 +31,37 @@ stronger visual and experiential identity.
 | --- | --- |
 | Delegated Work Control | The category: what can run, what waits, what stops, who owns it, and what proves it. |
 | Signal -> Decision -> Proof | The core operating loop and page rhythm. |
-| Canon Clear | The light proof/readability substrate for public and operator-facing communication. |
+| Readable Control | The calm proof/readability substrate inside Performance Lab, not a competing brand identity. |
+| Canon Clear | A legacy compatibility API that resolves to the Performance Lab readability substrate. |
 | Canon performance tokens | The higher-pressure layer for labs, dashboards, maps, readiness, and proof rooms. |
 | Atlas / Signal / Decision / Proof products | The product objects shown as mapped, governed, tested, and handed off. |
 
 The practical rule:
 
 > Performance Lab is the identity. External references are inputs, not the operating center.
+
+## Performance And Lab
+
+The name carries two different jobs that must remain visible together:
+
+- **Performance** contributes speed, exertion, stakes, decisive typography,
+  aggressive crops, temporal imagery, and vivid signal color.
+- **Lab** contributes instrumentation, prototypes, material studies, technical
+  notation, measurement, repeated trials, exploded views, versioning, and
+  evidence.
+- **The hybrid** pairs visceral campaign energy with rigorous operating proof.
+  A surface fails when it becomes only a calm dashboard or only a sports image.
+
+Translate the private performance reference into owned workflow meaning:
+
+| Performance reference | CREATE SOMETHING translation |
+| --- | --- |
+| Athlete under load | Workflow, agent, and operator under operational pressure |
+| Engineered performance product | MCP, policy, agent, or workflow as an engineered object |
+| Training and testing | Mapping, simulation, evals, dry runs, and gated releases |
+| Race or field conditions | Live production work |
+| Speed, gait, and material data | Traces, latency, readiness, permissions, and stops |
+| Campaign result | Receipt, outcome, recovery, and proof |
 
 ## Experience Principles
 
@@ -60,6 +89,12 @@ The practical rule:
    - Product demos should feel like controlled workbenches: filter, select,
      inspect, approve, stop, and receipt.
 
+6. **Campaign energy belongs on campaign surfaces**
+   - Homepage, services, editorial, case-study, and social surfaces may use
+     original human motion, material studies, kinetic sequences, and hard crops.
+   - Product, Atlas, proof, booking, and operator surfaces remain workflow-native:
+     maps, traces, policy, readiness, owners, receipts, and recovery.
+
 ## Typography Direction
 
 Use the Canon-owned local/system typography stack:
@@ -69,7 +104,8 @@ Use the Canon-owned local/system typography stack:
 - `--font-mono` carries workflow state, IDs, files, policies, receipts, and
   timestamps through the platform mono stack.
 - `--font-serif` uses Georgia/Times fallbacks when an editorial voice is useful.
-- Display scale should feel confident and direct, but not campaign-like.
+- Display scale should feel decisive and campaign-capable on public editorial
+  surfaces, while product and operator surfaces stay readable under pressure.
 - Do not introduce font hotlinks, new font files, or paid font dependencies
   without explicit licensing and implementation approval.
 
@@ -141,9 +177,11 @@ Canon exposes this through the Performance state tokens,
 
 | Surface | Direction |
 | --- | --- |
-| Homepage | Keep the plain offer, but add tested/governed/proven language. |
+| Homepage | Combine the plain offer with original human motion or material imagery, decisive scale, technical annotation, and integrated proof. |
+| Services | Show the workflow as a training and pressure sequence, not only a list of steps. |
 | Products | Present Atlas, Signal, Decision, and Proof as a performance system for delegated work. |
-| Articles | Use high-fidelity operating artifacts, not lesson diagrams or AI atmospherics. |
+| Articles | Combine high-fidelity operating artifacts with an original editorial field or material study when it clarifies pressure, testing, or proof. |
+| Atlas and booking | Keep workflow evidence primary; use hierarchy, state, annotation, and motion rather than athlete imagery. |
 | Dashboards | Use dense records, status rails, source bindings, and semantic state. |
 | Sales decks | Show workflow readiness and proof objects before stack diagrams. |
 | Social | Use bold evidence crops, lab-note framing, and receipt/state language. |
@@ -157,7 +195,9 @@ signal, pressure, growth, or risk.
 
 Do not recreate this structure in route CSS. Property routes provide the
 readiness content; Canon owns the responsive layout, typography, borders, and
-state accents.
+state accents. It is not the entire visual identity: campaign routes also need
+shared media, annotation, measurement, and motion primitives rather than a
+readiness band repeated between text sections.
 
 ## Review Gate
 
@@ -172,14 +212,16 @@ Before broad rollout, complete:
 5. Canon check: new UI uses tokens and shared primitives instead of local
    one-off styling.
 
-## First Implementation Slice
+## Hybrid Rollout
 
-The first slice is intentionally small:
+The first implementation slice established the definition, tokens, readiness
+band, and representative property rollout. The active hybrid rollout adds:
 
-1. Document this direction in Canon and `.agency`.
-2. Add a dated font/color review.
-3. Update the homepage description so the public promise includes mapped,
-   tested, governed, and proven work.
-4. Run copy/token checks and capture a browser screenshot.
+1. Original, non-branded human-motion and material imagery for campaign routes.
+2. Shared Canon compositions for media, annotation, measurement, and semantic motion.
+3. A campaign-versus-product boundary verified across homepage, services,
+   editorial, products, Atlas, and booking.
+4. Desktop, mobile, keyboard, and reduced-motion Browser evidence.
 
-Larger redesign work should come after the font/color decision is approved.
+The detailed visual rubric and asset provenance contract live in
+`docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md`.

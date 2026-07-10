@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -274,11 +274,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Next step"
   title="Map one Dify template before it goes public."
   description="I’ll map the workflow, app surface, MCP boundary, setup steps, smoke checks, and client-safe proof before the template expands to more tools."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Template publisher', authority: 'Marketplace submission contract', proof: 'Live clone + repo checks', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -287,4 +288,4 @@
     <Button href="/dify" variant="secondary">Back To Dify</Button>
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>

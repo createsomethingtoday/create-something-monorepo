@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -231,11 +231,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Map the runtime"
   title="Bring the workflow that needs a controlled route."
   description="I’ll map the route, state, permissions, tool boundary, and evidence your team needs before a Cloudflare build becomes production work."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Runtime owner', authority: 'Controlled Cloudflare route', proof: 'Deploy note + rollback path', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -243,4 +244,4 @@
     </Button>
     <Button href="/stack" variant="secondary">See Stack Boundary</Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>

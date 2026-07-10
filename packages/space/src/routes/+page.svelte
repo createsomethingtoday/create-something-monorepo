@@ -1,18 +1,18 @@
 <script lang="ts">
   import {
     Button,
+    PerformanceCampaignOpening,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceContrastChapter,
+    PerformanceConversionHandoff,
     PerformanceDecisionPanel,
     PerformancePageSection,
-    PerformanceProofStrip,
-    PerformanceLabBand,
+    PerformanceThesisConditions,
     PropertyFunnel,
     SEO,
     type PerformanceCardItem,
-    type PerformanceCtaItem,
-    type PerformanceDecisionItem,
-    type PerformanceLabMetric
+    type PerformanceCondition,
+    type PerformanceDecisionItem
   } from '@create-something/canon';
 
   const proofMetrics = [
@@ -22,22 +22,22 @@
     { value: 'Direct', label: 'inspectable routes, outputs, and state' }
   ];
 
-  const workbenchReadiness: PerformanceLabMetric[] = [
+  const workbenchReadiness: PerformanceCondition[] = [
     {
       label: 'Route',
-      value: 'Live',
+      title: 'Live',
       detail: 'The surface performs real work against the runtime instead of simulating an outcome.',
       tone: 'signal'
     },
     {
       label: 'Failure',
-      value: 'Visible',
+      title: 'Visible',
       detail: 'Timing, state, limits, and recovery behavior stay inspectable during the run.',
       tone: 'pressure'
     },
     {
       label: 'Promotion',
-      value: 'Receipted',
+      title: 'Receipted',
       detail: 'Patterns move to research or delivery only with a repeatable result and named handoff.',
       tone: 'growth'
     }
@@ -173,27 +173,6 @@
     }
   ];
 
-  const ctaItems: PerformanceCtaItem[] = [
-    {
-      label: 'Motion',
-      icon: 'clock',
-      title: 'Inspect interaction',
-      detail: 'Use the motion route when the system behavior depends on timing, easing, or sequence.'
-    },
-    {
-      label: 'Data',
-      icon: 'document',
-      title: 'Work the refresh loop',
-      detail: 'Use the data studio when the question needs live state and repeatable outputs.'
-    },
-    {
-      label: 'Delivery',
-      icon: 'arrow-right',
-      title: 'Move what holds',
-      detail: 'Promote useful runtime patterns into research or governed workflow delivery.'
-    }
-  ];
-
   const decisionStates: PerformanceDecisionItem[] = [
     {
       label: 'Run',
@@ -260,22 +239,26 @@
   propertyName="space"
 />
 
-<PerformancePageSection
-  variant="hero"
-  layout="split"
-  titleLevel="h1"
+<PerformanceCampaignOpening
   eyebrow="CREATE SOMETHING .space"
   title="A public workbench for testing runtime ideas."
-  description="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
+  lede="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
+  media={{ src: '/og-image.svg', alt: 'A terminal-native workbench artifact representing interactive runtime practice' }}
+  proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
 >
   {#snippet actions()}
     <Button href="/playground">Open The Playground</Button>
     <Button href="/praxis" variant="secondary">Start Praxis</Button>
   {/snippet}
+</PerformanceCampaignOpening>
 
-  <p class="clear-note">Live routes. Workers-first execution. Inspectable outputs.</p>
-
-  {#snippet aside()}
+<PerformanceContrastChapter
+  eyebrow="Workbench protocol"
+  title="Execute, inspect, then promote what survives."
+  description="Live routes. Workers-first execution. Inspectable outputs."
+  intervention={{ label: 'Runtime handoff', title: 'Visible behavior before promotion', detail: 'The workbench exposes state, timing, outputs, and failure before a pattern moves elsewhere.' }}
+>
+  {#snippet artifact()}
     <PerformanceCardGrid
       items={heroSignals}
       columns={1}
@@ -283,16 +266,12 @@
       ariaLabel="Workbench operating signals"
     />
   {/snippet}
+</PerformanceContrastChapter>
 
-  {#snippet after()}
-    <PerformanceProofStrip items={proofMetrics} ariaLabel="Workbench proof artifacts" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformanceLabBand
+<PerformanceThesisConditions
   title="The runtime decides what advances."
   description="Workbench patterns move forward only after the route runs, the failure state is visible, and the handoff has evidence."
-  metrics={workbenchReadiness}
+  conditions={workbenchReadiness}
   ariaLabel="Workbench readiness"
 />
 
@@ -344,24 +323,14 @@
   description="Try the runtime here, read the pattern when it holds up, and move to a mapping session when the workflow needs controls, owners, and a handoff."
 />
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Pick a surface"
   title="Start with the runtime you want to inspect."
   description="Open the playground if you want to execute code, motion if you want to inspect interaction systems, or data if you want to work against a live refresh loop."
-  items={ctaItems}
+  handoff={{ owner: 'Workbench operator', authority: 'Runtime evidence', proof: 'Output + state + handoff', state: 'ready' }}
 >
   {#snippet actions()}
     <Button href="/motion">Inspect Motion</Button>
     <Button href="/data/nba" variant="secondary">Open Data Studio</Button>
   {/snippet}
-</PerformanceCtaBand>
-
-<style>
-  .clear-note {
-    margin: 0;
-    max-width: 36rem;
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.94rem;
-    line-height: 1.55;
-  }
-</style>
+</PerformanceConversionHandoff>

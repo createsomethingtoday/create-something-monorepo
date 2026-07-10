@@ -40,6 +40,41 @@ function collectSourceFiles(directory: string): string[] {
 
 const PERFORMANCE_VISUAL_SCENARIOS = [
 	{
+		component: 'PerformanceCampaignOpening',
+		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceCampaignOpening.svelte',
+		states: ['ink', 'paper', 'mobile-media', 'with-proof']
+	},
+	{
+		component: 'PerformanceThesisConditions',
+		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceThesisConditions.svelte',
+		states: ['paper', 'ink', 'condition-tones', 'mobile-stack']
+	},
+	{
+		component: 'PerformanceFieldSequence',
+		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceFieldSequence.svelte',
+		states: ['sequential', 'sticky', 'alternating-media', 'reduced-motion']
+	},
+	{
+		component: 'PerformanceContrastChapter',
+		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceContrastChapter.svelte',
+		states: ['ink-to-paper', 'paper-to-ink', 'with-artifact', 'mobile-stack']
+	},
+	{
+		component: 'PerformanceEvidenceIndex',
+		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceEvidenceIndex.svelte',
+		states: ['verified', 'review', 'linked-records', 'empty']
+	},
+	{
+		component: 'PerformanceConversionHandoff',
+		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceConversionHandoff.svelte',
+		states: ['ready', 'review', 'stop', 'mobile-stack']
+	},
+	{
+		component: 'PerformanceFieldStudy',
+		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceFieldStudy.svelte',
+		states: ['campaign-flow', 'lab-pressure', 'archive-trace', 'mobile-settled']
+	},
+	{
 		component: 'PerformanceActionFooter',
 		sourcePath: 'packages/canon/src/lib/components/clear/ClearActionFooter.svelte',
 		states: ['primary-action', 'secondary-action', 'proof-note', 'mobile-stack']
@@ -137,6 +172,13 @@ const PERFORMANCE_VISUAL_SCENARIOS = [
 ] as const;
 
 const PERFORMANCE_EXPORTS = [
+	'PerformanceCampaignOpening',
+	'PerformanceThesisConditions',
+	'PerformanceFieldSequence',
+	'PerformanceContrastChapter',
+	'PerformanceEvidenceIndex',
+	'PerformanceConversionHandoff',
+	'PerformanceFieldStudy',
 	'PerformanceActionFooter',
 	'PerformanceArtifactCard',
 	'PerformanceCardGrid',

@@ -267,6 +267,8 @@
     }
 
     .privacy-choice--compact {
+      top: max(4.5rem, calc(4rem + env(safe-area-inset-top)));
+      bottom: auto;
       left: auto;
       max-width: max-content;
     }
@@ -331,6 +333,12 @@
 
     .privacy-pill--compact > span:first-child {
       display: inline;
+      font-size: 0;
+    }
+
+    .privacy-pill--compact > span:first-child::before {
+      content: 'Privacy';
+      font-size: 0.68rem;
     }
 
     .privacy-pill__sub {

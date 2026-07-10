@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -165,11 +165,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Map the workflow"
   title="Bring the workflow before choosing the stack."
   description="I’ll map the handoff, owner, connected systems, allowed actions, approval pauses, stop points, and evidence path before implementation starts."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Partner operator', authority: 'Named delivery boundary', proof: 'Shared workflow receipt', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -179,4 +180,4 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>

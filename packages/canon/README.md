@@ -163,13 +163,35 @@ Atlas Studio, and Substrate views keep the same typography contract.
 
 Canon uses Performance Lab as the CREATE SOMETHING design-language direction:
 delegated work should feel trained, tested, governed, and proven before it
-runs. The house language is now Performance Lab: plain claims, readable type,
+runs. The operative definition is intelligent systems trained for pressure:
+engineered in the lab, tested under load, and proven in the field. The house
+language is Performance Lab: plain claims, readable type,
 porcelain and near-black proof surfaces, visible artifacts, compact navigation,
 readiness rails, and restrained action states. The micro-interaction rule is
 performance first: use motion or selection only when it clarifies state,
 evidence, pressure, or the next action. `.agency` is the first verified rollout
 surface; the shared primitives are the path for the rest of CREATE SOMETHING as
 surfaces are migrated.
+
+Performance Lab has two coordinated surface modes:
+
+- **Campaign mode** uses original human/system motion, material studies,
+  asymmetric editorial composition, decisive type, technical annotation, and
+  integrated measurement on homepage, services, editorial, case-study, and
+  social surfaces.
+- **Product mode** keeps workflow-native maps, traces, policy, owners, state,
+  receipts, and recovery primary on Atlas, product, proof, booking, and operator
+  surfaces.
+
+Readable Control is the proof/readability substrate inside both modes. It is not
+a separate public identity.
+
+Performance design and composition is now a single six-pattern namespace rather than a set
+of route-local campaign, editorial, product, learning, and operator shells. Use the campaign opening, thesis/conditions,
+field sequence, contrast chapter, evidence index, and conversion handoff as the
+complete narrative vocabulary. The source-adjacent
+[`components/performance/README.md`](src/lib/components/performance/README.md)
+defines their contracts, property seams, composition recipe, and rollout gate.
 
 For readiness summaries that repeat across properties, use `PerformanceLabBand`
 instead of defining a route-local row of metric cards. It renders one continuous,

@@ -3,10 +3,14 @@
 	import { tick } from 'svelte';
 	import {
 		Button,
+		PerformanceCampaignOpening,
 		PerformanceCardGrid,
+		PerformanceContrastChapter,
 		PerformancePageSection,
+		PerformanceThesisConditions,
 		SEO,
-		type PerformanceCardItem
+		type PerformanceCardItem,
+		type PerformanceCondition
 	} from '@create-something/canon';
 	import { getAnalytics } from '@create-something/canon/analytics';
 	import { DatePicker } from '@create-something/canon/domains/agency';
@@ -197,6 +201,27 @@
 				'No workflow owner can join or make the next operating decision.',
 				'You need ongoing admin coverage rather than a scoped workflow build.'
 			]
+		}
+	];
+
+	const bookingProtocol: PerformanceCondition[] = [
+		{
+			label: 'Context',
+			title: 'One real workflow',
+			detail: 'Bring the handoff with visible drag, not a generic automation brief.',
+			tone: 'signal'
+		},
+		{
+			label: 'Authority',
+			title: 'Decision owner',
+			detail: 'The person who can approve scope, access, or risk joins the path.',
+			tone: 'pressure'
+		},
+		{
+			label: 'Proof boundary',
+			title: 'No secrets',
+			detail: 'Booking carries context and map evidence, never credentials.',
+			tone: 'growth'
 		}
 	];
 
@@ -470,13 +495,12 @@
 />
 
 <main class="booking-page">
-	<PerformancePageSection
-		variant="hero"
-		layout="split"
-		titleLevel="h1"
+	<PerformanceCampaignOpening
 		eyebrow="Workflow mapping session"
 		title="Map the workflow before the build decision."
-		description="Bring the support recovery, customer-trust, revenue, production, or credential-touching handoff with the most drag. You leave with the objects named, actions scoped, decision states, audit trail, and first controlled path or a clear stop."
+		lede="Bring the support recovery, customer-trust, revenue, production, or credential-touching handoff with the most drag. You leave with the objects named, actions scoped, decision states, audit trail, and first controlled path or a clear stop."
+		media={{ src: '/images/performance-lab/pressure-boundary.webp', mobileSrc: '/images/performance-lab/pressure-boundary-mobile.webp', alt: 'Water held inside a clear operating boundary before release' }}
+		proof={[{ label: 'Context', value: 'One workflow' }, { label: 'Authority', value: 'Decision owner' }, { label: 'Proof', value: 'No secrets' }]}
 	>
 		{#snippet actions()}
 			<Button href="#booking-flow">Choose a time</Button>
@@ -485,8 +509,15 @@
 			</Button>
 			<Button href="/services" variant="secondary">Review the service path</Button>
 		{/snippet}
+	</PerformanceCampaignOpening>
 
-		{#snippet aside()}
+	<PerformanceContrastChapter
+		eyebrow="Session output"
+		title="Leave with an operating boundary, not a brainstorm."
+		description="The mapping session converts one real handoff into named ownership, decision rules, proof requirements, and a first controlled path."
+		intervention={{ label: 'Fixed-scope handoff', title: 'Four inspectable outcomes', detail: 'The output stays useful even when the right decision is to stop before implementation.' }}
+	>
+		{#snippet artifact()}
 			<PerformanceCardGrid
 				items={mappingSessionOutcomes}
 				columns={1}
@@ -494,7 +525,15 @@
 				ariaLabel="Mapping session outcomes"
 			/>
 		{/snippet}
-	</PerformancePageSection>
+	</PerformanceContrastChapter>
+
+	<PerformanceThesisConditions
+		eyebrow="Delegation boundary"
+		title="Carry context into the session. Keep authority outside it."
+		description="The booking path preserves the workflow map, owner, and next decision while credentials and production access remain out of scope."
+		conditions={bookingProtocol}
+		ariaLabel="Booking delegation boundary"
+	/>
 
 	<PerformancePageSection
 		variant="white"

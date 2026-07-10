@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -304,11 +304,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the decision owner."
   description="CREATE SOMETHING will map the stack boundary, define the first controlled path, identify what can be assigned, and show what stays visible to the operator before implementation starts."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Workflow owner', authority: 'Owned stack boundary', proof: 'Controlled path + decision states', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -318,4 +319,4 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>

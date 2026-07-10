@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -257,11 +257,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Start with one workflow"
   title="Bring the workflow that wastes the most time."
   description="I will help map the first controlled pilot before expanding authority, scope, or spend."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Business operator', authority: 'First controlled pilot', proof: 'Runbook + control states', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -271,4 +272,4 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>

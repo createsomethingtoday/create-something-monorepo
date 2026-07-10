@@ -2,19 +2,19 @@
   import type { PageData } from './$types';
   import {
     Button,
+    PerformanceCampaignOpening,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceContrastChapter,
+    PerformanceConversionHandoff,
     PerformanceDecisionPanel,
     PerformancePageSection,
-    PerformanceProofStrip,
     PapersGrid,
-    PerformanceLabBand,
+    PerformanceThesisConditions,
     PropertyFunnel,
     SEO,
     type PerformanceCardItem,
-    type PerformanceCtaItem,
-    type PerformanceDecisionItem,
-    type PerformanceLabMetric
+    type PerformanceCondition,
+    type PerformanceDecisionItem
   } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
 
@@ -50,22 +50,22 @@
     { value: '3', label: 'database / automation / judgment layers' }
   ]);
 
-  const researchReadiness: PerformanceLabMetric[] = [
+  const researchReadiness: PerformanceCondition[] = [
     {
       label: 'Claim',
-      value: 'Traced',
+      title: 'Traced',
       detail: 'The paper names the source workflow, artifact trail, and operating question.',
       tone: 'signal'
     },
     {
       label: 'Runtime',
-      value: 'Tested',
+      title: 'Tested',
       detail: 'Timing, state, and failure behavior are exercised when the claim depends on them.',
       tone: 'pressure'
     },
     {
       label: 'Handoff',
-      value: 'Scoped',
+      title: 'Scoped',
       detail: 'The next route is research, practice, policy, or delivery with an explicit owner.',
       tone: 'growth'
     }
@@ -170,27 +170,6 @@
     }
   ];
 
-  const ctaItems: PerformanceCtaItem[] = [
-    {
-      label: 'Method',
-      icon: 'document',
-      title: 'Read the frame',
-      detail: 'Start with the methodology behind the papers before treating an insight as reusable.'
-    },
-    {
-      label: 'Graph',
-      icon: 'search',
-      title: 'Inspect the links',
-      detail: 'Use the research graph to see how artifacts, claims, and implementation notes connect.'
-    },
-    {
-      label: 'Next',
-      icon: 'arrow-right',
-      title: 'Promote carefully',
-      detail: 'Move strong patterns into runtime practice or scoped delivery only when the evidence holds.'
-    }
-  ];
-
   const decisionStates: PerformanceDecisionItem[] = [
     {
       label: 'Read',
@@ -256,22 +235,26 @@
   propertyName="io"
 />
 
-<PerformancePageSection
-  variant="hero"
-  layout="split"
-  titleLevel="h1"
+<PerformanceCampaignOpening
   eyebrow="CREATE SOMETHING .io"
   title="Research for automation you can defend."
-  description="CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer for operators. The goal is evidence you can carry into the next build, review, or production decision."
+  lede="CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer for operators. The goal is evidence you can carry into the next build, review, or production decision."
+  media={{ src: '/og-image.svg', alt: 'A terminal-native research artifact showing the CREATE SOMETHING research system' }}
+  proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
 >
   {#snippet actions()}
     <Button href="/papers">Read The Papers</Button>
     <Button href="/experiments" variant="secondary">Browse Experiments</Button>
   {/snippet}
+</PerformanceCampaignOpening>
 
-  <p class="clear-note">Patterns, benchmarks, and operator notes tied back to real builds.</p>
-
-  {#snippet aside()}
+<PerformanceContrastChapter
+  eyebrow="Research protocol"
+  title="Start from evidence, then publish what transfers."
+  description="Patterns, benchmarks, and operator notes stay tied back to real builds."
+  intervention={{ label: 'Research handoff', title: 'Signal / Artifact / Next move', detail: 'The research surface shows where the claim came from, what supports it, and where it should move next.' }}
+>
+  {#snippet artifact()}
     <PerformanceCardGrid
       items={heroSignals}
       columns={1}
@@ -279,16 +262,12 @@
       ariaLabel="Research operating signals"
     />
   {/snippet}
+</PerformanceContrastChapter>
 
-  {#snippet after()}
-    <PerformanceProofStrip items={proofMetrics} ariaLabel="Research proof artifacts" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformanceLabBand
+<PerformanceThesisConditions
   title="Evidence earns the next move."
   description="Research is ready to transfer when its claim is traced, runtime-dependent behavior is tested, and the receiving layer is explicit."
-  metrics={researchReadiness}
+  conditions={researchReadiness}
   ariaLabel="Research readiness"
 />
 
@@ -337,24 +316,14 @@
   description="Use .io to understand the evidence, move to .space when the pattern needs runtime validation, and move to .agency when the workflow is ready to be scoped."
 />
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Research stack"
   title="Start with the methodology, then inspect the work."
   description="If you want the operating frame behind the papers, start with the methodology and then move into the experiment and paper archive."
-  items={ctaItems}
+  handoff={{ owner: 'Research operator', authority: 'Evidence before promotion', proof: 'Paper + graph + method', state: 'ready' }}
 >
   {#snippet actions()}
     <Button href="/methodology">See The Methodology</Button>
     <Button href="/graph" variant="secondary">Open The Research Graph</Button>
   {/snippet}
-</PerformanceCtaBand>
-
-<style>
-  .clear-note {
-    margin: 0;
-    max-width: 36rem;
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.94rem;
-    line-height: 1.55;
-  }
-</style>
+</PerformanceConversionHandoff>

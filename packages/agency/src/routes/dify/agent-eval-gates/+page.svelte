@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -336,11 +336,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Next step"
   title="Map the first eval gates before publishing the workflow."
   description="Bring one Dify app and I’ll map the tool boundary, approval states, blocked paths, golden tasks, and client-safe evidence package."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Release operator', authority: 'Workflow eval contract', proof: 'Sanitized gate evidence', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -352,4 +353,4 @@
       Read Eval Evidence Paper
     </Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>
