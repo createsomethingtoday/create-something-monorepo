@@ -118,7 +118,7 @@ const CHAT_STYLES = `
 }
 .tmchat-launcher:hover { background: #0f5cd0; transform: translateY(-1px); }
 .tmchat-backdrop {
-  position: fixed; inset: 0; z-index: 9000;
+  position: fixed; inset: 0; z-index: 99999998;
   background: rgba(8,8,8,0.44);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   animation: tmchat-fade 200ms ease both;
@@ -141,7 +141,9 @@ const CHAT_STYLES = `
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .tmchat-panel.immersive {
-  position: fixed; top: 24px; bottom: 24px; left: 0; right: 0; margin: 0 auto; z-index: 9001;
+  /* Above the webflow.com sticky navigation — the immersive state is a modal
+     and nothing on the host page should paint over it. */
+  position: fixed; top: 24px; bottom: 24px; left: 0; right: 0; margin: 0 auto; z-index: 99999999;
   width: min(1120px, calc(100vw - 48px)); height: auto; min-height: 0;
   border-radius: 16px; box-shadow: 0 24px 80px rgba(0,0,0,0.3);
 }
@@ -274,15 +276,16 @@ const CHAT_STYLES = `
   border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; color: #080808;
   padding: 7px 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
 }
-.tmchat-preview-back { transition: background 120ms ease; }
+.tmchat-preview-back { height: 36px; padding: 0 12px; transition: background 120ms ease; }
 .tmchat-preview-back:hover { background: #f5f5f5; }
-.tmchat-preview-meta { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
-.tmchat-preview-name { font-size: 14px; font-weight: 600; color: #080808; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tmchat-preview-creator { font-size: 12px; color: #757575; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tmchat-devicetoggle { display: inline-flex; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+.tmchat-preview-sep { width: 1px; height: 20px; background: #e0e0e0; flex: 0 0 auto; }
+.tmchat-preview-meta { display: flex; flex-direction: column; justify-content: center; min-width: 0; margin-right: auto; min-height: 36px; }
+.tmchat-preview-name { font-size: 14px; line-height: 1.25; font-weight: 600; color: #080808; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tmchat-preview-creator { font-size: 12px; line-height: 1.25; color: #757575; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tmchat-devicetoggle { display: inline-flex; align-items: stretch; height: 36px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
 .tmchat-devicebtn {
   display: inline-flex; align-items: center; gap: 6px;
-  border: 0; background: #fff; color: #757575; padding: 7px 12px;
+  border: 0; background: #fff; color: #757575; padding: 0 12px;
   font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .tmchat-devicebtn { transition: background 140ms ease, color 140ms ease; }
@@ -290,7 +293,7 @@ const CHAT_STYLES = `
 .tmchat-devicebtn.active { background: #f0f5ff; color: #146ef5; }
 .tmchat-preview-cta {
   display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
-  border-radius: 8px; background: #146ef5; color: #fff; padding: 8px 14px;
+  height: 36px; border-radius: 8px; background: #146ef5; color: #fff; padding: 0 14px;
   font-family: inherit; font-size: 13px; font-weight: 600;
 }
 .tmchat-preview-cta { transition: background 140ms ease; }
@@ -892,6 +895,7 @@ function TemplatePreviewPane({
         <button ref={backRef} type="button" className="tmchat-preview-back" onClick={requestClose}>
           <ChatIcon name="back" size={14} /> Back to chat
         </button>
+        <span className="tmchat-preview-sep" aria-hidden="true" />
         <div className="tmchat-preview-meta">
           <span className="tmchat-preview-name">{item.name}</span>
           {item.creator_name ? <span className="tmchat-preview-creator">by {item.creator_name}</span> : null}
