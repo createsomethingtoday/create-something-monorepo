@@ -191,3 +191,12 @@ describe('cross-turn continuity', () => {
     expect(executor.describeKnownItems()).toContain('"template_slug":"partial"');
   });
 });
+
+describe('surface hints', () => {
+  it('maps surfaces to layout guidance and stays silent without a hint', async () => {
+    const { surfaceNote } = await import('../src/prompt.js');
+    expect(surfaceNote('immersive')).toContain('6-12');
+    expect(surfaceNote('compact')).toContain('2-6');
+    expect(surfaceNote(undefined)).toBeNull();
+  });
+});

@@ -24,7 +24,12 @@ export interface ChatRequestBody {
 
 export interface ChatContext {
   known_templates: TemplateSearchItem[];
+  // Client viewport hint: 'compact' = narrow docked panel, 'immersive' = wide
+  // fullscreen/inline canvas. Steers layout and item-count choices.
+  surface?: ChatSurface;
 }
+
+export type ChatSurface = 'compact' | 'immersive';
 
 // SSE events emitted to the client. `display` payloads are the generative-UI
 // contract: the model composes them via the display_results tool; the client

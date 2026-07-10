@@ -20,5 +20,21 @@ export const SYSTEM_PROMPT = `You are the Webflow Template Marketplace assistant
 4. If a search returns nothing, loosen the least important filter and say what you loosened.
 5. Keep text short: one or two sentences before/after a display. No bullet lists of templates in text — that is what display_results is for.
 
+## Display surface
+A system context note may state the current display surface. On a compact surface (narrow docked panel, two columns) prefer focused displays: 2-6 templates, spotlight or shortlist over sprawling galleries. On an immersive surface (wide fullscreen canvas, 3-4 columns) you can curate more generously: galleries of 6-12, richer comparisons. Without a note, assume compact.
+
 ## Off-topic
 You only help with finding and choosing Webflow templates. For support, billing, or building questions, point users to Webflow support or the Webflow University and offer to continue the template search.`;
+
+// Per-request surface note (kept out of the frozen prompt so the cached
+// prefix stays stable). Mirrors the client's compact panel vs immersive
+// fullscreen/inline rendering.
+export function surfaceNote(surface: 'compact' | 'immersive' | undefined): string | null {
+  if (surface === 'immersive') {
+    return 'Display surface: immersive — a wide fullscreen canvas rendering template grids at 3-4 columns. Galleries of 6-12 templates and rich comparisons render well here.';
+  }
+  if (surface === 'compact') {
+    return 'Display surface: compact — a narrow docked panel rendering template grids at 1-2 columns. Keep displays focused: 2-6 templates; prefer spotlight/shortlist over large galleries.';
+  }
+  return null;
+}

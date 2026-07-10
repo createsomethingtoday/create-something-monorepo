@@ -86,9 +86,10 @@ function parseBody(raw: unknown): ChatRequestBody | null {
 function parseContext(raw: unknown): ChatContext | undefined {
   if (typeof raw !== 'object' || raw === null) return undefined;
   const knownTemplates = (raw as { known_templates?: unknown }).known_templates;
-  if (!Array.isArray(knownTemplates)) return undefined;
+  const rawSurface = (raw as { surface?: unknown }).surface;
+  const surface = rawSurface === 'compact' || rawSurface === 'immersive' ? rawSurface : undefined;
 
-  const items = knownTemplates
+  const items = (Array.isArray(knownTemplates) ? knownTemplates : [])
     .filter(
       (entry): entry is TemplateSearchItem =>
         typeof entry === 'object' &&
@@ -98,7 +99,8 @@ function parseContext(raw: unknown): ChatContext | undefined {
     )
     .slice(0, 40);
 
-  return items.length > 0 ? { known_templates: items } : undefined;
+  if (items.length === 0 && !surface) return undefined;
+  return { known_templates: items, surface };
 }
 
 export default {

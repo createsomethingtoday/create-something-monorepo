@@ -177,6 +177,64 @@ const CHAT_STYLES = `
 }
 ` + TEMPLATE_CARD_STYLES;
 
+// Standardized 16px stroke icons (Feather-style geometry, currentColor) —
+// Unicode glyphs render inconsistently across platforms/fonts.
+function ChatIcon({ name }: { name: 'sparkle' | 'refresh' | 'expand' | 'collapse' | 'close' | 'send' }): React.ReactElement {
+  const paths: Record<string, React.ReactNode> = {
+    sparkle: <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" fill="currentColor" stroke="none" />,
+    refresh: (
+      <>
+        <polyline points="1 4 1 10 7 10" />
+        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+      </>
+    ),
+    expand: (
+      <>
+        <polyline points="15 3 21 3 21 9" />
+        <polyline points="9 21 3 21 3 15" />
+        <line x1="21" y1="3" x2="14" y2="10" />
+        <line x1="3" y1="21" x2="10" y2="14" />
+      </>
+    ),
+    collapse: (
+      <>
+        <polyline points="4 14 10 14 10 20" />
+        <polyline points="20 10 14 10 14 4" />
+        <line x1="14" y1="10" x2="21" y2="3" />
+        <line x1="3" y1="21" x2="10" y2="14" />
+      </>
+    ),
+    close: (
+      <>
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </>
+    ),
+    send: (
+      <>
+        <line x1="22" y1="2" x2="11" y2="13" />
+        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+      </>
+    ),
+  };
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {paths[name]}
+    </svg>
+  );
+}
+
 function formatPrice(item: AgentTemplateItem): string {
   if (item.is_free || item.price === 0) return 'Free';
   return typeof item.price === 'number' ? `$${item.price} USD` : '';
@@ -255,6 +313,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [streaming, setStreaming] = useState(false);
   const [followups, setFollowups] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
   // Templates verified by the agent's tools this conversation, keyed by slug.
@@ -334,7 +393,12 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           signal: controller.signal,
           body: JSON.stringify({
             messages: history.map((message) => ({ role: message.role, content: message.content })),
-            context: { known_templates: Array.from(knownTemplatesRef.current.values()).slice(-40) },
+            context: {
+              known_templates: Array.from(knownTemplatesRef.current.values()).slice(-40),
+              // Wide canvases (immersive, or an inline panel rendered wide)
+              // fit larger galleries; the agent sizes displays accordingly.
+              surface: immersive || (panelRef.current?.clientWidth ?? 0) >= 720 ? 'immersive' : 'compact',
+            },
           }),
         });
         if (!response.ok || !response.body) throw new Error(`Agent unavailable (${response.status}).`);
@@ -397,7 +461,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         setStreaming(false);
       }
     },
-    [apiBase, messages, streaming],
+    [apiBase, messages, streaming, immersive],
   );
 
   if (!open) {
@@ -405,7 +469,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       <>
         <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
         <button type="button" className="tmchat-launcher" onClick={() => setOpen(true)}>
-          ✦ {launcherLabel}
+          <ChatIcon name="sparkle" /> {launcherLabel}
         </button>
       </>
     );
@@ -419,13 +483,13 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     <>
       <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
       {immersive ? <div className="tmchat-backdrop" onClick={() => setImmersive(false)} /> : null}
-      <div className={panelClass} role={isInline && !immersive ? undefined : 'dialog'} aria-label={title}>
+      <div ref={panelRef} className={panelClass} role={isInline && !immersive ? undefined : 'dialog'} aria-label={title}>
         <div className="tmchat-header">
           <span className="tmchat-header-title">{title}</span>
           <div className="tmchat-header-actions">
             {messages.length > 0 ? (
               <button type="button" className="tmchat-iconbtn" aria-label="New chat" title="New chat" onClick={resetChat}>
-                ↺
+                <ChatIcon name="refresh" />
               </button>
             ) : null}
             <button
@@ -435,7 +499,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               title={immersive ? 'Exit fullscreen' : 'Expand'}
               onClick={() => setImmersive((current) => !current)}
             >
-              {immersive ? '⤡' : '⤢'}
+              <ChatIcon name={immersive ? 'collapse' : 'expand'} />
             </button>
             {!isInline || immersive ? (
               <button
@@ -447,7 +511,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                   if (!isInline) setOpen(false);
                 }}
               >
-                ×
+                <ChatIcon name="close" />
               </button>
             ) : null}
           </div>

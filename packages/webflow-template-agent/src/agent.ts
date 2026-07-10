@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { SYSTEM_PROMPT } from './prompt.js';
+import { SYSTEM_PROMPT, surfaceNote } from './prompt.js';
 import { AGENT_TOOLS, TemplateToolExecutor, type SearchToolInput } from './tools.js';
 import type { AgentSseEvent, ChatContext, ChatRequestMessage, Env } from './types.js';
 
@@ -43,6 +43,8 @@ export async function runAgentTurn(
   ];
   const knownItemsNote = executor.describeKnownItems();
   if (knownItemsNote) system.push({ type: 'text', text: knownItemsNote });
+  const surface = surfaceNote(context?.surface);
+  if (surface) system.push({ type: 'text', text: surface });
 
   // The client renders text into one bubble per turn; separate the text blocks
   // that surround tool calls so sentences don't run together.
