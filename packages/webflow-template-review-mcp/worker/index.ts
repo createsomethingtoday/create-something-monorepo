@@ -215,25 +215,27 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
                 timeout: SCREENSHOT_NAVIGATION_TIMEOUT_MS,
               });
 
+              // Prime reveal animations on every capture (Webflow IX2/GSAP
+              // elements start at opacity 0 until load/scroll triggers fire):
+              // step through the page so reveals run, then return to the top
+              // and let entrance animations settle. Viewport captures use a
+              // short pass; full-page captures walk the whole (capped) page.
+              // String-form evaluate keeps the worker typecheckable without
+              // the DOM lib — this code runs in the remote browser.
+              await page.evaluate(`(async () => {
+                const step = Math.max(window.innerHeight, 400);
+                const max = Math.min(document.documentElement.scrollHeight, ${SCREENSHOT_MAX_FULL_PAGE_HEIGHT});
+                const steps = Math.min(Math.ceil(max / step), ${full_page ? 16 : 3});
+                for (let i = 1; i <= steps; i++) {
+                  window.scrollTo(0, i * step);
+                  await new Promise((r) => setTimeout(r, 250));
+                }
+                window.scrollTo(0, 0);
+                await new Promise((r) => setTimeout(r, 700));
+              })()`);
+
               let clip: { x: number; y: number; width: number; height: number } | undefined;
               if (full_page) {
-                // Prime scroll-triggered reveals (Webflow IX2/GSAP elements start
-                // at opacity 0 until scrolled into view): step through the page so
-                // the animations fire, then return to the top before capturing.
-                // String-form evaluate keeps the worker typecheckable without the
-                // DOM lib — this code runs in the remote browser, not the Worker.
-                await page.evaluate(`(async () => {
-                  const step = Math.max(window.innerHeight, 400);
-                  const max = Math.min(document.documentElement.scrollHeight, ${SCREENSHOT_MAX_FULL_PAGE_HEIGHT});
-                  const steps = Math.min(Math.ceil(max / step), 16);
-                  for (let i = 1; i <= steps; i++) {
-                    window.scrollTo(0, i * step);
-                    await new Promise((r) => setTimeout(r, 250));
-                  }
-                  window.scrollTo(0, 0);
-                  await new Promise((r) => setTimeout(r, 500));
-                })()`);
-
                 const pageHeight = await page.evaluate('document.documentElement.scrollHeight');
                 clip = {
                   x: 0,
