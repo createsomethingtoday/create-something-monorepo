@@ -1,10 +1,10 @@
-# Agents: Ona Agents
+# Agents: CREATE SOMETHING Agents
 
 ## Agent Entry
 
-Use this package when working on the standalone Ona-styled frontend for CREATE SOMETHING Dify agents.
+Use this package when working on the standalone Performance Lab frontend for CREATE SOMETHING Dify agents.
 
-This package is not the Ona Core rollout environment. It is a staff-only operator shell that adapts Ona-style clarity patterns for CREATE SOMETHING-owned Dify agent workflows.
+This package is not the historical Ona Core rollout environment. It is a staff-only operator shell that applies CREATE SOMETHING Performance & Safety patterns to owned Dify agent workflows.
 
 - Start with `src/routes/agents/+page.svelte` for the roster.
 - Start with `src/routes/agents/[agentId]/+page.svelte` for the operator chat UI.

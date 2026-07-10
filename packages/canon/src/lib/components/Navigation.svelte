@@ -73,6 +73,7 @@
   class="nav-container"
   class:nav-fixed={fixed}
   class:nav-clear={usesPerformanceStyle}
+  class:nav-performance={usesPerformanceStyle}
   aria-label="Primary"
 >
   <div class="nav-inner shell-inner">
@@ -431,9 +432,7 @@
 
   .nav-clear {
     background-blend-mode: plus-darker, normal;
-    background:
-      linear-gradient(#9c9c964d 0% 100%),
-      #ffffffd9;
+    background: linear-gradient(#9c9c964d 0% 100%), #ffffffd9;
     color: var(--color-performance-ink, #090909);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -449,9 +448,7 @@
     border-bottom: 0.5px solid #9c9c9638;
     border-radius: 0;
     background-blend-mode: plus-darker, normal;
-    background:
-      linear-gradient(#9c9c964d 0% 100%),
-      #ffffffd9;
+    background: linear-gradient(#9c9c964d 0% 100%), #ffffffd9;
     box-shadow: none;
   }
 

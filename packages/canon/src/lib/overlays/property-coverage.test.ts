@@ -16,8 +16,8 @@ describe('Canon property overlay coverage', () => {
 
 		assertCanonPropertyOverlayCoverage(report);
 		expect(report.summary).toMatchObject({
-			required: 24,
-			covered: 24,
+			required: 26,
+			covered: 26,
 			missingOverlay: 0,
 			mismatchedSourcePackage: 0,
 			missingModalities: 0,
@@ -33,6 +33,8 @@ describe('Canon property overlay coverage', () => {
 			'@create-something/jandjhomehealth',
 			'@create-something/outerfields',
 			'@create-something/the-stack',
+			'app-governance-dashboard',
+			'app-governance-desktop',
 			'@create-something/clearway',
 			'@create-something/concierge-chat',
 			'@create-something/io',

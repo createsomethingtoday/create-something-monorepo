@@ -30,7 +30,11 @@
   // .learn: Educational (300ms)
   onNavigate((navigation) => {
     if (!document.startViewTransition) return;
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+      return;
 
     return new Promise((resolve) => {
       document.startViewTransition(async () => {
@@ -131,14 +135,18 @@
 
 <LayoutSEO property="lms" />
 
-<Analytics property="lms" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
+<Analytics
+  property="lms"
+  userId={data.user?.id}
+  userOptedOut={data.user?.analytics_opt_out ?? false}
+/>
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="lms" localItems={quickAccessItems} showMobileButton={false} />
 
 <SkipToContent />
 
-<div class="layout theme-light">
+<div class="layout theme-light property-performance">
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".learn"
@@ -152,7 +160,7 @@
     showLogin={true}
     loginHref="/login"
     accountHref="/account"
-    visualStyle="clear"
+    visualStyle="performance"
   />
 
   <main id="main-content" class="content">
@@ -171,7 +179,7 @@
     ]}
     showSocial={true}
     isAuthenticated={!!data.user}
-    visualStyle="clear"
+    visualStyle="performance"
   />
 
   <ModeIndicator current="learn" />
@@ -180,26 +188,26 @@
 <style>
   .layout {
     min-height: 100vh;
-    background: var(--color-clear-porcelain, #f7f7f7);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .content {
     padding-top: 72px;
   }
 
-  :global(.nav-clear .nav-logo) {
+  :global(.nav-performance .nav-logo) {
     max-width: calc(100% - 3.5rem);
     gap: 0.18rem;
   }
 
-  :global(.nav-clear .nav-logo-mark) {
+  :global(.nav-performance .nav-logo-mark) {
     width: 1.6rem;
     height: 1.6rem;
     margin-right: 0.45rem;
   }
 
-  :global(.nav-clear .nav-logo-text),
-  :global(.nav-clear .nav-logo-suffix) {
+  :global(.nav-performance .nav-logo-text),
+  :global(.nav-performance .nav-logo-suffix) {
     position: static !important;
     width: auto !important;
     height: auto !important;
@@ -210,15 +218,15 @@
     white-space: nowrap !important;
   }
 
-  :global(.nav-clear .nav-logo .nav-logo-text) {
-    color: var(--color-clear-onyx, #0a0e19) !important;
+  :global(.nav-performance .nav-logo .nav-logo-text) {
+    color: var(--color-performance-ink, #090909) !important;
     font-size: 1rem !important;
     font-weight: var(--font-bold) !important;
     line-height: 1 !important;
   }
 
-  :global(.nav-clear .nav-logo .nav-logo-suffix) {
-    color: var(--color-clear-grey, #636363) !important;
+  :global(.nav-performance .nav-logo .nav-logo-suffix) {
+    color: var(--color-performance-muted, #5e6268) !important;
     font-family: var(--font-mono) !important;
     font-size: 0.72rem !important;
     font-weight: var(--font-semibold) !important;
@@ -228,21 +236,21 @@
   }
 
   @media (max-width: 480px) {
-    :global(.nav-clear .nav-logo) {
+    :global(.nav-performance .nav-logo) {
       gap: 0.14rem;
     }
 
-    :global(.nav-clear .nav-logo-mark) {
+    :global(.nav-performance .nav-logo-mark) {
       width: 1.35rem;
       height: 1.35rem;
       margin-right: 0.32rem;
     }
 
-    :global(.nav-clear .nav-logo .nav-logo-text) {
+    :global(.nav-performance .nav-logo .nav-logo-text) {
       font-size: 0.9rem !important;
     }
 
-    :global(.nav-clear .nav-logo .nav-logo-suffix) {
+    :global(.nav-performance .nav-logo .nav-logo-suffix) {
       font-size: 0.68rem !important;
     }
   }

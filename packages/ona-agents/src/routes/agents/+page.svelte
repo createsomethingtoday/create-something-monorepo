@@ -8,24 +8,24 @@
 </script>
 
 <svelte:head>
-  <title>Ona Operator Agents</title>
+  <title>CREATE SOMETHING Operator Agents</title>
 </svelte:head>
 
 {#if !data.accessAllowed}
-  <section class="access-shell clear-paper">
+  <section class="access-shell performance-paper">
     <div class="access-copy">
       <div class="eyebrow">Clerk Access</div>
-      <h1 class="section-title">Sign in with Clerk to use the Ona agent shell.</h1>
+      <h1 class="section-title">Sign in with Clerk to use the Performance Lab agent shell.</h1>
       <p class="muted">
-        Agent keys stay server-side. Staff access is required before agent names, credentials,
-        or chat actions are available. {data.accessDetail}
+        Agent keys stay server-side. Staff access is required before agent names, credentials, or
+        chat actions are available. {data.accessDetail}
       </p>
     </div>
     <a class="link-button" href={data.signInUrl}>Staff sign-in</a>
   </section>
 {:else}
   <section class="agents-shell">
-    <header class="agents-header clear-grid">
+    <header class="agents-header performance-grid">
       <div>
         <div class="eyebrow">Workflow Trust Layer</div>
         <h1 class="page-title">Dify agents in one standalone operator surface.</h1>
@@ -68,12 +68,12 @@
 
     <div class="agent-grid">
       {#each data.agents as agent}
-        <a class="agent-row clear-panel" href={`/agents/${agent.id}`}>
+        <a class="agent-row performance-surface" href={`/agents/${agent.id}`}>
           <div class="agent-main">
             <div class="agent-title-line">
               <h2>{agent.label}</h2>
               <span
-                class={`status-pill ${agent.credentialState === 'available' ? 'good' : 'warn'}`}
+                class={`status-pill ${agent.credentialState === 'available' ? 'ready' : 'review'}`}
               >
                 {agent.credentialState === 'available' ? 'Key ready' : 'Needs key'}
               </span>
@@ -102,7 +102,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    width: min(var(--content-width-clear), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance), calc(100% - 2.5rem));
     margin-inline: auto;
   }
 
@@ -126,7 +126,7 @@
     align-items: end;
     min-height: 26rem;
     padding-block: 3rem 2rem;
-    border-bottom: 1px solid var(--color-clear-border);
+    border-bottom: 1px solid var(--color-performance-line);
   }
 
   .agents-header > div:first-child {
@@ -138,7 +138,7 @@
   .agents-header p {
     max-width: 41rem;
     margin: 0;
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-size: 1.08rem;
   }
 
@@ -155,8 +155,8 @@
     min-height: 5.1rem;
     align-content: center;
     padding: 0.8rem;
-    border: 1px solid var(--color-clear-border);
-    border-radius: var(--radius-clear-sm);
+    border: 1px solid var(--color-performance-line);
+    border-radius: var(--radius-performance-sm);
     background: rgba(255, 255, 255, 0.76);
   }
 
@@ -168,7 +168,7 @@
   }
 
   .header-proof span {
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-size: 0.84rem;
   }
 
@@ -177,14 +177,14 @@
     grid-template-columns: minmax(9rem, 0.22fr) repeat(3, minmax(0, 1fr));
     gap: 0.5rem;
     align-items: center;
-    width: min(var(--content-width-clear), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance), calc(100% - 2.5rem));
     margin-inline: auto;
     padding-block: 1rem;
-    border-bottom: 1px solid var(--color-clear-border);
+    border-bottom: 1px solid var(--color-performance-line);
   }
 
   .proof-strip > span {
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     font-weight: 500;
@@ -198,9 +198,9 @@
     min-height: 3.3rem;
     align-content: center;
     padding: 0.62rem 0.72rem;
-    border: 1px solid var(--color-clear-border);
-    border-radius: var(--radius-clear-sm);
-    background: var(--color-clear-panel);
+    border: 1px solid var(--color-performance-line);
+    border-radius: var(--radius-performance-sm);
+    background: var(--color-performance-panel);
   }
 
   .proof-strip strong {
@@ -209,7 +209,7 @@
   }
 
   .proof-strip small {
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-size: 0.78rem;
     line-height: 1.25;
   }
@@ -217,7 +217,7 @@
   .agent-grid {
     display: grid;
     gap: 0.7rem;
-    width: min(var(--content-width-clear), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance), calc(100% - 2.5rem));
     margin-inline: auto;
     padding-block: 1rem 3rem;
   }
@@ -231,8 +231,8 @@
   }
 
   .agent-row:hover {
-    border-color: var(--color-clear-border-strong);
-    background: var(--color-clear-porcelain);
+    border-color: var(--color-performance-line-strong);
+    background: var(--color-performance-paper);
     opacity: 1;
   }
 
@@ -259,14 +259,14 @@
 
   .agent-main p {
     margin: 0;
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
   }
 
   .agent-meta {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     text-transform: uppercase;
@@ -275,17 +275,17 @@
 
   .agent-meta span,
   .agent-proof span {
-    border: 1px solid var(--color-clear-border);
-    border-radius: var(--radius-clear-sm);
+    border: 1px solid var(--color-performance-line);
+    border-radius: var(--radius-performance-sm);
     padding: 0.35rem 0.5rem;
-    background: var(--color-clear-panel);
+    background: var(--color-performance-panel);
   }
 
   .agent-proof {
     display: grid;
     gap: 0.65rem;
     align-content: center;
-    color: var(--color-clear-onyx);
+    color: var(--color-performance-ink);
   }
 
   .agent-proof strong {
@@ -295,7 +295,7 @@
 
   .agent-proof span {
     overflow-wrap: anywhere;
-    color: var(--color-clear-grey);
+    color: var(--color-performance-muted);
     font-family: var(--font-mono);
     font-size: 0.72rem;
   }
@@ -314,7 +314,7 @@
     .access-shell,
     .agent-grid,
     .proof-strip {
-      width: min(100% - 1.5rem, var(--content-width-clear));
+      width: min(100% - 1.5rem, var(--content-width-performance));
     }
 
     .agents-header {

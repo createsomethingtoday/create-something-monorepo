@@ -1,4 +1,4 @@
-# Ona Agents Overlay Copy Rules
+# Performance Agents Overlay Copy Rules
 
 Use this file to define project-local language while preserving Canon structure.
 
@@ -6,7 +6,7 @@ Use this file to define project-local language while preserving Canon structure.
 
 - Name the workflow object before the action.
 - Name the owner, evidence, receipt, and next action when a surface asks for trust.
-- Keep state words stable across modalities: `ready`, `review`, `blocked`, `complete`.
+- Keep state words stable across modalities: `controlled`, `ready`, `review`, `stop`.
 - Keep reasoning and policy details off thin displays; summarize the decision and route to the full receipt.
 - Do not rename Canon primitives to project-specific concepts when the primitive behavior is unchanged.
 

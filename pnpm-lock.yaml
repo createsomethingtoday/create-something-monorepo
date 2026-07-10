@@ -2767,6 +2767,9 @@ importers:
 
   packages/ona-agents:
     dependencies:
+      '@create-something/canon':
+        specifier: workspace:*
+        version: link:../canon
       svelte:
         specifier: ^5.41.0
         version: 5.41.0

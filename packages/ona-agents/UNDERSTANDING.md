@@ -1,4 +1,4 @@
-# Understanding: Ona Agents
+# Understanding: CREATE SOMETHING Agents
 
 ## To Understand This Package, Read
 
@@ -10,9 +10,9 @@
 
 ## Boundary
 
-This package is not the Ona Core rollout environment. It is a staff-only operator shell that adapts Ona-style clarity patterns for CREATE SOMETHING-owned Dify agent workflows.
+This package is not the historical Ona Core rollout environment. It is a staff-only operator shell that applies the owned Performance Lab design to CREATE SOMETHING Dify agent workflows.
 
-This package is also not Abundance Concierge. It does not own nurse intake, D1/R2 session persistence, Indeed writeback, or Abundance-specific cookies. It exists to give CREATE SOMETHING operators an Ona-styled frontend for Dify agents while keeping Dify keys and proof events server-side.
+This package is also not Abundance Concierge. It does not own nurse intake, D1/R2 session persistence, Indeed writeback, or Abundance-specific cookies. It gives CREATE SOMETHING operators a Performance & Safety frontend for Dify agents while keeping Dify keys and proof events server-side.
 
 ## Agent Legibility Contract
 

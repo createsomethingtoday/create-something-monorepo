@@ -251,7 +251,11 @@
   }
 </script>
 
-<footer class="footer" class:footer-clear={usesPerformanceStyle}>
+<footer
+  class="footer"
+  class:footer-clear={usesPerformanceStyle}
+  class:footer-performance={usesPerformanceStyle}
+>
   <!-- Newsletter Section (Optional) -->
   {#if showNewsletter}
     <section id="newsletter" class="py-20 px-6">

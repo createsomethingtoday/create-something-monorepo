@@ -79,10 +79,7 @@
 
   <!-- Progress Bar -->
   <div class="progress-container">
-    <div
-      class="progress-bar"
-      style="width: {(lessonNumber / totalLessons) * 100}%"
-    ></div>
+    <div class="progress-bar" style="width: {(lessonNumber / totalLessons) * 100}%"></div>
   </div>
 
   <!-- Lesson Header -->
@@ -108,8 +105,8 @@
       <div class="placeholder-content">
         <h2>Coming Soon</h2>
         <p>
-          This lesson's content is being developed. For now, you can navigate through the lesson structure
-          to understand the path architecture.
+          This lesson's content is being developed. For now, you can navigate through the lesson
+          structure to understand the path architecture.
         </p>
 
         <h3>What you'll learn:</h3>
@@ -160,20 +157,12 @@
         <span>Lesson Completed</span>
       </div>
       {#if nextLesson}
-        <a href="/paths/{path.id}/{nextLesson.id}" class="btn-primary">
-          Continue to Next Lesson
-        </a>
+        <a href="/paths/{path.id}/{nextLesson.id}" class="btn-primary"> Continue to Next Lesson </a>
       {:else}
-        <a href="/paths/{path.id}" class="btn-secondary">
-          View Path Overview
-        </a>
+        <a href="/paths/{path.id}" class="btn-secondary"> View Path Overview </a>
       {/if}
     {:else}
-      <button
-        class="btn-primary"
-        onclick={handleCompleteLesson}
-        disabled={isCompleting}
-      >
+      <button class="btn-primary" onclick={handleCompleteLesson} disabled={isCompleting}>
         {isCompleting ? 'Completing...' : nextLesson ? 'Complete & Continue' : 'Complete Lesson'}
       </button>
     {/if}
@@ -191,25 +180,25 @@
   }
 
   .breadcrumb-link {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     transition: color var(--duration-micro) var(--ease-standard);
   }
 
   .breadcrumb-link:hover {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .breadcrumb-separator {
-    color: var(--color-clear-grey-quiet, #818181);
+    color: var(--color-performance-muted, #5e6268);
   }
 
   .breadcrumb-current {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .progress-container {
     height: 2px;
-    background: var(--color-clear-border, #e1e1e1);
+    background: var(--color-performance-line, #d7d7d2);
     border-radius: var(--radius-full);
     margin-bottom: var(--space-lg);
     overflow: hidden;
@@ -217,7 +206,7 @@
 
   .progress-bar {
     height: 100%;
-    background: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-ink, #090909);
     transition: width var(--duration-complex) var(--ease-standard);
   }
 
@@ -229,12 +218,12 @@
   }
 
   .lesson-meta {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: var(--text-body-sm);
   }
 
   .lesson-title {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: var(--text-display);
     font-weight: var(--font-medium);
     line-height: 0.98;
@@ -245,7 +234,7 @@
   .lesson-description {
     max-width: 48rem;
     font-size: var(--text-body-lg);
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     line-height: var(--leading-relaxed);
   }
 
@@ -253,7 +242,7 @@
     width: min(56rem, calc(100% - 2.5rem));
     margin-inline: auto;
     padding: clamp(3rem, 8vw, 5rem) 0 clamp(4rem, 8vw, 6rem);
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .lesson-content {
@@ -262,9 +251,9 @@
 
   .placeholder-content {
     padding: var(--space-xl);
-    border-radius: var(--radius-clear-md, 8px);
-    background: var(--color-clear-panel, #ffffff);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-performance-md, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .placeholder-content h2 {
@@ -280,7 +269,7 @@
 
   .placeholder-content p {
     font-size: var(--text-body);
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     line-height: var(--leading-relaxed);
     margin-bottom: var(--space-md);
   }
@@ -289,13 +278,13 @@
   .prose {
     font-size: var(--text-body);
     line-height: var(--leading-relaxed);
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .prose :global(h1) {
     font-size: var(--text-h1);
     font-weight: var(--font-medium);
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     margin: var(--space-xl) 0 var(--space-md);
   }
 
@@ -306,10 +295,10 @@
   .prose :global(h2) {
     font-size: var(--text-h2);
     font-weight: var(--font-medium);
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     margin: var(--space-lg) 0 var(--space-sm);
     padding-top: var(--space-md);
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .prose :global(h2:first-child) {
@@ -321,7 +310,7 @@
   .prose :global(h3) {
     font-size: var(--text-h3);
     font-weight: var(--font-semibold);
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     margin: var(--space-md) 0 var(--space-sm);
   }
 
@@ -330,7 +319,7 @@
   }
 
   .prose :global(strong) {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-weight: var(--font-semibold);
   }
 
@@ -347,9 +336,9 @@
   .prose :global(blockquote) {
     margin: var(--space-md) 0;
     padding: var(--space-md);
-    border-left: 3px solid var(--color-clear-onyx, #0a0e19);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-grey, #636363);
+    border-left: 3px solid var(--color-performance-ink, #090909);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-muted, #5e6268);
   }
 
   .prose :global(.learning-figure) {
@@ -357,9 +346,9 @@
     gap: var(--space-sm);
     margin: var(--space-lg) 0;
     padding: var(--space-md);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-md, 8px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-md, 4px);
+    background: var(--color-performance-panel, #ffffff);
   }
 
   .prose :global(.learning-figure picture) {
@@ -371,13 +360,13 @@
     display: block;
     width: 100%;
     height: auto;
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-porcelain, #f9f9f9);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .prose :global(.learning-figure figcaption) {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: var(--text-body-sm);
     line-height: var(--leading-relaxed);
   }
@@ -393,16 +382,16 @@
     font-family: var(--font-mono);
     font-size: 0.9em;
     padding: 0.2em 0.4em;
-    background: var(--color-clear-porcelain-soft, #f2f2f2);
-    border-radius: var(--radius-clear-sm, 4px);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-court, #e6e6e0);
+    border-radius: var(--radius-performance-sm, 4px);
+    color: var(--color-performance-ink, #090909);
   }
 
   .prose :global(pre) {
     margin: var(--space-md) 0;
     padding: var(--space-md);
-    background: var(--color-clear-onyx, #0a0e19);
-    border-radius: var(--radius-clear-md, 8px);
+    background: var(--color-performance-ink, #090909);
+    border-radius: var(--radius-performance-md, 4px);
     overflow-x: auto;
   }
 
@@ -416,36 +405,36 @@
     width: 100%;
     margin: var(--space-md) 0;
     border-collapse: collapse;
-    background: var(--color-clear-panel, #ffffff);
+    background: var(--color-performance-panel, #ffffff);
   }
 
   .prose :global(th),
   .prose :global(td) {
     padding: var(--space-sm);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     text-align: left;
   }
 
   .prose :global(th) {
-    background: var(--color-clear-porcelain-soft, #f2f2f2);
+    background: var(--color-performance-court, #e6e6e0);
     font-weight: var(--font-semibold);
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .prose :global(hr) {
     margin: var(--space-lg) 0;
     border: none;
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .prose :global(a) {
-    color: var(--color-clear-ocean, #0048ff);
+    color: var(--color-performance-signal, #0057b8);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 
   .prose :global(a:hover) {
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .lesson-nav {
@@ -454,7 +443,7 @@
     gap: var(--space-md);
     margin-bottom: var(--space-xl);
     padding-top: var(--space-xl);
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .nav-button {
@@ -462,17 +451,17 @@
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-md);
-    border-radius: var(--radius-clear-md, 8px);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    background: var(--color-clear-panel, #ffffff);
+    border-radius: var(--radius-performance-md, 4px);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #ffffff);
     transition:
       background var(--duration-micro) var(--ease-standard),
       border-color var(--duration-micro) var(--ease-standard);
   }
 
   .nav-button:hover {
-    border-color: var(--color-clear-border-strong, #cecece);
-    background: var(--color-clear-porcelain-soft, #f2f2f2);
+    border-color: var(--color-performance-line-strong, #9c9c96);
+    background: var(--color-performance-court, #e6e6e0);
   }
 
   .nav-button.center {
@@ -482,12 +471,12 @@
   .nav-arrow {
     display: flex;
     align-items: center;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
   }
 
   .nav-label {
     font-size: var(--text-caption);
-    color: var(--color-clear-grey-quiet, #818181);
+    color: var(--color-performance-muted, #5e6268);
     text-transform: uppercase;
     letter-spacing: 0;
     margin-bottom: 0.25rem;
@@ -495,7 +484,7 @@
 
   .nav-title {
     font-size: var(--text-body-sm);
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .completion-section {
@@ -506,9 +495,9 @@
 
   .btn-primary {
     padding: var(--space-md) var(--space-lg);
-    border-radius: var(--radius-clear-sm, 4px);
-    border: 1px solid var(--color-clear-onyx, #0a0e19);
-    background: var(--color-clear-onyx, #0a0e19);
+    border-radius: var(--radius-performance-sm, 4px);
+    border: 1px solid var(--color-performance-ink, #090909);
+    background: var(--color-performance-ink, #090909);
     color: #ffffff;
     font-size: var(--text-body);
     font-weight: var(--font-medium);
@@ -529,10 +518,10 @@
 
   .btn-secondary {
     padding: var(--space-md) var(--space-lg);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    color: var(--color-clear-onyx, #0a0e19);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    color: var(--color-performance-ink, #090909);
     font-size: var(--text-body);
     font-weight: var(--font-medium);
     transition:
@@ -542,8 +531,8 @@
   }
 
   .btn-secondary:hover {
-    border-color: var(--color-clear-border-strong, #cecece);
-    background: var(--color-clear-porcelain-soft, #f2f2f2);
+    border-color: var(--color-performance-line-strong, #9c9c96);
+    background: var(--color-performance-court, #e6e6e0);
   }
 
   .completed-indicator {

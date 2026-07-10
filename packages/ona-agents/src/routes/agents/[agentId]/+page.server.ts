@@ -10,7 +10,7 @@ import {
 } from '$lib/server/dify/agent-registry';
 
 type OperatorMessageRole = 'assistant' | 'user';
-type ProofTone = 'good' | 'warn' | 'danger';
+type ProofTone = 'ready' | 'review' | 'stop';
 
 interface OperatorChatMessage {
   id: string;
@@ -68,7 +68,7 @@ function getInitialMessages(agent: DifyOperatorAgent): OperatorChatMessage[] {
   return [
     createOperatorMessage({
       role: 'assistant',
-      author: 'Ona shell',
+      author: 'Performance Lab shell',
       body: `${agent.label} is selected. Ask for the next operator action, required proof, or a concise handoff brief.`,
       state: 'ready'
     })
@@ -121,7 +121,7 @@ function readString(formData: FormData, key: string) {
 }
 
 function buildProofEvents(output: DifyChatOutput, agent: DifyOperatorAgent): OperatorProofEvent[] {
-  const statusTone: ProofTone = output.ok ? 'good' : output.skipped ? 'warn' : 'danger';
+  const statusTone: ProofTone = output.ok ? 'ready' : output.skipped ? 'review' : 'stop';
   const proofEvents: OperatorProofEvent[] = [
     {
       label: 'Dify proxy',
@@ -136,8 +136,8 @@ function buildProofEvents(output: DifyChatOutput, agent: DifyOperatorAgent): Ope
     {
       label: 'Runtime',
       value: `${output.durationMs} ms`,
-      tone: output.durationMs > 30_000 ? 'warn' : 'good',
-      detail: 'Duration measured by the Ona agent proxy.'
+      tone: output.durationMs > 30_000 ? 'review' : 'ready',
+      detail: 'Duration measured by the governed agent proxy.'
     }
   ];
 
@@ -145,7 +145,7 @@ function buildProofEvents(output: DifyChatOutput, agent: DifyOperatorAgent): Ope
     proofEvents.push({
       label: 'Message ID',
       value: output.messageId,
-      tone: 'good',
+      tone: 'ready',
       detail: 'Use this ID with Dify monitoring or Langfuse trace inspection.'
     });
   }
@@ -154,7 +154,7 @@ function buildProofEvents(output: DifyChatOutput, agent: DifyOperatorAgent): Ope
     proofEvents.push({
       label: 'Conversation ID',
       value: output.conversationId,
-      tone: 'good',
+      tone: 'ready',
       detail: 'The browser stores only the opaque conversation handle.'
     });
   }
@@ -163,7 +163,7 @@ function buildProofEvents(output: DifyChatOutput, agent: DifyOperatorAgent): Ope
     proofEvents.push({
       label: 'Tool call',
       value: toolCall.tool,
-      tone: toolCall.hasObservation ? 'good' : 'warn',
+      tone: toolCall.hasObservation ? 'ready' : 'review',
       detail: toolCall.hasObservation
         ? `Observation captured server-side (${toolCall.observationBytes} bytes).`
         : 'Tool name was reported without an observation payload.'

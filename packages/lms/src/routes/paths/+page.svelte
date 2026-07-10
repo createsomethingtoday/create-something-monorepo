@@ -15,8 +15,8 @@
     <p class="paths-kicker">Operator learning</p>
     <h1 class="page-title">Operator Workflow Paths</h1>
     <p class="page-subtitle">
-      Use the Codex app to create your first MCP-backed workflow, then use Canon to make the workflow
-      visible through maps, boundaries, gates, receipts, and handoff artifacts.
+      Use the Codex app to create your first MCP-backed workflow, then use Canon to make the
+      workflow visible through maps, boundaries, gates, receipts, and handoff artifacts.
     </p>
   </header>
 
@@ -33,7 +33,9 @@
 
         <div class="path-meta">
           <span>{path.lessons.length} lessons</span>
-          <span>{path.id === 'codex-mcp' ? 'Codex MCP-building skill' : 'Canon learning images'}</span>
+          <span
+            >{path.id === 'codex-mcp' ? 'Codex MCP-building skill' : 'Canon learning images'}</span
+          >
           <span>Practical operator workflow</span>
         </div>
       </a>
@@ -46,7 +48,7 @@
     width: min(56rem, calc(100% - 2.5rem));
     margin-inline: auto;
     padding: clamp(3rem, 8vw, 5rem) 0;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
   }
 
   .paths-hero {
@@ -59,10 +61,10 @@
     width: fit-content;
     margin: 0;
     padding: 0.35rem 0.6rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-grey, #636363);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.76rem;
     font-weight: var(--font-semibold);
@@ -73,7 +75,7 @@
   .page-title {
     max-width: 12ch;
     margin: 0;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: var(--text-h1);
     font-weight: var(--font-medium);
     line-height: 1.02;
@@ -83,7 +85,7 @@
   .page-subtitle {
     max-width: 46rem;
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: var(--text-body-lg);
     line-height: 1.55;
   }
@@ -97,18 +99,18 @@
   .path-row {
     display: block;
     padding: var(--space-lg);
-    border-radius: var(--radius-clear-md, 8px);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    border-radius: var(--radius-performance-md, 4px);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
     transition:
       border-color var(--duration-micro) var(--ease-standard),
       background var(--duration-micro) var(--ease-standard);
   }
 
   .path-row:hover {
-    border-color: var(--color-clear-border-strong, #cecece);
-    background: var(--color-clear-porcelain-soft, #f2f2f2);
+    border-color: var(--color-performance-line-strong, #9c9c96);
+    background: var(--color-performance-court, #e6e6e0);
   }
 
   .path-header {
@@ -131,12 +133,12 @@
   }
 
   .path-subtitle {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: var(--text-body-sm);
   }
 
   .path-description {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     margin-bottom: var(--space-sm);
     line-height: var(--leading-relaxed);
   }
@@ -145,7 +147,7 @@
     flex-wrap: wrap;
     display: flex;
     gap: var(--space-md);
-    color: var(--color-clear-grey-quiet, #818181);
+    color: var(--color-performance-muted, #5e6268);
     font-size: var(--text-body-sm);
   }
 

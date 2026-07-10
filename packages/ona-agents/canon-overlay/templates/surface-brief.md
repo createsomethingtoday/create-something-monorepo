@@ -1,12 +1,12 @@
 # Surface Brief
 
-Overlay: Ona Agents Overlay (overlay.ona-agents)
+Overlay: Performance Agents Overlay (compatibility ID: overlay.ona-agents)
 
 ## Surface
 
 - Name:
 - Modality: web | chat | app | voice | glasses
-- Owner: ona-team
+- Owner: performance-lab
 - Source path:
 
 ## Workflow Need

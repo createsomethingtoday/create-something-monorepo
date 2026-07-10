@@ -2,11 +2,11 @@
   import { ArrowRight } from 'lucide-svelte';
   import { PATHS } from '$content/paths';
   import {
-    ClearCtaBand,
-    ClearPlatformHero,
-    ClearProofStrip,
-    ClearStateRows
-  } from '$canon/components/clear';
+    PerformanceCtaBand,
+    PerformancePlatformHero,
+    PerformanceProofStrip,
+    PerformanceStateRows
+  } from '$canon/components/performance';
 
   const featuredCourse = PATHS[0] ?? null;
   const featuredLessons = featuredCourse?.lessons ?? [];
@@ -16,10 +16,19 @@
   const totalLessons = PATHS.reduce((count, path) => count + path.lessons.length, 0);
 
   const proofItems = [
-    { value: `${PATHS.length} paths`, label: `${totalLessons} lessons from workflow creation to visible proof` },
+    {
+      value: `${PATHS.length} paths`,
+      label: `${totalLessons} lessons from workflow creation to visible proof`
+    },
     { value: 'RapidAPI', label: 'Use live business data without building a data source first' },
-    { value: 'Canon images', label: 'Turn workflow boundaries, gates, and receipts into learning artifacts' },
-    { value: 'MCP skill', label: 'Use Codex MCP-building guidance as the planning and review loop' },
+    {
+      value: 'Canon images',
+      label: 'Turn workflow boundaries, gates, and receipts into learning artifacts'
+    },
+    {
+      value: 'MCP skill',
+      label: 'Use Codex MCP-building guidance as the planning and review loop'
+    },
     { value: 'Operator loop', label: 'Search, normalize, inspect, prove, decide, then hand off' }
   ];
 
@@ -28,19 +37,22 @@
       tone: 'run' as const,
       state: 'Prompt',
       label: 'Start in the Codex app',
-      detail: 'Use the Codex app and its MCP-building skill to turn a concrete operator question into a narrow tool contract.'
+      detail:
+        'Use the Codex app and its MCP-building skill to turn a concrete operator question into a narrow tool contract.'
     },
     {
       tone: 'wait' as const,
       state: 'Create',
       label: 'Wrap the data source',
-      detail: 'Create the MCP server, connect one RapidAPI endpoint, and keep the schema inspectable.'
+      detail:
+        'Create the MCP server, connect one RapidAPI endpoint, and keep the schema inspectable.'
     },
     {
       tone: 'stop' as const,
       state: 'Prove',
       label: 'Make the work visible',
-      detail: 'Use Canon image rules to show the object, boundary, policy gate, receipt, owner, and next action.'
+      detail:
+        'Use Canon image rules to show the object, boundary, policy gate, receipt, owner, and next action.'
     }
   ];
 
@@ -48,17 +60,20 @@
     {
       label: 'Path 01',
       title: 'Learn Codex through MCP creation',
-      detail: 'Codex is the working environment, and the MCP-building skill is the guide for creating a capability Codex can call.'
+      detail:
+        'Codex is the working environment, and the MCP-building skill is the guide for creating a capability Codex can call.'
     },
     {
       label: 'Path 02',
       title: 'Learn Canon through workflow images',
-      detail: 'Turn the workflow into maps, MCP boundaries, policy gates, receipts, and handoff images that operators can inspect.'
+      detail:
+        'Turn the workflow into maps, MCP boundaries, policy gates, receipts, and handoff images that operators can inspect.'
     },
     {
       label: 'Outcome',
       title: 'Ship with proof',
-      detail: 'Leave with a working capability and the visual evidence needed to explain, govern, and extend it.'
+      detail:
+        'Leave with a working capability and the visual evidence needed to explain, govern, and extend it.'
     }
   ];
 </script>
@@ -71,12 +86,12 @@
   />
 </svelte:head>
 
-<div class="learn-home">
-  <ClearPlatformHero
+<div class="learn-home property-performance">
+  <PerformancePlatformHero
     eyebrow="CREATE SOMETHING Learn"
     title="Build workflows operators can run and explain"
     description="Practical paths for business owners becoming operators. Start in the OpenAI ecosystem with the Codex app, create a RapidAPI-backed MCP, then use Canon image rules to make boundaries, policy, proof, and handoff visible."
-    proofItems={proofItems}
+    {proofItems}
     metaItems={[
       { label: 'Paths', value: `${PATHS.length} operator tracks` },
       { label: 'Pace', value: 'About 175 minutes' },
@@ -93,21 +108,28 @@
     {/snippet}
 
     {#snippet aside()}
-      <ClearStateRows
+      <PerformanceStateRows
         eyebrow="Learning loop"
         title="Prompt, create, prove"
         states={workflowStates}
         receiptLabel="Final receipt"
-        receipts={['MCP-building skill prompt', 'server scaffold', 'RapidAPI tool schema', 'Canon workflow image']}
+        receipts={[
+          'MCP-building skill prompt',
+          'server scaffold',
+          'RapidAPI tool schema',
+          'Canon workflow image'
+        ]}
         ariaLabel="Course workflow states"
       />
     {/snippet}
-  </ClearPlatformHero>
+  </PerformancePlatformHero>
 
   <section class="learn-section" aria-labelledby="course-outline-title">
     <div class="learn-section__header">
       <span>Course outline</span>
-      <h2 id="course-outline-title">Two operator paths: create the workflow, then make it visible.</h2>
+      <h2 id="course-outline-title">
+        Two operator paths: create the workflow, then make it visible.
+      </h2>
     </div>
 
     {#if PATHS.length}
@@ -151,18 +173,30 @@
       <span>How it lands</span>
       <h2 id="proof-title">The course is judged by artifacts, not vibes.</h2>
     </div>
-    <ClearProofStrip
+    <PerformanceProofStrip
       items={[
-        { value: 'Tool contract', label: 'Input schema, output shape, API limits, and failure behavior are explicit.' },
-        { value: 'Local config', label: 'Codex can find and run the server from your environment.' },
-        { value: 'Workflow image', label: 'The object, MCP boundary, policy gate, owner, and receipt are visible.' },
-        { value: 'Next workflow', label: 'You leave with a scoped extension instead of a vague automation roadmap.' }
+        {
+          value: 'Tool contract',
+          label: 'Input schema, output shape, API limits, and failure behavior are explicit.'
+        },
+        {
+          value: 'Local config',
+          label: 'Codex can find and run the server from your environment.'
+        },
+        {
+          value: 'Workflow image',
+          label: 'The object, MCP boundary, policy gate, owner, and receipt are visible.'
+        },
+        {
+          value: 'Next workflow',
+          label: 'You leave with a scoped extension instead of a vague automation roadmap.'
+        }
       ]}
       ariaLabel="Course proof artifacts"
     />
   </section>
 
-  <ClearCtaBand
+  <PerformanceCtaBand
     eyebrow="Get started"
     title="Build the smallest useful workflow first."
     description="Start with one Codex prompt, one endpoint, one schema, and one MCP call. Then use Canon to make the operating boundary visible enough to govern."
@@ -172,18 +206,18 @@
       <a class="btn btn-primary" href={firstLessonHref}>Start lesson 1</a>
       <a class="btn btn-secondary" href="/paths">View paths</a>
     {/snippet}
-  </ClearCtaBand>
+  </PerformanceCtaBand>
 </div>
 
 <style>
   .learn-home {
-    background: var(--color-clear-porcelain, #f7f7f7);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .learn-section {
     display: grid;
     gap: 1.25rem;
-    width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
     margin-inline: auto;
     padding-block: 3.5rem;
   }
@@ -200,7 +234,7 @@
 
   .learn-section__header span,
   .course-panel__summary span {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-mono);
     font-size: 0.76rem;
     font-weight: var(--font-semibold);
@@ -211,7 +245,7 @@
 
   .learn-section__header h2 {
     margin: 0;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: clamp(2rem, 4vw, 3.15rem);
     font-weight: var(--font-medium);
     letter-spacing: 0;
@@ -229,15 +263,15 @@
     grid-template-columns: minmax(16rem, 0.72fr) minmax(0, 1.28fr);
     gap: 1.25rem;
     padding: 1rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-md, 8px);
-    background: var(--color-clear-panel, #ffffff);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-md, 4px);
+    background: var(--color-performance-panel, #ffffff);
     color: inherit;
     text-decoration: none;
   }
 
   .course-panel:hover {
-    border-color: var(--color-clear-border-strong, #cecece);
+    border-color: var(--color-performance-line-strong, #9c9c96);
   }
 
   .course-panel__summary {
@@ -245,16 +279,15 @@
     align-content: start;
     gap: 0.75rem;
     padding: 0.85rem;
-    border-radius: var(--radius-clear-sm, 4px);
+    border-radius: var(--radius-performance-sm, 4px);
     background:
-      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 2.8rem
-        2.8rem,
-      var(--color-clear-porcelain-soft, #f2f2f2);
+      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 2.8rem 2.8rem,
+      var(--color-performance-court, #e6e6e0);
   }
 
   .course-panel__summary h3 {
     margin: 0;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: clamp(1.65rem, 3vw, 2.5rem);
     font-weight: var(--font-medium);
     letter-spacing: 0;
@@ -263,7 +296,7 @@
 
   .course-panel__summary p {
     margin: 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 1rem;
     line-height: 1.52;
   }
@@ -283,8 +316,8 @@
     align-items: start;
     min-height: 4.6rem;
     padding: 0.85rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: var(--radius-clear-sm, 4px);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-sm, 4px);
     background: rgba(255, 255, 255, 0.9);
   }
 
@@ -301,14 +334,14 @@
     place-items: center;
     min-width: 2.1rem;
     min-height: 2.1rem;
-    border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-onyx, #0a0e19);
+    border-radius: var(--radius-performance-sm, 4px);
+    background: var(--color-performance-ink, #090909);
     color: #ffffff;
   }
 
   .lesson-list strong {
     display: block;
-    color: var(--color-clear-onyx, #0a0e19);
+    color: var(--color-performance-ink, #090909);
     font-size: 1rem;
     font-weight: var(--font-medium);
     line-height: 1.25;
@@ -316,13 +349,13 @@
 
   .lesson-list p {
     margin: 0.26rem 0 0;
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.92rem;
     line-height: 1.42;
   }
 
   .lesson-list__duration {
-    color: var(--color-clear-grey, #636363);
+    color: var(--color-performance-muted, #5e6268);
     white-space: nowrap;
   }
 
@@ -334,7 +367,7 @@
 
   @media (max-width: 640px) {
     .learn-section {
-      width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+      width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
       padding-block: 2.5rem;
     }
 

@@ -8,7 +8,26 @@ const ACTIVE_PROPERTY_SOURCE_DIRECTORIES = [
 	'packages/agency/src',
 	'packages/ltd/src',
 	'packages/io/src',
-	'packages/space/src'
+	'packages/space/src',
+	'packages/lms/src',
+	'packages/ona-agents/src'
+] as const;
+
+const OWNED_PERFORMANCE_OVERLAY_FILES = [
+	'packages/canon/src/lib/overlays/project-template/theme.css',
+	'packages/canon/src/lib/overlays/project-template/tokens.json',
+	'packages/agency/canon-overlay/theme.css',
+	'packages/agency/canon-overlay/tokens.json',
+	'packages/ltd/canon-overlay/theme.css',
+	'packages/ltd/canon-overlay/tokens.json',
+	'packages/io/canon-overlay/theme.css',
+	'packages/io/canon-overlay/tokens.json',
+	'packages/space/canon-overlay/theme.css',
+	'packages/space/canon-overlay/tokens.json',
+	'packages/lms/canon-overlay/theme.css',
+	'packages/lms/canon-overlay/tokens.json',
+	'packages/ona-agents/canon-overlay/theme.css',
+	'packages/ona-agents/canon-overlay/tokens.json'
 ] as const;
 
 function collectSourceFiles(directory: string): string[] {
@@ -192,6 +211,46 @@ describe('Canon Performance Lab visual regression scenarios', () => {
 				expect(source, file).not.toMatch(/--(?:color|radius|shadow|content-width)-clear(?:-|\b)/);
 				expect(source, file).not.toMatch(/visualStyle\s*=\s*["']clear["']/);
 			}
+		}
+	});
+
+	it('keeps owned property overlays on Performance tokens', () => {
+		for (const relativePath of OWNED_PERFORMANCE_OVERLAY_FILES) {
+			const source = readFileSync(join(REPO_ROOT, relativePath), 'utf8');
+			expect(source, relativePath).not.toMatch(/--(?:color|radius|shadow|content-width)-clear(?:-|\b)/);
+			expect(source, relativePath).not.toMatch(/\{(?:color|radius)\.clear(?:\.|\})/);
+		}
+	});
+
+	it('keeps public examples and preferred DOM hooks on Performance naming', () => {
+		const readme = readFileSync(join(REPO_ROOT, 'packages/canon/README.md'), 'utf8');
+		const evidence = readFileSync(
+			join(REPO_ROOT, 'packages/canon/src/routes/visual-evidence/[group]/+page.svelte'),
+			'utf8'
+		);
+		const navigation = readFileSync(
+			join(REPO_ROOT, 'packages/canon/src/lib/components/Navigation.svelte'),
+			'utf8'
+		);
+		const footer = readFileSync(
+			join(REPO_ROOT, 'packages/canon/src/lib/components/Footer.svelte'),
+			'utf8'
+		);
+
+		expect(readme).toContain('PerformanceDecisionPanel');
+		expect(readme).not.toContain('<ClearDecisionPanel');
+		expect(readme).not.toContain('visualStyle="clear"');
+		expect(evidence).not.toMatch(/\bClear[A-Z]/);
+		expect(navigation).toContain('class:nav-performance={usesPerformanceStyle}');
+		expect(footer).toContain('class:footer-performance={usesPerformanceStyle}');
+	});
+
+	it('keeps the operator shell independent of Ona fonts and visible Ona naming', () => {
+		const sourceDirectory = join(REPO_ROOT, 'packages/ona-agents/src');
+		for (const file of collectSourceFiles(sourceDirectory)) {
+			const source = readFileSync(file, 'utf8');
+			expect(source, file).not.toContain('https://ona.com');
+			expect(source, file).not.toMatch(/\bOna\b/);
 		}
 	});
 

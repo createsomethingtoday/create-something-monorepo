@@ -1,4 +1,4 @@
-# Ona Agents Overlay Surface Policy
+# Performance Agents Overlay Surface Policy
 
 This policy keeps @create-something/ona-agents overlays portable across web, chat, app, voice, glasses without forking Canon.
 
