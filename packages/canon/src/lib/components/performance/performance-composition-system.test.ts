@@ -86,7 +86,8 @@ describe('PerformanceCampaignOpening', () => {
 		);
 
 		expect(source).toContain('--performance-campaign-scrim-copy: rgba(9, 9, 9, 0.94)');
-		expect(source).toContain('--performance-campaign-scrim-mid: rgba(9, 9, 9, 0.76)');
+		expect(source).toContain('--performance-campaign-scrim-mid: rgba(9, 9, 9, 0.24)');
+		expect(source).toContain('--performance-campaign-scrim-edge: rgba(9, 9, 9, 0)');
 		expect(source).toContain('linear-gradient(90deg,');
 		expect(source).toContain('linear-gradient(0deg,');
 		expect(source).toContain('@media (max-width: 47.99rem)');
@@ -121,7 +122,10 @@ describe('Performance composition typography', () => {
 
 		const tokens = readFileSync(join(process.cwd(), 'src/lib/styles/tokens.css'), 'utf8');
 		expect(tokens).toContain(
-			'--font-performance-display: "Helvetica Neue", Helvetica, Arial, system-ui'
+			'--font-performance-display: "Satoshi", "Helvetica Neue", Helvetica, Arial, system-ui'
+		);
+		expect(tokens).toContain(
+			'--font-performance-mono: "IBM Plex Mono", "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace'
 		);
 		expect(tokens).toContain('--font-performance-display-weight: 500');
 		expect(tokens).toContain('--tracking-performance-display: -0.03em');
@@ -138,6 +142,15 @@ describe('Performance composition typography', () => {
 			expect(source, component).toContain('font-kerning: normal');
 			expect(source, component).toContain('font-feature-settings: "kern" 1, "liga" 1');
 		}
+	});
+
+	it('loads the approved Performance font sources without importing a client font asset', () => {
+		const source = readFileSync(join(process.cwd(), 'src/lib/styles/performance.css'), 'utf8');
+
+		expect(source).toContain('api.fontshare.com/v2/css');
+		expect(source).toContain('@ibm/plex-mono/css/ibm-plex-mono-all.css');
+		expect(source).toContain('font-family: var(--font-performance-display');
+		expect(source).toContain('--font-mono: var(--font-performance-mono)');
 	});
 
 	it('keeps the shared PerformancePageSection foundation on the same display contract', () => {

@@ -25,6 +25,11 @@ const productsRoute = readFileSync(
 	new URL('../src/routes/products/+page.svelte', import.meta.url),
 	'utf8'
 );
+const bookRoute = readFileSync(new URL('../src/routes/book/+page.svelte', import.meta.url), 'utf8');
+const difyControlPlaneRoute = readFileSync(
+	new URL('../src/routes/dify/mcp-control-plane/+page.svelte', import.meta.url),
+	'utf8'
+);
 const signalProductRoute = readFileSync(
 	new URL('../src/routes/products/signal/+page.svelte', import.meta.url),
 	'utf8'
@@ -122,11 +127,34 @@ test('atlas route labels the story and mapping surfaces distinctly', () => {
 
 test('services route keeps one public Atlas map and removes the example canvas', () => {
 	assert.ok(servicesRoute.includes('<PublicAtlasCanvas'));
+	assert.match(
+		servicesRoute,
+		/<PerformanceContrastChapter[\s\S]*?artifactPlacement="full-width"[\s\S]*?<PublicAtlasCanvas \/>/
+	);
 	assert.equal(servicesRoute.includes('<PublicAtlasStoryCanvas'), false);
 	assert.equal(servicesRoute.includes('storyId="services-marketplace-review-story"'), false);
 	assert.equal(servicesRoute.includes('<PerformanceDecisionPanel'), false);
 	assert.equal(servicesRoute.includes('<PerformanceCtaBand'), false);
 	assert.equal(servicesRoute.includes('<PerformanceCardGrid'), false);
+});
+
+test('public Atlas gives the booking warmup a distinct label and deliberate copy rhythm', () => {
+	assert.ok(agencyEditableCanvas.includes('<span>Mapping warmup</span>'));
+	assert.ok(agencyEditableCanvas.includes('gap: clamp(1.5rem, 3vw, 2.5rem)'));
+	assert.ok(agencyEditableCanvas.includes('max-width: 46rem'));
+	assert.ok(agencyEditableCanvas.includes('font-family: var(--font-mono)'));
+});
+
+test('public Performance routes use the natural water image series', () => {
+	for (const route of [homeRoute, servicesRoute, productsRoute, bookRoute, atlasRoute, difyControlPlaneRoute]) {
+		assert.equal(route.includes('/images/performance-lab/controlled-flow.webp'), false);
+		assert.equal(route.includes('/images/performance-lab/pressure-boundary.webp'), false);
+		assert.equal(route.includes('/images/performance-lab/trace-control-plane.webp'), false);
+	}
+
+	assert.ok(homeRoute.includes('/images/performance-lab/pressure-boundary-natural.webp'));
+	assert.ok(servicesRoute.includes('/images/performance-lab/trace-wake-natural.webp'));
+	assert.ok(productsRoute.includes('/images/performance-lab/controlled-flow-natural.webp'));
 });
 
 test('home route uses the shared canvas kernel as a transparent proof object', () => {

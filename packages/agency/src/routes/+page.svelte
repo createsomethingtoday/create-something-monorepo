@@ -189,8 +189,8 @@
     title="Train the workflow under pressure."
     description="One ordered field sequence keeps the operating principle, measured conditions, and receipt together."
     studies={[{
-      image: '/images/performance-lab/pressure-boundary.webp',
-      mobileImage: '/images/performance-lab/pressure-boundary-mobile.webp',
+      image: '/images/performance-lab/pressure-boundary-natural.webp',
+      mobileImage: '/images/performance-lab/pressure-boundary-natural-mobile.webp',
       alt: 'Black-and-white field study of water meeting a designed boundary.',
       title: 'Train the system before it runs.',
       description: 'Work moves. Governance gives it a channel: map the signal, route the decision, define the stop, and preserve the trace before authority expands.',

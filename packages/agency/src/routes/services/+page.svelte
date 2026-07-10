@@ -123,7 +123,7 @@
     eyebrow="How I Work"
     title="Map the workflow before deciding to build."
     lede="Bring one real handoff your team still protects by hand. Atlas maps the signal, owner, AI boundary, approval pause, stop condition, and proof record before anything touches customers, money, production, or accounts."
-    media={{ src: '/images/performance-lab/pressure-boundary.webp', mobileSrc: '/images/performance-lab/pressure-boundary-mobile.webp', alt: 'Water striking a transparent boundary in a controlled laboratory channel' }}
+    media={{ src: '/images/performance-lab/pressure-boundary-natural.webp', mobileSrc: '/images/performance-lab/pressure-boundary-natural-mobile.webp', alt: 'Black-and-white wave impact against a concrete boundary' }}
     proof={[{ label: 'Boundary', value: 'Named' }, { label: 'Pressure', value: 'Held' }, { label: 'Evidence', value: 'Attached' }]}
   >
     {#snippet actions()}
@@ -140,9 +140,9 @@
     eyebrow="Service condition"
     title="Governance is the channel, not the dam."
     studies={[{
-      image: '/images/performance-lab/trace-control-plane.webp',
-      mobileImage: '/images/performance-lab/trace-control-plane-mobile.webp',
-      alt: 'Black-and-white field study of a wake moving through a controlled channel.',
+      image: '/images/performance-lab/trace-wake-natural.webp',
+      mobileImage: '/images/performance-lab/trace-wake-natural-mobile.webp',
+      alt: 'Aerial black-and-white view of a survey craft leaving a directional wake.',
       title: 'Control the conditions.',
       description: 'The work does not stop moving. It enters a designed boundary where ownership, approval, evidence, and recovery make the next action reliable.',
       principle: 'Every action leaves a wake.',
@@ -166,6 +166,7 @@
     title="See the workflow before deciding to build."
     description="The public Atlas map turns one workflow into a first plan: the systems involved, which signals matter, what AI can handle, where people approve, and what proof records the outcome. It does not touch production systems."
     intervention={{ label: 'Read-only warmup', title: 'Public Atlas canvas', detail: 'Explore the operating path without touching production systems.' }}
+    artifactPlacement="full-width"
   >
     {#snippet artifact()}
       <PublicAtlasCanvas />

@@ -90,9 +90,9 @@
 <style>
 	.performance-campaign-opening {
 		--performance-campaign-scrim-copy: rgba(9, 9, 9, 0.94);
-		--performance-campaign-scrim-mid: rgba(9, 9, 9, 0.76);
-		--performance-campaign-scrim-edge: rgba(9, 9, 9, 0.18);
-		--performance-campaign-scrim-bottom: rgba(9, 9, 9, 0.92);
+		--performance-campaign-scrim-mid: rgba(9, 9, 9, 0.24);
+		--performance-campaign-scrim-edge: rgba(9, 9, 9, 0);
+		--performance-campaign-scrim-bottom: rgba(9, 9, 9, 0.48);
 		position: relative;
 		display: grid;
 		min-height: clamp(38rem, 82svh, 58rem);
@@ -132,12 +132,12 @@
 				rgba(9, 9, 9, 0.99) 0%,
 				var(--performance-campaign-scrim-copy) 36%,
 				var(--performance-campaign-scrim-mid) 58%,
-				rgba(9, 9, 9, 0.42) 76%,
+				rgba(9, 9, 9, 0.04) 76%,
 				var(--performance-campaign-scrim-edge) 100%),
 			linear-gradient(0deg,
 				var(--performance-campaign-scrim-bottom) 0%,
-				rgba(9, 9, 9, 0.48) 48%,
-				rgba(9, 9, 9, 0.12) 100%);
+				rgba(9, 9, 9, 0.08) 48%,
+				rgba(9, 9, 9, 0) 100%);
 	}
 
 	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media {
