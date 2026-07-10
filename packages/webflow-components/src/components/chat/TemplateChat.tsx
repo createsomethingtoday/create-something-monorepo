@@ -192,7 +192,12 @@ const CHAT_STYLES = `
 .tmchat-panel.immersive .tmchat-display-title { font-size: 16px; }
 .tmchat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .tmchat-grid.single { grid-template-columns: 1fr; }
-.tmchat-panel.immersive .tmchat-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+/* Chat displays are curated sets (2-6 items), not a browse grid: two scaled-up
+   columns by default (thumbnails are the product — bigger reads better, and 4
+   items make a clean 2x2). Sets of exactly 3 or 6+ go three-across so rows
+   stay complete. */
+.tmchat-panel.immersive .tmchat-grid { grid-template-columns: repeat(2, minmax(0, 420px)); justify-content: center; gap: 20px; }
+.tmchat-panel.immersive .tmchat-grid.wide { grid-template-columns: repeat(3, minmax(0, 380px)); gap: 16px; }
 .tmchat-panel.immersive .tmchat-grid.single { grid-template-columns: minmax(0, 420px); }
 .tmchat-strip { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
 .tmchat-strip > * { flex: 0 0 220px; }
@@ -287,12 +292,14 @@ const CHAT_STYLES = `
   position: relative; flex: 1 1 auto; min-height: 0; overflow: auto;
   display: flex; justify-content: center; background: #f2f2f2; padding: 0;
 }
-.tmchat-preview-stage.mobile { padding: 20px 16px; }
+.tmchat-preview-stage.mobile, .tmchat-preview-stage.tablet { padding: 20px 16px; }
 .tmchat-preview-frame { border: 0; background: #fff; width: 100%; height: 100%; display: block; }
-.tmchat-preview-stage.mobile .tmchat-preview-frame {
-  width: 390px; max-width: 100%; height: 100%; flex: 0 0 auto;
-  border: 1px solid #d9d9d9; border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.14);
+.tmchat-preview-stage.mobile .tmchat-preview-frame, .tmchat-preview-stage.tablet .tmchat-preview-frame {
+  max-width: 100%; height: 100%; flex: 0 0 auto;
+  border: 1px solid #d9d9d9; box-shadow: 0 12px 40px rgba(0,0,0,0.14);
 }
+.tmchat-preview-stage.mobile .tmchat-preview-frame { width: 390px; border-radius: 20px; }
+.tmchat-preview-stage.tablet .tmchat-preview-frame { width: 768px; border-radius: 14px; }
 .tmchat-preview-loading {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
   color: #757575; font-size: 13px; pointer-events: none;
@@ -301,8 +308,8 @@ const CHAT_STYLES = `
   .tmchat-panel { right: 8px; bottom: 8px; width: calc(100vw - 16px); height: calc(100vh - 16px); }
   .tmchat-panel.immersive { top: 0; bottom: 0; width: 100vw; border-radius: 0; }
   .tmchat-grid, .tmchat-panel.immersive .tmchat-grid { grid-template-columns: 1fr; }
-  .tmchat-preview-stage.mobile { padding: 0; }
-  .tmchat-preview-stage.mobile .tmchat-preview-frame { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+  .tmchat-preview-stage.mobile, .tmchat-preview-stage.tablet { padding: 0; }
+  .tmchat-preview-stage.mobile .tmchat-preview-frame, .tmchat-preview-stage.tablet .tmchat-preview-frame { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .tmchat-panel.entering, .tmchat-backdrop, .tmchat-dots span, .tmchat-caret,
@@ -321,7 +328,7 @@ function ChatIcon({
   name,
   size = 16,
 }: {
-  name: 'sparkle' | 'refresh' | 'expand' | 'collapse' | 'close' | 'down' | 'back' | 'external' | 'desktop' | 'mobile';
+  name: 'sparkle' | 'refresh' | 'expand' | 'collapse' | 'close' | 'down' | 'back' | 'external' | 'desktop' | 'tablet' | 'mobile';
   size?: number;
 }): React.ReactElement {
   const paths: Record<string, React.ReactNode> = {
@@ -343,6 +350,12 @@ function ChatIcon({
         <rect x="2" y="3" width="20" height="14" rx="2" />
         <line x1="8" y1="21" x2="16" y2="21" />
         <line x1="12" y1="17" x2="12" y2="21" />
+      </>
+    ),
+    tablet: (
+      <>
+        <rect x="4" y="2" width="16" height="20" rx="2" />
+        <line x1="11" y1="18" x2="13" y2="18" />
       </>
     ),
     mobile: (
@@ -725,7 +738,13 @@ function DisplayArtifact({
       {isStrip ? (
         <div className="tmchat-strip">{cards}</div>
       ) : (
-        <div className={`tmchat-grid${isSingle ? ' single' : ''}`}>{cards}</div>
+        <div
+          className={`tmchat-grid${isSingle ? ' single' : ''}${
+            payload.items.length === 3 || payload.items.length >= 6 ? ' wide' : ''
+          }`}
+        >
+          {cards}
+        </div>
       )}
     </div>
   );
@@ -745,7 +764,7 @@ function TemplatePreviewPane({
   onClose: () => void;
   onEvent?: ChatTrack;
 }): React.ReactElement {
-  const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [loaded, setLoaded] = useState(false);
   const [closing, setClosing] = useState(false);
   const backRef = useRef<HTMLButtonElement>(null);
@@ -769,7 +788,7 @@ function TemplatePreviewPane({
   // live-resizing an iframe reflows the embedded site every frame). Snap the
   // layout, then settle the new frame in with a compositor-only fade so the
   // change reads as intentional.
-  const switchDevice = (next: 'desktop' | 'mobile') => {
+  const switchDevice = (next: 'desktop' | 'tablet' | 'mobile') => {
     if (next === device) return;
     setDevice(next);
     onEvent?.('live_preview_device_changed', { template_slug: item.template_slug, device: next });
@@ -813,6 +832,14 @@ function TemplatePreviewPane({
           </button>
           <button
             type="button"
+            className={`tmchat-devicebtn${device === 'tablet' ? ' active' : ''}`}
+            aria-pressed={device === 'tablet'}
+            onClick={() => switchDevice('tablet')}
+          >
+            <ChatIcon name="tablet" size={14} /> Tablet
+          </button>
+          <button
+            type="button"
             className={`tmchat-devicebtn${device === 'mobile' ? ' active' : ''}`}
             aria-pressed={device === 'mobile'}
             onClick={() => switchDevice('mobile')}
@@ -853,7 +880,7 @@ function TemplatePreviewPane({
           </a>
         ) : null}
       </div>
-      <div ref={stageRef} className={`tmchat-preview-stage${device === 'mobile' ? ' mobile' : ''}`}>
+      <div ref={stageRef} className={`tmchat-preview-stage ${device}`}>
         {!loaded ? (
           <div className="tmchat-preview-loading" aria-live="polite">
             Loading live preview
