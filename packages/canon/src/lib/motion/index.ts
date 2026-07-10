@@ -31,3 +31,20 @@ export { default as CanonReveal } from './CanonReveal.svelte';
 
 // Animation renderer for spec-driven animations
 export { default as AnimationRenderer } from './AnimationRenderer.svelte';
+
+// Renderer-independent semantic motion contracts
+export {
+	PERFORMANCE_LAB_SEQUENCE,
+	resolveMotionStages,
+	selectMotionRuntime,
+	semanticColorRoles,
+	validateMotionIntent,
+	type MotionChannel,
+	type MotionIntent,
+	type MotionIntentValidation,
+	type MotionInterruptionPolicy,
+	type MotionRuntime,
+	type MotionStage,
+	type ReducedMotionPolicy,
+	type SemanticColorRole
+} from './intent.js';

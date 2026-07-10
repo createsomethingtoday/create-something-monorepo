@@ -892,6 +892,7 @@
     --performance-system-green: var(--color-performance-growth);
     --performance-system-soft-blue: var(--color-performance-signal-soft);
     --performance-system-red: var(--color-performance-risk);
+    --performance-motion-color: var(--performance-system-ink);
     background: var(--performance-system-paper);
     color: var(--performance-system-ink);
     font-family: var(--font-sans);
@@ -1405,6 +1406,155 @@
   .performance-system-game-turn-header button.active {
     background: var(--performance-system-blue);
     border-color: var(--performance-system-blue);
+  }
+
+  .performance-system-shell [data-motion-color-role='performance.ink'] {
+    --performance-motion-color: var(--performance-system-ink);
+  }
+
+  .performance-system-shell [data-motion-color-role='performance.growth'] {
+    --performance-motion-color: var(--performance-system-green);
+  }
+
+  .performance-system-shell [data-motion-color-role='performance.signal'] {
+    --performance-motion-color: var(--performance-system-blue);
+  }
+
+  .performance-system-shell [data-motion-color-role='performance.pressure'] {
+    --performance-motion-color: var(--color-performance-pressure);
+  }
+
+  .performance-system-shell [data-motion-color-role='performance.risk'] {
+    --performance-motion-color: var(--performance-system-red);
+  }
+
+  .performance-system-shell [data-motion-color-role='performance.gold'] {
+    --performance-motion-color: var(--color-performance-gold);
+  }
+
+  .performance-system-shell [data-motion-target] {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition:
+      outline-color var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard),
+      background-color var(--duration-micro) var(--ease-standard),
+      box-shadow var(--duration-micro) var(--ease-standard),
+      color var(--duration-micro) var(--ease-standard);
+  }
+
+  .performance-system-shell [data-motion-target][data-motion-active='true'] {
+    outline-color: var(--performance-motion-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--performance-motion-color) 14%, transparent);
+  }
+
+  .performance-system-motion-sequence {
+    display: grid;
+    gap: 8px;
+    border-top: 1px solid var(--performance-system-line);
+    padding-top: 10px;
+  }
+
+  .performance-system-motion-sequence-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .performance-system-motion-sequence-header > div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .performance-system-motion-sequence-header span,
+  .performance-system-motion-sequence-header small {
+    color: var(--performance-system-muted);
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .performance-system-motion-sequence-header strong {
+    color: var(--performance-system-ink);
+    font-size: 0.82rem;
+    line-height: 1.15;
+  }
+
+  .performance-system-motion-sequence ol {
+    display: grid;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .performance-system-motion-sequence li {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    border: 1px solid var(--performance-system-line);
+    border-left: 3px solid var(--performance-system-line);
+    border-radius: var(--radius-performance-sm);
+    padding: 7px 8px;
+    background: color-mix(in srgb, white 88%, var(--performance-system-surface));
+  }
+
+  .performance-system-motion-sequence li > span {
+    width: 22px;
+    height: 22px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--performance-system-line);
+    color: var(--performance-system-ink);
+    font-size: 0.62rem;
+    font-weight: 900;
+  }
+
+  .performance-system-motion-sequence li > div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .performance-system-motion-sequence li strong {
+    color: var(--performance-system-ink);
+    font-size: 0.72rem;
+    line-height: 1.1;
+  }
+
+  .performance-system-motion-sequence li small {
+    color: var(--performance-system-muted);
+    font-size: 0.62rem;
+    line-height: 1.22;
+  }
+
+  .performance-system-motion-sequence li[data-status='done'] {
+    border-left-color: var(--performance-motion-color);
+  }
+
+  .performance-system-motion-sequence li[data-status='done'] > span,
+  .performance-system-motion-sequence li[data-status='active'] > span {
+    background: var(--performance-motion-color);
+    color: white;
+  }
+
+  .performance-system-motion-sequence li[data-status='active'] {
+    border-color: var(--performance-motion-color);
+    border-left-color: var(--performance-motion-color);
+    background: color-mix(in srgb, var(--performance-motion-color) 9%, white);
+  }
+
+  .performance-system-motion-announcement {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .performance-system-game-turn-lanes {
@@ -4574,6 +4724,10 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .performance-system-shell [data-motion-target] {
+      transition: none;
+    }
+
     .performance-system-policy-list button {
       transition: none;
     }
