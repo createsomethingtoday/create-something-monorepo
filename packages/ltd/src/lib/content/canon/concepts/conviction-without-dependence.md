@@ -53,7 +53,7 @@ move, and improve:
 
 | Owned layer | What remains portable |
 | --- | --- |
-| **Data** | Source records, schemas, provenance, identity, and organizational context. |
+| **Substrate data and review** | Source records, schemas, provenance, identity, workflow state, human review, and organizational context. |
 | **MCP boundaries** | Tool and resource contracts, authentication scopes, errors, and allowed actions. |
 | **Harness** | Context assembly, tool exposure, iteration loops, budgets, and recovery behavior. |
 | **Skills and prompts** | Reusable behavior, domain instructions, examples, and task framing. |
@@ -70,6 +70,14 @@ CREATE SOMETHING currently builds primarily with **OpenAI Codex**. This is a
 real operating conviction: Codex is the primary environment for setup,
 demonstration, repository work, and agent-operable delivery. OpenAI can also
 provide reasoning and agent hosting when a workflow benefits from it.
+
+**Substrate is the owned database and operator layer.** It keeps source
+records, Atlas bindings, workflow actions, approvals, runs, receipts, and
+API/MCP access inside the system CREATE SOMETHING can inspect and evolve.
+**OpenAI, Dify, and Cloudflare are the active external stack:** OpenAI is the
+primary reasoning and agent environment, Dify is the visible agent application
+surface, and Cloudflare is the runtime. Each external platform has a clear job;
+none owns the workflow or its institutional memory.
 
 That statement is not an official OpenAI partnership, certification,
 affiliation, reseller, or endorsement claim. It describes how CREATE SOMETHING

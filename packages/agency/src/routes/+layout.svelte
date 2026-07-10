@@ -70,9 +70,9 @@
       ariaLabel: 'Workflow tool stack',
       links: [
         { label: 'Workflow Tool Stack', href: '/partners' },
+        { label: 'OpenAI', href: '/stack' },
         { label: 'Cloudflare', href: '/cloudflare' },
-        { label: 'Dify', href: '/dify' },
-        { label: 'Notion', href: '/notion' }
+        { label: 'Dify', href: '/dify' }
       ]
     },
     {
@@ -160,9 +160,9 @@
       keywords: [
         'workflow tool stack',
         'tool stack',
+        'substrate',
         'dify',
         'cloudflare',
-        'notion',
         'openai',
         'workflow systems',
         'tool boundary',
@@ -243,23 +243,6 @@
         'cloudflare',
         'mcp',
         'comparison'
-      ]
-    },
-    {
-      id: 'nav-notion',
-      label: 'Notion',
-      description:
-        'Notion review workspace, operator views, templates, builders, and workflow evidence',
-      href: '/notion',
-      icon: 'N',
-      keywords: [
-        'notion',
-        'review workspace',
-        'templates',
-        'builders',
-        'workers',
-        'mcp',
-        'operator workspace'
       ]
     },
     {

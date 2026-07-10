@@ -126,18 +126,18 @@
       href: '/dify'
     },
     {
-      eyebrow: 'Operator workspace',
+      eyebrow: 'Owned operating layer',
       icon: 'document',
-      title: 'Notion',
-      detail: 'Workspace systems, templates, and reviewable operating receipts.',
-      href: '/notion'
+      title: 'Substrate',
+      detail: 'Source records, operator review, decisions, and receipts remain in the owned system.',
+      href: '/products'
     },
     {
       eyebrow: 'Vendor boundary',
       icon: 'check',
       title: 'Stack',
       detail:
-        'Ownership boundaries across Cloudflare, Dify, Notion, tools, delivery surfaces, account data, billing, tokens, and public proof.',
+        'Ownership boundaries across Substrate, OpenAI, Dify, Cloudflare, client tools, account data, billing, tokens, and public proof.',
       href: '/stack'
     }
   ];
@@ -179,7 +179,7 @@
   titleLevel="h1"
   eyebrow="Cloudflare Workflow Runtime"
   title="Cloudflare runtime with controlled workflows."
-  description="Cloudflare is the deployable substrate for controlled workflow surfaces: routes, state, queues, approvals, scoped tool endpoints, and rollback-ready handoffs."
+  description="Cloudflare is the deployable runtime for controlled workflow surfaces: routes, state, queues, approvals, scoped tool endpoints, and rollback-ready handoffs."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>

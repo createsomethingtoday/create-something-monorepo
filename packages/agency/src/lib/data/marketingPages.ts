@@ -194,12 +194,12 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent: 'Explain the stack boundary in workflow terms before vendor choices dominate.',
     primaryAction: 'Map the stack boundary',
     requiredTerms: ['workflow', 'approval', 'evidence', 'runbook', 'vendor'],
-    requiredLinks: ['/cloudflare', '/dify', '/notion'],
+    requiredLinks: ['/products', '/cloudflare', '/dify'],
     schema: 'faq',
     search: {
       changefreq: 'monthly',
       priority: '0.85',
-      lastmod: '2026-06-19'
+      lastmod: '2026-07-09'
     },
     selfHealing: ['copy:heal', 'search-route:sync']
   },
@@ -211,15 +211,15 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Teams choosing the right tool path for one controlled workflow.',
     funnelStage: 'understand',
     intent:
-      'Explain the workflow tool stack before routing readers toward Dify, Cloudflare, Notion, or the broader stack boundary.',
+      'Explain Substrate as the owned operating layer and OpenAI, Dify, and Cloudflare as the active external stack.',
     primaryAction: 'Map the workflow',
-    requiredTerms: ['Dify', 'Cloudflare', 'Notion', 'workflow', 'evidence'],
-    requiredLinks: ['/dify', '/cloudflare', '/notion', '/stack'],
+    requiredTerms: ['Substrate', 'OpenAI', 'Dify', 'Cloudflare', 'workflow', 'evidence'],
+    requiredLinks: ['/products', '/dify', '/cloudflare', '/stack'],
     schema: 'faq',
     search: {
       changefreq: 'monthly',
       priority: '0.85',
-      lastmod: '2026-06-19'
+      lastmod: '2026-07-09'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
@@ -290,25 +290,6 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent: 'Explain Cloudflare as the runtime substrate for controlled workflow routes.',
     primaryAction: 'Map the runtime',
     requiredTerms: ['Cloudflare', 'Workers', 'D1', 'workflow', 'evidence'],
-    requiredLinks: ['/partners', '/stack'],
-    schema: 'faq',
-    search: {
-      changefreq: 'monthly',
-      priority: '0.8',
-      lastmod: '2026-06-28'
-    },
-    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
-  },
-  {
-    path: '/notion',
-    cluster: 'workflow-tool-stack',
-    role: 'support',
-    decision: 'index',
-    audience: 'Teams whose workflow needs an operator-facing review workspace.',
-    funnelStage: 'evaluate',
-    intent: 'Explain Notion as the visible operating layer around AI-enabled work.',
-    primaryAction: 'Map the workspace',
-    requiredTerms: ['Notion', 'workspace', 'workflow', 'evidence', 'review'],
     requiredLinks: ['/partners', '/stack'],
     schema: 'faq',
     search: {

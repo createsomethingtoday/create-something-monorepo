@@ -9,6 +9,7 @@ import {
   discoverPublicCopyFiles,
   packageRoot
 } from '../scripts/check-public-copy.mjs';
+import { products } from '../src/lib/data/services.ts';
 
 function packageRelative(file: string): string {
   return file.replace(`${packageRoot}/`, '');
@@ -149,6 +150,49 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
   assert.match(partners, /open-weight and custom models/i);
 });
 
+test('public stack positioning names Substrate and the active OpenAI, Dify, Cloudflare stack', () => {
+  const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
+  const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
+  const partners = readFileSync(
+    new URL('../src/routes/partners/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const cloudflare = readFileSync(
+    new URL('../src/routes/cloudflare/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const dify = readFileSync(new URL('../src/routes/dify/+page.svelte', import.meta.url), 'utf8');
+
+  assert.match(stack, /Substrate is the owned database and operator layer/i);
+  assert.match(partners, /OpenAI, Dify, and Cloudflare are the active external stack/i);
+  assert.doesNotMatch(stack, /\bNotion\b/);
+  assert.doesNotMatch(partners, /\bNotion\b/);
+  assert.doesNotMatch(cloudflare, /\bNotion\b/);
+  assert.doesNotMatch(dify, /\bNotion\b/);
+  assert.doesNotMatch(layout, /href:\s*['"]\/notion['"]/);
+});
+
+test('the active product catalog leads with Substrate and keeps Notion only as client history', () => {
+  const substrate = products.find((product) => product.id === 'substrate');
+  const activeNotionProducts = products.filter(
+    (product) =>
+      product.category !== 'client' &&
+      /\bNotion\b/i.test([product.title, product.tagline, product.description].join(' '))
+  );
+
+  assert.equal(substrate?.category, 'framework');
+  assert.match(substrate?.tagline ?? '', /agent-native data layer/i);
+  assert.deepEqual(activeNotionProducts, []);
+  assert.ok(
+    products.some(
+      (product) =>
+        product.category === 'client' &&
+        /\bNotion\b/i.test([product.title, product.tagline, product.description].join(' '))
+    ),
+    'historical client evidence should remain available'
+  );
+});
+
 test('agency README documents the public copy contract', () => {
   const source = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 
@@ -161,4 +205,7 @@ test('agency README documents the public copy contract', () => {
   assert.match(source, /Run `pnpm copy:heal`/);
   assert.match(source, /### Platform Conviction Contract/);
   assert.match(source, /Built primarily with OpenAI Codex\. Designed to outlast any model\./);
+  assert.match(source, /### Current System Stack Contract/);
+  assert.match(source, /Substrate is the owned database and operator layer/);
+  assert.match(source, /OpenAI, Dify, and\s+> Cloudflare are the active external stack/);
 });

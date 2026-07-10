@@ -129,18 +129,6 @@ export const products: Product[] = [
 
 	// ─── Integration MCPs ────────────────────────────────────────
 	{
-		id: 'notion-sync',
-		title: 'Notion Sync',
-		tagline: 'Two-way Notion database sync',
-		description:
-			'Bidirectional sync between a master Issues database and client-specific Notion databases with conflict handling.',
-		badge: 'Open Source',
-		category: 'integration',
-		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/notion-sync-mcp',
-		pricing: 'Free',
-		timeline: 'Requires Notion integration'
-	},
-	{
 		id: 'schedule',
 		title: 'Schedule',
 		tagline: 'Shared scheduling with backfill and forecast',
@@ -151,18 +139,6 @@ export const products: Product[] = [
 		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/schedule-mcp',
 		pricing: 'Free',
 		timeline: 'Requires Cloudflare setup'
-	},
-	{
-		id: 'quickbooks-notion',
-		title: 'QuickBooks Notion',
-		tagline: 'QuickBooks Online to Notion sync',
-		description:
-			'Read-only MCP server giving AI agents secure access to QuickBooks data, synced into Notion databases with OAuth auto-refresh.',
-		badge: 'Open Source',
-		category: 'integration',
-		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/quickbooks-notion-mcp',
-		pricing: 'Free',
-		timeline: 'Requires Intuit + Notion setup'
 	},
 	{
 		id: 'webflow-site-analyzer',

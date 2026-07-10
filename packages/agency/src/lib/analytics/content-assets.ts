@@ -125,16 +125,6 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentPrimaryKeyword: 'Dify vs n8n',
     contentPrimaryCta: 'request-workflow-teardown',
     contentLinearIssue: 'CRE-374'
-  },
-  '/notion': {
-    contentAssetId: 'workflow.notion-review-workspace.v20260518',
-    contentType: 'guide',
-    contentCluster: 'workflow-tool-stack',
-    contentIntent: 'workflow-proof',
-    contentAudience: 'operator evaluating Notion implementation support',
-    contentFunnelStage: 'consideration',
-    contentPrimaryKeyword: 'Notion review workspace',
-    contentPrimaryCta: 'request-workflow-teardown'
   }
 };
 

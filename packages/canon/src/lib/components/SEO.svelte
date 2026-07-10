@@ -107,7 +107,7 @@
       'Controlled Automation',
       'Dify Agent Apps',
       'Cloudflare Workers',
-      'Notion Operating Systems',
+      'Substrate Agent-native Data Layer',
       'API Integration',
       'OAuth Authentication',
       'TypeScript',

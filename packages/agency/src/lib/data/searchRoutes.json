@@ -39,13 +39,13 @@
     "path": "/stack",
     "changefreq": "monthly",
     "priority": "0.85",
-    "lastmod": "2026-06-19"
+    "lastmod": "2026-07-09"
   },
   {
     "path": "/partners",
     "changefreq": "monthly",
     "priority": "0.85",
-    "lastmod": "2026-06-19"
+    "lastmod": "2026-07-09"
   },
   {
     "path": "/methodology",
@@ -103,12 +103,6 @@
   },
   {
     "path": "/cloudflare",
-    "changefreq": "monthly",
-    "priority": "0.8",
-    "lastmod": "2026-06-28"
-  },
-  {
-    "path": "/notion",
     "changefreq": "monthly",
     "priority": "0.8",
     "lastmod": "2026-06-28"

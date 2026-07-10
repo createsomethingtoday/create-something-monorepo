@@ -129,6 +129,23 @@ The technical shorthand is:
 `pnpm copy:check` guards the prohibited relationship claims and the public
 surface test guards the required conviction and ownership language.
 
+### Current System Stack Contract
+
+The current operating boundary is:
+
+> Substrate is the owned database and operator layer. OpenAI, Dify, and
+> Cloudflare are the active external stack.
+
+- **Substrate** owns source records, workflow state, human review, decisions,
+  receipts, and API/MCP access.
+- **OpenAI** is the primary reasoning and agent environment.
+- **Dify** is the visible agent application surface.
+- **Cloudflare** is the runtime.
+
+Historical client integrations may remain as delivery evidence or compatibility
+code, but they must not be presented as the current CREATE SOMETHING operating
+architecture.
+
 ### Marketing Page Portfolio
 
 Public SEO/AEO pages should operate as a funnel portfolio, not a pile of
@@ -151,7 +168,7 @@ The managed portfolio covers the high-intent public funnel:
 |---------|--------|---------------|
 | Core services | `/services` | - |
 | Stack boundary | `/stack` | - |
-| Workflow tool stack | `/partners` | `/cloudflare`, `/notion` |
+| Workflow tool stack | `/partners` | `/cloudflare` |
 | Dify | `/dify` | `/dify/mcp-control-plane`, `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`, `/dify/template-marketplace-proof`, `/dify/n8n-vs-dify` |
 | Products | `/products` | - |
 | Business use case | `/use-cases/business` | - |

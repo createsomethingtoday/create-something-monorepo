@@ -49,9 +49,9 @@
     {
       eyebrow: 'Workflow template',
       icon: 'refresh',
-      title: 'Transcript To Notion',
+      title: 'Transcript Workflow',
       detail:
-        'A repeatable Dify plus MCP workflow pattern for turning media intake into structured operating records.'
+        'A prior client integration proved a repeatable Dify plus MCP pattern for turning media intake into structured operating records.'
     },
     {
       eyebrow: 'Review system',
