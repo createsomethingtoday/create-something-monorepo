@@ -47,7 +47,7 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
   {
     name: 'search_templates',
     description:
-      'Search the Webflow Template Marketplace. Call this whenever the user describes what they need — translate their intent into filters. Sorts: "popular" = current demand (recent sales), "best_selling" = all-time sales, "newest" = recently published. Feature filters use AND semantics.',
+      'Search the Webflow Template Marketplace. Call this whenever the user describes what they need — translate their intent into filters. General discovery defaults to "popular", a marketplace ranking signal. Use "best_selling" only when the user explicitly asks for best sellers, most purchased, lifetime sales, or all-time favorites. "newest" = recently published. Do not imply that Popular measures recency or conversion. Feature filters use AND semantics.',
     strict: true,
     input_schema: {
       type: 'object',
@@ -79,7 +79,8 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
         free_only: { type: ['boolean', 'null'], description: 'Only free templates.' },
         sort: {
           anyOf: [{ type: 'string', enum: [...SORT_VALUES] }, { type: 'null' }],
-          description: 'Default "popular".',
+          description:
+            'General discovery defaults to "popular". Use "best_selling" only when the user explicitly asks for lifetime popularity such as best sellers or most purchased.',
         },
         page_size: { type: ['integer', 'null'], description: '1-24, default 12.' },
       },

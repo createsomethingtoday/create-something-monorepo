@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildSearchUrl, TemplateToolExecutor, TEMPLATE_FEATURES } from '../src/tools.js';
+import { SYSTEM_PROMPT } from '../src/prompt.js';
+import { AGENT_TOOLS, buildSearchUrl, TemplateToolExecutor, TEMPLATE_FEATURES } from '../src/tools.js';
 import type { Env, TemplateSearchItem } from '../src/types.js';
 
 const ENV: Env = {
@@ -196,8 +197,26 @@ describe('surface hints', () => {
   it('maps surfaces to layout guidance and stays silent without a hint', async () => {
     const { surfaceNote } = await import('../src/prompt.js');
     expect(surfaceNote('immersive')).toContain('6-12');
-    expect(surfaceNote('compact')).toContain('2-6');
+    expect(surfaceNote('compact')).toContain('2-4');
+    expect(surfaceNote('compact')).toContain('show more');
     expect(surfaceNote(undefined)).toBeNull();
+  });
+});
+
+describe('ranking policy', () => {
+  it('uses Popular for general discovery and reserves Best selling for explicit lifetime intent', () => {
+    const searchTool = AGENT_TOOLS.find((tool) => tool.name === 'search_templates');
+    const schema = searchTool?.input_schema as {
+      properties?: { sort?: { description?: string } };
+    };
+    const policy = `${searchTool?.description ?? ''} ${schema.properties?.sort?.description ?? ''}`;
+
+    expect(policy).toContain('General discovery defaults to "popular"');
+    expect(policy).toContain('only when the user explicitly asks');
+    expect(policy).not.toContain('recent sales');
+    expect(SYSTEM_PROMPT).toContain('General discovery defaults to popular');
+    expect(SYSTEM_PROMPT).toContain('Do not infer recent sales or conversion');
+    expect(SYSTEM_PROMPT).not.toContain('selling well right now');
   });
 });
 
