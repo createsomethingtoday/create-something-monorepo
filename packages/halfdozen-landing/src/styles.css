@@ -216,7 +216,19 @@ button:focus-visible {
   display: block;
   width: 100%;
   height: 100%;
+  -webkit-appearance: none;
+  background: transparent;
   object-fit: contain;
+}
+
+.hd-hero__motion-video::-webkit-media-controls,
+.hd-hero__motion-video::-webkit-media-controls-start-playback-button,
+.hd-hero__motion-video::-webkit-media-controls-overlay-play-button,
+.hd-clients__motion-video::-webkit-media-controls,
+.hd-clients__motion-video::-webkit-media-controls-start-playback-button,
+.hd-clients__motion-video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  -webkit-appearance: none;
 }
 
 .hd-hero__meta {
@@ -301,6 +313,8 @@ button:focus-visible {
   display: block;
   width: 100%;
   height: 100%;
+  -webkit-appearance: none;
+  background: transparent;
   object-fit: cover;
 }
 
