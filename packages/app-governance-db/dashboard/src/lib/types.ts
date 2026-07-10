@@ -11,6 +11,15 @@ export type CursorRow = {
 
 export type CountRow = { key: string; n: number };
 
+export type SyncFreshnessRow = {
+  source_type: string;
+  source_external_id: string;
+  name: string;
+  last_synced_at: string | null;
+  /** Hours since last sync; null when the source has never synced. */
+  hours_since_sync: number | null;
+};
+
 export type EventRow = {
   id: number;
   actor: string;

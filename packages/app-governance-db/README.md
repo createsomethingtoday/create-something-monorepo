@@ -155,6 +155,7 @@ Slack channels/canvas ──(Slack MCP, read)──▶ Claude Code agent ──(
 | `governance_list_categories` | The taxonomy (§1–§8 + triage-ops) |
 | `governance_record_apps` | Upsert Webflow Apps admin snapshots and detect listing drift |
 | `governance_list_apps` | List synced marketplace apps and recent drift |
+| `governance_record_app_endpoint_access` | Record Webflow Admin endpoint capability/readback state (MRP id, no-op read/write support, verified/unsupported/error status) and an optional operator-approved write receipt for an app or unsupported template — no secrets stored |
 | `governance_set_cursor` | Set a high-water mark for non-item sync mechanisms |
 | `governance_record_source_records` | Idempotently record row-level source records from Notion or another database source |
 | `governance_list_source_records` | Inspect source records and identity/migration filters, including missing Substrate IDs |
@@ -263,7 +264,7 @@ pnpm deploy                     # wraps scripts/run-wrangler.mjs
 infisical run -- sh -c 'echo "$APP_GOVERNANCE_MCP_KEY" | npx wrangler secret put MCP_API_KEY'
 ```
 
-Migrations are plain SQL in `migrations/`; apply in order with `wrangler d1 execute app-governance-db --remote --file=migrations/<nnnn_name>.sql`. `0006_atlas_workflows.sql` adds the canonical Atlas/workflow runtime tables used by the `/atlas` dashboard view and Atlas MCP tools. `0007_source_record_imports.sql` adds the row-level source-record ledger and import-run tables used by the `/sources` dashboard view and Notion migration MCP tools.
+Migrations are plain SQL in `migrations/`; apply in order (lexical filename sort) with `wrangler d1 execute app-governance-db --remote --file=migrations/<nnnn_name>.sql`. `0006_atlas_workflows.sql` adds the canonical Atlas/workflow runtime tables used by the `/atlas` dashboard view and Atlas MCP tools. `0007_source_record_imports.sql` adds the row-level source-record ledger and import-run tables used by the `/sources` dashboard view and Notion migration MCP tools. `0012_app_admin_endpoint_access.sql` (renamed from `0006_app_admin_endpoint_access.sql`, which collided with the atlas file; prod applied it under the old name) adds the apps MRP columns and admin-endpoint capability/receipt tables — **not idempotent**: its bare `ALTER TABLE ADD COLUMN` statements fail on re-apply, so skip it when `PRAGMA table_info(apps)` already shows the `mrp_*` columns. `0013_seed_platform_api_gaps.sql` seeds the `platform-api-gaps` category (already present in prod; the seed keeps fresh bootstraps aligned).
 
 Dashboard deploys are separate because the dashboard is a SvelteKit Worker with
 static assets:

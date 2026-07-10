@@ -14,12 +14,26 @@
     } else {
       params.delete(name);
     }
+    // A filter change starts back at the newest page.
+    params.delete('before');
     goto(`/events?${params.toString()}`, { keepFocus: true });
   }
 
   function isFailure(action: string): boolean {
     return action.toLowerCase().includes('fail');
   }
+
+  function pageHref(before: number | null): string {
+    const params = new URLSearchParams();
+    if (data.filters.entityType) params.set('entity_type', data.filters.entityType);
+    if (data.filters.actor) params.set('actor', data.filters.actor);
+    if (before !== null) params.set('before', String(before));
+    const query = params.toString();
+    return query ? `/events?${query}` : '/events';
+  }
+
+  const olderHref = $derived(pageHref(data.events.at(-1)?.id ?? null));
+  const newestHref = $derived(pageHref(null));
 </script>
 
 <h1 class="page-title">Events</h1>
@@ -85,6 +99,16 @@
           </li>
         {/each}
       </ol>
+    {/if}
+    {#if data.filters.before || data.hasOlder}
+      <div class="pager flex items-baseline gap-4">
+        {#if data.filters.before}
+          <a class="pager-link" href={newestHref}>← Newest</a>
+        {/if}
+        {#if data.hasOlder}
+          <a class="pager-link" href={olderHref}>Older →</a>
+        {/if}
+      </div>
     {/if}
   </Panel>
 </div>
@@ -182,6 +206,22 @@
     padding: var(--space-md) var(--space-sm);
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
+  }
+
+  .pager {
+    padding: var(--space-xs) var(--space-sm);
+    border-top: 1px solid var(--color-border-default);
+  }
+
+  .pager-link {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    text-decoration: none;
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .pager-link:hover {
+    color: var(--color-fg-secondary);
   }
 
   .payload-details summary {

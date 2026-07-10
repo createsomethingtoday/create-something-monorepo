@@ -78,7 +78,7 @@ export class AppGovernanceMCP extends McpAgent<Env> {
         .catch(() => {});
     };
     publish({ ts: new Date().toISOString(), actor: operator, action: 'session_connected', entity_type: 'session', entity_id: null });
-    registerTools(this.server as unknown as McpServer, () => this.env.DB, publish);
+    registerTools(this.server as unknown as McpServer, () => this.env.DB, publish, operator);
   }
 }
 
@@ -109,13 +109,17 @@ const LIVE_PAGE = `<!doctype html>
 <script>
   const feed = document.getElementById('feed');
   const status = document.getElementById('status');
+  const ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  function esc(value) {
+    return String(value).replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
   function row(e) {
     const li = document.createElement('li');
     const t = (e.ts || '').slice(11, 19);
-    li.innerHTML = '<span class="ts">' + t + '</span><span class="op">' + (e.operator || '—') +
-      '</span><span class="action">' + (e.action || '') + '</span><span class="entity">' +
-      (e.entity_type || '') + (e.entity_id ? ' #' + e.entity_id : '') +
-      (e.actor && e.actor !== e.operator ? ' · ' + e.actor : '') + '</span>';
+    li.innerHTML = '<span class="ts">' + esc(t) + '</span><span class="op">' + esc(e.operator || '—') +
+      '</span><span class="action">' + esc(e.action || '') + '</span><span class="entity">' +
+      esc(e.entity_type || '') + (e.entity_id ? ' #' + esc(e.entity_id) : '') +
+      (e.actor && e.actor !== e.operator ? ' · ' + esc(e.actor) : '') + '</span>';
     feed.prepend(li);
     while (feed.children.length > 200) feed.removeChild(feed.lastChild);
   }
@@ -145,9 +149,13 @@ export default {
       url.pathname === '/sse' || url.pathname.startsWith('/sse/') ||
       url.pathname === '/presence' || url.pathname === '/live';
 
+    // ?key= auth is only honored for browser/WebSocket endpoints that cannot
+    // set headers; /mcp and /sse require the Authorization: Bearer header.
+    const allowQueryKey = url.pathname === '/presence' || url.pathname === '/live';
+
     let operator = 'unknown';
     if (needsAuth) {
-      const resolved = await resolveOperator(request, env);
+      const resolved = await resolveOperator(request, env, { allowQueryKey });
       if (resolved instanceof Response) return resolved;
       operator = resolved.operator;
     }

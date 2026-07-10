@@ -2,12 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
   Daily Webflow Apps Admin sync (device-bound: needs Tailscale + browser session).
+  Runs the run-admin-sync.sh wrapper, which materializes the scripts from
+  origin/main into ~/.config/webflow-admin-sync/runtime on every run.
   Install:
+    cp packages/app-governance-db/scripts/run-admin-sync.sh ~/.config/webflow-admin-sync/run-sync.sh
+    chmod +x ~/.config/webflow-admin-sync/run-sync.sh
     cp packages/app-governance-db/scripts/com.createsomething.app-governance-admin-sync.plist ~/Library/LaunchAgents/
     launchctl load ~/Library/LaunchAgents/com.createsomething.app-governance-admin-sync.plist
   The MCP key is resolved via infisical at run time (interactive login session must be valid);
   alternatively export APP_GOVERNANCE_MCP_KEY in EnvironmentVariables below.
-  Logs: ~/.config/webflow-admin-sync/sync.log
+  Logs: ~/.config/webflow-admin-sync/sync.log (wrapper) and launchd.log (launchd capture)
 -->
 <plist version="1.0">
 <dict>
@@ -17,7 +21,7 @@
   <array>
     <string>/bin/zsh</string>
     <string>-lc</string>
-    <string>cd /Users/micahjohnson/Code/create-something-monorepo &amp;&amp; node packages/app-governance-db/scripts/sync-admin-apps.playwright.mjs</string>
+    <string>$HOME/.config/webflow-admin-sync/run-sync.sh</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>
@@ -27,8 +31,8 @@
     <integer>17</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>/Users/micahjohnson/.config/webflow-admin-sync/sync.log</string>
+  <string>/Users/micahjohnson/.config/webflow-admin-sync/launchd.log</string>
   <key>StandardErrorPath</key>
-  <string>/Users/micahjohnson/.config/webflow-admin-sync/sync.log</string>
+  <string>/Users/micahjohnson/.config/webflow-admin-sync/launchd.log</string>
 </dict>
 </plist>

@@ -1,3 +1,9 @@
+-- NOT idempotent: ALTER TABLE ADD COLUMN fails if re-applied. Skip if columns
+-- already exist (check: PRAGMA table_info(apps)).
+--
+-- (Renamed from 0006_app_admin_endpoint_access.sql, which collided with
+-- 0006_atlas_workflows.sql. Prod has already applied it under the old name.)
+--
 -- Webflow Admin endpoint capability and receipt state.
 -- The MRP endpoint is app-supported when an MRP id no-op probe succeeds.
 -- Existing templates currently resolve to legacy Template ids and should be

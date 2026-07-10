@@ -1,5 +1,7 @@
 # Alignment Packet — Apps Page UX (dashboard)
 
+Status: design spec — NOT yet implemented (current /apps has search/sort/drift only).
+
 For the agent working `packages/app-governance-db/dashboard`. The Apps page currently renders a flat 645-row table under a mostly-empty drift panel. The registry is the governance system's densest dataset; the page should answer operator questions, not just enumerate rows. Read-only SELECTs against D1 remain the only data access; use the Canon data primitives landed in #788 (`DataTable`, `StatusBadge`) and the patterns in `docs/CANON_DATABASE_LAYER_DESIGN.md`.
 
 ## The operator jobs this page must serve (in priority order)
