@@ -31,6 +31,11 @@ interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   REVIEWER_DIRECTORY_JSON?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_HOST?: string;
+  LANGFUSE_PROJECT_NAME?: string;
+  LANGFUSE_ENVIRONMENT?: string;
   CLERK_SECRET_KEY?: string;
   CLERK_PUBLISHABLE_KEY?: string;
   OAUTH_ALLOWED_EMAIL_DOMAIN?: string;
@@ -58,12 +63,29 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
   );
 
   async init() {
-    if (this.env.TELEMETRY_DB) {
+    // Emit tool-call telemetry to D1 (cs-telemetry) and, when configured, to
+    // Langfuse for tracing/evals. Traces are keyed by the resolved account
+    // (OAuth reviewer email or legacy bridge accountId) so per-reviewer
+    // activity is observable.
+    const langfuseEnabled = Boolean(this.env.LANGFUSE_PUBLIC_KEY && this.env.LANGFUSE_SECRET_KEY);
+    if (this.env.TELEMETRY_DB || langfuseEnabled) {
       enableTelemetry(
         this.server,
         this.env.TELEMETRY_DB as unknown as Parameters<typeof enableTelemetry>[1],
         'webflow-template-review-mcp',
         () => this.props?.accountId ?? this.env.MCP_ACCOUNT_ID?.trim() ?? 'operator',
+        langfuseEnabled
+          ? {
+              publicKey: this.env.LANGFUSE_PUBLIC_KEY,
+              secretKey: this.env.LANGFUSE_SECRET_KEY,
+              host: this.env.LANGFUSE_HOST,
+              projectName: this.env.LANGFUSE_PROJECT_NAME || 'CREATE SOMETHING',
+              environment: this.env.LANGFUSE_ENVIRONMENT || 'production',
+              // This worker runs as a short-lived subrequest behind the hub
+              // proxy; await the flush so traces aren't dropped on suspend.
+              awaitFlush: true,
+            }
+          : undefined,
       );
     }
 

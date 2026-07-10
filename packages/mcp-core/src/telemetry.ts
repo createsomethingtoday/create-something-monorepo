@@ -93,6 +93,17 @@ export interface LangfuseTelemetryOptions {
   projectName?: string;
   environment?: string;
   enabled?: boolean;
+  /**
+   * Await the Langfuse trace flush before the tool handler returns.
+   *
+   * Default false: the flush runs as a floating promise, which is fine for
+   * long-lived entry Workers that hold the client connection open. Set true
+   * for Workers invoked as short-lived subrequests (e.g. a downstream MCP
+   * behind a hub proxy) whose isolate may suspend before a floating flush
+   * completes, dropping the trace. Adds one Langfuse round-trip of latency
+   * per tool call.
+   */
+  awaitFlush?: boolean;
 }
 
 // =============================================================================
@@ -525,8 +536,10 @@ export function enableTelemetry(
     projectName: langfuseOptions?.projectName || serverName,
     environment: langfuseOptions?.environment,
     enabled: langfuseOptions?.enabled,
+    awaitFlush: langfuseOptions?.awaitFlush,
   };
   const langfuseEnabled = initLangfuseTelemetry(resolvedLangfuseOptions, serverName);
+  const awaitLangfuseFlush = resolvedLangfuseOptions.awaitFlush === true;
 
   const resolveInvocationAccountId = (handlerArgs: unknown[]): string => {
     let configuredAccountId: string | null = null;
@@ -575,7 +588,7 @@ export function enableTelemetry(
       }
 
       if (langfuseEnabled) {
-        emitLangfuseInvocation({
+        const emit = emitLangfuseInvocation({
           serverName,
           toolName,
           accountId,
@@ -587,6 +600,7 @@ export function enableTelemetry(
           projectName: resolvedLangfuseOptions.projectName,
           environment: resolvedLangfuseOptions.environment,
         }).catch((e: unknown) => console.warn(`[telemetry] langfuse emit failed for ${toolName}:`, e));
+        if (awaitLangfuseFlush) await emit;
       }
 
       return result;
@@ -600,7 +614,7 @@ export function enableTelemetry(
       }
 
       if (langfuseEnabled) {
-        emitLangfuseInvocation({
+        const emit = emitLangfuseInvocation({
           serverName,
           toolName,
           accountId,
@@ -612,6 +626,7 @@ export function enableTelemetry(
           projectName: resolvedLangfuseOptions.projectName,
           environment: resolvedLangfuseOptions.environment,
         }).catch((e: unknown) => console.warn(`[telemetry] langfuse emit failed for ${toolName}:`, e));
+        if (awaitLangfuseFlush) await emit;
       }
 
       throw error;
