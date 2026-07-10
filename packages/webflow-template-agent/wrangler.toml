@@ -1,0 +1,21 @@
+name = "webflow-template-agent"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[vars]
+ENVIRONMENT = "development"
+# Server-side calls are not subject to the webflow.com CSP, so the direct
+# worker origin is fine here. The *client* chat component must still reach
+# this agent through a *.webflow.com proxy path.
+SEARCH_API_BASE = "https://webflow-template-search.createsomething.workers.dev"
+ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com"
+ANTHROPIC_MODEL = "claude-opus-4-8"
+
+# Secrets (set via `wrangler secret put`):
+# - ANTHROPIC_API_KEY

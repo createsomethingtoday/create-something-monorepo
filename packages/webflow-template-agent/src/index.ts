@@ -1,0 +1,121 @@
+import { runAgentTurn } from './agent.js';
+import type { AgentSseEvent, ChatRequestBody, Env } from './types.js';
+
+function corsHeaders(request: Request, env: Env): Record<string, string> {
+  const origin = request.headers.get('Origin') ?? '';
+  const allowed = (env.ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  const originAllowed = allowed.some((pattern) => {
+    if (pattern === origin) return true;
+    if (pattern.startsWith('*.')) {
+      try {
+        const host = new URL(origin).hostname;
+        return host === pattern.slice(2) || host.endsWith(pattern.slice(1));
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
+
+  return {
+    'Access-Control-Allow-Origin': originAllowed ? origin : 'https://webflow.com',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    Vary: 'Origin',
+  };
+}
+
+function sseResponse(request: Request, env: Env, body: ChatRequestBody, ctx: ExecutionContext): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const emit = (event: AgentSseEvent) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+      };
+
+      ctx.waitUntil(
+        runAgentTurn(env, body.messages, emit)
+          .catch((error) => {
+            emit({
+              type: 'error',
+              message: error instanceof Error ? error.message : 'The assistant hit an unexpected error.',
+            });
+          })
+          .finally(() => {
+            try {
+              controller.close();
+            } catch {
+              // Stream already closed by the client.
+            }
+          }),
+      );
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-store',
+      ...corsHeaders(request, env),
+    },
+  });
+}
+
+function parseBody(raw: unknown): ChatRequestBody | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const messages = (raw as { messages?: unknown }).messages;
+  if (!Array.isArray(messages) || messages.length === 0 || messages.length > 60) return null;
+
+  const parsed: ChatRequestBody['messages'] = [];
+  for (const entry of messages) {
+    const role = (entry as { role?: unknown }).role;
+    const content = (entry as { content?: unknown }).content;
+    if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string') return null;
+    parsed.push({ role, content });
+  }
+  return { messages: parsed };
+}
+
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders(request, env) });
+    }
+
+    if (url.pathname === '/' || url.pathname === '/health') {
+      return Response.json(
+        { service: 'webflow-template-agent', ok: Boolean(env.ANTHROPIC_API_KEY) },
+        { headers: corsHeaders(request, env) },
+      );
+    }
+
+    if (url.pathname === '/api/templates/agent/chat' && request.method === 'POST') {
+      if (!env.ANTHROPIC_API_KEY) {
+        return Response.json({ error: 'Agent is not configured.' }, { status: 503, headers: corsHeaders(request, env) });
+      }
+
+      let body: ChatRequestBody | null = null;
+      try {
+        body = parseBody(await request.json());
+      } catch {
+        body = null;
+      }
+      if (!body) {
+        return Response.json(
+          { error: 'Body must be { messages: [{ role: "user" | "assistant", content: string }, ...] }.' },
+          { status: 400, headers: corsHeaders(request, env) },
+        );
+      }
+
+      return sseResponse(request, env, body, ctx);
+    }
+
+    return Response.json({ error: 'Not found' }, { status: 404, headers: corsHeaders(request, env) });
+  },
+} satisfies ExportedHandler<Env>;
