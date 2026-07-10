@@ -152,7 +152,7 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
   {
     name: 'display_results',
     description:
-      'Render templates to the user in the chat UI. Call this after searching — the user cannot see raw search results, only what you display. Layouts: "gallery" (browsing several), "carousel" (a strip), "spotlight" (one strong recommendation), "comparison" (2-4 side by side), "shortlist" (ranked picks, each with a reason). Only slugs returned by earlier tool calls in this conversation will render. Include 2-4 short follow-up suggestions the user might tap next.',
+      'Render templates to the user in the chat UI. Call this after searching — the user cannot see raw search results, only what you display. Layouts: "gallery" (browsing several), "carousel" (a strip), "spotlight" (one strong recommendation), "comparison" (2-4 side by side), "shortlist" (ranked picks, each with a reason). For a broad category search, use a 2-4 item prefix in the exact returned order; do not re-curate the ranked results. Only slugs returned by earlier tool calls in this conversation will render. Include 2-4 short follow-up suggestions the user might tap next.',
     strict: true,
     input_schema: {
       type: 'object',
@@ -300,6 +300,10 @@ export class TemplateToolExecutor {
   // Anti-hallucination registry: display_results only renders slugs the
   // conversation has actually seen from tool results.
   private readonly knownItems = new Map<string, TemplateSearchItem>();
+  // Category browse results have an explicit marketplace ordering. Keep the
+  // leading compact prefix at the validation boundary so model curation cannot
+  // silently turn Popular into a different ranking.
+  private rankedCategorySlugs: string[] | null = null;
 
   constructor(private readonly env: Env) {}
 
@@ -329,6 +333,7 @@ export class TemplateToolExecutor {
   }
 
   async searchTemplates(input: SearchToolInput): Promise<string> {
+    this.rankedCategorySlugs = null;
     let searchInput = input;
     let searchUrl = new URL(buildSearchUrl(this.env.SEARCH_API_BASE, searchInput));
     if (input.q && !input.category_group_slug) searchUrl.searchParams.set('include', 'items,pills');
@@ -354,11 +359,20 @@ export class TemplateToolExecutor {
     }
 
     for (const item of data.items) this.knownItems.set(item.template_slug, item);
+    if (searchInput.category_group_slug && !searchInput.q) {
+      this.rankedCategorySlugs = data.items.slice(0, 4).map((item) => item.template_slug);
+    }
 
     return JSON.stringify({
       total_items: data.pagination.total_items,
       returned: data.items.length,
       items: data.items.map(itemSummary),
+      ...(this.rankedCategorySlugs
+        ? {
+            display_prefix: this.rankedCategorySlugs,
+            display_instruction: 'Display a 2-4 item prefix in this exact order.',
+          }
+        : {}),
     });
   }
 
@@ -412,11 +426,24 @@ export class TemplateToolExecutor {
     followups?: string[] | null;
   }): { payload: DisplayPayload | null; dropped: string[] } {
     const dropped: string[] = [];
+    const requested = input.items.slice(0, MAX_DISPLAY_ITEMS);
+    const reasons = new Map(requested.map((entry) => [entry.template_slug, entry.reason ?? undefined]));
+    for (const entry of requested) {
+      if (!this.knownItems.has(entry.template_slug)) dropped.push(entry.template_slug);
+    }
+
+    const rankedCount = requested.length > 0 ? Math.min(Math.max(requested.length, 2), 4) : 0;
+    const entries =
+      this.rankedCategorySlugs && rankedCount > 0
+        ? this.rankedCategorySlugs.slice(0, rankedCount).map((template_slug) => ({
+            template_slug,
+            reason: reasons.get(template_slug),
+          }))
+        : requested;
     const items = [];
-    for (const entry of input.items.slice(0, MAX_DISPLAY_ITEMS)) {
+    for (const entry of entries) {
       const known = this.knownItems.get(entry.template_slug);
       if (!known) {
-        dropped.push(entry.template_slug);
         continue;
       }
       items.push({ template_slug: entry.template_slug, reason: entry.reason ?? undefined, item: known });

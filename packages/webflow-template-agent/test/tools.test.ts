@@ -100,7 +100,12 @@ describe('TemplateToolExecutor search intent routing', () => {
       const isDocumentationCategory =
         url.searchParams.get('category_group_slug') === 'documentation-websites' && !url.searchParams.has('q');
       const items = isDocumentationCategory
-        ? [searchItem('flowguide-website-template'), searchItem('notate-website-template')]
+        ? [
+            searchItem('flowguide-website-template'),
+            searchItem('notate-website-template'),
+            searchItem('knowledgehub-x-help-center-website-template'),
+            searchItem('bytefix-template-website-template'),
+          ]
         : url.searchParams.get('q') === 'yoga studio'
           ? [searchItem('yoga-studio-template')]
           : [searchItem('helpdesk-documentation-website-template')];
@@ -125,10 +130,29 @@ describe('TemplateToolExecutor search intent routing', () => {
     expect(result.items.map((item) => item.template_slug)).toEqual([
       'flowguide-website-template',
       'notate-website-template',
+      'knowledgehub-x-help-center-website-template',
+      'bytefix-template-website-template',
     ]);
     const searchUrl = new URL(String(fetchMock.mock.calls.at(-1)?.[0]));
     expect(searchUrl.searchParams.get('category_group_slug')).toBe('documentation-websites');
     expect(searchUrl.searchParams.has('q')).toBe(false);
+
+    const { payload } = executor.buildDisplayPayload({
+      layout: 'shortlist',
+      title: 'Documentation templates',
+      items: [
+        { template_slug: 'knowledgehub-x-help-center-website-template', reason: 'A flexible help center.' },
+        { template_slug: 'bytefix-template-website-template', reason: 'A compact support site.' },
+        { template_slug: 'flowguide-website-template', reason: 'A strong guide layout.' },
+      ],
+      followups: ['Show more'],
+    });
+
+    expect(payload?.items.map((item) => item.template_slug)).toEqual([
+      'flowguide-website-template',
+      'notate-website-template',
+      'knowledgehub-x-help-center-website-template',
+    ]);
   });
 
   it('preserves full-text search for an unrecognized topic', async () => {
