@@ -42,17 +42,59 @@ const MAX_DISPLAY_ITEMS = 12;
 // Cap on the continuity snapshot echoed between turns (keeps the request body
 // and the model's context note bounded).
 const MAX_KNOWN_ITEMS = 40;
+const CATEGORY_INTENT_FILLER = new Set([
+  'a',
+  'am',
+  'an',
+  'find',
+  'for',
+  'i',
+  'looking',
+  'me',
+  'need',
+  'show',
+  'site',
+  'sites',
+  'template',
+  'templates',
+  'want',
+  'webflow',
+  'website',
+  'websites',
+]);
+
+function categoryIntentKey(value: string): string {
+  return (value.toLowerCase().match(/[a-z0-9]+/g) ?? [])
+    .filter((token) => !CATEGORY_INTENT_FILLER.has(token))
+    .join(' ');
+}
+
+function exactCategorySlug(
+  query: string,
+  pills: TemplateSearchResponse['category_pills'],
+): string | null {
+  const queryKey = categoryIntentKey(query);
+  if (!queryKey) return null;
+
+  const match = (pills ?? []).find(
+    (pill) => categoryIntentKey(pill.name) === queryKey || categoryIntentKey(pill.slug) === queryKey,
+  );
+  return match?.slug ?? null;
+}
 
 export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
   {
     name: 'search_templates',
     description:
-      'Search the Webflow Template Marketplace. Call this whenever the user describes what they need — translate their intent into filters. General discovery defaults to "popular", a marketplace ranking signal. Use "best_selling" only when the user explicitly asks for best sellers, most purchased, lifetime sales, or all-time favorites. "newest" = recently published. Do not imply that Popular measures recency or conversion. Feature filters use AND semantics.',
+      'Search the Webflow Template Marketplace. Call this whenever the user describes what they need — translate their intent into filters. For a broad request that names an existing marketplace category, use category_group_slug and leave q null so its requested sort controls the ordering; use q for unstructured topics and template names. General discovery defaults to "popular", a marketplace ranking signal. Use "best_selling" only when the user explicitly asks for best sellers, most purchased, lifetime sales, or all-time favorites. "newest" = recently published. Do not imply that Popular measures recency or conversion. Feature filters use AND semantics.',
     strict: true,
     input_schema: {
       type: 'object',
       properties: {
-        q: { type: ['string', 'null'], description: 'Free-text keywords (template names, topics). Omit for pure filter queries.' },
+        q: {
+          type: ['string', 'null'],
+          description: 'Free-text keywords for unstructured topics or template names. Leave null for category-only queries.',
+        },
         category_group_slug: {
           type: ['string', 'null'],
           description: 'Category slug from list_categories_and_styles, e.g. "medical", "technology".',
@@ -287,14 +329,30 @@ export class TemplateToolExecutor {
   }
 
   async searchTemplates(input: SearchToolInput): Promise<string> {
-    const response = await fetch(buildSearchUrl(this.env.SEARCH_API_BASE, input), {
+    let searchInput = input;
+    let searchUrl = new URL(buildSearchUrl(this.env.SEARCH_API_BASE, searchInput));
+    if (input.q && !input.category_group_slug) searchUrl.searchParams.set('include', 'items,pills');
+
+    let response = await fetch(searchUrl, {
       headers: { 'User-Agent': 'webflow-template-agent/0.1' },
     });
     if (!response.ok) {
       return JSON.stringify({ error: `Search failed (${response.status}). Try adjusting the filters.` });
     }
 
-    const data = (await response.json()) as TemplateSearchResponse;
+    let data = (await response.json()) as TemplateSearchResponse;
+    const categorySlug = input.q && !input.category_group_slug ? exactCategorySlug(input.q, data.category_pills) : null;
+    if (categorySlug) {
+      searchInput = { ...input, q: null, category_group_slug: categorySlug };
+      response = await fetch(buildSearchUrl(this.env.SEARCH_API_BASE, searchInput), {
+        headers: { 'User-Agent': 'webflow-template-agent/0.1' },
+      });
+      if (!response.ok) {
+        return JSON.stringify({ error: `Search failed (${response.status}). Try adjusting the filters.` });
+      }
+      data = (await response.json()) as TemplateSearchResponse;
+    }
+
     for (const item of data.items) this.knownItems.set(item.template_slug, item);
 
     return JSON.stringify({

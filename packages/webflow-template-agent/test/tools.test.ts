@@ -83,6 +83,69 @@ describe('buildSearchUrl', () => {
   });
 });
 
+describe('TemplateToolExecutor search intent routing', () => {
+  function mockLiveTaxonomySearch() {
+    return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+
+      if (url.searchParams.get('include') === 'facets,pills') {
+        return Response.json({
+          items: [],
+          pagination: { total_items: 0 },
+          category_pills: [{ name: 'Documentation', slug: 'documentation-websites', count: 58 }],
+          available_facets: { styles: [] },
+        });
+      }
+
+      const isDocumentationCategory =
+        url.searchParams.get('category_group_slug') === 'documentation-websites' && !url.searchParams.has('q');
+      const items = isDocumentationCategory
+        ? [searchItem('flowguide-website-template'), searchItem('notate-website-template')]
+        : url.searchParams.get('q') === 'yoga studio'
+          ? [searchItem('yoga-studio-template')]
+          : [searchItem('helpdesk-documentation-website-template')];
+
+      return Response.json({
+        items,
+        pagination: { total_items: items.length },
+        applied_filters: {},
+        category_pills: [{ name: 'Documentation', slug: 'documentation-websites', count: 58 }],
+      });
+    });
+  }
+
+  it('routes an exact broad category request through the canonical Popular category', async () => {
+    const fetchMock = mockLiveTaxonomySearch();
+    const executor = new TemplateToolExecutor(ENV);
+
+    const result = JSON.parse(
+      await executor.searchTemplates({ q: 'documentation template', sort: 'popular', page_size: 4 }),
+    ) as { items: Array<{ template_slug: string }> };
+
+    expect(result.items.map((item) => item.template_slug)).toEqual([
+      'flowguide-website-template',
+      'notate-website-template',
+    ]);
+    const searchUrl = new URL(String(fetchMock.mock.calls.at(-1)?.[0]));
+    expect(searchUrl.searchParams.get('category_group_slug')).toBe('documentation-websites');
+    expect(searchUrl.searchParams.has('q')).toBe(false);
+  });
+
+  it('preserves full-text search for an unrecognized topic', async () => {
+    const fetchMock = mockLiveTaxonomySearch();
+    const executor = new TemplateToolExecutor(ENV);
+
+    const result = JSON.parse(await executor.searchTemplates({ q: 'yoga studio', sort: 'popular' })) as {
+      items: Array<{ template_slug: string }>;
+    };
+
+    expect(result.items.map((item) => item.template_slug)).toEqual(['yoga-studio-template']);
+    const searchUrl = new URL(String(fetchMock.mock.calls.at(-1)?.[0]));
+    expect(searchUrl.searchParams.get('q')).toBe('yoga studio');
+    expect(searchUrl.searchParams.has('category_group_slug')).toBe(false);
+  });
+});
+
 describe('TemplateToolExecutor display validation', () => {
   it('only renders slugs previously returned by search (anti-hallucination)', async () => {
     mockSearchResponse([searchItem('real-template')]);
