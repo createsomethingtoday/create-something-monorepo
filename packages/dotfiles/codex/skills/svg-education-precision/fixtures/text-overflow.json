@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "canvas": {
+    "width": 400,
+    "height": 240,
+    "background": "#ffffff"
+  },
+  "metadata": {
+    "title": "Text overflow fixture",
+    "description": "A long label exceeds its declared text box and must fail."
+  },
+  "elements": [
+    {
+      "id": "overflow-label",
+      "type": "text",
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 32,
+      "lines": ["This label cannot fit"],
+      "fontSize": 18,
+      "fontWeight": 700,
+      "fill": "#0a0e19"
+    }
+  ]
+}

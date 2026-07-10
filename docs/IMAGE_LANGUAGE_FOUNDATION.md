@@ -28,6 +28,7 @@ gate. They are not acceptable when they only create AI atmosphere.
 
 ## Tier Mapping
 
+<!-- prettier-ignore -->
 | Tier | Role in Image Language | Repo Surface |
 | --- | --- | --- |
 | Database | TASTE references, Are.na channels, Atlas graph artifacts, prompts, metadata, screenshots, source files | `/taste`, `/llm.txt`, `packages/agency/content/assets/**`, article metadata |
@@ -84,6 +85,7 @@ Reject references that rely on:
 CREATE SOMETHING images should feel like governed operations, not generic AI
 marketing.
 
+<!-- prettier-ignore -->
 | Element | Rule |
 | --- | --- |
 | Surface | Campaign: optic white or near-black with field/material imagery. Product: porcelain, white, or quiet near-black proof surfaces. |
@@ -99,6 +101,7 @@ marketing.
 
 Use repeatable families so generated assets become a recognizable system.
 
+<!-- prettier-ignore -->
 | Family | Use When | Must Show |
 | --- | --- | --- |
 | Performance field study | Homepage, services, editorial, case study, or social needs visceral evidence of work under pressure | Original human or system motion, temporal cue, technical annotation, and a workflow meaning |
@@ -122,6 +125,7 @@ the same quality bar as the generated export.
 
 Use the route that matches the work:
 
+<!-- prettier-ignore -->
 | Need | Route |
 | --- | --- |
 | One production image from a completed prompt | OpenAI Image API generation with `gpt-image-2` when access is available |
@@ -137,6 +141,32 @@ the language foundation. Google Gemini, Omni, and Vertex are not first-class
 providers for this Canon pipeline because CREATE SOMETHING is intentionally
 limiting the visual-generation stack around OpenAI plus repo-owned source
 briefs.
+
+## SVG Education Precision Route
+
+Use the repo-owned `svg-education-precision` skill when labels, topology, data,
+policy states, or proof relationships must remain exact. The skill compiles a
+structured JSON source into SVG and fails closed on canvas overflow, text-fit
+risk, unintended element collisions, malformed geometry, and undeclared
+relationships.
+
+```bash
+pnpm agent:svg-education validate path/to/spec.json
+pnpm agent:svg-education check path/to/spec.json path/to/review.svg
+```
+
+The precision route does not reverse the Image2 decision above:
+
+- Ship the SVG directly for instructional, accessible, editable, responsive,
+  or interactive surfaces only after browser-size and human visual review.
+- Use the validated SVG as Image2 source context when public marketing polish,
+  atmosphere, or expressive composition matters more.
+- Keep the structured spec authoritative in both cases; neither the SVG renderer
+  nor Image2 becomes the source of workflow truth.
+
+Deterministic markup is supporting evidence, not a publication gate by itself.
+The target surface must still be rendered and inspected at its native and
+smallest supported display sizes.
 
 ## Prompt Stack
 

@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "canvas": {
+    "width": 400,
+    "height": 240,
+    "background": "#ffffff"
+  },
+  "metadata": {
+    "title": "Collision fixture",
+    "description": "Two cards overlap without a declared relationship and must fail."
+  },
+  "elements": [
+    {
+      "id": "first-card",
+      "type": "rect",
+      "x": 40,
+      "y": 40,
+      "width": 160,
+      "height": 120,
+      "fill": "#ffffff",
+      "stroke": "#0a0e19"
+    },
+    {
+      "id": "second-card",
+      "type": "rect",
+      "x": 160,
+      "y": 80,
+      "width": 160,
+      "height": 120,
+      "fill": "#ffffff",
+      "stroke": "#0a0e19"
+    }
+  ]
+}

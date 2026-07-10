@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "canvas": {
+    "width": 400,
+    "height": 240,
+    "background": "#ffffff"
+  },
+  "metadata": {
+    "title": "Overflow fixture",
+    "description": "A card exceeds the right edge and must fail validation."
+  },
+  "elements": [
+    {
+      "id": "overflow-card",
+      "type": "rect",
+      "x": 300,
+      "y": 40,
+      "width": 140,
+      "height": 100,
+      "fill": "#ffffff",
+      "stroke": "#0a0e19"
+    }
+  ]
+}
