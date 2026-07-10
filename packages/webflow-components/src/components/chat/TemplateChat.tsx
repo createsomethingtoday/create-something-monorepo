@@ -1,5 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { TemplateCard, TEMPLATE_CARD_STYLES } from '../cards/TemplateCard';
+import { trackMarketplaceEvent, type MarketplaceAnalyticsData } from '../marketplace/analytics';
+import { useMarketplaceComponentErrorTracking } from '../marketplace/MarketplaceComponentErrorBoundary';
+import {
+  getSafeAnalyticsOverrides,
+  writeTemplateAttribution,
+  MARKETPLACE_SIGNAL_WINDOW,
+  type TemplateMarketplaceAttribution,
+} from '../marketplace/templateAttribution';
 
 // ── Agent protocol (mirrors webflow-template-agent) ───────────────────────────
 
@@ -81,6 +89,8 @@ export interface TemplateChatProps {
   defaultOpen?: boolean;
   /** Start in the immersive fullscreen state. */
   defaultImmersive?: boolean;
+  /** Emit marketplace analytics (wf_analytics / Segment / Amplitude). */
+  enableAnalytics?: boolean;
 }
 
 const DEFAULT_STARTERS =
@@ -552,19 +562,79 @@ function highlightPageTemplates(slugs: string[], attempt: number): void {
   found[0]?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
 }
 
+// ── Analytics ─────────────────────────────────────────────────────────────────
+// All chat telemetry flows through the shared marketplace tracker
+// ('Code Component Event' + scope, fanned out to wf_analytics/Segment/
+// Amplitude), matching TemplateGrid — chat sessions join the same Amplitude
+// funnels, and card clicks write the same attribution record the template
+// detail page's conversion tracker consumes.
+type ChatTrack = (scope: string, data?: MarketplaceAnalyticsData) => void;
+
+function buildChatAttribution(
+  item: AgentTemplateItem,
+  position: number,
+  sourceSort: string,
+): TemplateMarketplaceAttribution {
+  return {
+    version: 1,
+    source_component: 'TemplateChat',
+    source_pathname: typeof window === 'undefined' ? null : window.location.pathname || null,
+    source_scope: 'chat',
+    // The display layout (or 'preview') stands in for sort context — chat
+    // results are agent-curated, not sorted by a grid lens.
+    source_sort: sourceSort,
+    source_category_group_slug: null,
+    source_child_category_slug: null,
+    source_style_slug: null,
+    source_tag_slug: null,
+    source_free_only: false,
+    // Chat results always follow a user prompt.
+    source_q_present: true,
+    source_styles_count: 0,
+    source_tags_count: 0,
+    source_types_count: 0,
+    source_page: 1,
+    source_position: position,
+    template_slug: item.template_slug,
+    signal_bucket: null,
+    signal_metric: null,
+    signal_window: MARKETPLACE_SIGNAL_WINDOW,
+    signal_density: 'none',
+    created_at: new Date().toISOString(),
+  };
+}
+
+function isAnchorClickOn(event: React.MouseEvent, href: string | null): boolean {
+  if (!href) return false;
+  const target = event.target;
+  if (!(target instanceof Element)) return false;
+  const anchor = target.closest<HTMLAnchorElement>('a[href]');
+  return Boolean(anchor && anchor.getAttribute('href') === href);
+}
+
 function DisplayArtifact({
   payload,
   onPreview,
+  onTemplateClick,
 }: {
   payload: DisplayPayload;
-  onPreview?: (item: AgentTemplateItem) => void;
+  onPreview?: (item: AgentTemplateItem, position: number, layout: string) => void;
+  onTemplateClick?: (item: AgentTemplateItem, position: number, layout: string) => void;
 }): React.ReactElement {
   const isStrip = payload.layout === 'carousel';
   const isSingle = payload.layout === 'spotlight' || payload.items.length === 1;
   const showReasons = payload.layout === 'shortlist' || payload.layout === 'spotlight' || payload.layout === 'comparison';
 
   const cards = payload.items.map((entry, index) => (
-    <div key={entry.template_slug} style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}>
+    <div
+      key={entry.template_slug}
+      style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+      onClickCapture={(event) => {
+        if (isAnchorClickOn(event, entry.item.url)) {
+          onTemplateClick?.(entry.item, index + 1, payload.layout);
+        }
+      }}
+    >
       <TemplateCard
         templateName={entry.item.name}
         templateLink={{ href: entry.item.url ?? '#', target: '_blank' }}
@@ -600,7 +670,7 @@ function DisplayArtifact({
                 onClick: (event) => {
                   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
                   event.preventDefault();
-                  onPreview(entry.item);
+                  onPreview(entry.item, index + 1, payload.layout);
                 },
               }
             : undefined
@@ -629,9 +699,11 @@ function DisplayArtifact({
 function TemplatePreviewPane({
   item,
   onClose,
+  onEvent,
 }: {
   item: AgentTemplateItem;
   onClose: () => void;
+  onEvent?: ChatTrack;
 }): React.ReactElement {
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [loaded, setLoaded] = useState(false);
@@ -656,7 +728,10 @@ function TemplatePreviewPane({
             type="button"
             className={`tmchat-devicebtn${device === 'desktop' ? ' active' : ''}`}
             aria-pressed={device === 'desktop'}
-            onClick={() => setDevice('desktop')}
+            onClick={() => {
+              setDevice('desktop');
+              onEvent?.('live_preview_device_changed', { template_slug: item.template_slug, device: 'desktop' });
+            }}
           >
             <ChatIcon name="desktop" size={14} /> Desktop
           </button>
@@ -664,18 +739,39 @@ function TemplatePreviewPane({
             type="button"
             className={`tmchat-devicebtn${device === 'mobile' ? ' active' : ''}`}
             aria-pressed={device === 'mobile'}
-            onClick={() => setDevice('mobile')}
+            onClick={() => {
+              setDevice('mobile');
+              onEvent?.('live_preview_device_changed', { template_slug: item.template_slug, device: 'mobile' });
+            }}
           >
             <ChatIcon name="mobile" size={14} /> Mobile
           </button>
         </div>
         {item.website_url ? (
-          <a className="tmchat-preview-open" href={item.website_url} target="_blank" rel="noopener noreferrer">
+          <a
+            className="tmchat-preview-open"
+            href={item.website_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => onEvent?.('live_preview_site_opened', { template_slug: item.template_slug })}
+          >
             Open site <ChatIcon name="external" size={12} />
           </a>
         ) : null}
         {item.url ? (
-          <a className="tmchat-preview-cta" href={item.url} target="_blank" rel="noopener noreferrer">
+          <a
+            className="tmchat-preview-cta"
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() =>
+              onEvent?.('live_preview_cta_clicked', {
+                template_slug: item.template_slug,
+                is_free: item.is_free,
+                price: item.price,
+              })
+            }
+          >
             {item.is_free || item.price === 0
               ? 'Use for free'
               : typeof item.price === 'number'
@@ -709,8 +805,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   starterPrompts = DEFAULT_STARTERS,
   defaultOpen = false,
   defaultImmersive = false,
+  enableAnalytics = true,
 }) => {
   const isInline = variant === 'inline';
+  useMarketplaceComponentErrorTracking('TemplateChat', enableAnalytics);
   const [persisted] = useState<PersistedSession | null>(() =>
     typeof window === 'undefined' ? null : loadPersistedSession(),
   );
@@ -725,7 +823,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [atBottom, setAtBottom] = useState(true);
   const [retryText, setRetryText] = useState<string | null>(null);
   // Template being live-previewed in the in-panel iframe (null = chat view).
-  const [preview, setPreview] = useState<AgentTemplateItem | null>(null);
+  // Position/layout are kept for conversion attribution on the preview CTA.
+  const [preview, setPreview] = useState<{ item: AgentTemplateItem; position: number; layout: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -750,6 +849,55 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       setWorking(value);
     }
   }, []);
+
+  // Refs so track() stays referentially stable across immersive/turn changes.
+  const immersiveRef = useRef(immersive);
+  immersiveRef.current = immersive;
+  const messageCountRef = useRef(messages.length);
+  messageCountRef.current = messages.length;
+
+  const track = useCallback<ChatTrack>(
+    (scope, data = {}) => {
+      trackMarketplaceEvent(
+        'Code Component Event',
+        {
+          ...getSafeAnalyticsOverrides(),
+          component: 'TemplateChat',
+          scope,
+          chat_variant: variant,
+          chat_surface: immersiveRef.current ? 'immersive' : 'compact',
+          chat_message_count: messageCountRef.current,
+          ...data,
+        },
+        enableAnalytics,
+      );
+    },
+    [enableAnalytics, variant],
+  );
+
+  // Open/collapse transitions (skips the initial render).
+  const prevImmersiveRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (prevImmersiveRef.current !== null && prevImmersiveRef.current !== immersive) {
+      track(immersive ? 'chat_expanded' : 'chat_collapsed');
+    }
+    prevImmersiveRef.current = immersive;
+  }, [immersive, track]);
+
+  const prevOpenRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (prevOpenRef.current === open) return;
+    const isFirst = prevOpenRef.current === null;
+    prevOpenRef.current = open;
+    if (open) {
+      track('chat_opened', {
+        trigger: isFirst ? (isInline ? 'inline' : defaultOpen ? 'default_open' : persisted?.open ? 'restored' : 'launcher') : 'launcher',
+      });
+    } else if (!isFirst) {
+      track('chat_closed');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, track]);
 
   // Warm the worker (edge cold start + upstream TLS) before the first message.
   const warmUp = useCallback(() => {
@@ -900,12 +1048,47 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   // The preview reads best on a wide canvas: opening one from the docked
   // panel expands to immersive; closing the preview returns to the chat as-is.
   const openPreview = useCallback(
-    (item: AgentTemplateItem) => {
+    (item: AgentTemplateItem, position: number, layout: string) => {
       if (!item.website_url) return;
-      setPreview(item);
+      setPreview({ item, position, layout });
+      track('live_preview_opened', {
+        template_slug: item.template_slug,
+        source_position: position,
+        display_layout: layout,
+        is_free: item.is_free,
+        price: item.price,
+      });
       if (!immersive) setImmersiveAnimated(true);
     },
-    [immersive, setImmersiveAnimated],
+    [immersive, setImmersiveAnimated, track],
+  );
+
+  // Card clicks to the template detail page — writes the same attribution
+  // record TemplateGrid does, so the detail page's conversion tracker
+  // credits purchases back to the chat.
+  const handleTemplateClick = useCallback(
+    (item: AgentTemplateItem, position: number, layout: string) => {
+      writeTemplateAttribution(buildChatAttribution(item, position, layout));
+      track('template_card_clicked', {
+        template_slug: item.template_slug,
+        source_position: position,
+        display_layout: layout,
+        is_free: item.is_free,
+        price: item.price,
+      });
+    },
+    [track],
+  );
+
+  // Preview toolbar events; the CTA also writes conversion attribution.
+  const handlePreviewEvent = useCallback<ChatTrack>(
+    (scope, data = {}) => {
+      if (scope === 'live_preview_cta_clicked' && preview) {
+        writeTemplateAttribution(buildChatAttribution(preview.item, preview.position, `preview:${preview.layout}`));
+      }
+      track(scope, data);
+    },
+    [preview, track],
   );
 
   useEffect(() => () => streamAbortRef.current?.abort(), []);
@@ -922,16 +1105,17 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     setInput('');
     setRetryText(null);
     setPreview(null);
+    track('chat_reset');
     try {
       window.sessionStorage.removeItem(STORAGE_KEY);
     } catch {
       // Ignore storage errors.
     }
     inputRef.current?.focus();
-  }, []);
+  }, [track]);
 
   const send = useCallback(
-    async (text: string, baseOverride?: ChatMessage[]) => {
+    async (text: string, baseOverride?: ChatMessage[], source: 'input' | 'starter' | 'followup' | 'retry' = 'input') => {
       const trimmed = text.trim();
       if (!trimmed || streaming || !apiBase) return;
 
@@ -947,6 +1131,19 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       const base = baseOverride ?? messages;
       const history = [...base, { role: 'user' as const, content: trimmed, displays: [] }];
       setMessages([...history, { role: 'assistant', content: '', displays: [] }]);
+
+      const turn = history.filter((message) => message.role === 'user').length;
+      const startedAt = Date.now();
+      let displaysShown = 0;
+      let templatesShown = 0;
+      let pageActionsApplied = 0;
+      let hadError = false;
+      track('message_sent', {
+        source,
+        turn,
+        message: trimmed.slice(0, 200),
+        message_length: trimmed.length,
+      });
 
       const controller = new AbortController();
       streamAbortRef.current = controller;
@@ -1018,13 +1215,35 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               for (const entry of event.payload.items) knownTemplatesRef.current.set(entry.template_slug, entry.item);
               appendToAssistant((message) => ({ ...message, displays: [...message.displays, event.payload] }));
               if (event.payload.followups?.length) setFollowups(event.payload.followups);
+              displaysShown += 1;
+              templatesShown += event.payload.items.length;
+              track('results_displayed', {
+                turn,
+                display_layout: event.payload.layout,
+                result_count: event.payload.items.length,
+                template_slugs: event.payload.items.map((entry) => entry.template_slug).join(','),
+                followups_count: event.payload.followups?.length ?? 0,
+              });
             } else if (event.type === 'page_action') {
               applyPageAction(event.payload);
+              pageActionsApplied += 1;
+              track('page_action_applied', {
+                turn,
+                action_sort: event.payload.sort ?? null,
+                action_category: event.payload.category_group_slug ?? null,
+                action_styles: (event.payload.styles ?? []).join(',') || null,
+                action_free_only: event.payload.free_only ?? null,
+                action_clear_filters: event.payload.clear_filters ?? null,
+                action_q: event.payload.q ?? null,
+                highlight_count: event.payload.highlight_slugs?.length ?? 0,
+              });
             } else if (event.type === 'context') {
               for (const item of event.payload.known_templates ?? []) {
                 if (item?.template_slug) knownTemplatesRef.current.set(item.template_slug, item);
               }
             } else if (event.type === 'error') {
+              hadError = true;
+              track('chat_error', { turn, error_source: 'agent', message: String(event.message).slice(0, 200) });
               setRetryText(trimmed);
               appendToAssistant((message) => ({
                 ...message,
@@ -1035,6 +1254,12 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         }
       } catch (error) {
         if (!controller.signal.aborted) {
+          hadError = true;
+          track('chat_error', {
+            turn,
+            error_source: 'connection',
+            message: (error instanceof Error ? error.message : String(error)).slice(0, 200),
+          });
           setRetryText(trimmed);
           appendToAssistant((message) => ({
             ...message,
@@ -1044,9 +1269,18 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       } finally {
         setWorkingState(false);
         setStreaming(false);
+        track('response_completed', {
+          turn,
+          duration_ms: Date.now() - startedAt,
+          displays_shown: displaysShown,
+          templates_shown: templatesShown,
+          page_actions_applied: pageActionsApplied,
+          had_error: hadError,
+          stopped: controller.signal.aborted,
+        });
       }
     },
-    [apiBase, messages, streaming, immersive, setWorkingState],
+    [apiBase, messages, streaming, immersive, setWorkingState, track],
   );
 
   if (!open) {
@@ -1116,7 +1350,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                   type="button"
                   className="tmchat-chip"
                   style={{ animationDelay: `${index * 50}ms` }}
-                  onClick={() => void send(suggestion)}
+                  onClick={() => void send(suggestion, undefined, 'starter')}
                 >
                   {suggestion}
                 </button>
@@ -1134,7 +1368,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 </div>
               ) : null}
               {message.displays.map((payload, displayIndex) => (
-                <DisplayArtifact key={displayIndex} payload={payload} onPreview={openPreview} />
+                <DisplayArtifact key={displayIndex} payload={payload} onPreview={openPreview} onTemplateClick={handleTemplateClick} />
               ))}
             </React.Fragment>
           ))}
@@ -1156,7 +1390,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 onClick={() => {
                   if (!retryText) return;
                   const base = messages.slice(0, -2);
-                  void send(retryText, base);
+                  void send(retryText, base, 'retry');
                 }}
               >
                 Try again
@@ -1171,7 +1405,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                   type="button"
                   className="tmchat-chip"
                   style={{ animationDelay: `${120 + index * 50}ms` }}
-                  onClick={() => void send(suggestion)}
+                  onClick={() => void send(suggestion, undefined, 'followup')}
                 >
                   {suggestion}
                 </button>
@@ -1213,7 +1447,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         </div>
 
         {preview ? (
-          <TemplatePreviewPane key={preview.template_slug} item={preview} onClose={() => setPreview(null)} />
+          <TemplatePreviewPane key={preview.item.template_slug} item={preview.item} onEvent={handlePreviewEvent} onClose={() => setPreview(null)} />
         ) : null}
         </div>
       </div>

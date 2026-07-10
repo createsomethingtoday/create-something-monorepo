@@ -54,5 +54,11 @@ export default declareComponent(TemplateChat, {
       defaultValue: false,
       tooltip: 'Start in the fullscreen immersive state.',
     }),
+    enableAnalytics: props.Boolean({
+      name: 'Enable Analytics',
+      defaultValue: true,
+      tooltip:
+        'Emit marketplace analytics (wf_analytics / Segment / Amplitude) and write conversion attribution for template clicks.',
+    }),
   },
 });
