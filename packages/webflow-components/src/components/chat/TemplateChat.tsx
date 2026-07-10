@@ -450,9 +450,29 @@ function loadPersistedSession(): PersistedSession | null {
 
 // Detect the marketplace grid components on the host page. Used both to tell
 // the agent whether update_page is meaningful and to target highlights.
+// Webflow mounts each code component in an isolated (open) shadow root, so a
+// plain document.querySelector can never see a grid rendered by a *different*
+// component on the page. Walk open shadow roots (bounded depth) to find them.
+function deepQuerySelectorAll(selector: string): Element[] {
+  if (typeof document === 'undefined') return [];
+  const found: Element[] = [];
+  const visit = (root: ParentNode, depth: number) => {
+    found.push(...Array.from(root.querySelectorAll(selector)));
+    if (depth >= 3) return;
+    for (const el of Array.from(root.querySelectorAll<HTMLElement>('*'))) {
+      if (el.shadowRoot) visit(el.shadowRoot, depth + 1);
+    }
+  };
+  visit(document, 0);
+  return found;
+}
+
+const GRID_MARKER_SELECTOR = '[data-template-slug], .tmgrid-grid, .tmgrid-item, .tmsearch-page';
+
 function pageHasTemplateGrid(): boolean {
   if (typeof document === 'undefined') return false;
-  return Boolean(document.querySelector('[data-template-slug], .tmgrid-grid, .tmsearch-page'));
+  if (document.querySelector(GRID_MARKER_SELECTOR)) return true;
+  return deepQuerySelectorAll(GRID_MARKER_SELECTOR).length > 0;
 }
 
 // Apply an agent page action through the marketplace components' shared
@@ -529,8 +549,14 @@ function applyPageAction(payload: PageActionPayload): void {
 
 function highlightPageTemplates(slugs: string[], attempt: number): void {
   if (typeof document === 'undefined' || slugs.length === 0) return;
+  // One shadow-piercing sweep for all cards, then match requested slugs.
+  const bySlug = new Map<string, HTMLElement>();
+  for (const el of deepQuerySelectorAll('[data-template-slug]')) {
+    const slug = el.getAttribute('data-template-slug');
+    if (slug && el instanceof HTMLElement && !bySlug.has(slug)) bySlug.set(slug, el);
+  }
   const found = slugs
-    .map((slug) => document.querySelector<HTMLElement>(`[data-template-slug="${CSS.escape(slug)}"]`))
+    .map((slug) => bySlug.get(slug))
     .filter((el): el is HTMLElement => Boolean(el));
 
   if (found.length === 0) {
