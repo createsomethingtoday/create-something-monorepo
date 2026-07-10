@@ -102,15 +102,15 @@ function isMarketplaceSignalBadge(signal: string): boolean {
 function marketplaceSignalHelp(signal: string): string {
   switch (signal) {
     case 'Marketplace favorite':
-      return 'Marketplace favorite: 250+ purchases in the last 30 days.';
+      return 'Marketplace favorite: 250+ purchases all-time.';
     case 'Top seller':
-      return 'Top seller: 100+ purchases in the last 30 days.';
+      return 'Top seller: 100+ purchases all-time.';
     case 'Strong seller':
-      return 'Strong seller: 50+ purchases in the last 30 days.';
+      return 'Strong seller: 50+ purchases all-time.';
     case 'Sales momentum':
-      return 'Sales momentum: 20+ purchases in the last 30 days.';
+      return 'Sales momentum: 20+ purchases all-time.';
     case 'Recently purchased':
-      return 'Recently purchased: bought by customers in the last 30 days.';
+      return 'Recently purchased: bought by marketplace customers.';
     case 'High interest':
       return 'High interest: viewed by many template shoppers recently.';
     case 'Buyer interest':
@@ -118,7 +118,7 @@ function marketplaceSignalHelp(signal: string): string {
     case 'Popular':
       return 'Popular: this template ranks well in marketplace popularity signals.';
     default:
-      if (/purchases?$/i.test(signal)) return `${signal} in the last 30 days.`;
+      if (/purchases?$/i.test(signal)) return `${signal} all-time.`;
       if (/views?$/i.test(signal)) return `${signal} from recent marketplace shoppers.`;
       return signal;
   }
