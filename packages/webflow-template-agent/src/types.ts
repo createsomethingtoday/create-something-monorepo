@@ -15,6 +15,15 @@ export interface ChatRequestMessage {
 
 export interface ChatRequestBody {
   messages: ChatRequestMessage[];
+  // Opaque continuity blob the client echoes back from the previous turn's
+  // `context` event. Re-seeds the slug registry so multi-turn requests can
+  // display/compare templates surfaced in earlier turns (the worker is
+  // stateless across requests).
+  context?: ChatContext;
+}
+
+export interface ChatContext {
+  known_templates: TemplateSearchItem[];
 }
 
 // SSE events emitted to the client. `display` payloads are the generative-UI
@@ -24,6 +33,9 @@ export interface ChatRequestBody {
 export type AgentSseEvent =
   | { type: 'text_delta'; text: string }
   | { type: 'display'; payload: DisplayPayload }
+  // Continuity snapshot: templates this conversation has verified via tools.
+  // The client stores it and echoes it back as `context` on the next request.
+  | { type: 'context'; payload: ChatContext }
   | { type: 'done' }
   | { type: 'error'; message: string };
 

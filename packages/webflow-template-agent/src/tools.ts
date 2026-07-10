@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import type { DisplayPayload, Env, TemplateSearchItem, TemplateSearchResponse } from './types.js';
+import type { ChatContext, DisplayPayload, Env, TemplateSearchItem, TemplateSearchResponse } from './types.js';
 
 // Closed vocabulary sourced from the Templates CMS Features collection.
 // Keeping it in the tool schema (enum + strict) makes hallucinated features
@@ -30,6 +30,9 @@ export const SORT_VALUES = ['popular', 'best_selling', 'newest', 'price_asc', 'p
 export const DISPLAY_LAYOUTS = ['gallery', 'carousel', 'spotlight', 'comparison', 'shortlist'] as const;
 
 const MAX_DISPLAY_ITEMS = 12;
+// Cap on the continuity snapshot echoed between turns (keeps the request body
+// and the model's context note bounded).
+const MAX_KNOWN_ITEMS = 40;
 
 export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
   {
@@ -164,8 +167,8 @@ function itemSummary(item: TemplateSearchItem): Record<string, unknown> {
     name: item.name,
     creator: item.creator_name,
     price: item.is_free ? 'Free' : item.price != null ? `$${item.price}` : null,
-    categories: item.category_groups.map((group) => group.name),
-    features: item.features,
+    categories: (item.category_groups ?? []).map((group) => group.name),
+    features: item.features ?? [],
     has_ecommerce: item.has_ecommerce,
     has_membership: item.has_membership,
     has_cms: item.has_cms,
@@ -180,6 +183,31 @@ export class TemplateToolExecutor {
   private readonly knownItems = new Map<string, TemplateSearchItem>();
 
   constructor(private readonly env: Env) {}
+
+  // Re-seed the registry from the previous turn's continuity snapshot so a
+  // stateless worker can still display/compare templates surfaced earlier.
+  seedFromContext(context: ChatContext | undefined): void {
+    for (const item of (context?.known_templates ?? []).slice(0, MAX_KNOWN_ITEMS)) {
+      if (item?.template_slug && !this.knownItems.has(item.template_slug)) {
+        this.knownItems.set(item.template_slug, item);
+      }
+    }
+  }
+
+  // Most-recent-first snapshot for the next turn's `context` echo.
+  snapshotContext(): ChatContext {
+    return { known_templates: Array.from(this.knownItems.values()).slice(-MAX_KNOWN_ITEMS) };
+  }
+
+  // Compact facts about already-verified templates, injected as a system
+  // context block so the model can reference/compare them without re-searching.
+  describeKnownItems(): string | null {
+    if (this.knownItems.size === 0) return null;
+    const lines = Array.from(this.knownItems.values())
+      .slice(-MAX_KNOWN_ITEMS)
+      .map((item) => JSON.stringify(itemSummary(item)));
+    return `Templates already verified by tools earlier in this conversation (you may display or compare these by template_slug without re-searching):\n${lines.join('\n')}`;
+  }
 
   async searchTemplates(input: SearchToolInput): Promise<string> {
     const response = await fetch(buildSearchUrl(this.env.SEARCH_API_BASE, input), {

@@ -30,6 +30,10 @@ interface DisplayPayload {
 type AgentSseEvent =
   | { type: 'text_delta'; text: string }
   | { type: 'display'; payload: DisplayPayload }
+  // Continuity snapshot from the (stateless) agent worker: templates verified
+  // by tools this conversation. Echoed back as `context` on the next request
+  // so follow-up turns can compare/re-display without re-searching.
+  | { type: 'context'; payload: { known_templates: AgentTemplateItem[] } }
   | { type: 'done' }
   | { type: 'error'; message: string };
 
@@ -114,6 +118,14 @@ function formatPrice(item: AgentTemplateItem): string {
   return typeof item.price === 'number' ? `$${item.price} USD` : '';
 }
 
+// The agent is prompted to emit plain text, but render defensively: turn any
+// **bold** spans into <strong> instead of showing raw asterisks.
+function renderMessageText(content: string): React.ReactNode {
+  const parts = content.split(/\*\*(.+?)\*\*/g);
+  if (parts.length === 1) return content;
+  return parts.map((part, index) => (index % 2 === 1 ? <strong key={index}>{part}</strong> : part));
+}
+
 function DisplayArtifact({ payload }: { payload: DisplayPayload }): React.ReactElement {
   const isStrip = payload.layout === 'carousel';
   const isSingle = payload.layout === 'spotlight' || payload.items.length === 1;
@@ -175,6 +187,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [followups, setFollowups] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
+  // Templates verified by the agent's tools this conversation, keyed by slug.
+  // Echoed back with each request so the stateless worker can compare or
+  // re-display earlier results instead of "forgetting" them between turns.
+  const knownTemplatesRef = useRef(new Map<string, AgentTemplateItem>());
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -213,6 +229,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           signal: controller.signal,
           body: JSON.stringify({
             messages: history.map((message) => ({ role: message.role, content: message.content })),
+            context: { known_templates: Array.from(knownTemplatesRef.current.values()).slice(-40) },
           }),
         });
         if (!response.ok || !response.body) throw new Error(`Agent unavailable (${response.status}).`);
@@ -249,8 +266,13 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             if (event.type === 'text_delta') {
               appendToAssistant((message) => ({ ...message, content: message.content + event.text }));
             } else if (event.type === 'display') {
+              for (const entry of event.payload.items) knownTemplatesRef.current.set(entry.template_slug, entry.item);
               appendToAssistant((message) => ({ ...message, displays: [...message.displays, event.payload] }));
               if (event.payload.followups?.length) setFollowups(event.payload.followups);
+            } else if (event.type === 'context') {
+              for (const item of event.payload.known_templates ?? []) {
+                if (item?.template_slug) knownTemplatesRef.current.set(item.template_slug, item);
+              }
             } else if (event.type === 'error') {
               appendToAssistant((message) => ({
                 ...message,
@@ -299,7 +321,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           <div className="tmchat-msg assistant">{welcomeMessage}</div>
           {messages.map((message, index) => (
             <React.Fragment key={index}>
-              {message.content ? <div className={`tmchat-msg ${message.role}`}>{message.content}</div> : null}
+              {message.content ? (
+                <div className={`tmchat-msg ${message.role}`}>{renderMessageText(message.content)}</div>
+              ) : null}
               {message.displays.map((payload, displayIndex) => (
                 <DisplayArtifact key={displayIndex} payload={payload} />
               ))}

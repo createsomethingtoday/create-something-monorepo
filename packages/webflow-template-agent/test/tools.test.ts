@@ -140,3 +140,54 @@ describe('feature vocabulary', () => {
     expect(TEMPLATE_FEATURES.length).toBeGreaterThanOrEqual(19);
   });
 });
+
+describe('cross-turn continuity', () => {
+  it('seeds the registry from echoed context so earlier templates can be re-displayed', () => {
+    const executor = new TemplateToolExecutor(ENV);
+    executor.seedFromContext({ known_templates: [searchItem('johnston'), searchItem('whitman')] });
+
+    const { payload, dropped } = executor.buildDisplayPayload({
+      layout: 'comparison',
+      title: 'Compared',
+      items: [
+        { template_slug: 'johnston', reason: 'Strong seller' },
+        { template_slug: 'whitman', reason: 'CMS-driven' },
+      ],
+      followups: null,
+    });
+
+    expect(dropped).toEqual([]);
+    expect(payload?.items.map((entry) => entry.template_slug)).toEqual(['johnston', 'whitman']);
+  });
+
+  it('snapshots seeded + searched items and describes them for the model', async () => {
+    mockSearchResponse([searchItem('fresh')]);
+    const executor = new TemplateToolExecutor(ENV);
+    executor.seedFromContext({ known_templates: [searchItem('prior')] });
+    await executor.searchTemplates({});
+
+    const snapshot = executor.snapshotContext();
+    expect(snapshot.known_templates.map((item) => item.template_slug)).toEqual(['prior', 'fresh']);
+
+    const note = executor.describeKnownItems();
+    expect(note).toContain('already verified');
+    expect(note).toContain('"template_slug":"prior"');
+    expect(note).toContain('"template_slug":"fresh"');
+  });
+
+  it('describes nothing when the conversation has no verified templates', () => {
+    const executor = new TemplateToolExecutor(ENV);
+    expect(executor.describeKnownItems()).toBeNull();
+    expect(executor.snapshotContext().known_templates).toEqual([]);
+  });
+
+  it('tolerates malformed echoed items without arrays', () => {
+    const executor = new TemplateToolExecutor(ENV);
+    executor.seedFromContext({
+      known_templates: [
+        { ...searchItem('partial'), features: undefined, category_groups: undefined } as never,
+      ],
+    });
+    expect(executor.describeKnownItems()).toContain('"template_slug":"partial"');
+  });
+});

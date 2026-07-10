@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT } from './prompt.js';
 import { AGENT_TOOLS, TemplateToolExecutor, type SearchToolInput } from './tools.js';
-import type { AgentSseEvent, ChatRequestMessage, Env } from './types.js';
+import type { AgentSseEvent, ChatContext, ChatRequestMessage, Env } from './types.js';
 
 const MAX_LOOP_ITERATIONS = 6;
 const MAX_HISTORY_MESSAGES = 20;
@@ -24,9 +24,11 @@ export async function runAgentTurn(
   env: Env,
   history: ChatRequestMessage[],
   emit: (event: AgentSseEvent) => void,
+  context?: ChatContext,
 ): Promise<void> {
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   const executor = new TemplateToolExecutor(env);
+  executor.seedFromContext(context);
   const model = env.ANTHROPIC_MODEL || 'claude-opus-4-8';
 
   const messages: Anthropic.Messages.MessageParam[] = toAnthropicMessages(history);
@@ -35,18 +37,37 @@ export async function runAgentTurn(
     return;
   }
 
+  // Frozen prompt first (cache-stable prefix); per-conversation context after.
+  const system: Anthropic.Messages.TextBlockParam[] = [
+    { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+  ];
+  const knownItemsNote = executor.describeKnownItems();
+  if (knownItemsNote) system.push({ type: 'text', text: knownItemsNote });
+
+  // The client renders text into one bubble per turn; separate the text blocks
+  // that surround tool calls so sentences don't run together.
+  let hasStreamedText = false;
+
   for (let iteration = 0; iteration < MAX_LOOP_ITERATIONS; iteration += 1) {
+    let separatorPending = hasStreamedText;
     const stream = client.messages.stream({
       model,
       max_tokens: 4096,
       thinking: { type: 'adaptive' },
       output_config: { effort: 'low' },
-      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+      system,
       tools: AGENT_TOOLS,
       messages,
     });
 
-    stream.on('text', (delta) => emit({ type: 'text_delta', text: delta }));
+    stream.on('text', (delta) => {
+      if (separatorPending) {
+        emit({ type: 'text_delta', text: '\n\n' });
+        separatorPending = false;
+      }
+      hasStreamedText = true;
+      emit({ type: 'text_delta', text: delta });
+    });
 
     const message = await stream.finalMessage();
 
@@ -60,6 +81,7 @@ export async function runAgentTurn(
     );
 
     if (message.stop_reason !== 'tool_use' || toolUses.length === 0) {
+      emit({ type: 'context', payload: executor.snapshotContext() });
       emit({ type: 'done' });
       return;
     }
@@ -78,6 +100,7 @@ export async function runAgentTurn(
     messages.push({ role: 'user', content: toolResults });
   }
 
+  emit({ type: 'context', payload: executor.snapshotContext() });
   emit({ type: 'error', message: 'The assistant took too many steps. Please rephrase your request.' });
 }
 

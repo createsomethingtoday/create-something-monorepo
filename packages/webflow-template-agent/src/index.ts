@@ -1,5 +1,5 @@
 import { runAgentTurn } from './agent.js';
-import type { AgentSseEvent, ChatRequestBody, Env } from './types.js';
+import type { AgentSseEvent, ChatContext, ChatRequestBody, Env, TemplateSearchItem } from './types.js';
 
 function corsHeaders(request: Request, env: Env): Record<string, string> {
   const origin = request.headers.get('Origin') ?? '';
@@ -38,7 +38,7 @@ function sseResponse(request: Request, env: Env, body: ChatRequestBody, ctx: Exe
       };
 
       ctx.waitUntil(
-        runAgentTurn(env, body.messages, emit)
+        runAgentTurn(env, body.messages, emit, body.context)
           .catch((error) => {
             emit({
               type: 'error',
@@ -77,7 +77,28 @@ function parseBody(raw: unknown): ChatRequestBody | null {
     if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string') return null;
     parsed.push({ role, content });
   }
-  return { messages: parsed };
+  return { messages: parsed, context: parseContext((raw as { context?: unknown }).context) };
+}
+
+// Continuity blob echoed back from a previous turn's `context` event. Shape is
+// validated loosely (it only affects this client's own rendering); a malformed
+// blob degrades to "no context" instead of failing the request.
+function parseContext(raw: unknown): ChatContext | undefined {
+  if (typeof raw !== 'object' || raw === null) return undefined;
+  const knownTemplates = (raw as { known_templates?: unknown }).known_templates;
+  if (!Array.isArray(knownTemplates)) return undefined;
+
+  const items = knownTemplates
+    .filter(
+      (entry): entry is TemplateSearchItem =>
+        typeof entry === 'object' &&
+        entry !== null &&
+        typeof (entry as { template_slug?: unknown }).template_slug === 'string' &&
+        typeof (entry as { name?: unknown }).name === 'string',
+    )
+    .slice(0, 40);
+
+  return items.length > 0 ? { known_templates: items } : undefined;
 }
 
 export default {
