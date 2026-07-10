@@ -51,6 +51,9 @@ export interface TemplateSearchItem {
   url: string | null;
   preview_url: string | null;
   creator_name: string | null;
+  creator_profile_url: string | null;
+  creator_avatar_url: string | null;
+  creator_avatar_alt: string | null;
   thumbnail_image_url: string | null;
   price: number | null;
   is_free: boolean;

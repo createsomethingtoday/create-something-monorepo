@@ -10,6 +10,9 @@ interface AgentTemplateItem {
   name: string;
   url: string | null;
   creator_name: string | null;
+  creator_profile_url: string | null;
+  creator_avatar_url: string | null;
+  creator_avatar_alt: string | null;
   thumbnail_image_url: string | null;
   price: number | null;
   is_free: boolean;
@@ -82,7 +85,6 @@ const CHAT_STYLES = `
 .tmchat-grid.single { grid-template-columns: 1fr; }
 .tmchat-strip { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
 .tmchat-strip > * { flex: 0 0 220px; }
-.tmchat-reason { font-size: 12.5px; color: #404040; margin: 4px 0 0; }
 .tmchat-followups { display: flex; flex-wrap: wrap; gap: 8px; }
 .tmchat-chip {
   border: 1px solid #dbe6fb; border-radius: 999px; background: #f2f7ff;
@@ -125,6 +127,17 @@ function DisplayArtifact({ payload }: { payload: DisplayPayload }): React.ReactE
         price={formatPrice(entry.item)}
         isFree={entry.item.is_free}
         creatorName={entry.item.creator_name ?? ''}
+        creatorLink={
+          entry.item.creator_profile_url ? { href: entry.item.creator_profile_url, target: '_blank' } : undefined
+        }
+        creatorIcon={
+          entry.item.creator_avatar_url
+            ? {
+                src: entry.item.creator_avatar_url,
+                alt: entry.item.creator_avatar_alt ?? entry.item.creator_name ?? '',
+              }
+            : undefined
+        }
         primaryImage={
           entry.item.thumbnail_image_url ? { src: entry.item.thumbnail_image_url, alt: entry.item.name } : undefined
         }
@@ -132,7 +145,6 @@ function DisplayArtifact({ payload }: { payload: DisplayPayload }): React.ReactE
         agentNote={showReasons ? entry.reason : undefined}
         showCategoryMeta={false}
       />
-      {showReasons && entry.reason ? <p className="tmchat-reason">{entry.reason}</p> : null}
     </div>
   ));
 
