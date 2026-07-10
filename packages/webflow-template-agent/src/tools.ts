@@ -223,6 +223,19 @@ export function buildSearchUrl(base: string, input: SearchToolInput): string {
 
 // Trim items to what the model needs to reason about — the full item is kept
 // in the slug registry for display enrichment, not replayed into context.
+// The model never sees raw sales counts — only a coarse demand tier. Prompt
+// rules ban quoting numbers, but a data boundary cannot be prompted around:
+// what the model does not have, it cannot leak. Raw counts still drive the
+// search API's ranking and the display payload's card signals.
+function demandTier(purchases: number | null): string | null {
+  if (purchases == null) return null;
+  if (purchases >= 500) return 'top seller';
+  if (purchases >= 100) return 'strong demand';
+  if (purchases >= 25) return 'steady demand';
+  if (purchases >= 1) return 'emerging';
+  return 'new';
+}
+
 function itemSummary(item: TemplateSearchItem): Record<string, unknown> {
   return {
     template_slug: item.template_slug,
@@ -235,7 +248,7 @@ function itemSummary(item: TemplateSearchItem): Record<string, unknown> {
     has_membership: item.has_membership,
     has_cms: item.has_cms,
     template_type: item.template_type,
-    cumulative_purchases: item.cumulative_purchases,
+    demand: demandTier(item.cumulative_purchases),
     published_date: item.published_date,
   };
 }
