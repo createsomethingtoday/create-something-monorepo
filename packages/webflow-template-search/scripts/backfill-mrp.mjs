@@ -2,6 +2,7 @@
 
 const DEFAULT_WORKER_URL = 'https://webflow-template-search.createsomething.workers.dev';
 const MAX_SEARCH_LATENCY_MS = 10_000;
+const MAX_LOCK_WAIT_MS = 10 * 60 * 1000;
 
 const args = process.argv.slice(2);
 const has = (flag) => args.includes(flag);
@@ -44,7 +45,12 @@ async function adminRequest(method, searchParams = new URLSearchParams()) {
     signal: AbortSignal.timeout(MAX_SEARCH_LATENCY_MS),
   });
   const payload = await response.json();
-  if (!response.ok) throw new Error(`Admin request failed (${response.status}): ${JSON.stringify(payload)}`);
+  if (!response.ok) {
+    const error = new Error(`Admin request failed (${response.status}): ${JSON.stringify(payload)}`);
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
+  }
   return payload;
 }
 
@@ -85,12 +91,32 @@ if (mode === 'dry-run') {
 await assertSearchAvailable();
 let batch = 0;
 let restart = has('--restart');
+let lockWaitStartedAt = null;
 for (;;) {
   const params = new URLSearchParams({ batch_size: String(batchSize) });
   if (restart) params.set('restart', 'true');
   restart = false;
 
-  const result = await adminRequest('POST', params);
+  let result;
+  try {
+    result = await adminRequest('POST', params);
+    lockWaitStartedAt = null;
+  } catch (error) {
+    if (error.status !== 409) throw error;
+    lockWaitStartedAt ??= Date.now();
+    if (Date.now() - lockWaitStartedAt > MAX_LOCK_WAIT_MS) {
+      throw new Error(`Shared sync lease remained busy for more than ${MAX_LOCK_WAIT_MS / 1000}s.`);
+    }
+    console.log(
+      JSON.stringify({
+        status: 'waiting_for_sync_lease',
+        active_mode: error.payload?.active_job?.mode ?? null,
+        active_started_at: error.payload?.active_job?.started_at ?? null,
+      }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    continue;
+  }
   batch += 1;
   console.log(
     JSON.stringify({

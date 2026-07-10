@@ -185,7 +185,9 @@ Each POST processes at most 50 D1 rows in stable ID order, fetches only those Ai
 updates only rows whose non-empty source MRP ID differs, and records cursor, cumulative counts,
 source mismatches, missing MRP IDs, completion, or failure in `sync_state.mrp_backfill`. Every write
 batch uses the shared `template_sync` lease. A killed CLI can be rerun with `--resume`; it never
-needs to restart at batch zero.
+needs to restart at batch zero. If an incremental sync or maintenance job owns the lease between
+batches, the CLI waits up to ten minutes and continues automatically rather than treating the
+expected `409` response as failed backfill work.
 
 The CLI runs both queryless and FTS public search probes before work, every five batches by
 default, and after completion. It stops if either probe fails, returns no items, or exceeds ten
