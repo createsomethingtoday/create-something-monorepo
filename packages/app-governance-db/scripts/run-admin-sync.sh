@@ -33,6 +33,15 @@ run() {
   # this is a no-op when the right build is already present.
   (cd "$RUNTIME" && npx playwright install chromium >/dev/null 2>&1)
 
+  # The sync script falls back to `infisical` relative to its own location,
+  # which inside the runtime dir has no .infisical.json project context —
+  # fetch the key from the real repo checkout and hand it over via env.
+  export APP_GOVERNANCE_MCP_KEY="$(cd "$REPO" && infisical secrets get APP_GOVERNANCE_MCP_KEY --plain 2>/dev/null | tail -1)"
+  if [ -z "$APP_GOVERNANCE_MCP_KEY" ]; then
+    echo "error: could not fetch APP_GOVERNANCE_MCP_KEY via infisical (session expired?)"
+    return 1
+  fi
+
   node "$RUNTIME/packages/app-governance-db/scripts/sync-admin-apps.playwright.mjs" "$@"
 }
 
