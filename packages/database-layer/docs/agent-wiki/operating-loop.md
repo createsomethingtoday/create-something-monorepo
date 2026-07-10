@@ -25,9 +25,9 @@ for agents to inspect without turning documentation into a write surface.
 
 | Tier | Count | Use in this loop |
 | --- | --- | --- |
-| Database | 21 | Resources, data artifacts, D1/R2/KV bindings, generated proof objects. |
+| Database | 25 | Resources, data artifacts, D1/R2/KV bindings, generated proof objects. |
 | Automation | 237 | Workers, MCP servers, scripts, routes, and runtime command surfaces. |
-| Judgment | 93 | Policies, guides, approval boundaries, and operator escalation rules. |
+| Judgment | 91 | Policies, guides, approval boundaries, and operator escalation rules. |
 
 ## Business Readout
 
@@ -41,8 +41,8 @@ Atlas is showing value for CREATE SOMETHING: the business is mapped enough to re
 | Client | CREATE SOMETHING |
 | Workflow | Internal operating topology |
 | Owner | CREATE SOMETHING |
-| Canvas nodes | 440 |
-| Canvas edges | 898 |
+| Canvas nodes | 441 |
+| Canvas edges | 902 |
 | Story steps | 6 |
 | Open questions | 1 |
 

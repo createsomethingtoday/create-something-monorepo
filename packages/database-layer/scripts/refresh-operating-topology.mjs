@@ -85,12 +85,12 @@ runStep('Business operating recommendations', process.execPath, [
 ]);
 runStep('Management surface', process.execPath, ['scripts/generate-management-surface.mjs']);
 runStep('Performance contract', process.execPath, ['scripts/generate-performance-contract.mjs']);
-runStep('Worker state', process.execPath, ['scripts/generate-worker-state.mjs']);
 runStep('3D topology projection', process.execPath, ['scripts/generate-topology-3d.mjs']);
 runStep('Atlas Studio session export', process.execPath, [
   'scripts/export-internal-atlas-session.mjs',
   ...(installAtlasSession ? ['--install', '--install-app-data'] : [])
 ]);
+runStep('Worker state', process.execPath, ['scripts/generate-worker-state.mjs']);
 runStep('Atlas/Substrate agent wiki', process.execPath, ['scripts/generate-agent-wiki.mjs']);
 
 if (!skipTests) {

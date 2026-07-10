@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-07-08T18:21:41.279Z",
+    "generatedAt": "2026-07-10T20:32:17.251Z",
     "rootPath": ".",
-    "packageCount": 183,
+    "packageCount": 185,
     "appCount": 6,
     "workerCount": 99,
     "clientOverlayCount": 6,
     "policyCount": 56,
-    "guideCount": 55,
+    "guideCount": 54,
     "configCount": 40
   },
   "nodes": [
@@ -392,7 +392,7 @@
       "surface": "mcp",
       "owner": "CREATE SOMETHING <hello@createsomething.agency>",
       "status": "mapped",
-      "summary": "Complete AI development environment. Ghostty, Claude Code, Beads, MCP servers—all configured and ready.",
+      "summary": "Complete AI development environment. Zellij, Claude Code, Beads, MCP servers-all configured and ready.",
       "tags": [
         "package",
         "mcp",
@@ -400,7 +400,7 @@
         "ai",
         "development",
         "dotfiles",
-        "ghostty",
+        "zellij",
         "mcp"
       ],
       "packageName": "@createsomething/agent-kit",
@@ -662,7 +662,7 @@
       "atlasNodeId": "atlas_create-something_package_createsomething-canon-tokens-packages-canon-tokens",
       "title": "@createsomething/canon-tokens",
       "path": "packages/canon-tokens",
-      "tier": "Judgment",
+      "tier": "Database",
       "surface": "package",
       "owner": "CREATE SOMETHING <hello@createsomething.io>",
       "status": "mapped",
@@ -694,7 +694,8 @@
         "svelte",
         "angular",
         "tailwind",
-        "framework-agnostic"
+        "framework-agnostic",
+        "database"
       ],
       "packageName": "@createsomething/canon-tokens",
       "runtime": "node"
@@ -704,7 +705,7 @@
       "atlasNodeId": "atlas_create-something_package_create-something-canon-packages-canon",
       "title": "@create-something/canon",
       "path": "packages/canon",
-      "tier": "Judgment",
+      "tier": "Database",
       "surface": "package",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
@@ -718,9 +719,32 @@
         "canon",
         "create-something",
         "dieter-rams",
-        "minimalism"
+        "minimalism",
+        "database"
       ],
       "packageName": "@create-something/canon",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
+      "atlasNodeId": "atlas_create-something_package_create-something-canvas-kernel-packages-canvas-kernel",
+      "title": "@create-something/canvas-kernel",
+      "path": "packages/canvas-kernel",
+      "tier": "Database",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Shared CREATE SOMETHING canvas renderer and canvas-state contracts for Atlas, Substrate, and Topology surfaces.",
+      "tags": [
+        "package",
+        "package",
+        "canvas",
+        "webgpu",
+        "substrate",
+        "atlas",
+        "topology"
+      ],
+      "packageName": "@create-something/canvas-kernel",
       "runtime": "node"
     },
     {
@@ -1407,6 +1431,23 @@
       ],
       "packageName": "halfdozen-gmail-sync-worker",
       "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-halfdozen-landing-packages-halfdozen-landing",
+      "atlasNodeId": "atlas_create-something_package_create-something-halfdozen-landing-packages-halfdozen-landing",
+      "title": "@create-something/halfdozen-landing",
+      "path": "packages/halfdozen-landing",
+      "tier": "Database",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Half Dozen landing page built from Figma with Webflow Code Component-ready React sections.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/halfdozen-landing",
+      "runtime": "node"
     },
     {
       "id": "substrate:create-something:package:create-something-halfdozen-notion-mcp-packages-halfdozen-notion-mcp",
@@ -2222,7 +2263,7 @@
       "surface": "agent",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
-      "summary": "Standalone Ona-styled operator chat frontend for CREATE SOMETHING Dify agents.",
+      "summary": "Standalone Performance Lab operator chat frontend for CREATE SOMETHING Dify agents.",
       "tags": [
         "package",
         "agent",
@@ -6437,21 +6478,6 @@
       ]
     },
     {
-      "id": "substrate:create-something:guide:docs-guides-cmux-claude-webflow-bridge-md",
-      "atlasNodeId": "atlas_create-something_guide_docs-guides-cmux-claude-webflow-bridge-md",
-      "title": "CMUX_CLAUDE_WEBFLOW_BRIDGE.md",
-      "path": "docs/guides/CMUX_CLAUDE_WEBFLOW_BRIDGE.md",
-      "tier": "Mixed",
-      "surface": "guide",
-      "owner": "CREATE SOMETHING",
-      "status": "mapped",
-      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
-      "tags": [
-        "guide",
-        "documentation"
-      ]
-    },
-    {
       "id": "substrate:create-something:guide:docs-guides-coding-agent-harness-pattern-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-coding-agent-harness-pattern-md",
       "title": "CODING_AGENT_HARNESS_PATTERN.md",
@@ -6606,21 +6632,6 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-git-light-agent-delivery-workflow-md",
       "title": "GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md",
       "path": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md",
-      "tier": "Mixed",
-      "surface": "guide",
-      "owner": "CREATE SOMETHING",
-      "status": "mapped",
-      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
-      "tags": [
-        "guide",
-        "documentation"
-      ]
-    },
-    {
-      "id": "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
-      "atlasNodeId": "atlas_create-something_guide_docs-guides-hermes-agent-loop-evaluation-md",
-      "title": "HERMES_AGENT_LOOP_EVALUATION.md",
-      "path": "docs/guides/HERMES_AGENT_LOOP_EVALUATION.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -7071,6 +7082,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-webflow-template-review-dify-agent-manual-md",
       "title": "WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md",
       "path": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-zellij-agent-cockpit-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-zellij-agent-cockpit-md",
+      "title": "ZELLIJ_AGENT_COCKPIT.md",
+      "path": "docs/guides/ZELLIJ_AGENT_COCKPIT.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -7969,6 +7995,13 @@
       "evidence": "packages/canon is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-canvas-kernel-packages-canvas-kernel",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
+      "relation": "contains",
+      "evidence": "packages/canvas-kernel is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-check-asset-name-worker-packages-check-asset-name-worker",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-check-asset-name-worker-packages-check-asset-name-worker",
@@ -8205,6 +8238,13 @@
       "target": "substrate:create-something:package:halfdozen-gmail-sync-worker-packages-halfdozen-gmail-sync-worker",
       "relation": "contains",
       "evidence": "packages/halfdozen-gmail-sync/worker is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-halfdozen-landing-packages-halfdozen-landing",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-halfdozen-landing-packages-halfdozen-landing",
+      "relation": "contains",
+      "evidence": "packages/halfdozen-landing is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-halfdozen-notion-mcp-packages-halfdozen-notion-mcp",
@@ -10216,13 +10256,6 @@
       "evidence": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md is present in the repo scan."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-cmux-claude-webflow-bridge-md",
-      "source": "substrate:create-something:root",
-      "target": "substrate:create-something:guide:docs-guides-cmux-claude-webflow-bridge-md",
-      "relation": "contains",
-      "evidence": "docs/guides/CMUX_CLAUDE_WEBFLOW_BRIDGE.md is present in the repo scan."
-    },
-    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-coding-agent-harness-pattern-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-coding-agent-harness-pattern-md",
@@ -10298,13 +10331,6 @@
       "target": "substrate:create-something:guide:docs-guides-git-light-agent-delivery-workflow-md",
       "relation": "contains",
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md is present in the repo scan."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-hermes-agent-loop-evaluation-md",
-      "source": "substrate:create-something:root",
-      "target": "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
-      "relation": "contains",
-      "evidence": "docs/guides/HERMES_AGENT_LOOP_EVALUATION.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md",
@@ -10515,6 +10541,13 @@
       "target": "substrate:create-something:guide:docs-guides-webflow-template-review-dify-agent-manual-md",
       "relation": "contains",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-zellij-agent-cockpit-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-zellij-agent-cockpit-md",
+      "relation": "contains",
+      "evidence": "docs/guides/ZELLIJ_AGENT_COCKPIT.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
@@ -10937,18 +10970,18 @@
       "evidence": "packages/agency/clients/the-stack is a managed client overlay under packages/agency/clients."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-canvas-kernel-packages-canvas-kernel",
+      "source": "substrate:create-something:package:create-something-agency-packages-agency",
+      "target": "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
+      "relation": "depends_on",
+      "evidence": "@create-something/agency declares @create-something/canvas-kernel."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
       "source": "substrate:create-something:package:create-something-agency-packages-agency",
       "target": "substrate:create-something:package:create-something-canon-packages-canon",
       "relation": "depends_on",
       "evidence": "@create-something/agency declares @create-something/canon."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-database-layer-packages-database-layer",
-      "source": "substrate:create-something:package:create-something-agency-packages-agency",
-      "target": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
-      "relation": "depends_on",
-      "evidence": "@create-something/agency declares @create-something/database-layer."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-delivery-schema-packages-delivery-schema",
@@ -11154,6 +11187,13 @@
       "evidence": "wrangler.toml configures runtime for packages/concierge-chat."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mcp-packages-create-something-mcp-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+      "source": "substrate:create-something:package:create-something-mcp-packages-create-something-mcp",
+      "target": "substrate:create-something:package:create-something-canon-packages-canon",
+      "relation": "depends_on",
+      "evidence": "@create-something/mcp declares @create-something/canon."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mcp-packages-create-something-mcp-depends-on-substrate-create-something-package-create-something-playbook-mcp-packages-playbook-mcp",
       "source": "substrate:create-something:package:create-something-mcp-packages-create-something-mcp",
       "target": "substrate:create-something:package:create-something-playbook-mcp-packages-playbook-mcp",
@@ -11217,6 +11257,13 @@
       "evidence": "wrangler.toml configures runtime for packages/cs-telemetry-mcp/worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-database-layer-packages-database-layer-depends-on-substrate-create-something-package-create-something-canvas-kernel-packages-canvas-kernel",
+      "source": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+      "target": "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
+      "relation": "depends_on",
+      "evidence": "@create-something/database-layer declares @create-something/canvas-kernel."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-database-layer-packages-database-layer-runs-substrate-create-something-worker-packages-database-layer-worker-wrangler-toml",
       "source": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
       "target": "substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
@@ -11236,6 +11283,13 @@
       "target": "substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/database-layer/worker."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-eslint-plugin-canon-packages-eslint-plugin-canon-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+      "source": "substrate:create-something:package:create-something-eslint-plugin-canon-packages-eslint-plugin-canon",
+      "target": "substrate:create-something:package:create-something-canon-packages-canon",
+      "relation": "depends_on",
+      "evidence": "@create-something/eslint-plugin-canon declares @create-something/canon."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-gmail-notion-mcp-packages-gmail-notion-mcp-runs-substrate-create-something-worker-packages-gmail-notion-mcp-worker-wrangler-toml",
@@ -11588,6 +11642,13 @@
       "evidence": "wrangler.toml configures runtime for packages/identity-worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp-depends-on-substrate-create-something-package-create-something-canvas-kernel-packages-canvas-kernel",
+      "source": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+      "target": "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
+      "relation": "depends_on",
+      "evidence": "@create-something/interaction-atlas-mcp declares @create-something/canvas-kernel."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp-depends-on-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
       "source": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "target": "substrate:create-something:package:create-something-mcp-authz-packages-mcp-authz",
@@ -11859,6 +11920,13 @@
       "target": "substrate:create-something:worker:packages-notion-sync-mcp-worker-wrangler-toml",
       "relation": "runs",
       "evidence": "worker/wrangler.toml configures runtime for packages/notion-sync-mcp."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-ona-agents-packages-ona-agents-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+      "source": "substrate:create-something:package:create-something-ona-agents-packages-ona-agents",
+      "target": "substrate:create-something:package:create-something-canon-packages-canon",
+      "relation": "depends_on",
+      "evidence": "@create-something/ona-agents declares @create-something/canon."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-ona-agents-packages-ona-agents-runs-substrate-create-something-worker-packages-ona-agents-wrangler-toml",
@@ -12869,13 +12937,6 @@
       "evidence": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md is an operating guide."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-cmux-claude-webflow-bridge-md-documents-substrate-create-something-root",
-      "source": "substrate:create-something:guide:docs-guides-cmux-claude-webflow-bridge-md",
-      "target": "substrate:create-something:root",
-      "relation": "documents",
-      "evidence": "docs/guides/CMUX_CLAUDE_WEBFLOW_BRIDGE.md is an operating guide."
-    },
-    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-coding-agent-harness-pattern-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-coding-agent-harness-pattern-md",
       "target": "substrate:create-something:root",
@@ -12951,13 +13012,6 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md is an operating guide."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hermes-agent-loop-evaluation-md-documents-substrate-create-something-root",
-      "source": "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
-      "target": "substrate:create-something:root",
-      "relation": "documents",
-      "evidence": "docs/guides/HERMES_AGENT_LOOP_EVALUATION.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md-documents-substrate-create-something-root",
@@ -13168,6 +13222,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-zellij-agent-cockpit-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-zellij-agent-cockpit-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/ZELLIJ_AGENT_COCKPIT.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-doc-docs-readme-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
@@ -13688,13 +13749,6 @@
       "evidence": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md documents packages/substrate-mcp through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-cmux-claude-webflow-bridge-md-documents-substrate-create-something-mcp-config-config-dify-mcp-intake-webflow-app-review-json",
-      "source": "substrate:create-something:guide:docs-guides-cmux-claude-webflow-bridge-md",
-      "target": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-app-review-json",
-      "relation": "documents",
-      "evidence": "docs/guides/CMUX_CLAUDE_WEBFLOW_BRIDGE.md documents config/dify-mcp-intake/webflow-app-review.json through matching topology terms."
-    },
-    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-coding-agent-harness-pattern-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": "substrate:create-something:guide:docs-guides-coding-agent-harness-pattern-md",
       "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
@@ -13770,13 +13824,6 @@
       "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
       "relation": "documents",
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hermes-agent-loop-evaluation-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
-      "source": "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
-      "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
-      "relation": "documents",
-      "evidence": "docs/guides/HERMES_AGENT_LOOP_EVALUATION.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md-documents-substrate-create-something-package-create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",
@@ -13987,6 +14034,13 @@
       "target": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md documents config/dify-agents/template-review-hub.json through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-zellij-agent-cockpit-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+      "source": "substrate:create-something:guide:docs-guides-zellij-agent-cockpit-md",
+      "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+      "relation": "documents",
+      "evidence": "docs/guides/ZELLIJ_AGENT_COCKPIT.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-database-layer-packages-database-layer-documents-substrate-create-something-root",

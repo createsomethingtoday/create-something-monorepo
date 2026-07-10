@@ -30,9 +30,9 @@ The wrapper uses `LINEAR_API_KEY`. Store that key in Infisical or another secret
 
 Use `pnpm agent:claim-worktree -- --issue CRE-123` for implementation work that needs a new isolated workspace. It claims the issue, creates a branch/worktree from fresh `origin/main`, and writes a Linear comment with the branch, worktree path, base ref, and base SHA. That comment is the handoff record other agents and engineers should check before pushing, rebasing, merging, or promoting work.
 
-Hermes write-enabled runs should avoid macOS temp roots such as `/private/var`,
-because Hermes' file-write guard can treat those paths as sensitive. Use a
-normal user-owned root:
+Local Ornith and other write-enabled agent runs should use a normal user-owned
+root instead of macOS temporary roots so worktree ownership remains stable and
+operator-visible:
 
 ```bash
 mkdir -p "$HOME/Code/create-something-worktrees"

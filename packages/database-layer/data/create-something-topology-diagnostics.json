@@ -2,19 +2,19 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-07-08T18:21:41.279Z",
+  "generatedAt": "2026-07-10T20:32:17.251Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 440,
-    "edges": 898,
-    "mapped": 440,
+    "nodes": 441,
+    "edges": 902,
+    "mapped": 441,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
     "isolatedNodeCount": 0,
     "surfaceCounts": {
       "repo": 1,
-      "package": 40,
+      "package": 42,
       "app": 6,
       "mcp": 72,
       "client": 6,
@@ -22,14 +22,14 @@
       "agent": 28,
       "doc": 6,
       "policy": 56,
-      "guide": 55,
+      "guide": 54,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 89,
-      "Judgment": 93,
+      "Mixed": 88,
+      "Judgment": 91,
       "Automation": 237,
-      "Database": 21
+      "Database": 25
     }
   },
   "signals": [
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 237 record(s); Database has 21 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 237 record(s); Database has 25 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
         "Automation=237",
-        "Database=21",
-        "Total nodes=440"
+        "Database=25",
+        "Total nodes=441"
       ],
       "nodeIds": [],
       "paths": [],
@@ -274,7 +274,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "55 record(s) are classified as guide.",
+      "summary": "54 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
