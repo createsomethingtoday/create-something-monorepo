@@ -9,6 +9,8 @@ interface AgentTemplateItem {
   template_slug: string;
   name: string;
   url: string | null;
+  /** Published .webflow.io site — frameable on *.webflow.com, used for live previews. */
+  website_url?: string | null;
   creator_name: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
@@ -227,15 +229,68 @@ const CHAT_STYLES = `
 .tmchat-send:disabled { background: #a9c6f7; cursor: default; }
 .tmchat-send.stop { background: #fff; color: #404040; border: 1px solid #e0e0e0; }
 .tmchat-send.stop:hover { background: #f5f5f5; }
+/* ── Live template preview (published .webflow.io site in an iframe) ── */
+.tmchat-body { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.tmchat-preview {
+  position: absolute; inset: 0; z-index: 4;
+  display: flex; flex-direction: column; background: #fff;
+  animation: tmchat-fade 180ms ease both;
+}
+.tmchat-preview-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 14px; border-bottom: 1px solid #ececec; background: #fff;
+}
+.tmchat-panel.immersive .tmchat-preview-bar { padding: 10px clamp(16px, 5vw, 56px); }
+.tmchat-preview-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; color: #080808;
+  padding: 7px 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.tmchat-preview-back:hover { background: #f5f5f5; }
+.tmchat-preview-meta { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
+.tmchat-preview-name { font-size: 14px; font-weight: 600; color: #080808; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tmchat-preview-creator { font-size: 12px; color: #757575; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tmchat-devicetoggle { display: inline-flex; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+.tmchat-devicebtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 0; background: #fff; color: #757575; padding: 7px 12px;
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.tmchat-devicebtn + .tmchat-devicebtn { border-left: 1px solid #e0e0e0; }
+.tmchat-devicebtn.active { background: #f0f5ff; color: #146ef5; }
+.tmchat-preview-cta {
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+  border-radius: 8px; background: #146ef5; color: #fff; padding: 8px 14px;
+  font-family: inherit; font-size: 13px; font-weight: 600;
+}
+.tmchat-preview-cta:hover { background: #0f5cd0; }
+.tmchat-preview-open { display: inline-flex; align-items: center; gap: 5px; color: #757575; font-size: 12px; text-decoration: none; }
+.tmchat-preview-open:hover { color: #080808; }
+.tmchat-preview-stage {
+  position: relative; flex: 1 1 auto; min-height: 0; overflow: auto;
+  display: flex; justify-content: center; background: #f2f2f2; padding: 0;
+}
+.tmchat-preview-stage.mobile { padding: 20px 16px; }
+.tmchat-preview-frame { border: 0; background: #fff; width: 100%; height: 100%; display: block; }
+.tmchat-preview-stage.mobile .tmchat-preview-frame {
+  width: 390px; max-width: 100%; height: 100%; flex: 0 0 auto;
+  border: 1px solid #d9d9d9; border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.14);
+}
+.tmchat-preview-loading {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: #757575; font-size: 13px; pointer-events: none;
+}
 @media (max-width: 560px) {
   .tmchat-panel { right: 8px; bottom: 8px; width: calc(100vw - 16px); height: calc(100vh - 16px); }
   .tmchat-panel.immersive { top: 0; bottom: 0; width: 100vw; border-radius: 0; }
   .tmchat-grid, .tmchat-panel.immersive .tmchat-grid { grid-template-columns: 1fr; }
+  .tmchat-preview-stage.mobile { padding: 0; }
+  .tmchat-preview-stage.mobile .tmchat-preview-frame { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .tmchat-panel.entering, .tmchat-backdrop, .tmchat-dots span, .tmchat-caret,
   .tmchat-msg, .tmchat-display, .tmchat-typing, .tmchat-followups .tmchat-chip,
-  .tmchat-jump, .tmchat-grid > div, .tmchat-strip > div { animation: none; }
+  .tmchat-jump, .tmchat-grid > div, .tmchat-strip > div, .tmchat-preview { animation: none; }
   .tmchat-chip, .tmchat-send, .tmchat-launcher { transition: none; }
   .tmchat-chip:hover, .tmchat-launcher:hover, .tmchat-send:active:not(:disabled) { transform: none; }
 }
@@ -247,10 +302,36 @@ function ChatIcon({
   name,
   size = 16,
 }: {
-  name: 'sparkle' | 'refresh' | 'expand' | 'collapse' | 'close' | 'down';
+  name: 'sparkle' | 'refresh' | 'expand' | 'collapse' | 'close' | 'down' | 'back' | 'external' | 'desktop' | 'mobile';
   size?: number;
 }): React.ReactElement {
   const paths: Record<string, React.ReactNode> = {
+    back: (
+      <>
+        <line x1="19" y1="12" x2="5" y2="12" />
+        <polyline points="12 19 5 12 12 5" />
+      </>
+    ),
+    external: (
+      <>
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <polyline points="15 3 21 3 21 9" />
+        <line x1="10" y1="14" x2="21" y2="3" />
+      </>
+    ),
+    desktop: (
+      <>
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+      </>
+    ),
+    mobile: (
+      <>
+        <rect x="7" y="2" width="10" height="20" rx="2" />
+        <line x1="11" y1="18" x2="13" y2="18" />
+      </>
+    ),
     sparkle: <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" fill="currentColor" stroke="none" />,
     refresh: (
       <>
@@ -471,7 +552,13 @@ function highlightPageTemplates(slugs: string[], attempt: number): void {
   found[0]?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
 }
 
-function DisplayArtifact({ payload }: { payload: DisplayPayload }): React.ReactElement {
+function DisplayArtifact({
+  payload,
+  onPreview,
+}: {
+  payload: DisplayPayload;
+  onPreview?: (item: AgentTemplateItem) => void;
+}): React.ReactElement {
   const isStrip = payload.layout === 'carousel';
   const isSingle = payload.layout === 'spotlight' || payload.items.length === 1;
   const showReasons = payload.layout === 'shortlist' || payload.layout === 'spotlight' || payload.layout === 'comparison';
@@ -501,6 +588,23 @@ function DisplayArtifact({ payload }: { payload: DisplayPayload }): React.ReactE
         cumulativePurchases={entry.item.cumulative_purchases ?? undefined}
         agentNote={showReasons ? entry.reason : undefined}
         showCategoryMeta={false}
+        showPreviewLink={Boolean(onPreview && entry.item.website_url)}
+        previewLabel="Live preview"
+        previewLink={
+          onPreview && entry.item.website_url
+            ? {
+                // Plain click opens the in-chat preview; cmd/middle-click
+                // still opens the published site directly.
+                href: entry.item.website_url,
+                target: '_blank',
+                onClick: (event) => {
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+                  event.preventDefault();
+                  onPreview(entry.item);
+                },
+              }
+            : undefined
+        }
       />
     </div>
   ));
@@ -513,6 +617,84 @@ function DisplayArtifact({ payload }: { payload: DisplayPayload }): React.ReactE
       ) : (
         <div className={`tmchat-grid${isSingle ? ' single' : ''}`}>{cards}</div>
       )}
+    </div>
+  );
+}
+
+// Live preview of the template's published .webflow.io site. The published
+// sites ship `frame-ancestors … *.webflow.com`, so embedding here is
+// explicitly sanctioned. The mobile toggle narrows the iframe viewport, which
+// drives the site's own responsive breakpoints — a real mobile render, not a
+// scaled screenshot.
+function TemplatePreviewPane({
+  item,
+  onClose,
+}: {
+  item: AgentTemplateItem;
+  onClose: () => void;
+}): React.ReactElement {
+  const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [loaded, setLoaded] = useState(false);
+  const backRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    backRef.current?.focus();
+  }, []);
+
+  return (
+    <div className="tmchat-preview" role="region" aria-label={`Live preview of ${item.name}`}>
+      <div className="tmchat-preview-bar">
+        <button ref={backRef} type="button" className="tmchat-preview-back" onClick={onClose}>
+          <ChatIcon name="back" size={14} /> Back to chat
+        </button>
+        <div className="tmchat-preview-meta">
+          <span className="tmchat-preview-name">{item.name}</span>
+          {item.creator_name ? <span className="tmchat-preview-creator">by {item.creator_name}</span> : null}
+        </div>
+        <div className="tmchat-devicetoggle" role="group" aria-label="Preview device">
+          <button
+            type="button"
+            className={`tmchat-devicebtn${device === 'desktop' ? ' active' : ''}`}
+            aria-pressed={device === 'desktop'}
+            onClick={() => setDevice('desktop')}
+          >
+            <ChatIcon name="desktop" size={14} /> Desktop
+          </button>
+          <button
+            type="button"
+            className={`tmchat-devicebtn${device === 'mobile' ? ' active' : ''}`}
+            aria-pressed={device === 'mobile'}
+            onClick={() => setDevice('mobile')}
+          >
+            <ChatIcon name="mobile" size={14} /> Mobile
+          </button>
+        </div>
+        {item.website_url ? (
+          <a className="tmchat-preview-open" href={item.website_url} target="_blank" rel="noopener noreferrer">
+            Open site <ChatIcon name="external" size={12} />
+          </a>
+        ) : null}
+        {item.url ? (
+          <a className="tmchat-preview-cta" href={item.url} target="_blank" rel="noopener noreferrer">
+            {item.is_free || item.price === 0
+              ? 'Use for free'
+              : typeof item.price === 'number'
+                ? `Buy — $${item.price}`
+                : 'View template'}
+          </a>
+        ) : null}
+      </div>
+      <div className={`tmchat-preview-stage${device === 'mobile' ? ' mobile' : ''}`}>
+        {!loaded ? <div className="tmchat-preview-loading">Loading live preview…</div> : null}
+        <iframe
+          className="tmchat-preview-frame"
+          src={item.website_url ?? undefined}
+          title={`${item.name} — live template preview`}
+          loading="eager"
+          onLoad={() => setLoaded(true)}
+          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 240ms ease' }}
+        />
+      </div>
     </div>
   );
 }
@@ -542,6 +724,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [working, setWorking] = useState(false);
   const [atBottom, setAtBottom] = useState(true);
   const [retryText, setRetryText] = useState<string | null>(null);
+  // Template being live-previewed in the in-panel iframe (null = chat view).
+  const [preview, setPreview] = useState<AgentTemplateItem | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -699,17 +883,30 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [immersive]);
 
-  // Esc collapses the immersive state first, then closes a floating panel.
+  // Esc closes the live preview first, then collapses the immersive state,
+  // then closes a floating panel.
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      if (immersive) setImmersiveAnimated(false);
+      if (preview) setPreview(null);
+      else if (immersive) setImmersiveAnimated(false);
       else if (!isInline) setOpen(false);
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, immersive, isInline, setImmersiveAnimated]);
+  }, [open, immersive, isInline, preview, setImmersiveAnimated]);
+
+  // The preview reads best on a wide canvas: opening one from the docked
+  // panel expands to immersive; closing the preview returns to the chat as-is.
+  const openPreview = useCallback(
+    (item: AgentTemplateItem) => {
+      if (!item.website_url) return;
+      setPreview(item);
+      if (!immersive) setImmersiveAnimated(true);
+    },
+    [immersive, setImmersiveAnimated],
+  );
 
   useEffect(() => () => streamAbortRef.current?.abort(), []);
 
@@ -724,6 +921,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     setFollowups([]);
     setInput('');
     setRetryText(null);
+    setPreview(null);
     try {
       window.sessionStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -896,6 +1094,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 className="tmchat-iconbtn"
                 aria-label="Close chat"
                 onClick={() => {
+                  setPreview(null);
                   if (immersive) setImmersiveAnimated(false);
                   if (!isInline) setOpen(false);
                 }}
@@ -906,6 +1105,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           </div>
         </div>
 
+        <div className="tmchat-body">
         <div ref={scrollRef} className="tmchat-scroll" onScroll={handleScroll}>
           <div className="tmchat-msg assistant">{welcomeMessage}</div>
           {showStarterChips ? (
@@ -934,7 +1134,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 </div>
               ) : null}
               {message.displays.map((payload, displayIndex) => (
-                <DisplayArtifact key={displayIndex} payload={payload} />
+                <DisplayArtifact key={displayIndex} payload={payload} onPreview={openPreview} />
               ))}
             </React.Fragment>
           ))}
@@ -1010,6 +1210,11 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               Send
             </button>
           )}
+        </div>
+
+        {preview ? (
+          <TemplatePreviewPane key={preview.template_slug} item={preview} onClose={() => setPreview(null)} />
+        ) : null}
         </div>
       </div>
     </>

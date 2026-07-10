@@ -18,6 +18,8 @@ export interface TemplateCardImage {
 export interface TemplateCardLink {
   href: string;
   target?: string;
+  /** Intercept the click (e.g. open an in-app preview). Modified clicks (cmd/middle) still follow the href. */
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 }
 
 export interface TemplateCardProps {
@@ -1007,6 +1009,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
               href={previewLink!.href}
               target={previewLink!.target}
               rel={relForTarget(previewLink!.target)}
+              onClick={previewLink!.onClick}
               className="tmcard-preview-link"
               style={S.previewLink}
             >

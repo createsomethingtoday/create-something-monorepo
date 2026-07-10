@@ -89,6 +89,9 @@ export interface TemplateSearchItem {
   name: string;
   url: string | null;
   preview_url: string | null;
+  /** Published .webflow.io site. Frameable on *.webflow.com — the chat
+   *  component uses it for in-panel live previews. */
+  website_url: string | null;
   creator_name: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
