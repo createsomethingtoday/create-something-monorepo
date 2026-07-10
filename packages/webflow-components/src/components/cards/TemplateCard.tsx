@@ -1,13 +1,14 @@
 import React, { CSSProperties, useState, useCallback, memo } from 'react';
+import { UiIcon, type UiIconName } from '../primitives/UiIcon';
 
 export type TemplateCardBadge = 'none' | 'new' | 'featured' | 'reviewed' | 'top-rated';
 
-const BADGE_ICONS: Record<TemplateCardBadge, string> = {
-  none: '',
-  new: '✦',
-  featured: '★',
-  reviewed: '✓',
-  'top-rated': '◆',
+const BADGE_ICONS: Record<TemplateCardBadge, UiIconName | null> = {
+  none: null,
+  new: 'sparkles',
+  featured: 'star',
+  reviewed: 'check',
+  'top-rated': 'diamond',
 };
 
 export interface TemplateCardImage {
@@ -73,9 +74,6 @@ export interface TemplateCardProps {
   // per-card copy.
   stylesProvided?: boolean;
 }
-
-const ARROW_ICON_URL =
-  'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670878b0296e4ae4034fe652_view-details-arrow.svg';
 
 // 1×1 grey SVG used when the primary image fails to load
 const FALLBACK_IMAGE =
@@ -436,13 +434,7 @@ const S: Record<string, CSSProperties> = {
     width: '14px',
     height: '14px',
     flexShrink: 0,
-    border: '1px solid rgba(20, 110, 245, 0.18)',
-    borderRadius: '999px',
     color: 'rgba(20, 110, 245, 0.7)',
-    backgroundColor: 'rgba(20, 110, 245, 0.04)',
-    fontSize: '9px',
-    fontWeight: 700,
-    lineHeight: '12px',
     cursor: 'help',
     userSelect: 'none',
   } as CSSProperties,
@@ -482,6 +474,7 @@ const S: Record<string, CSSProperties> = {
   previewLink: {
     display: 'inline-flex',
     alignItems: 'center',
+    gap: '4px',
     width: 'fit-content',
     maxWidth: '100%',
     marginTop: '6px',
@@ -886,13 +879,15 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
             style={{ ...S.hoverContent, transform: isLinkHovered ? 'scale(1.04)' : 'scale(0.96)' }}
           >
             <span>View details</span>
-            <img loading="lazy" decoding="async" src={ARROW_ICON_URL} alt="" width="16" height="16" />
+            <UiIcon name="arrow-right" size={16} />
           </div>
         </div>
 
         {hasBadge && (
           <div style={badgeStyle}>
-            <span style={{ fontSize: '9px', lineHeight: 1 }}>{BADGE_ICONS[effectiveBadgeVariant]}</span>
+            {BADGE_ICONS[effectiveBadgeVariant] ? (
+              <UiIcon name={BADGE_ICONS[effectiveBadgeVariant]} size={10} />
+            ) : null}
             {effectiveBadgeText}
           </div>
         )}
@@ -984,7 +979,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
                     style={S.signalInfo}
                     title={marketplaceSignalHelp(primaryMarketplaceSignal)}
                   >
-                    i
+                    <UiIcon name="info" size={14} />
                   </span>
                   {marketplaceSignalItems.slice(1).map((signal) => (
                     <React.Fragment key={signal}>
@@ -1013,7 +1008,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
               className="tmcard-preview-link"
               style={S.previewLink}
             >
-              {previewLabel}
+              <UiIcon name="monitor" size={12} /> {previewLabel}
             </a>
           )}
 

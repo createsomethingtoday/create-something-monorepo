@@ -15,3 +15,6 @@ export type { FocusRingProps } from './FocusRing';
 
 export { VisuallyHidden } from './VisuallyHidden';
 export type { VisuallyHiddenProps } from './VisuallyHidden';
+
+export { UiIcon } from './UiIcon';
+export type { UiIconName, UiIconProps } from './UiIcon';

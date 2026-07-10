@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { TemplateCard, TEMPLATE_CARD_STYLES } from '../cards/TemplateCard';
+import { UiIcon } from '../primitives/UiIcon';
 import { trackMarketplaceEvent, type MarketplaceAnalyticsData } from '../marketplace/analytics';
 import { useMarketplaceComponentErrorTracking } from '../marketplace/MarketplaceComponentErrorBoundary';
 import {
@@ -335,102 +336,6 @@ const CHAT_STYLES = `
   .tmchat-chip:hover, .tmchat-launcher:hover, .tmchat-send:active:not(:disabled) { transform: none; }
 }
 ` + TEMPLATE_CARD_STYLES;
-
-// Standardized 16px stroke icons (Feather-style geometry, currentColor) —
-// Unicode glyphs render inconsistently across platforms/fonts.
-function ChatIcon({
-  name,
-  size = 16,
-}: {
-  name: 'sparkle' | 'refresh' | 'expand' | 'collapse' | 'close' | 'down' | 'back' | 'external' | 'desktop' | 'tablet' | 'mobile';
-  size?: number;
-}): React.ReactElement {
-  const paths: Record<string, React.ReactNode> = {
-    back: (
-      <>
-        <line x1="19" y1="12" x2="5" y2="12" />
-        <polyline points="12 19 5 12 12 5" />
-      </>
-    ),
-    external: (
-      <>
-        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-        <polyline points="15 3 21 3 21 9" />
-        <line x1="10" y1="14" x2="21" y2="3" />
-      </>
-    ),
-    desktop: (
-      <>
-        <rect x="2" y="3" width="20" height="14" rx="2" />
-        <line x1="8" y1="21" x2="16" y2="21" />
-        <line x1="12" y1="17" x2="12" y2="21" />
-      </>
-    ),
-    tablet: (
-      <>
-        <rect x="4" y="2" width="16" height="20" rx="2" />
-        <line x1="11" y1="18" x2="13" y2="18" />
-      </>
-    ),
-    mobile: (
-      <>
-        <rect x="7" y="2" width="10" height="20" rx="2" />
-        <line x1="11" y1="18" x2="13" y2="18" />
-      </>
-    ),
-    sparkle: <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" fill="currentColor" stroke="none" />,
-    refresh: (
-      <>
-        <polyline points="1 4 1 10 7 10" />
-        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-      </>
-    ),
-    expand: (
-      <>
-        <polyline points="15 3 21 3 21 9" />
-        <polyline points="9 21 3 21 3 15" />
-        <line x1="21" y1="3" x2="14" y2="10" />
-        <line x1="3" y1="21" x2="10" y2="14" />
-      </>
-    ),
-    collapse: (
-      <>
-        <polyline points="4 14 10 14 10 20" />
-        <polyline points="20 10 14 10 14 4" />
-        <line x1="14" y1="10" x2="21" y2="3" />
-        <line x1="3" y1="21" x2="10" y2="14" />
-      </>
-    ),
-    close: (
-      <>
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </>
-    ),
-    down: (
-      <>
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <polyline points="19 12 12 19 5 12" />
-      </>
-    ),
-  };
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      {paths[name]}
-    </svg>
-  );
-}
 
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
@@ -903,7 +808,7 @@ function TemplatePreviewPane({
     >
       <div className="tmchat-preview-bar">
         <button ref={backRef} type="button" className="tmchat-preview-back" onClick={requestClose}>
-          <ChatIcon name="back" size={14} /> Back to chat
+          <UiIcon name="arrow-left" size={14} /> Back to chat
         </button>
         <span className="tmchat-preview-sep" aria-hidden="true" />
         <div className="tmchat-preview-meta">
@@ -917,7 +822,7 @@ function TemplatePreviewPane({
             aria-pressed={device === 'desktop'}
             onClick={() => switchDevice('desktop')}
           >
-            <ChatIcon name="desktop" size={14} /> Desktop
+            <UiIcon name="monitor" size={14} /> Desktop
           </button>
           <button
             type="button"
@@ -925,7 +830,7 @@ function TemplatePreviewPane({
             aria-pressed={device === 'tablet'}
             onClick={() => switchDevice('tablet')}
           >
-            <ChatIcon name="tablet" size={14} /> Tablet
+            <UiIcon name="tablet" size={14} /> Tablet
           </button>
           <button
             type="button"
@@ -933,7 +838,7 @@ function TemplatePreviewPane({
             aria-pressed={device === 'mobile'}
             onClick={() => switchDevice('mobile')}
           >
-            <ChatIcon name="mobile" size={14} /> Mobile
+            <UiIcon name="smartphone" size={14} /> Mobile
           </button>
         </div>
         {item.website_url ? (
@@ -944,7 +849,7 @@ function TemplatePreviewPane({
             rel="noopener noreferrer"
             onClick={() => onEvent?.('live_preview_site_opened', { template_slug: item.template_slug })}
           >
-            Open site <ChatIcon name="external" size={12} />
+            Open site <UiIcon name="external-link" size={12} />
           </a>
         ) : null}
         {item.purchase_url || item.url ? (
@@ -1492,7 +1397,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       <>
         <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
         <button type="button" className="tmchat-launcher" onMouseEnter={warmUp} onClick={() => setOpen(true)}>
-          <ChatIcon name="sparkle" /> {launcherLabel}
+          <UiIcon name="sparkles" /> {launcherLabel}
         </button>
       </>
     );
@@ -1524,7 +1429,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           <div className="tmchat-header-actions">
             {messages.length > 0 ? (
               <button type="button" className="tmchat-iconbtn" aria-label="New chat" title="New chat" onClick={resetChat}>
-                <ChatIcon name="refresh" />
+                <UiIcon name="refresh-cw" />
               </button>
             ) : null}
             <button
@@ -1534,7 +1439,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               title={immersive ? 'Exit fullscreen' : 'Expand'}
               onClick={() => setImmersiveAnimated((current) => !current)}
             >
-              <ChatIcon name={immersive ? 'collapse' : 'expand'} />
+              <UiIcon name={immersive ? 'minimize-2' : 'maximize-2'} />
             </button>
             {!isInline || immersive ? (
               <button
@@ -1547,7 +1452,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                   if (!isInline) setOpen(false);
                 }}
               >
-                <ChatIcon name="close" />
+                <UiIcon name="x" />
               </button>
             ) : null}
           </div>
@@ -1631,7 +1536,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
 
         {!atBottom && messages.length > 0 ? (
           <button type="button" className="tmchat-jump" onClick={() => scrollToBottom('smooth')}>
-            <ChatIcon name="down" size={14} /> Latest
+            <UiIcon name="arrow-down" size={14} /> Latest
           </button>
         ) : null}
         </div>
