@@ -53,14 +53,37 @@ Ad-hoc edit links can expire; if one 404s, rebuild from the definitions above �
 chart is `[Template Marketplace] Code Component Event` filtered/grouped by the listed
 `scope`/property values over Last 30 Days.
 
-## Pending: conversion-by-source chart
+## Pending: conversion-by-source chart (needs an Amplitude tracking-plan admin)
 
-Amplitude's schema registers properties on first ingestion. Once the first real
-click-through to a template detail page happens on the published site,
-`attribution_source_component` appears in the taxonomy — then build:
+**Diagnosis (2026-07-10):** the Webflow Amplitude project appears to block
+unplanned event properties. Evidence: `template_slug` has been sent on grid
+click events at production scale for weeks and `detail_viewed` (which carries
+`attribution_*` properties) flows at ~1,500/hour — yet neither appears in the
+project taxonomy, and every property registered on
+`[Template Marketplace] Code Component Event` predates this instrumentation.
+A real click-through was reproduced end-to-end on the published site
+(attribution record verified in sessionStorage on the detail page) and the
+property still did not register.
+
+**Fix (one admin action):** someone with *Update Tracking Plan* permission adds
+these event-scoped properties to `[Template Marketplace] Code Component Event`:
+`attribution_source_component`, `attribution_source_sort`, `attribution_present`,
+`template_slug`, `source_position`, `display_layout`, `turn`, `chat_variant`,
+`chat_surface`, `error_source`, `device`. (Or disable property blocking for
+this event.)
+
+**Then build the headline chart:**
 
 > Events Segmentation · `[Template Marketplace] Code Component Event` ·
 > filter `scope = detail_purchase_cta_clicked` · group by `attribution_source_component` ·
 > Last 30 Days · Totals
 
-This is the headline chart for "does the chat convert better than browsing."
+`TemplateChat` vs `TemplateGrid` in that breakdown = chat-assisted vs. browse
+conversion. `attribution_source_sort` values beginning `preview:` isolate
+purchases that went through the in-chat live preview.
+
+**Caveat this implies for the charts above:** until the properties are added to
+the plan, per-property breakdowns beyond `scope`/`component`/`message`/`price`/
+`source`/`trigger` may be unavailable even though the events themselves are
+flowing. The engagement and preview funnels rely only on registered properties
+and work today.
