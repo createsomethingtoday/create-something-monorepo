@@ -30,7 +30,7 @@ import {
   getReviewerProfileForAccount,
   getReviewerProfileForEmail,
 } from '../src/reviewer-directory.js';
-import { registerTools } from '../src/tools.js';
+import { OAUTH_HIDDEN_TOOL_NAMES, registerTools } from '../src/tools.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
@@ -135,7 +135,13 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
           ? Number(this.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS)
           : undefined,
       },
-      { allowWrites },
+      {
+        allowWrites,
+        // OAuth (Claude connector) sessions don't get the E2B bundle-prep
+        // tool — they can't execute its output, and the Browser Rendering
+        // screenshot tool supersedes it on that path.
+        ...(this.props?.authMode === 'oauth' ? { hiddenTools: OAUTH_HIDDEN_TOOL_NAMES } : {}),
+      },
     );
     registerPrompts(this.server);
     this.registerScreenshotTool();
@@ -150,15 +156,16 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
   private registerScreenshotTool() {
     this.server.tool(
       'template_review_capture_published_site_screenshots',
-      'Read-only visual evidence: capture screenshots of one page of the published template site at desktop and/or mobile viewports using Cloudflare Browser Rendering. Use during comprehensive reviews to assess layout, typography, visual hierarchy, and responsive behavior. Same-origin only; findings from screenshots are Auto/Partial evidence, not a final visual-quality decision.',
+      'Read-only visual evidence: capture screenshots of the published template site at desktop and/or mobile viewports using Cloudflare Browser Rendering. Accepts up to 3 site-relative paths per call (max 4 images total across paths x viewports). Use during comprehensive reviews to assess layout, typography, visual hierarchy, and responsive behavior. Same-origin only; findings from screenshots are Auto/Partial evidence, not a final visual-quality decision.',
       {
         published_url: z.string().url().describe('The published template site URL (https), e.g. from review context.'),
-        path: z.string().optional().describe('Optional site-relative path to capture (must start with "/"). Defaults to the published URL path.'),
+        path: z.string().optional().describe('Optional single site-relative path to capture (must start with "/"). Defaults to the published URL path.'),
+        paths: z.array(z.string()).max(3).optional().describe('Up to 3 site-relative paths to capture in one call (each must start with "/"). Overrides `path`. Keep paths x viewports <= 4 images.'),
         viewports: z.array(z.enum(['desktop', 'mobile'])).optional().describe('Viewports to capture. Defaults to both desktop (1280x1600) and mobile (390x844).'),
         full_page: z.boolean().optional().describe('Capture the full page height (capped at 4000px) instead of the viewport. Defaults to false.'),
         quality: z.number().int().min(30).max(80).optional().describe('JPEG quality 30-80. Defaults to 60. Lower it if responses are too large.'),
       },
-      async ({ published_url, path, viewports, full_page, quality }) => {
+      async ({ published_url, path, paths, viewports, full_page, quality }) => {
         if (!this.env.BROWSER) {
           return {
             content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: { code: 'BROWSER_RENDERING_UNAVAILABLE', message: 'Browser Rendering binding is not configured for this deployment.' } }) }],
@@ -166,17 +173,31 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
           };
         }
 
-        const target = buildCaptureTarget(published_url, path);
-        if (!target.ok) {
-          return {
-            content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: { code: 'INVALID_CAPTURE_TARGET', message: target.error } }) }],
-            isError: true,
-          };
+        const requestedPaths = paths && paths.length > 0 ? paths : [path];
+        const targets: Array<{ path: string | undefined; url: string }> = [];
+        for (const requestedPath of requestedPaths) {
+          const target = buildCaptureTarget(published_url, requestedPath);
+          if (!target.ok) {
+            return {
+              content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: { code: 'INVALID_CAPTURE_TARGET', message: target.error } }) }],
+              isError: true,
+            };
+          }
+          targets.push({ path: requestedPath, url: target.url });
         }
 
         const jpegQuality = clampScreenshotQuality(quality);
         const resolvedViewports = resolveViewports(viewports);
-        const captures: Array<{ viewport: string; width: number; height: number; bytes: number; error?: string }> = [];
+
+        // Keep responses inspectable: cap the total images per call.
+        if (targets.length * resolvedViewports.length > 4) {
+          return {
+            content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: { code: 'TOO_MANY_CAPTURES', message: `Requested ${targets.length} paths x ${resolvedViewports.length} viewports = ${targets.length * resolvedViewports.length} images; the cap is 4 per call. Use fewer paths or a single viewport, or split into multiple calls.` } }) }],
+            isError: true,
+          };
+        }
+
+        const captures: Array<{ url: string; viewport: string; width: number; height: number; bytes: number; error?: string }> = [];
         const content: Array<
           | { type: 'text'; text: string }
           | { type: 'image'; data: string; mimeType: string }
@@ -184,6 +205,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
 
         const browser = await puppeteer.launch(this.env.BROWSER as never);
         try {
+          for (const target of targets) {
           for (const viewport of resolvedViewports) {
             try {
               const page = await browser.newPage();
@@ -229,10 +251,11 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
               await page.close();
 
               const bytes = shot.byteLength;
-              captures.push({ viewport: viewport.name, width: viewport.width, height: clip?.height ?? viewport.height, bytes });
+              captures.push({ url: target.url, viewport: viewport.name, width: viewport.width, height: clip?.height ?? viewport.height, bytes });
               content.push({ type: 'image', data: shot.toString('base64'), mimeType: 'image/jpeg' });
             } catch (error) {
               captures.push({
+                url: target.url,
                 viewport: viewport.name,
                 width: viewport.width,
                 height: viewport.height,
@@ -240,6 +263,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
                 error: error instanceof Error ? error.message : String(error),
               });
             }
+          }
           }
         } finally {
           await browser.close().catch(() => {});
@@ -252,7 +276,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
             {
               ok: anySuccess,
               data: {
-                url: target.url,
+                urls: targets.map((t) => t.url),
                 jpegQuality,
                 fullPage: Boolean(full_page),
                 captures,
