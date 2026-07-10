@@ -15,6 +15,11 @@ function useViewportVideo(restartOnEnter = false, threshold = 0.05) {
     const video = videoRef.current;
     if (!video) return;
 
+    video.defaultMuted = true;
+    video.muted = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const initialRect = video.getBoundingClientRect();
     const initiallyVisibleHeight = Math.max(
@@ -23,13 +28,21 @@ function useViewportVideo(restartOnEnter = false, threshold = 0.05) {
     );
     let isIntersecting = initiallyVisibleHeight / Math.max(initialRect.height, 1) >= threshold;
 
+    let playAttempt: Promise<void> | null = null;
+
     const syncPlayback = () => {
       const shouldPlay = !reduceMotion.matches && isIntersecting && document.visibilityState === 'visible';
 
       if (reduceMotion.matches && video.readyState > 0) video.currentTime = 0;
       if (restartOnEnter && !isIntersecting && video.readyState > 0 && video.currentTime !== 0) video.currentTime = 0;
-      if (shouldPlay && video.paused) {
-        void video.play().catch(() => undefined);
+      if (shouldPlay && video.paused && !playAttempt) {
+        playAttempt = video
+          .play()
+          .then(() => video.removeAttribute('data-playback-blocked'))
+          .catch(() => video.setAttribute('data-playback-blocked', 'true'))
+          .finally(() => {
+            playAttempt = null;
+          });
       } else if (!shouldPlay && !video.paused) {
         video.pause();
       }
@@ -47,14 +60,26 @@ function useViewportVideo(restartOnEnter = false, threshold = 0.05) {
 
     observer.observe(video);
     document.addEventListener('visibilitychange', syncPlayback);
+    document.addEventListener('pointerdown', syncPlayback, { passive: true });
+    document.addEventListener('touchstart', syncPlayback, { passive: true });
     reduceMotion.addEventListener('change', syncPlayback);
+    video.addEventListener('loadeddata', syncPlayback);
+    video.addEventListener('canplay', syncPlayback);
+    window.addEventListener('focus', syncPlayback);
+    window.addEventListener('pageshow', syncPlayback);
     syncPlayback();
 
     return () => {
       observer.disconnect();
       video.pause();
       document.removeEventListener('visibilitychange', syncPlayback);
+      document.removeEventListener('pointerdown', syncPlayback);
+      document.removeEventListener('touchstart', syncPlayback);
       reduceMotion.removeEventListener('change', syncPlayback);
+      video.removeEventListener('loadeddata', syncPlayback);
+      video.removeEventListener('canplay', syncPlayback);
+      window.removeEventListener('focus', syncPlayback);
+      window.removeEventListener('pageshow', syncPlayback);
     };
   }, [restartOnEnter, threshold]);
 
@@ -120,7 +145,9 @@ export function HeroSection({
             muted
             loop
             playsInline
-            preload="metadata"
+            controls={false}
+            disablePictureInPicture
+            preload="auto"
             poster={heroMotionPoster}
           >
             <source src={heroMotion} type="video/mp4" />
@@ -160,9 +187,12 @@ export function ClientsSection({
         <video
           className="hd-clients__motion-video"
           ref={videoRef}
+          autoPlay
           muted
           loop
           playsInline
+          controls={false}
+          disablePictureInPicture
           preload="metadata"
           poster={heroFullbleedPoster}
         >

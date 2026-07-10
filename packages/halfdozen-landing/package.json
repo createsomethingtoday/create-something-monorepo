@@ -9,10 +9,11 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "check": "pnpm typecheck && pnpm test && pnpm webflow:bundle",
+    "check": "pnpm typecheck && pnpm test && pnpm functions:build && pnpm webflow:bundle",
     "test": "vitest --run",
     "deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=5c3e9cf4d55ce171b844fad0931607f9 node ../../scripts/run-wrangler.mjs pages deploy dist --project-name=halfdozen-landing --branch=main --commit-dirty=true",
     "deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=5c3e9cf4d55ce171b844fad0931607f9 node ../../scripts/run-wrangler.mjs pages deploy dist --project-name=halfdozen-landing --branch=preview --commit-dirty=true",
+    "functions:build": "node ../../scripts/run-wrangler.mjs pages functions build functions --outfile /tmp/halfdozen-landing-functions.js",
     "webflow:bundle": "webflow library bundle --public-path / --output-path dist-webflow --no-input",
     "webflow:share": "webflow library share"
   },

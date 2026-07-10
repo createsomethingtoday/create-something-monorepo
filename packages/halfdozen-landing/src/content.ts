@@ -107,9 +107,9 @@ export const testimonials = [
 
 export const assetDefaults = {
   heroCard: '/assets/hero-motion-card.png',
-  heroMotion: '/assets/hero-motion.mp4',
+  heroMotion: '/media/hero-motion.mp4',
   heroMotionPoster: '/assets/hero-motion-poster.jpg',
-  heroFullbleedMotion: '/assets/hero-fullbleed-motion.mp4',
+  heroFullbleedMotion: '/media/hero-fullbleed-motion.mp4',
   heroFullbleedPoster: '/assets/hero-fullbleed-poster.jpg',
   eventPhoto: '/assets/live-event-photo.png',
   testimonialPhoto: '/assets/testimonial-crowd.png'

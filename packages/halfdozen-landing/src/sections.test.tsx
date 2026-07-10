@@ -20,8 +20,8 @@ describe('Half Dozen landing components', () => {
     expect(html).toContain('Request consultation');
     expect(html).not.toContain('consultion');
     expect(html).toContain('business can grow');
-    expect(html).toContain('/assets/hero-motion.mp4');
-    expect(html).toContain('/assets/hero-fullbleed-motion.mp4');
+    expect(html).toContain('/media/hero-motion.mp4');
+    expect(html).toContain('/media/hero-fullbleed-motion.mp4');
     expect(html).toContain('/assets/live-event-photo.png');
   });
 
