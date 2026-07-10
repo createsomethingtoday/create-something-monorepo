@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
 	AGENCY_ATLAS_PROOF_PATHS,
@@ -154,7 +154,19 @@ test('public Performance routes use the natural water image series', () => {
 
 	assert.ok(homeRoute.includes('/images/performance-lab/pressure-boundary-natural.webp'));
 	assert.ok(servicesRoute.includes('/images/performance-lab/trace-wake-natural.webp'));
-	assert.ok(productsRoute.includes('/images/performance-lab/controlled-flow-natural.webp'));
+	assert.ok(productsRoute.includes('/images/performance-lab/product-system-natural.webp'));
+	assert.ok(productsRoute.includes('/images/performance-lab/product-system-natural-mobile.webp'));
+	assert.equal(productsRoute.includes('/images/performance-lab/controlled-flow-natural.webp'), false);
+	assert.equal(
+		existsSync(new URL('../static/images/performance-lab/product-system-natural.webp', import.meta.url)),
+		true
+	);
+	assert.equal(
+		existsSync(
+			new URL('../static/images/performance-lab/product-system-natural-mobile.webp', import.meta.url)
+		),
+		true
+	);
 });
 
 test('home route uses the shared canvas kernel as a transparent proof object', () => {
@@ -362,4 +374,11 @@ test('compact mobile privacy prompt stays below navigation and away from campaig
 	assert.ok(agencyPrivacyAnalytics.includes('top: max(4.5rem, calc(4rem + env(safe-area-inset-top)))'));
 	assert.ok(agencyPrivacyAnalytics.includes('bottom: auto'));
 	assert.ok(agencyPrivacyAnalytics.includes("content: 'Privacy'"));
+});
+
+test('short desktop campaigns keep the property switcher away from primary actions', () => {
+	assert.ok(layoutRoute.includes('@media (max-height: 47.5rem) and (min-width: 48rem)'));
+	assert.ok(layoutRoute.includes(':global(.layout-root .mode-indicator)'));
+	assert.ok(layoutRoute.includes('top: calc(72px + var(--space-md, 1rem))'));
+	assert.ok(layoutRoute.includes('bottom: auto'));
 });

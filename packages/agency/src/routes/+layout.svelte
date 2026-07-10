@@ -438,4 +438,11 @@
   .layout-root {
     background: var(--color-performance-paper, #f3f3f0);
   }
+
+  @media (max-height: 47.5rem) and (min-width: 48rem) {
+    :global(.layout-root .mode-indicator) {
+      top: calc(72px + var(--space-md, 1rem));
+      bottom: auto;
+    }
+  }
 </style>
