@@ -126,9 +126,13 @@ const CHAT_STYLES = `
   display: flex; flex-direction: column; gap: 12px;
 }
 /* Compositor-only entrances: transform + opacity, no layout properties. */
-.tmchat-msg, .tmchat-display, .tmchat-followups, .tmchat-typing {
+.tmchat-msg, .tmchat-display, .tmchat-typing {
   animation: tmchat-rise 180ms cubic-bezier(0.2, 0, 0, 1) both;
 }
+/* Chips arrive one by one after the reply settles — the whole row popping in
+   at once reads as a layout jump. Delay is set inline per chip. */
+.tmchat-followups .tmchat-chip { animation: tmchat-chip-in 240ms cubic-bezier(0.2, 0, 0, 1) both; }
+@keyframes tmchat-chip-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes tmchat-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .tmchat-grid > div, .tmchat-strip > div {
   animation: tmchat-card 260ms cubic-bezier(0.2, 0, 0, 1) both;
@@ -189,7 +193,7 @@ const CHAT_STYLES = `
 }
 @media (prefers-reduced-motion: reduce) {
   .tmchat-panel.entering, .tmchat-backdrop, .tmchat-dots span,
-  .tmchat-msg, .tmchat-display, .tmchat-followups, .tmchat-typing,
+  .tmchat-msg, .tmchat-display, .tmchat-typing, .tmchat-followups .tmchat-chip,
   .tmchat-grid > div, .tmchat-strip > div { animation: none; }
   .tmchat-chip, .tmchat-send, .tmchat-launcher { transition: none; }
   .tmchat-chip:hover, .tmchat-launcher:hover, .tmchat-send:active:not(:disabled) { transform: none; }
@@ -357,7 +361,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       top: scrollRef.current.scrollHeight,
       behavior: streaming || prefersReducedMotion() ? 'auto' : 'smooth',
     });
-  }, [messages, streaming, open]);
+  }, [messages, streaming, open, followups]);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -579,8 +583,14 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           <div className="tmchat-msg assistant">{welcomeMessage}</div>
           {showStarterChips ? (
             <div className="tmchat-followups">
-              {starters.map((suggestion) => (
-                <button key={suggestion} type="button" className="tmchat-chip" onClick={() => void send(suggestion)}>
+              {starters.map((suggestion, index) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  className="tmchat-chip"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  onClick={() => void send(suggestion)}
+                >
                   {suggestion}
                 </button>
               ))}
@@ -608,8 +618,14 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           ) : null}
           {showConversationChips ? (
             <div className="tmchat-followups">
-              {followups.map((suggestion) => (
-                <button key={suggestion} type="button" className="tmchat-chip" onClick={() => void send(suggestion)}>
+              {followups.map((suggestion, index) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  className="tmchat-chip"
+                  style={{ animationDelay: `${120 + index * 50}ms` }}
+                  onClick={() => void send(suggestion)}
+                >
                   {suggestion}
                 </button>
               ))}
