@@ -82,7 +82,9 @@ const CHAT_STYLES = `
   position: fixed; inset: 0; z-index: 9000;
   background: rgba(8,8,8,0.44);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: tmchat-fade 200ms ease both;
 }
+@keyframes tmchat-fade { from { opacity: 0; } }
 .tmchat-panel {
   position: fixed; right: 24px; bottom: 24px; z-index: 9001;
   display: flex; flex-direction: column;
@@ -92,8 +94,8 @@ const CHAT_STYLES = `
   font-family: "WF Visual Sans Variable", "Inter", system-ui, sans-serif;
   color: #080808; font-size: 14px; line-height: 1.45;
 }
-.tmchat-panel.entering { animation: tmchat-in 200ms ease; }
-@keyframes tmchat-in { from { opacity: 0; } to { opacity: 1; } }
+.tmchat-panel.entering { animation: tmchat-in 220ms cubic-bezier(0.2, 0, 0, 1); }
+@keyframes tmchat-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
 .tmchat-panel.inline {
   position: relative; right: auto; bottom: auto; z-index: auto;
   width: 100%; height: 100%; min-height: 560px;
@@ -116,11 +118,22 @@ const CHAT_STYLES = `
   width: 30px; height: 30px; border-radius: 8px; font-size: 16px; line-height: 1;
   display: inline-flex; align-items: center; justify-content: center;
 }
+.tmchat-iconbtn { transition: background 120ms ease; }
 .tmchat-iconbtn:hover { background: #ececec; }
+.tmchat-iconbtn:active { background: #e0e0e0; }
 .tmchat-scroll {
   flex: 1 1 auto; overflow-y: auto; padding: 16px;
-  display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth;
+  display: flex; flex-direction: column; gap: 12px;
 }
+/* Compositor-only entrances: transform + opacity, no layout properties. */
+.tmchat-msg, .tmchat-display, .tmchat-followups, .tmchat-typing {
+  animation: tmchat-rise 180ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes tmchat-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.tmchat-grid > div, .tmchat-strip > div {
+  animation: tmchat-card 260ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes tmchat-card { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
 .tmchat-panel.immersive .tmchat-scroll { padding: 24px clamp(16px, 5vw, 56px) 32px; gap: 14px; }
 .tmchat-msg { max-width: 92%; white-space: pre-wrap; overflow-wrap: break-word; }
 .tmchat-panel.immersive .tmchat-msg { max-width: 680px; font-size: 15px; }
@@ -140,9 +153,10 @@ const CHAT_STYLES = `
 .tmchat-chip {
   border: 1px solid #dbe6fb; border-radius: 999px; background: #f2f7ff;
   color: #0f5cd0; padding: 7px 12px; font-size: 13px; cursor: pointer; font-family: inherit;
-  transition: background 140ms ease;
+  transition: background 140ms ease, transform 140ms ease;
 }
-.tmchat-chip:hover { background: #e3edfd; }
+.tmchat-chip:hover { background: #e3edfd; transform: translateY(-1px); }
+.tmchat-chip:active { transform: translateY(0); }
 .tmchat-typing { align-self: flex-start; color: #757575; font-size: 13px; display: inline-flex; align-items: baseline; gap: 6px; }
 .tmchat-dots { display: inline-flex; gap: 3px; }
 .tmchat-dots span {
@@ -162,7 +176,9 @@ const CHAT_STYLES = `
 .tmchat-send {
   border: 0; border-radius: 8px; background: #146ef5; color: #fff;
   padding: 0 16px; font: inherit; font-weight: 600; cursor: pointer;
+  transition: background 140ms ease, transform 120ms ease;
 }
+.tmchat-send:active:not(:disabled) { transform: scale(0.97); }
 .tmchat-send:disabled { background: #a9c6f7; cursor: default; }
 .tmchat-send.stop { background: #fff; color: #404040; border: 1px solid #e0e0e0; }
 .tmchat-send.stop:hover { background: #f5f5f5; }
@@ -172,8 +188,11 @@ const CHAT_STYLES = `
   .tmchat-grid, .tmchat-panel.immersive .tmchat-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tmchat-panel.entering, .tmchat-dots span { animation: none; }
-  .tmchat-scroll { scroll-behavior: auto; }
+  .tmchat-panel.entering, .tmchat-backdrop, .tmchat-dots span,
+  .tmchat-msg, .tmchat-display, .tmchat-followups, .tmchat-typing,
+  .tmchat-grid > div, .tmchat-strip > div { animation: none; }
+  .tmchat-chip, .tmchat-send, .tmchat-launcher { transition: none; }
+  .tmchat-chip:hover, .tmchat-launcher:hover, .tmchat-send:active:not(:disabled) { transform: none; }
 }
 ` + TEMPLATE_CARD_STYLES;
 
@@ -235,6 +254,10 @@ function ChatIcon({ name }: { name: 'sparkle' | 'refresh' | 'expand' | 'collapse
   );
 }
 
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+}
+
 function formatPrice(item: AgentTemplateItem): string {
   if (item.is_free || item.price === 0) return 'Free';
   return typeof item.price === 'number' ? `$${item.price} USD` : '';
@@ -253,8 +276,8 @@ function DisplayArtifact({ payload }: { payload: DisplayPayload }): React.ReactE
   const isSingle = payload.layout === 'spotlight' || payload.items.length === 1;
   const showReasons = payload.layout === 'shortlist' || payload.layout === 'spotlight' || payload.layout === 'comparison';
 
-  const cards = payload.items.map((entry) => (
-    <div key={entry.template_slug}>
+  const cards = payload.items.map((entry, index) => (
+    <div key={entry.template_slug} style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}>
       <TemplateCard
         templateName={entry.item.name}
         templateLink={{ href: entry.item.url ?? '#', target: '_blank' }}
@@ -328,19 +351,54 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     .slice(0, 6);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    // Instant follow while streaming — queueing smooth scrolls on every SSE
+    // delta fights the scroller and janks. Smooth only for discrete changes.
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: streaming || prefersReducedMotion() ? 'auto' : 'smooth',
+    });
   }, [messages, streaming, open]);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open, immersive]);
 
+  // FLIP the docked panel <-> immersive transition: measure before the layout
+  // change (in the toggle handler), then play a single compositor-friendly
+  // transform animation from the old box to the new one via WAAPI.
+  const flipRectRef = useRef<DOMRect | null>(null);
+
+  const setImmersiveAnimated = useCallback((next: boolean | ((current: boolean) => boolean)) => {
+    flipRectRef.current = panelRef.current?.getBoundingClientRect() ?? null;
+    setImmersive(next);
+  }, []);
+
+  useEffect(() => {
+    const first = flipRectRef.current;
+    flipRectRef.current = null;
+    const el = panelRef.current;
+    if (!first || !el || typeof el.animate !== 'function' || prefersReducedMotion()) return;
+    const last = el.getBoundingClientRect();
+    const sx = first.width / Math.max(last.width, 1);
+    const sy = first.height / Math.max(last.height, 1);
+    const dx = first.left - last.left;
+    const dy = first.top - last.top;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(1 - sx) < 0.01 && Math.abs(1 - sy) < 0.01) return;
+    el.animate(
+      [
+        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, transformOrigin: 'top left' },
+        { transform: 'none', transformOrigin: 'top left' },
+      ],
+      { duration: 280, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+    );
+  }, [immersive]);
+
   // Esc collapses the immersive state first, then closes a floating panel.
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      if (immersive) setImmersive(false);
+      if (immersive) setImmersiveAnimated(false);
       else if (!isInline) setOpen(false);
     };
     document.addEventListener('keydown', onKeyDown);
@@ -482,7 +540,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
-      {immersive ? <div className="tmchat-backdrop" onClick={() => setImmersive(false)} /> : null}
+      {immersive ? <div className="tmchat-backdrop" onClick={() => setImmersiveAnimated(false)} /> : null}
       <div ref={panelRef} className={panelClass} role={isInline && !immersive ? undefined : 'dialog'} aria-label={title}>
         <div className="tmchat-header">
           <span className="tmchat-header-title">{title}</span>
@@ -497,7 +555,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               className="tmchat-iconbtn"
               aria-label={immersive ? 'Exit fullscreen' : 'Expand to fullscreen'}
               title={immersive ? 'Exit fullscreen' : 'Expand'}
-              onClick={() => setImmersive((current) => !current)}
+              onClick={() => setImmersiveAnimated((current) => !current)}
             >
               <ChatIcon name={immersive ? 'collapse' : 'expand'} />
             </button>
@@ -507,7 +565,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 className="tmchat-iconbtn"
                 aria-label="Close chat"
                 onClick={() => {
-                  if (immersive) setImmersive(false);
+                  if (immersive) setImmersiveAnimated(false);
                   if (!isInline) setOpen(false);
                 }}
               >
