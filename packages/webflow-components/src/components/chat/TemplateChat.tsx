@@ -575,6 +575,10 @@ function applyPageAction(payload: PageActionPayload): void {
     (window as unknown as Record<string, unknown>).__templateMarketplaceFilters = detail;
     window.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
     document.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
+
+    // Show the user which controls the agent just changed. Slight delay so
+    // the filter bar has re-rendered its state before we point at it.
+    window.setTimeout(() => pulsePageControls(payload), 250);
   }
 
   if (payload.highlight_slugs?.length) {
@@ -672,6 +676,68 @@ function isAnchorClickOn(event: React.MouseEvent, href: string | null): boolean 
   if (!(target instanceof Element)) return false;
   const anchor = target.closest<HTMLAnchorElement>('a[href]');
   return Boolean(anchor && anchor.getAttribute('href') === href);
+}
+
+// ── Agent-action transparency ────────────────────────────────────────────────
+// When the agent drives the page's filters/sort, pulse the controls it
+// "touched" so the change is visible and attributable — the same trust
+// language as the template-card highlight. Inline styles + WAAPI because the
+// controls live in other components' isolated shadow roots.
+const CONTROL_SELECTORS: Array<{ keys: Array<keyof PageActionPayload>; selector: string }> = [
+  { keys: ['sort'], selector: '.tmfilter-sort-toggle, [data-template-search-sort], select[name="sort"]' },
+  { keys: ['styles'], selector: '[data-template-search-style], select[name="styles"]' },
+  { keys: ['types'], selector: '[data-template-search-type], select[name="types"]' },
+  { keys: ['free_only'], selector: '[data-template-search-free], input[name="free_only"]' },
+  { keys: ['q'], selector: '.tmfilter-search-wrap, [data-template-search-input], input[type="search"]' },
+  // Fields without a precise control (category, clear) light up the bar shell.
+  { keys: ['category_group_slug', 'clear_filters'], selector: '.tmfilter-shell' },
+];
+
+function pulseElements(elements: HTMLElement[]): void {
+  const reduced = prefersReducedMotion();
+  for (const el of elements) {
+    const previousOutline = el.style.outline;
+    const previousOffset = el.style.outlineOffset;
+    const previousRadius = el.style.borderRadius;
+    el.style.outline = '2px solid #146ef5';
+    el.style.outlineOffset = '3px';
+    if (!previousRadius) el.style.borderRadius = '8px';
+    window.setTimeout(() => {
+      el.style.outline = previousOutline;
+      el.style.outlineOffset = previousOffset;
+      el.style.borderRadius = previousRadius;
+    }, 2600);
+    if (!reduced && typeof el.animate === 'function') {
+      el.animate(
+        [
+          { boxShadow: '0 0 0 2px rgba(20,110,245,0.3), 0 0 0 5px rgba(20,110,245,0.16)' },
+          { boxShadow: '0 0 0 2px rgba(20,110,245,0.3), 0 0 0 12px rgba(20,110,245,0)' },
+        ],
+        { duration: 1200, iterations: 2, easing: 'ease-out' },
+      );
+    }
+  }
+}
+
+function pulsePageControls(payload: PageActionPayload): void {
+  if (typeof document === 'undefined') return;
+  const targets = new Set<HTMLElement>();
+  let matchedSpecific = false;
+  for (const entry of CONTROL_SELECTORS) {
+    if (!entry.keys.some((key) => payload[key] != null)) continue;
+    const found = deepQuerySelectorAll(entry.selector).filter(
+      (el): el is HTMLElement => el instanceof HTMLElement,
+    );
+    if (found.length > 0 && entry.selector !== '.tmfilter-shell') matchedSpecific = true;
+    for (const el of found.slice(0, 3)) targets.add(el);
+  }
+  // Nothing specific found (e.g. older filter bar markup): fall back to the bar.
+  if (!matchedSpecific && targets.size === 0) {
+    for (const el of deepQuerySelectorAll('.tmfilter-shell').slice(0, 1)) {
+      if (el instanceof HTMLElement) targets.add(el);
+    }
+  }
+  pulseElements(Array.from(targets));
 }
 
 function DisplayArtifact({
