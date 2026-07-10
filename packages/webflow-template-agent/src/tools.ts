@@ -59,7 +59,10 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
         has_membership: { type: ['boolean', 'null'], description: 'Require member login / gated content support.' },
         has_cms: { type: ['boolean', 'null'], description: 'Require CMS collections (blog, listings, dynamic content).' },
         free_only: { type: ['boolean', 'null'], description: 'Only free templates.' },
-        sort: { type: ['string', 'null'], enum: [...SORT_VALUES, null] as never, description: 'Default "popular".' },
+        sort: {
+          anyOf: [{ type: 'string', enum: [...SORT_VALUES] }, { type: 'null' }],
+          description: 'Default "popular".',
+        },
         page_size: { type: ['integer', 'null'], description: '1-24, default 12.' },
       },
       required: [
