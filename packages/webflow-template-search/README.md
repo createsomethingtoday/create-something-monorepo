@@ -189,6 +189,11 @@ needs to restart at batch zero. If an incremental sync or maintenance job owns t
 batches, the CLI waits up to ten minutes and continues automatically rather than treating the
 expected `409` response as failed backfill work.
 
+Public search keeps the strict ten-second circuit breaker. Admin batch requests have a separate
+30-second timeout because they include an Airtable lookup; transient admin timeouts and network
+resets are retried up to six times with search probes and backoff. Since every request reads the
+durable cursor first and writes only changed values, a response lost after commit is safe to retry.
+
 The CLI runs both queryless and FTS public search probes before work, every five batches by
 default, and after completion. It stops if either probe fails, returns no items, or exceeds ten
 seconds. Treat `missing_source_records` and `missing_mrp_records` as explicit reconciliation work;

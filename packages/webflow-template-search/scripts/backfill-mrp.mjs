@@ -2,7 +2,9 @@
 
 const DEFAULT_WORKER_URL = 'https://webflow-template-search.createsomething.workers.dev';
 const MAX_SEARCH_LATENCY_MS = 10_000;
+const ADMIN_REQUEST_TIMEOUT_MS = 30_000;
 const MAX_LOCK_WAIT_MS = 10 * 60 * 1000;
+const MAX_TRANSIENT_ADMIN_RETRIES = 6;
 
 const args = process.argv.slice(2);
 const has = (flag) => args.includes(flag);
@@ -42,7 +44,7 @@ async function adminRequest(method, searchParams = new URLSearchParams()) {
   const response = await fetch(url, {
     method,
     headers: { Authorization: `Bearer ${token}` },
-    signal: AbortSignal.timeout(MAX_SEARCH_LATENCY_MS),
+    signal: AbortSignal.timeout(ADMIN_REQUEST_TIMEOUT_MS),
   });
   const payload = await response.json();
   if (!response.ok) {
@@ -92,6 +94,7 @@ await assertSearchAvailable();
 let batch = 0;
 let restart = has('--restart');
 let lockWaitStartedAt = null;
+let transientAdminRetries = 0;
 for (;;) {
   const params = new URLSearchParams({ batch_size: String(batchSize) });
   if (restart) params.set('restart', 'true');
@@ -101,20 +104,36 @@ for (;;) {
   try {
     result = await adminRequest('POST', params);
     lockWaitStartedAt = null;
+    transientAdminRetries = 0;
   } catch (error) {
-    if (error.status !== 409) throw error;
-    lockWaitStartedAt ??= Date.now();
-    if (Date.now() - lockWaitStartedAt > MAX_LOCK_WAIT_MS) {
-      throw new Error(`Shared sync lease remained busy for more than ${MAX_LOCK_WAIT_MS / 1000}s.`);
+    if (error.status === 409) {
+      lockWaitStartedAt ??= Date.now();
+      if (Date.now() - lockWaitStartedAt > MAX_LOCK_WAIT_MS) {
+        throw new Error(`Shared sync lease remained busy for more than ${MAX_LOCK_WAIT_MS / 1000}s.`);
+      }
+      console.log(
+        JSON.stringify({
+          status: 'waiting_for_sync_lease',
+          active_mode: error.payload?.active_job?.mode ?? null,
+          active_started_at: error.payload?.active_job?.started_at ?? null,
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      continue;
     }
+
+    if (error.name !== 'TimeoutError' && !(error instanceof TypeError)) throw error;
+    transientAdminRetries += 1;
+    if (transientAdminRetries > MAX_TRANSIENT_ADMIN_RETRIES) throw error;
     console.log(
       JSON.stringify({
-        status: 'waiting_for_sync_lease',
-        active_mode: error.payload?.active_job?.mode ?? null,
-        active_started_at: error.payload?.active_job?.started_at ?? null,
+        status: 'retrying_transient_admin_request',
+        attempt: transientAdminRetries,
+        reason: error.name,
       }),
     );
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await assertSearchAvailable();
+    await new Promise((resolve) => setTimeout(resolve, transientAdminRetries * 2000));
     continue;
   }
   batch += 1;
