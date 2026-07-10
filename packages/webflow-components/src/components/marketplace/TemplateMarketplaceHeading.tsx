@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { parseTemplateRoute, TemplatePathKind, TemplateScope } from './templateRoute';
+import { parseTemplateRoute, resolveApiBase, TemplatePathKind, TemplateScope } from './templateRoute';
 import { TEMPLATE_MARKETPLACE_COMPONENT_VERSION } from './templateTelemetry';
 
 type HeadingPageKind = TemplatePathKind;
@@ -180,9 +180,6 @@ const BREADCRUMB_LABELS: Record<TemplateScope, string> = {
 };
 
 const GENERIC_FALLBACK_DESCRIPTION = 'Explore Webflow templates by category, style, type, price, and popularity.';
-const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
-const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
-const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 
 function titleCase(value: string): string {
   return value
@@ -298,12 +295,6 @@ function hasRouteOwnedDescription(state: HeadingState): boolean {
   );
 }
 
-function resolveApiBase(apiBase?: string): string {
-  const rawBase = apiBase || DEFAULT_API_BASE;
-  return rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
-    ? DEFAULT_API_BASE
-    : rawBase.replace(/\/+$/, '');
-}
 
 function shouldUseTaxonomyApi(apiBaseProp: string): boolean {
   return Boolean(apiBaseProp.trim());

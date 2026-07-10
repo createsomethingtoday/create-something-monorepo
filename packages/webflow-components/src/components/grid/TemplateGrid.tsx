@@ -74,8 +74,13 @@ interface ApiResponse {
 
 // ─── Filter / route state ─────────────────────────────────────────────────────
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
-type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+import {
+  normalizeTemplateSort,
+  resolveApiBase,
+  type TemplateScope,
+  type TemplateSort,
+} from '../marketplace/templateRoute';
+
 
 interface FilterState {
   q: string;
@@ -174,13 +179,6 @@ export interface TemplateGridProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-// Production Cloud App URL — hosted on *.webflow.com so it passes the
-// webflow.com page CSP (connect-src https://*.webflow.com).
-const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
-// The direct Worker origin is blocked by webflow.com's CSP — rewrite to proxy.
-const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
-// Legacy preview URL — rewrite to the production base.
-const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const DEFAULT_PAGE_SIZE = 24;
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
 const NEW_TEMPLATE_WINDOW_DAYS = 30;
@@ -255,31 +253,7 @@ function toStyleSlug(name: string): string {
   return toFilterSlug(name);
 }
 
-function normalizeSort(value: string | null | undefined, fallback: TemplateSort = 'popular'): TemplateSort {
-  switch ((value ?? '').trim()) {
-    case 'newest':
-    case 'approval-date':
-    case 'approval-date-desc':
-      return 'newest';
-    case 'price_asc':
-    case 'price-asc':
-      return 'price_asc';
-    case 'price_desc':
-    case 'price-desc':
-      return 'price_desc';
-    case 'best_selling':
-    case 'best-selling':
-    case 'best_sellers':
-    case 'best-sellers':
-      return 'best_selling';
-    case 'popular':
-    case 'popularity-score':
-    case 'popularity-score-desc':
-      return 'popular';
-    default:
-      return fallback;
-  }
-}
+const normalizeSort = normalizeTemplateSort;
 
 function resolveScopeOverride(scopeOverrideParam?: TemplateScope): TemplateScope | undefined {
   return scopeOverrideParam && scopeOverrideParam !== 'all' ? scopeOverrideParam : undefined;
@@ -1139,11 +1113,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   // Rewrite any absolute origin that webflow.com's CSP blocks to the relative default:
   //   - Direct Worker URL (always blocked)
   //   - Cloud App preview subdomain (different origin from webflow.com)
-  const rawBase = apiBaseProp || DEFAULT_API_BASE;
-  const apiBase =
-    rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
-      ? DEFAULT_API_BASE
-      : rawBase;
+  const apiBase = resolveApiBase(apiBaseProp);
   const resolvedPageSize = pageSize || DEFAULT_PAGE_SIZE;
   // Parse initial filter state from URL on first render
   const [filters, setFilters] = useState<FilterState>(() =>
@@ -1165,6 +1135,10 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Errors from infinite-scroll appends are non-blocking: they render an
+  // inline retry row instead of silently freezing pagination for the session
+  // (the blocking `error` state only guards the initial page load).
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [emptyRecommendations, setEmptyRecommendations] = useState<ApiItem[]>([]);
   const [emptyRecommendationsTitleState, setEmptyRecommendationsTitleState] = useState(emptyRecommendationsTitle);
   const [emptyRecommendationsLoading, setEmptyRecommendationsLoading] = useState(false);
@@ -1205,6 +1179,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       if (cached) {
         if (activeFetchAbortRef.current === controller) activeFetchAbortRef.current = null;
         setError(null);
+        setLoadMoreError(null);
         setItems((prev) => (append ? [...prev, ...cached.items] : cached.items));
         setPage(cached.pagination.page);
         setHasNextPage(cached.pagination.has_next_page);
@@ -1218,6 +1193,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       if (!append) {
         setLoading(true);
         setError(null);
+        setLoadMoreError(null);
       } else {
         setLoadingMore(true);
       }
@@ -1230,6 +1206,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 
         if (epoch !== fetchEpochRef.current) return;
 
+        setLoadMoreError(null);
         setItems((prev) => (append ? [...prev, ...data.items] : data.items));
         setPage(data.pagination.page);
         setHasNextPage(data.pagination.has_next_page);
@@ -1238,7 +1215,12 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       } catch (e) {
         if (controller.signal.aborted) return;
         if (epoch !== fetchEpochRef.current) return;
-        setError(e instanceof Error ? e.message : 'Failed to load templates');
+        const message = e instanceof Error ? e.message : 'Failed to load templates';
+        if (append) {
+          setLoadMoreError(message);
+        } else {
+          setError(message);
+        }
       } finally {
         if (activeFetchAbortRef.current === controller) activeFetchAbortRef.current = null;
         if (epoch === fetchEpochRef.current && !controller.signal.aborted) {
@@ -1332,7 +1314,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   // fetch cycle. Observers only fire on intersection changes, so a
   // post-render check continues loading while the sentinel stays in view.
 
-  const scrollStateRef = useRef({ hasNextPage, loadingMore, loading, error, page, filters });
+  const scrollStateRef = useRef({ hasNextPage, loadingMore, loading, error, loadMoreError, page, filters });
   const sentinelVisibleRef = useRef(false);
   const loadMoreInFlightRef = useRef(false);
   const sentinelObserverRef = useRef<IntersectionObserver | null>(null);
@@ -1345,7 +1327,10 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       !state.hasNextPage ||
       state.loadingMore ||
       state.loading ||
-      state.error
+      state.error ||
+      // A failed append pauses auto-loading until the user retries, so a
+      // transient failure can't loop and doesn't silently end pagination.
+      state.loadMoreError
     ) {
       return;
     }
@@ -1356,7 +1341,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   }, [fetchPage]);
 
   useEffect(() => {
-    scrollStateRef.current = { hasNextPage, loadingMore, loading, error, page, filters };
+    scrollStateRef.current = { hasNextPage, loadingMore, loading, error, loadMoreError, page, filters };
     maybeLoadMore();
   });
 
@@ -1845,6 +1830,39 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       {loadingMore && (
         <div style={S.loadMoreWrapper}>
           <div className="tmgrid-spinner" />
+        </div>
+      )}
+
+      {loadMoreError && !loadingMore && items.length > 0 && (
+        <div
+          style={{
+            ...S.loadMoreWrapper,
+            flexDirection: 'column',
+            gap: '8px',
+            fontSize: '13px',
+            color: 'rgba(0,0,0,0.55)',
+          }}
+        >
+          <span>Couldn&rsquo;t load more templates.</span>
+          <button
+            type="button"
+            onClick={() => {
+              setLoadMoreError(null);
+              void fetchPage(page + 1, filters, true);
+            }}
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #e0e0e0',
+              borderRadius: '4px',
+              background: '#fff',
+              color: '#080808',
+              font: 'inherit',
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
         </div>
       )}
 

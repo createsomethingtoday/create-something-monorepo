@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { MarketplaceExperimentRole, trackMarketplaceEvent } from './analytics';
 
-type TemplateSort = 'popular' | 'newest';
+import { resolveApiBase, type TemplateSort } from './templateRoute';
 type ColumnSetting = 'auto' | 'two' | 'three' | 'four';
 type CategoryLayout = 'icon_table' | 'thumbnail_cards';
 type PopularCategoryIconName =
@@ -98,9 +98,6 @@ export interface PopularCategoryGridProps {
   experimentRole?: MarketplaceExperimentRole;
 }
 
-const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
-const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
-const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const CATEGORY_CACHE_TTL_MS = 5 * 60 * 1000;
 const IMAGE_PROXY_BLOCKLIST = ['airtableusercontent.com'];
 
@@ -471,12 +468,6 @@ const POPULAR_CATEGORY_GRID_STYLES = `
 }
 `;
 
-function resolveApiBase(apiBaseProp?: string): string {
-  const rawBase = apiBaseProp || DEFAULT_API_BASE;
-  return rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
-    ? DEFAULT_API_BASE
-    : rawBase;
-}
 
 function normalizeLimit(value: number | undefined, fallback: number, min: number, max: number): number {
   const numeric = Number(value);

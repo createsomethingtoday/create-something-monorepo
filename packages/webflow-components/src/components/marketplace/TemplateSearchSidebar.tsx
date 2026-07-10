@@ -5,8 +5,7 @@ import {
 } from './MarketplaceComponentErrorBoundary';
 import { TemplateSearchBox } from './TemplateSearchBox';
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
-type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+import { resolveApiBase, type TemplateScope, type TemplateSort } from './templateRoute';
 type SidebarInteractionMode = 'navigate' | 'filter';
 type SidebarCountMode = 'global' | 'contextual';
 
@@ -79,9 +78,6 @@ export interface TemplateSearchSidebarProps {
   collapseOnMobile?: boolean;
 }
 
-const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
-const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
-const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const SIDEBAR_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const sidebarPayloadCache = new Map<string, { timestamp: number; data: SidebarPayload }>();
@@ -393,12 +389,6 @@ const SIDEBAR_STYLES = `
 
 `;
 
-function resolveApiBase(apiBase?: string): string {
-  const rawBase = apiBase || DEFAULT_API_BASE;
-  return rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
-    ? DEFAULT_API_BASE
-    : rawBase;
-}
 
 function toFilterSlug(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');

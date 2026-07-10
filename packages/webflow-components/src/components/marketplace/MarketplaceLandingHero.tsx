@@ -53,9 +53,7 @@ export interface MarketplaceLandingHeroProps {
   experimentRole?: MarketplaceExperimentRole;
 }
 
-const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
-const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
-const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
+import { resolveApiBase } from './templateRoute';
 const SUGGESTION_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const suggestionCache = new Map<string, { timestamp: number; data: MarketplaceLandingHeroSuggestion[] }>();
@@ -260,12 +258,6 @@ const HERO_STYLES = `
 }
 `;
 
-function resolveApiBase(apiBaseProp?: string): string {
-  const rawBase = apiBaseProp || DEFAULT_API_BASE;
-  return rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
-    ? DEFAULT_API_BASE
-    : rawBase;
-}
 
 function normalizeLimit(value: number | undefined, fallback: number, min: number, max: number): number {
   const numeric = Number(value);

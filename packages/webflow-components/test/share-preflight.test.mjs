@@ -2,11 +2,15 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
+  evaluateManifestScope,
   evaluatePreflight,
   parseAheadBehind,
   parseArgs,
+  parseForbidList,
   parseGitPorcelain,
+  readManifest,
   relevantDirtyEntries,
+  resolveManifestComponents,
 } from '../scripts/share-preflight.mjs';
 
 test('parseArgs tolerates pnpm argument separator', () => {
@@ -18,6 +22,7 @@ test('parseArgs tolerates pnpm argument separator', () => {
     allowDirty: false,
     fetch: false,
     manifest: 'webflow.cato.json',
+    forbid: [],
     json: false,
   });
 
@@ -91,4 +96,58 @@ test('evaluatePreflight permits explicitly approved scoped dirty share with warn
   assert.equal(result.ok, true);
   assert.deepEqual(result.failures, []);
   assert.equal(result.warnings.length, 2);
+});
+
+test('parseForbidList splits and trims comma lists', () => {
+  assert.deepEqual(parseForbidList('cato, control,business,'), ['cato', 'control', 'business']);
+  assert.deepEqual(parseForbidList(''), []);
+  assert.deepEqual(parseForbidList(undefined), []);
+});
+
+test('evaluateManifestScope fails on forbidden component paths', () => {
+  const result = evaluateManifestScope({
+    matches: [
+      'src/components/marketplace/TemplateSearchPage.webflow.tsx',
+      'src/components/cato/CatoNavigation.webflow.tsx',
+      'src/components/control/ApprovalQueue.webflow.tsx',
+    ],
+    forbid: ['cato', 'control', 'business'],
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.failures.length, 1);
+  assert.match(result.failures[0], /2 component\(s\) under forbidden/);
+  assert.match(result.failures[0], /cato\/CatoNavigation/);
+});
+
+test('evaluateManifestScope fails on an empty component set', () => {
+  const result = evaluateManifestScope({ matches: [], forbid: [] });
+  assert.equal(result.ok, false);
+  assert.match(result.failures[0], /resolve to zero files/);
+});
+
+test('evaluateManifestScope passes a clean scoped set', () => {
+  const result = evaluateManifestScope({
+    matches: ['src/components/marketplace/TemplateSearchPage.webflow.tsx'],
+    forbid: ['cato', 'control', 'business'],
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.failures, []);
+});
+
+test('marketplace manifest resolves a non-empty set with no forbidden components', () => {
+  const manifest = readManifest('webflow.marketplace.json');
+  const matches = resolveManifestComponents(manifest.componentGlobs);
+  const result = evaluateManifestScope({ matches, forbid: ['cato', 'control', 'business'] });
+
+  assert.ok(matches.length > 0, 'marketplace manifest must resolve components');
+  assert.equal(result.ok, true, result.failures.join('\n'));
+});
+
+test('catch-all Canon manifest is caught by the forbid guard (regression fixture)', () => {
+  const manifest = readManifest('webflow.json');
+  const matches = resolveManifestComponents(manifest.componentGlobs);
+  const result = evaluateManifestScope({ matches, forbid: ['cato', 'control', 'business'] });
+
+  assert.equal(result.ok, false, 'the catch-all manifest should trip the guard');
 });

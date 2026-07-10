@@ -9,8 +9,13 @@ import React, {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
-type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+import {
+  normalizeTemplateSort,
+  resolveApiBase,
+  type TemplateScope,
+  type TemplateSort,
+} from '../marketplace/templateRoute';
+
 type SortDisplay = 'auto' | 'dropdown' | 'segmented';
 
 interface StyleFacet {
@@ -137,9 +142,6 @@ export interface TemplateFilterBarProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
-const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
-const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const FACETS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const facetsPayloadCache = new Map<string, { timestamp: number; data: FacetsPayload }>();
@@ -723,31 +725,7 @@ function titleCaseSlug(value: string): string {
     .replace(/\s+&\s+/g, ' & ');
 }
 
-function normalizeSort(value: string | null, fallback: TemplateSort = 'popular'): TemplateSort {
-  switch ((value ?? '').trim()) {
-    case 'newest':
-    case 'approval-date':
-    case 'approval-date-desc':
-      return 'newest';
-    case 'price_asc':
-    case 'price-asc':
-      return 'price_asc';
-    case 'price_desc':
-    case 'price-desc':
-      return 'price_desc';
-    case 'best_selling':
-    case 'best-selling':
-    case 'best_sellers':
-    case 'best-sellers':
-      return 'best_selling';
-    case 'popular':
-    case 'popularity-score':
-    case 'popularity-score-desc':
-      return 'popular';
-    default:
-      return fallback;
-  }
-}
+const normalizeSort = normalizeTemplateSort;
 
 function defaultUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
   return { q: '', styles: [], tags: [], types: [], freeOnly: false, sort: defaultSort };
@@ -1001,12 +979,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   typesLabel = 'Type',
   freeOnlyLabel = 'Free only',
 }) => {
-  const rawBase = apiBaseProp || DEFAULT_API_BASE;
-  // Rewrite origins blocked by webflow.com CSP
-  const apiBase =
-    rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
-      ? DEFAULT_API_BASE
-      : rawBase;
+  const apiBase = resolveApiBase(apiBaseProp);
 
   const [filters, setFilters] = useState<LocalFilters>(() => defaultUrlFilters(defaultSort));
   const [styleFacets, setStyleFacets] = useState<StyleFacet[]>([]);
@@ -1184,10 +1157,14 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     });
   }, [defaultSort]);
 
+  // Free context offers a reduced sort set; reset any active sort that isn't
+  // offered (price_*, best_selling) so the label always matches the query.
   useEffect(() => {
-    if (!isFreeSortContext || (filters.sort !== 'price_asc' && filters.sort !== 'price_desc')) return;
-    applyFilter({ sort: defaultSort });
-  }, [applyFilter, defaultSort, filters.sort, isFreeSortContext]);
+    if (!isFreeSortContext || sortOptions.some((option) => option.value === filters.sort)) return;
+    applyFilter({
+      sort: sortOptions.some((option) => option.value === defaultSort) ? defaultSort : 'popular',
+    });
+  }, [applyFilter, defaultSort, filters.sort, isFreeSortContext, sortOptions]);
 
   const onSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

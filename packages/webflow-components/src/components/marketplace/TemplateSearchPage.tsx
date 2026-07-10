@@ -3,8 +3,8 @@ import { TemplateSearchBox } from './TemplateSearchBox';
 import { TemplateSearchResults } from './TemplateSearchResults';
 import { TemplateSearchSidebar } from './TemplateSearchSidebar';
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
-type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+import { normalizeTemplateSort, type TemplateScope, type TemplateSort } from './templateRoute';
+
 
 interface SearchFilters {
   q: string;
@@ -422,31 +422,7 @@ const SORT_LABELS: Record<TemplateSort, string> = {
   price_desc: 'Price: High to Low',
 };
 
-function normalizeSort(value: string | null | undefined, fallback: TemplateSort = 'popular'): TemplateSort {
-  switch ((value ?? '').trim()) {
-    case 'newest':
-    case 'approval-date':
-    case 'approval-date-desc':
-      return 'newest';
-    case 'price_asc':
-    case 'price-asc':
-      return 'price_asc';
-    case 'price_desc':
-    case 'price-desc':
-      return 'price_desc';
-    case 'best_selling':
-    case 'best-selling':
-    case 'best_sellers':
-    case 'best-sellers':
-      return 'best_selling';
-    case 'popular':
-    case 'popularity-score':
-    case 'popularity-score-desc':
-      return 'popular';
-    default:
-      return fallback;
-  }
-}
+const normalizeSort = normalizeTemplateSort;
 
 function toFilterSlug(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');

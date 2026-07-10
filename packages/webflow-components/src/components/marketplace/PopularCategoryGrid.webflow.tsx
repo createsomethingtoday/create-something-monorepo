@@ -63,7 +63,7 @@ export default declareComponent(PopularCategoryGrid, {
     }),
     sort: props.Variant({
       name: 'Thumbnail Sort',
-      options: ['popular', 'newest'],
+      options: ['popular', 'best_selling', 'newest'],
       defaultValue: 'popular',
     }),
     fetchImages: props.Boolean({

@@ -2,9 +2,9 @@ import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState
 import { TemplateCard, TEMPLATE_CARD_STYLES } from '../cards/TemplateCard';
 import { MarketplaceExperimentRole, trackMarketplaceEvent } from './analytics';
 
-type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+import { resolveApiBase, type TemplateScope, type TemplateSort } from './templateRoute';
+
 type TemplateScopeSetting = 'auto' | TemplateScope;
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
 type TemplateSortSetting = 'auto' | TemplateSort;
 
 export type TemplateCarouselPreset =
@@ -97,9 +97,6 @@ interface PresetConfig {
   query?: string;
 }
 
-const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
-const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
-const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
 const IMAGE_PROXY_BLOCKLIST = ['airtableusercontent.com'];
 
@@ -646,12 +643,6 @@ const S: Record<string, CSSProperties> = {
   },
 };
 
-function resolveApiBase(apiBaseProp?: string): string {
-  const rawBase = apiBaseProp || DEFAULT_API_BASE;
-  return rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
-    ? DEFAULT_API_BASE
-    : rawBase;
-}
 
 function toStyleSlug(name: string): string {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');

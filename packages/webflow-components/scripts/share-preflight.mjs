@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { globSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +18,7 @@ const DEFAULT_RELEVANT_PREFIXES = [
   'packages/webflow-components/dist/',
   'packages/webflow-components/webflow.json',
   'packages/webflow-components/webflow.cato.json',
+  'packages/webflow-components/webflow.marketplace.json',
   'packages/webflow-components/package.json',
   'packages/webflow-components/README.md'
 ];
@@ -28,6 +29,7 @@ export function parseArgs(argv) {
     allowDirty: process.env[ALLOW_DIRTY_ENV] === '1',
     fetch: true,
     manifest: 'webflow.json',
+    forbid: [],
     json: false
   };
 
@@ -40,6 +42,11 @@ export function parseArgs(argv) {
       options.manifest = readOptionValue(arg, argv[index]);
     } else if (arg.startsWith('--manifest=')) {
       options.manifest = arg.slice('--manifest='.length);
+    } else if (arg === '--forbid') {
+      index += 1;
+      options.forbid = parseForbidList(readOptionValue(arg, argv[index]));
+    } else if (arg.startsWith('--forbid=')) {
+      options.forbid = parseForbidList(arg.slice('--forbid='.length));
     } else if (arg === '--allow-dirty') {
       options.allowDirty = true;
     } else if (arg === '--no-fetch') {
@@ -64,11 +71,57 @@ function readOptionValue(flag, value) {
 export function readManifest(manifestPath, { packageRoot = PACKAGE_ROOT } = {}) {
   const absolutePath = path.resolve(packageRoot, manifestPath);
   const manifest = JSON.parse(readFileSync(absolutePath, 'utf8'));
+  const componentGlobs = [
+    ...(typeof manifest.components === 'string' ? [manifest.components] : []),
+    ...(Array.isArray(manifest.library?.components) ? manifest.library.components : [])
+  ];
   return {
     path: path.relative(packageRoot, absolutePath),
     libraryId: manifest.library?.id ?? null,
-    libraryName: manifest.library?.name ?? manifest.name ?? null
+    libraryName: manifest.library?.name ?? manifest.name ?? null,
+    componentGlobs: Array.from(new Set(componentGlobs))
   };
+}
+
+export function parseForbidList(value) {
+  return (value ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+export function resolveManifestComponents(componentGlobs, { packageRoot = PACKAGE_ROOT } = {}) {
+  const matches = new Set();
+  for (const pattern of componentGlobs) {
+    for (const match of globSync(pattern, { cwd: packageRoot })) {
+      matches.add(String(match).replace(/\\/g, '/').replace(/^\.\//, ''));
+    }
+  }
+  return Array.from(matches).sort();
+}
+
+// Fails closed on manifest scope: the resolved component set must be non-empty
+// and must not include any file under a forbidden component directory. This is
+// what prevents a catch-all glob from shipping client (cato) or internal
+// (control/business) components to an external workspace.
+export function evaluateManifestScope({ matches, forbid }) {
+  const failures = [];
+
+  if (matches.length === 0) {
+    failures.push('Manifest component globs resolve to zero files; the share would publish an empty library.');
+  }
+
+  if (forbid.length > 0) {
+    const forbiddenPattern = new RegExp(`(^|/)components/(${forbid.join('|')})/`);
+    const offenders = matches.filter((match) => forbiddenPattern.test(match));
+    if (offenders.length > 0) {
+      failures.push(
+        `Manifest resolves ${offenders.length} component(s) under forbidden director${offenders.length === 1 ? 'y' : 'ies'} [${forbid.join(', ')}]: ${offenders.slice(0, 5).join(', ')}${offenders.length > 5 ? ', …' : ''}`
+      );
+    }
+  }
+
+  return { ok: failures.length === 0, failures };
 }
 
 export function parseGitPorcelain(statusText) {
@@ -160,12 +213,13 @@ function runGit(args, { cwd = REPO_ROOT, okStatuses = [0] } = {}) {
 
 function usage() {
   console.log(`Usage:
-  node scripts/share-preflight.mjs [--manifest webflow.json] [--allow-dirty] [--no-fetch] [--json]
+  node scripts/share-preflight.mjs [--manifest webflow.json] [--forbid cato,control] [--allow-dirty] [--no-fetch] [--json]
 
 Fails closed before Webflow Code Component library sharing unless:
 - ${APPROVAL_ENV}=1 is set after explicit approval
 - the current branch has an upstream and is not behind it
 - relevant webflow-components files are clean, unless --allow-dirty or ${ALLOW_DIRTY_ENV}=1 is intentionally supplied
+- when --forbid is supplied: the manifest resolves at least one component and none under the forbidden component directories
 
 This command does not mutate Webflow. It may run git fetch unless --no-fetch is supplied.`);
 }
@@ -178,6 +232,13 @@ function main() {
   }
 
   const manifest = readManifest(options.manifest);
+  const manifestScope =
+    options.forbid.length > 0
+      ? evaluateManifestScope({
+          matches: resolveManifestComponents(manifest.componentGlobs),
+          forbid: options.forbid
+        })
+      : { ok: true, failures: [] };
 
   if (options.fetch) {
     const fetch = runGit(['fetch', '--quiet']);
@@ -218,6 +279,11 @@ function main() {
       allowDirty: options.allowDirty
     })
   };
+
+  if (!manifestScope.ok) {
+    result.failures.unshift(...manifestScope.failures);
+    result.ok = false;
+  }
 
   if (options.json) {
     console.log(JSON.stringify(result, null, 2));

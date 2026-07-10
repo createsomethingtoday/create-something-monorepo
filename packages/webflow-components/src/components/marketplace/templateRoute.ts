@@ -1,5 +1,21 @@
 export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+
+// Canonical template-search API endpoints. Every marketplace component must
+// import these (and resolveApiBase) instead of re-declaring them, so a base
+// URL change is a one-line edit.
+export const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
+export const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
+export const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
+
+// Rewrites origins blocked by the webflow.com CSP to the production API base
+// and strips trailing slashes so callers can safely append `/api/...` paths.
+export function resolveApiBase(apiBase?: string): string {
+  const rawBase = apiBase || DEFAULT_API_BASE;
+  return rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
+    ? DEFAULT_API_BASE
+    : rawBase.replace(/\/+$/, '');
+}
 export type TemplatePathKind =
   | 'auto'
   | 'search'

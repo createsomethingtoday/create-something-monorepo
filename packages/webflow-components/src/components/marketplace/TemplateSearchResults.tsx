@@ -1,8 +1,7 @@
 import React from 'react';
 import { TemplateGrid } from '../grid/TemplateGrid';
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling';
-type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+import type { TemplateScope, TemplateSort } from './templateRoute';
 
 export interface TemplateSearchResultsProps {
   /** Base URL for the template search API, no trailing slash. */
