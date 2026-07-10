@@ -829,7 +829,7 @@ function TemplatePreviewPane({
 
 export const TemplateChat: React.FC<TemplateChatProps> = ({
   apiBase = 'https://templates.webflow.com/templates-api',
-  title = 'Template assistant',
+  title = 'Template finder',
   launcherLabel = 'Find your template',
   placeholder = 'Describe the site you want to build…',
   welcomeMessage = 'Hi! Tell me about the site you want to build — the business, the look you like, and anything it must support (store, blog, member logins…) — and I’ll find templates that fit.',

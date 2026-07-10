@@ -16,7 +16,7 @@ export default declareComponent(TemplateChat, {
     }),
     title: props.Text({
       name: 'Panel Title',
-      defaultValue: 'Template assistant',
+      defaultValue: 'Template finder',
     }),
     launcherLabel: props.Text({
       name: 'Launcher Label',
