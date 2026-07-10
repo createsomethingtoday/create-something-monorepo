@@ -159,7 +159,7 @@ page grammar, not a route template.
 
 | Pattern | CREATE SOMETHING use | Canon or property owner | Required boundary |
 | --- | --- | --- | --- |
-| Campaign opening | Full-bleed controlled-water/material field study with decisive claim and one operating annotation | Canon field-study/frame primitive plus property copy | No stock logistics landscape, decorative video, or copied Fleet hero |
+| Campaign opening | Full-bleed controlled-water/material field study with decisive claim and one operating annotation | Canon field-study/frame primitive plus property copy | Water photography carries kinetic campaign energy; no stock logistics landscape, decorative video, or copied Fleet hero |
 | Thesis plus conditions | One large proposition paired with three inspectable conditions or consequences | Property narrative using Canon protocol/state rows | Conditions need owners, denominators, or evidence; no generic benefit cards |
 | Sequential field tests | Sticky or chaptered progression through pressure, boundary, trace, and settlement | Canon semantic sequence plus property-owned assets | Motion must preserve reading order and settle immediately under reduced motion |
 | Contrast chapter | One black/white or optic-light break that marks a principle or intervention | Performance campaign/lab modes | Semantic color stays a thin functional rail; do not adopt Fleet yellow as brand identity |

@@ -14,6 +14,7 @@
     type PerformanceCondition,
     type PerformanceDecisionItem,
   } from '@create-something/canon';
+  import { pressureBoundaryMedia } from '@create-something/canon/components/performance/media/pressure-boundary';
 
   const heroProofItems: PerformanceCampaignProof[] = [
     {
@@ -235,7 +236,7 @@
   eyebrow="CREATE SOMETHING .ltd"
   title="The philosophy of automation infrastructure."
   lede="CREATE SOMETHING .ltd explains the creation moat: consuming AI tools is easy; building governed connectivity, policy, trust boundaries, and proof is the work."
-  media={{ src: '/og-image.png', alt: 'A governed automation system connecting policy, verification, ownership, and proof artifacts' }}
+  media={pressureBoundaryMedia}
   proof={heroProofItems}
 >
   {#snippet actions()}

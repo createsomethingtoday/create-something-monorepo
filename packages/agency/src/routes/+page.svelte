@@ -14,6 +14,7 @@
     type PerformanceFieldStudyMetric,
     type PerformanceFieldStudyProof
   } from '@create-something/canon';
+  import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -174,7 +175,7 @@
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Make one workflow safe to delegate."
     lede="CREATE SOMETHING turns one messy handoff into work that is mapped, tested, governed, and proven: Signals enter from the tools, Decisions route to the right owner, and Proof records approvals, stops, and outcomes."
-    media={{ src: '/images/performance-lab/controlled-flow.webp', mobileSrc: '/images/performance-lab/controlled-flow-mobile.webp', alt: 'Water moving through a controlled bifurcation in a transparent test channel' }}
+    media={controlledFlowMedia}
     proof={heroProofItems}
   >
     {#snippet actions()}

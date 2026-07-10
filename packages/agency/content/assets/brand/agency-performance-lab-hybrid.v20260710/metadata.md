@@ -29,7 +29,7 @@ The transferable grammar is summarized in `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.m
 | --- | --- | --- | --- |
 | Water system board 01 | `ChatGPT Image Jul 10, 2026 at 08_30_09 AM (2).png` | Controlled flow, workflow map, black proof surface, hard crops | Fake readiness score, generated receipt data, rock as primary material |
 | Water system board 02 | `ChatGPT Image Jul 10, 2026 at 08_30_09 AM (3).png` | Flow/pressure/boundary/trace/clarity taxonomy, artifact family | Generated copy and logos, equal density across every surface |
-| Water system board 03 | `ChatGPT Image Jul 10, 2026 at 08_30_09 AM (4).png` | Strongest white/black constitution, engineered channels, issued objects | Generic ocean branding, water as decoration, synthetic proof |
+| Water system board 03 | `ChatGPT Image Jul 10, 2026 at 08_30_09 AM (4).png` | Strongest white/black constitution, engineered channels, issued objects, decorative water photography as the kinetic campaign subject | Generic ocean branding, static wave motifs, synthetic proof |
 
 These paths resolve under `/Users/micahjohnson/Downloads/` and remain private reference inputs.
 The original generated campaign pass from earlier in this goal is superseded by this water steer;
@@ -56,6 +56,11 @@ exploration history. They were not generated from image inputs and none is appro
 
 ## Public Exports
 
+The approved responsive exports are copied into Canon at
+`packages/canon/src/lib/components/performance/media/`. Canon is the delivery source for shared
+Performance campaign openings; the agency static paths remain compatible with existing article and
+field-study routes.
+
 | File | Source | Crop | Size | Intended surface |
 | --- | --- | --- | --- | --- |
 | `static/images/performance-lab/controlled-flow.webp` | Controlled flow 01 | Full 3:2 | 1536 x 1024 | Homepage desktop |
@@ -64,6 +69,16 @@ exploration history. They were not generated from image inputs and none is appro
 | `static/images/performance-lab/pressure-boundary-mobile.webp` | Pressure boundary 02 | Right 4:5 | 819 x 1024 | Services mobile |
 | `static/images/performance-lab/trace-control-plane.webp` | Trace control plane 02 | Full 3:2 | 1536 x 1024 | Article desktop |
 | `static/images/performance-lab/trace-control-plane-mobile.webp` | Trace control plane 02 | Center-right 4:5 | 819 x 1024 | Article mobile |
+
+### Cross-property campaign mapping
+
+| Property | Study | Campaign role |
+| --- | --- | --- |
+| `.agency` | Controlled flow | Delegated work accelerates through an explicit route |
+| `.ltd` | Pressure boundary | Governance gives force a designed limit |
+| `.io` | Trace control plane | Research follows intervention into an inspectable wake |
+| `.space` | Controlled flow | Runtime work is tested in visible motion |
+| `.learn` | Trace control plane | Learning follows a path and leaves evidence behind |
 
 ## Rejections
 
