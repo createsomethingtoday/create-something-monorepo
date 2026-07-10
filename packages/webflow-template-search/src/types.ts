@@ -178,7 +178,14 @@ export interface SearchParams {
   styles: string[];
   tags: string[];
   types: string[];
+  /** CMS feature names (closed vocabulary, e.g. "Ecommerce", "Memberships"); AND semantics. */
+  features: string[];
   freeOnly: boolean;
+  requiresCms: boolean;
+  requiresEcommerce: boolean;
+  requiresMembership: boolean;
+  requiresMultipleLayouts: boolean;
+  requiresUiKit: boolean;
   sort: TemplateSort;
   view: TemplateSearchView;
   page: number;
@@ -208,6 +215,12 @@ export interface SearchItem {
   is_free: boolean;
   is_featured: boolean;
   reviewer_pick_reason: string | null;
+  features: string[];
+  has_cms: boolean | null;
+  has_ecommerce: boolean | null;
+  has_membership: boolean | null;
+  has_multiple_layouts: boolean | null;
+  is_ui_kit: boolean | null;
   template_type: string | null;
   popularity_score: number | null;
   unique_viewers: number | null;
@@ -242,7 +255,13 @@ export interface SearchResponsePayload {
     styles: string[];
     tags: string[];
     types: string[];
+    features: string[];
     free_only: boolean;
+    has_cms: boolean;
+    has_ecommerce: boolean;
+    has_membership: boolean;
+    has_multiple_layouts: boolean;
+    is_ui_kit: boolean;
     /** True when the strict all-tokens query matched nothing and results come from an OR-relaxed retry. */
     relaxed: boolean;
   };
@@ -349,6 +368,12 @@ export interface DocumentRow {
   is_featured: number;
   is_landing_page: number;
   reviewer_pick_reason: string | null;
+  features_json: string | null;
+  has_cms: number | null;
+  has_ecommerce: number | null;
+  has_membership: number | null;
+  has_multiple_layouts: number | null;
+  is_ui_kit: number | null;
   popularity_score: number | null;
   unique_viewers: number | null;
   cumulative_purchases: number | null;

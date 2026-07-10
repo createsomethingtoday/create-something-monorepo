@@ -22,6 +22,7 @@ import {
   refreshCreatorProfiles,
   refreshImages,
   refreshReviewerPickReasons,
+  refreshTemplateCapabilities,
   syncTemplateRecordsByIds,
   syncTemplates,
 } from './sync.js';
@@ -66,6 +67,11 @@ const PUBLIC_SEARCH_CACHE_PARAM_ORDER = [
   'style_slug',
   'tag_slug',
   'free_only',
+  'has_cms',
+  'has_ecommerce',
+  'has_membership',
+  'has_multiple_layouts',
+  'is_ui_kit',
   'sort',
   'page',
   'page_size',
@@ -157,6 +163,21 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, ca
       case 'free_only':
         if (params.freeOnly) cacheUrl.searchParams.set(key, 'true');
         break;
+      case 'has_cms':
+        if (params.requiresCms) cacheUrl.searchParams.set(key, 'true');
+        break;
+      case 'has_ecommerce':
+        if (params.requiresEcommerce) cacheUrl.searchParams.set(key, 'true');
+        break;
+      case 'has_membership':
+        if (params.requiresMembership) cacheUrl.searchParams.set(key, 'true');
+        break;
+      case 'has_multiple_layouts':
+        if (params.requiresMultipleLayouts) cacheUrl.searchParams.set(key, 'true');
+        break;
+      case 'is_ui_kit':
+        if (params.requiresUiKit) cacheUrl.searchParams.set(key, 'true');
+        break;
       case 'sort':
         cacheUrl.searchParams.set(key, params.sort);
         break;
@@ -172,6 +193,7 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, ca
   appendSearchCacheList(cacheUrl, 'styles', params.styles);
   appendSearchCacheList(cacheUrl, 'tags', params.tags);
   appendSearchCacheList(cacheUrl, 'types', params.types);
+  appendSearchCacheList(cacheUrl, 'features', params.features);
   return new Request(cacheUrl.toString(), { method: 'GET' });
 }
 
@@ -255,6 +277,13 @@ async function handleReviewerPickRefresh(request: Request, env: Env): Promise<Re
   if (authError) return authError;
 
   return jsonResponse(request, env, await refreshReviewerPickReasons(env));
+}
+
+async function handleCapabilityRefresh(request: Request, env: Env): Promise<Response> {
+  const authError = validateAdminToken(request, env);
+  if (authError) return authError;
+
+  return jsonResponse(request, env, await refreshTemplateCapabilities(env));
 }
 
 async function parseRecordIds(request: Request): Promise<string[]> {
@@ -493,6 +522,10 @@ export default {
 
       if (url.pathname === '/api/templates/admin/refresh-reviewer-picks' && request.method === 'POST') {
         return await handleReviewerPickRefresh(request, env);
+      }
+
+      if (url.pathname === '/api/templates/admin/refresh-capabilities' && request.method === 'POST') {
+        return await handleCapabilityRefresh(request, env);
       }
 
       if (url.pathname === '/api/templates/admin/backfill-creators' && request.method === 'POST') {

@@ -17,7 +17,7 @@ import {
   updateTemplateImagesFromWebflow,
 } from '../src/db.js';
 import worker from '../src/index.js';
-import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID, extractTemplateOffer } from '../src/webflow.js';
+import { DESIGNERS_COLLECTION_ID, FEATURES_COLLECTION_ID, TEMPLATES_COLLECTION_ID, extractTemplateOffer } from '../src/webflow.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callScheduled, callWorker, createTestEnv } from './support/worker.js';
 
@@ -3471,6 +3471,135 @@ describe('webflow-template-search worker', () => {
       expect(afterPayload.items[0]?.reviewer_pick_reason).toBe(
         'Strong interaction polish and clear buyer-fit execution.',
       );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('indexes CMS capability data and filters search by features and capability switches', async () => {
+    const dataset = {
+      publishedAssets: PUBLISHED_ASSETS,
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'template-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recAgentflow',
+              name: 'Agentflow',
+              slug: 'agentflow-website-template',
+              features: ['feat-ecommerce', 'feat-forms'],
+              cms: true,
+              'e-commerce': true,
+              membership: true,
+              'multiple-layouts': false,
+              'ui-kit': false,
+            },
+          },
+          {
+            id: 'template-setrex',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recSetrex',
+              name: 'Setrex',
+              slug: 'setrex-website-template',
+              features: ['feat-forms'],
+              cms: true,
+              'e-commerce': false,
+              membership: false,
+              'multiple-layouts': true,
+              'ui-kit': false,
+            },
+          },
+        ],
+        [FEATURES_COLLECTION_ID]: [
+          { id: 'feat-ecommerce', isArchived: false, isDraft: false, fieldData: { name: 'Ecommerce' } },
+          { id: 'feat-forms', isArchived: false, isDraft: false, fieldData: { name: 'Forms' } },
+        ],
+      },
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const refresh = await callWorker(
+        new Request('https://templates.test/api/templates/admin/refresh-capabilities', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(refresh.status).toBe(200);
+      // Note: refreshed_records relies on D1 meta.changes, which miniflare
+      // reports as 0 for batched UPDATEs — the follow-up search assertions
+      // prove the writes landed, so only the mode/vocabulary are asserted.
+      expect((await refresh.json()) as Record<string, unknown>).toMatchObject({
+        mode: 'capability_refresh',
+        feature_vocabulary_size: 2,
+      });
+
+      // Feature filter is case-insensitive and returns capability fields.
+      const ecommerce = await callWorker(
+        new Request('https://templates.test/api/templates/search?features=ecommerce'),
+        env,
+      );
+      const ecommercePayload = (await ecommerce.json()) as {
+        items: Array<{
+          name: string;
+          features: string[];
+          has_ecommerce: boolean | null;
+          has_membership: boolean | null;
+        }>;
+        applied_filters: { features: string[] };
+      };
+      expect(ecommercePayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(ecommercePayload.items[0]?.features).toEqual(['Ecommerce', 'Forms']);
+      expect(ecommercePayload.items[0]?.has_ecommerce).toBe(true);
+      expect(ecommercePayload.applied_filters.features).toEqual(['ecommerce']);
+
+      // Multiple features use AND semantics.
+      const both = await callWorker(
+        new Request('https://templates.test/api/templates/search?features=Forms,Ecommerce'),
+        env,
+      );
+      const bothPayload = (await both.json()) as { items: Array<{ name: string }> };
+      expect(bothPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+
+      const forms = await callWorker(new Request('https://templates.test/api/templates/search?features=Forms'), env);
+      const formsPayload = (await forms.json()) as { items: Array<{ name: string }> };
+      expect(formsPayload.items.map((item) => item.name).sort()).toEqual(['Agentflow', 'Setrex']);
+
+      // Capability switch filters.
+      const membership = await callWorker(
+        new Request('https://templates.test/api/templates/search?has_membership=true'),
+        env,
+      );
+      const membershipPayload = (await membership.json()) as { items: Array<{ name: string }> };
+      expect(membershipPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+
+      const multiLayout = await callWorker(
+        new Request('https://templates.test/api/templates/search?has_multiple_layouts=true'),
+        env,
+      );
+      const multiLayoutPayload = (await multiLayout.json()) as { items: Array<{ name: string }> };
+      expect(multiLayoutPayload.items.map((item) => item.name)).toEqual(['Setrex']);
     } finally {
       fetchMock.mockRestore();
       close();

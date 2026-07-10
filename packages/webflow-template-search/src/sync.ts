@@ -30,6 +30,7 @@ import {
   type TemplateImageUpdateInput,
   type TemplateImageRefreshRow,
   updateCreatorAvatarsFromWebflow,
+  updateTemplateCapabilitiesFromWebflow,
   updateTemplateDocumentImages,
   updateTemplateImagesFromWebflow,
   updateTemplateReviewerPickReasonsFromWebflow,
@@ -39,6 +40,7 @@ import {
 import {
   fetchWebflowDesignerAvatars,
   fetchWebflowDesignerAvatarsForTargets,
+  fetchWebflowFeatureNames,
   fetchWebflowTemplateImages,
   fetchWebflowTemplateImagesForTargets,
   type WebflowDesignerAvatarRecord,
@@ -1204,6 +1206,40 @@ export async function refreshReviewerPickReasons(env: Env): Promise<{
     finished_at: nowIso(),
     fetched_records: templateImages.length,
     reviewer_pick_records: reviewerPickRecords.length,
+    refreshed_records: refreshedRecords,
+  };
+}
+
+// Pulls CMS capability data (features multi-reference + capability switches)
+// into D1 so search filters and agent tools can match on capability facts.
+export async function refreshTemplateCapabilities(env: Env): Promise<{
+  mode: 'capability_refresh';
+  started_at: string;
+  finished_at: string;
+  fetched_records: number;
+  feature_vocabulary_size: number;
+  refreshed_records: number;
+}> {
+  const startedAt = nowIso();
+  const [templateImages, featureNamesById] = await Promise.all([
+    fetchWebflowTemplateImages(env),
+    fetchWebflowFeatureNames(env),
+  ]);
+  const refreshedRecords = await updateTemplateCapabilitiesFromWebflow(
+    env.DB,
+    templateImages,
+    featureNamesById,
+    startedAt,
+  );
+
+  if (refreshedRecords > 0) await bumpPublicSearchCacheVersion(env.DB, 'capability_refresh');
+
+  return {
+    mode: 'capability_refresh',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    fetched_records: templateImages.length,
+    feature_vocabulary_size: featureNamesById.size,
     refreshed_records: refreshedRecords,
   };
 }

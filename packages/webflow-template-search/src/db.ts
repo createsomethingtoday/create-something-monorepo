@@ -128,6 +128,12 @@ const UPSERT_TEMPLATE_SQL = `
     is_featured,
     is_landing_page,
     reviewer_pick_reason,
+    features_json,
+    has_cms,
+    has_ecommerce,
+    has_membership,
+    has_multiple_layouts,
+    is_ui_kit,
     popularity_score,
     unique_viewers,
     cumulative_purchases,
@@ -141,7 +147,7 @@ const UPSERT_TEMPLATE_SQL = `
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -216,6 +222,12 @@ const UPSERT_TEMPLATE_SQL = `
     is_featured = excluded.is_featured,
     is_landing_page = excluded.is_landing_page,
     reviewer_pick_reason = template_documents.reviewer_pick_reason,
+    features_json = template_documents.features_json,
+    has_cms = template_documents.has_cms,
+    has_ecommerce = template_documents.has_ecommerce,
+    has_membership = template_documents.has_membership,
+    has_multiple_layouts = template_documents.has_multiple_layouts,
+    is_ui_kit = template_documents.is_ui_kit,
     popularity_score = excluded.popularity_score,
     unique_viewers = excluded.unique_viewers,
     cumulative_purchases = excluded.cumulative_purchases,
@@ -541,7 +553,13 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.isFree ? 1 : 0,
         document.isFeatured ? 1 : 0,
         document.isLandingPage ? 1 : 0,
-        null,
+        null, // reviewer_pick_reason — owned by the CMS refresh, preserved on conflict
+        null, // features_json — owned by the CMS capability refresh
+        null, // has_cms
+        null, // has_ecommerce
+        null, // has_membership
+        null, // has_multiple_layouts
+        null, // is_ui_kit
         document.popularityScore,
         document.uniqueViewers,
         document.cumulativePurchases,
@@ -883,6 +901,96 @@ export async function updateTemplateReviewerPickReasonsFromWebflow(
                AND NOT (reviewer_pick_reason IS ?)`,
           )
           .bind(record.reviewerPickReason, syncedAt, record.name, record.name, record.reviewerPickReason),
+      );
+    }
+  }
+
+  return runStatementBatches(db, statements, options);
+}
+
+// Persist CMS capability data (features + capability switches) onto indexed
+// templates. Matches by sync-record-id first, then unique slug, then unique
+// name, mirroring the reviewer-pick refresh. Rows already carrying identical
+// capability values are skipped so unchanged refreshes stay cheap.
+export async function updateTemplateCapabilitiesFromWebflow(
+  db: D1Database,
+  records: WebflowTemplateImageRecord[],
+  featureNamesById: Map<string, string>,
+  syncedAt: string,
+  options: { onBatch?: BatchProgress } = {},
+): Promise<number> {
+  const statements: D1PreparedStatement[] = [];
+
+  const CAPABILITY_SET = `features_json = ?,
+                 has_cms = ?,
+                 has_ecommerce = ?,
+                 has_membership = ?,
+                 has_multiple_layouts = ?,
+                 is_ui_kit = ?,
+                 synced_at = ?`;
+  const CAPABILITY_CHANGED = `(
+                 NOT (features_json IS ?)
+                 OR NOT (has_cms IS ?)
+                 OR NOT (has_ecommerce IS ?)
+                 OR NOT (has_membership IS ?)
+                 OR NOT (has_multiple_layouts IS ?)
+                 OR NOT (is_ui_kit IS ?)
+               )`;
+
+  for (const record of records) {
+    const featureNames = Array.from(
+      new Set(record.featureIds.map((id) => featureNamesById.get(id)).filter((name): name is string => Boolean(name))),
+    ).sort();
+    const featuresJson = JSON.stringify(featureNames);
+    const values = [
+      featuresJson,
+      record.hasCms === null ? null : record.hasCms ? 1 : 0,
+      record.hasEcommerce === null ? null : record.hasEcommerce ? 1 : 0,
+      record.hasMembership === null ? null : record.hasMembership ? 1 : 0,
+      record.hasMultipleLayouts === null ? null : record.hasMultipleLayouts ? 1 : 0,
+      record.isUiKit === null ? null : record.isUiKit ? 1 : 0,
+    ];
+
+    if (record.id) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET ${CAPABILITY_SET}
+             WHERE id = ?
+               AND ${CAPABILITY_CHANGED}`,
+          )
+          .bind(...values, syncedAt, record.id, ...values),
+      );
+      continue;
+    }
+
+    if (record.templateSlug) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET ${CAPABILITY_SET}
+             WHERE template_slug = ?
+               AND (SELECT COUNT(*) FROM template_documents WHERE template_slug = ?) = 1
+               AND ${CAPABILITY_CHANGED}`,
+          )
+          .bind(...values, syncedAt, record.templateSlug, record.templateSlug, ...values),
+      );
+      continue;
+    }
+
+    if (record.name) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET ${CAPABILITY_SET}
+             WHERE name = ?
+               AND (SELECT COUNT(*) FROM template_documents WHERE name = ?) = 1
+               AND ${CAPABILITY_CHANGED}`,
+          )
+          .bind(...values, syncedAt, record.name, record.name, ...values),
       );
     }
   }

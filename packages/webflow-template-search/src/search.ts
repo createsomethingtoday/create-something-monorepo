@@ -104,6 +104,12 @@ const GRID_ITEM_SELECT_COLUMNS = [
   'd.is_free',
   'd.is_featured',
   'd.reviewer_pick_reason',
+  'd.features_json',
+  'd.has_cms',
+  'd.has_ecommerce',
+  'd.has_membership',
+  'd.has_multiple_layouts',
+  'd.is_ui_kit',
   'd.popularity_score',
   'd.unique_viewers',
   'd.cumulative_purchases',
@@ -173,6 +179,20 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
   if (params.scope === 'free') clauses.push(FREE_TEMPLATE_CLAUSE);
   if (params.scope === 'landing_pages') clauses.push('d.is_landing_page = 1');
   if (params.freeOnly) clauses.push(FREE_TEMPLATE_CLAUSE);
+
+  // Capability filters sourced from the Templates CMS collection.
+  // Features use AND semantics: every requested feature must be present.
+  for (const feature of params.features) {
+    clauses.push(
+      `EXISTS (SELECT 1 FROM json_each(COALESCE(d.features_json, '[]')) WHERE lower(json_each.value) = lower(?))`,
+    );
+    binds.push(feature);
+  }
+  if (params.requiresCms) clauses.push('d.has_cms = 1');
+  if (params.requiresEcommerce) clauses.push('d.has_ecommerce = 1');
+  if (params.requiresMembership) clauses.push('d.has_membership = 1');
+  if (params.requiresMultipleLayouts) clauses.push('d.has_multiple_layouts = 1');
+  if (params.requiresUiKit) clauses.push('d.is_ui_kit = 1');
 
   const filterCategoryGroup = params.categoryGroupSlug && !options.excludeCategoryGroup ? params.categoryGroupSlug : null;
   const filterChildCategory = params.childCategorySlug && !options.excludeChildCategory ? params.childCategorySlug : null;
@@ -646,6 +666,12 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       is_free: typeof row.price === 'number' ? row.price === 0 : row.is_free === 1,
       is_featured: row.is_featured === 1,
       reviewer_pick_reason: row.reviewer_pick_reason,
+      features: parseJsonArray(row.features_json),
+      has_cms: row.has_cms === null ? null : row.has_cms === 1,
+      has_ecommerce: row.has_ecommerce === null ? null : row.has_ecommerce === 1,
+      has_membership: row.has_membership === null ? null : row.has_membership === 1,
+      has_multiple_layouts: row.has_multiple_layouts === null ? null : row.has_multiple_layouts === 1,
+      is_ui_kit: row.is_ui_kit === null ? null : row.is_ui_kit === 1,
       template_type: row.template_type,
       popularity_score: row.popularity_score,
       unique_viewers: row.unique_viewers,
@@ -688,7 +714,13 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       styles: params.styles,
       tags: params.tags,
       types: params.types,
+      features: params.features,
       free_only: params.freeOnly,
+      has_cms: params.requiresCms,
+      has_ecommerce: params.requiresEcommerce,
+      has_membership: params.requiresMembership,
+      has_multiple_layouts: params.requiresMultipleLayouts,
+      is_ui_kit: params.requiresUiKit,
       relaxed: relaxedQuery,
     },
     available_facets: {

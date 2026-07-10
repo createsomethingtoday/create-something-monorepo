@@ -2,6 +2,7 @@ import type { Env } from './types.js';
 
 export const TEMPLATES_COLLECTION_ID = '641b464e78789f611a5d4496';
 export const DESIGNERS_COLLECTION_ID = '641b464e78789fc19d5d4461';
+export const FEATURES_COLLECTION_ID = '641b464e78789f71085d4493';
 const WEBFLOW_PAGE_FETCH_TIMEOUT_MS = 15_000;
 const WEBFLOW_API_MAX_RETRIES = 3;
 const WEBFLOW_API_BASE_BACKOFF_MS = 750;
@@ -109,6 +110,15 @@ export interface WebflowTemplateImageRecord {
   thumbnailImageSecondaryUrl: string | null;
   carouselImageUrls: string[];
   reviewerPickReason: string | null;
+  // Capability data sourced only from the Templates CMS collection.
+  // featureIds are raw multi-reference item IDs; resolve names via
+  // fetchWebflowFeatureNames before persisting.
+  featureIds: string[];
+  hasCms: boolean | null;
+  hasEcommerce: boolean | null;
+  hasMembership: boolean | null;
+  hasMultipleLayouts: boolean | null;
+  isUiKit: boolean | null;
   price: number | null;
   isFree: boolean | null;
 }
@@ -317,6 +327,17 @@ function trimString(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
+// Webflow Switch fields arrive as booleans; anything else means "unknown".
+function parseSwitch(value: unknown): boolean | null {
+  return typeof value === 'boolean' ? value : null;
+}
+
+// Webflow multi-reference fields arrive as arrays of referenced item IDs.
+function referenceIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0);
+}
+
 function webflowApiToken(env: Env): string | null {
   return env.CMS_READ_ONLY?.trim() || env.WEBFLOW_API_TOKEN?.trim() || null;
 }
@@ -436,6 +457,12 @@ function mapTemplateFieldData(fieldData: Record<string, unknown>): WebflowTempla
     thumbnailImageSecondaryUrl: imageUrl(fieldData, ['thumbnail-secondary', 'thumbnail-image-secondary']),
     carouselImageUrls: imageUrls(fieldData, ['slider-images', 'carousel-images']),
     reviewerPickReason: trimString(fieldData['reviewer-pick-reason-featured-templates']),
+    featureIds: referenceIds(fieldData['features']),
+    hasCms: parseSwitch(fieldData['cms']),
+    hasEcommerce: parseSwitch(fieldData['e-commerce']),
+    hasMembership: parseSwitch(fieldData['membership']),
+    hasMultipleLayouts: parseSwitch(fieldData['multiple-layouts']),
+    isUiKit: parseSwitch(fieldData['ui-kit']),
     price: offer?.price ?? null,
     isFree: offer?.isFree ?? null,
   };
@@ -471,6 +498,28 @@ export async function fetchWebflowTemplateImages(
   if (!token) throw new Error('A Webflow CMS read token is not configured.');
 
   return paginateWebflow(token, TEMPLATES_COLLECTION_ID, (item) => mapTemplateFieldData(item.fieldData), options);
+}
+
+// Resolves the Features collection (closed ~20-item vocabulary) into an
+// id -> display-name map so template featureIds can be persisted as names.
+export async function fetchWebflowFeatureNames(
+  env: Env,
+  options: { onPage?: () => Promise<void> } = {},
+): Promise<Map<string, string>> {
+  const token = webflowApiToken(env);
+  if (!token) throw new Error('A Webflow CMS read token is not configured.');
+
+  const entries = await paginateWebflow(
+    token,
+    FEATURES_COLLECTION_ID,
+    (item) => {
+      const name = trimString(item.fieldData.name ?? item.fieldData.Name);
+      return name ? ([item.id, name] as const) : null;
+    },
+    options,
+  );
+
+  return new Map(entries);
 }
 
 export async function fetchWebflowTemplateImagesForTargets(
