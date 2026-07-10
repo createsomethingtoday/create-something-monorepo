@@ -10,9 +10,9 @@ export default declareComponent(TemplateChat, {
   props: {
     apiBase: props.Text({
       name: 'Agent API Base URL',
-      defaultValue: '',
+      defaultValue: 'https://templates.webflow.com/templates-api',
       tooltip:
-        'Base URL of the template agent worker (no trailing slash). Must be reachable under the webflow.com CSP (a *.webflow.com proxy path in production).',
+        'Base URL of the template agent proxy (no trailing slash). Use https://templates.webflow.com/templates-api on webflow.com — the direct workers.dev origin is blocked by the webflow.com CSP.',
     }),
     title: props.Text({
       name: 'Panel Title',

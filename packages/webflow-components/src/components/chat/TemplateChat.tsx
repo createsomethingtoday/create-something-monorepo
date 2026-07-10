@@ -518,7 +518,7 @@ function DisplayArtifact({ payload }: { payload: DisplayPayload }): React.ReactE
 }
 
 export const TemplateChat: React.FC<TemplateChatProps> = ({
-  apiBase = '',
+  apiBase = 'https://templates.webflow.com/templates-api',
   title = 'Template assistant',
   launcherLabel = 'Find your template',
   placeholder = 'Describe the site you want to build…',
