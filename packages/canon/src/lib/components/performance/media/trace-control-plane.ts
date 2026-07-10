@@ -1,10 +1,10 @@
-import traceControlPlane from './trace-control-plane.webp';
-import traceControlPlaneMobile from './trace-control-plane-mobile.webp';
+import traceControlPlane from './trace-wake-natural.webp';
+import traceControlPlaneMobile from './trace-wake-natural-mobile.webp';
 
 import type { PerformanceMediaStudy } from './types';
 
 export const traceControlPlaneMedia = {
   src: traceControlPlane,
   mobileSrc: traceControlPlaneMobile,
-  alt: 'Water moving through a mechanical gate and leaving a visible downstream trace'
+  alt: 'A survey craft leaving a directional wake across dark water'
 } as const satisfies PerformanceMediaStudy;

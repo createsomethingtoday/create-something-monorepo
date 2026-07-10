@@ -1,3 +1,6 @@
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');
+@import '@ibm/plex-mono/css/ibm-plex-mono-all.css';
+
 /*
   Canon Performance Excellence Layer
 
@@ -10,7 +13,7 @@
 .performance-shell {
   background: var(--color-performance-paper);
   color: var(--color-performance-ink);
-  font-family: var(--font-sans);
+  font-family: var(--font-performance-display, var(--font-sans));
   letter-spacing: 0;
 }
 
@@ -22,6 +25,7 @@
 .performance-eyebrow {
   margin: 0;
   color: var(--color-performance-pressure);
+  font-family: var(--font-performance-mono, var(--font-mono));
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -136,9 +140,19 @@
 }
 
 .property-performance {
+  --font-sans: var(--font-performance-display);
+  --font-display: var(--font-performance-display);
+  --font-heading: var(--font-performance-display);
+  --font-interface: var(--font-performance-display);
+  --font-prose: var(--font-performance-display);
+  --font-mono: var(--font-performance-mono);
+  --font-record: var(--font-performance-mono);
+  --font-topology-label: var(--font-performance-mono);
+  --font-code: var(--font-performance-mono);
   --property-performance-panel-shadow: var(--shadow-performance-panel);
   background: var(--color-performance-paper);
   color: var(--color-performance-ink);
+  font-family: var(--font-performance-display, var(--font-sans));
 }
 
 .property-performance:is(.layout-root, .layout, .min-h-screen) {

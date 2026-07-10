@@ -29,9 +29,9 @@ The same placement rule applies to conversion. Keep a compact receipt or object 
 
 ## Typography contract
 
-Performance display copy uses a system-safe Helvetica family stack: `Helvetica Neue`, `Helvetica`, `Arial`, then platform sans fallbacks. Canon sets display weight `500`, tracking `-0.03em`, line-height `0.94`, normal kerning, and standard kerning and ligature features. This replaces route-specific weight and tracking decisions while keeping paragraph and interface copy on the existing Canon sans and mono stacks.
+Performance uses Satoshi for commands, conclusions, interface prose, and display copy. Canon sets display weight `500`, tracking `-0.03em`, line-height `0.94`, normal kerning, and standard kerning and ligature features. IBM Plex Mono owns labels, evidence, numbers, metadata, states, timestamps, identifiers, topology labels, and code. Tabular values should continue to use tabular numerals.
 
-Do not pull Satoshi or another client, template, remote, or unlicensed face into the shared system. A property may supply original media and content, but typography remains a Canon-owned contract. `PerformanceThesisConditions` defaults to an `h2`; set `headingLevel="h1"` when it is the primary product or operator opening.
+Satoshi is loaded from Fontshare's official hosted service under the ITF Free Font License; do not copy the client-owned Satoshi files elsewhere in this repository. IBM Plex Mono is bundled from the official `@ibm/plex-mono` package under the SIL Open Font License. The fallback stacks remain explicit so the system stays readable if a hosted font is unavailable. A property may supply original media and content, but typography remains a Canon-owned contract. `PerformanceThesisConditions` defaults to an `h2`; set `headingLevel="h1"` when it is the primary product or operator opening.
 
 ## Composition example
 

@@ -17,4 +17,13 @@ describe('Performance media canon', () => {
       expect(study.src).not.toMatch(/og-image/i);
     }
   });
+
+  it('uses the natural water series for every shared operating condition', () => {
+    expect(controlledFlowMedia.src).toMatch(/controlled-flow-natural\.webp$/);
+    expect(pressureBoundaryMedia.src).toMatch(/pressure-boundary-natural\.webp$/);
+    expect(traceControlPlaneMedia.src).toMatch(/trace-wake-natural\.webp$/);
+    expect(controlledFlowMedia.alt).toContain('concrete sluice');
+    expect(pressureBoundaryMedia.alt).toContain('concrete boundary');
+    expect(traceControlPlaneMedia.alt).toContain('directional wake');
+  });
 });

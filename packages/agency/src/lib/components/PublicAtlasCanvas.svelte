@@ -377,7 +377,7 @@
 
 <section class="public-atlas" class:compact={compact} aria-label="Public Atlas workflow canvas">
 	<div class="atlas-copy">
-		<span>Public Atlas canvas</span>
+		<span>Mapping warmup</span>
 		<h3>Turn one workflow into a map before booking.</h3>
 		<p>
 			Chat with the constrained mapping agent, shape the canvas, then carry the summary into the
@@ -664,10 +664,12 @@
 <style>
 	.public-atlas {
 		display: grid;
-		gap: 1rem;
+		gap: clamp(1.5rem, 3vw, 2.5rem);
 	}
 
 	.atlas-copy {
+		display: grid;
+		gap: 0.625rem;
 		max-width: 54rem;
 	}
 
@@ -681,6 +683,7 @@
 	.summary-panel summary span,
 	.starter-grid button > span {
 		color: var(--color-performance-muted, #5e6268);
+		font-family: var(--font-mono);
 		font-size: 0.72rem;
 		font-weight: 700;
 		letter-spacing: 0.08em;
@@ -688,7 +691,7 @@
 	}
 
 	.atlas-copy h3 {
-		margin: 0.25rem 0;
+		margin: 0;
 		color: var(--color-performance-ink, #090909);
 		font-size: clamp(1.45rem, 2vw, 2.2rem);
 		letter-spacing: 0;
@@ -700,6 +703,10 @@
 		margin: 0;
 		color: var(--color-performance-muted, #5e6268);
 		line-height: 1.55;
+	}
+
+	.atlas-copy p {
+		max-width: 46rem;
 	}
 
 	.atlas-layout {

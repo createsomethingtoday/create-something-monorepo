@@ -499,7 +499,7 @@
 		eyebrow="Workflow mapping session"
 		title="Map the workflow before the build decision."
 		lede="Bring the support recovery, customer-trust, revenue, production, or credential-touching handoff with the most drag. You leave with the objects named, actions scoped, decision states, audit trail, and first controlled path or a clear stop."
-		media={{ src: '/images/performance-lab/pressure-boundary.webp', mobileSrc: '/images/performance-lab/pressure-boundary-mobile.webp', alt: 'Water held inside a clear operating boundary before release' }}
+		media={{ src: '/images/performance-lab/pressure-boundary-natural.webp', mobileSrc: '/images/performance-lab/pressure-boundary-natural-mobile.webp', alt: 'Black-and-white wave impact against a concrete boundary' }}
 		proof={[{ label: 'Context', value: 'One workflow' }, { label: 'Authority', value: 'Decision owner' }, { label: 'Proof', value: 'No secrets' }]}
 	>
 		{#snippet actions()}
