@@ -19,7 +19,7 @@ if (!mode || has('--help')) {
 
 Environment:
   SYNC_ADMIN_TOKEN  Required admin token
-  WORKER_URL         Optional Worker origin override`);
+  WEBFLOW_TEMPLATE_SEARCH_URL  Optional Worker origin override`);
   process.exit(mode ? 0 : 1);
 }
 
@@ -29,7 +29,7 @@ if (!token) {
   process.exit(1);
 }
 
-const workerUrl = (process.env.WORKER_URL ?? DEFAULT_WORKER_URL).replace(/\/$/, '');
+const workerUrl = (process.env.WEBFLOW_TEMPLATE_SEARCH_URL ?? DEFAULT_WORKER_URL).replace(/\/$/, '');
 const batchSize = Number(valueAfter('--batch-size', '25'));
 const probeEvery = Number(valueAfter('--probe-every', '5'));
 if (!Number.isInteger(batchSize) || batchSize < 1 || batchSize > 50) throw new Error('--batch-size must be an integer from 1 to 50.');

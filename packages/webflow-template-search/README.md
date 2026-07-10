@@ -163,6 +163,10 @@ jobs remain visible on the latest job row until another job replaces the lock re
 must be filled through the authenticated `backfill-mrp` workflow, not Wrangler file imports,
 scratch scripts, or direct Cloudflare API writes.
 
+The CLI defaults to the production Worker. Use the service-specific
+`WEBFLOW_TEMPLATE_SEARCH_URL` environment variable for a preview or local override; generic
+`WORKER_URL` variables from shared secret-manager environments are intentionally ignored.
+
 ```bash
 # Inspect durable checkpoint and coverage without writing.
 SYNC_ADMIN_TOKEN=... pnpm backfill:mrp -- --status
