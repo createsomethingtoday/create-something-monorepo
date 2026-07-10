@@ -1,4 +1,13 @@
-import type { AliasType, CreatorLookupValue, DocumentCountRow, SlugAliasInput, TemplateDocumentInput, TemplateImageSourceStats } from './types.js';
+import type {
+  AliasType,
+  CreatorLookupValue,
+  DocumentCountRow,
+  MrpBackfillState,
+  MrpCoverage,
+  SlugAliasInput,
+  TemplateDocumentInput,
+  TemplateImageSourceStats,
+} from './types.js';
 import type { WebflowDesignerAvatarRecord, WebflowTemplateImageRecord } from './webflow.js';
 import { chunk, nowIso } from './utils.js';
 
@@ -21,6 +30,16 @@ export interface TemplateLookupTarget {
   id: string;
   templateSlug: string | null;
   sourceLastModifiedTime?: string | null;
+}
+
+export interface TemplateMrpRow {
+  id: string;
+  mrp_id: string | null;
+}
+
+export interface TemplateMrpUpdate {
+  id: string;
+  mrpId: string;
 }
 
 type BatchProgress = () => Promise<void>;
@@ -1723,6 +1742,74 @@ export async function templateImageSourceStats(db: D1Database): Promise<Template
     rows_with_temp_airtable_image: Number(row?.rows_with_temp_airtable_image ?? 0),
     rows_missing_image: Number(row?.rows_missing_image ?? 0),
   };
+}
+
+export async function listTemplateMrpRows(db: D1Database, afterId: string, limit: number): Promise<TemplateMrpRow[]> {
+  const result = await db
+    .prepare(
+      `SELECT id, mrp_id
+       FROM template_documents
+       WHERE id > ?
+       ORDER BY id
+       LIMIT ?`,
+    )
+    .bind(afterId, limit)
+    .all<TemplateMrpRow>();
+  return result.results ?? [];
+}
+
+export async function countTemplateMrpRowsAfter(db: D1Database, afterId: string): Promise<number> {
+  const row = await db
+    .prepare('SELECT COUNT(*) AS total FROM template_documents WHERE id > ?')
+    .bind(afterId)
+    .first<DocumentCountRow>();
+  return Number(row?.total ?? 0);
+}
+
+export async function updateTemplateMrpIds(db: D1Database, updates: TemplateMrpUpdate[]): Promise<number> {
+  if (updates.length === 0) return 0;
+
+  const statements = updates.map((update) =>
+    db
+      .prepare(
+        `UPDATE template_documents
+         SET mrp_id = ?
+         WHERE id = ?
+           AND NOT (mrp_id IS ?)`,
+      )
+      .bind(update.mrpId, update.id, update.mrpId),
+  );
+  await runStatementBatches(db, statements);
+  return updates.length;
+}
+
+export async function mrpCoverage(db: D1Database): Promise<MrpCoverage> {
+  const row = await db
+    .prepare(
+      `SELECT
+         COUNT(*) AS total_rows,
+         SUM(CASE WHEN mrp_id IS NOT NULL AND mrp_id != '' THEN 1 ELSE 0 END) AS rows_with_mrp,
+         SUM(CASE WHEN mrp_id IS NULL OR mrp_id = '' THEN 1 ELSE 0 END) AS rows_missing_mrp
+       FROM template_documents`,
+    )
+    .first<MrpCoverage>();
+
+  return {
+    total_rows: Number(row?.total_rows ?? 0),
+    rows_with_mrp: Number(row?.rows_with_mrp ?? 0),
+    rows_missing_mrp: Number(row?.rows_missing_mrp ?? 0),
+  };
+}
+
+export async function getMrpBackfillState(db: D1Database): Promise<MrpBackfillState | null> {
+  const row = await db.prepare('SELECT value_json FROM sync_state WHERE key = ?').bind('mrp_backfill').first<{ value_json: string }>();
+  const parsed = parseJson(row?.value_json ?? null);
+  if (!parsed || typeof parsed !== 'object' || (parsed as { mode?: unknown }).mode !== 'mrp_backfill') return null;
+  return parsed as MrpBackfillState;
+}
+
+export async function setMrpBackfillState(db: D1Database, state: MrpBackfillState): Promise<void> {
+  await recordSyncSummary(db, state, 'mrp_backfill');
 }
 
 export async function getSyncCursor(db: D1Database, key = 'airtable_last_modified_cursor'): Promise<string | null> {

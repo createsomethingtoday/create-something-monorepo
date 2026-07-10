@@ -15,9 +15,11 @@ import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
 import {
   SyncAlreadyRunningError,
+  backfillTemplateMrpIds,
   backfillCreatorMetadata,
   backfillTemplateImages,
   forceRefreshCreatorProfiles,
+  getMrpBackfillStatus,
   pruneMissingTemplateImages,
   refreshCreatorProfiles,
   refreshImages,
@@ -43,6 +45,7 @@ const SYNC_STATUS_STATE_KEYS = [
   'last_sync_error',
   'last_sync_skipped',
   'last_sync_warning',
+  'mrp_backfill',
 ];
 
 const INCREMENTAL_SYNC_CRON = '*/5 * * * *';
@@ -318,6 +321,31 @@ async function handleRecordSync(request: Request, env: Env): Promise<Response> {
   return jsonResponse(request, env, await syncTemplateRecordsByIds(env, ids));
 }
 
+async function handleMrpBackfill(request: Request, env: Env): Promise<Response> {
+  const authError = validateAdminToken(request, env);
+  if (authError) return authError;
+
+  if (request.method === 'GET') {
+    return jsonResponse(request, env, await getMrpBackfillStatus(env));
+  }
+
+  const url = new URL(request.url);
+  const batchSizeRaw = Number(url.searchParams.get('batch_size') ?? '25');
+  if (!Number.isFinite(batchSizeRaw) || batchSizeRaw < 1 || batchSizeRaw > 50) {
+    return jsonResponse(request, env, { error: 'batch_size must be between 1 and 50.' }, 400);
+  }
+
+  return jsonResponse(
+    request,
+    env,
+    await backfillTemplateMrpIds(env, {
+      batchSize: batchSizeRaw,
+      dryRun: url.searchParams.get('dry_run') === 'true',
+      restart: url.searchParams.get('restart') === 'true',
+    }),
+  );
+}
+
 function parseCreatorNames(url: URL): string[] {
   return Array.from(
     new Set(
@@ -514,6 +542,10 @@ export default {
 
       if (url.pathname === '/api/templates/admin/sync-status' && request.method === 'GET') {
         return await handleSyncStatus(request, env);
+      }
+
+      if (url.pathname === '/api/templates/admin/backfill-mrp' && (request.method === 'GET' || request.method === 'POST')) {
+        return await handleMrpBackfill(request, env);
       }
 
       if (url.pathname === '/api/templates/admin/refresh-images' && request.method === 'POST') {

@@ -79,6 +79,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '🔗Preview Site URL'?: string;
   '🔗Listing URL'?: string;
   '🔗Website URL'?: string;
+  'ℹ️MRP ID'?: string | string[];
   '📅LMT'?: string;
 }
 
@@ -297,6 +298,36 @@ export interface SyncSummary {
   skipped_empty_windows?: number;
   recent_published_records?: number;
   warnings?: Array<{ source: string; message: string }>;
+}
+
+export interface MrpCoverage {
+  total_rows: number;
+  rows_with_mrp: number;
+  rows_missing_mrp: number;
+}
+
+export interface MrpBackfillState {
+  mode: 'mrp_backfill';
+  status: 'running' | 'complete' | 'failed';
+  started_at: string;
+  updated_at: string;
+  finished_at: string | null;
+  cursor: string;
+  scanned_records: number;
+  updated_records: number;
+  missing_source_records: number;
+  missing_mrp_records: number;
+  remaining_records: number;
+  error: string | null;
+}
+
+export interface MrpBackfillSummary extends MrpBackfillState {
+  dry_run: boolean;
+  batch_size: number;
+  batch_scanned_records: number;
+  batch_updated_records: number;
+  batch_missing_source_records: number;
+  batch_missing_mrp_records: number;
 }
 
 export interface TemplateImageSourceStats {

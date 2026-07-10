@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "sync": "node scripts/sync.mjs",
     "rebuild": "node scripts/rebuild.mjs",
+    "backfill:mrp": "node scripts/backfill-mrp.mjs",
     "featured-creators": "node scripts/featured-creators.mjs"
   },
   "dependencies": {

@@ -11,6 +11,7 @@ Cloudflare Worker and D1 search index for the Webflow template marketplace.
 - `POST /api/templates/admin/sync`
 - `POST /api/templates/admin/sync-records`
 - `GET /api/templates/admin/sync-status`
+- `GET|POST /api/templates/admin/backfill-mrp`
 - `POST /api/templates/admin/refresh-images`
 - `POST /api/templates/admin/refresh-reviewer-picks`
 - `POST /api/templates/admin/backfill-images`
@@ -155,6 +156,41 @@ Use `GET /api/templates/admin/sync-status` with the sync admin token to inspect 
 lock, latest sync job, health counts, and recent sync summaries/errors/skips in one response.
 Successful sync summaries clear a stale `sync_state.last_sync_error` for the same mode; failed
 jobs remain visible on the latest job row until another job replaces the lock record.
+
+## Safe MRP ID backfill
+
+`mrp_id` powers the direct marketplace checkout URL returned as `purchase_url`. Historical rows
+must be filled through the authenticated `backfill-mrp` workflow, not Wrangler file imports,
+scratch scripts, or direct Cloudflare API writes.
+
+```bash
+# Inspect durable checkpoint and coverage without writing.
+SYNC_ADMIN_TOKEN=... pnpm backfill:mrp -- --status
+
+# Compare the next bounded batch with Airtable without writing or advancing the checkpoint.
+SYNC_ADMIN_TOKEN=... pnpm backfill:mrp -- --dry-run --batch-size 25
+
+# Resume from the stored D1 cursor. The CLI probes queryless and FTS search and stops on failure.
+SYNC_ADMIN_TOKEN=... pnpm backfill:mrp -- --resume --batch-size 25
+
+# Explicitly rescan from the beginning; equal values remain no-ops.
+SYNC_ADMIN_TOKEN=... pnpm backfill:mrp -- --resume --restart --batch-size 25
+```
+
+Each POST processes at most 50 D1 rows in stable ID order, fetches only those Airtable records,
+updates only rows whose non-empty source MRP ID differs, and records cursor, cumulative counts,
+source mismatches, missing MRP IDs, completion, or failure in `sync_state.mrp_backfill`. Every write
+batch uses the shared `template_sync` lease. A killed CLI can be rerun with `--resume`; it never
+needs to restart at batch zero.
+
+The CLI runs both queryless and FTS public search probes before work, every five batches by
+default, and after completion. It stops if either probe fails, returns no items, or exceeds ten
+seconds. Treat `missing_source_records` and `missing_mrp_records` as explicit reconciliation work;
+do not claim complete MRP coverage merely because the D1 scan finished.
+
+Rollback: stop the CLI (the checkpoint is durable), redeploy the previous Worker version if
+needed, and leave populated `mrp_id` values in place. The values are additive and the search
+payload already falls back to the template detail URL when `mrp_id` is null.
 
 ## D1 migration history
 
