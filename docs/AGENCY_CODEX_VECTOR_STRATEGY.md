@@ -40,6 +40,29 @@ The commercial default remains **Policy OS** (**Skills + MCP**), with
   golden tasks.
 - Canonical phrasing for delivery vector is now **Skills on MCP**.
 
+## Platform Conviction Language System
+
+The Canon doctrine is **Conviction Without Dependence**:
+
+> Use the best instrument. Own the system.
+
+Apply the doctrine through one context-specific hierarchy:
+
+- `canonical_doctrine`: **Conviction Without Dependence**
+- `commercial_line`: **Built primarily with OpenAI Codex. Designed to outlast any model.**
+- `technical_line`: **Model-opinionated in practice. Model-portable by design.**
+- `ownership_line`: **Model capability is rented. Organizational intelligence and control are owned.**
+
+OpenAI Codex is the current primary setup, demonstration, repository, and
+agent-operable delivery environment. That choice is explicit because it is a
+real operating conviction. It is not the category, the paid offer, or a claim
+of official OpenAI partnership.
+
+The portable unit is the surrounding system: data, MCP contracts, harnesses,
+skills, prompts, policy, evals, receipts, routing, fallback, and recovery.
+Claude, Pi, compatible harnesses, open-weight executors, and custom models are
+evaluation and routing targets under the same contract and proof requirements.
+
 ## Delivery Vector Language System
 
 Use context-specific ordering, not a single global phrase:

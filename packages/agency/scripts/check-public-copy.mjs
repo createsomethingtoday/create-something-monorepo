@@ -198,6 +198,36 @@ export const PUBLIC_COPY_RULES = [
     replacement: 'official authorization claim'
   },
   {
+    id: 'official-openai-partner',
+    pattern: /\bofficial\s+OpenAI\s+partner\b/gi,
+    replacement: 'built primarily with OpenAI Codex'
+  },
+  {
+    id: 'certified-openai-provider',
+    pattern: /\bcertified\s+OpenAI\s+provider\b/gi,
+    replacement: 'OpenAI-ready workflow systems practice'
+  },
+  {
+    id: 'openai-approved-partner',
+    pattern: /\bOpenAI-approved\s+implementation\s+partner\b/gi,
+    replacement: 'OpenAI-ready implementation practice'
+  },
+  {
+    id: 'openai-reseller',
+    pattern: /\bOpenAI\s+reseller\b/gi,
+    replacement: 'OpenAI product user'
+  },
+  {
+    id: 'openai-affiliate',
+    pattern: /\bOpenAI\s+affiliate\b/gi,
+    replacement: 'OpenAI product user'
+  },
+  {
+    id: 'frontier-alliance-partner',
+    pattern: /\bFrontier\s+Alliance\s+partner\b/gi,
+    replacement: 'OpenAI ecosystem-ready practice'
+  },
+  {
     id: 'solutions-partner',
     pattern: /\bSolutions\s+Partner\b/g,
     replacement: 'consulting path'

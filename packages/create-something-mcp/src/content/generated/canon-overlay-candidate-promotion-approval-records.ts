@@ -3076,7 +3076,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "./overlays/intake: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./codification: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./components/data: candidate-review / stable-foundation-candidate"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -3090,7 +3090,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "./overlays/intake: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
             "./codification: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./components/data: candidate-review / stable-foundation-candidate"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -3255,16 +3255,11 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
+            "registryPolicy": "candidate-review",
             "score": 7,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
-            ]
+            "rationale": "Database-layer primitives barrel (docs/CANON_DATABASE_LAYER_DESIGN.md); components stay in candidate review until a second consuming surface exists."
           }
         ],
         "docsPaths": [
@@ -4055,11 +4050,11 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "required": true,
           "value": null,
           "hints": [
+            "./components/data: candidate-review / stable-foundation-candidate",
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
-            "./codification: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./codification: registry-covered / registry-artifact"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -4069,11 +4064,11 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "required": false,
           "value": null,
           "hints": [
+            "./components/data: candidate-review / stable-foundation-candidate",
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./mcp-snapshot: registry-covered / registry-artifact",
-            "./codification: registry-covered / registry-artifact",
-            "./overlays: registry-covered / registry-artifact"
+            "./codification: registry-covered / registry-artifact"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -4194,6 +4189,13 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
         ],
         "exportPolicies": [
           {
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
+            "registryPolicy": "candidate-review",
+            "score": 15,
+            "rationale": "Database-layer primitives barrel (docs/CANON_DATABASE_LAYER_DESIGN.md); components stay in candidate review until a second consuming surface exists."
+          },
+          {
             "exportPath": "./modality-readiness",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -4233,18 +4235,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "score": 11,
             "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
             "registryItemIds": [
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
-            ]
-          },
-          {
-            "exportPath": "./overlays",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 11,
-            "rationale": "Overlay catalog export is covered by the Canon project overlay template pack, manifest, and extension intake registry items.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
               "template.canon-project-overlay-manifest",
               "template.canon-extension-intake"
             ]
@@ -5052,7 +5042,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./components#TriadHealth: candidate-review / domain-specific",
-            "./design-audit: registry-covered / registry-artifact"
+            "./components/data#DataTable: candidate-review / stable-foundation-candidate"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -5066,7 +5056,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./components#TriadHealth: candidate-review / domain-specific",
-            "./design-audit: registry-covered / registry-artifact"
+            "./components/data#DataTable: candidate-review / stable-foundation-candidate"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -5228,14 +5218,12 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "exportName": "TriadHealth"
           },
           {
-            "exportPath": "./design-audit",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
+            "registryPolicy": "candidate-review",
             "score": 8,
-            "rationale": "Design audit checks operationalize Canon token, layout, motion, and accessibility policy for agent and human review.",
-            "registryItemIds": [
-              "policy.signal-decision-proof"
-            ]
+            "rationale": "Dense database-layer table primitive (design doc §2); candidate review until the deployed app-governance dashboard plus a second operator surface validate the contract.",
+            "exportName": "DataTable"
           }
         ],
         "docsPaths": [
@@ -6044,10 +6032,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./components/data: candidate-review / stable-foundation-candidate",
             "./overlays/intake: registry-covered / registry-artifact",
             "./components#TriadHealth: candidate-review / domain-specific",
-            "./components#CrossPropertyLink: candidate-review / platform-surface",
-            "./conversion: candidate-review / composition-pattern"
+            "./components#CrossPropertyLink: candidate-review / platform-surface"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -6058,10 +6046,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
+            "./components/data: candidate-review / stable-foundation-candidate",
             "./overlays/intake: registry-covered / registry-artifact",
             "./components#TriadHealth: candidate-review / domain-specific",
-            "./components#CrossPropertyLink: candidate-review / platform-surface",
-            "./conversion: candidate-review / composition-pattern"
+            "./components#CrossPropertyLink: candidate-review / platform-surface"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -6193,6 +6181,13 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
+            "registryPolicy": "candidate-review",
+            "score": 8,
+            "rationale": "Database-layer primitives barrel (docs/CANON_DATABASE_LAYER_DESIGN.md); components stay in candidate review until a second consuming surface exists."
+          },
+          {
             "exportPath": "./overlays/intake",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -6217,13 +6212,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "score": 7,
             "rationale": "Property-routing primitive candidate tied to CREATE SOMETHING property topology.",
             "exportName": "CrossPropertyLink"
-          },
-          {
-            "exportPath": "./conversion",
-            "classification": "composition-pattern",
-            "registryPolicy": "candidate-review",
-            "score": 7,
-            "rationale": "Conversion components need proof/receipt and property-policy contracts before promotion."
           }
         ],
         "docsPaths": [
@@ -6366,10 +6354,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./components#CrossPropertyLink: candidate-review / platform-surface",
+            "./components/data: candidate-review / stable-foundation-candidate",
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./components#TriadHealth: candidate-review / domain-specific",
-            "./components#MarkdownPreviewModal: candidate-review / platform-surface"
+            "./components#TriadHealth: candidate-review / domain-specific"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -6380,10 +6368,10 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "value": null,
           "hints": [
             "./components#CrossPropertyLink: candidate-review / platform-surface",
+            "./components/data: candidate-review / stable-foundation-candidate",
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./components#TriadHealth: candidate-review / domain-specific",
-            "./components#MarkdownPreviewModal: candidate-review / platform-surface"
+            "./components#TriadHealth: candidate-review / domain-specific"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -6512,6 +6500,13 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "exportName": "CrossPropertyLink"
           },
           {
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
+            "registryPolicy": "candidate-review",
+            "score": 10,
+            "rationale": "Database-layer primitives barrel (docs/CANON_DATABASE_LAYER_DESIGN.md); components stay in candidate review until a second consuming surface exists."
+          },
+          {
             "exportPath": "./modality-readiness",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -6539,14 +6534,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "score": 9,
             "rationale": "CREATE SOMETHING framework display; needs governance-pattern contract before promotion.",
             "exportName": "TriadHealth"
-          },
-          {
-            "exportPath": "./components",
-            "classification": "platform-surface",
-            "registryPolicy": "candidate-review",
-            "score": 9,
-            "rationale": "Authoring modal surface; not a foundation primitive until editor patterns are formalized.",
-            "exportName": "MarkdownPreviewModal"
           }
         ],
         "docsPaths": [
@@ -6688,11 +6675,11 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "required": true,
           "value": null,
           "hints": [
+            "./components/data: candidate-review / stable-foundation-candidate",
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./mcp-snapshot: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./components#TriadHealth: candidate-review / domain-specific"
+            "./components/data#DataTable: candidate-review / stable-foundation-candidate",
+            "./components/data#StatusBadge: candidate-review / stable-foundation-candidate"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -6702,11 +6689,11 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "required": false,
           "value": null,
           "hints": [
+            "./components/data: candidate-review / stable-foundation-candidate",
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./mcp-snapshot: registry-covered / registry-artifact",
-            "./registry: registry-covered / registry-artifact",
-            "./components#TriadHealth: candidate-review / domain-specific"
+            "./components/data#DataTable: candidate-review / stable-foundation-candidate",
+            "./components/data#StatusBadge: candidate-review / stable-foundation-candidate"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -6827,6 +6814,13 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
         ],
         "exportPolicies": [
           {
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
+            "registryPolicy": "candidate-review",
+            "score": 10,
+            "rationale": "Database-layer primitives barrel (docs/CANON_DATABASE_LAYER_DESIGN.md); components stay in candidate review until a second consuming surface exists."
+          },
+          {
             "exportPath": "./modality-readiness",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -6848,35 +6842,20 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
-            "exportPath": "./mcp-snapshot",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 8,
-            "rationale": "MCP snapshot bundles Canon registry, overlays, candidate review, and readiness artifacts for agent-facing consumers.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
-            ]
-          },
-          {
-            "exportPath": "./registry",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 8,
-            "rationale": "Registry API is the Canon source of truth for discoverable artifacts and lifecycle rules.",
-            "registryItemIds": [
-              "template.canon-extension-intake",
-              "template.canon-project-overlay-manifest"
-            ]
-          },
-          {
-            "exportPath": "./components",
-            "classification": "domain-specific",
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
             "registryPolicy": "candidate-review",
-            "score": 7,
-            "rationale": "CREATE SOMETHING framework display; needs governance-pattern contract before promotion.",
-            "exportName": "TriadHealth"
+            "score": 8,
+            "rationale": "Dense database-layer table primitive (design doc §2); candidate review until the deployed app-governance dashboard plus a second operator surface validate the contract.",
+            "exportName": "DataTable"
+          },
+          {
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
+            "registryPolicy": "candidate-review",
+            "score": 8,
+            "rationale": "Semantic state badge for database-layer lifecycles (design doc §4); candidate review until the tone vocabulary is validated by a second consuming surface.",
+            "exportName": "StatusBadge"
           }
         ],
         "docsPaths": [
@@ -7020,9 +6999,9 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
             "./codification: registry-covered / registry-artifact",
+            "./components/data#DataTable: candidate-review / stable-foundation-candidate",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./components#TriadHealth: candidate-review / domain-specific",
-            "./design-audit: registry-covered / registry-artifact"
+            "./components#TriadHealth: candidate-review / domain-specific"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -7034,9 +7013,9 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "hints": [
             "./modality-readiness: registry-covered / registry-artifact",
             "./codification: registry-covered / registry-artifact",
+            "./components/data#DataTable: candidate-review / stable-foundation-candidate",
             "./overlays/intake: registry-covered / registry-artifact",
-            "./components#TriadHealth: candidate-review / domain-specific",
-            "./design-audit: registry-covered / registry-artifact"
+            "./components#TriadHealth: candidate-review / domain-specific"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -7179,6 +7158,14 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             ]
           },
           {
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
+            "registryPolicy": "candidate-review",
+            "score": 10,
+            "rationale": "Dense database-layer table primitive (design doc §2); candidate review until the deployed app-governance dashboard plus a second operator surface validate the contract.",
+            "exportName": "DataTable"
+          },
+          {
             "exportPath": "./overlays/intake",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -7195,16 +7182,6 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "score": 9,
             "rationale": "CREATE SOMETHING framework display; needs governance-pattern contract before promotion.",
             "exportName": "TriadHealth"
-          },
-          {
-            "exportPath": "./design-audit",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 9,
-            "rationale": "Design audit checks operationalize Canon token, layout, motion, and accessibility policy for agent and human review.",
-            "registryItemIds": [
-              "policy.signal-decision-proof"
-            ]
           }
         ],
         "docsPaths": [
@@ -7346,11 +7323,11 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "required": true,
           "value": null,
           "hints": [
+            "./components/data#DataTable: candidate-review / stable-foundation-candidate",
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./components#TriadHealth: candidate-review / domain-specific",
-            "./mcp-snapshot: registry-covered / registry-artifact",
-            "./codification: registry-covered / registry-artifact"
+            "./components/data: candidate-review / stable-foundation-candidate"
           ],
           "instructions": "Record the package export path that implementation should add or update."
         },
@@ -7360,11 +7337,11 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
           "required": false,
           "value": null,
           "hints": [
+            "./components/data#DataTable: candidate-review / stable-foundation-candidate",
             "./modality-readiness: registry-covered / registry-artifact",
             "./overlays/intake: registry-covered / registry-artifact",
             "./components#TriadHealth: candidate-review / domain-specific",
-            "./mcp-snapshot: registry-covered / registry-artifact",
-            "./codification: registry-covered / registry-artifact"
+            "./components/data: candidate-review / stable-foundation-candidate"
           ],
           "instructions": "Record the named export when the target is a symbol-level export."
         },
@@ -7485,6 +7462,14 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
         ],
         "exportPolicies": [
           {
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
+            "registryPolicy": "candidate-review",
+            "score": 12,
+            "rationale": "Dense database-layer table primitive (design doc §2); candidate review until the deployed app-governance dashboard plus a second operator surface validate the contract.",
+            "exportName": "DataTable"
+          },
+          {
             "exportPath": "./modality-readiness",
             "classification": "registry-artifact",
             "registryPolicy": "registry-covered",
@@ -7514,27 +7499,11 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
             "exportName": "TriadHealth"
           },
           {
-            "exportPath": "./mcp-snapshot",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
+            "exportPath": "./components/data",
+            "classification": "stable-foundation-candidate",
+            "registryPolicy": "candidate-review",
             "score": 7,
-            "rationale": "MCP snapshot bundles Canon registry, overlays, candidate review, and readiness artifacts for agent-facing consumers.",
-            "registryItemIds": [
-              "template.canon-project-overlay-template-pack",
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
-            ]
-          },
-          {
-            "exportPath": "./codification",
-            "classification": "registry-artifact",
-            "registryPolicy": "registry-covered",
-            "score": 6,
-            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
-            "registryItemIds": [
-              "template.canon-project-overlay-manifest",
-              "template.canon-extension-intake"
-            ]
+            "rationale": "Database-layer primitives barrel (docs/CANON_DATABASE_LAYER_DESIGN.md); components stay in candidate review until a second consuming surface exists."
           }
         ],
         "docsPaths": [

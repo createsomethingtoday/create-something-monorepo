@@ -44,6 +44,10 @@ export const canonNavigation: NavSection[] = [
 			{ label: 'Vorhandenheit', href: '/canon/concepts/vorhandenheit' },
 			{ label: 'Gestell', href: '/canon/concepts/gestell' },
 			{ label: 'Gelassenheit', href: '/canon/concepts/gelassenheit' },
+			{
+				label: 'Conviction Without Dependence',
+				href: '/canon/concepts/conviction-without-dependence'
+			},
 			{ label: 'Complementarity', href: '/canon/concepts/complementarity' },
 			{ label: 'Hermeneutic Circle', href: '/canon/concepts/hermeneutic-circle' }
 		]

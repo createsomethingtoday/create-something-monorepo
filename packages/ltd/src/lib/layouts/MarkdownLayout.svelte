@@ -157,8 +157,14 @@ ${section ? `**Section**: ${section}\n` : ''}
 
 	:global(.prose-ltd table) {
 		width: 100%;
+		table-layout: fixed;
 		margin: var(--space-lg) 0;
 		border-collapse: collapse;
+	}
+
+	:global(.prose-ltd th),
+	:global(.prose-ltd td) {
+		overflow-wrap: anywhere;
 	}
 
 	:global(.prose-ltd th) {

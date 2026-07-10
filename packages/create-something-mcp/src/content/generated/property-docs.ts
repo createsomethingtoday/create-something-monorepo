@@ -2092,14 +2092,14 @@ from detection, to governed review, to submission copilot.`
 
 
 Agent-native design—exposing classic algorithms as MCP tools—enables team AI agents
-to perform sophisticated template analysis without custom integrations. The algorithms
+to perform sophisticated template analysis without custom integrations. The algorithms\u0020
 do the heavy lifting; AI handles edge cases requiring judgment.
 
 
 ## The Problem
 
 
-Webflow Marketplace receives plagiarism reports comparing two templates. Manual review
+Webflow Marketplace receives plagiarism reports comparing two templates. Manual review\u0020
 is expensive (\$625/month for 50 cases). We needed a system that could:
 
 - Fingerprint 9,500+ templates efficiently
@@ -2262,19 +2262,19 @@ The discrepancy is **expected and informative**:
 ## What This Proves
 
 
-✓ MinHash + Vector embeddings provide complementary signals
-✓ LSH enables O(1) candidate lookup at scale
-✓ PageRank identifies originals vs derivatives
-✓ MCP enables any team member's AI to invoke analysis
-✓ Three-tier AI optimizes cost/accuracy tradeoff
+✓ MinHash + Vector embeddings provide complementary signals\u0020\u0020
+✓ LSH enables O(1) candidate lookup at scale\u0020\u0020
+✓ PageRank identifies originals vs derivatives\u0020\u0020
+✓ MCP enables any team member's AI to invoke analysis\u0020\u0020
+✓ Three-tier AI optimizes cost/accuracy tradeoff\u0020\u0020
 
 
 ## What This Doesn't Prove
 
 
-○ Visual similarity (screenshot comparison not yet implemented)
-○ Optimal Bayesian weights (weight tuning script created, not validated)
-○ Real-time ingestion (webhook integration pending)
+○ Visual similarity (screenshot comparison not yet implemented)\u0020\u0020
+○ Optimal Bayesian weights (weight tuning script created, not validated)\u0020\u0020
+○ Real-time ingestion (webhook integration pending)\u0020\u0020
 
 
 ## Reproducibility
@@ -2297,8 +2297,8 @@ wrangler deploy
 ## Canon Reflection
 
 
-> **Zuhandenheit (ready-to-hand):** When the system works correctly, the infrastructure
-> disappears. Marketplace administrators see decisions in Airtable—not queues, tiers,
+> **Zuhandenheit (ready-to-hand):** When the system works correctly, the infrastructure\u0020
+> disappears. Marketplace administrators see decisions in Airtable—not queues, tiers,\u0020
 > or AI models.
 
 > **Subtractive Architecture:** The three-tier system removes work at each stage:
@@ -2313,7 +2313,7 @@ wrangler deploy
 
 
 The hypothesis is **validated**. Classic CS algorithms (MinHash, LSH, PageRank, Bayesian)
-combined with AI tiers create an effective plagiarism detection system at 99.6% cost
+combined with AI tiers create an effective plagiarism detection system at 99.6% cost\u0020
 reduction. Exposing these tools via MCP enables any team member's AI agent to perform
 sophisticated template analysis.
 
@@ -13311,7 +13311,7 @@ curl https://createsomething.space/experiments/notion-api-migration-2025
 ## Testing Checklist
 
 - [x] Lesson 1: Basic parameter migration
-- [x] Lesson 2: Batch updates
+- [x] Lesson 2: Batch updates\u0020\u0020
 - [x] Lesson 3: Create page with data source
 - [x] Validation errors display correctly
 - [x] Success outputs match expected results
@@ -13321,8 +13321,8 @@ curl https://createsomething.space/experiments/notion-api-migration-2025
 
 ## Status
 
-✅ **BUG FIXED**
-✅ **DEPLOYED TO PRODUCTION**
+✅ **BUG FIXED**\u0020\u0020
+✅ **DEPLOYED TO PRODUCTION**\u0020\u0020
 ✅ **EXPERIMENT FULLY FUNCTIONAL**
 
 **Production URL**: https://createsomething.space/experiments/notion-api-migration-2025
@@ -19404,8 +19404,8 @@ Following DRY development principles:
 
 This document describes the database enhancements made to support advanced NBA Live Analytics features, including player baselines, historical data storage, and play-by-play archival.
 
-**Date Completed:** January 8, 2026
-**Database:** \`create-something-db\` (Cloudflare D1)
+**Date Completed:** January 8, 2026\u0020\u0020
+**Database:** \`create-something-db\` (Cloudflare D1)\u0020\u0020
 **Worker:** \`nba-proxy\`
 
 ---
@@ -19622,8 +19622,8 @@ pnpm tsx packages/space/scripts/backfill-nba-history.ts --days 7 --dry-run
 - \`archive_metadata\` - Archive status tracking ✅
 
 ### Total Database Size
-**Before:** ~5.25 MB
-**After:** ~5.37 MB
+**Before:** ~5.25 MB\u0020\u0020
+**After:** ~5.37 MB\u0020\u0020
 **Growth:** +120 KB (tables only, no data yet)
 
 ---
@@ -19667,8 +19667,8 @@ GET /game/:gameId/boxscore
 # Check all tables exist
 cd packages/space/workers/nba-proxy
 wrangler d1 execute create-something-db --remote --command \\
-  "SELECT name FROM sqlite_master WHERE type='table' AND name IN
-   ('pbp_archive', 'boxscore_archive', 'archive_metadata',
+  "SELECT name FROM sqlite_master WHERE type='table' AND name IN\u0020
+   ('pbp_archive', 'boxscore_archive', 'archive_metadata',\u0020
     'player_baselines', 'season_averages') ORDER BY name"
 \`\`\`
 
@@ -19683,12 +19683,12 @@ wrangler d1 execute create-something-db --remote --command \\
 
 # Check player baselines (after seeding)
 wrangler d1 execute create-something-db --remote --command \\
-  "SELECT player_name, offensive_rating, defensive_rating
+  "SELECT player_name, offensive_rating, defensive_rating\u0020
    FROM player_baselines ORDER BY net_rating DESC LIMIT 5"
 
 # Check archive status
 wrangler d1 execute create-something-db --remote --command \\
-  "SELECT game_id, game_date, has_pbp, has_boxscore
+  "SELECT game_id, game_date, has_pbp, has_boxscore\u0020
    FROM archive_metadata ORDER BY game_date DESC LIMIT 5"
 \`\`\`
 
@@ -19753,7 +19753,7 @@ wrangler d1 execute create-something-db --remote --command \\
 
 \`\`\`sql
 -- Archive coverage
-SELECT
+SELECT\u0020
   COUNT(*) as total_games,
   SUM(has_pbp) as pbp_archived,
   SUM(has_boxscore) as boxscore_archived,
@@ -19768,7 +19768,7 @@ ORDER BY last_attempt_at DESC
 LIMIT 10;
 
 -- Database size by table
-SELECT
+SELECT\u0020
   name,
   (SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=m.name) as row_count
 FROM sqlite_master m
@@ -19799,7 +19799,7 @@ If issues arise, rollback is straightforward:
 
 3. **Remove from d1_migrations:**
    \`\`\`sql
-   DELETE FROM d1_migrations
+   DELETE FROM d1_migrations\u0020
    WHERE name IN ('0013_nba_baselines.sql', '0002_pbp_archive.sql');
    \`\`\`
 
@@ -19828,8 +19828,8 @@ The system is now ready for production deployment and can support sophisticated 
     uri: "docs://space/NOTION_API_DEPLOYMENT",
     content: `# ✅ Notion API Migration Experiment - DEPLOYED TO PRODUCTION
 
-**Deployment Date**: November 18, 2025
-**Status**: ✅ Live and Accessible
+**Deployment Date**: November 18, 2025\u0020\u0020
+**Status**: ✅ Live and Accessible\u0020\u0020
 **Production URL**: https://createsomething.space/experiments/notion-api-migration-2025
 
 ---
@@ -19844,7 +19844,7 @@ Interactive coding experiment teaching developers how to migrate from \`database
 
 **3 Progressive Lessons**:
 1. ✅ Basic parameter migration (single query)
-2. ✅ Batch updates (multiple queries)
+2. ✅ Batch updates (multiple queries)\u0020\u0020
 3. ✅ Create pages with new parent format
 
 ---
@@ -19878,7 +19878,7 @@ wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-spa
 
 ### 4. ✅ Production Verification
 
-✅ Preview URL: https://65e0cafe.create-something-space.pages.dev/experiments/notion-api-migration-2025
+✅ Preview URL: https://65e0cafe.create-something-space.pages.dev/experiments/notion-api-migration-2025\u0020\u0020
 ✅ Production URL: https://createsomething.space/experiments/notion-api-migration-2025
 
 ---
@@ -19913,8 +19913,8 @@ wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-spa
 
 ## Status
 
-✅ **DEPLOYMENT COMPLETE**
-✅ **EXPERIMENT LIVE IN PRODUCTION**
+✅ **DEPLOYMENT COMPLETE**\u0020\u0020
+✅ **EXPERIMENT LIVE IN PRODUCTION**\u0020\u0020
 ✅ **READY FOR STUDENTS**
 
 `
@@ -23944,7 +23944,7 @@ Public readers need to test CREATE SOMETHING's workflow mapping method before a 
 ## Canon Reuse
 
 - Registry items: \`component.clear-page-section\`, \`component.clear-proof-strip\`, \`component.atlas-atlas-flow\`, \`component.atlas-atlas-story-canvas\`, \`adapter.atlas-graph-artifact\`, \`template.atlas-development-handoff\`, \`policy.signal-decision-proof\`.
-- Imported components: \`ClearPageSection\`, \`PublicAtlasCanvas\`, \`PublicAtlasStoryCanvas\`, \`PublicAtlasFlow\`.
+- Imported components: \`PerformancePageSection\`, \`PublicAtlasCanvas\`, \`PublicAtlasStoryCanvas\`, \`PublicAtlasFlow\`.
 - Token aliases: local overlay variables in \`theme.css\` and \`tokens.json\` point back to Canon color, radius, spacing, and focus tokens.
 
 ## Local Overlay
@@ -27377,7 +27377,7 @@ Updated: 2026-06-22
 
 ## Original Visuals
 
-- Uses existing Dify lane OG asset at \`/og/dify-lane.svg\`.
+- Uses existing Dify lane OG asset at \`/og/dify-lane.png\`.
 - No new third-party screenshots were introduced.
 
 ## Usage
@@ -27402,12 +27402,16 @@ Updated: 2026-06-22
 
 ## Original Visuals
 
-### dify-mcp-control-plane.svg
+### dify-mcp-control-plane.png
 
-- Path: \`/images/articles/dify-mcp-control-plane/dify-mcp-control-plane.svg\`
+- Path: \`/images/articles/dify-mcp-control-plane/dify-mcp-control-plane.png\`
 - Owner: CREATE SOMETHING
 - Usage: Article architecture diagram for the Dify, MCP, and Policy OS control plane.
 - Refresh cadence: Review with article updates.
+- Source brief: \`packages/agency/static/images/articles/dify-mcp-control-plane/dify-mcp-control-plane.svg\`
+- Model: OpenAI \`gpt-image-2\`
+- Generated: 2026-07-06
+- SHA-256: \`7d010069810f6804db2b165a967e23d26e5d722a461e3eaf4e04a69567516518\`
 
 ## Collected Screenshots
 
@@ -27438,12 +27442,16 @@ Updated: 2026-06-22
 
 ## Original Visuals
 
-### dify-n8n-layer-map.svg
+### dify-n8n-layer-map.png
 
-- Path: \`/images/articles/dify-vs-n8n/dify-n8n-layer-map.svg\`
+- Path: \`/images/articles/dify-vs-n8n/dify-n8n-layer-map.png\`
 - Owner: CREATE SOMETHING
 - Usage: Article layer map comparing n8n, Cloudflare, Dify, and Policy OS.
 - Refresh cadence: Review with article updates.
+- Source brief: \`packages/agency/static/images/articles/dify-vs-n8n/dify-n8n-layer-map.svg\`
+- Model: OpenAI \`gpt-image-2\`
+- Generated: 2026-07-06
+- SHA-256: \`965997b76ed5ba9d6f1b066379848eb0fb09eb17bd500b1c8efc31e4c289e172\`
 
 ## Collected Screenshots
 
@@ -27474,12 +27482,16 @@ Updated: 2026-05-25
 
 ## Original Visuals
 
-### notion-operator-workspace.svg
+### notion-operator-workspace.png
 
-- Path: \`/images/articles/notion-ops-workspace/notion-operator-workspace.svg\`
+- Path: \`/images/articles/notion-ops-workspace/notion-operator-workspace.png\`
 - Owner: CREATE SOMETHING
 - Usage: Article architecture diagram for Notion as an operator workspace.
 - Refresh cadence: Review with article updates.
+- Source brief: \`packages/agency/static/images/articles/notion-ops-workspace/notion-operator-workspace.svg\`
+- Model: OpenAI \`gpt-image-2\`
+- Generated: 2026-07-06
+- SHA-256: \`c57f2f9129b104e0764c1c5da9e00796d6c67e47ec52c345510f4fac4003ab6d\`
 
 ## Collected Screenshots
 
@@ -27554,10 +27566,10 @@ Updated: 2026-05-25
     uri: "docs://agency/content/campaigns/atlas-starter-map-launch",
     content: `# Atlas Starter Map Launch Package
 
-**Campaign:** Public Atlas starter maps
-**Surface:** \`https://createsomething.agency/atlas\`
-**Primary channels:** LinkedIn, Substack, Instagram
-**Primary CTA:** Load an industry starter map, edit the trust boundary, then book a Workflow Mapping Session if the workflow is real.
+**Campaign:** Public Atlas starter maps\u0020\u0020
+**Surface:** \`https://createsomething.agency/atlas\`\u0020\u0020
+**Primary channels:** LinkedIn, Substack, Instagram\u0020\u0020
+**Primary CTA:** Load an industry starter map, edit the trust boundary, then book a Workflow Mapping Session if the workflow is real.\u0020\u0020
 **Source issue:** CRE-782
 
 ---
@@ -27680,8 +27692,8 @@ https://createsomething.agency/atlas?utm_source=instagram&utm_medium=social&utm_
 
 ### Post 1: Launch Position
 
-**CTA:** \`/atlas\`
-**Best audience:** operators, RevOps, systems-minded founders
+**CTA:** \`/atlas\`\u0020\u0020
+**Best audience:** operators, RevOps, systems-minded founders\u0020\u0020
 **Asset:** simple diagram showing \`Run\`, \`Wait\`, and \`Stop\`
 
 Before you automate a workflow, map what must run, wait, and stop.
@@ -27735,8 +27747,8 @@ If the map exposes a real approval boundary, that is usually the place to start.
 
 ### Post 2: RevOps Lead Handoff
 
-**CTA:** \`/atlas\`
-**Best audience:** RevOps, sales ops, founder-led B2B teams
+**CTA:** \`/atlas\`\u0020\u0020
+**Best audience:** RevOps, sales ops, founder-led B2B teams\u0020\u0020
 **Asset:** lead handoff map with owner, CRM route, review, receipt
 
 Lead handoff is a good test of whether your automation system is actually ready.
@@ -27781,8 +27793,8 @@ RevOps starter map:
 
 ### Post 3: Review Operations
 
-**CTA:** \`/atlas\`
-**Best audience:** marketplace ops, trust and safety, platform teams
+**CTA:** \`/atlas\`\u0020\u0020
+**Best audience:** marketplace ops, trust and safety, platform teams\u0020\u0020
 **Asset:** review queue map with submission, assist, reviewer, policy stop
 
 AI can help a reviewer.
@@ -27827,8 +27839,8 @@ Marketplace review starter map:
 
 ### Post 4: Construction Project Controls
 
-**CTA:** \`/atlas\`
-**Best audience:** project controls, GC ops, owner reps, construction tech
+**CTA:** \`/atlas\`\u0020\u0020
+**Best audience:** project controls, GC ops, owner reps, construction tech\u0020\u0020
 **Asset:** RFI/submittal map with contract boundary
 
 RFI and submittal workflows are a useful reminder that not every bottleneck is
@@ -27867,8 +27879,8 @@ Construction starter map:
 
 ### Post 5: Give-First Offer
 
-**CTA:** \`/atlas\` and replies
-**Best audience:** warm ICPs who saw prior posts
+**CTA:** \`/atlas\` and replies\u0020\u0020
+**Best audience:** warm ICPs who saw prior posts\u0020\u0020
 **Asset:** screenshot or diagram of the five starter maps
 
 I want to map five real workflows from operators this week.
@@ -29259,9 +29271,9 @@ If the answer to 1 is yes, do not change it lightly.
     uri: "docs://agency/content/sales/discovery-call-script",
     content: `# Workflow Infrastructure Discovery Call Script (Ops/RevOps)
 
-**Audience:** Ops/RevOps leaders
-**Duration:** 20–30 minutes
-**Primary objective:** confirm fit and secure next step for a Workflow Mapping Session
+**Audience:** Ops/RevOps leaders\u0020\u0020
+**Duration:** 20–30 minutes\u0020\u0020
+**Primary objective:** confirm fit and secure next step for a Workflow Mapping Session\u0020\u0020
 **Message taxonomy:** core phrase "Production-safe workflow infrastructure"; client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
 
 **Operator standard:** discovery is workflow diagnosis and policy-boundary mapping, not app-intake alone
@@ -29476,16 +29488,16 @@ Commit:
 
 ### 2-minute "how it works in practice"
 
-> "In practice, we map one high-cost workflow, define policy boundaries, and ship three operating artifacts: \`mcp_contract.yaml\`, \`agent_contract.yaml\`, and \`outcome_contract.md\`.
+> "In practice, we map one high-cost workflow, define policy boundaries, and ship three operating artifacts: \`mcp_contract.yaml\`, \`agent_contract.yaml\`, and \`outcome_contract.md\`.\u0020\u0020
 > Runtime behavior is simple: safe actions auto-allow, risky actions route to approval inbox, disallowed actions block with reason. Then we review reliability KPIs and expand coverage based on evidence."
 
 ### Three case-pattern examples
 
-1. **Cross-system drift prevention**
+1. **Cross-system drift prevention**\u0020\u0020
    CRM and support tooling diverge under volume; governed routing enforces sync paths and reduces reconciliation overhead.
-2. **Approval-gated write workflows**
+2. **Approval-gated write workflows**\u0020\u0020
    Write/send actions require explicit gate while read paths stay fast; reduces unreviewed risky changes.
-3. **Incident-to-policy feedback loop**
+3. **Incident-to-policy feedback loop**\u0020\u0020
    Repeated failure patterns are codified into policy updates, reducing recurrence over time.
 
 ### Closing language by fit
@@ -29570,7 +29582,7 @@ Pass when call closes with named owner, scoped next step, and date.
     uri: "docs://agency/content/sales/discovery-policy",
     content: `# Discovery Policy And Standards
 
-**Scope:** all CREATE SOMETHING \`.agency\` discovery, qualification, and workflow mapping work
+**Scope:** all CREATE SOMETHING \`.agency\` discovery, qualification, and workflow mapping work\u0020\u0020
 **Applies to:** discovery calls, async qualification, MCP-only wedge scoping, and Workflow Mapping Sessions
 
 ---
@@ -29747,7 +29759,7 @@ No discovery should end with vague intent and no owner.
     uri: "docs://agency/content/sales/discovery-runbook",
     content: `# Workflow Discovery Runbook
 
-**Audience:** CREATE SOMETHING \`.agency\` operators
+**Audience:** CREATE SOMETHING \`.agency\` operators\u0020\u0020
 **Purpose:** run discovery as workflow diagnosis and trust-boundary mapping, not tool intake
 
 ---
@@ -30088,9 +30100,9 @@ If the audience is the internal Half Dozen team:
     uri: "docs://agency/content/sales/policy-os-buyer-brief-ops-revops",
     content: `# Workflow Infrastructure Buyer Brief (Ops/RevOps)
 
-**Audience:** Ops and RevOps leaders
-**Read time:** ~3 minutes
-**Core phrase:** Production-safe workflow infrastructure
+**Audience:** Ops and RevOps leaders\u0020\u0020
+**Read time:** ~3 minutes\u0020\u0020
+**Core phrase:** Production-safe workflow infrastructure\u0020\u0020
 **Delivery vector language:** client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
 
 ---
@@ -30099,7 +30111,7 @@ If the audience is the internal Half Dozen team:
 
 Most teams can now connect tools to AI. Very few can run autonomous workflows safely in production.
 
-The bottleneck is no longer "Can we connect systems?"
+The bottleneck is no longer "Can we connect systems?"\u0020\u0020
 The bottleneck is "Can we govern actions, approvals, and risk while keeping execution fast?"
 
 This operating model closes that gap.
@@ -30134,11 +30146,11 @@ Extend into high-stakes operations: cross-system orchestration, strict governanc
 
 ## What ships every engagement
 
-- \`mcp_contract.yaml\`
+- \`mcp_contract.yaml\`\u0020\u0020
   Tool schemas, resources, auth scopes, error model.
-- \`agent_contract.yaml\`
+- \`agent_contract.yaml\`\u0020\u0020
   Allowed actions, approval mode, escalation triggers, budget/latency guardrails.
-- \`outcome_contract.md\`
+- \`outcome_contract.md\`\u0020\u0020
   Workflow targets, success criteria, fallback/manual path, ownership boundaries.
 - \`golden_tasks.yaml\` + runbook
   Regression gates, incident response, rollback path.
@@ -30204,8 +30216,8 @@ If the map is not convincing, do not proceed.
     uri: "docs://agency/content/sales/README",
     content: `# Workflow Infrastructure Sales Assets v1
 
-**Primary buyer:** Ops/RevOps
-**Primary channel:** Live discovery and mapping calls
+**Primary buyer:** Ops/RevOps\u0020\u0020
+**Primary channel:** Live discovery and mapping calls\u0020\u0020
 **Core phrase:** Production-safe workflow infrastructure
 
 ---
@@ -30804,7 +30816,7 @@ Norvig's original notebook: github.com/norvig/pytudes/blob/main/ipynb/Advent-202
 **Target:** LinkedIn (Personal - Micah)
 **Type:** Longform post + static graphic
 **Asset:** \`packages/agency/static/social/linkedin-governed-reviewer-lane.png\`
-**Source Asset:** \`packages/agency/static/social/linkedin-governed-reviewer-lane.svg\`
+**Source Asset:** \`packages/agency/static/social/linkedin-governed-reviewer-lane.png\`
 **CTA:** Soft inbound conversation
 
 ---
@@ -31162,7 +31174,7 @@ The full framework: createsomething.ltd/ethos
 **Target:** LinkedIn (Personal - Micah)
 **Type:** Longform post + static diagram
 **Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.png\`
-**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.svg\`
+**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.png\`
 **Graphic Brief:** \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface-brief.md\`
 **CTA:** createsomething.io/papers/analyzer-mcp-review-architecture
 
@@ -31267,7 +31279,7 @@ published state, authoring state, and policy state are not the same thing.
 **Target:** LinkedIn (Personal - Micah)
 **Type:** Longform post + simple graphic
 **Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.png\`
-**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.svg\`
+**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.png\`
 **Graphic Brief:** \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state-brief.md\`
 **CTA:** createsomething.io/papers/analyzer-mcp-review-architecture
 
@@ -31379,7 +31391,7 @@ If the answer is nowhere, I usually trust it less.
 **Target:** LinkedIn (Personal - Micah)
 **Type:** Longform post + provenance diagram
 **Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.png\`
-**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.svg\`
+**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.png\`
 **Graphic Brief:** \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance-brief.md\`
 **CTA:** createsomething.io/papers/analyzer-mcp-review-architecture
 
@@ -31493,7 +31505,7 @@ If the rule can change upstream, provenance has to become part of the system.
 **Target:** LinkedIn (Personal - Micah)
 **Type:** Longform post + product screenshot or static frame
 **Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.png\`
-**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.svg\`
+**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.png\`
 **Graphic Brief:** \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill-brief.md\`
 **CTA:** createsomething.io/papers/webflow-analyzer-productization
 
@@ -32915,9 +32927,9 @@ Before sending SOW to client:
     uri: "docs://agency/content/templates/delivery/examples/exampleco-golden-task-checks",
     content: `# Golden-Task Checks
 
-**Status:** Example
-**Client:** \`ExampleCo\`
-**Workflow:** \`quote_to_confirmation\`
+**Status:** Example\u0020\u0020
+**Client:** \`ExampleCo\`\u0020\u0020
+**Workflow:** \`quote_to_confirmation\`\u0020\u0020
 **Owner:** \`RevOps Director\`
 
 ---
@@ -33048,9 +33060,9 @@ The workflow is considered ready for release only if:
     uri: "docs://agency/content/templates/delivery/examples/exampleco-outcome_contract",
     content: `# Outcome Contract
 
-**Status:** Example
-**Client:** \`ExampleCo\`
-**Workflow:** \`quote_to_confirmation\`
+**Status:** Example\u0020\u0020
+**Client:** \`ExampleCo\`\u0020\u0020
+**Workflow:** \`quote_to_confirmation\`\u0020\u0020
 **Date:** \`2026-03-07\`
 
 ---
@@ -33212,9 +33224,9 @@ The workflow does not move to production until:
     uri: "docs://agency/content/templates/delivery/examples/exampleco-runbook",
     content: `# Workflow Runbook
 
-**Status:** Example
-**Client:** \`ExampleCo\`
-**Workflow:** \`quote_to_confirmation\`
+**Status:** Example\u0020\u0020
+**Client:** \`ExampleCo\`\u0020\u0020
+**Workflow:** \`quote_to_confirmation\`\u0020\u0020
 **Primary owner:** \`RevOps Director\`
 
 ---
@@ -33396,7 +33408,7 @@ No production change is complete until the documentation and gates are updated t
     uri: "docs://agency/content/templates/delivery/examples/halfdozen-current-mcp-onboarding-checklist",
     content: `# Half Dozen Current MCP Onboarding Checklist
 
-**Status:** Working draft
+**Status:** Working draft\u0020\u0020
 **Audience:** session lead for current Half Dozen MCP onboarding
 
 ---
@@ -33485,8 +33497,8 @@ For each team member, confirm they can answer:
     uri: "docs://agency/content/templates/delivery/examples/halfdozen-current-mcp-onboarding-pack",
     content: `# Half Dozen Current MCP Onboarding Pack
 
-**Status:** Working draft
-**Audience:** Half Dozen team
+**Status:** Working draft\u0020\u0020
+**Audience:** Half Dozen team\u0020\u0020
 **Purpose:** operational onboarding pack for the MCPs currently in active team use
 
 ---
@@ -33700,8 +33712,8 @@ When Langfuse is part of the discussion:
     uri: "docs://agency/content/templates/delivery/examples/halfdozen-mcp-onboarding-example",
     content: `# Half Dozen MCP Onboarding Example
 
-**Status:** Example
-**Audience:** Half Dozen team
+**Status:** Example\u0020\u0020
+**Audience:** Half Dozen team\u0020\u0020
 **Scope:** selected MCPs for internal adoption
 
 ---
@@ -33804,9 +33816,9 @@ Use these as reference implementations, not as universal defaults. Each client w
     uri: "docs://agency/content/templates/delivery/golden-task-checks",
     content: `# Golden-Task Checks
 
-**Status:** Draft
-**Client:** \`CLIENT_NAME\`
-**Workflow:** \`PRIMARY_WORKFLOW_NAME\`
+**Status:** Draft\u0020\u0020
+**Client:** \`CLIENT_NAME\`\u0020\u0020
+**Workflow:** \`PRIMARY_WORKFLOW_NAME\`\u0020\u0020
 **Owner:** \`ROLE_OR_NAME\`
 
 ---
@@ -34367,10 +34379,10 @@ Langfuse may be referenced only as observability and eval infrastructure, not as
     uri: "docs://agency/content/templates/delivery/runbook",
     content: `# Workflow Runbook
 
-**Status:** Draft
-**Client:** \`CLIENT_NAME\`
-**Workflow:** \`PRIMARY_WORKFLOW_NAME\`
-**Primary owner:** \`ROLE_OR_NAME\`
+**Status:** Draft\u0020\u0020
+**Client:** \`CLIENT_NAME\`\u0020\u0020
+**Workflow:** \`PRIMARY_WORKFLOW_NAME\`\u0020\u0020
+**Primary owner:** \`ROLE_OR_NAME\`\u0020\u0020
 **Package:** \`Policy OS\`
 
 ---
@@ -34570,24 +34582,25 @@ No production change is complete until the documentation and gates are updated t
 
 ## Original Visuals
 
-| File | Source prompt | Source file | Model | Owner | Review status | Refresh due | Notes |
-| ---- | ------------- | ----------- | ----- | ----- | ------------- | ----------- | ----- |
-|      |               |             |       |       |               |             |       |
+| File | Source prompt | Source brief | Model | Output hash | Owner | Review status | Refresh due | Notes |
+| ---- | ------------- | ------------ | ----- | ----------- | ----- | ------------- | ----------- | ----- |
+|      |               |             |       |             |       |               |             |       |
 
 ## Canvas Artifacts
 
 Use this section when a visual explains workflow behavior, governance, an offer,
-a case study, a tool comparison, or agent behavior.
+a case study, a tool comparison, or agent behavior. These artifacts are source
+briefs and control artifacts unless they are explicitly approved for publication.
 
-| File | Graph source | Renderer | Nodes shown | Relationships shown | Motion plan | Accessibility summary | Notes |
-| ---- | ------------ | -------- | ----------- | ------------------- | ----------- | --------------------- | ----- |
-|      |              |          |             |                     |             |                       |       |
+| File | Graph source | Renderer | Publishable as-is? | Nodes shown | Relationships shown | Motion plan | Accessibility summary | Notes |
+| ---- | ------------ | -------- | ------------------ | ----------- | ------------------- | ----------- | --------------------- | ----- |
+|      |              |          |                    |             |                     |             |                       |       |
 
 ## Generated Exports
 
-| File | Target surface | Size | Source prompt | Approved by | Published at | Notes |
-| ---- | -------------- | ---- | ------------- | ----------- | ------------ | ----- |
-|      |                |      |               |             |              |       |
+| File | Target surface | Size | Source prompt | Source brief | Output hash | Approved by | Published at | Notes |
+| ---- | -------------- | ---- | ------------- | ------------ | ----------- | ----------- | ------------ | ----- |
+|      |                |      |               |              |             |             |              |       |
 
 ## Route Placement
 
@@ -34606,15 +34619,16 @@ a case study, a tool comparison, or agent behavior.
 - [ ] Original visuals use the Canon Images guideline.
 - [ ] TASTE packet is attached or explicitly marked not applicable.
 - [ ] TASTE references were used as judgment inputs and were not copied.
-- [ ] Workflow, governance, and agent-behavior visuals were attempted as Atlas canvas artifacts before one-off graphics.
-- [ ] Canvas artifacts preserve a graph source and do not move the source of truth into the renderer.
-- [ ] Canvas artifacts show owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
+- [ ] Workflow, governance, and agent-behavior visuals preserve a graph, SVG, Atlas map, or written source brief before generated export.
+- [ ] Canvas artifacts preserve a graph source and do not move the source of truth into the renderer or generated image.
+- [ ] Canvas/source artifacts show owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
+- [ ] Public article, education, social, deck, and client-update visuals use the approved OpenAI generated export unless the raw SVG/Atlas artifact is quality-approved.
 - [ ] Screenshots prove a concrete claim and are not decorative.
 - [ ] Screenshots are redacted and do not expose secrets, private data, prompts, or customer records.
 - [ ] Primary owned visual is placed in the article body when it is part of the page argument.
 - [ ] Captions and alt text are written.
 - [ ] Refresh dates are assigned.
-- [ ] No generated image is treated as durable source-of-truth evidence.
+- [ ] No generated image is treated as durable source-of-truth evidence unless backed by workflow artifacts, screenshots, receipts, metadata, or policy records.
 - [ ] Langfuse is excluded unless this asset is part of a separate scored rubric.
 `
   },
@@ -34635,10 +34649,12 @@ a case study, a tool comparison, or agent behavior.
 > Image family: atlas-story-canvas | system-map-hero | db-automation-judgment | policy-gate-chart | evidence-map | handoff-receipt | screenshot-annotation | cta-visual
 > Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable
 > Atlas graph source: existing starter map | new graph artifact | not applicable
+> Source brief: graph | SVG | Atlas map | written brief | screenshot | not applicable
 > TASTE packet: approved references attached | not applicable
 > Owner:
 > Review status: draft | approved | published | retired
 > Target export:
+> Output hash:
 > Last updated:
 
 ## Model
@@ -34663,6 +34679,7 @@ Proof object:
 Next action:
 Canvas source:
 Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt
+Publishable layer: approved OpenAI generated export | screenshot evidence | raw SVG/Atlas only if quality-approved
 TASTE references:
 \`\`\`
 
@@ -34680,20 +34697,27 @@ communication pattern to borrow>. Use references for judgment only. Do not copy
 source assets, brand marks, fonts, layouts, campaign language, or images.
 
 If the image explains workflow behavior, governance, an offer, a case study, a
-tool comparison, or agent behavior, use an Atlas-style canvas with nodes and
-mapped relationships before any decorative composition. Preserve the graph as the source of truth: owner, workflow or data artifact, automation route, AI-assisted task when present, human judgment point, stop condition, and receipt surface. Use static story canvas for marketing and article visuals, interactive Atlas canvas only when the surface needs editing or intake, and Sigma/Cosmograph only for large read-only network exploration.
+tool comparison, or agent behavior, preserve a graph, SVG, Atlas map, or written
+brief with nodes and mapped relationships before any decorative composition. Use
+that source brief to generate the publishable OpenAI export.
+Preserve the graph
+as source context: owner, workflow or data artifact, automation route,
+AI-assisted task when present, human judgment point, stop condition, and receipt
+surface. Publish raw SVG/Atlas output only when it meets the same quality bar as
+the generated export.
 
-Style: Use Ona.com as the design and communication foundation: calm hierarchy,
-plain claims, compact proof, governed execution, visible evidence, and restrained
-action states. Translate that foundation into CREATE SOMETHING artifact language:
-system maps, MCP boundaries, policy gates, receipts, validation proof, owners,
-and handoff state. Prefer porcelain or quiet near-black surfaces, crisp labels,
-restrained cobalt/moss/stop accents, compact proof panels, and the isometric cube
-as a persistent system signature.
+Style: CREATE SOMETHING Performance Lab image language:
+plain claim, decisive hierarchy, compact proof, governed execution, visible evidence,
+readiness states, and restrained action states. Translate that foundation into CREATE SOMETHING artifact language: system maps, MCP boundaries, policy gates, receipts,
+validation proof, owners, and handoff state. Prefer porcelain \`#f9f9f9\`, white
+panels, onyx \`#0a0e19\`, quiet grey \`#636363\`, thin \`#e1e1e1\` borders, 4-8px
+radii, compact proof panels, receipt grids, state rows, decision panels, and a
+small isometric cube system signature only when useful. Use ocean \`#0048ff\`, moss \`#1e3c2c\`, and stop \`#c41e3a\` only as semantic state accents.
 
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains, stock
-photography, fake dashboards, unreadable file paths, client secrets, PHI, private
-prompts, watermarks, vendor endorsement, and decorative AI atmosphere.
+photography, generic premium desk scenes, random decorative objects, fake
+dashboards, unreadable file paths, client secrets, PHI, private prompts,
+watermarks, vendor endorsement, and decorative AI atmosphere.
 \`\`\`
 
 ## Review Gate
@@ -34702,12 +34726,12 @@ prompts, watermarks, vendor endorsement, and decorative AI atmosphere.
 - [ ] The image answers a specific operational question.
 - [ ] TASTE references are attached or explicitly marked not applicable.
 - [ ] TASTE references were used as judgment inputs and were not copied.
-- [ ] Workflow, governance, or agent-behavior visuals use an Atlas canvas unless explicitly marked not applicable.
-- [ ] The canvas shows owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
+- [ ] Workflow, governance, or agent-behavior visuals preserve a graph, SVG, Atlas map, or written source brief unless explicitly marked not applicable.
+- [ ] The source brief shows owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
 - [ ] The claim is supported by visible proof or a real screenshot.
 - [ ] No fake UI is presented as a screenshot.
 - [ ] No secrets, private data, private prompts, client records, or tokens appear.
-- [ ] The source prompt, model, date, owner, target surface, and refresh date are stored.
+- [ ] The source prompt, source brief, model, date, output hash, owner, target surface, and refresh date are stored.
 - [ ] Langfuse is not required unless a separate scored image-quality rubric exists.
 `
   },
@@ -34889,8 +34913,8 @@ Use primary source URLs and current docs. Add checked dates.
     uri: "docs://agency/content/templates/outreach/atlas-starter-map-follow-up",
     content: `# Atlas Starter Map Follow-up Templates
 
-**Purpose:** Follow up after qualified engagement with Atlas starter-map content
-**When to use:** Within 24-48 hours of a relevant comment, reply, or repeat engagement
+**Purpose:** Follow up after qualified engagement with Atlas starter-map content\u0020\u0020
+**When to use:** Within 24-48 hours of a relevant comment, reply, or repeat engagement\u0020\u0020
 **Primary CTA:** Load the relevant starter map or book a Workflow Mapping Session after 2-3 positive exchanges
 
 ---
@@ -35876,7 +35900,7 @@ After sending, update lead in funnel:
     uri: "docs://agency/content/templates/sales/discovery-note-example",
     content: `# Workflow Infrastructure Discovery Note Example
 
-**Purpose:** show the expected level of specificity for post-call discovery capture
+**Purpose:** show the expected level of specificity for post-call discovery capture\u0020\u0020
 **Use with:** \`discovery-note-template.md\`
 
 ---
@@ -35969,7 +35993,7 @@ After sending, update lead in funnel:
     uri: "docs://agency/content/templates/sales/discovery-note-template",
     content: `# Workflow Infrastructure Discovery Note Template
 
-**Purpose:** Standardize post-call capture so proposal drafting is consistent and fast.
+**Purpose:** Standardize post-call capture so proposal drafting is consistent and fast.\u0020\u0020
 **Use with:** \`content/sales/discovery-call-script.md\`
 
 ---
@@ -37028,7 +37052,7 @@ Based on this, the next step is:
 
 If this summary is accurate, I will proceed with the above path.
 
-Best,
+Best,\u0020\u0020
 {{sender}}
 
 ---
@@ -37048,7 +37072,7 @@ what is the current cost of a failure in this workflow (cleanup time, delay, or 
 
 This baseline is how we size the initial policy boundary and pilot target.
 
-Best,
+Best,\u0020\u0020
 {{sender}}
 
 ---
@@ -37072,7 +37096,7 @@ Please also confirm the actions that currently fall into:
 - approval-required
 - block
 
-Best,
+Best,\u0020\u0020
 {{sender}}
 
 ### Medium fit
@@ -37087,7 +37111,7 @@ For the MCP-only wedge, please confirm:
 
 If runtime tracing is in scope, we can add Langfuse as observability support after the wedge is defined.
 
-Best,
+Best,\u0020\u0020
 {{sender}}
 
 ### Low fit
@@ -37100,7 +37124,7 @@ Agreed to pause for now. Please confirm the re-entry condition:
 
 When that condition is met, we can reopen with a scoped mapping call.
 
-Best,
+Best,\u0020\u0020
 {{sender}}
 
 ---
@@ -37119,7 +37143,7 @@ Quick timeline check: should we keep the current next-step date, or reset it?
 
 If reset, please share the new owner and date so we can keep this moving cleanly.
 
-Best,
+Best,\u0020\u0020
 {{sender}}
 
 ---
@@ -37135,13 +37159,13 @@ Subject: close loop on next step
 Hi {{Name}},
 
 I want to close this loop with one clear outcome:
-1. proceed now,
-2. proceed later with a set date, or
+1. proceed now,\u0020\u0020
+2. proceed later with a set date, or\u0020\u0020
 3. pause indefinitely.
 
 Reply with the option and I will update our plan accordingly.
 
-Best,
+Best,\u0020\u0020
 {{sender}}
 
 ---
@@ -37164,7 +37188,7 @@ Best,
     uri: "docs://agency/content/templates/sales/policy-os-proposal-input-template",
     content: `# Workflow Infrastructure Proposal Input Template
 
-**Purpose:** Convert discovery outputs into proposal-ready scope in one pass.
+**Purpose:** Convert discovery outputs into proposal-ready scope in one pass.\u0020\u0020
 **Use after:** \`content/templates/sales/discovery-note-template.md\`
 
 ---
@@ -37798,8 +37822,8 @@ I'd be happy to recommend some alternatives that might be better suited."
     uri: "docs://agency/content/templates/sales/workflow-mapping-session-agenda",
     content: `# Workflow Mapping Session Agenda
 
-**Audience:** client stakeholders
-**Duration:** 60 minutes
+**Audience:** client stakeholders\u0020\u0020
+**Duration:** 60 minutes\u0020\u0020
 **Purpose:** define one pilot workflow, its trust boundary, and the 30-day implementation path
 
 ---
@@ -38676,6 +38700,32 @@ Validation:
 - Add a rule to \`scripts/check-public-copy.mjs\` when a phrase becomes a private
   planning term instead of public language.
 
+### Platform Conviction Contract
+
+Public platform language follows
+[Conviction Without Dependence](https://createsomething.ltd/canon/concepts/conviction-without-dependence):
+
+> Built primarily with OpenAI Codex. Designed to outlast any model.
+
+Apply the contract in this order:
+
+1. Explain the workflow, decision boundary, and proof before naming a vendor.
+2. Name OpenAI Codex as the current primary agent environment when the stack is
+   relevant to the reader.
+3. Put the owned system beside the claim: data, MCP contracts, harnesses,
+   skills, prompts, policy, evals, receipts, routing, fallback, and recovery.
+4. Describe portability as a tested exit path to Claude, compatible harnesses,
+   open-weight executors, or custom models—not as indifference to model quality.
+5. Do not imply OpenAI partnership, certification, affiliation, resale,
+   endorsement, or Frontier Alliance status without documentary authorization.
+
+The technical shorthand is:
+
+> Model-opinionated in practice. Model-portable by design.
+
+\`pnpm copy:check\` guards the prohibited relationship claims and the public
+surface test guards the required conviction and ownership language.
+
 ### Marketing Page Portfolio
 
 Public SEO/AEO pages should operate as a funnel portfolio, not a pile of
@@ -38878,6 +38928,19 @@ Implementation surface:
 - \`src/lib/components/PublicAtlasStoryCanvas.svelte\` wraps Canon's
   \`AtlasStoryCanvas\` with \`.agency\` starter-map selection and renders the static
   story artifact without invoking the mapping agent.
+- \`src/lib/components/PublicSubstrateCanvas.svelte\` mounts the shared
+  \`@create-something/canvas-kernel\` renderer directly on \`.agency\` so the public
+  proof object is a live canvas over the CREATE SOMETHING operating projection,
+  not a detached illustration. Its visible language should follow the
+  Ona/UNA communication foundation: one clear operating claim, Signal /
+  Decision / Proof vocabulary, and implementation details hidden until they are
+  useful evidence.
+- \`src/lib/atlas/public-substrate-canvas.ts\` owns the public-safe operating
+  projection for that live canvas: signal queue, Substrate graph, agent queue,
+  decision gate, stop boundary, client delivery lane, receipt graph, and the
+  \`.agency\` surface itself. It also owns the mobile projection: same nodes and
+  edges, arranged as a readable phone-width operating map instead of shrinking
+  the desktop map into an illegible thumbnail.
 - \`src/lib/components/PublicAtlasFlow.svelte\` wraps Canon's \`AtlasFlow\` so the
   editable renderer stays reusable while \`.agency\` owns intake state.
 - \`src/lib/components/PublicAtlasCanvas.svelte\` renders the selector and persists
@@ -38906,6 +38969,18 @@ Renderer rule:
 
 - The interactive Svelte Atlas flow is the primary renderer for workflow
   education, intake, editing, accessibility, and agent-operable maps.
+- The homepage proof object is the transparent operating canvas:
+  \`PublicSubstrateCanvas.svelte\` mounts the shared \`@create-something/canvas-kernel\`
+  renderer and shows a public projection of the real Substrate/Atlas/receipt
+  operating model instead of a story-only abstraction.
+- The canvas chrome should read like a CREATE SOMETHING operating record, not a
+  renderer demo: expose nodes, edges, shared-kernel proof, selected state,
+  receipt, and view context; do not surface raw backend names such as WebGPU as
+  primary visitor copy.
+- Public canvas surfaces need data-level responsive projections when the graph
+  shape changes by viewport. Do not rely on CSS alone to squeeze a wide desktop
+  map into a phone; keep the same operating records and relationships, then
+  arrange them for the viewport.
 - Static story canvases are the fallback for marketing, articles, social cards,
   and non-JS presentation.
 - Sigma/Cosmograph are reserved for large read-only network exploration. Do not
@@ -39194,8 +39269,8 @@ This guide has been consolidated to eliminate duplication.
     uri: "docs://agency/static/akkio-interview-prep",
     content: `# Akkio Interview Prep: Algorithmic Problem Solving
 
-**Target Role:** Full Stack Web Engineer
-**Company Focus:** AI workflows, marketing analytics, data visualization
+**Target Role:** Full Stack Web Engineer\u0020\u0020
+**Company Focus:** AI workflows, marketing analytics, data visualization\u0020\u0020
 **Timeline:** 1-2 weeks recommended
 
 ---
@@ -39283,12 +39358,12 @@ String manipulation is everywhere in web dev.
 let left = 0;
 for (let right = 0; right < s.length; right++) {
   // Expand window: add s[right] to window state
-
+\u0020\u0020
   while (/* window invalid */) {
     // Shrink window: remove s[left] from window state
     left++;
   }
-
+\u0020\u0020
   // Update result if window is valid
 }
 \`\`\`
@@ -39326,11 +39401,11 @@ Nested data structures are common in UI (DOM, component trees, JSON).
 // Tree DFS template
 function dfs(node) {
   if (!node) return /* base case */;
-
+\u0020\u0020
   // Process node.val
   const left = dfs(node.left);
   const right = dfs(node.right);
-
+\u0020\u0020
   return /* combine results */;
 }
 
@@ -39339,11 +39414,11 @@ function bfs(root) {
   if (!root) return [];
   const queue = [root];
   const result = [];
-
+\u0020\u0020
   while (queue.length) {
     const levelSize = queue.length;
     const level = [];
-
+\u0020\u0020\u0020\u0020
     for (let i = 0; i < levelSize; i++) {
       const node = queue.shift();
       level.push(node.val);
@@ -39373,15 +39448,15 @@ Fundamentals that come up in optimization questions.
 // Binary search template
 function binarySearch(arr, target) {
   let left = 0, right = arr.length - 1;
-
+\u0020\u0020
   while (left <= right) {
     const mid = Math.floor((left + right) / 2);
-
+\u0020\u0020\u0020\u0020
     if (arr[mid] === target) return mid;
     if (arr[mid] < target) left = mid + 1;
     else right = mid - 1;
   }
-
+\u0020\u0020
   return -1; // or left for insertion point
 }
 \`\`\`
@@ -39403,15 +39478,15 @@ You probably won't get hard DP, but know the basics.
 function dp(input) {
   const n = input.length;
   const dp = new Array(n + 1).fill(0);
-
+\u0020\u0020
   // Base case
   dp[0] = /* base value */;
-
+\u0020\u0020
   for (let i = 1; i <= n; i++) {
     // Recurrence relation
     dp[i] = /* some function of dp[i-1], dp[i-2], etc. */;
   }
-
+\u0020\u0020
   return dp[n];
 }
 \`\`\`
@@ -39645,8 +39720,8 @@ Sources used:
     uri: "docs://agency/static/job-applications/akkio/interview-prep",
     content: `# Akkio Interview Prep: Algorithmic Problem Solving
 
-**Target Role:** Full Stack Web Engineer
-**Company Focus:** AI workflows, marketing analytics, data visualization
+**Target Role:** Full Stack Web Engineer\u0020\u0020
+**Company Focus:** AI workflows, marketing analytics, data visualization\u0020\u0020
 **Timeline:** 1-2 weeks recommended
 
 ---
@@ -39734,12 +39809,12 @@ String manipulation is everywhere in web dev.
 let left = 0;
 for (let right = 0; right < s.length; right++) {
   // Expand window: add s[right] to window state
-
+\u0020\u0020
   while (/* window invalid */) {
     // Shrink window: remove s[left] from window state
     left++;
   }
-
+\u0020\u0020
   // Update result if window is valid
 }
 \`\`\`
@@ -39777,11 +39852,11 @@ Nested data structures are common in UI (DOM, component trees, JSON).
 // Tree DFS template
 function dfs(node) {
   if (!node) return /* base case */;
-
+\u0020\u0020
   // Process node.val
   const left = dfs(node.left);
   const right = dfs(node.right);
-
+\u0020\u0020
   return /* combine results */;
 }
 
@@ -39790,11 +39865,11 @@ function bfs(root) {
   if (!root) return [];
   const queue = [root];
   const result = [];
-
+\u0020\u0020
   while (queue.length) {
     const levelSize = queue.length;
     const level = [];
-
+\u0020\u0020\u0020\u0020
     for (let i = 0; i < levelSize; i++) {
       const node = queue.shift();
       level.push(node.val);
@@ -39824,15 +39899,15 @@ Fundamentals that come up in optimization questions.
 // Binary search template
 function binarySearch(arr, target) {
   let left = 0, right = arr.length - 1;
-
+\u0020\u0020
   while (left <= right) {
     const mid = Math.floor((left + right) / 2);
-
+\u0020\u0020\u0020\u0020
     if (arr[mid] === target) return mid;
     if (arr[mid] < target) left = mid + 1;
     else right = mid - 1;
   }
-
+\u0020\u0020
   return -1; // or left for insertion point
 }
 \`\`\`
@@ -39854,15 +39929,15 @@ You probably won't get hard DP, but know the basics.
 function dp(input) {
   const n = input.length;
   const dp = new Array(n + 1).fill(0);
-
+\u0020\u0020
   // Base case
   dp[0] = /* base value */;
-
+\u0020\u0020
   for (let i = 1; i <= n; i++) {
     // Recurrence relation
     dp[i] = /* some function of dp[i-1], dp[i-2], etc. */;
   }
-
+\u0020\u0020
   return dp[n];
 }
 \`\`\`
@@ -40131,7 +40206,8 @@ Legacy Techforce paths in \`/Users/micahjohnson/Documents/Github/Create Somethin
 ## Deliverables
 
 - PNG: \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.png\`
-- Source SVG: \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.svg\`
+- Source brief: \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.svg\`
+- Publishable image: \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.png\`
 
 ## Use
 
@@ -40218,7 +40294,8 @@ Add a thin line above or below the cards:
 ## Deliverables
 
 - PNG: \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.png\`
-- Source SVG: \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.svg\`
+- Source brief: \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.svg\`
+- Publishable image: \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.png\`
 
 ## Use
 
@@ -40302,7 +40379,8 @@ Below the columns, place a thin logic line:
 ## Deliverables
 
 - PNG: \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.png\`
-- Source SVG: \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.svg\`
+- Source brief: \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.svg\`
+- Publishable image: \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.png\`
 
 ## Use
 
@@ -40397,7 +40475,8 @@ Use thin arrows from all three cards into one lower center card:
 ## Deliverables
 
 - PNG: \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.png\`
-- Source SVG: \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.svg\`
+- Source brief: \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.svg\`
+- Publishable image: \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.png\`
 
 ## Use
 

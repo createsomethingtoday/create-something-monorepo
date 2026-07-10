@@ -66,6 +66,24 @@ The thesis is not "add an agent." The thesis is:
 > Build the connectivity and control layer between tools and AI, then encode the
 > operating policy as artifacts that humans and agents can inspect.
 
+The model-era Canon doctrine is **Conviction Without Dependence**:
+
+> Use the best instrument. Own the system.
+
+CREATE SOMETHING does not claim indifference to model quality. It makes a
+deliberate present choice—OpenAI Codex is the primary operating environment—
+while locating durable ownership outside the model. The technical formulation
+is:
+
+> Model-opinionated in practice. Model-portable by design.
+
+The owned system is organizational data, MCP contracts, harness behavior,
+skills, prompts, policy, evals, receipts, routing, fallback, and recovery. A
+frontier, open-weight, or custom model participates in that system; it does not
+own the system. Portability is proven when the same contracts, policies, golden
+tasks, and receipts can compare another model without erasing institutional
+learning.
+
 The category hierarchy is:
 
 | Layer | Role |

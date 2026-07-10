@@ -100,6 +100,55 @@ test('public agency copy guard catches old lane and partner framing', () => {
   }
 });
 
+test('public agency copy guard rejects unauthorized OpenAI relationship claims', () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
+  const fixture = path.join(tempDir, '+page.svelte');
+
+  try {
+    writeFileSync(
+      fixture,
+      [
+        'Official OpenAI Partner',
+        'Certified OpenAI Provider',
+        'OpenAI-approved implementation partner',
+        'OpenAI reseller',
+        'OpenAI affiliate',
+        'Frontier Alliance partner'
+      ].join('\n')
+    );
+
+    assert.deepEqual(
+      auditPublicCopy([fixture]).map((finding) => finding.rule),
+      [
+        'official-openai-partner',
+        'certified-openai-provider',
+        'openai-approved-partner',
+        'openai-reseller',
+        'openai-affiliate',
+        'frontier-alliance-partner'
+      ]
+    );
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('public agency surfaces state the OpenAI conviction and owned-system boundary', () => {
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+  const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
+  const partners = readFileSync(
+    new URL('../src/routes/partners/+page.svelte', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(home, /Built primarily with OpenAI Codex\. Designed to outlast any model\./);
+  assert.match(home, /https:\/\/createsomething\.ltd\/canon\/concepts\/conviction-without-dependence/);
+  assert.match(stack, /Model-opinionated in practice\. Model-portable by design\./);
+  assert.match(stack, /data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts/i);
+  assert.match(partners, /OpenAI is the primary reasoning and agent environment/i);
+  assert.match(partners, /open-weight and custom models/i);
+});
+
 test('agency README documents the public copy contract', () => {
   const source = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 
@@ -110,4 +159,6 @@ test('agency README documents the public copy contract', () => {
   assert.match(source, /support lane/);
   assert.match(source, /Run `pnpm copy:check`/);
   assert.match(source, /Run `pnpm copy:heal`/);
+  assert.match(source, /### Platform Conviction Contract/);
+  assert.match(source, /Built primarily with OpenAI Codex\. Designed to outlast any model\./);
 });

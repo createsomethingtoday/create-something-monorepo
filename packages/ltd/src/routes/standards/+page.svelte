@@ -100,6 +100,72 @@
 	</div>
 </section>
 
+<!-- Platform Conviction Standard -->
+<section class="py-16 px-6 border-t border-canon">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">Platform Conviction Standard</h2>
+		<p class="opacity-70-canon leading-relaxed mb-8">
+			A platform claim is canonical only when it names a deliberate current choice and proves that
+			the surrounding system remains owned. Apply
+			<a href="/canon/concepts/conviction-without-dependence">Conviction Without Dependence</a>
+			before publishing vendor-specific language.
+		</p>
+
+		<div class="space-y-8">
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">1. Current Default</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Name the model or agent environment in current use and the evidence that makes it the default.
+					Do not turn the supplier into the company category.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">2. Owned Boundary</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Show which data, MCP contracts, harness behavior, skills, prompts, policy, evals, receipts, and
+					recovery artifacts remain under organizational control.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">3. Tested Exit</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Document model routing, fallback, and rollback. Portability is not proven until the same policy
+					and golden tasks can evaluate another hosted, open-weight, or custom model.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">4. Relationship Accuracy</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Describe ordinary product use as product use. Partnership, certification, affiliation, resale,
+					or endorsement language requires documentary authorization.
+				</p>
+			</div>
+		</div>
+
+		<div class="mt-8 border border-canon p-6 space-y-3">
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>The current platform is named without becoming the offer.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>The owned system is concrete enough to inspect and move.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>Routing, fallback, eval, and rollback evidence exists.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>No vendor relationship is implied beyond the available authority.</span>
+			</label>
+		</div>
+	</div>
+</section>
+
 <!-- Clear Communication UI Standards -->
 <section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">

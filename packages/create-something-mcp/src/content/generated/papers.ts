@@ -694,8 +694,8 @@ The system that earns trust through structured transparency is more valuable tha
 
 ---
 
-*Version 3.1 — February 2026*  
-*Supersedes: v1.0 (RFI Protocol), v2.0 (Andon Protocol), v3.0 (AI-Native Extensions)*  
+*Version 3.1 — February 2026*\u0020\u0020
+*Supersedes: v1.0 (RFI Protocol), v2.0 (Andon Protocol), v3.0 (AI-Native Extensions)*\u0020\u0020
 *CREATE SOMETHING · WORKWAY · Half Dozen Solutions*`
   },
   {

@@ -413,7 +413,7 @@ export const CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS: CanonOverlayCandidateReview
           "name": "Public Atlas route",
           "modality": "web",
           "sourcePath": "src/routes/atlas/+page.svelte",
-          "proof": "Route composes ClearPageSection, PublicAtlasStoryCanvas, and PublicAtlasCanvas so the public page shows story, editable map, readiness, and booking context from one Canon Atlas graph contract."
+          "proof": "Route composes PerformancePageSection, PublicAtlasStoryCanvas, and PublicAtlasCanvas so the public page shows story, editable map, readiness, and booking context from one Canon Atlas graph contract."
         },
         {
           "surfaceId": "agency-atlas-agent-canvas",
@@ -1914,7 +1914,7 @@ export const CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS: CanonOverlayCandidateReview
           "name": "Workbench home",
           "modality": "web",
           "sourcePath": "src/routes/+page.svelte",
-          "proof": "The home route composes ClearPageSection, ClearCardGrid, ClearProofStrip, ClearDecisionPanel, and ClearCtaBand into a live tool directory with proof and handoff states."
+          "proof": "The home route composes PerformancePageSection, PerformanceCardGrid, PerformanceProofStrip, PerformanceDecisionPanel, and PerformanceCtaBand into a live tool directory with proof and handoff states."
         },
         {
           "surfaceId": "space-tool-routing-data",
