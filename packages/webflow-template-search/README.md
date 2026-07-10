@@ -193,6 +193,8 @@ Public search keeps the strict ten-second circuit breaker. Admin batch requests 
 30-second timeout because they include an Airtable lookup; transient admin timeouts and network
 resets are retried up to six times with search probes and backoff. Since every request reads the
 durable cursor first and writes only changed values, a response lost after commit is safe to retry.
+The Worker also aborts the targeted Airtable lookup after 20 seconds so a slow source request is
+recorded as failed and releases the shared lease before the client retry begins.
 
 The CLI runs both queryless and FTS public search probes before work, every five batches by
 default, and after completion. It stops if either probe fails, returns no items, or exceeds ten

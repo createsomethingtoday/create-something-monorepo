@@ -93,6 +93,7 @@ const RECORD_SYNC_STALE_HEARTBEAT_MS = 5 * 60 * 1000;
 const INCREMENTAL_SYNC_STALE_HEARTBEAT_MS = 10 * 60 * 1000;
 const MRP_BACKFILL_DEFAULT_BATCH_SIZE = 25;
 const MRP_BACKFILL_MAX_BATCH_SIZE = 50;
+const MRP_BACKFILL_SOURCE_TIMEOUT_MS = 20 * 1000;
 
 interface SyncWarning {
   source: string;
@@ -1169,7 +1170,12 @@ export async function backfillTemplateMrpIds(
     const now = nowIso();
     const baseState = existingState ?? initialMrpBackfillState(now);
     const rows = await listTemplateMrpRows(env.DB, baseState.cursor, batchSize);
-    const assets = rows.length > 0 ? await fetchAssetRecordsByIds(env, rows.map((row) => row.id)) : [];
+    const assets =
+      rows.length > 0
+        ? await fetchAssetRecordsByIds(env, rows.map((row) => row.id), {
+            signal: AbortSignal.timeout(MRP_BACKFILL_SOURCE_TIMEOUT_MS),
+          })
+        : [];
     await heartbeat?.();
 
     const assetsById = new Map(assets.map((record) => [record.id, record]));
