@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -262,17 +262,18 @@
   </div>
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Start with one workflow"
   title={agencyCoreMessaging.workflowCtaHeading}
   description={agencyCoreMessaging.workflowCtaDetail}
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Workflow owner', authority: 'Mapped control states', proof: 'Safer first path', state: 'review' }}
 >
   {#snippet actions()}
     <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
     <Button href="/services" variant="secondary">{agencyCoreMessaging.engagementModelLabel}</Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>
 
 <style>
   .about-prose {

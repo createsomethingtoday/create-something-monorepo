@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     PerformanceProofStrip,
     PerformanceWorkflowMiniArtifact,
@@ -146,17 +146,23 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow={`${product.name} implementation`}
   title="Attach this surface to a real workflow."
   description="Start with one live workflow, connect the source signal, name the decision owner, and decide which proof record must survive the action."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{
+    owner: `${product.name} operator`,
+    authority: `${product.name} production contract`,
+    proof: 'Connected workflow receipt',
+    state: 'review'
+  }}
 >
   {#snippet actions()}
     <Button href={primaryHref}>{primaryAction}</Button>
     <Button href={secondaryHref} variant="secondary">{secondaryAction}</Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>
 
 <style>
   .governance-product-artifact {

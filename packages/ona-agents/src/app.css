@@ -151,22 +151,26 @@ input::placeholder {
 .page-title {
   margin: 0;
   color: var(--color-performance-ink);
-  font-family: var(--font-display);
+  font-family: var(--font-performance-display, var(--font-display));
   font-size: 4.7rem;
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 0.98;
+  font-weight: var(--font-performance-display-weight, 500);
+  font-kerning: normal;
+  font-feature-settings: "kern" 1, "liga" 1;
+  letter-spacing: var(--tracking-performance-display, -0.03em);
+  line-height: var(--leading-performance-display, 0.94);
   text-wrap: balance;
 }
 
 .section-title {
   margin: 0;
   color: var(--color-performance-ink);
-  font-family: var(--font-heading);
+  font-family: var(--font-performance-display, var(--font-heading));
   font-size: 2rem;
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 1.08;
+  font-weight: var(--font-performance-display-weight, 500);
+  font-kerning: normal;
+  font-feature-settings: "kern" 1, "liga" 1;
+  letter-spacing: var(--tracking-performance-display, -0.03em);
+  line-height: 1.02;
   text-wrap: balance;
 }
 

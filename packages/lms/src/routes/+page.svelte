@@ -2,10 +2,12 @@
   import { ArrowRight } from 'lucide-svelte';
   import { PATHS } from '$content/paths';
   import {
-    PerformanceCtaBand,
-    PerformancePlatformHero,
+    PerformanceCampaignOpening,
+    PerformanceConversionHandoff,
     PerformanceProofStrip,
-    PerformanceStateRows
+    PerformanceThesisConditions,
+    type PerformanceCampaignProof,
+    type PerformanceCondition
   } from '$canon/components/performance';
 
   const featuredCourse = PATHS[0] ?? null;
@@ -15,65 +17,37 @@
     : '/paths';
   const totalLessons = PATHS.reduce((count, path) => count + path.lessons.length, 0);
 
-  const proofItems = [
+  const proofItems: PerformanceCampaignProof[] = [
     {
-      value: `${PATHS.length} paths`,
-      label: `${totalLessons} lessons from workflow creation to visible proof`
+      label: 'Learning paths',
+      value: `${PATHS.length} / ${totalLessons} lessons`
     },
-    { value: 'RapidAPI', label: 'Use live business data without building a data source first' },
-    {
-      value: 'Canon images',
-      label: 'Turn workflow boundaries, gates, and receipts into learning artifacts'
-    },
-    {
-      value: 'MCP skill',
-      label: 'Use Codex MCP-building guidance as the planning and review loop'
-    },
-    { value: 'Operator loop', label: 'Search, normalize, inspect, prove, decide, then hand off' }
+    { label: 'Working surface', value: 'Codex app + MCP' },
+    { label: 'Evidence', value: 'Canon workflow images' },
+    { label: 'Outcome', value: 'Operator-ready proof' }
   ];
 
-  const workflowStates = [
+  const workflowConditions: PerformanceCondition[] = [
     {
-      tone: 'run' as const,
-      state: 'Prompt',
-      label: 'Start in the Codex app',
+      tone: 'signal',
+      label: 'Prompt',
+      title: 'Start in the Codex app',
       detail:
         'Use the Codex app and its MCP-building skill to turn a concrete operator question into a narrow tool contract.'
     },
     {
-      tone: 'wait' as const,
-      state: 'Create',
-      label: 'Wrap the data source',
+      tone: 'pressure',
+      label: 'Create',
+      title: 'Wrap the data source',
       detail:
         'Create the MCP server, connect one RapidAPI endpoint, and keep the schema inspectable.'
     },
     {
-      tone: 'stop' as const,
-      state: 'Prove',
-      label: 'Make the work visible',
+      tone: 'growth',
+      label: 'Prove',
+      title: 'Make the work visible',
       detail:
         'Use Canon image rules to show the object, boundary, policy gate, receipt, owner, and next action.'
-    }
-  ];
-
-  const outcomes = [
-    {
-      label: 'Path 01',
-      title: 'Learn Codex through MCP creation',
-      detail:
-        'Codex is the working environment, and the MCP-building skill is the guide for creating a capability Codex can call.'
-    },
-    {
-      label: 'Path 02',
-      title: 'Learn Canon through workflow images',
-      detail:
-        'Turn the workflow into maps, MCP boundaries, policy gates, receipts, and handoff images that operators can inspect.'
-    },
-    {
-      label: 'Outcome',
-      title: 'Ship with proof',
-      detail:
-        'Leave with a working capability and the visual evidence needed to explain, govern, and extend it.'
     }
   ];
 </script>
@@ -87,17 +61,15 @@
 </svelte:head>
 
 <div class="learn-home property-performance">
-  <PerformancePlatformHero
+  <PerformanceCampaignOpening
     eyebrow="CREATE SOMETHING Learn"
     title="Build workflows operators can run and explain"
-    description="Practical paths for business owners becoming operators. Start in the OpenAI ecosystem with the Codex app, create a RapidAPI-backed MCP, then use Canon image rules to make boundaries, policy, proof, and handoff visible."
-    {proofItems}
-    metaItems={[
-      { label: 'Paths', value: `${PATHS.length} operator tracks` },
-      { label: 'Pace', value: 'About 175 minutes' },
-      { label: 'Surface', value: 'Codex app + Canon' }
-    ]}
-    ariaLabel="CREATE SOMETHING Learn course overview"
+    lede="Practical paths for business owners becoming operators. Start in the OpenAI ecosystem with the Codex app, create a RapidAPI-backed MCP, then use Canon image rules to make boundaries, policy, proof, and handoff visible."
+    media={{
+      src: '/learning/codex-mcp/codex-mcp-loop.png',
+      alt: 'An operator learning loop connecting the Codex app, a local MCP package, and evidence results'
+    }}
+    proof={proofItems}
   >
     {#snippet actions()}
       <a class="btn btn-primary" href={firstLessonHref}>
@@ -106,23 +78,15 @@
       </a>
       <a class="btn btn-secondary" href="/paths">Review paths</a>
     {/snippet}
+  </PerformanceCampaignOpening>
 
-    {#snippet aside()}
-      <PerformanceStateRows
-        eyebrow="Learning loop"
-        title="Prompt, create, prove"
-        states={workflowStates}
-        receiptLabel="Final receipt"
-        receipts={[
-          'MCP-building skill prompt',
-          'server scaffold',
-          'RapidAPI tool schema',
-          'Canon workflow image'
-        ]}
-        ariaLabel="Course workflow states"
-      />
-    {/snippet}
-  </PerformancePlatformHero>
+  <PerformanceThesisConditions
+    eyebrow="Learning loop"
+    title="Prompt. Create. Prove."
+    description="Performance learning is complete when the operator can run the workflow, inspect its boundary, and explain the evidence it leaves behind."
+    conditions={workflowConditions}
+    ariaLabel="Course workflow conditions"
+  />
 
   <section class="learn-section" aria-labelledby="course-outline-title">
     <div class="learn-section__header">
@@ -196,17 +160,22 @@
     />
   </section>
 
-  <PerformanceCtaBand
-    eyebrow="Get started"
+  <PerformanceConversionHandoff
+    eyebrow="Learning handoff"
     title="Build the smallest useful workflow first."
     description="Start with one Codex prompt, one endpoint, one schema, and one MCP call. Then use Canon to make the operating boundary visible enough to govern."
-    items={outcomes}
+    handoff={{
+      owner: 'Learner / operator',
+      authority: 'Artifact review',
+      proof: 'Working MCP + workflow image',
+      state: 'ready'
+    }}
   >
     {#snippet actions()}
       <a class="btn btn-primary" href={firstLessonHref}>Start lesson 1</a>
       <a class="btn btn-secondary" href="/paths">View paths</a>
     {/snippet}
-  </PerformanceCtaBand>
+  </PerformanceConversionHandoff>
 </div>
 
 <style>

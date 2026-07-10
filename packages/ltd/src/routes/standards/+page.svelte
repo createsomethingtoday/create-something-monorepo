@@ -1,26 +1,27 @@
 <script lang="ts">
 	import {
-		PerformanceLabBand,
+		PerformancePageSection,
+		PerformanceThesisConditions,
 		SEO,
-		type PerformanceLabMetric
+		type PerformanceCondition
 	} from '@create-something/canon';
 
-	const standardReadiness: PerformanceLabMetric[] = [
+	const standardReadiness: PerformanceCondition[] = [
 		{
 			label: 'Clarity',
-			value: 'Visible',
+			title: 'Visible',
 			detail: 'Offer, audience, trust signal, and next action resolve in the first viewport.',
 			tone: 'signal'
 		},
 		{
 			label: 'Proof',
-			value: 'Attached',
+			title: 'Attached',
 			detail: 'Every material claim points to an artifact, result, source, or operating boundary.',
 			tone: 'growth'
 		},
 		{
 			label: 'Pressure',
-			value: 'Reviewed',
+			title: 'Reviewed',
 			detail: 'Mobile, failure, permission, and recovery states are checked before release.',
 			tone: 'pressure'
 		}
@@ -37,22 +38,20 @@
 	]}
 />
 
-<!-- Header -->
-<section class="pt-24 pb-16 px-6 border-b border-canon">
-	<div class="max-w-4xl mx-auto text-center">
-		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
-		<h1 class="mb-6">Make standards visible.</h1>
-		<p class="text-xl-canon opacity-70-canon leading-relaxed">
-			Codified criteria for evaluating pages, workflows, experiments, and deliverables. The
-			reader should see the rule, the proof, and the next action.
-		</p>
-	</div>
-</section>
+<PerformancePageSection
+	variant="hero"
+	titleLevel="h1"
+	eyebrow="The Canon"
+	title="Make standards visible."
+	description="Codified criteria for evaluating pages, workflows, experiments, and deliverables. The reader should see the rule, the proof, and the next action."
+	ariaLabel="The Canon standards opening"
+/>
 
-<PerformanceLabBand
+<PerformanceThesisConditions
+	eyebrow="Operational standard"
 	title="Standards must survive contact."
 	description="The system is ready only when the rule is visible, the proof is attached, and the pressured state has been reviewed."
-	metrics={standardReadiness}
+	conditions={standardReadiness}
 	ariaLabel="Performance Lab interface standards"
 />
 

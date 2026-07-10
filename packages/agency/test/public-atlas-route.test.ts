@@ -45,6 +45,14 @@ const agencySubstrateCanvasWrapper = readFileSync(
 	new URL('../src/lib/components/PublicSubstrateCanvas.svelte', import.meta.url),
 	'utf8'
 );
+const agencyDelegationArtifact = readFileSync(
+	new URL('../src/lib/components/HeroTrustArtifact.svelte', import.meta.url),
+	'utf8'
+);
+const agencyPrivacyAnalytics = readFileSync(
+	new URL('../src/lib/components/PrivacyAnalytics.svelte', import.meta.url),
+	'utf8'
+);
 const agencySubstrateCanvasModule = readFileSync(
 	new URL('../src/lib/atlas/public-substrate-canvas.ts', import.meta.url),
 	'utf8'
@@ -125,8 +133,22 @@ test('home route uses the shared canvas kernel as a transparent proof object', (
 	assert.ok(homeRoute.includes('<PublicSubstrateCanvas'));
 	assert.ok(homeRoute.includes("from '$lib/components/PublicSubstrateCanvas.svelte'"));
 	assert.ok(homeRoute.includes('Map the work before AI runs it.'));
+	assert.ok(homeRoute.includes('artifactPlacement="full-width"'));
 	assert.equal(homeRoute.includes('<PublicAtlasStoryCanvas'), false);
 	assert.equal(homeRoute.includes('<PublicAtlasCanvas'), false);
+});
+
+test('home route promotes the delegation object to a wide conversion proof surface', () => {
+	assert.match(
+		homeRoute,
+		/<PerformanceConversionHandoff[\s\S]*?artifactPlacement="full-width"[\s\S]*?\{#snippet aside\(\)\}<HeroTrustArtifact \/>\{\/snippet\}/
+	);
+	assert.ok(agencyDelegationArtifact.includes('container-type: inline-size'));
+	assert.ok(agencyDelegationArtifact.includes('grid-template-columns: repeat(4, minmax(0, 1fr))'));
+	assert.ok(agencyDelegationArtifact.includes('Signal / Decision / Action / Proof'));
+	assert.ok(agencyDelegationArtifact.indexOf("label: 'Signal'") < agencyDelegationArtifact.indexOf("label: 'Decision'"));
+	assert.ok(agencyDelegationArtifact.indexOf("label: 'Decision'") < agencyDelegationArtifact.indexOf("label: 'Action'"));
+	assert.ok(agencyDelegationArtifact.indexOf("label: 'Action'") < agencyDelegationArtifact.indexOf("label: 'Proof'"));
 });
 
 test('methodology route uses a read-only story canvas to explain the method', () => {
@@ -305,4 +327,11 @@ test('layout keeps privacy prompt compact on Atlas proof-heavy routes', () => {
 	assert.ok(layoutRoute.includes('isAgencyDifyArticlePath($page.url.pathname)'));
 	assert.ok(layoutRoute.includes('usesCompactAgencyPrivacyPrompt($page.url.pathname)'));
 	assert.equal(layoutRoute.includes('services|atlas|methodology|stack|products'), false);
+});
+
+test('compact mobile privacy prompt stays below navigation and away from campaign proof', () => {
+	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice--compact'));
+	assert.ok(agencyPrivacyAnalytics.includes('top: max(4.5rem, calc(4rem + env(safe-area-inset-top)))'));
+	assert.ok(agencyPrivacyAnalytics.includes('bottom: auto'));
+	assert.ok(agencyPrivacyAnalytics.includes("content: 'Privacy'"));
 });

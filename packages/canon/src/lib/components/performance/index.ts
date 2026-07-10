@@ -3,6 +3,49 @@ export type {
   PerformanceLabMetric,
   PerformanceLabTone
 } from './PerformanceLabBand.svelte';
+export { default as PerformanceFieldStudy } from './PerformanceFieldStudy.svelte';
+export type {
+  PerformanceFieldStudyMetric,
+  PerformanceFieldStudyMode,
+  PerformanceFieldStudyProps,
+  PerformanceFieldStudyProof,
+  PerformanceFieldStudySide,
+  PerformanceFieldStudyStage
+} from './PerformanceFieldStudy.svelte';
+export { default as PerformanceFieldSequence } from './PerformanceFieldSequence.svelte';
+export type {
+  PerformanceFieldSequenceItem,
+  PerformanceFieldSequenceLayout
+} from './PerformanceFieldSequence.svelte';
+export { default as PerformanceCampaignOpening } from './PerformanceCampaignOpening.svelte';
+export type {
+  PerformanceCampaignMedia,
+  PerformanceCampaignOpeningMode,
+  PerformanceCampaignProof
+} from './PerformanceCampaignOpening.svelte';
+export { default as PerformanceThesisConditions } from './PerformanceThesisConditions.svelte';
+export type {
+  PerformanceCondition,
+  PerformanceConditionTone,
+  PerformanceThesisMode
+} from './PerformanceThesisConditions.svelte';
+export { default as PerformanceContrastChapter } from './PerformanceContrastChapter.svelte';
+export type {
+  PerformanceContrastMode,
+  PerformanceIntervention
+} from './PerformanceContrastChapter.svelte';
+export { default as PerformanceEvidenceIndex } from './PerformanceEvidenceIndex.svelte';
+export type {
+  PerformanceEvidenceItem,
+  PerformanceEvidenceState
+} from './PerformanceEvidenceIndex.svelte';
+export { default as PerformanceConversionHandoff } from './PerformanceConversionHandoff.svelte';
+export type {
+  PerformanceHandoffArtifactPlacement,
+  PerformanceHandoff,
+  PerformanceHandoffStep,
+  PerformanceHandoffState
+} from './PerformanceConversionHandoff.svelte';
 
 // Preferred public names. The implementation paths and legacy Clear exports
 // remain stable for downstream compatibility.

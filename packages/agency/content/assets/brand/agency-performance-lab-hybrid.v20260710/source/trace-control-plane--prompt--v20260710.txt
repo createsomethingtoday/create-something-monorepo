@@ -1,0 +1,11 @@
+Create an original wide black-and-white editorial laboratory photograph of a physical water control
+plane. Three clear low-profile channels sit on a near-black test surface. One incoming pulse of
+water enters the first channel, reaches a visible mechanical gate in the second, and leaves a
+single settled trace in the third. Show flow, decision boundary, and proof through real material
+behavior, not through software. Include controlled refraction, a wake line, fine mesh, a glass
+stop, and precise but non-legible physical scale marks at the edge. Compose center-right for a
+desktop article header and resilient mobile portrait crop; leave negative space for real DOM copy.
+
+No legible text, letters, numbers, logo, watermark, vendor UI, fake screenshot, colored light,
+ocean, river landscape, dam landmark, generic science fiction, glowing interface, sports object,
+branded industrial design, or imitation of an existing image.

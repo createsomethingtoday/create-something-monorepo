@@ -4,7 +4,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformanceMetadataRail,
     PerformancePageSection,
     SEO,
@@ -517,17 +517,18 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Taste system sprint"
   title="Build a taste system your team and agents can use."
   description="Use TASTE to turn curation into direction for pages, product surfaces, content systems, and AI-assisted delivery."
-  items={businessCtaItems}
+  steps={businessCtaItems}
+  handoff={{ owner: 'Design owner', authority: 'Approved taste corpus', proof: 'References + implementation criteria', state: 'review' }}
 >
   {#snippet actions()}
     <Button href="https://createsomething.agency">Start With A Taste System</Button>
     <Button href="https://www.are.na/create-something" variant="secondary">Inspect The Source Channel</Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>
 
 <!-- Image Lightbox -->
 {#if data.examples && data.examples.length > 0}

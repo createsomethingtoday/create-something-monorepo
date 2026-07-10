@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -286,11 +286,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Start with the workflow"
   title="Bring the workflow, owner, and first risk boundary."
   description="I will map the control states before expanding automation authority."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Decision owner', authority: 'Enterprise control boundary', proof: 'Evidence + rollback path', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -300,4 +301,4 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>

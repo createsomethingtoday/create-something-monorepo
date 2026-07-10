@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -262,11 +262,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Next step"
   title="Map the layer before changing tools."
   description="Bring the workflow and I’ll identify whether it should stay internal automation, move to runtime infrastructure, or become a governed agent app."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Workflow owner', authority: 'Layer decision', proof: 'Mapped automation boundary', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -275,4 +276,4 @@
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
     <Button href="/dify/mcp-control-plane" variant="secondary">Read Control Plane</Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>

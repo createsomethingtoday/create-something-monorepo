@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -222,11 +222,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Map the agent surface"
   title="Bring one Dify workflow that needs control."
   description="I’ll map the app surface, MCP boundary, eval gates, approval states, and evidence path before the workflow becomes a production agent."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Agent operator', authority: 'Scoped Dify + MCP contract', proof: 'Policy OS evidence', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -235,4 +236,4 @@
     <Button href="/dify/mcp-control-plane" variant="secondary">Read Control Plane</Button>
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>

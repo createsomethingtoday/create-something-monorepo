@@ -164,18 +164,21 @@
 	.clear-page-section__title {
 		margin: 0;
 		color: var(--color-performance-ink, #090909);
+		font-family: var(--font-performance-display, var(--font-display, var(--font-sans)));
 		font-size: 3.1rem;
-		font-weight: var(--font-medium);
-		line-height: 1.02;
-		letter-spacing: 0;
+		font-weight: var(--font-performance-display-weight, var(--font-medium, 500));
+		font-kerning: normal;
+		font-feature-settings: "kern" 1, "liga" 1;
+		line-height: 1;
+		letter-spacing: var(--tracking-performance-display, -0.03em);
 		text-wrap: balance;
 	}
 
 	.clear-page-section--hero .clear-page-section__title {
 		max-width: 13ch;
 		font-size: 5.45rem;
-		font-weight: var(--font-medium);
-		line-height: 0.98;
+		font-weight: var(--font-performance-display-weight, var(--font-medium, 500));
+		line-height: var(--leading-performance-display, 0.94);
 	}
 
 	.clear-page-section__description {

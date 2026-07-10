@@ -1,0 +1,349 @@
+// @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createRawSnippet, flushSync, mount, unmount } from 'svelte';
+import { afterEach, describe, expect, it } from 'vitest';
+
+import PerformanceCampaignOpening from './PerformanceCampaignOpening.svelte';
+import PerformanceThesisConditions from './PerformanceThesisConditions.svelte';
+import PerformanceFieldSequence from './PerformanceFieldSequence.svelte';
+import PerformanceContrastChapter from './PerformanceContrastChapter.svelte';
+import PerformanceEvidenceIndex from './PerformanceEvidenceIndex.svelte';
+import PerformanceConversionHandoff from './PerformanceConversionHandoff.svelte';
+
+let target: HTMLElement;
+let instance: Record<string, unknown> | undefined;
+
+afterEach(() => {
+	if (instance) {
+		unmount(instance as never);
+		instance = undefined;
+	}
+	document.body.innerHTML = '';
+});
+
+describe('PerformanceCampaignOpening', () => {
+	it('renders a complete media-first campaign opening with proof and actions', () => {
+		const actions = createRawSnippet(() => ({
+			render: () => '<a href="/book" data-testid="campaign-action">Book a working session</a>'
+		}));
+
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceCampaignOpening, {
+			target,
+			props: {
+				eyebrow: 'AI Performance Lab',
+				title: 'Train the system before it runs.',
+				lede: 'Map signals. Route decisions. Define actions. Leave proof.',
+				mode: 'ink',
+				media: {
+					src: '/images/pressure-wide.webp',
+					mobileSrc: '/images/pressure-tall.webp',
+					alt: 'Water moving through a controlled spillway',
+					width: 1920,
+					height: 1080
+				},
+				proof: [
+					{ label: 'Signals', value: 'Mapped' },
+					{ label: 'Decisions', value: 'Assigned' }
+				],
+				actions
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const opening = target.querySelector('section.performance-campaign-opening');
+		expect(opening?.getAttribute('data-mode')).toBe('ink');
+		expect(opening?.getAttribute('aria-label')).toBe('AI Performance Lab');
+		expect(opening?.querySelector('h1')?.textContent).toBe('Train the system before it runs.');
+		expect(opening?.querySelector('.performance-campaign-opening__lede')?.textContent).toContain(
+			'Map signals.'
+		);
+
+		const source = opening?.querySelector('picture source');
+		expect(source?.getAttribute('media')).toBe('(max-width: 47.99rem)');
+		expect(source?.getAttribute('srcset')).toBe('/images/pressure-tall.webp');
+
+		const image = opening?.querySelector('picture img');
+		expect(image?.getAttribute('alt')).toBe('Water moving through a controlled spillway');
+		expect(image?.getAttribute('width')).toBe('1920');
+		expect(image?.getAttribute('height')).toBe('1080');
+
+		const proofItems = [...(opening?.querySelectorAll('.performance-campaign-opening__proof li') ?? [])];
+		expect(proofItems).toHaveLength(2);
+		expect(proofItems[0].textContent).toContain('Signals');
+		expect(proofItems[0].textContent).toContain('Mapped');
+		expect(opening?.querySelector('[data-testid="campaign-action"]')?.getAttribute('href')).toBe(
+			'/book'
+		);
+	});
+
+	it('owns a high-contrast directional scrim for image-backed copy', () => {
+		const source = readFileSync(
+			join(process.cwd(), 'src/lib/components/performance/PerformanceCampaignOpening.svelte'),
+			'utf8'
+		);
+
+		expect(source).toContain('--performance-campaign-scrim-copy: rgba(9, 9, 9, 0.94)');
+		expect(source).toContain('--performance-campaign-scrim-mid: rgba(9, 9, 9, 0.76)');
+		expect(source).toContain('linear-gradient(90deg,');
+		expect(source).toContain('linear-gradient(0deg,');
+		expect(source).toContain('@media (max-width: 47.99rem)');
+	});
+
+	it('owns mode-aware action contrast and a visible focus boundary', () => {
+		const source = readFileSync(
+			join(process.cwd(), 'src/lib/components/performance/PerformanceCampaignOpening.svelte'),
+			'utf8'
+		);
+
+		expect(source).toContain(".performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-primary)");
+		expect(source).toContain(".performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-secondary)");
+		expect(source).toContain(".performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-primary)");
+		expect(source).toContain(".performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-secondary)");
+		expect(source).toContain('.performance-campaign-opening__actions :global(.btn:focus-visible)');
+		expect(source).toContain('outline: 3px solid var(--color-performance-signal-soft, #a7b8ff)');
+	});
+});
+
+describe('Performance composition typography', () => {
+	it('keeps every composition on the shared display, kerning, weight, and tracking contract', () => {
+		const components = [
+			'PerformanceCampaignOpening.svelte',
+			'PerformanceFieldStudy.svelte',
+			'PerformanceThesisConditions.svelte',
+			'PerformanceFieldSequence.svelte',
+			'PerformanceContrastChapter.svelte',
+			'PerformanceEvidenceIndex.svelte',
+			'PerformanceConversionHandoff.svelte'
+		];
+
+		const tokens = readFileSync(join(process.cwd(), 'src/lib/styles/tokens.css'), 'utf8');
+		expect(tokens).toContain(
+			'--font-performance-display: "Helvetica Neue", Helvetica, Arial, system-ui'
+		);
+		expect(tokens).toContain('--font-performance-display-weight: 500');
+		expect(tokens).toContain('--tracking-performance-display: -0.03em');
+		expect(tokens).toContain('--leading-performance-display: 0.94');
+
+		for (const component of components) {
+			const source = readFileSync(
+				join(process.cwd(), 'src/lib/components/performance', component),
+				'utf8'
+			);
+			expect(source, component).toContain('var(--font-performance-display');
+			expect(source, component).toContain('var(--font-performance-display-weight');
+			expect(source, component).toContain('var(--tracking-performance-display');
+			expect(source, component).toContain('font-kerning: normal');
+			expect(source, component).toContain('font-feature-settings: "kern" 1, "liga" 1');
+		}
+	});
+
+	it('keeps the shared PerformancePageSection foundation on the same display contract', () => {
+		const source = readFileSync(
+			join(process.cwd(), 'src/lib/components/clear/ClearPageSection.svelte'),
+			'utf8'
+		);
+
+		expect(source).toContain('var(--font-performance-display');
+		expect(source).toContain('var(--font-performance-display-weight');
+		expect(source).toContain('var(--tracking-performance-display');
+		expect(source).toContain('font-kerning: normal');
+		expect(source).toContain('font-feature-settings: "kern" 1, "liga" 1');
+	});
+});
+
+describe('PerformanceThesisConditions', () => {
+	it('pairs one governing thesis with explicit operating conditions', () => {
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceThesisConditions, {
+			target,
+			props: {
+				eyebrow: 'Operating principle',
+				title: 'Governance is the channel, not the dam.',
+				description: 'Movement stays legible, accountable, and bounded.',
+				conditions: [
+					{ label: 'Pressure', title: 'Test under real conditions.', detail: 'Stress before delegation.', tone: 'pressure' },
+					{ label: 'Boundary', title: 'Design the limits.', detail: 'Stop conditions remain visible.', tone: 'signal' }
+				]
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const section = target.querySelector('section.performance-thesis-conditions');
+		expect(section?.getAttribute('aria-label')).toBe('Operating principle');
+		expect(section?.querySelector('h2')?.textContent).toBe('Governance is the channel, not the dam.');
+		const conditions = [...(section?.querySelectorAll('.performance-thesis-conditions__condition') ?? [])];
+		expect(conditions).toHaveLength(2);
+		expect(conditions[0].getAttribute('data-tone')).toBe('pressure');
+		expect(conditions[1].textContent).toContain('Stop conditions remain visible.');
+	});
+});
+
+describe('PerformanceFieldSequence', () => {
+	it('renders ordered field studies as one named evidence sequence', () => {
+		const sharedProof = { id: '#PR-2026-0710', owner: 'Platform Team', state: 'RUN', verified: 'Jul 10, 2026' };
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceFieldSequence, {
+			target,
+			props: {
+				eyebrow: 'Field protocol',
+				title: 'Test the workflow in sequence.',
+				layout: 'sticky',
+				studies: [
+					{ image: '/one.webp', alt: 'Pressure test', title: 'Apply pressure.', description: 'Expose the failure mode.', principle: 'Pressure reveals risk.', metrics: [{ label: 'Checks', value: '7 / 7' }], proof: sharedProof },
+					{ image: '/two.webp', alt: 'Proof settles', title: 'Settle the proof.', description: 'Make the outcome public.', principle: 'Evidence creates trust.', metrics: [{ label: 'Receipts', value: '3' }], proof: sharedProof, stage: 'receipt-settled' }
+				]
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const sequence = target.querySelector('section.performance-field-sequence');
+		expect(sequence?.getAttribute('data-layout')).toBe('sticky');
+		expect(sequence?.querySelector('h2')?.textContent).toBe('Test the workflow in sequence.');
+		const studies = [...(sequence?.querySelectorAll('.performance-field-study') ?? [])];
+		expect(studies).toHaveLength(2);
+		expect(studies[0].textContent).toContain('Figure 01');
+		expect(studies[1].textContent).toContain('Figure 02');
+		expect(studies[1].getAttribute('data-motion-stage')).toBe('receipt-settled');
+	});
+});
+
+describe('PerformanceContrastChapter', () => {
+	it('creates an explicit principle-to-intervention contrast with an artifact seam', () => {
+		const artifact = createRawSnippet(() => ({ render: () => '<div data-testid="contrast-artifact">Live workflow graph</div>' }));
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceContrastChapter, {
+			target,
+			props: {
+				eyebrow: 'Performance principle',
+				title: 'A system should expose its wake.',
+				description: 'Every consequential action leaves evidence.',
+				intervention: { label: 'Intervention 03', title: 'Public proof surface', detail: 'Receipts make delegation inspectable.' },
+				mode: 'ink-to-paper',
+				artifact
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const chapter = target.querySelector('section.performance-contrast-chapter');
+		expect(chapter?.getAttribute('data-mode')).toBe('ink-to-paper');
+		expect(chapter?.querySelector('h2')?.textContent).toBe('A system should expose its wake.');
+		expect(chapter?.querySelector('h3')?.textContent).toBe('Public proof surface');
+		expect(chapter?.querySelector('[data-testid="contrast-artifact"]')?.textContent).toBe('Live workflow graph');
+	});
+
+	it('can promote a live artifact to a full-width operating surface', () => {
+		const artifact = createRawSnippet(() => ({ render: () => '<div data-testid="full-width-artifact">Live canvas</div>' }));
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceContrastChapter, {
+			target,
+			props: {
+				title: 'Map the work before AI runs it.',
+				intervention: { label: 'Intervention 01', title: 'Atlas workflow map', detail: 'The canvas stays inspectable.' },
+				artifactPlacement: 'full-width',
+				artifact
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const chapter = target.querySelector('section.performance-contrast-chapter');
+		expect(chapter?.getAttribute('data-artifact-placement')).toBe('full-width');
+		const promoted = chapter?.querySelector('.performance-contrast-chapter__artifact--full-width');
+		expect(promoted?.querySelector('[data-testid="full-width-artifact"]')?.textContent).toBe('Live canvas');
+
+		const source = readFileSync(
+			join(process.cwd(), 'src/lib/components/performance/PerformanceContrastChapter.svelte'),
+			'utf8'
+		);
+		expect(source).toContain('grid-column: 1 / -1');
+	});
+});
+
+describe('PerformanceEvidenceIndex', () => {
+	it('renders inspectable evidence rows and a truthful empty state', () => {
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceEvidenceIndex, {
+			target,
+			props: {
+				title: 'Evidence index',
+				items: [
+					{ id: '#PR-0710-01', kind: 'Report', title: 'Workflow readiness', detail: 'Seven signals mapped.', state: 'verified', date: 'Jul 10, 2026', href: '/evidence/readiness' },
+					{ id: '#PR-0710-02', kind: 'Receipt', title: 'Delegation boundary', detail: 'Three stop conditions attached.', state: 'review', date: 'Jul 10, 2026' }
+				]
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const index = target.querySelector('section.performance-evidence-index');
+		expect(index?.querySelectorAll('.performance-evidence-index__item')).toHaveLength(2);
+		expect(index?.querySelector('a[href="/evidence/readiness"]')?.textContent).toContain('Workflow readiness');
+		expect(index?.querySelector('[data-state="review"]')?.textContent).toContain('#PR-0710-02');
+
+		unmount(instance as never);
+		instance = mount(PerformanceEvidenceIndex, { target, props: { title: 'Evidence index', items: [] } }) as Record<string, unknown>;
+		flushSync();
+		expect(target.querySelector('[data-empty="true"]')?.textContent).toContain('No public evidence has been attached yet.');
+	});
+});
+
+describe('PerformanceConversionHandoff', () => {
+	it('carries owner, authority, and proof into the conversion boundary', () => {
+		const actions = createRawSnippet(() => ({ render: () => '<a href="/book" data-testid="handoff-action">Map the workflow</a>' }));
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceConversionHandoff, {
+			target,
+			props: {
+				eyebrow: 'Next protocol',
+				title: 'Make one workflow safe to delegate.',
+				description: 'Start with a bounded operating path and its proof surface.',
+				handoff: { owner: 'AI Performance Lab', authority: 'Operator approval', proof: 'Public receipt', state: 'ready' },
+				steps: [
+					{ label: 'Map', title: 'Name the boundary', detail: 'Expose the workflow and its owner.' },
+					{ label: 'Prove', title: 'Attach the receipt', detail: 'Keep evidence with the action.' }
+				],
+				actions
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const handoff = target.querySelector('section.performance-conversion-handoff');
+		expect(handoff?.getAttribute('data-state')).toBe('ready');
+		expect(handoff?.querySelector('h2')?.textContent).toBe('Make one workflow safe to delegate.');
+		const values = [...(handoff?.querySelectorAll('dd') ?? [])].map((node) => node.textContent);
+		expect(values).toEqual(['AI Performance Lab', 'Operator approval', 'Public receipt', 'ready']);
+		expect(handoff?.querySelectorAll('.performance-conversion-handoff__step')).toHaveLength(2);
+		expect(handoff?.textContent).toContain('Attach the receipt');
+		expect(handoff?.querySelector('[data-testid="handoff-action"]')?.getAttribute('href')).toBe('/book');
+	});
+
+	it('gives wide operating artifacts a full-width handoff surface', () => {
+		const aside = createRawSnippet(() => ({
+			render: () => '<div data-testid="delegation-artifact">Delegation artifact</div>'
+		}));
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceConversionHandoff, {
+			target,
+			props: {
+				title: 'Bring one workflow your team is ready to delegate.',
+				handoff: { owner: 'CREATE SOMETHING', authority: 'Operator approval', proof: 'Workflow map', state: 'ready' },
+				artifactPlacement: 'full-width',
+				aside
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const handoff = target.querySelector('section.performance-conversion-handoff');
+		expect(handoff?.getAttribute('data-artifact-placement')).toBe('full-width');
+		expect(handoff?.querySelector(':scope > .performance-conversion-handoff__artifact [data-testid="delegation-artifact"]')).not.toBeNull();
+		expect(handoff?.querySelector('.performance-conversion-handoff__boundary [data-testid="delegation-artifact"]')).toBeNull();
+	});
+});

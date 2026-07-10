@@ -2,7 +2,7 @@
   import {
     Button,
     PerformanceCardGrid,
-    PerformanceCtaBand,
+    PerformanceConversionHandoff,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
@@ -372,11 +372,12 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformanceCtaBand
+<PerformanceConversionHandoff
   eyebrow="Next step"
   title="Bring one Dify workflow before adding more tools."
   description="I’ll map the workflow, MCP tool boundary, approval path, eval gates, and client-safe proof package before the app gets more autonomy."
-  items={ctaItems}
+  steps={ctaItems}
+  handoff={{ owner: 'Dify app operator', authority: 'Scoped MCP tool contract', proof: 'Policy OS launch receipt', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowTeardownHref}>
@@ -388,4 +389,4 @@
       Read Contract Bundle Paper
     </Button>
   {/snippet}
-</PerformanceCtaBand>
+</PerformanceConversionHandoff>
