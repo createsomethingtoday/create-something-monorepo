@@ -226,6 +226,26 @@ alone: pair every state with a text label, icon, or explicit decision copy.
 `--color-performance-pressure` marks test intensity or decisive emphasis; it
 does not mean safe, approved, or ready.
 
+### Semantic Motion Contract
+
+Use `@create-something/canon/motion` for renderer-independent interaction
+intent. An intent names the event, user-visible stages, semantic targets,
+Canon color roles, interruption policy, announcement copy, and reduced-motion
+resolution. It must not contain raw color values, CSS selectors, or
+runtime-specific timeline code.
+
+Runtime adapters choose the smallest appropriate executor:
+
+- CSS or Web Animations for local hover, focus, and isolated state changes.
+- View Transitions for navigation continuity.
+- GSAP for coordinated multi-stage sequences.
+- Canvas or graph APIs for renderer-owned position and viewport changes.
+- Immediate settled state when reduced-motion policy requires it.
+
+GSAP is therefore a first-class orchestration adapter, not the Canon data
+model. Performance Lab sequences must remain understandable through text,
+icons, values, and receipts when animation is unavailable.
+
 The same rule applies to marketing images and generated visuals. Use
 Performance Lab as the direction, then translate the work into CREATE SOMETHING
 artifact language: system maps, MCP boundaries, policy gates, receipts,

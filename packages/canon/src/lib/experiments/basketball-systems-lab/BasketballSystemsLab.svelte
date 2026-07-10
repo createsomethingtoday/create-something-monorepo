@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
+	import { gsap } from 'gsap';
 	import {
 		Activity,
 		ArrowUpRight,
@@ -17,6 +19,13 @@
 		Trophy,
 		Users
 	} from 'lucide-svelte';
+	import {
+		PERFORMANCE_LAB_SEQUENCE,
+		resolveMotionStages,
+		selectMotionRuntime,
+		type MotionRuntime,
+		type MotionStage
+	} from '../../motion/intent.js';
 	import {
 		getDefaultEnvironment,
 		getSampleSystemField,
@@ -302,6 +311,18 @@
 		resilience: 18
 	});
 	let builderMessage = $state('Builder weights are valid');
+	let labRoot: HTMLElement;
+	let motionTimeline: ReturnType<typeof gsap.timeline> | null = null;
+	let motionRunId = $state(0);
+	let activeMotionStageId = $state('idle');
+	let motionStageHistory = $state<string[]>([]);
+	let motionSequenceStatus = $state<'idle' | 'running' | 'settled'>('idle');
+	let motionRuntime = $state<MotionRuntime>('native');
+	let motionAnnouncement = $state('Ready to run the system.');
+	const performanceMotionStages = PERFORMANCE_LAB_SEQUENCE.stages;
+	const activeMotionStage = $derived(
+		performanceMotionStages.find((stage) => stage.id === activeMotionStageId) ?? null
+	);
 
 	const systems = $derived(listSystems(uploadedSystems));
 	const selectedEnvironment = $derived(
@@ -1292,6 +1313,127 @@
 		steeringPolicy = 'labor';
 	}
 
+	function motionTargets(target: string): HTMLElement[] {
+		if (!labRoot) return [];
+		return Array.from(labRoot.querySelectorAll<HTMLElement>(`[data-motion-target="${target}"]`));
+	}
+
+	function clearMotionTargetState(): void {
+		if (!labRoot) return;
+		for (const target of labRoot.querySelectorAll<HTMLElement>('[data-motion-target]')) {
+			target.dataset.motionActive = 'false';
+		}
+	}
+
+	function clearMotionAnimationState(): void {
+		if (!labRoot) return;
+		gsap.set(labRoot.querySelectorAll<HTMLElement>('[data-motion-target]'), {
+			clearProps: 'opacity,transform'
+		});
+	}
+
+	function activateMotionStage(stage: MotionStage): void {
+		clearMotionTargetState();
+		activeMotionStageId = stage.id;
+		motionStageHistory = [...motionStageHistory, stage.id];
+		motionAnnouncement = stage.announce;
+
+		for (const target of motionTargets(stage.target)) {
+			target.dataset.motionActive = 'true';
+			target.dataset.motionColorRole = stage.colorRole;
+		}
+
+		labRoot?.dispatchEvent(
+			new CustomEvent('performance-lab:motion-stage', {
+				bubbles: true,
+				detail: {
+					runId: motionRunId,
+					runtime: motionRuntime,
+					stageId: stage.id,
+					timestamp: performance.now()
+				}
+			})
+		);
+	}
+
+	function motionStageStatus(stageId: string): 'active' | 'done' | 'next' {
+		if (motionSequenceStatus === 'settled') return 'done';
+		if (activeMotionStageId === stageId) return 'active';
+		return motionStageHistory.includes(stageId) ? 'done' : 'next';
+	}
+
+	function runPerformanceSequence(action: () => void): void {
+		motionTimeline?.kill();
+		motionTimeline = null;
+		clearMotionAnimationState();
+		clearMotionTargetState();
+
+		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const stages = resolveMotionStages(PERFORMANCE_LAB_SEQUENCE, { reducedMotion });
+		motionRuntime = selectMotionRuntime(PERFORMANCE_LAB_SEQUENCE, {
+			gsap: true,
+			reducedMotion
+		});
+		motionRunId += 1;
+		motionStageHistory = [];
+		activeMotionStageId = 'idle';
+		motionSequenceStatus = 'running';
+		motionAnnouncement = 'Applying policy and resolving system evidence.';
+
+		action();
+
+		if (motionRuntime === 'instant') {
+			const settled = stages.at(-1);
+			if (settled) activateMotionStage(settled);
+			motionSequenceStatus = 'settled';
+			return;
+		}
+
+		const timeline = gsap.timeline({
+			defaults: { overwrite: 'auto' },
+			onComplete: () => {
+				motionSequenceStatus = 'settled';
+				motionTimeline = null;
+			}
+		});
+
+		for (const stage of stages) {
+			const targets = motionTargets(stage.target);
+			const animateOpacity = stage.channels.includes('opacity');
+			const animateTransform =
+				stage.channels.includes('scale') || stage.channels.includes('transform');
+			timeline.call(() => activateMotionStage(stage));
+			if (targets.length > 0 && (animateOpacity || animateTransform)) {
+				timeline.fromTo(
+					targets,
+					{
+						...(animateOpacity ? { opacity: 0.76 } : {}),
+						...(animateTransform ? { scale: 0.985 } : {})
+					},
+					{
+						...(animateOpacity ? { opacity: 1 } : {}),
+						...(animateTransform ? { scale: 1 } : {}),
+						duration: stage.durationMs / 1_000,
+						ease: 'power2.out',
+						stagger: 0.02,
+						clearProps: [animateOpacity ? 'opacity' : '', animateTransform ? 'transform' : '']
+							.filter(Boolean)
+							.join(',')
+					}
+				);
+			} else {
+				timeline.to({}, { duration: stage.durationMs / 1_000 });
+			}
+		}
+
+		motionTimeline = timeline;
+	}
+
+	onDestroy(() => {
+		motionTimeline?.kill();
+		clearMotionAnimationState();
+	});
+
 	function runPrimaryAction(): void {
 		if (playbackRunning) {
 			playbackRunning = false;
@@ -1306,15 +1448,15 @@
 
 		if (activeFirstRunStep === 'Decide' && canSteer) {
 			if (currentYearDecision) {
-				watchNextTurn();
+				runPerformanceSequence(watchNextTurn);
 				return;
 			}
 
-			applySteeringRecommendation();
+			runPerformanceSequence(applySteeringRecommendation);
 			return;
 		}
 
-		watchNextTurn();
+		runPerformanceSequence(watchNextTurn);
 	}
 
 	function steerFromViewedYear(policyKey = steeringPolicy): void {
@@ -2147,7 +2289,16 @@
 	}
 </script>
 
-<section class="performance-system-shell" aria-labelledby="performance-system-title">
+<section
+	bind:this={labRoot}
+	class="performance-system-shell"
+	aria-labelledby="performance-system-title"
+	data-motion-sequence-state={motionSequenceStatus}
+	data-motion-stage={activeMotionStageId}
+	data-motion-runtime={motionRuntime}
+	data-motion-run-id={motionRunId}
+	data-motion-history={motionStageHistory.join('|')}
+>
 	<div class="performance-system-hero performance-system-container">
 		<div class="performance-system-copy">
 			<p class="performance-system-eyebrow">Basketball Systems Lab</p>
@@ -2183,7 +2334,7 @@
 					<small>{activeEntry.decision}. {activeEntry.receipt}</small>
 				</div>
 			</div>
-			<div class="performance-system-metric-grid">
+			<div class="performance-system-metric-grid" data-motion-target="performance-lab.metrics">
 				{#each activeEntry.metrics as metric}
 					<div class="performance-system-metric" data-tone={metric.tone}>
 						<span>{metric.label}</span>
@@ -2250,7 +2401,10 @@
 			{/if}
 
 			<div class="performance-system-game-turn" aria-label="Game turn">
-				<div class="performance-system-game-turn-header">
+				<div
+					class="performance-system-game-turn-header"
+					data-motion-target="performance-lab.policy"
+				>
 					<div>
 						<span>{gameTurnLabel}</span>
 						<strong>{gameTurnTitle}</strong>
@@ -2267,6 +2421,38 @@
 						{/if}
 						<span>{primaryRunActionLabel}</span>
 					</button>
+				</div>
+				<div
+					class="performance-system-motion-sequence"
+					aria-label="Performance evidence sequence"
+					data-state={motionSequenceStatus}
+				>
+					<div class="performance-system-motion-sequence-header">
+						<div>
+							<span>Performance evidence</span>
+							<strong>{activeMotionStage?.label ?? 'Ready to resolve'}</strong>
+						</div>
+						<small>{motionRuntime} runtime</small>
+					</div>
+					<ol>
+						{#each performanceMotionStages as stage, index}
+							<li
+								data-motion-target={stage.target}
+								data-motion-color-role={stage.colorRole}
+								data-motion-active={activeMotionStageId === stage.id}
+								data-status={motionStageStatus(stage.id)}
+							>
+								<span>{index + 1}</span>
+								<div>
+									<strong>{stage.label}</strong>
+									<small>{stage.announce}</small>
+								</div>
+							</li>
+						{/each}
+					</ol>
+					<p class="performance-system-motion-announcement" aria-live="polite">
+						{motionAnnouncement}
+					</p>
 				</div>
 				<div class="performance-system-game-turn-lanes">
 					{#each gameTurnLanes as lane}
@@ -2838,7 +3024,11 @@
 				{/each}
 			</div>
 
-			<div class="performance-system-turn-recap performance-system-resource-bank" aria-label="Resource bank">
+			<div
+				class="performance-system-turn-recap performance-system-resource-bank"
+				aria-label="Resource bank"
+				data-motion-target="performance-lab.pressure"
+			>
 				{#each activeResourceLanes as resource}
 					<article data-tone={resource.critical ? 'red' : resource.tone}>
 						<span>{resource.label}</span>
@@ -2975,8 +3165,8 @@
 								class="primary"
 								disabled={nextTurnPrompt.status === 'applied' && !canAdvanceTurn}
 								onclick={nextTurnPrompt.status === 'applied'
-									? watchNextTurn
-									: applySteeringRecommendation}
+									? () => runPerformanceSequence(watchNextTurn)
+									: () => runPerformanceSequence(applySteeringRecommendation)}
 							>
 								<span>{nextTurnPrompt.primaryLabel}</span>
 								<strong>{nextTurnPrompt.primaryValue}</strong>
@@ -2984,12 +3174,16 @@
 							<button
 								type="button"
 								disabled={currentYearDecision?.policyKey === null}
-								onclick={holdOriginalFromViewedYear}
+								onclick={() => runPerformanceSequence(holdOriginalFromViewedYear)}
 							>
 								<span>Hold</span>
 								<strong>Original</strong>
 							</button>
-							<button type="button" disabled={!canAdvanceTurn} onclick={watchNextTurn}>
+							<button
+								type="button"
+								disabled={!canAdvanceTurn}
+								onclick={() => runPerformanceSequence(watchNextTurn)}
+							>
 								<span>Watch</span>
 								<strong>{canAdvanceTurn ? `Year ${viewedYear + 1}` : 'Done'}</strong>
 							</button>
@@ -3359,6 +3553,7 @@
 			<div
 				class="performance-system-validation"
 				data-status={match.validation.status}
+				data-motion-target="performance-lab.validation"
 				aria-label="Game requirement validation"
 			>
 				<div class="performance-system-validation-header">
@@ -3434,7 +3629,11 @@
 				</article>
 			{/each}
 		</div>
-		<div class="performance-system-receipt-ledger" aria-label="Simulation receipts">
+		<div
+			class="performance-system-receipt-ledger"
+			aria-label="Simulation receipts"
+			data-motion-target="performance-lab.receipt"
+		>
 			{#each match.ledger as entry}
 				<article class="performance-system-receipt">
 					<div>
