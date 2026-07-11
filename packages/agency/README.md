@@ -171,6 +171,7 @@ The managed portfolio covers the high-intent public funnel:
 | Workflow tool stack | `/partners` | `/cloudflare` |
 | Dify | `/dify` | `/dify/mcp-control-plane`, `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`, `/dify/template-marketplace-proof` |
 | Products | `/products` | - |
+| Field Reports | `/field-reports` | `/field-reports/template-review` |
 | Business use case | `/use-cases/business` | - |
 | Enterprise use case | `/use-cases/enterprise` | - |
 

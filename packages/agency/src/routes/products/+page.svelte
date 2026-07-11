@@ -238,9 +238,9 @@
 
 <PerformanceContrastChapter
   eyebrow="System anatomy"
-  title="One governed flow. Four inspectable surfaces."
-  description="The product system stays cohesive because every surface owns one part of the operating path."
-  intervention={{ label: 'Product system', title: 'Atlas / Signal / Decision / Proof', detail: 'Map the work, watch the change, route the judgment, preserve the record.' }}
+  title="One map coordinates three operating surfaces."
+  description="Atlas holds the map. Signal watches, Decision routes, and Proof records. Each surface owns one part of the operating path without pretending to be the whole system."
+  intervention={{ label: 'Product system', title: 'Atlas → Signal / Decision / Proof', detail: 'Map the work once, then watch the change, route the judgment, and preserve the record.' }}
 >
   {#snippet artifact()}
     <aside class="product-system-artifact" aria-label="CREATE SOMETHING product system">
@@ -273,8 +273,8 @@
 
 <PerformanceThesisConditions
   eyebrow="Product protocol"
-  title="One governed flow. Four inspectable surfaces."
-  description="The product system directs work through a map, signal, decision, and receipt without hiding ownership inside one interface."
+  title="The map and operating surfaces stay distinct."
+  description="Atlas defines the boundary. Signal, Decision, and Proof operate inside it without hiding ownership inside one interface."
   conditions={productProtocol}
   ariaLabel="Product system protocol"
 />

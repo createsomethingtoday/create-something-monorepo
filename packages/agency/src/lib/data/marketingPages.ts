@@ -9,6 +9,7 @@ export type MarketingPageCluster =
   | 'dify'
   | 'methodology'
   | 'products'
+  | 'field-reports'
   | 'proof-lab'
   | 'workflow-proof'
   | 'trust'
@@ -80,7 +81,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent: 'Introduce the category and route readers toward workflow mapping.',
     primaryAction: 'Start Workflow Map',
     requiredTerms: ['workflow', 'business operations', 'Signal', 'Decision', 'Proof'],
-    requiredLinks: ['/services', '/partners', '/products'],
+    requiredLinks: ['/services', '/partners', '/products', '/field-reports/template-review'],
     schema: 'faq',
     search: {
       changefreq: 'weekly',
@@ -536,6 +537,44 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       lastmod: '2026-06-28'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'archive-route:review']
+  },
+  {
+    path: '/field-reports',
+    cluster: 'field-reports',
+    role: 'pillar',
+    decision: 'index',
+    audience: 'Teams evaluating whether CREATE SOMETHING workflow claims survive inspection.',
+    funnelStage: 'evaluate',
+    intent: 'Index measured workflow results, failed gates, evidence sources, and remaining questions.',
+    primaryAction: 'Read the first report',
+    requiredTerms: ['Field Reports', 'measured', 'evidence', 'human', 'result'],
+    requiredLinks: ['/field-reports/template-review'],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.82',
+      lastmod: '2026-07-10'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
+    path: '/field-reports/template-review',
+    cluster: 'field-reports',
+    role: 'support',
+    decision: 'index',
+    audience: 'Operations and review teams evaluating evidence-assisted human judgment.',
+    funnelStage: 'evaluate',
+    intent: 'Show what the governed template-review workflow proved, failed, and still needs measured.',
+    primaryAction: 'Inspect the result',
+    requiredTerms: ['evidence', 'reviewer', 'measured', 'promotion blocked', 'savings'],
+    requiredLinks: ['/field-reports'],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.86',
+      lastmod: '2026-07-10'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
   {
     path: '/use-cases/business',
