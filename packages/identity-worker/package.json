@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:deploy": "pnpm --filter @create-something/auth-platform build",
     "dev": "node ../../scripts/run-wrangler.mjs dev",
-    "deploy": "node ../../scripts/run-wrangler.mjs deploy",
+    "deploy": "pnpm run build:deploy && node ../../scripts/run-wrangler.mjs deploy",
     "types": "node ../../scripts/run-wrangler.mjs types",
     "test": "pnpm --filter @create-something/mcp-authz build && pnpm --filter @create-something/auth-platform build && node --import tsx --test test/*.test.ts",
     "db:create": "node ../../scripts/run-wrangler.mjs d1 create identity-db",
