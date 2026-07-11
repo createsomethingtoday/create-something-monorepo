@@ -170,12 +170,17 @@
 <div class="shell property-performance" aria-busy={commandBusy}>
   <header class="topbar">
     <div class="brand"><span>GUARD PERFORMANCE LAB</span><small class="mono">FIELD TEST 01</small></div>
-    <div class="privacy">LOCAL / REV {labState.revision}</div>
+    <div class="privacy">PRIVATE / REV {labState.revision}</div>
     <div class="player-select">
-      <label for="player">Active player</label>
-      <select id="player" value={labState.selectedPlayerId} onchange={(event) => selectPlayer(event.currentTarget.value)}>
-        {#each labState.players as item}<option value={item.id}>{item.name}</option>{/each}
-      </select>
+      {#if operator}
+        <label for="player">Active player</label>
+        <select id="player" value={labState.selectedPlayerId} onchange={(event) => selectPlayer(event.currentTarget.value)}>
+          {#each labState.players as item}<option value={item.id}>{item.name}</option>{/each}
+        </select>
+      {:else}
+        <span class="assigned-player"><small>Assigned player</small><strong>{player?.name}</strong></span>
+      {/if}
+      <a class="sign-out" href="/api/auth/logout">Sign out</a>
     </div>
   </header>
 
@@ -185,7 +190,7 @@
     {/each}
   </nav>
 
-  {#if syncError}<div class="errors sync-error" role="alert"><strong>Local save needs attention.</strong> {syncError} Your browser copy is retained so you can retry.</div>{/if}
+  {#if syncError}<div class="errors sync-error" role="alert"><strong>Workspace save needs attention.</strong> {syncError} Retry after the authenticated server connection is restored.</div>{/if}
 
   <main class="main" id="main-content" tabindex="-1">
     {#if view === 'dashboard'}
@@ -317,17 +322,17 @@
         <fieldset class="evidence"><legend>Evidence snapshot</legend>
           {#each Object.entries(evidenceLabels) as [signal, label]}<div class="evidence-row"><strong>{label}</strong>{#each ['emerging', 'usable', 'repeatable'] as value}<label class="radio"><input type="radio" name={signal} checked={draft.evidence[signal as EvidenceSignal] === value} onchange={() => setEvidence(signal as EvidenceSignal, value as EvidenceValue)} /> {value}</label>{/each}</div>{/each}
         </fieldset>
-        <div class="actions"><button class="button primary" disabled={commandBusy} type="submit">Save receipt</button>{#if saved}<span class="success" role="status">RECEIPT SAVED / LOCAL ONLY</span>{/if}</div>
+        <div class="actions"><button class="button primary" disabled={commandBusy} type="submit">Save receipt</button>{#if saved}<span class="success" role="status">RECEIPT SAVED / PRIVATE WORKSPACE</span>{/if}</div>
       </form>
 
     {:else if view === 'progress'}
       <div class="section-head"><h2>Mastery before calendar</h2><p>Phases are gates, not promises tied to a fixed number of weeks.</p></div>
       <div class="table-wrap"><table><thead><tr><th>Phase</th><th>Development focus</th><th>Proof to advance</th></tr></thead><tbody>{#each progressionPhases as row}<tr>{#each row as cell}<td>{cell}</td>{/each}</tr>{/each}</tbody></table></div>
-      <div class="section-head"><h2>Receipt history</h2><p>Each entry belongs only to {player?.name} in the private local workspace.</p></div>
+      <div class="section-head"><h2>Receipt history</h2><p>Each entry belongs only to {player?.name} in the authenticated private workspace.</p></div>
       <div class="history">{#each receipts as item}<article class="receipt"><time>{item.date}</time><div><strong>{item.strength}</strong><p>{item.playerWords}</p></div><div><strong>Next: {item.nextFocus}</strong><p>{item.session}</p></div></article>{:else}<div class="empty">No progression receipts yet.</div>{/each}</div>
 
     {:else if view === 'players'}
-      <div class="section-head"><h2>Players + local data</h2><p>The app-owned local datastore is authoritative; this browser keeps a recovery cache. No analytics or external write is used.</p></div>
+      <div class="section-head"><h2>Players + private data</h2><p>The authenticated server response is authoritative. Protected workspace records are never restored from browser storage, and no analytics are used.</p></div>
       {#if operator}<section class="profile-box"><p class="eyebrow">Add a player profile</p><div class="profile-row"><input class="input" aria-label="New player name" bind:value={playerName} placeholder="Player name or private label" /><button class="button primary" disabled={commandBusy} onclick={addPlayer}>Add profile</button></div></section>{/if}
       <div class="section-head"><h2>Codex access boundary</h2><p>Both people work with the program. Neither needs a coach persona.</p></div>
       <div class="role-grid">
@@ -337,9 +342,9 @@
         <article><span class="mono">Operator Codex</span><strong>Manages the system</strong><p>Creates profiles, reviews the full workspace, manages evidence, and performs confirmation-gated reset.</p></article>
       </div>
       {#if operator}<div class="section-head"><h2>Data control</h2><p>Reset returns the app to its generic starter profile. This cannot be undone.</p></div>
-      <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset local data'}</button>{/if}
+      <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset workspace'}</button>{/if}
     {/if}
 
-    <footer class="footer">FIELD TEST / V0.2 &nbsp; STATUS / {hydrated ? 'PRIVATE READY' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY IDENTITY</footer>
+    <footer class="footer">FIELD TEST / V0.3 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
   </main>
 </div>
