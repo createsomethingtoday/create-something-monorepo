@@ -11,16 +11,17 @@ CS_IDENTITY_ISSUER = "https://id.createsomething.space"
 CS_IDENTITY_JWKS_URL = "https://id.createsomething.space/.well-known/jwks.json"
 CS_IDENTITY_AUDIENCE = "ona-agents"
 CS_AUTH_SIGN_IN_URL = "/sign-in"
+CS_AUTH_ALLOWED_EMAIL_DOMAINS = "createsomething.io"
 ALLOW_CS_AUTH_PREVIEW = "false"
 CS_AUTH_ALLOW_ANY_AUTHENTICATED = "false"
 
-# Required before production operator access:
-# - one or more allow rules:
+# Production operator access preserves the approved staff-domain policy. If a
+# narrower subject/email rule replaces it later, promote that as a separate
+# reviewed policy change.
+# Other supported allow rules:
 #   CS_AUTH_ALLOWED_SUBJECTS, CS_AUTH_ALLOWED_EMAILS,
-#   CS_AUTH_ALLOWED_EMAIL_DOMAINS, CS_AUTH_ALLOWED_TENANT_IDS,
+#   CS_AUTH_ALLOWED_TENANT_IDS,
 #   CS_AUTH_ALLOWED_ROLES, or CS_AUTH_ALLOW_ANY_AUTHENTICATED=true.
-# - production allow-rule values must be translated from the currently approved
-#   staff policy before third-party credentials are removed.
 #
 # Dify Service API keys remain server-side Pages secrets:
 # DIFY_TEMPLATE_REVIEW_HUB_API_KEY, DIFY_ERIC_HUB_API_KEY, DIFY_NATALIA_HUB_API_KEY,
