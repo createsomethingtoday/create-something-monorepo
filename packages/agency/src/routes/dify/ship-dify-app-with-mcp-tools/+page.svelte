@@ -307,12 +307,12 @@
   {#snippet after()}
     <PerformanceCardGrid items={buildPath} columns={4} ariaLabel="Dify MCP shipping path" />
     <ArticleVisualFigure
-      src="/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path.png"
+      src="/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path-v2.svg"
       alt="Diagram showing Dify as the app surface, MCP as the tool boundary, Policy OS as the control layer, and proof as the release surface."
-      eyebrow="Generated visual"
+      eyebrow="Verified diagram"
       title="The shipping path is surface, boundary, control, proof."
       caption="This owned diagram keeps the implementation legible: Dify carries the app, MCP scopes capability, Policy OS governs behavior, and proof explains what changed."
-      sourceLabel="Created by CREATE SOMETHING for this field guide."
+      sourceLabel="Verified SVG generated from a structured CREATE SOMETHING specification."
     />
   {/snippet}
 </PerformancePageSection>
