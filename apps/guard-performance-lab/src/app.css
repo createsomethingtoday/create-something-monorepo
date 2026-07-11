@@ -33,6 +33,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .player-select { display: flex; align-items: center; gap: 8px; }
 .player-select label { font-size: 10px; color: var(--color-performance-muted); }
 .player-select select { width: clamp(130px, 18vw, 190px); border: 1px solid var(--color-performance-line-strong); background: white; padding: 8px 10px; text-overflow: ellipsis; }
+.assigned-player { display: grid; gap: 2px; text-align: right; }
+.assigned-player small { color: var(--color-performance-muted); font: 700 8px/1 var(--font-performance-mono); text-transform: uppercase; }
+.assigned-player strong { max-width: 190px; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.sign-out { color: var(--color-performance-ink); font: 700 9px/1 var(--font-performance-mono); text-transform: uppercase; }
 .nav { display: flex; gap: 4px; padding: 8px clamp(16px, 4vw, 56px); overflow-x: auto; border-bottom: 1px solid var(--color-performance-line); background: var(--color-performance-panel); }
 .nav button { flex: 0 0 auto; border: 0; background: transparent; padding: 10px 12px; color: var(--color-performance-muted); font: 700 10px/1 var(--font-performance-mono); text-transform: uppercase; letter-spacing: .05em; }
 .nav button[aria-current='page'] { background: var(--color-performance-ink); color: white; }
@@ -139,11 +143,14 @@ textarea.input { min-height: 104px; resize: vertical; }
   .court { min-height: 420px; }
 }
 @media (max-width: 600px) {
-  .topbar { gap: 8px; padding: 10px 12px; }
+  .topbar { grid-template-columns: 1fr; gap: 8px; padding: 10px 12px; }
   .brand span { font-size: 14px; }
   .brand small { display: none; }
+  .player-select { width: 100%; justify-content: space-between; }
   .player-select label { position: absolute; width: 1px; height: 1px; overflow: hidden; }
-  .player-select select { width: clamp(120px, 42vw, 165px); }
+  .player-select select { width: min(60vw, 190px); }
+  .assigned-player { text-align: left; }
+  .assigned-player strong { max-width: 60vw; }
   .nav { padding-inline: 8px; }
   .main { width: min(100% - 20px, 1180px); padding-top: 18px; }
   .hero-copy { padding: 30px 22px; }

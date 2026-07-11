@@ -1,6 +1,6 @@
 # Guard Performance Lab
 
-A standalone, private-first coaching system for developing guards. Version 0.2 turns the Session 01 packet into a court-side workflow: prepare, run the session, align language, read the help, save a receipt, record engagement, and review progression.
+A standalone, private-first coaching system for developing guards. Version 0.3 adds first-party identity, exact operator/player authorization, remote MCP verification, and durable production storage to the court-side workflow.
 
 ## Privacy model
 
@@ -45,17 +45,19 @@ The coach supplies short observations only when requested. The agent/program own
 
 ## Codex / MCP
 
-Operator mode exposes full local workspace management:
+Operator mode exposes full workspace management only when a trusted launcher assigns the scope explicitly:
 
 ```bash
+GUARD_LAB_MCP_LAUNCHER=trusted \
+GUARD_LAB_MCP_SCOPE=operator \
 pnpm --filter @create-something/guard-performance-lab mcp
 ```
 
 Player mode registers only player-safe capabilities and filters every read/write to one player:
 
 ```bash
-GUARD_LAB_ROLE=player \
-GUARD_LAB_PLAYER_ID=developing-guard \
+GUARD_LAB_MCP_LAUNCHER=trusted \
+GUARD_LAB_MCP_SCOPE=player:developing-guard \
 pnpm --filter @create-something/guard-performance-lab mcp
 ```
 
@@ -76,7 +78,7 @@ The MCP surface provides program/workspace resources plus guidance, evidence rev
 
 ## Fonts and network boundary
 
-Satoshi and IBM Plex Mono are self-hosted under `static/fonts/`. The app consumes Canon’s Performance color tokens without importing Canon’s remote Fontshare stylesheet or its all-language font bundle. Runtime network activity is limited to the local app/API unless a person explicitly opens a saved evidence link.
+Satoshi and IBM Plex Mono are self-hosted under `static/fonts/`. The app consumes Canon’s Performance color tokens without importing Canon’s remote Fontshare stylesheet or its all-language font bundle. Runtime network activity is limited to the app, CREATE SOMETHING Identity endpoints, the configured remote MCP boundary, and evidence links a person explicitly opens.
 
 Verify both MCP profiles:
 
@@ -92,4 +94,4 @@ pnpm --filter @create-something/guard-performance-lab mcp:parity
 
 ## Deployment boundary
 
-The package is production-buildable, but public deployment, analytics, remote accounts, external persistence, licensed feeds, and provider credentials are approval-gated. The v0.2 completion target is a verified local production build.
+The package now has an approved Cloudflare Pages and D1 production path. Production remains fail-closed until exact legitimate subject bindings are supplied. New credentials, real-user assignments, retention-policy changes, licensed feeds, and future production promotions remain separately approval-gated; no source change by itself grants those permissions.

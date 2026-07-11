@@ -38,6 +38,7 @@ pnpm-debug.log*
 coverage
 .vitest
 output/playwright/
+output/guard-auth-adoption/
 .playwright-cli/
 
 # Temporary files
