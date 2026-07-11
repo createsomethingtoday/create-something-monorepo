@@ -306,7 +306,7 @@ test('agency public Substrate canvas mounts the shared canvas kernel', () => {
 	assert.ok(agencySubstrateCanvasWrapper.includes('The canvas is the proof object.'));
 	assert.ok(agencySubstrateCanvasWrapper.includes('Signal / Decision / Proof'));
 	assert.ok(agencySubstrateCanvasWrapper.includes('shared kernel'));
-	assert.ok(agencySubstrateCanvasWrapper.includes('Show receipts'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('Trace proof'));
 	assert.ok(agencySubstrateCanvasModule.includes("from '@create-something/canvas-kernel'"));
 	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROJECTION'));
 	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_MOBILE_PROJECTION'));
@@ -314,6 +314,24 @@ test('agency public Substrate canvas mounts the shared canvas kernel', () => {
 	assert.ok(agencySubstrateCanvasModule.includes("'receipt_graph'"));
 	assert.ok(agencySubstrateCanvasModule.includes('Public proof surface'));
 	assert.ok(agencySubstrateCanvasModule.includes('Stop condition'));
+});
+
+test('agency public Substrate canvas turns receipt selection into an accessible proof trace', () => {
+	assert.ok(agencySubstrateCanvasWrapper.includes('Trace proof'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('aria-pressed={proofModeActive}'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('aria-controls="public-substrate-receipt"'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('on:keydown={handleProofKeydown}'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('PUBLIC_SUBSTRATE_CANVAS_PROOF_EMPHASIS'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('id="public-substrate-receipt"'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('href="/products/proof"'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('Representative public receipt'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Source</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Decision</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Action</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Result</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Rollback</dt>'));
+	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROOF_NODE_IDS'));
+	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROOF_EDGE_IDS'));
 });
 
 test('agency public Substrate canvas keeps a readable mobile projection', () => {
