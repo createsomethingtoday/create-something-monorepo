@@ -10,6 +10,7 @@ export type MarketingPageCluster =
   | 'methodology'
   | 'products'
   | 'proof-lab'
+  | 'workflow-proof'
   | 'trust'
   | 'business-use-case'
   | 'enterprise-use-case'
@@ -185,6 +186,26 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
   {
+    path: '/proof/marketplace-workflow',
+    cluster: 'workflow-proof',
+    role: 'pillar',
+    decision: 'index',
+    audience: 'Operators evaluating a complete governed workflow before mapping their own.',
+    funnelStage: 'evaluate',
+    intent:
+      'Show one complete Marketplace workflow from versioned map through compiled contracts, representative replay, and deterministic proof.',
+    primaryAction: 'Map your workflow',
+    requiredTerms: ['workflow', 'Atlas', 'Marketplace', 'approval', 'proof'],
+    requiredLinks: ['/products'],
+    schema: 'article',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.82',
+      lastmod: '2026-07-11'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
     path: '/stack',
     cluster: 'stack-boundary',
     role: 'pillar',
@@ -351,8 +372,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'evaluate',
     intent: 'Show the gates that prove a Dify workflow can operate safely.',
     primaryAction: 'Request workflow teardown',
-    requiredTerms: ['Dify', 'Langfuse', 'eval trace', 'forbidden tool', 'secret refusal'],
-    requiredLinks: ['/dify', '/dify/ship-dify-app-with-mcp-tools'],
+    requiredTerms: ['Dify', 'Langfuse', 'runtime trace', 'forbidden tool', 'secret refusal'],
+    requiredLinks: ['/dify', '/dify/mcp-control-plane'],
     schema: 'article',
     search: {
       changefreq: 'weekly',
