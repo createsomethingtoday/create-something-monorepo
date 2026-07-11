@@ -5,9 +5,10 @@ A standalone, private-first coaching system for developing guards. Version 0.2 t
 ## Privacy model
 
 - Player profiles, receipts, evidence, and engagement state use a versioned app-owned local datastore at `.data/workspace.json` relative to the app process working directory (gitignored). Set `GUARD_LAB_DATA_PATH` to use an explicit private path.
+- Production uses the private `GUARD_LAB_DB` Cloudflare D1 binding. The runtime fails closed when `ENVIRONMENT=production` and that durable binding is absent; the JSON file store remains development-only.
 - Every mutation goes through one typed command service. An atomic cross-process lock prevents browser and Codex writes from overwriting one another; the visible workspace revision increments after each accepted command.
-- Browser `localStorage` is only a recoverable draft/cache layer.
-- The app has no analytics or external network writes.
+- Protected workspace data is never restored from browser storage; the server-scoped response is authoritative for every identity.
+- The app has no analytics or domain-external data writes. Network access is limited to first-party identity verification/login and operator-requested source links.
 - The starter profile is generic and contains no child-identifying information.
 - Resetting local data restores the generic profile and removes saved receipts, evidence, and engagement events.
 
@@ -57,6 +58,19 @@ GUARD_LAB_ROLE=player \
 GUARD_LAB_PLAYER_ID=developing-guard \
 pnpm --filter @create-something/guard-performance-lab mcp
 ```
+
+## First-party identity and production
+
+Guard Lab accepts only exact server-side subject bindings:
+
+- `GUARD_LAB_OPERATOR_SUBJECTS`: comma-separated operator subjects.
+- `GUARD_LAB_PLAYER_BINDINGS`: JSON object mapping identity subject to assigned player ID.
+- `CS_IDENTITY_AUDIENCE=guard-performance-lab` with the standard CREATE SOMETHING issuer/JWKS variables.
+- `ALLOW_CS_AUTH_PREVIEW=true` requires an explicit non-production `GUARD_LAB_DEV_SCOPE=operator` or `player:<id>` and is rejected in production.
+
+Every layout and `/api/*` data route resolves Canon access. Player HTTP and MCP calls are scoped from the binding; a caller-supplied different player ID is denied. Stdio MCP requires `GUARD_LAB_MCP_LAUNCHER=trusted` and an explicit `GUARD_LAB_MCP_SCOPE`; remote MCP callers must pass bearer verification before a tool server is constructed.
+
+Production hosting is Cloudflare Pages plus D1. Apply migrations before deploying. Keep a D1 export and the previous Pages deployment ID before promotion; rollback the Pages deployment first, then restore the corresponding D1 export only if the schema/data change requires it. Private player records are retained until an operator explicitly deletes or resets them; exports and rollback artifacts must remain private and follow the same deletion decision.
 
 The MCP surface provides program/workspace resources plus guidance, evidence review, artifact-search preparation, evidence registration, receipt, and engagement tools. Operator-only create-player and reset tools are absent in player mode. Every player mutation response is filtered back to that one profile, and player engagement is attributed to the player even if a caller supplies another source. Codex may locate collegiate/professional sources using its own web tools, but saved evidence must carry provenance; video is linked, not copied.
 

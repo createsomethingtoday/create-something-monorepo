@@ -7,15 +7,22 @@ import { guideInputSchema, getNextInteraction, reviewEvidence } from '../lib/gui
 import type { EvidenceDraft } from '../lib/model.js';
 import { LabService } from '../lib/server/lab-service.js';
 import { JsonFileLabStore, labStore, type LabStore } from '../lib/server/store.js';
+import type { GuardAccessScope } from '../lib/server/scope.js';
 
 const textResult = (value: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }], structuredContent: value as Record<string, unknown> });
 
-export type GuardMcpScope = { role: 'operator' } | { role: 'player'; playerId: string };
+export type GuardMcpScope = GuardAccessScope;
 
-export function createGuardLabMcpServer(store: LabStore = labStore, scope: GuardMcpScope = { role: 'operator' }) {
+export function createGuardLabMcpServer(store: LabStore = labStore, scope: GuardMcpScope) {
   const service = new LabService(store);
   const readWorkspace = async () => scope.role === 'player' ? service.getPlayerWorkspace(scope.playerId) : service.getWorkspace();
-  const targetPlayerId = async (requested?: string) => scope.role === 'player' ? scope.playerId : requested ?? (await service.getWorkspace()).workspace.selectedPlayerId;
+  const targetPlayerId = async (requested?: string) => {
+    if (scope.role === 'player') {
+      if (requested && requested !== scope.playerId) throw new Error('The requested operation is outside the assigned player scope.');
+      return scope.playerId;
+    }
+    return requested ?? (await service.getWorkspace()).workspace.selectedPlayerId;
+  };
   const mutationResult = async (result: Promise<unknown>) => { await result; return scope.role === 'player' ? service.getPlayerWorkspace(scope.playerId) : result; };
   const server = new McpServer({ name: 'guard-performance-lab', version: '0.2.0' });
   server.registerResource('guard-program-session-01', 'guard://program/session-01', { title: 'Guard Performance Lab Session 01', description: 'The controlled program sequence, context-provider boundary, safety stops, and evidence policy.', mimeType: 'application/json' }, async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify({ thesis: 'See it early. Create an angle. Read the help. Leave balanced.', sequence: ['prepare','connect','baseline','advantage','help','misdirection','live','receipt'], coachRole: 'Provide concise real-time context only when requested.', agentRole: 'Own sequence, requested context, safety policy, evidence review, and next interaction.', evidencePolicy: 'Separate sourced observation, coach context, and inference. Never rank or diagnose a child.' }, null, 2) }] }));
@@ -33,5 +40,17 @@ export function createGuardLabMcpServer(store: LabStore = labStore, scope: Guard
   return server;
 }
 
-async function main() { const role = process.env.GUARD_LAB_ROLE === 'player' ? 'player' : 'operator'; const playerId = process.env.GUARD_LAB_PLAYER_ID; if (role === 'player' && !playerId) throw new Error('GUARD_LAB_PLAYER_ID is required in player mode.'); const scope: GuardMcpScope = role === 'player' ? { role, playerId: playerId! } : { role }; const server = createGuardLabMcpServer(new JsonFileLabStore(), scope); await server.connect(new StdioServerTransport()); console.error(`guard-performance-lab MCP running on stdio (${role})`); }
+export function parseTrustedLauncherScope(env: Record<string, string | undefined>): GuardMcpScope {
+  if (env.GUARD_LAB_MCP_LAUNCHER !== 'trusted') {
+    throw new Error('Guard Lab stdio scope must come from a trusted launcher.');
+  }
+  const raw = env.GUARD_LAB_MCP_SCOPE?.trim();
+  if (raw === 'operator') return { role: 'operator' };
+  if (raw?.startsWith('player:') && raw.slice('player:'.length).trim()) {
+    return { role: 'player', playerId: raw.slice('player:'.length).trim() };
+  }
+  throw new Error('Trusted launcher must set GUARD_LAB_MCP_SCOPE to operator or player:<assigned-player-id>.');
+}
+
+async function main() { const scope = parseTrustedLauncherScope(process.env); const server = createGuardLabMcpServer(new JsonFileLabStore(), scope); await server.connect(new StdioServerTransport()); console.error(`guard-performance-lab MCP running on stdio (${scope.role})`); }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch((error) => { console.error(error); process.exit(1); });

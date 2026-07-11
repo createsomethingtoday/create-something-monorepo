@@ -1,5 +1,6 @@
 import { z, ZodError } from 'zod';
 import { labService, type LabService } from './server/lab-service.js';
+import { isPlayerScope, type GuardAccessScope } from './server/scope.js';
 
 const evidenceValues = z.enum(['emerging', 'usable', 'repeatable']);
 const receiptSchema = z.object({
@@ -31,9 +32,21 @@ export const workspaceCommandSchema = z.discriminatedUnion('action', [
 ]);
 export type WorkspaceCommand = z.infer<typeof workspaceCommandSchema>;
 
-export async function workspaceCommandResponse(request: Request, service: LabService = labService): Promise<Response> {
+export async function workspaceCommandResponse(
+  request: Request,
+  service: LabService = labService,
+  scope: GuardAccessScope = { role: 'operator' }
+): Promise<Response> {
   try {
     const command = workspaceCommandSchema.parse(await request.json());
+    if (isPlayerScope(scope)) {
+      if (command.action === 'create-player' || command.action === 'select-player') {
+        return Response.json({ ok: false, error: 'Player access cannot manage player profiles.' }, { status: 403 });
+      }
+      if (command.playerId !== scope.playerId) {
+        return Response.json({ ok: false, error: 'The requested operation is outside the assigned player scope.' }, { status: 403 });
+      }
+    }
     const result = command.action === 'select-player' ? await service.selectPlayer(command.playerId)
       : command.action === 'create-player' ? await service.createPlayer(command.name)
       : command.action === 'save-receipt' ? await service.saveReceipt(command.playerId, command.receipt)
