@@ -1,0 +1,33 @@
+/*
+ * Guard Performance Lab Overlay theme overlay.
+ * Generated from @create-something/canon/overlays/project-template.
+ * Keep aliases pointed at Canon tokens instead of forking primitives.
+ */
+
+:root {
+	/* Typography is intentionally local and embedded; Helvetica is not part of this system. */
+	--overlay-font-display: var(--font-performance-display, 'Satoshi', Arial, system-ui, sans-serif);
+	--overlay-font-mono: var(--font-performance-mono, 'IBM Plex Mono', ui-monospace, monospace);
+	--overlay-accent: var(--color-performance-signal, #0057b8);
+	--overlay-pressure: var(--color-performance-pressure, #e54800);
+	--overlay-accent-contrast: var(--color-performance-panel, #ffffff);
+	--overlay-surface: var(--color-performance-panel, #ffffff);
+	--overlay-surface-muted: var(--color-performance-paper, #f3f3f0);
+	--overlay-border: var(--color-performance-line, #d7d7d2);
+	--overlay-proof: var(--color-performance-growth, #007a4d);
+	--overlay-review: var(--color-performance-gold, #8b6b00);
+	--overlay-block: var(--color-performance-risk, #c62026);
+	--overlay-radius: var(--radius-performance-md, 4px);
+	--overlay-focus-ring: 0 0 0 3px color-mix(in srgb, var(--overlay-accent) 24%, transparent);
+}
+
+[data-canon-overlay='overlay.guard-performance-lab'] {
+	font-family: var(--overlay-font-display);
+	color: var(--color-performance-ink, #090909);
+	background: var(--overlay-surface);
+}
+
+[data-canon-overlay='overlay.guard-performance-lab'] :focus-visible {
+	outline: none;
+	box-shadow: var(--overlay-focus-ring);
+}

@@ -1,0 +1,38 @@
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createGuardLabMcpServer } from './server.js';
+import { JsonFileLabStore } from '../lib/server/store.js';
+
+const dir = await mkdtemp(join(tmpdir(), 'guard-mcp-'));
+try {
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const server = createGuardLabMcpServer(new JsonFileLabStore(join(dir, 'workspace.json')));
+  const client = new Client({ name: 'guard-lab-smoke', version: '1.0.0' }, { capabilities: {} });
+  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  const tools = await client.listTools();
+  const resources = await client.listResources();
+  const guidance = await client.callTool({ name: 'guard_next_interaction', arguments: { stage: 'help', helpSource: 'nail', observation: 'Nail helper stepped early' } });
+  const created = await client.callTool({ name: 'guard_create_player', arguments: { name: 'Codex Managed Player' } });
+  if (tools.tools.length < 7 || resources.resources.length < 2 || guidance.isError || created.isError) throw new Error('MCP smoke did not expose or execute the required contract.');
+  const [playerClientTransport, playerServerTransport] = InMemoryTransport.createLinkedPair();
+  const playerServer = createGuardLabMcpServer(new JsonFileLabStore(join(dir, 'workspace.json')), { role: 'player', playerId: 'developing-guard' });
+  const playerClient = new Client({ name: 'guard-player-smoke', version: '1.0.0' }, { capabilities: {} });
+  await Promise.all([playerServer.connect(playerServerTransport), playerClient.connect(playerClientTransport)]);
+  const playerTools = await playerClient.listTools();
+  const playerWorkspace = await playerClient.callTool({ name: 'guard_get_workspace', arguments: {} });
+  const playerEvidence = await playerClient.callTool({ name: 'guard_register_evidence', arguments: { kind: 'stat-line', title: 'Official collegiate guard stat profile', sourceLabel: 'Official NCAA statistics', sourceUrl: 'https://www.ncaa.com/stats/basketball-men/d1', level: 'college', observation: 'Source retained for a later film-and-stat review; no player ranking inferred.' } });
+  const playerEngagement = await playerClient.callTool({ name: 'guard_record_engagement', arguments: { stage: 'help', status: 'active', source: 'coach', note: 'Player requested another look at the nail read.' } });
+  if (playerTools.tools.some((tool) => ['guard_create_player','guard_reset_workspace'].includes(tool.name))) throw new Error('Player scope exposed operator-only tools.');
+  const playerPayload = playerWorkspace.structuredContent as { workspace?: { players?: unknown[] } };
+  if (playerPayload.workspace?.players?.length !== 1) throw new Error('Player scope did not isolate workspace data.');
+  const evidencePayload = playerEvidence.structuredContent as { workspace?: { players?: unknown[]; artifacts?: Array<{ playerId?: string }> } };
+  if (playerEvidence.isError || evidencePayload.workspace?.players?.length !== 1 || evidencePayload.workspace?.artifacts?.some((artifact) => artifact.playerId !== 'developing-guard')) throw new Error('Player evidence response escaped its assigned profile.');
+  const engagementPayload = playerEngagement.structuredContent as { workspace?: { players?: unknown[]; engagements?: Array<{ playerId?: string; source?: string }> } };
+  if (playerEngagement.isError || engagementPayload.workspace?.players?.length !== 1 || engagementPayload.workspace?.engagements?.some((event) => event.playerId !== 'developing-guard' || event.source !== 'player')) throw new Error('Player engagement response escaped its scope or retained an operator source.');
+  console.log(JSON.stringify({ ok: true, operatorTools: tools.tools.map((t) => ({ name: t.name, annotations: t.annotations })), playerTools: playerTools.tools.map((t) => t.name), resources: resources.resources.map((r) => r.uri), guidance: guidance.structuredContent, write: created.structuredContent, playerEvidence: playerEvidence.structuredContent, playerEngagement: playerEngagement.structuredContent }, null, 2));
+  await playerClient.close(); await playerServer.close();
+  await client.close(); await server.close();
+} finally { await rm(dir, { recursive: true, force: true }); }

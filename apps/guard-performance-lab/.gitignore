@@ -1,0 +1,4 @@
+.data/
+.svelte-kit/
+build/
+node_modules/
