@@ -13,6 +13,7 @@ import {
   fetchAuthorizedAgentRequest,
   requestTemplateAgentSession,
 } from './templateAgentSession';
+import { completeTurnstileChallenge, type TurnstileApi } from './turnstileChallenge';
 
 // ── Agent protocol (mirrors webflow-template-agent) ───────────────────────────
 
@@ -430,24 +431,6 @@ function loadPersistedSession(): PersistedSession | null {
   }
 }
 
-interface TurnstileApi {
-  render(
-    container: HTMLElement,
-    options: {
-      sitekey: string;
-      action: string;
-      execution: 'execute';
-      appearance: 'interaction-only';
-      callback: (token: string) => void;
-      'error-callback': () => void;
-      'expired-callback': () => void;
-      'timeout-callback': () => void;
-    },
-  ): string;
-  execute(widgetId: string): void;
-  remove(widgetId: string): void;
-}
-
 declare global {
   interface Window {
     turnstile?: TurnstileApi;
@@ -483,28 +466,7 @@ function loadTurnstile(): Promise<TurnstileApi> {
 
 async function getTurnstileToken(container: HTMLElement, sitekey: string): Promise<string> {
   const turnstile = await loadTurnstile();
-  return new Promise((resolve, reject) => {
-    let widgetId = '';
-    let settled = false;
-    const finish = (token?: string) => {
-      if (settled) return;
-      settled = true;
-      if (widgetId) turnstile.remove(widgetId);
-      if (token) resolve(token);
-      else reject(new Error('Bot check could not be completed.'));
-    };
-    widgetId = turnstile.render(container, {
-      sitekey,
-      action: 'template-agent-session',
-      execution: 'execute',
-      appearance: 'interaction-only',
-      callback: (token) => finish(token),
-      'error-callback': () => finish(),
-      'expired-callback': () => finish(),
-      'timeout-callback': () => finish(),
-    });
-    turnstile.execute(widgetId);
-  });
+  return completeTurnstileChallenge(turnstile, container, sitekey);
 }
 
 // ── Page control (agent drives the host page's grid/filters) ─────────────────

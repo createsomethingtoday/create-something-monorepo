@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { TemplateChat } from '../src/components/chat/TemplateChat';
+import { completeTurnstileChallenge, type TurnstileApi } from '../src/components/chat/turnstileChallenge';
 import {
   fetchAuthorizedAgentRequest,
   requestTemplateAgentSession,
@@ -82,4 +83,31 @@ test('TemplateChat renders a Turnstile mount without exposing a secret', () => {
   );
   assert.match(html, /class="tmchat-turnstile"/);
   assert.doesNotMatch(html, /public-site-key/);
+});
+
+test('Turnstile runs on render and defers widget removal until after its callback returns', async () => {
+  const calls: string[] = [];
+  let renderOptions: Parameters<TurnstileApi['render']>[1] | undefined;
+  const turnstile: TurnstileApi = {
+    render(_container, options) {
+      renderOptions = options;
+      queueMicrotask(() => {
+        calls.push('callback:start');
+        options.callback('challenge-once');
+        calls.push('callback:end');
+      });
+      return 'widget-1';
+    },
+    remove(widgetId) {
+      calls.push(`remove:${widgetId}`);
+    },
+  };
+
+  const token = await completeTurnstileChallenge(turnstile, {} as HTMLElement, 'public-site-key');
+  assert.equal(token, 'challenge-once');
+  assert.equal('execution' in (renderOptions ?? {}), false);
+  assert.deepEqual(calls, ['callback:start', 'callback:end']);
+
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.deepEqual(calls, ['callback:start', 'callback:end', 'remove:widget-1']);
 });
