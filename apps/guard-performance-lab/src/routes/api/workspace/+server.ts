@@ -1,8 +1,25 @@
 import type { RequestHandler } from './$types';
-import { labService } from '$lib/server/lab-service.js';
+import { deniedAccessResponse, resolveGuardApplicationAccess, runtimeEnv } from '$lib/server/access.js';
+import { readWorkspaceResponse, resetWorkspaceResponse } from '$lib/server/workspace-http.js';
+import { labServiceForRuntime } from '$lib/server/runtime-store.js';
 
-export const GET: RequestHandler = async () => Response.json(await labService.getWorkspace());
-export const DELETE: RequestHandler = async ({ request }) => {
-  if (request.headers.get('x-guard-lab-confirm') !== 'reset') return Response.json({ ok: false, error: 'Reset requires x-guard-lab-confirm: reset.' }, { status: 409 });
-  return Response.json(await labService.reset());
+async function accessFor(event: Parameters<RequestHandler>[0]) {
+  return resolveGuardApplicationAccess({
+    request: event.request,
+    url: event.url,
+    fetch: event.fetch,
+    env: runtimeEnv(event.platform)
+  });
+}
+
+export const GET: RequestHandler = async (event) => {
+  const access = await accessFor(event);
+  return access.scope ? readWorkspaceResponse(labServiceForRuntime(event.platform), access.scope) : deniedAccessResponse(access);
+};
+
+export const DELETE: RequestHandler = async (event) => {
+  const access = await accessFor(event);
+  return access.scope
+    ? resetWorkspaceResponse(event.request, labServiceForRuntime(event.platform), access.scope)
+    : deniedAccessResponse(access);
 };

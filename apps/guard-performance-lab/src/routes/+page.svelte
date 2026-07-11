@@ -1,15 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import type { PageData } from './$types';
   import { glossary, progressionPhases, sessionBlocks } from '$lib/data.js';
   import type { GuideOutput } from '$lib/guide.js';
   import type { WorkspaceCommand } from '$lib/workspace-api.js';
   import {
-    STORAGE_KEY,
     createInitialState,
     artifactsForSelected,
     engagementsForSelected,
     emptyReceipt,
-    parseState,
     receiptsForSelected,
     validateReceipt,
     validateArtifact,
@@ -20,6 +19,8 @@
     type ProgramStage,
     type ReceiptDraft
   } from '$lib/model.js';
+
+  let { data }: { data: PageData } = $props();
 
   type View = 'dashboard' | 'guide' | 'plan' | 'language' | 'reads' | 'receipt' | 'progress' | 'players';
   const views: { key: View; label: string }[] = [
@@ -57,6 +58,7 @@
   let engagementNote = $state('');
   let artifactErrors = $state<string[]>([]);
   let artifactDraft = $state<EvidenceDraft>({ kind: 'coach-observation', title: '', sourceLabel: 'Coach', sourceUrl: '', level: 'youth', jurisdiction: '', observation: '' });
+  let operator = $derived(data.guardAccess.scope?.role === 'operator');
 
   let player = $derived(labState.players.find((item) => item.id === labState.selectedPlayerId) ?? labState.players[0]);
   let receipts = $derived(receiptsForSelected(labState));
@@ -71,10 +73,10 @@
   onMount(async () => {
     try {
       const response = await fetch('/api/workspace');
-      const body = await response.json();
-      labState = body.ok ? body.workspace : parseState(localStorage.getItem(STORAGE_KEY));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(labState));
-    } catch { labState = parseState(localStorage.getItem(STORAGE_KEY)); }
+      const body = await response.json() as { ok?: boolean; workspace?: LabState; error?: string };
+      if (!response.ok || !body.ok || !body.workspace) throw new Error(body.error ?? 'The private workspace could not be loaded.');
+      labState = body.workspace;
+    } catch (error) { syncError = error instanceof Error ? error.message : 'The private workspace could not be loaded.'; }
     hydrated = true;
   });
 
@@ -86,7 +88,6 @@
       const body = await response.json();
       if (!response.ok || !body.ok) throw new Error(body.error ?? 'The local datastore did not accept the update.');
       labState = body.workspace;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(body.workspace));
       return true;
     } catch (error) {
       syncError = error instanceof Error ? error.message : 'The local datastore could not be reached.';
@@ -152,7 +153,6 @@
       const body = await response.json();
       if (!response.ok || !body.ok) throw new Error(body.error ?? 'Reset failed.');
       labState = body.workspace;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(body.workspace));
       draft = emptyReceipt();
       resetArmed = false;
       view = 'dashboard';
@@ -328,7 +328,7 @@
 
     {:else if view === 'players'}
       <div class="section-head"><h2>Players + local data</h2><p>The app-owned local datastore is authoritative; this browser keeps a recovery cache. No analytics or external write is used.</p></div>
-      <section class="profile-box"><p class="eyebrow">Add a player profile</p><div class="profile-row"><input class="input" aria-label="New player name" bind:value={playerName} placeholder="Player name or private label" /><button class="button primary" disabled={commandBusy} onclick={addPlayer}>Add profile</button></div></section>
+      {#if operator}<section class="profile-box"><p class="eyebrow">Add a player profile</p><div class="profile-row"><input class="input" aria-label="New player name" bind:value={playerName} placeholder="Player name or private label" /><button class="button primary" disabled={commandBusy} onclick={addPlayer}>Add profile</button></div></section>{/if}
       <div class="section-head"><h2>Codex access boundary</h2><p>Both people work with the program. Neither needs a coach persona.</p></div>
       <div class="role-grid">
         <article><span class="mono">Program agent</span><strong>Guides the sequence</strong><p>Requests context, applies safety policy, separates evidence, and proposes the next interaction.</p></article>
@@ -336,10 +336,10 @@
         <article><span class="mono">Player Codex</span><strong>Own records only</strong><p>Can review and save personal receipts, source links, reflections, and engagement events—never another player or reset controls.</p></article>
         <article><span class="mono">Operator Codex</span><strong>Manages the system</strong><p>Creates profiles, reviews the full workspace, manages evidence, and performs confirmation-gated reset.</p></article>
       </div>
-      <div class="section-head"><h2>Data control</h2><p>Reset returns the app to its generic starter profile. This cannot be undone.</p></div>
-      <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset local data'}</button>
+      {#if operator}<div class="section-head"><h2>Data control</h2><p>Reset returns the app to its generic starter profile. This cannot be undone.</p></div>
+      <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset local data'}</button>{/if}
     {/if}
 
-    <footer class="footer">FIELD TEST / V0.2 &nbsp; STATUS / {hydrated ? 'LOCAL READY' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; NO EXTERNAL WRITES</footer>
+    <footer class="footer">FIELD TEST / V0.2 &nbsp; STATUS / {hydrated ? 'PRIVATE READY' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY IDENTITY</footer>
   </main>
 </div>

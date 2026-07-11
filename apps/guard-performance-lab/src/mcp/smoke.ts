@@ -9,7 +9,7 @@ import { JsonFileLabStore } from '../lib/server/store.js';
 const dir = await mkdtemp(join(tmpdir(), 'guard-mcp-'));
 try {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const server = createGuardLabMcpServer(new JsonFileLabStore(join(dir, 'workspace.json')));
+  const server = createGuardLabMcpServer(new JsonFileLabStore(join(dir, 'workspace.json')), { role: 'operator' });
   const client = new Client({ name: 'guard-lab-smoke', version: '1.0.0' }, { capabilities: {} });
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
   const tools = await client.listTools();

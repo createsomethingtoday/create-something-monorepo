@@ -23,4 +23,35 @@ describe('workspace command HTTP contract', () => {
     expect(invalid.status).toBe(400);
     expect((await invalid.json()).error).toContain('Invalid workspace command');
   });
+
+  it('denies a player-scoped caller that supplies another player id', async () => {
+    dir = await mkdtemp(join(tmpdir(), 'guard-api-scope-'));
+    const service = new LabService(new JsonFileLabStore(join(dir, 'workspace.json')));
+    const initial = await service.getWorkspace();
+    const assignedPlayerId = initial.workspace.selectedPlayerId;
+    const other = await service.createPlayer('Other player');
+    const otherPlayerId = other.workspace.selectedPlayerId;
+
+    const response = await workspaceCommandResponse(
+      new Request('http://local/api/workspace/command', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'record-engagement',
+          playerId: otherPlayerId,
+          engagement: {
+            stage: 'prepare',
+            status: 'active',
+            source: 'player',
+            note: 'Attempted cross-player write.'
+          }
+        })
+      }),
+      service,
+      { role: 'player', playerId: assignedPlayerId }
+    );
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).error).toContain('assigned player');
+    expect((await service.getPlayerWorkspace(otherPlayerId)).workspace.engagements).toHaveLength(0);
+  });
 });
