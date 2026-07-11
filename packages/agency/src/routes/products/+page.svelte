@@ -181,7 +181,7 @@
   eyebrow="Product system"
   title="One map. Three operating surfaces."
   lede="Atlas maps the workflow. Signal watches what changes. Decision routes the judgment. Proof preserves the record. Together they make AI work inspectable before it becomes autonomous."
-  media={{ src: '/images/performance-lab/controlled-flow-natural.webp', mobileSrc: '/images/performance-lab/controlled-flow-natural-mobile.webp', alt: 'Aerial black-and-white view of water routed through a concrete sluice' }}
+  media={{ src: '/images/performance-lab/product-system-natural.webp', mobileSrc: '/images/performance-lab/product-system-natural-mobile.webp', alt: 'Aerial black-and-white view of one water-control structure dividing flow across three channels' }}
   proof={[{ label: 'Atlas', value: 'Map' }, { label: 'Signal', value: 'Watch' }, { label: 'Decision', value: 'Route' }, { label: 'Proof', value: 'Record' }]}
 >
   {#snippet actions()}

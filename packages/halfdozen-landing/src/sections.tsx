@@ -1,12 +1,28 @@
-import { useEffect, useRef } from 'react';
-import { assetDefaults, clientRows, clients, keepUpItems, navItems, services, testimonials } from './content';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import {
+  assetDefaults,
+  clientRows,
+  clientShapeByName,
+  keepUpItems,
+  navItems,
+  services,
+  testimonials,
+  tickerLogos
+} from './content';
 
-export type HalfDozenAssetProps = Partial<typeof assetDefaults>;
+export type HalfDozenAssetProps = Partial<typeof assetDefaults> & {
+  assetBaseUrl?: string;
+};
 
 export type HeroProps = HalfDozenAssetProps & {
   eyebrow?: string;
   description?: string;
 };
+
+function resolveAsset(path: string, assetBaseUrl = '') {
+  if (!assetBaseUrl || /^(?:https?:|data:|blob:)/.test(path)) return path;
+  return `${assetBaseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+}
 
 function useViewportVideo(restartOnEnter = false, threshold = 0.05) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -86,6 +102,65 @@ function useViewportVideo(restartOnEnter = false, threshold = 0.05) {
   return videoRef;
 }
 
+function useRevealOnView(threshold = 0.2) {
+  const elementRef = useRef<HTMLDivElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reduceMotion.matches) {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold }
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return { elementRef, isVisible };
+}
+
+function useAutoplayIndex(length: number, intervalMs: number, isPaused: boolean) {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let interval: number | null = null;
+
+    const sync = () => {
+      if (interval !== null) window.clearInterval(interval);
+      interval = null;
+      if (reduceMotion.matches || isPaused || document.visibilityState !== 'visible') return;
+      interval = window.setInterval(() => {
+        setActiveIndex((current) => (current + 1) % length);
+      }, intervalMs);
+    };
+
+    reduceMotion.addEventListener('change', sync);
+    document.addEventListener('visibilitychange', sync);
+    sync();
+
+    return () => {
+      if (interval !== null) window.clearInterval(interval);
+      reduceMotion.removeEventListener('change', sync);
+      document.removeEventListener('visibilitychange', sync);
+    };
+  }, [intervalMs, isPaused, length]);
+
+  return [activeIndex, setActiveIndex] as const;
+}
+
 export function HalfDozenLogo({ inverted = false }: { inverted?: boolean }) {
   return (
     <a className={`hd-logo ${inverted ? 'hd-logo--inverted' : ''}`} href="/" aria-label="Half Dozen home">
@@ -105,8 +180,8 @@ export function HalfDozenHeader() {
       <HalfDozenLogo />
       <nav className="hd-nav" aria-label="Primary navigation">
         {navItems.map((item) => (
-          <a href={`#${item.toLowerCase()}`} key={item}>
-            {item}
+          <a href={item.href} key={item.label}>
+            {item.label}
           </a>
         ))}
       </nav>
@@ -120,6 +195,7 @@ export function HalfDozenHeader() {
 export function HeroSection({
   heroMotion = assetDefaults.heroMotion,
   heroMotionPoster = assetDefaults.heroMotionPoster,
+  assetBaseUrl,
   eyebrow = 'A system is an interconnected set of elements that is coherently organized in a way that achieves something.',
   description = 'Half Dozen is a strategic solutions partner helping teams in live events build better systems and do more with less.'
 }: HeroProps) {
@@ -148,9 +224,9 @@ export function HeroSection({
             controls={false}
             disablePictureInPicture
             preload="auto"
-            poster={heroMotionPoster}
+            poster={resolveAsset(heroMotionPoster, assetBaseUrl)}
           >
-            <source src={heroMotion} type="video/mp4" />
+            <source src={resolveAsset(heroMotion, assetBaseUrl)} type="video/mp4" />
           </video>
         </span>
       </div>
@@ -159,13 +235,13 @@ export function HeroSection({
         <div>
           <p>{description}</p>
           <div className="hd-socials" aria-label="Social links">
-            <a href="https://www.linkedin.com" aria-label="LinkedIn">
+            <a href="https://www.linkedin.com/company/halfdozen" aria-label="LinkedIn">
               in
             </a>
-            <a href="https://www.instagram.com" aria-label="Instagram">
+            <a href="https://www.instagram.com/halfdozensolutions/" aria-label="Instagram">
               ◎
             </a>
-            <a href="mailto:hello@halfdozen.co" aria-label="Email">
+            <a href="mailto:info@halfdozen.co" aria-label="Email">
               ✉
             </a>
           </div>
@@ -177,7 +253,8 @@ export function HeroSection({
 
 export function ClientsSection({
   heroFullbleedMotion = assetDefaults.heroFullbleedMotion,
-  heroFullbleedPoster = assetDefaults.heroFullbleedPoster
+  heroFullbleedPoster = assetDefaults.heroFullbleedPoster,
+  assetBaseUrl
 }: HalfDozenAssetProps) {
   const videoRef = useViewportVideo(true, 0.25);
 
@@ -194,9 +271,9 @@ export function ClientsSection({
           controls={false}
           disablePictureInPicture
           preload="metadata"
-          poster={heroFullbleedPoster}
+          poster={resolveAsset(heroFullbleedPoster, assetBaseUrl)}
         >
-          <source src={heroFullbleedMotion} type="video/mp4" />
+          <source src={resolveAsset(heroFullbleedMotion, assetBaseUrl)} type="video/mp4" />
         </video>
       </span>
       <h2>Our Clients</h2>
@@ -206,8 +283,10 @@ export function ClientsSection({
             {row.map((client) => (
               <span className="hd-client" key={client}>
                 {client}
-                <i
-                  className={`hd-client-chip hd-client-chip--${(clients.indexOf(client) % 6) + 1}`}
+                <img
+                  className="hd-client-chip"
+                  src={resolveAsset(clientShapeByName[client], assetBaseUrl)}
+                  alt=""
                   aria-hidden="true"
                 />
               </span>
@@ -219,56 +298,89 @@ export function ClientsSection({
   );
 }
 
-export function LogoTicker() {
-  const tickerItems = ["Boots 'N Beats", 'Stereo Punks', 'Golden Era Rave', 'Laszewo', 'FanPad', 'Lightswitch'];
+export function LogoTicker({ assetBaseUrl }: HalfDozenAssetProps) {
   return (
     <div className="hd-ticker" aria-label="Featured client logos">
       <div>
-        {[...tickerItems, ...tickerItems, ...tickerItems].map((item, index) => (
-          <span key={`${item}-${index}`}>{item}</span>
+        {[...tickerLogos, ...tickerLogos, ...tickerLogos].map((item, index) => (
+          <span key={`${item.name}-${index}`}>
+            <img
+              src={resolveAsset(item.image, assetBaseUrl)}
+              alt={index < tickerLogos.length ? item.name : ''}
+              style={{ '--logo-ratio': item.ratio } as CSSProperties}
+            />
+          </span>
         ))}
       </div>
     </div>
   );
 }
 
-export function DetailsSection() {
-  const featuredService = services[0];
+export function DetailsSection({ assetBaseUrl }: HalfDozenAssetProps) {
+  const [isPaused, setIsPaused] = useState(false);
+  const [activeIndex, setActiveIndex] = useAutoplayIndex(services.length, 1500, isPaused);
+  const activeService = services[activeIndex];
 
   return (
-    <section className="hd-section hd-details" id="details" aria-label="Half Dozen service layers">
-      <article className="hd-service-card">
-        <span>{featuredService.number}</span>
-        <p>{featuredService.summary}</p>
-        <h2>{featuredService.title}</h2>
+    <section
+      className="hd-section hd-details"
+      id="details"
+      aria-label="Half Dozen service layers"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocusCapture={() => setIsPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setIsPaused(false);
+      }}
+    >
+      <article className="hd-service-card" key={activeService.number}>
+        <span>{activeService.number}</span>
+        <p>{activeService.summary}</p>
+        <img
+          className="hd-service-artwork"
+          src={resolveAsset(activeService.artwork, assetBaseUrl)}
+          alt=""
+          aria-hidden="true"
+          style={{ '--service-rotation': `${activeService.rotation}deg` } as CSSProperties}
+        />
+        <h2>{activeService.title}</h2>
       </article>
       <div className="hd-service-rail" aria-label="Service system">
-        {services.map((service) => (
-          <span key={service.number}>
+        {services.map((service, index) => (
+          <button
+            className={index === activeIndex ? 'is-active' : ''}
+            key={service.number}
+            type="button"
+            data-service-number={service.number}
+            aria-pressed={index === activeIndex}
+            onClick={() => setActiveIndex(index)}
+          >
             <strong>{service.number}</strong>
             {service.title}
-          </span>
+          </button>
         ))}
       </div>
     </section>
   );
 }
 
-export function ContentCtaSection() {
+export function ContentCtaSection({ assetBaseUrl }: HalfDozenAssetProps) {
+  const { elementRef, isVisible } = useRevealOnView();
+
   return (
-    <section className="hd-section hd-content-cta" id="team">
+    <section className="hd-section hd-content-cta" id="updates">
       <div className="hd-keep-up">
         <div className="hd-section-title-row">
           <h2>Keep Up</h2>
-          <a className="hd-pill-link" href="#work">
+          <a className="hd-pill-link" href="https://www.halfdozen.co/community">
             View all <span aria-hidden="true">→</span>
           </a>
         </div>
         <div className="hd-feed-list">
           {keepUpItems.map((item, index) => (
-            <a className="hd-feed-item" href="#contact" key={item.title}>
+            <article className="hd-feed-item" key={item.title}>
               <span className={`hd-feed-thumb hd-feed-thumb--${index + 1}`}>
-                <img src={item.image} alt="" loading="lazy" aria-hidden="true" />
+                <img src={resolveAsset(item.image, assetBaseUrl)} alt="" loading="lazy" aria-hidden="true" />
                 <span>{item.type}</span>
               </span>
               <span className="hd-feed-copy">
@@ -276,11 +388,17 @@ export function ContentCtaSection() {
                 <strong>{item.title}</strong>
                 <em>{item.summary}</em>
               </span>
-            </a>
+            </article>
           ))}
         </div>
       </div>
-      <div className="hd-talk" id="contact">
+      <div className={`hd-talk ${isVisible ? 'is-visible' : ''}`} id="contact" ref={elementRef}>
+        <img
+          className="hd-talk__mark"
+          src={resolveAsset('/assets/brand/cta-mark.png', assetBaseUrl)}
+          alt=""
+          aria-hidden="true"
+        />
         <div className="hd-talk__copy">
           <h2>Let's Talk</h2>
           <small>Looking to level up?</small>
@@ -288,7 +406,7 @@ export function ContentCtaSection() {
             Meet with our team to dive into your specific goals and challenges, discuss focused insights on how best to
             streamline your workflows, and create a path towards systemizing your operations.
           </p>
-          <a className="hd-button" href="mailto:hello@halfdozen.co">
+          <a className="hd-button" href="mailto:info@halfdozen.co?subject=Half%20Dozen%20consultation">
             Request consultation <span aria-hidden="true">→</span>
           </a>
         </div>
@@ -297,46 +415,93 @@ export function ContentCtaSection() {
   );
 }
 
-export function TestimonialSection({ testimonialPhoto = assetDefaults.testimonialPhoto }: HalfDozenAssetProps) {
+export function TestimonialSection({
+  testimonialPhoto = assetDefaults.testimonialPhoto,
+  assetBaseUrl
+}: HalfDozenAssetProps) {
+  const [isPaused, setIsPaused] = useState(false);
+  const [activeIndex, setActiveIndex] = useAutoplayIndex(testimonials.length, 6500, isPaused);
+  const activeTestimonial = testimonials[activeIndex];
+
   return (
-    <section className="hd-section hd-testimonial">
-      <img className="hd-testimonial__image" src={testimonialPhoto} alt="Crowd at a Stereo Punks live event" />
-      <div className="hd-testimonial__copy">
+    <section
+      className="hd-section hd-testimonial"
+      id="testimonials"
+      style={{ '--testimonial-bg': activeTestimonial.background } as CSSProperties}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocusCapture={() => setIsPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setIsPaused(false);
+      }}
+    >
+      <img
+        className="hd-testimonial__image"
+        src={resolveAsset(activeIndex === 0 ? testimonialPhoto : activeTestimonial.image, assetBaseUrl)}
+        alt={`${activeTestimonial.client} live event`}
+      />
+      <div className="hd-testimonial__copy" key={activeTestimonial.client}>
         <div className="hd-testimonial__logos" aria-label="Testimonials">
-          {testimonials.map((testimonial) => (
-            <span key={testimonial.client}>{testimonial.client}</span>
+          {testimonials.map((testimonial, index) => (
+            <button
+              type="button"
+              data-testimonial-client={testimonial.client}
+              className={index === activeIndex ? 'is-active' : ''}
+              key={testimonial.client}
+              aria-label={`Show ${testimonial.client} testimonial`}
+              aria-pressed={index === activeIndex}
+              onClick={() => setActiveIndex(index)}
+            >
+              <img src={resolveAsset(testimonial.logo, assetBaseUrl)} alt={testimonial.client} />
+            </button>
           ))}
         </div>
-        <blockquote>&ldquo;{testimonials[0].quote}&rdquo;</blockquote>
+        <blockquote className={activeTestimonial.quote.length > 360 ? 'is-long' : ''}>
+          &ldquo;{activeTestimonial.quote}&rdquo;
+        </blockquote>
         <cite>
-          <strong>{testimonials[0].name}</strong>
-          <span>{testimonials[0].title}</span>
+          <strong>{activeTestimonial.name}</strong>
+          <span>{activeTestimonial.title}</span>
         </cite>
-        <div className="hd-slider-dots" aria-hidden="true">
-          <span />
-          <span />
+        <div
+          className="hd-slider-dots"
+          role="progressbar"
+          aria-label="Testimonial position"
+          aria-valuemin={1}
+          aria-valuemax={testimonials.length}
+          aria-valuenow={activeIndex + 1}
+        >
+          <span style={{ width: `${((activeIndex + 1) / testimonials.length) * 100}%` }} />
         </div>
       </div>
     </section>
   );
 }
 
-export function FooterSection() {
+export function FooterSection({ assetBaseUrl }: HalfDozenAssetProps) {
   return (
     <footer className="hd-footer">
-      <HalfDozenLogo inverted />
+      <div className="hd-footer__brand">
+        <img
+          className="hd-footer__mark"
+          src={resolveAsset('/assets/brand/footer-mark.png', assetBaseUrl)}
+          alt=""
+          aria-hidden="true"
+        />
+        <span>Half Dozen</span>
+      </div>
       <div className="hd-footer__bottom">
         <nav aria-label="Footer navigation">
           {navItems.map((item) => (
-            <a href={`#${item.toLowerCase()}`} key={item}>
-              {item}
+            <a href={item.href} key={item.label}>
+              {item.label}
             </a>
           ))}
         </nav>
         <nav aria-label="Legal navigation">
-          <a href="#privacy">Privacy Policy</a>
-          <a href="#terms">Terms of Service</a>
-          <a href="#cookies">Cookie Settings</a>
+          <a href="https://www.halfdozen.co/privacy-policy">Privacy Policy</a>
+          <a href="https://www.halfdozen.co/terms-of-service">Terms of Service</a>
+          <a href="https://www.halfdozen.co/cookie-settings">Cookie Settings</a>
         </nav>
         <a className="hd-footer__contact" href="#contact">
           Get in touch <span aria-hidden="true">→</span>
@@ -352,11 +517,11 @@ export function HalfDozenLanding(props: HalfDozenAssetProps) {
     <main className="hd-page">
       <HeroSection {...props} />
       <ClientsSection {...props} />
-      <LogoTicker />
-      <DetailsSection />
-      <ContentCtaSection />
+      <LogoTicker {...props} />
+      <DetailsSection {...props} />
+      <ContentCtaSection {...props} />
       <TestimonialSection {...props} />
-      <FooterSection />
+      <FooterSection {...props} />
     </main>
   );
 }

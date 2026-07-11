@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "workflow_extraction_policy.v0.1",
+  "systemMappings": {
+    "CREATE SOMETHING MCP Hub": {
+      "id": "create-something-mcp-hub",
+      "tier": "automation",
+      "sourceOfTruth": false
+    },
+    "Webflow preview and published sites": {
+      "id": "webflow-preview-and-published-sites",
+      "tier": "database",
+      "sourceOfTruth": true
+    },
+    "webflow-site-analyzer-mcp": {
+      "id": "webflow-site-analyzer-mcp",
+      "tier": "automation",
+      "sourceOfTruth": false
+    }
+  },
+  "ruleMappings": {
+    "wf.template.runtime.site_accessible": {
+      "actionId": "validate_submission",
+      "expectedOutcome": "blocked"
+    },
+    "wf.template.code.no_legacy_ix2": {
+      "actionId": "validate_submission",
+      "expectedOutcome": "approval_required"
+    },
+    "wf.template.utility.license_page_linked": {
+      "actionId": "validate_submission",
+      "expectedOutcome": "approval_required"
+    }
+  },
+  "agentActionMappings": [
+    { "contains": "request changes", "actionId": "request_changes" },
+    { "contains": "approve a version", "actionId": "approve_template" },
+    { "contains": "publishing metadata", "actionId": "publish_template" },
+    { "contains": "creator-facing communication", "actionId": "send_creator_decision" }
+  ],
+  "mcpToolMappings": {
+    "template_review_request_changes": { "actionIds": ["request_changes"] },
+    "template_review_set_review_status": { "actionIds": ["approve_template"] },
+    "phase_a_review_state_changes": { "actionIds": ["approve_template", "publish_template"] }
+  }
+}

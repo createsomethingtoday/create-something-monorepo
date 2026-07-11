@@ -13,6 +13,7 @@ import {
   REVIEW_STATUS_OPTIONS,
   TABLE_IDS,
 } from '../src/schema.js';
+import { reviewerCaseCap } from '../src/reviewer-sampling.js';
 
 type AirtableRecord = {
   id: string;
@@ -590,7 +591,7 @@ async function selectCases(apiKey: string, baseId: string, options: CliOptions):
   const warnings: string[] = [];
   const globalReviewerCounts: Record<string, number> = {};
   const globalReviewerCap = options.balanceReviewers
-    ? Math.max(1, Math.ceil(options.limit * options.maxReviewerShare))
+    ? reviewerCaseCap(options.limit, options.maxReviewerShare)
     : Number.POSITIVE_INFINITY;
   const counts = targetCounts(options.limit, options.strata);
   const versionFields = Object.values(CONFIRMED_VERSION_FIELDS);
@@ -611,7 +612,7 @@ async function selectCases(apiKey: string, baseId: string, options: CliOptions):
     const selectedForStratum: SelectedCase[] = [];
     const stratumReviewerCounts: Record<string, number> = {};
     const stratumReviewerCap = options.balanceReviewers
-      ? Math.max(1, Math.ceil(target * options.maxReviewerShare))
+      ? reviewerCaseCap(target, options.maxReviewerShare)
       : Number.POSITIVE_INFINITY;
 
     const tryAccept = (version: AirtableRecord, enforceReviewerCaps: boolean): boolean => {
