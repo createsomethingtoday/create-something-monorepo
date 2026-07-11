@@ -26,7 +26,7 @@
     },
     {
       label: 'Boundary',
-      title: `${data.agents.length} Clerk-scoped lanes`,
+      title: `${data.agents.length} identity-scoped lanes`,
       detail: 'Agent identity, credential state, next action, and proof path remain inside the staff boundary.',
       tone: 'signal'
     }
@@ -51,8 +51,8 @@
 {#if !data.accessAllowed}
   <section class="access-shell performance-paper">
     <div class="access-copy">
-      <div class="eyebrow">Clerk Access</div>
-      <h1 class="section-title">Sign in with Clerk to use the Performance Lab agent shell.</h1>
+      <div class="eyebrow">Staff access</div>
+      <h1 class="section-title">Sign in with CREATE SOMETHING to use the agent shell.</h1>
       <p class="muted">
         Agent keys stay server-side. Staff access is required before agent names, credentials, or
         chat actions are available. {data.accessDetail}
@@ -65,7 +65,7 @@
     <PerformanceThesisConditions
       eyebrow="Workflow trust layer"
       title="Dify agents in one standalone operator surface."
-      description="Each agent keeps its API key server-side, exposes its lane and proof path, and waits behind Clerk before any operator chat can run."
+      description="Each agent keeps its API key server-side, exposes its lane and proof path, and waits behind verified staff identity before any operator chat can run."
       conditions={agentConditions}
       headingLevel="h1"
       ariaLabel="Agent credential summary"

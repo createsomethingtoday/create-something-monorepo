@@ -18,11 +18,13 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/auth/signup` | Create account |
-| POST | `/auth/login` | Authenticate |
-| POST | `/auth/refresh` | Refresh tokens |
-| POST | `/auth/logout` | Invalidate session |
-| GET | `/auth/me` | Get current user |
+| GET | `/.well-known/create-something-auth` | Versioned AI-readable platform discovery |
+| GET | `/v1/auth/openapi.json` | Auth-focused OpenAPI 3.1 contract |
+| POST | `/v1/auth/signup` | Create account |
+| POST | `/v1/auth/login` | Authenticate |
+| POST | `/v1/auth/refresh` | Refresh tokens |
+| POST | `/v1/auth/logout` | Invalidate session |
+| GET | `/v1/users/me` | Get current user |
 | GET | `/.well-known/jwks.json` | Public keys |
 | POST | `/v1/mcp/sessions` | Create MCP session token + policy claims |
 | POST | `/v1/mcp/sessions/admin-mint` | Admin mint MCP session for mapped account (API key + policy gated) |
@@ -63,6 +65,18 @@ Cloudflare D1 uses the package-local migrations directory configured in
 [wrangler.toml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/identity-worker/wrangler.toml#L29).
 
 ## Integration
+
+### First-party applications
+
+Identity Worker is the credential and token authority and the primary API surface for CREATE SOMETHING applications. Agents discover it through `/.well-known/create-something-auth`, `/v1/auth/openapi.json`, or the CREATE SOMETHING MCP resources `auth://platform/contract` and `auth://platform/openapi`. The read-only MCP tool `auth_config_validate` checks proposed non-secret integration configuration without network access or mutation.
+
+Access tokens are ES256 JWTs published through `/.well-known/jwks.json`; application-specific audiences include `ona-agents`. Canon consumers verify the exact issuer, audience, signature, and expiry before applying app-owned allow rules. Canon is the reference adapter, not the platform contract.
+
+New SvelteKit applications should adopt `@create-something/canon/auth/access`, `@create-something/canon/auth/handlers`, `@create-something/canon/auth/cookies`, and `@create-something/canon/auth/components` rather than implementing a provider-specific verifier. The full integration and promotion contract is in [`docs/guides/FIRST_PARTY_AUTH_PLATFORM.md`](../../docs/guides/FIRST_PARTY_AUTH_PLATFORM.md).
+
+Production audience changes require an Identity Worker deployment. Application cutover, real-user migration, and removal of prior provider credentials remain separate approval-gated actions.
+
+### Property and MCP integration
 
 Properties verify tokens by:
 1. Fetching JWKS from `/.well-known/jwks.json`

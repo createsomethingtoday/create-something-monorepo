@@ -490,6 +490,24 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Server auth surface is security-sensitive platform code, not a UI registry primitive."
   },
   {
+    "exportPath": "./auth/access",
+    "classification": "auth-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Application access policy is security-sensitive platform code, not a UI registry primitive."
+  },
+  {
+    "exportPath": "./auth/cookies",
+    "classification": "auth-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Session cookie handling is security-sensitive platform code, not a UI registry primitive."
+  },
+  {
+    "exportPath": "./auth/handlers",
+    "classification": "auth-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Authentication request handlers are security-sensitive platform code, not UI registry primitives."
+  },
+  {
     "exportPath": "./gdpr",
     "classification": "platform-surface",
     "registryPolicy": "classified-out",

@@ -49,11 +49,7 @@ export function isProductionRuntime(platform?: App.Platform) {
   return readRuntimeEnv(platform, 'ENVIRONMENT') === 'production';
 }
 
-export function isPreviewAccessEnabled(platform?: App.Platform) {
-  const explicitFlag = parseBooleanFlag(readRuntimeEnv(platform, 'ALLOW_CLERK_ACCESS_PREVIEW'));
-  if (explicitFlag !== undefined) {
-    return explicitFlag;
-  }
-
-  return !isProductionRuntime(platform);
+export function isAuthPreviewAccessEnabled(platform?: App.Platform) {
+  const explicitFlag = parseBooleanFlag(readRuntimeEnv(platform, 'ALLOW_CS_AUTH_PREVIEW'));
+  return explicitFlag === true;
 }

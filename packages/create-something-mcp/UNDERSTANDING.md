@@ -14,6 +14,7 @@ This package is the knowledge surface for the CREATE SOMETHING corpus. It makes 
 |------------|----------------|
 | `@modelcontextprotocol/sdk` | MCP resource, tool, and prompt registration |
 | `@create-something/playbook-mcp` | Canonical host workflow playbook data |
+| `@create-something/auth-platform` | Framework-neutral discovery, OpenAPI, and integration-validation contract |
 | `src/content/generated/` | Built artifacts that make repo content searchable and embeddable |
 | property source docs | Raw papers, canon pages, patterns, and framework documents that become MCP resources |
 
@@ -68,6 +69,7 @@ worker/
 | graph traversal | relationship lookup across concepts and documents | `graph://...` resources and `relate` tool |
 | cross-property search | unified search across `.io`, `.ltd`, `.space`, `.agency`, and playbooks | `search` tool |
 | framework resource | MCP resource exposing Three-Tier definitions and mappings | `framework://...` resources |
+| auth platform contract | AI-readable auth discovery, OpenAPI, and read-only integration validation | `auth://platform/...`, `auth_config_validate` |
 
 ## This Package Helps You Understand
 
