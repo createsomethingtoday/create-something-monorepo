@@ -77,6 +77,26 @@ const skills = [
 
 const codexOnlySkills = [
   {
+    name: 'svg-education-precision',
+    codex: 'packages/dotfiles/codex/skills/svg-education-precision/SKILL.md',
+    expectations: [
+      /structured spec/i,
+      /pnpm agent:svg-education validate/,
+      /pnpm agent:svg-education build/,
+      /pnpm agent:svg-education check/,
+      /INVALID_ELEMENT_ID/,
+      /ELEMENT_OUT_OF_BOUNDS/,
+      /TEXT_OVERFLOW/,
+      /ELEMENT_COLLISION/,
+      /INVALID_CONTAINMENT/,
+      /in-app browser/i,
+      /geometry readback/i,
+      /Image2/,
+      /human review/i,
+      /Do not move the source of truth into the renderer/i
+    ]
+  },
+  {
     name: 'claude-agent-cli-handoff',
     codex: 'packages/dotfiles/codex/skills/claude-agent-cli-handoff/SKILL.md',
     expectations: [

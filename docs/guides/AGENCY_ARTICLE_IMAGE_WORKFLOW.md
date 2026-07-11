@@ -53,6 +53,13 @@ Do not move the source of truth into a renderer. The source of truth should be a
 graph artifact that can be adapted into a story canvas, an interactive canvas,
 large-network renderer, or an OpenAI generated export.
 
+When the source brief needs exact labels, topology, policy states, or evidence
+relationships, invoke the repo-owned `svg-education-precision` skill and run
+`pnpm agent:svg-education check <spec.json> <review.svg>`. Its geometry gate
+must pass before the SVG is used directly or supplied as Image2 context. A clean
+gate makes the source brief dependable; it does not by itself make the SVG the
+preferred `.agency` publication surface.
+
 Canvas visuals should show, at minimum:
 
 - accountable owner
