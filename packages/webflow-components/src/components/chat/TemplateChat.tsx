@@ -9,6 +9,11 @@ import {
   MARKETPLACE_SIGNAL_WINDOW,
   type TemplateMarketplaceAttribution,
 } from '../marketplace/templateAttribution';
+import {
+  fetchAuthorizedAgentRequest,
+  requestTemplateAgentSession,
+} from './templateAgentSession';
+import { completeTurnstileChallenge, type TurnstileApi } from './turnstileChallenge';
 
 // ── Agent protocol (mirrors webflow-template-agent) ───────────────────────────
 
@@ -61,10 +66,9 @@ type AgentSseEvent =
   | { type: 'display'; payload: DisplayPayload }
   | { type: 'status'; label: AgentStatus }
   | { type: 'page_action'; payload: PageActionPayload }
-  // Continuity snapshot from the (stateless) agent worker: templates verified
-  // by tools this conversation. Echoed back as `context` on the next request
-  // so follow-up turns can compare/re-display without re-searching.
-  | { type: 'context'; payload: { known_templates: AgentTemplateItem[] } }
+  // Signed continuity snapshot from the stateless agent Worker. The browser
+  // cannot forge or modify trusted template facts between turns.
+  | { type: 'context'; payload: { context_token: string } }
   | { type: 'done' }
   | { type: 'error'; message: string };
 
@@ -77,6 +81,8 @@ interface ChatMessage {
 export interface TemplateChatProps {
   /** Base URL of the template agent (no trailing slash). */
   apiBase?: string;
+  /** Public Cloudflare Turnstile site key used to mint a short-lived agent session. */
+  turnstileSiteKey?: string;
   title?: string;
   launcherLabel?: string;
   placeholder?: string;
@@ -156,6 +162,11 @@ const CHAT_STYLES = `
 }
 .tmchat-header-title { font-weight: 600; font-size: 15px; }
 .tmchat-panel.immersive .tmchat-header-title { font-size: 16px; }
+.tmchat-turnstile:empty { display: none; }
+.tmchat-turnstile:not(:empty) {
+  flex: 0 0 auto; display: flex; justify-content: center;
+  padding: 8px 16px; border-top: 1px solid #ececec; background: #fafafa;
+}
 .tmchat-header-actions { display: flex; align-items: center; gap: 2px; }
 .tmchat-iconbtn {
   border: 0; background: transparent; cursor: pointer; color: #404040;
@@ -391,6 +402,7 @@ interface PersistedSession {
   messages: ChatMessage[];
   followups: string[];
   known: AgentTemplateItem[];
+  contextToken?: string;
   open: boolean;
 }
 
@@ -411,11 +423,50 @@ function loadPersistedSession(): PersistedSession | null {
       ),
       followups: Array.isArray(parsed.followups) ? parsed.followups.filter((f) => typeof f === 'string') : [],
       known: Array.isArray(parsed.known) ? parsed.known.filter((item) => item && typeof item.template_slug === 'string') : [],
+      contextToken: typeof parsed.contextToken === 'string' ? parsed.contextToken : undefined,
       open: Boolean(parsed.open),
     };
   } catch {
     return null;
   }
+}
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
+
+let turnstileScriptPromise: Promise<TurnstileApi> | null = null;
+
+function loadTurnstile(): Promise<TurnstileApi> {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+
+  const pending = new Promise<TurnstileApi>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-template-agent-turnstile]');
+    const script = existing ?? document.createElement('script');
+    const finish = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error('Bot check unavailable.')));
+    script.addEventListener('load', finish, { once: true });
+    script.addEventListener('error', () => reject(new Error('Bot check unavailable.')), { once: true });
+    if (!existing) {
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true;
+      script.defer = true;
+      script.dataset.templateAgentTurnstile = 'true';
+      document.head.appendChild(script);
+    }
+  }).catch((error) => {
+    turnstileScriptPromise = null;
+    throw error;
+  });
+  turnstileScriptPromise = pending;
+  return pending;
+}
+
+async function getTurnstileToken(container: HTMLElement, sitekey: string): Promise<string> {
+  const turnstile = await loadTurnstile();
+  return completeTurnstileChallenge(turnstile, container, sitekey);
 }
 
 // ── Page control (agent drives the host page's grid/filters) ─────────────────
@@ -931,6 +982,7 @@ function TemplatePreviewPane({
 
 export const TemplateChat: React.FC<TemplateChatProps> = ({
   apiBase = 'https://templates.webflow.com/templates-api',
+  turnstileSiteKey = '0x4AAAAAADzmfUVSu5s1hvW5',
   title = 'Template finder',
   launcherLabel = 'Find your template',
   placeholder = 'Describe the site you want to build…',
@@ -964,6 +1016,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const sessionTokenRef = useRef<string | null>(null);
+  const sessionPromiseRef = useRef<Promise<string> | null>(null);
+  const contextTokenRef = useRef<string | null>(persisted?.contextToken ?? null);
   const atBottomRef = useRef(true);
   const workingRef = useRef(false);
   const warmedRef = useRef(false);
@@ -1064,6 +1120,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         messages: messages.slice(-MAX_PERSISTED_MESSAGES),
         followups,
         known: Array.from(knownTemplatesRef.current.values()).slice(-40),
+        contextToken: contextTokenRef.current ?? undefined,
         open: isInline ? false : open,
       };
       window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1250,6 +1307,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const resetChat = useCallback(() => {
     streamAbortRef.current?.abort();
     knownTemplatesRef.current.clear();
+    sessionTokenRef.current = null;
+    sessionPromiseRef.current = null;
+    contextTokenRef.current = null;
     setMessages([]);
     setFollowups([]);
     setInput('');
@@ -1263,6 +1323,22 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     }
     inputRef.current?.focus();
   }, [track]);
+
+  const getSessionToken = useCallback(async (): Promise<string> => {
+    if (sessionTokenRef.current) return sessionTokenRef.current;
+    if (sessionPromiseRef.current) return sessionPromiseRef.current;
+    if (!turnstileSiteKey || !turnstileRef.current) throw new Error('Secure session is not configured.');
+
+    sessionPromiseRef.current = (async () => {
+      const challengeToken = await getTurnstileToken(turnstileRef.current!, turnstileSiteKey);
+      const sessionToken = await requestTemplateAgentSession(apiBase, challengeToken);
+      sessionTokenRef.current = sessionToken;
+      return sessionToken;
+    })().finally(() => {
+      sessionPromiseRef.current = null;
+    });
+    return sessionPromiseRef.current;
+  }, [apiBase, turnstileSiteKey]);
 
   const send = useCallback(
     async (text: string, baseOverride?: ChatMessage[], source: 'input' | 'starter' | 'followup' | 'retry' = 'input') => {
@@ -1308,14 +1384,20 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       };
 
       try {
-        const response = await fetch(`${apiBase.replace(/\/+$/, '')}/api/templates/agent/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
+        const response = await fetchAuthorizedAgentRequest({
+          url: `${apiBase.replace(/\/+$/, '')}/api/templates/agent/chat`,
+          getSessionToken,
+          clearSessionToken: () => {
+            sessionTokenRef.current = null;
+          },
+          init: {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
             messages: history.map((message) => ({ role: message.role, content: message.content })),
             context: {
-              known_templates: Array.from(knownTemplatesRef.current.values()).slice(-40),
+              context_token: contextTokenRef.current ?? undefined,
               // Highlight failures from the previous turn (cards not rendered
               // under the page's current filters) — keeps the agent honest.
               highlight_misses: pendingHighlightMisses.size > 0 ? Array.from(pendingHighlightMisses) : undefined,
@@ -1326,6 +1408,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               has_page_grid: pageHasTemplateGrid(),
             },
           }),
+          },
         });
         if (!response.ok || !response.body) throw new Error(`Agent unavailable (${response.status}).`);
         pendingHighlightMisses.clear();
@@ -1392,9 +1475,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 highlight_count: event.payload.highlight_slugs?.length ?? 0,
               });
             } else if (event.type === 'context') {
-              for (const item of event.payload.known_templates ?? []) {
-                if (item?.template_slug) knownTemplatesRef.current.set(item.template_slug, item);
-              }
+              contextTokenRef.current = event.payload.context_token;
             } else if (event.type === 'error') {
               hadError = true;
               track('chat_error', { turn, error_source: 'agent', message: String(event.message).slice(0, 200) });
@@ -1434,7 +1515,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         });
       }
     },
-    [apiBase, messages, streaming, immersive, setWorkingState, track],
+    [apiBase, messages, streaming, immersive, setWorkingState, track, getSessionToken],
   );
 
   if (!open) {
@@ -1586,6 +1667,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         ) : null}
         </div>
 
+        <div ref={turnstileRef} className="tmchat-turnstile" aria-live="polite" />
         <div className="tmchat-inputrow">
           <textarea
             ref={inputRef}

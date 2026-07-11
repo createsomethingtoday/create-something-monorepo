@@ -14,6 +14,11 @@ export default declareComponent(TemplateChat, {
       tooltip:
         'Base URL of the template agent proxy (no trailing slash). Use https://templates.webflow.com/templates-api on webflow.com — the direct workers.dev origin is blocked by the webflow.com CSP.',
     }),
+    turnstileSiteKey: props.Text({
+      name: 'Turnstile Site Key',
+      defaultValue: '0x4AAAAAADzmfUVSu5s1hvW5',
+      tooltip: 'Public Cloudflare Turnstile site key for the Template Finder. Never enter the secret key here.',
+    }),
     title: props.Text({
       name: 'Panel Title',
       defaultValue: 'Template finder',

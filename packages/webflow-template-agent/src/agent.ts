@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, pageGridNote, surfaceNote } from './prompt.js';
 import { AGENT_TOOLS, TemplateToolExecutor, type PageActionInput, type SearchToolInput } from './tools.js';
-import type { AgentSseEvent, ChatContext, ChatRequestMessage, Env } from './types.js';
+import type { AgentSseEvent, AgentUsage, ChatContext, ChatRequestMessage, Env } from './types.js';
 
 const MAX_LOOP_ITERATIONS = 6;
 const MAX_HISTORY_MESSAGES = 20;
@@ -25,16 +25,22 @@ export async function runAgentTurn(
   history: ChatRequestMessage[],
   emit: (event: AgentSseEvent) => void,
   context?: ChatContext,
-): Promise<void> {
+): Promise<AgentUsage> {
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   const executor = new TemplateToolExecutor(env);
   executor.seedFromContext(context);
   const model = env.ANTHROPIC_MODEL || 'claude-opus-4-8';
 
   const messages: Anthropic.Messages.MessageParam[] = toAnthropicMessages(history);
+  const usage: AgentUsage = {
+    cacheCreationInputTokens: 0,
+    cacheReadInputTokens: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+  };
   if (messages.length === 0 || messages[messages.length - 1]?.role !== 'user') {
     emit({ type: 'error', message: 'The last message must be from the user.' });
-    return;
+    return usage;
   }
 
   // Frozen prompt first (cache-stable prefix); per-conversation context after.
@@ -82,6 +88,10 @@ export async function runAgentTurn(
     });
 
     const message = await stream.finalMessage();
+    usage.inputTokens += message.usage.input_tokens;
+    usage.outputTokens += message.usage.output_tokens;
+    usage.cacheCreationInputTokens += message.usage.cache_creation_input_tokens ?? 0;
+    usage.cacheReadInputTokens += message.usage.cache_read_input_tokens ?? 0;
 
     if (message.stop_reason === 'pause_turn') {
       messages.push({ role: 'assistant', content: message.content });
@@ -95,7 +105,7 @@ export async function runAgentTurn(
     if (message.stop_reason !== 'tool_use' || toolUses.length === 0) {
       emit({ type: 'context', payload: executor.snapshotContext() });
       emit({ type: 'done' });
-      return;
+      return usage;
     }
 
     messages.push({ role: 'assistant', content: message.content });
@@ -114,6 +124,7 @@ export async function runAgentTurn(
 
   emit({ type: 'context', payload: executor.snapshotContext() });
   emit({ type: 'error', message: 'The assistant took too many steps. Please rephrase your request.' });
+  return usage;
 }
 
 async function executeTool(
