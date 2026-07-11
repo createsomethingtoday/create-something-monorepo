@@ -3,13 +3,36 @@
   "canvas": {
     "width": 1200,
     "height": 675,
-    "background": "#f9f9f9"
+    "background": "#f7f5ef"
   },
   "metadata": {
     "title": "The governed Dify shipping path",
     "description": "A four-stage education diagram showing Dify as the surface, MCP as the boundary, Policy OS as the control, and a receipt as proof. A gate band and evidence rail make the release decision inspectable."
   },
   "elements": [
+    {
+      "id": "performance-header",
+      "type": "rect",
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 120,
+      "radius": 0,
+      "fill": "#111111",
+      "stroke": "#111111",
+      "contains": ["pressure-index", "diagram-title", "diagram-subtitle"]
+    },
+    {
+      "id": "pressure-index",
+      "type": "rect",
+      "x": 0,
+      "y": 0,
+      "width": 12,
+      "height": 120,
+      "radius": 0,
+      "fill": "#c35d21",
+      "stroke": "#c35d21"
+    },
     {
       "id": "diagram-title",
       "type": "text",
@@ -20,7 +43,7 @@
       "lines": ["Ship one governed path."],
       "fontSize": 30,
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#f7f5ef"
     },
     {
       "id": "diagram-subtitle",
@@ -32,7 +55,7 @@
       "lines": ["Surface → boundary → control → proof"],
       "fontSize": 18,
       "fontWeight": 400,
-      "fill": "#636363"
+      "fill": "#d9d6cf"
     },
     {
       "id": "surface-card",
@@ -41,10 +64,27 @@
       "y": 140,
       "width": 246,
       "height": 210,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
-      "contains": ["surface-step", "surface-title", "surface-detail", "surface-state"]
+      "stroke": "#d9d6cf",
+      "contains": [
+        "surface-signal-rail",
+        "surface-step",
+        "surface-title",
+        "surface-detail",
+        "surface-state"
+      ]
+    },
+    {
+      "id": "surface-signal-rail",
+      "type": "rect",
+      "x": 72,
+      "y": 140,
+      "width": 246,
+      "height": 4,
+      "radius": 0,
+      "fill": "#255f85",
+      "stroke": "#255f85"
     },
     {
       "id": "surface-step",
@@ -55,8 +95,9 @@
       "height": 24,
       "lines": ["01 · SURFACE"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0048ff"
+      "fill": "#255f85"
     },
     {
       "id": "surface-title",
@@ -68,7 +109,7 @@
       "lines": ["Dify app"],
       "fontSize": 23,
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "surface-detail",
@@ -80,7 +121,7 @@
       "lines": ["Captures the request", "and visible response."],
       "fontSize": 16,
       "lineHeight": 24,
-      "fill": "#636363"
+      "fill": "#60646c"
     },
     {
       "id": "surface-state",
@@ -91,8 +132,9 @@
       "height": 24,
       "lines": ["STATE · REQUESTED"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0048ff"
+      "fill": "#255f85"
     },
     {
       "id": "surface-to-boundary",
@@ -101,7 +143,7 @@
       "y1": 245,
       "x2": 342,
       "y2": 245,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     },
@@ -112,10 +154,27 @@
       "y": 140,
       "width": 246,
       "height": 210,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
-      "contains": ["boundary-step", "boundary-title", "boundary-detail", "boundary-state"]
+      "stroke": "#d9d6cf",
+      "contains": [
+        "boundary-growth-rail",
+        "boundary-step",
+        "boundary-title",
+        "boundary-detail",
+        "boundary-state"
+      ]
+    },
+    {
+      "id": "boundary-growth-rail",
+      "type": "rect",
+      "x": 342,
+      "y": 140,
+      "width": 246,
+      "height": 4,
+      "radius": 0,
+      "fill": "#28724f",
+      "stroke": "#28724f"
     },
     {
       "id": "boundary-step",
@@ -126,8 +185,9 @@
       "height": 24,
       "lines": ["02 · BOUNDARY"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "boundary-title",
@@ -139,7 +199,7 @@
       "lines": ["MCP tools"],
       "fontSize": 23,
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "boundary-detail",
@@ -151,7 +211,7 @@
       "lines": ["Limits capability to", "named, allowed tools."],
       "fontSize": 16,
       "lineHeight": 24,
-      "fill": "#636363"
+      "fill": "#60646c"
     },
     {
       "id": "boundary-state",
@@ -162,8 +222,9 @@
       "height": 24,
       "lines": ["STATE · SCOPED"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "boundary-to-control",
@@ -172,7 +233,7 @@
       "y1": 245,
       "x2": 612,
       "y2": 245,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     },
@@ -183,10 +244,27 @@
       "y": 140,
       "width": 246,
       "height": 210,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
-      "contains": ["control-step", "control-title", "control-detail", "control-state"]
+      "stroke": "#d9d6cf",
+      "contains": [
+        "control-growth-rail",
+        "control-step",
+        "control-title",
+        "control-detail",
+        "control-state"
+      ]
+    },
+    {
+      "id": "control-growth-rail",
+      "type": "rect",
+      "x": 612,
+      "y": 140,
+      "width": 246,
+      "height": 4,
+      "radius": 0,
+      "fill": "#28724f",
+      "stroke": "#28724f"
     },
     {
       "id": "control-step",
@@ -197,8 +275,9 @@
       "height": 24,
       "lines": ["03 · CONTROL"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "control-title",
@@ -210,7 +289,7 @@
       "lines": ["Policy OS"],
       "fontSize": 23,
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "control-detail",
@@ -222,7 +301,7 @@
       "lines": ["Evaluates identity,", "intent, and limits."],
       "fontSize": 16,
       "lineHeight": 24,
-      "fill": "#636363"
+      "fill": "#60646c"
     },
     {
       "id": "control-state",
@@ -233,8 +312,9 @@
       "height": 24,
       "lines": ["STATE · ALLOWED"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "control-to-proof",
@@ -243,7 +323,7 @@
       "y1": 245,
       "x2": 882,
       "y2": 245,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     },
@@ -254,10 +334,21 @@
       "y": 140,
       "width": 246,
       "height": 210,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
-      "contains": ["proof-step", "proof-title", "proof-detail", "proof-state"]
+      "stroke": "#d9d6cf",
+      "contains": ["proof-signal-rail", "proof-step", "proof-title", "proof-detail", "proof-state"]
+    },
+    {
+      "id": "proof-signal-rail",
+      "type": "rect",
+      "x": 882,
+      "y": 140,
+      "width": 246,
+      "height": 4,
+      "radius": 0,
+      "fill": "#255f85",
+      "stroke": "#255f85"
     },
     {
       "id": "proof-step",
@@ -268,8 +359,9 @@
       "height": 24,
       "lines": ["04 · PROOF"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0048ff"
+      "fill": "#255f85"
     },
     {
       "id": "proof-title",
@@ -281,7 +373,7 @@
       "lines": ["Receipt"],
       "fontSize": 23,
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "proof-detail",
@@ -293,7 +385,7 @@
       "lines": ["Records the result,", "owner, and evidence."],
       "fontSize": 16,
       "lineHeight": 24,
-      "fill": "#636363"
+      "fill": "#60646c"
     },
     {
       "id": "proof-state",
@@ -304,8 +396,9 @@
       "height": 24,
       "lines": ["STATE · ATTESTED"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0048ff"
+      "fill": "#255f85"
     },
     {
       "id": "gate-band",
@@ -314,10 +407,11 @@
       "y": 382,
       "width": 1056,
       "height": 78,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
+      "stroke": "#d9d6cf",
       "contains": [
+        "gate-pressure-rail",
         "gate-title",
         "gate-identity",
         "gate-data",
@@ -325,6 +419,17 @@
         "gate-output",
         "gate-cost"
       ]
+    },
+    {
+      "id": "gate-pressure-rail",
+      "type": "rect",
+      "x": 72,
+      "y": 382,
+      "width": 4,
+      "height": 78,
+      "radius": 0,
+      "fill": "#c35d21",
+      "stroke": "#c35d21"
     },
     {
       "id": "gate-title",
@@ -335,8 +440,9 @@
       "height": 26,
       "lines": ["RELEASE GATES"],
       "fontSize": 14,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "gate-identity",
@@ -348,7 +454,7 @@
       "lines": ["✓ Identity"],
       "fontSize": 15,
       "fontWeight": 600,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "gate-data",
@@ -360,7 +466,7 @@
       "lines": ["✓ Data"],
       "fontSize": 15,
       "fontWeight": 600,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "gate-action",
@@ -372,7 +478,7 @@
       "lines": ["✓ Action"],
       "fontSize": 15,
       "fontWeight": 600,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "gate-output",
@@ -384,7 +490,7 @@
       "lines": ["✓ Output"],
       "fontSize": 15,
       "fontWeight": 600,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "gate-cost",
@@ -396,7 +502,7 @@
       "lines": ["✓ Cost"],
       "fontSize": 15,
       "fontWeight": 600,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "receipt-rail",
@@ -405,9 +511,9 @@
       "y": 492,
       "width": 1056,
       "height": 130,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
+      "stroke": "#d9d6cf",
       "contains": [
         "receipt-title",
         "receipt-meta",
@@ -426,8 +532,9 @@
       "height": 26,
       "lines": ["PROOF RECEIPT"],
       "fontSize": 14,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "receipt-meta",
@@ -438,7 +545,8 @@
       "height": 26,
       "lines": ["Owner: Platform team  •  Decision: Allowed  •  Evidence: Recorded"],
       "fontSize": 14,
-      "fill": "#636363"
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
+      "fill": "#60646c"
     },
     {
       "id": "receipt-surface",
@@ -450,7 +558,7 @@
       "lines": ["Request accepted"],
       "fontSize": 16,
       "fontWeight": 600,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "receipt-boundary",
@@ -462,7 +570,7 @@
       "lines": ["Tool executed"],
       "fontSize": 16,
       "fontWeight": 600,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "receipt-control",
@@ -474,7 +582,7 @@
       "lines": ["Policy allowed"],
       "fontSize": 16,
       "fontWeight": 600,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "receipt-proof",
@@ -486,7 +594,7 @@
       "lines": ["Evidence recorded"],
       "fontSize": 16,
       "fontWeight": 600,
-      "fill": "#0048ff"
+      "fill": "#255f85"
     },
     {
       "id": "receipt-surface-to-boundary",
@@ -495,7 +603,7 @@
       "y1": 583,
       "x2": 350,
       "y2": 583,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     },
@@ -506,7 +614,7 @@
       "y1": 583,
       "x2": 618,
       "y2": 583,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     },
@@ -517,7 +625,7 @@
       "y1": 583,
       "x2": 886,
       "y2": 583,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     }
