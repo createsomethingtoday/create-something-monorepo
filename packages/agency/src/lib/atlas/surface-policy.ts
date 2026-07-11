@@ -11,6 +11,7 @@ export const AGENCY_ATLAS_PROOF_PATHS = [
   '/methodology',
   '/stack',
   '/products',
+  '/proof/marketplace-workflow',
   '/products/signal',
   '/products/decision',
   '/products/proof'

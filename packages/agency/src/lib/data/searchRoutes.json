@@ -36,6 +36,12 @@
     "lastmod": "2026-06-21"
   },
   {
+    "path": "/proof/marketplace-workflow",
+    "changefreq": "monthly",
+    "priority": "0.82",
+    "lastmod": "2026-07-11"
+  },
+  {
     "path": "/stack",
     "changefreq": "monthly",
     "priority": "0.85",

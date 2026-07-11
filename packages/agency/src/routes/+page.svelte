@@ -158,6 +158,19 @@
     version: 'v1',
     classification: 'Public method'
   };
+
+  const operatorOutcomes = [
+    {
+      state: 'Before',
+      title: 'The operator watches the handoff.',
+      detail: 'Routine work waits across tools, and exceptions arrive without enough context.'
+    },
+    {
+      state: 'After',
+      title: 'The operator returns when judgment matters.',
+      detail: 'Safe work moves, exceptions reach a named owner, and unsafe actions stop with a reason.'
+    }
+  ] as const;
 </script>
 
 <SEO
@@ -174,15 +187,34 @@
   <PerformanceCampaignOpening
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Make one workflow safe to delegate."
-    lede="CREATE SOMETHING turns one messy handoff into work that is mapped, tested, governed, and proven: Signals enter from the tools, Decisions route to the right owner, and Proof records approvals, stops, and outcomes."
+    lede="CREATE SOMETHING turns a handoff your team still watches by hand into a controlled operating path. Routine work can move, judgment reaches the right owner, unsafe actions stop, and every consequential step leaves proof."
     media={controlledFlowMedia}
     proof={heroProofItems}
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>Map one workflow</Button>
-      <Button href="/products" variant="secondary">See proof</Button>
+      <Button href="/proof/marketplace-workflow" variant="secondary">See one complete workflow</Button>
     {/snippet}
   </PerformanceCampaignOpening>
+
+  <PerformancePageSection
+    variant="white"
+    eyebrow="Business outcome"
+    title="Stop watching the workflow. Keep the judgment."
+    description="The goal is not more autonomous activity. It is less manual monitoring without giving away consequential authority."
+  >
+    {#snippet after()}
+      <div class="operator-outcomes" aria-label="Workflow before and after controlled delegation">
+        {#each operatorOutcomes as outcome}
+          <article class="operator-outcome operator-outcome--{outcome.state.toLowerCase()}">
+            <span>{outcome.state}</span>
+            <h3>{outcome.title}</h3>
+            <p>{outcome.detail}</p>
+          </article>
+        {/each}
+      </div>
+    {/snippet}
+  </PerformancePageSection>
 
   <PerformanceFieldSequence
     eyebrow="Performance principle"
@@ -297,6 +329,49 @@
     padding-block: 3.35rem;
   }
 
+  .operator-outcomes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-block: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .operator-outcome {
+    display: grid;
+    gap: 0.7rem;
+    min-height: 13rem;
+    padding: clamp(1.25rem, 3vw, 2.2rem);
+  }
+
+  .operator-outcome + .operator-outcome {
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .operator-outcome span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+  }
+
+  .operator-outcome h3,
+  .operator-outcome p {
+    margin: 0;
+  }
+
+  .operator-outcome h3 {
+    max-width: 22ch;
+    font-size: clamp(1.45rem, 2.5vw, 2.15rem);
+    font-weight: var(--font-medium);
+    line-height: 1.05;
+  }
+
+  .operator-outcome p {
+    max-width: 34rem;
+    color: var(--color-performance-muted, #5e6268);
+    line-height: 1.55;
+  }
+
   .home-pilot :global(.home-process-section .clear-page-section__copy) {
     max-width: 42rem;
     gap: 0.78rem;
@@ -407,6 +482,15 @@
   }
 
   @media (max-width: 640px) {
+    .operator-outcomes {
+      grid-template-columns: 1fr;
+    }
+
+    .operator-outcome + .operator-outcome {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+      border-left: 0;
+    }
+
     .service-flow-artifacts {
       grid-template-columns: 1fr;
       border-bottom: 0;
