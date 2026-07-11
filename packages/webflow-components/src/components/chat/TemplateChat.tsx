@@ -248,6 +248,7 @@ const CHAT_STYLES = `
 .tmchat-panel.immersive .tmchat-preview-bar { padding: 10px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)); }
 .tmchat-input {
   flex: 1 1 auto; min-height: 40px; max-height: 120px; padding: 9px 12px;
+  box-sizing: border-box;
   border: 1px solid #e0e0e0; border-radius: 8px; font: inherit; resize: none; overflow-y: auto;
 }
 .tmchat-input:focus-visible { outline: 2px solid #146ef5; outline-offset: 1px; }
@@ -320,9 +321,39 @@ const CHAT_STYLES = `
   color: #757575; font-size: 13px; pointer-events: none;
 }
 @media (max-width: 560px) {
-  .tmchat-panel { right: 8px; bottom: 8px; width: calc(100vw - 16px); height: calc(100vh - 16px); }
+  .tmchat-panel {
+    inset: 0; width: 100vw; height: 100vh; height: 100dvh;
+    border: 0; border-radius: 0; box-shadow: none;
+  }
   .tmchat-panel.immersive { top: 0; bottom: 0; width: 100vw; border-radius: 0; }
-  .tmchat-grid, .tmchat-panel.immersive .tmchat-grid { grid-template-columns: 1fr; }
+  .tmchat-inputrow, .tmchat-panel.immersive .tmchat-inputrow {
+    padding: 10px 12px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  .tmchat-header, .tmchat-panel.immersive .tmchat-header { padding: 8px 10px; }
+  .tmchat-scroll, .tmchat-panel.immersive .tmchat-scroll { padding: 12px 16px 16px; gap: 12px; }
+  .tmchat-iconbtn { width: 40px; height: 40px; }
+  .tmchat-expand { display: none; }
+  .tmchat-grid:not(.single), .tmchat-panel.immersive .tmchat-grid:not(.single) {
+    grid-template-columns: none; grid-auto-flow: column;
+    grid-auto-columns: min(76vw, 280px); justify-content: start;
+    overflow-x: auto; overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory; padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tmchat-grid:not(.single) > *, .tmchat-panel.immersive .tmchat-grid:not(.single) > * { scroll-snap-align: start; }
+  .tmchat-grid.single, .tmchat-panel.immersive .tmchat-grid.single {
+    grid-template-columns: 1fr; overflow: visible;
+  }
+  .tmchat-followups {
+    flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity; padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tmchat-followups > * { flex: 0 0 auto; scroll-snap-align: start; }
+  .tmchat-preview-bar, .tmchat-panel.immersive .tmchat-preview-bar { flex-wrap: nowrap; gap: 8px; padding: 8px 10px; }
+  .tmchat-preview-back, .tmchat-preview-cta { height: 40px; }
+  .tmchat-devicetoggle, .tmchat-preview-open, .tmchat-preview-sep { display: none; }
   .tmchat-preview-stage.mobile, .tmchat-preview-stage.tablet { padding: 0; }
   .tmchat-preview-stage.mobile .tmchat-preview-frame, .tmchat-preview-stage.tablet .tmchat-preview-frame { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
 }
@@ -917,6 +948,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   );
   const [open, setOpen] = useState(isInline || defaultOpen || Boolean(persisted?.open));
   const [immersive, setImmersive] = useState(defaultImmersive);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(persisted?.messages ?? []);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -939,6 +971,17 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   // Echoed back with each request so the stateless worker can compare or
   // re-display earlier results instead of "forgetting" them between turns.
   const knownTemplatesRef = useRef(new Map<string, AgentTemplateItem>(persisted?.known.map((item) => [item.template_slug, item])));
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(max-width: 560px)');
+    const sync = () => setIsMobileViewport(media.matches);
+    sync();
+    media.addEventListener?.('change', sync);
+    return () => media.removeEventListener?.('change', sync);
+  }, []);
+
+  const isModalSurface = immersive || (!isInline && open && isMobileViewport);
 
   const starters = starterPrompts
     .split(/[,\n]/)
@@ -1098,19 +1141,20 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     );
   }, [immersive]);
 
-  // Immersive is a modal: lock the page scroll behind the backdrop.
+  // Immersive and phone-sized floating chats are modal surfaces: lock the page
+  // behind them so swipe/keyboard interactions stay inside the conversation.
   useEffect(() => {
-    if (!immersive || typeof document === 'undefined') return;
+    if (!isModalSurface || typeof document === 'undefined') return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [immersive]);
+  }, [isModalSurface]);
 
-  // Keep Tab focus inside the immersive dialog.
+  // Keep Tab focus inside any modal conversation surface.
   useEffect(() => {
-    if (!immersive) return;
+    if (!isModalSurface) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Tab') return;
       const root = panelRef.current;
@@ -1132,7 +1176,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [immersive]);
+  }, [isModalSurface]);
 
   // Esc closes the live preview first, then collapses the immersive state,
   // then closes a floating panel.
@@ -1150,8 +1194,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [open, immersive, isInline, preview, setImmersiveAnimated]);
 
-  // The preview reads best on a wide canvas: opening one from the docked
-  // panel expands to immersive; closing the preview returns to the chat as-is.
+  // The preview reads best on a wide canvas: opening one from a desktop docked
+  // panel expands to immersive. Phones already use the full-screen surface, so
+  // toggling desktop immersive state there would only reintroduce wide padding.
   const openPreview = useCallback(
     (item: AgentTemplateItem, position: number, layout: string) => {
       if (!item.website_url) return;
@@ -1163,9 +1208,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         is_free: item.is_free,
         price: item.price,
       });
-      if (!immersive) setImmersiveAnimated(true);
+      if (!immersive && !isMobileViewport) setImmersiveAnimated(true);
     },
-    [immersive, setImmersiveAnimated, track],
+    [immersive, isMobileViewport, setImmersiveAnimated, track],
   );
 
   // Card clicks to the template detail page — writes the same attribution
@@ -1434,7 +1479,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             ) : null}
             <button
               type="button"
-              className="tmchat-iconbtn"
+              className="tmchat-iconbtn tmchat-expand"
               aria-label={immersive ? 'Exit fullscreen' : 'Expand to fullscreen'}
               title={immersive ? 'Exit fullscreen' : 'Expand'}
               onClick={() => setImmersiveAnimated((current) => !current)}
