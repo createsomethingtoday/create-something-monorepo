@@ -26,4 +26,11 @@ describe('Performance media canon', () => {
     expect(pressureBoundaryMedia.alt).toContain('concrete boundary');
     expect(traceControlPlaneMedia.alt).toContain('directional wake');
   });
+
+  it('publishes the controlled-flow hero as static-first progressive video media', () => {
+    expect(controlledFlowMedia.video?.mp4).toMatch(/controlled-flow-motion\.mp4$/);
+    expect(controlledFlowMedia.video?.webm).toMatch(/controlled-flow-motion\.webm$/);
+    expect(controlledFlowMedia.video?.poster).toMatch(/controlled-flow-motion-poster\.webp$/);
+    expect(controlledFlowMedia.src).toMatch(/controlled-flow-natural\.webp$/);
+  });
 });

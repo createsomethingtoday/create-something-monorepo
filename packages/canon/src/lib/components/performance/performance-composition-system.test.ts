@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRawSnippet, flushSync, mount, unmount } from 'svelte';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import PerformanceCampaignOpening from './PerformanceCampaignOpening.svelte';
 import PerformanceThesisConditions from './PerformanceThesisConditions.svelte';
@@ -20,6 +20,7 @@ afterEach(() => {
 		instance = undefined;
 	}
 	document.body.innerHTML = '';
+	vi.unstubAllGlobals();
 });
 
 describe('PerformanceCampaignOpening', () => {
@@ -76,6 +77,87 @@ describe('PerformanceCampaignOpening', () => {
 		expect(proofItems[0].textContent).toContain('Mapped');
 		expect(opening?.querySelector('[data-testid="campaign-action"]')?.getAttribute('href')).toBe(
 			'/book'
+		);
+	});
+
+	it('progressively enhances static campaign media with silent looping video', () => {
+		vi.stubGlobal('matchMedia', () => ({
+			matches: false,
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn()
+		}));
+
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceCampaignOpening, {
+			target,
+			props: {
+				eyebrow: 'AI Performance Lab',
+				title: 'Make one workflow safe to delegate.',
+				media: {
+					src: '/images/controlled-flow.webp',
+					mobileSrc: '/images/controlled-flow-mobile.webp',
+					alt: 'Water moving through a concrete spillway',
+					video: {
+						mp4: '/video/controlled-flow.mp4',
+						webm: '/video/controlled-flow.webm',
+						poster: '/images/controlled-flow-motion-poster.webp'
+					}
+				}
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const opening = target.querySelector('section.performance-campaign-opening');
+		const video = opening?.querySelector('video');
+		expect(video).not.toBeNull();
+		expect(video?.hasAttribute('autoplay')).toBe(true);
+		expect(video?.muted).toBe(true);
+		expect(video?.hasAttribute('loop')).toBe(true);
+		expect(video?.hasAttribute('playsinline')).toBe(true);
+		expect(video?.getAttribute('poster')).toBe('/images/controlled-flow-motion-poster.webp');
+		expect(video?.querySelector('source[type="video/webm"]')?.getAttribute('src')).toBe(
+			'/video/controlled-flow.webm'
+		);
+		expect(video?.querySelector('source[type="video/mp4"]')?.getAttribute('src')).toBe(
+			'/video/controlled-flow.mp4'
+		);
+		expect(opening?.querySelector('picture img')?.getAttribute('src')).toBe(
+			'/images/controlled-flow.webp'
+		);
+	});
+
+	it('keeps campaign video absent when the operator prefers reduced motion', () => {
+		vi.stubGlobal('matchMedia', () => ({
+			matches: true,
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn()
+		}));
+
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceCampaignOpening, {
+			target,
+			props: {
+				eyebrow: 'AI Performance Lab',
+				title: 'Make one workflow safe to delegate.',
+				media: {
+					src: '/images/controlled-flow.webp',
+					mobileSrc: '/images/controlled-flow-mobile.webp',
+					alt: 'Water moving through a concrete spillway',
+					video: {
+						mp4: '/video/controlled-flow.mp4',
+						webm: '/video/controlled-flow.webm'
+					}
+				}
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const opening = target.querySelector('section.performance-campaign-opening');
+		expect(opening?.querySelector('video')).toBeNull();
+		expect(opening?.querySelector('picture img')?.getAttribute('src')).toBe(
+			'/images/controlled-flow.webp'
 		);
 	});
 

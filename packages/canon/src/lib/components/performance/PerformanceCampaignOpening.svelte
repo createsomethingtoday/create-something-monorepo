@@ -1,7 +1,10 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
+	import type { PerformanceMediaVideo } from './media/types';
 
 	export type PerformanceCampaignOpeningMode = 'ink' | 'paper';
+
+	export type PerformanceCampaignVideo = PerformanceMediaVideo;
 
 	export interface PerformanceCampaignMedia {
 		src: string;
@@ -10,6 +13,7 @@
 		width?: number;
 		height?: number;
 		objectPosition?: string;
+		video?: PerformanceCampaignVideo;
 	}
 
 	export interface PerformanceCampaignProof {
@@ -38,6 +42,25 @@
 		priority = true,
 		actions
 	}: Props = $props();
+
+	let motionAllowed = $state(false);
+
+	onMount(() => {
+		const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+		if (!reducedMotion) {
+			motionAllowed = true;
+			return;
+		}
+
+		const syncMotionPreference = () => {
+			motionAllowed = !reducedMotion.matches;
+		};
+
+		syncMotionPreference();
+		reducedMotion.addEventListener('change', syncMotionPreference);
+
+		return () => reducedMotion.removeEventListener('change', syncMotionPreference);
+	});
 </script>
 
 <section class="performance-campaign-opening" data-mode={mode} aria-label={eyebrow}>
@@ -57,6 +80,23 @@
 				style:object-position={media.objectPosition ?? 'center'}
 			/>
 		</picture>
+		{#if media.video && motionAllowed}
+			<video
+				autoplay
+				muted
+				loop
+				playsinline
+				preload="metadata"
+				poster={media.video.poster ?? media.src}
+				aria-hidden="true"
+				style:object-position={media.objectPosition ?? 'center'}
+			>
+				{#if media.video.webm}
+					<source src={media.video.webm} type="video/webm" />
+				{/if}
+				<source src={media.video.mp4} type="video/mp4" />
+			</video>
+		{/if}
 		<div class="performance-campaign-opening__grid" aria-hidden="true"></div>
 	</figure>
 
@@ -109,7 +149,8 @@
 
 	.performance-campaign-opening__media,
 	.performance-campaign-opening__media picture,
-	.performance-campaign-opening__media img {
+	.performance-campaign-opening__media img,
+	.performance-campaign-opening__media video {
 		position: absolute;
 		inset: 0;
 		display: block;
@@ -118,7 +159,8 @@
 		margin: 0;
 	}
 
-	.performance-campaign-opening__media img {
+	.performance-campaign-opening__media img,
+	.performance-campaign-opening__media video {
 		object-fit: cover;
 		filter: grayscale(1) contrast(1.08);
 	}

@@ -21,7 +21,8 @@ export { default as PerformanceCampaignOpening } from './PerformanceCampaignOpen
 export type {
   PerformanceCampaignMedia,
   PerformanceCampaignOpeningMode,
-  PerformanceCampaignProof
+  PerformanceCampaignProof,
+  PerformanceCampaignVideo
 } from './PerformanceCampaignOpening.svelte';
 export { default as PerformanceThesisConditions } from './PerformanceThesisConditions.svelte';
 export type {
