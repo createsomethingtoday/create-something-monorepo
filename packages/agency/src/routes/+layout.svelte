@@ -82,7 +82,6 @@
         { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
         { label: 'Dify Agent Eval Gates', href: '/dify/agent-eval-gates' },
         { label: 'Ship Dify With MCP', href: '/dify/ship-dify-app-with-mcp-tools' },
-        { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
         {
           label: agencyCoreMessaging.governanceChecklistLabel,
           href: agencyCoreMessaging.governanceChecklistHref
@@ -227,22 +226,6 @@
         'policy os',
         'agent governance',
         'approval gates'
-      ]
-    },
-    {
-      id: 'nav-dify-n8n',
-      label: 'Dify vs n8n',
-      description: 'How n8n workflows Cloudflare runtime and Dify agent apps fit together',
-      href: '/dify/n8n-vs-dify',
-      icon: 'DN',
-      keywords: [
-        'dify',
-        'n8n',
-        'workflow automation',
-        'agent apps',
-        'cloudflare',
-        'mcp',
-        'comparison'
       ]
     },
     {

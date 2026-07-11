@@ -284,7 +284,7 @@ Acquire first external paying customer (Stripe transaction outside The Stack).
 ### Scale Outreach
 - [ ] Expand beyond DFW (Austin, Houston, San Antonio)
 - [ ] Hire SDR or contractor for outreach
-- [ ] Automate follow-ups (Zapier, Make, n8n)
+- [ ] Automate follow-ups with the approved workflow platform
 
 ### Product Iteration
 - [ ] Collect customer feedback

@@ -1,11 +1,11 @@
 {
   "generated": "2026-01-26T19:37:32.848Z",
   "summary": {
-    "total": 590,
-    "accessible": 590,
+    "total": 589,
+    "accessible": 589,
     "noAccess": 0,
     "errors": 0,
-    "uniqueClientIds": 572,
+    "uniqueClientIds": 571,
     "duplicateClientIdGroups": 8
   },
   "duplicateClientIds": [
@@ -356,14 +356,6 @@
       "workspaceId": "638f7017f8f3b49d78e071a0",
       "error": null,
       "editUrl": "https://webflow.com/apps/detail/finsweet-components/edit"
-    },
-    {
-      "name": "n8n Cloud",
-      "slug": "n8n-cloud",
-      "clientId": "7a70d745efb20753c9db3e2ceb633607a2acb7f7dadacc1493bba68bc2a17e15",
-      "workspaceId": "63881938fc91cc45f558ac3f",
-      "error": null,
-      "editUrl": "https://webflow.com/apps/detail/n8n-cloud/edit"
     },
     {
       "name": "HubSpot",

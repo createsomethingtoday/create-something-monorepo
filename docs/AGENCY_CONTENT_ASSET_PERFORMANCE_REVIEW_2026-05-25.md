@@ -32,7 +32,6 @@ tables.
 | `/dify`                |      7 |        3 |          3 |                 0 |             0 |           0 | 2026-05-24 |
 | `/cloudflare`          |      6 |        2 |          2 |                 0 |             0 |           0 | 2026-05-24 |
 | `/dify/content-engine` |      4 |        2 |          2 |                 0 |             0 |           0 | 2026-05-24 |
-| `/dify/n8n-vs-dify`    |      3 |        2 |          2 |                 0 |             0 |           0 | 2026-05-24 |
 | `/notion`              |      3 |        1 |          1 |                 0 |             0 |           0 | 2026-05-24 |
 
 ## 90-Day Baseline
@@ -45,7 +44,6 @@ tables.
 | `/dify`                |      7 |        3 |          3 | 2026-05-24 |
 | `/cloudflare`          |      6 |        2 |          2 | 2026-05-24 |
 | `/dify/content-engine` |      4 |        2 |          2 | 2026-05-24 |
-| `/dify/n8n-vs-dify`    |      3 |        2 |          2 | 2026-05-24 |
 | `/notion`              |      3 |        1 |          1 | 2026-05-24 |
 
 ## Findings
@@ -55,8 +53,7 @@ tables.
 2. `/book` receives decision-stage traffic but does not yet have enough booking
    event evidence in `unified_events` to calculate conversion rate.
 3. The Dify article cluster is live and indexed in the sitemap, but traffic is
-   early: two page views each for `/dify/content-engine` and `/dify/n8n-vs-dify`
-   in the last 30 days.
+   early: two page views for `/dify/content-engine` in the last 30 days.
 4. `/dify/mcp-control-plane` is in the sitemap and content-asset metadata, but
    had no matching recent D1 events in the 30/90-day query window.
 5. No live analytics events currently contain `metadata.contentAssetId`; the
@@ -97,7 +94,7 @@ Footer structure implemented:
 - Expanded content-asset metadata coverage to include `/services`, `/book`,
   `/partners`, `/cloudflare`, and `/dify`.
 - Preserved article metadata for `/dify/content-engine`,
-  `/dify/mcp-control-plane`, `/dify/n8n-vs-dify`, and `/notion`.
+  `/dify/mcp-control-plane`, and `/notion`.
 - Added grouped footer support to the shared canon footer while preserving the
   existing flat `quickLinks` API.
 - Reorganized the agency footer into commercial paths, partner lanes, guides,

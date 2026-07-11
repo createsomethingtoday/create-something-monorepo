@@ -321,7 +321,7 @@
 				<div class="p-4 font-mono code-block">
 					<p class="code-comment">// README claimed:</p>
 					<p class="code-primary">1. Node.js + Railway (documented as primary)</p>
-					<p class="code-primary">2. n8n (mentioned as future target)</p>
+					<p class="code-primary">2. Legacy workflow platform (mentioned as future target)</p>
 					<p class="code-primary">3. Cloudflare Workers (actual production)</p>
 				</div>
 

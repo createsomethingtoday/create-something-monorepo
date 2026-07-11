@@ -27476,46 +27476,6 @@ Updated: 2026-06-22
 `
   },
   {
-    id: "agency:content/assets/articles/article.dify-vs-n8n.v20260518/metadata",
-    property: "agency",
-    title: "Article Image Metadata: Dify vs n8n",
-    description: "Article Image Metadata: Dify vs n8n",
-    section: "content",
-    path: "content/assets/articles/article.dify-vs-n8n.v20260518/metadata.md",
-    slug: "content/assets/articles/article.dify-vs-n8n.v20260518/metadata",
-    uri: "docs://agency/content/assets/articles/article.dify-vs-n8n.v20260518/metadata",
-    content: `# Article Image Metadata: Dify vs n8n
-
-Article URL: \`/dify/n8n-vs-dify\`
-Article asset ID: \`article.dify-vs-n8n.v20260518\`
-Updated: 2026-06-22
-
-## Original Visuals
-
-### dify-n8n-layer-map.png
-
-- Path: \`/images/articles/dify-vs-n8n/dify-n8n-layer-map.png\`
-- Owner: CREATE SOMETHING
-- Usage: Article layer map comparing n8n, Cloudflare, Dify, and Policy OS.
-- Refresh cadence: Review with article updates.
-- Source brief: \`packages/agency/static/images/articles/dify-vs-n8n/dify-n8n-layer-map.svg\`
-- Model: OpenAI \`gpt-image-2\`
-- Generated: 2026-07-06
-- SHA-256: \`965997b76ed5ba9d6f1b066379848eb0fb09eb17bd500b1c8efc31e4c289e172\`
-
-## Collected Screenshots
-
-### n8n-mcp-server-docs-20260525.png
-
-- Path: \`/images/articles/dify-vs-n8n/n8n-mcp-server-docs-20260525.png\`
-- Source: \`https://docs.n8n.io/advanced-ai/mcp/accessing-n8n-mcp-server/\`
-- Captured: 2026-05-25
-- Refresh due: 2026-07-24
-- Usage: Evidence screenshot for n8n MCP access documentation.
-- Rights note: Public official documentation screenshot for commentary and comparison. Do not imply n8n endorsement. Refresh or replace if the UI or docs materially change.
-`
-  },
-  {
     id: "agency:content/assets/articles/partner.notion-ops-workspace.v20260518/metadata",
     property: "agency",
     title: "Article Image Metadata: Notion Ops Workspace",
@@ -38816,7 +38776,7 @@ The managed portfolio covers the high-intent public funnel:
 | Core services | \`/services\` | - |
 | Stack boundary | \`/stack\` | - |
 | Workflow tool stack | \`/partners\` | \`/cloudflare\` |
-| Dify | \`/dify\` | \`/dify/mcp-control-plane\`, \`/dify/agent-eval-gates\`, \`/dify/ship-dify-app-with-mcp-tools\`, \`/dify/template-marketplace-proof\`, \`/dify/n8n-vs-dify\` |
+| Dify | \`/dify\` | \`/dify/mcp-control-plane\`, \`/dify/agent-eval-gates\`, \`/dify/ship-dify-app-with-mcp-tools\`, \`/dify/template-marketplace-proof\` |
 | Products | \`/products\` | - |
 | Business use case | \`/use-cases/business\` | - |
 | Enterprise use case | \`/use-cases/enterprise\` | - |
@@ -38830,7 +38790,6 @@ The Dify cluster is the first multi-page content system:
 | \`/dify/agent-eval-gates\` | Operations | Show the gates that prove a Dify workflow can operate safely. |
 | \`/dify/ship-dify-app-with-mcp-tools\` | Implementation | Give a practical shipping checklist for Dify plus MCP systems. |
 | \`/dify/template-marketplace-proof\` | Implementation | Package the first Dify marketplace template as public proof without leaking private delivery evidence. |
-| \`/dify/n8n-vs-dify\` | Comparison | Capture comparison intent and route it toward the governed Dify workflow path. |
 
 The durable SEO/AEO strategy is:
 

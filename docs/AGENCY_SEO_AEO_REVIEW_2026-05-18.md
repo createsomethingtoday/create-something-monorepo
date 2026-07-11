@@ -46,7 +46,7 @@ should not be treated as acquisition pages.
 | Authenticated surfaces     | Dashboard and MCP tools page had indexable metadata in their component state.                                                   | Marked as `noindex`. Crawlers already see login redirect, but component intent is now explicit.          |
 | Client-delivery surface    | `/delivery/abundance` was public and indexable but not in the sitemap.                                                          | Marked as `noindex`; it remains available as a client/review artifact, not an acquisition landing page.  |
 | Legacy experiments         | `/experiments` and dynamic experiment pages are not part of the current public navigation or sitemap.                           | Marked as `noindex` until the content is intentionally promoted into the current proof-surface strategy. |
-| Dify content pages         | New Dify pages had solid titles/descriptions but did not declare article metadata.                                              | Added article schema fields to the Dify content-engine, MCP control-plane, and n8n comparison pages.     |
+| Dify content pages         | New Dify pages had solid titles/descriptions but did not declare article metadata.                                              | Added article schema fields to the Dify content-engine and MCP control-plane pages.                       |
 | Snippet length             | Several indexable descriptions tried to carry the full business thesis in one meta tag.                                         | Tightened core acquisition and proof-page descriptions around the route's actual job.                    |
 
 ## Indexable Page Set
@@ -65,7 +65,6 @@ The sitemap now prioritizes these pages:
 - `/dify`
 - `/dify/content-engine`
 - `/dify/mcp-control-plane`
-- `/dify/n8n-vs-dify`
 - `/cloudflare`
 - `/notion`
 - `/products`
@@ -96,8 +95,8 @@ These route groups are intentionally excluded from search acquisition:
 
 These were not required for the narrow fix but are useful future improvements:
 
-1. Create dedicated Open Graph images for Dify, Cloudflare, Notion, Policy OS,
-   and the n8n comparison page instead of reusing the generic OG image.
+1. Create dedicated Open Graph images for Dify, Cloudflare, Notion, and Policy OS
+   instead of reusing the generic OG image.
 2. Decide whether legal pages should remain `noindex`; if the trust strategy
    changes, remove `noindex` and re-add them to the sitemap.
 3. Promote selected `/experiments` content into `/products` or future case-study

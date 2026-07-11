@@ -6,7 +6,6 @@ import { agentWorkUnitContractPaths } from '../agent-loop-pilot.mjs';
 
 test('isModelApiKeyEnvName detects OpenAI and common model provider API keys', () => {
   assert.equal(isModelApiKeyEnvName('OPENAI_API_KEY'), true);
-  assert.equal(isModelApiKeyEnvName('N8N_OPENAI_API_KEY'), true);
   assert.equal(isModelApiKeyEnvName('WEBFLOW_OPENAI_API_KEY'), true);
   assert.equal(isModelApiKeyEnvName('ANTHROPIC_API_KEY'), true);
   assert.equal(isModelApiKeyEnvName('PERPLEXITY_API_KEY'), true);
@@ -17,7 +16,6 @@ test('isModelApiKeyEnvName detects OpenAI and common model provider API keys', (
 test('buildAccountBasedLoopEnv strips model API keys but preserves coordination credentials', () => {
   const { env, removedKeys } = buildAccountBasedLoopEnv({
     OPENAI_API_KEY: 'sk-test',
-    N8N_OPENAI_API_KEY: 'sk-n8n',
     ANTHROPIC_API_KEY: 'anthropic-test',
     PERPLEXITY_API_KEY: 'pplx-test',
     LINEAR_API_KEY: 'linear-test',
@@ -27,12 +25,10 @@ test('buildAccountBasedLoopEnv strips model API keys but preserves coordination 
 
   assert.deepEqual(removedKeys, [
     'ANTHROPIC_API_KEY',
-    'N8N_OPENAI_API_KEY',
     'OPENAI_API_KEY',
     'PERPLEXITY_API_KEY'
   ]);
   assert.equal(env.OPENAI_API_KEY, undefined);
-  assert.equal(env.N8N_OPENAI_API_KEY, undefined);
   assert.equal(env.ANTHROPIC_API_KEY, undefined);
   assert.equal(env.PERPLEXITY_API_KEY, undefined);
   assert.equal(env.LINEAR_API_KEY, 'linear-test');

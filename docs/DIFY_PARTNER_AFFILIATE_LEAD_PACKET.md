@@ -178,8 +178,7 @@ Prepare these before submitting:
 - Secondary category: `Marketplace Partner`
 - Public reference page: `/dify`
 - Public content cluster: `/dify`, `/dify/mcp-control-plane`,
-  `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`,
-  `/dify/n8n-vs-dify`
+  `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`
 - Product proof: public guide agent and sanitized public trust catalog entries.
 - Delivery proof: sanitized Abundance, YouTube Transcript Notion, and Webflow
   Marketplace Creator Agent examples.

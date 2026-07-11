@@ -114,17 +114,6 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'ship Dify app with MCP tools',
     contentPrimaryCta: 'request-workflow-teardown'
-  },
-  '/dify/n8n-vs-dify': {
-    contentAssetId: 'article.dify-vs-n8n.v20260518',
-    contentType: 'article',
-    contentCluster: 'ai-workflow-platform-comparisons',
-    contentIntent: 'versus',
-    contentAudience: 'operator comparing workflow automation and agent app tools',
-    contentFunnelStage: 'decision',
-    contentPrimaryKeyword: 'Dify vs n8n',
-    contentPrimaryCta: 'request-workflow-teardown',
-    contentLinearIssue: 'CRE-374'
   }
 };
 

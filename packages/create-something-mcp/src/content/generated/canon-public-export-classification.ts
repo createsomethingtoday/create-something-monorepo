@@ -323,6 +323,24 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Root components barrel mixes stable primitives and review candidates; individual symbols keep explicit policy."
   },
   {
+    "exportPath": "./components/performance/media/controlled-flow",
+    "classification": "brand-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Responsive campaign photography is an expression asset, not an agent-default UI primitive."
+  },
+  {
+    "exportPath": "./components/performance/media/pressure-boundary",
+    "classification": "brand-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Responsive campaign photography is an expression asset, not an agent-default UI primitive."
+  },
+  {
+    "exportPath": "./components/performance/media/trace-control-plane",
+    "classification": "brand-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Responsive campaign photography is an expression asset, not an agent-default UI primitive."
+  },
+  {
     "exportPath": "./components/form",
     "classification": "stable-foundation-candidate",
     "registryPolicy": "registry-covered",
