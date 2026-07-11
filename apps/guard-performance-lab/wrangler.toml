@@ -10,6 +10,7 @@ CS_IDENTITY_JWKS_URL = "https://id.createsomething.space/.well-known/jwks.json"
 CS_IDENTITY_AUDIENCE = "guard-performance-lab"
 CS_AUTH_SIGN_IN_URL = "/sign-in"
 ALLOW_CS_AUTH_PREVIEW = "false"
+GUARD_LAB_OPERATOR_SUBJECTS = "b8adb839-ddbb-4747-968e-7668687cf140"
 
 [[d1_databases]]
 binding = "GUARD_LAB_DB"
