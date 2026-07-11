@@ -52,9 +52,18 @@ export type CanvasKernelPalette = {
   statusRing: Record<string, [number, number, number, number]>;
 };
 
+export type CanvasKernelEmphasis = {
+  dimUnfocused: boolean;
+  edgeIds: ReadonlySet<string>;
+  nodeIds: ReadonlySet<string>;
+};
+
+export type CanvasKernelEmphasisLevel = 'default' | 'dimmed' | 'focused';
+
 export type CanvasKernelProps = {
   activeNodeIds: Set<string>;
   ariaLabel: string;
+  emphasis?: CanvasKernelEmphasis;
   fitRequest: number;
   focusRequest: CanvasKernelFocusRequest;
   onNodeSelect: (nodeId: string) => void;
@@ -90,6 +99,7 @@ const FAST_OVERVIEW_LABEL_LIMIT = 48;
 const FAST_OVERVIEW_NODE_THRESHOLD = 220;
 const FAST_OVERVIEW_ZOOM = 0.2;
 const FAST_VIEW_PADDING = 84;
+const FAST_CANVAS_BACKGROUND: [number, number, number, number] = [0.976, 0.976, 0.949, 1];
 
 export type CanvasKernelDrawPlan = {
   labelLimit: number;
@@ -150,6 +160,38 @@ export function canvasKernelDrawPlan(
     mode: overview ? 'overview' : 'map',
     renderEdges: !overview || edgeCount <= nodeCount
   };
+}
+
+export function canvasKernelEmphasisLevel(
+  id: string,
+  focusedIds: ReadonlySet<string> | undefined,
+  dimUnfocused: boolean
+): CanvasKernelEmphasisLevel {
+  if (!focusedIds) return 'default';
+  if (focusedIds.has(id)) return 'focused';
+  return dimUnfocused ? 'dimmed' : 'default';
+}
+
+function mixColor(
+  color: [number, number, number, number],
+  target: [number, number, number, number],
+  amount: number
+): [number, number, number, number] {
+  return [
+    color[0] + (target[0] - color[0]) * amount,
+    color[1] + (target[1] - color[1]) * amount,
+    color[2] + (target[2] - color[2]) * amount,
+    color[3] + (target[3] - color[3]) * amount
+  ];
+}
+
+function emphasisColor(
+  color: [number, number, number, number],
+  level: CanvasKernelEmphasisLevel
+): [number, number, number, number] {
+  if (level === 'focused') return [color[0], color[1], color[2], Math.max(color[3], 0.82)];
+  if (level === 'dimmed') return mixColor(color, FAST_CANVAS_BACKGROUND, 0.76);
+  return color;
 }
 
 function clipPoint(
@@ -218,6 +260,7 @@ function graphVertexBuffers(
   viewport: CanvasKernelViewport,
   selectedNodeId: string | null,
   activeNodeIds: Set<string>,
+  emphasis: CanvasKernelEmphasis | undefined,
   palette: CanvasKernelPalette,
   width: number,
   height: number,
@@ -230,6 +273,10 @@ function graphVertexBuffers(
       const source = nodeById.get(edge.source);
       const target = nodeById.get(edge.target);
       if (!source || !target) continue;
+      const edgeColor = emphasisColor(
+        palette.edge,
+        canvasKernelEmphasisLevel(edge.id, emphasis?.edgeIds, emphasis?.dimUnfocused ?? false)
+      );
       pushVertex(
         edgeVertices,
         clipPoint(
@@ -239,7 +286,7 @@ function graphVertexBuffers(
           width,
           height
         ),
-        palette.edge
+        edgeColor
       );
       pushVertex(
         edgeVertices,
@@ -250,7 +297,7 @@ function graphVertexBuffers(
           width,
           height
         ),
-        palette.edge
+        edgeColor
       );
     }
   }
@@ -261,15 +308,24 @@ function graphVertexBuffers(
   for (const node of projection.nodes) {
     const isSelected = node.id === selectedNodeId;
     const isActive = activeNodeIds.has(node.id);
+    const emphasisLevel = canvasKernelEmphasisLevel(
+      node.id,
+      emphasis?.nodeIds,
+      emphasis?.dimUnfocused ?? false
+    );
+    const isFocused = emphasisLevel === 'focused';
     pushRect(
       nodeRings,
       node,
-      isSelected ? 6 : isActive ? 4 : 2,
-      isSelected
-        ? palette.selectedRing
-        : isActive
-          ? palette.activeRing
-          : (palette.statusRing[node.status] ?? palette.nodeBorder),
+      isSelected ? 6 : isFocused ? 5 : isActive ? 4 : 2,
+      emphasisColor(
+        isSelected
+          ? palette.selectedRing
+          : isFocused || isActive
+            ? palette.activeRing
+            : (palette.statusRing[node.status] ?? palette.nodeBorder),
+        emphasisLevel
+      ),
       viewport,
       width,
       height
@@ -278,7 +334,7 @@ function graphVertexBuffers(
       nodeFaces,
       node,
       0,
-      isSelected ? palette.nodeFaceSelected : palette.nodeFace,
+      emphasisColor(isSelected ? palette.nodeFaceSelected : palette.nodeFace, emphasisLevel),
       viewport,
       width,
       height
@@ -290,7 +346,7 @@ function graphVertexBuffers(
       node.y,
       node.x + stripeWidth,
       node.y + node.height,
-      palette.kindStripe[node.kind] ?? palette.nodeBorder,
+      emphasisColor(palette.kindStripe[node.kind] ?? palette.nodeBorder, emphasisLevel),
       viewport,
       width,
       height
@@ -444,6 +500,7 @@ function renderGraphWebgpu(
   viewport: CanvasKernelViewport,
   selectedNodeId: string | null,
   activeNodeIds: Set<string>,
+  emphasis: CanvasKernelEmphasis | undefined,
   palette: CanvasKernelPalette,
   width: number,
   height: number,
@@ -454,6 +511,7 @@ function renderGraphWebgpu(
     viewport,
     selectedNodeId,
     activeNodeIds,
+    emphasis,
     palette,
     width,
     height,
@@ -501,6 +559,7 @@ function renderGraphCanvas2d(
   viewport: CanvasKernelViewport,
   selectedNodeId: string | null,
   activeNodeIds: Set<string>,
+  emphasis: CanvasKernelEmphasis | undefined,
   palette: CanvasKernelPalette,
   width: number,
   height: number,
@@ -516,23 +575,36 @@ function renderGraphCanvas2d(
 
   const nodeById = new Map(projection.nodes.map((node) => [node.id, node]));
   if (drawPlan.renderEdges) {
-    context.strokeStyle = colorToCss(palette.edge);
-    context.lineWidth = 1;
-    context.beginPath();
+    const edgeGroups: Record<CanvasKernelEmphasisLevel, CanvasKernelEdge[]> = {
+      default: [],
+      dimmed: [],
+      focused: []
+    };
     for (const edge of projection.edges) {
-      const source = nodeById.get(edge.source);
-      const target = nodeById.get(edge.target);
-      if (!source || !target) continue;
-      context.moveTo(
-        (source.x + source.width / 2) * viewport.zoom + viewport.x,
-        (source.y + source.height / 2) * viewport.zoom + viewport.y
-      );
-      context.lineTo(
-        (target.x + target.width / 2) * viewport.zoom + viewport.x,
-        (target.y + target.height / 2) * viewport.zoom + viewport.y
-      );
+      edgeGroups[
+        canvasKernelEmphasisLevel(edge.id, emphasis?.edgeIds, emphasis?.dimUnfocused ?? false)
+      ].push(edge);
     }
-    context.stroke();
+    for (const level of ['dimmed', 'default', 'focused'] as const) {
+      if (!edgeGroups[level].length) continue;
+      context.strokeStyle = colorToCss(emphasisColor(palette.edge, level));
+      context.lineWidth = level === 'focused' ? 2 : 1;
+      context.beginPath();
+      for (const edge of edgeGroups[level]) {
+        const source = nodeById.get(edge.source);
+        const target = nodeById.get(edge.target);
+        if (!source || !target) continue;
+        context.moveTo(
+          (source.x + source.width / 2) * viewport.zoom + viewport.x,
+          (source.y + source.height / 2) * viewport.zoom + viewport.y
+        );
+        context.lineTo(
+          (target.x + target.width / 2) * viewport.zoom + viewport.x,
+          (target.y + target.height / 2) * viewport.zoom + viewport.y
+        );
+      }
+      context.stroke();
+    }
   }
 
   for (const node of projection.nodes) {
@@ -542,16 +614,30 @@ function renderGraphCanvas2d(
     const nodeHeight = node.height * viewport.zoom;
     const isSelected = node.id === selectedNodeId;
     const isActive = activeNodeIds.has(node.id);
-    const ringColor = isSelected
-      ? palette.selectedRing
-      : isActive
-        ? palette.activeRing
-        : (palette.statusRing[node.status] ?? palette.nodeBorder);
+    const emphasisLevel = canvasKernelEmphasisLevel(
+      node.id,
+      emphasis?.nodeIds,
+      emphasis?.dimUnfocused ?? false
+    );
+    const isFocused = emphasisLevel === 'focused';
+    const ringColor = emphasisColor(
+      isSelected
+        ? palette.selectedRing
+        : isFocused || isActive
+          ? palette.activeRing
+          : (palette.statusRing[node.status] ?? palette.nodeBorder),
+      emphasisLevel
+    );
     context.fillStyle = colorToCss(ringColor);
-    context.fillRect(left - 2, top - 2, nodeWidth + 4, nodeHeight + 4);
-    context.fillStyle = colorToCss(isSelected ? palette.nodeFaceSelected : palette.nodeFace);
+    const ringWidth = isSelected ? 3 : isFocused ? 2.5 : 2;
+    context.fillRect(left - ringWidth, top - ringWidth, nodeWidth + ringWidth * 2, nodeHeight + ringWidth * 2);
+    context.fillStyle = colorToCss(
+      emphasisColor(isSelected ? palette.nodeFaceSelected : palette.nodeFace, emphasisLevel)
+    );
     context.fillRect(left, top, nodeWidth, nodeHeight);
-    context.fillStyle = colorToCss(palette.kindStripe[node.kind] ?? palette.nodeBorder);
+    context.fillStyle = colorToCss(
+      emphasisColor(palette.kindStripe[node.kind] ?? palette.nodeBorder, emphasisLevel)
+    );
     context.fillRect(left, top, Math.max(3, Math.min(8, nodeWidth * 0.05)), nodeHeight);
   }
 }
@@ -586,6 +672,7 @@ function hitTestNode(nodes: CanvasKernelNode[], worldX: number, worldY: number):
 export function CanvasKernel({
   activeNodeIds,
   ariaLabel,
+  emphasis,
   fitRequest,
   focusRequest,
   onNodeSelect,
@@ -673,6 +760,7 @@ export function CanvasKernel({
         viewport,
         selectedNodeId,
         activeNodeIds,
+        emphasis,
         palette,
         size.width,
         size.height,
@@ -693,6 +781,7 @@ export function CanvasKernel({
             viewport,
             selectedNodeId,
             activeNodeIds,
+            emphasis,
             palette,
             size.width,
             size.height,
@@ -711,7 +800,7 @@ export function CanvasKernel({
     return () => {
       cancelled = true;
     };
-  }, [activeNodeIds, drawPlan, palette, projection, selectedNodeId, size.height, size.width, viewport]);
+  }, [activeNodeIds, drawPlan, emphasis, palette, projection, selectedNodeId, size.height, size.width, viewport]);
 
   const onPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -779,9 +868,15 @@ export function CanvasKernel({
       return selected ? [selected] : [];
     }
     return projection.nodes
-      .filter((node) => viewport.zoom > 0.22 || node.id === selectedNodeId || activeNodeIds.has(node.id))
+      .filter(
+        (node) =>
+          viewport.zoom > 0.22 ||
+          node.id === selectedNodeId ||
+          activeNodeIds.has(node.id) ||
+          emphasis?.nodeIds.has(node.id)
+      )
       .slice(0, drawPlan.labelLimit);
-  }, [activeNodeIds, drawPlan.labelLimit, projection.nodes, selectedNodeId, viewport.zoom]);
+  }, [activeNodeIds, drawPlan.labelLimit, emphasis, projection.nodes, selectedNodeId, viewport.zoom]);
 
   return (
     <div
@@ -789,6 +884,9 @@ export function CanvasKernel({
       className="fast-topology-canvas"
       data-atlas-renderer="canvas-kernel"
       data-edge-count={projection.edges.length}
+      data-emphasis={emphasis ? 'active' : 'none'}
+      data-focused-edge-count={emphasis?.edgeIds.size ?? 0}
+      data-focused-node-count={emphasis?.nodeIds.size ?? 0}
       data-render-mode={drawPlan.mode}
       data-node-count={projection.nodes.length}
       data-render-backend={renderBackend}
@@ -805,11 +903,16 @@ export function CanvasKernel({
         {labels.map((node) => {
           const left = node.x * viewport.zoom + viewport.x;
           const top = node.y * viewport.zoom + viewport.y;
+          const emphasisLevel = canvasKernelEmphasisLevel(
+            node.id,
+            emphasis?.nodeIds,
+            emphasis?.dimUnfocused ?? false
+          );
           return (
             <span
               className={`fast-node-label kind-${node.kind} ${
                 node.id === selectedNodeId ? 'selected' : ''
-              } ${activeNodeIds.has(node.id) ? 'active' : ''}`}
+              } ${activeNodeIds.has(node.id) ? 'active' : ''} ${emphasisLevel}`}
               key={node.id}
               style={{
                 left,
