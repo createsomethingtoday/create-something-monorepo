@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "workflow_receipt_reconciliation_policy.v0.1",
+  "sampling": {
+    "minimumCaseCount": 8,
+    "minimumReviewerCount": 4,
+    "maximumReviewerShare": 0.35
+  },
+  "outcomeMappings": {
+    "approved": {
+      "actionId": "approve_template",
+      "expectedGovernanceOutcome": "approval_required"
+    },
+    "rejected": {
+      "actionId": "request_changes",
+      "expectedGovernanceOutcome": "approval_required"
+    },
+    "changes_requested": {
+      "actionId": "request_changes",
+      "expectedGovernanceOutcome": "approval_required"
+    },
+    "response_to_review": {
+      "actionId": "request_changes",
+      "expectedGovernanceOutcome": "approval_required"
+    }
+  },
+  "classificationMappings": {
+    "sandbox_minor_signals_on_approved_case": {
+      "classification": "approved_with_minor_objective_findings",
+      "objectiveEvidenceExplainsOutcome": true,
+      "status": "aligned"
+    },
+    "sandbox_consistent_with_approved_clean_evidence": {
+      "classification": "approved_with_clean_objective_evidence",
+      "objectiveEvidenceExplainsOutcome": true,
+      "status": "aligned"
+    },
+    "sandbox_found_substantive_signal_on_approved_case": {
+      "classification": "approved_with_substantive_objective_findings",
+      "objectiveEvidenceExplainsOutcome": false,
+      "status": "discrepancy"
+    },
+    "sandbox_did_not_explain_human_rejection": {
+      "classification": "unexplained_human_rejection",
+      "objectiveEvidenceExplainsOutcome": false,
+      "status": "discrepancy"
+    },
+    "sandbox_did_not_explain_iterative_review": {
+      "classification": "unexplained_iterative_review",
+      "objectiveEvidenceExplainsOutcome": false,
+      "status": "discrepancy"
+    }
+  },
+  "evaluationProposal": {
+    "confidence": 0.95,
+    "evaluation": {
+      "id": "case-level-outcome-replay",
+      "title": "Historical outcome discrepancies retain replayable case receipt provenance",
+      "actionId": "request_changes",
+      "expectedOutcome": "approval_required",
+      "requiredEvidence": ["case_receipt_id", "source_hash", "source_pointer", "observed_outcome", "objective_findings", "snapshot_currency"]
+    }
+  },
+  "samplingConflictTargets": {
+    "insufficientCases": {
+      "id": "conflict:receipt-corpus-insufficient-cases",
+      "targetPath": "/judgment/receipt-corpus/minimum-case-count"
+    },
+    "insufficientReviewers": {
+      "id": "conflict:receipt-corpus-insufficient-reviewers",
+      "targetPath": "/judgment/receipt-corpus/minimum-reviewer-count"
+    },
+    "reviewerConcentration": {
+      "id": "conflict:receipt-corpus-reviewer-concentration",
+      "targetPath": "/judgment/receipt-corpus/maximum-reviewer-share"
+    }
+  }
+}
