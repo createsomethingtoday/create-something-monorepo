@@ -88,6 +88,27 @@ describe('webflow-template-agent worker abuse boundaries', () => {
     expect(runTurn).not.toHaveBeenCalled();
   });
 
+  it('rejects malformed JSON before invoking the agent', async () => {
+    const runTurn = vi.fn(async () => undefined);
+    const worker = createTemplateAgentWorker(securityDependencies(runTurn));
+    const response = await worker.fetch(
+      new Request('https://agent.test/api/templates/agent/chat', {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer signed-session',
+          'content-type': 'application/json',
+          origin: 'https://webflow.com',
+        },
+        body: '{"messages":',
+      }),
+      testEnv(),
+      testContext(),
+    );
+
+    expect(response.status).toBe(400);
+    expect(runTurn).not.toHaveBeenCalled();
+  });
+
   it.each([
     {
       label: 'more than 20 messages',
@@ -150,6 +171,25 @@ describe('webflow-template-agent worker abuse boundaries', () => {
       'challenge-token',
       expect.objectContaining({ origin: 'https://webflow.com' }),
     );
+  });
+
+  it('rejects a replayed Turnstile challenge without minting another session', async () => {
+    const dependencies = securityDependencies();
+    dependencies.verifyTurnstile
+      .mockResolvedValueOnce({ success: true })
+      .mockResolvedValueOnce({ success: false, reason: 'Bot verification failed.' });
+    const worker = createTemplateAgentWorker(dependencies);
+    const request = () =>
+      new Request('https://agent.test/api/templates/agent/session', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', origin: 'https://webflow.com' },
+        body: JSON.stringify({ turnstile_token: 'single-use-challenge' }),
+      });
+
+    expect((await worker.fetch(request(), testEnv(), testContext())).status).toBe(201);
+    expect((await worker.fetch(request(), testEnv(), testContext())).status).toBe(403);
+    expect(dependencies.issueSession).toHaveBeenCalledOnce();
+    expect(dependencies.runAgentTurn).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -230,6 +270,41 @@ describe('webflow-template-agent worker abuse boundaries', () => {
     expect(dependencies.settleTurn).toHaveBeenCalledWith(testEnv(), {
       leaseId: 'lease-1',
       actualCostMicroUsd: 2_700,
+    });
+  });
+
+  it('settles the full reservation after a failed model stream so concurrency cannot leak', async () => {
+    const runTurn = vi.fn(async () => {
+      throw new Error('upstream failed');
+    });
+    const dependencies = securityDependencies(runTurn);
+    dependencies.reserveTurn.mockResolvedValue({
+      allowed: true as const,
+      leaseId: 'failed-lease',
+      reservedMicroUsd: 2_000_000,
+    });
+    const worker = createTemplateAgentWorker(dependencies);
+    const ctx = trackedContext();
+    const response = await worker.fetch(
+      new Request('https://agent.test/api/templates/agent/chat', {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer signed-session',
+          'content-type': 'application/json',
+          origin: 'https://webflow.com',
+        },
+        body: JSON.stringify({ messages: [{ role: 'user', content: 'Find a template' }] }),
+      }),
+      testEnv(),
+      ctx,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('unexpected error');
+    await Promise.all(ctx.pending);
+
+    expect(dependencies.settleTurn).toHaveBeenCalledWith(testEnv(), {
+      leaseId: 'failed-lease',
+      actualCostMicroUsd: 2_000_000,
     });
   });
 

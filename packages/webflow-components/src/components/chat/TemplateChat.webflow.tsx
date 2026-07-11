@@ -16,7 +16,7 @@ export default declareComponent(TemplateChat, {
     }),
     turnstileSiteKey: props.Text({
       name: 'Turnstile Site Key',
-      defaultValue: '',
+      defaultValue: '0x4AAAAAADzmfUVSu5s1hvW5',
       tooltip: 'Public Cloudflare Turnstile site key for the Template Finder. Never enter the secret key here.',
     }),
     title: props.Text({

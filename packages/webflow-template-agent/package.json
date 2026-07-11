@@ -10,6 +10,7 @@
     "deploy": "node ../../scripts/run-wrangler.mjs deploy --config wrangler.toml",
     "lint": "pnpm run typecheck",
     "test": "vitest run",
+    "test:abuse": "vitest run test/worker.test.ts test/security.test.ts test/abuse.test.ts test/telemetry.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

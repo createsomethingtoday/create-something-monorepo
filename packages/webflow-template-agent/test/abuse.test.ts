@@ -14,6 +14,7 @@ function env(overrides: Partial<Env> = {}): Env {
 
 function fakeState(): DurableObjectState {
   const data = new Map<string, unknown>();
+  let transactionTail: Promise<unknown> = Promise.resolve();
   const transaction = {
     get: async <T>(key: string) => data.get(key) as T | undefined,
     put: async (key: string, value: unknown) => {
@@ -22,7 +23,14 @@ function fakeState(): DurableObjectState {
   };
   return {
     storage: {
-      transaction: async <T>(callback: (txn: typeof transaction) => Promise<T>) => callback(transaction),
+      transaction: <T>(callback: (txn: typeof transaction) => Promise<T>) => {
+        const result = transactionTail.then(() => callback(transaction));
+        transactionTail = result.then(
+          () => undefined,
+          () => undefined,
+        );
+        return result;
+      },
     },
   } as unknown as DurableObjectState;
 }
@@ -70,6 +78,16 @@ describe('TemplateAgentAbuseGuard', () => {
     expect(await reserve(guard, 'session-b')).toMatchObject({ allowed: true });
   });
 
+  it('atomically admits only one of two simultaneous reservations at the concurrency ceiling', async () => {
+    const guard = new TemplateAgentAbuseGuard(fakeState(), env({ MAX_CONCURRENT_TURNS: '1' }));
+    const decisions = await Promise.all([reserve(guard, 'session-a'), reserve(guard, 'session-b')]);
+
+    expect(decisions.filter((decision) => decision.allowed)).toHaveLength(1);
+    expect(decisions.filter((decision) => !decision.allowed)).toEqual([
+      expect.objectContaining({ reason: 'concurrency_limit', status: 429 }),
+    ]);
+  });
+
   it('enforces the session turn ceiling after settled turns', async () => {
     const guard = new TemplateAgentAbuseGuard(fakeState(), env({ MAX_SESSION_TURNS: '2' }));
     const first = await reserve(guard, 'session-a');
@@ -110,4 +128,3 @@ describe('TemplateAgentAbuseGuard', () => {
     ).toBe(2_700);
   });
 });
-
