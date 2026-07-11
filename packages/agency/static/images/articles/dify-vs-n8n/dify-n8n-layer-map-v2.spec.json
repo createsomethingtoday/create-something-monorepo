@@ -3,13 +3,36 @@
   "canvas": {
     "width": 1200,
     "height": 675,
-    "background": "#f9f9f9"
+    "background": "#f7f5ef"
   },
   "metadata": {
     "title": "Choose the tool by operating layer",
     "description": "An education diagram showing a workflow progressing from n8n internal automation to Cloudflare runtime ownership to a Dify agent surface, governed by a Policy OS rail and recorded as a four-step execution receipt."
   },
   "elements": [
+    {
+      "id": "performance-header",
+      "type": "rect",
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 120,
+      "radius": 0,
+      "fill": "#111111",
+      "stroke": "#111111",
+      "contains": ["pressure-index", "diagram-title", "diagram-subtitle"]
+    },
+    {
+      "id": "pressure-index",
+      "type": "rect",
+      "x": 0,
+      "y": 0,
+      "width": 12,
+      "height": 120,
+      "radius": 0,
+      "fill": "#c35d21",
+      "stroke": "#c35d21"
+    },
     {
       "id": "diagram-title",
       "type": "text",
@@ -20,7 +43,7 @@
       "lines": ["Choose the tool by operating layer."],
       "fontSize": 30,
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#f7f5ef"
     },
     {
       "id": "diagram-subtitle",
@@ -31,7 +54,7 @@
       "height": 28,
       "lines": ["The job changes as ownership moves toward the client."],
       "fontSize": 18,
-      "fill": "#636363"
+      "fill": "#d9d6cf"
     },
     {
       "id": "n8n-card",
@@ -40,10 +63,21 @@
       "y": 140,
       "width": 300,
       "height": 210,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
-      "contains": ["n8n-layer", "n8n-title", "n8n-detail", "n8n-owner"]
+      "stroke": "#d9d6cf",
+      "contains": ["n8n-signal-rail", "n8n-layer", "n8n-title", "n8n-detail", "n8n-owner"]
+    },
+    {
+      "id": "n8n-signal-rail",
+      "type": "rect",
+      "x": 72,
+      "y": 140,
+      "width": 300,
+      "height": 4,
+      "radius": 0,
+      "fill": "#255f85",
+      "stroke": "#255f85"
     },
     {
       "id": "n8n-layer",
@@ -54,8 +88,9 @@
       "height": 24,
       "lines": ["01 · INTERNAL WORKFLOW"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0048ff"
+      "fill": "#255f85"
     },
     {
       "id": "n8n-title",
@@ -67,7 +102,7 @@
       "lines": ["n8n"],
       "fontSize": 24,
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "n8n-detail",
@@ -79,7 +114,7 @@
       "lines": ["Deterministic triggers,", "movement, and operator logic."],
       "fontSize": 16,
       "lineHeight": 24,
-      "fill": "#636363"
+      "fill": "#60646c"
     },
     {
       "id": "n8n-owner",
@@ -90,8 +125,9 @@
       "height": 24,
       "lines": ["OWNER · AUTOMATION TEAM"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "n8n-to-cloudflare",
@@ -100,7 +136,7 @@
       "y1": 245,
       "x2": 450,
       "y2": 245,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     },
@@ -111,10 +147,27 @@
       "y": 140,
       "width": 300,
       "height": 210,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
-      "contains": ["cloudflare-layer", "cloudflare-title", "cloudflare-detail", "cloudflare-owner"]
+      "stroke": "#d9d6cf",
+      "contains": [
+        "cloudflare-growth-rail",
+        "cloudflare-layer",
+        "cloudflare-title",
+        "cloudflare-detail",
+        "cloudflare-owner"
+      ]
+    },
+    {
+      "id": "cloudflare-growth-rail",
+      "type": "rect",
+      "x": 450,
+      "y": 140,
+      "width": 300,
+      "height": 4,
+      "radius": 0,
+      "fill": "#28724f",
+      "stroke": "#28724f"
     },
     {
       "id": "cloudflare-layer",
@@ -125,8 +178,9 @@
       "height": 24,
       "lines": ["02 · INFRASTRUCTURE"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "cloudflare-title",
@@ -138,7 +192,7 @@
       "lines": ["Cloudflare"],
       "fontSize": 24,
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "cloudflare-detail",
@@ -150,7 +204,7 @@
       "lines": ["Routes, state, queues,", "permissions, and recovery."],
       "fontSize": 16,
       "lineHeight": 24,
-      "fill": "#636363"
+      "fill": "#60646c"
     },
     {
       "id": "cloudflare-owner",
@@ -161,8 +215,9 @@
       "height": 24,
       "lines": ["OWNER · PLATFORM TEAM"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "cloudflare-to-dify",
@@ -171,7 +226,7 @@
       "y1": 245,
       "x2": 828,
       "y2": 245,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     },
@@ -182,10 +237,21 @@
       "y": 140,
       "width": 300,
       "height": 210,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
-      "contains": ["dify-layer", "dify-title", "dify-detail", "dify-owner"]
+      "stroke": "#d9d6cf",
+      "contains": ["dify-signal-rail", "dify-layer", "dify-title", "dify-detail", "dify-owner"]
+    },
+    {
+      "id": "dify-signal-rail",
+      "type": "rect",
+      "x": 828,
+      "y": 140,
+      "width": 300,
+      "height": 4,
+      "radius": 0,
+      "fill": "#255f85",
+      "stroke": "#255f85"
     },
     {
       "id": "dify-layer",
@@ -196,8 +262,9 @@
       "height": 24,
       "lines": ["03 · AGENT SURFACE"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0048ff"
+      "fill": "#255f85"
     },
     {
       "id": "dify-title",
@@ -209,7 +276,7 @@
       "lines": ["Dify"],
       "fontSize": 24,
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "dify-detail",
@@ -221,7 +288,7 @@
       "lines": ["A direct client and", "operator agent experience."],
       "fontSize": 16,
       "lineHeight": 24,
-      "fill": "#636363"
+      "fill": "#60646c"
     },
     {
       "id": "dify-owner",
@@ -232,8 +299,9 @@
       "height": 24,
       "lines": ["OWNER · PRODUCT TEAM"],
       "fontSize": 13,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "policy-rail",
@@ -242,10 +310,11 @@
       "y": 382,
       "width": 1056,
       "height": 82,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
+      "stroke": "#d9d6cf",
       "contains": [
+        "policy-pressure-rail",
         "policy-title",
         "policy-description",
         "policy-identity",
@@ -253,6 +322,17 @@
         "policy-action",
         "policy-output"
       ]
+    },
+    {
+      "id": "policy-pressure-rail",
+      "type": "rect",
+      "x": 72,
+      "y": 382,
+      "width": 4,
+      "height": 82,
+      "radius": 0,
+      "fill": "#c35d21",
+      "stroke": "#c35d21"
     },
     {
       "id": "policy-title",
@@ -263,8 +343,9 @@
       "height": 26,
       "lines": ["POLICY OS"],
       "fontSize": 14,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "policy-description",
@@ -275,7 +356,7 @@
       "height": 26,
       "lines": ["One governance rail follows the workflow across every operating layer."],
       "fontSize": 16,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "policy-identity",
@@ -287,7 +368,7 @@
       "lines": ["✓ Identity"],
       "fontSize": 15,
       "fontWeight": 600,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "policy-data",
@@ -299,7 +380,7 @@
       "lines": ["✓ Data"],
       "fontSize": 15,
       "fontWeight": 600,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "policy-action",
@@ -311,7 +392,7 @@
       "lines": ["✓ Action"],
       "fontSize": 15,
       "fontWeight": 600,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "policy-output",
@@ -323,7 +404,7 @@
       "lines": ["✓ Output"],
       "fontSize": 15,
       "fontWeight": 600,
-      "fill": "#1e3c2c"
+      "fill": "#28724f"
     },
     {
       "id": "execution-rail",
@@ -332,9 +413,9 @@
       "y": 496,
       "width": 1056,
       "height": 130,
-      "radius": 8,
+      "radius": 4,
       "fill": "#ffffff",
-      "stroke": "#e1e1e1",
+      "stroke": "#d9d6cf",
       "contains": [
         "execution-title",
         "execution-meta",
@@ -353,8 +434,9 @@
       "height": 26,
       "lines": ["GOVERNED EXECUTION"],
       "fontSize": 14,
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
       "fontWeight": 700,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "execution-meta",
@@ -365,7 +447,8 @@
       "height": 26,
       "lines": ["State: Compliant  •  Events: 4  •  Violations: 0  •  Evidence: Attested"],
       "fontSize": 14,
-      "fill": "#636363"
+      "fontFamily": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
+      "fill": "#60646c"
     },
     {
       "id": "execution-intake",
@@ -377,7 +460,7 @@
       "lines": ["Intake"],
       "fontSize": 17,
       "fontWeight": 600,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "execution-evaluate",
@@ -389,7 +472,7 @@
       "lines": ["Evaluate"],
       "fontSize": 17,
       "fontWeight": 600,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "execution-execute",
@@ -401,7 +484,7 @@
       "lines": ["Execute"],
       "fontSize": 17,
       "fontWeight": 600,
-      "fill": "#0a0e19"
+      "fill": "#111111"
     },
     {
       "id": "execution-evidence",
@@ -413,7 +496,7 @@
       "lines": ["Evidence"],
       "fontSize": 17,
       "fontWeight": 600,
-      "fill": "#0048ff"
+      "fill": "#255f85"
     },
     {
       "id": "intake-to-evaluate",
@@ -422,7 +505,7 @@
       "y1": 588,
       "x2": 350,
       "y2": 588,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     },
@@ -433,7 +516,7 @@
       "y1": 588,
       "x2": 618,
       "y2": 588,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     },
@@ -444,7 +527,7 @@
       "y1": 588,
       "x2": 886,
       "y2": 588,
-      "stroke": "#636363",
+      "stroke": "#60646c",
       "strokeWidth": 2,
       "markerEnd": true
     }

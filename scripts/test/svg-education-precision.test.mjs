@@ -52,7 +52,14 @@ test('public CLI builds a deterministic accessible workflow SVG', (t) => {
   assert.match(firstSvg, /aria-labelledby="svg-title svg-desc"/);
   assert.match(firstSvg, /id="decision-card"/);
   assert.match(firstSvg, /id="signal-to-decision"/);
-  assert.match(firstSvg, /marker-end="url\(#arrow\)"/);
+  assert.match(
+    firstSvg,
+    /<marker id="arrow-signal-to-decision"[\s\S]*?<path[^>]+fill="#255f85"\/\>/
+  );
+  assert.match(
+    firstSvg,
+    /id="signal-to-decision"[^>]+stroke="#255f85"[^>]+marker-end="url\(#arrow-signal-to-decision\)"/
+  );
 });
 
 test('public CLI rejects an element that overflows the canvas', () => {

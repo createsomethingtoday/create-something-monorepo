@@ -3,100 +3,118 @@
   <title id="svg-title">Choose the tool by operating layer</title>
   <desc id="svg-desc">An education diagram showing a workflow progressing from n8n internal automation to Cloudflare runtime ownership to a Dify agent surface, governed by a Policy OS rail and recorded as a four-step execution receipt.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#636363"/>
+    <marker id="arrow-n8n-to-cloudflare" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60646c"/>
+    </marker>
+    <marker id="arrow-cloudflare-to-dify" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60646c"/>
+    </marker>
+    <marker id="arrow-intake-to-evaluate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60646c"/>
+    </marker>
+    <marker id="arrow-evaluate-to-execute" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60646c"/>
+    </marker>
+    <marker id="arrow-execute-to-evidence" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60646c"/>
     </marker>
   </defs>
-  <rect width="1200" height="675" fill="#f9f9f9"/>
-  <text id="diagram-title" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700" fill="#0a0e19">
+  <rect width="1200" height="675" fill="#f7f5ef"/>
+  <rect id="performance-header" x="0" y="0" width="1200" height="120" rx="0" fill="#111111" stroke="#111111"/>
+  <rect id="pressure-index" x="0" y="0" width="12" height="120" rx="0" fill="#c35d21" stroke="#c35d21"/>
+  <text id="diagram-title" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700" fill="#f7f5ef">
     <tspan x="72" y="66">Choose the tool by operating layer.</tspan>
   </text>
-  <text id="diagram-subtitle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="400" fill="#636363">
+  <text id="diagram-subtitle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="400" fill="#d9d6cf">
     <tspan x="72" y="106">The job changes as ownership moves toward the client.</tspan>
   </text>
-  <rect id="n8n-card" x="72" y="140" width="300" height="210" rx="8" fill="#ffffff" stroke="#e1e1e1"/>
-  <text id="n8n-layer" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" fill="#0048ff">
+  <rect id="n8n-card" x="72" y="140" width="300" height="210" rx="4" fill="#ffffff" stroke="#d9d6cf"/>
+  <rect id="n8n-signal-rail" x="72" y="140" width="300" height="4" rx="0" fill="#255f85" stroke="#255f85"/>
+  <text id="n8n-layer" font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="13" font-weight="700" fill="#255f85">
     <tspan x="96" y="173">01 · INTERNAL WORKFLOW</tspan>
   </text>
-  <text id="n8n-title" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#0a0e19">
+  <text id="n8n-title" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#111111">
     <tspan x="96" y="224">n8n</tspan>
   </text>
-  <text id="n8n-detail" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="400" fill="#636363">
+  <text id="n8n-detail" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="400" fill="#60646c">
     <tspan x="96" y="262">Deterministic triggers,</tspan>
     <tspan x="96" y="286">movement, and operator logic.</tspan>
   </text>
-  <text id="n8n-owner" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" fill="#0a0e19">
+  <text id="n8n-owner" font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="13" font-weight="700" fill="#111111">
     <tspan x="96" y="328">OWNER · AUTOMATION TEAM</tspan>
   </text>
-  <line id="n8n-to-cloudflare" x1="372" y1="245" x2="450" y2="245" stroke="#636363" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect id="cloudflare-card" x="450" y="140" width="300" height="210" rx="8" fill="#ffffff" stroke="#e1e1e1"/>
-  <text id="cloudflare-layer" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" fill="#1e3c2c">
+  <line id="n8n-to-cloudflare" x1="372" y1="245" x2="450" y2="245" stroke="#60646c" stroke-width="2" marker-end="url(#arrow-n8n-to-cloudflare)"/>
+  <rect id="cloudflare-card" x="450" y="140" width="300" height="210" rx="4" fill="#ffffff" stroke="#d9d6cf"/>
+  <rect id="cloudflare-growth-rail" x="450" y="140" width="300" height="4" rx="0" fill="#28724f" stroke="#28724f"/>
+  <text id="cloudflare-layer" font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="13" font-weight="700" fill="#28724f">
     <tspan x="474" y="173">02 · INFRASTRUCTURE</tspan>
   </text>
-  <text id="cloudflare-title" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#0a0e19">
+  <text id="cloudflare-title" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#111111">
     <tspan x="474" y="224">Cloudflare</tspan>
   </text>
-  <text id="cloudflare-detail" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="400" fill="#636363">
+  <text id="cloudflare-detail" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="400" fill="#60646c">
     <tspan x="474" y="262">Routes, state, queues,</tspan>
     <tspan x="474" y="286">permissions, and recovery.</tspan>
   </text>
-  <text id="cloudflare-owner" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" fill="#0a0e19">
+  <text id="cloudflare-owner" font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="13" font-weight="700" fill="#111111">
     <tspan x="474" y="328">OWNER · PLATFORM TEAM</tspan>
   </text>
-  <line id="cloudflare-to-dify" x1="750" y1="245" x2="828" y2="245" stroke="#636363" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect id="dify-card" x="828" y="140" width="300" height="210" rx="8" fill="#ffffff" stroke="#e1e1e1"/>
-  <text id="dify-layer" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" fill="#0048ff">
+  <line id="cloudflare-to-dify" x1="750" y1="245" x2="828" y2="245" stroke="#60646c" stroke-width="2" marker-end="url(#arrow-cloudflare-to-dify)"/>
+  <rect id="dify-card" x="828" y="140" width="300" height="210" rx="4" fill="#ffffff" stroke="#d9d6cf"/>
+  <rect id="dify-signal-rail" x="828" y="140" width="300" height="4" rx="0" fill="#255f85" stroke="#255f85"/>
+  <text id="dify-layer" font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="13" font-weight="700" fill="#255f85">
     <tspan x="852" y="173">03 · AGENT SURFACE</tspan>
   </text>
-  <text id="dify-title" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#0a0e19">
+  <text id="dify-title" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#111111">
     <tspan x="852" y="224">Dify</tspan>
   </text>
-  <text id="dify-detail" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="400" fill="#636363">
+  <text id="dify-detail" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="400" fill="#60646c">
     <tspan x="852" y="262">A direct client and</tspan>
     <tspan x="852" y="286">operator agent experience.</tspan>
   </text>
-  <text id="dify-owner" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" fill="#0a0e19">
+  <text id="dify-owner" font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="13" font-weight="700" fill="#111111">
     <tspan x="852" y="328">OWNER · PRODUCT TEAM</tspan>
   </text>
-  <rect id="policy-rail" x="72" y="382" width="1056" height="82" rx="8" fill="#ffffff" stroke="#e1e1e1"/>
-  <text id="policy-title" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#1e3c2c">
+  <rect id="policy-rail" x="72" y="382" width="1056" height="82" rx="4" fill="#ffffff" stroke="#d9d6cf"/>
+  <rect id="policy-pressure-rail" x="72" y="382" width="4" height="82" rx="0" fill="#c35d21" stroke="#c35d21"/>
+  <text id="policy-title" font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="14" font-weight="700" fill="#28724f">
     <tspan x="96" y="412">POLICY OS</tspan>
   </text>
-  <text id="policy-description" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="400" fill="#0a0e19">
+  <text id="policy-description" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="400" fill="#111111">
     <tspan x="300" y="414">One governance rail follows the workflow across every operating layer.</tspan>
   </text>
-  <text id="policy-identity" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e3c2c">
+  <text id="policy-identity" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#28724f">
     <tspan x="300" y="441">✓ Identity</tspan>
   </text>
-  <text id="policy-data" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e3c2c">
+  <text id="policy-data" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#28724f">
     <tspan x="490" y="441">✓ Data</tspan>
   </text>
-  <text id="policy-action" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e3c2c">
+  <text id="policy-action" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#28724f">
     <tspan x="680" y="441">✓ Action</tspan>
   </text>
-  <text id="policy-output" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e3c2c">
+  <text id="policy-output" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#28724f">
     <tspan x="870" y="441">✓ Output</tspan>
   </text>
-  <rect id="execution-rail" x="72" y="496" width="1056" height="130" rx="8" fill="#ffffff" stroke="#e1e1e1"/>
-  <text id="execution-title" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0a0e19">
+  <rect id="execution-rail" x="72" y="496" width="1056" height="130" rx="4" fill="#ffffff" stroke="#d9d6cf"/>
+  <text id="execution-title" font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="14" font-weight="700" fill="#111111">
     <tspan x="96" y="526">GOVERNED EXECUTION</tspan>
   </text>
-  <text id="execution-meta" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="400" fill="#636363">
+  <text id="execution-meta" font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="14" font-weight="400" fill="#60646c">
     <tspan x="330" y="526">State: Compliant  •  Events: 4  •  Violations: 0  •  Evidence: Attested</tspan>
   </text>
-  <text id="execution-intake" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#0a0e19">
+  <text id="execution-intake" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#111111">
     <tspan x="96" y="587">Intake</tspan>
   </text>
-  <text id="execution-evaluate" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#0a0e19">
+  <text id="execution-evaluate" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#111111">
     <tspan x="364" y="587">Evaluate</tspan>
   </text>
-  <text id="execution-execute" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#0a0e19">
+  <text id="execution-execute" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#111111">
     <tspan x="632" y="587">Execute</tspan>
   </text>
-  <text id="execution-evidence" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#0048ff">
+  <text id="execution-evidence" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#255f85">
     <tspan x="900" y="587">Evidence</tspan>
   </text>
-  <line id="intake-to-evaluate" x1="286" y1="588" x2="350" y2="588" stroke="#636363" stroke-width="2" marker-end="url(#arrow)"/>
-  <line id="evaluate-to-execute" x1="554" y1="588" x2="618" y2="588" stroke="#636363" stroke-width="2" marker-end="url(#arrow)"/>
-  <line id="execute-to-evidence" x1="822" y1="588" x2="886" y2="588" stroke="#636363" stroke-width="2" marker-end="url(#arrow)"/>
+  <line id="intake-to-evaluate" x1="286" y1="588" x2="350" y2="588" stroke="#60646c" stroke-width="2" marker-end="url(#arrow-intake-to-evaluate)"/>
+  <line id="evaluate-to-execute" x1="554" y1="588" x2="618" y2="588" stroke="#60646c" stroke-width="2" marker-end="url(#arrow-evaluate-to-execute)"/>
+  <line id="execute-to-evidence" x1="822" y1="588" x2="886" y2="588" stroke="#60646c" stroke-width="2" marker-end="url(#arrow-execute-to-evidence)"/>
 </svg>

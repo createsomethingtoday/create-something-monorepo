@@ -147,6 +147,10 @@ export function buildSvg(spec) {
   const title = spec.metadata?.title ?? 'Educational visual';
   const description = spec.metadata?.description ?? title;
   const body = (spec.elements ?? []).map(renderElement).join('\n');
+  const markerDefinitions = (spec.elements ?? [])
+    .filter((element) => element.type === 'connector' && element.markerEnd)
+    .map(renderMarker)
+    .join('\n');
 
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -154,9 +158,7 @@ export function buildSvg(spec) {
     `  <title id="svg-title">${escapeXml(title)}</title>`,
     `  <desc id="svg-desc">${escapeXml(description)}</desc>`,
     '  <defs>',
-    '    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">',
-    '      <path d="M 0 0 L 10 5 L 0 10 z" fill="#636363"/>',
-    '    </marker>',
+    markerDefinitions,
     '  </defs>',
     `  <rect width="${formatNumber(width)}" height="${formatNumber(height)}" fill="${escapeXml(background)}"/>`,
     body,
@@ -236,11 +238,24 @@ function renderElement(element) {
   }
 
   if (element.type === 'connector') {
-    const marker = element.markerEnd ? ' marker-end="url(#arrow)"' : '';
+    const marker = element.markerEnd ? ` marker-end="url(#${escapeXml(markerId(element))})"` : '';
     return `  <line id="${escapeXml(element.id)}" x1="${formatNumber(element.x1)}" y1="${formatNumber(element.y1)}" x2="${formatNumber(element.x2)}" y2="${formatNumber(element.y2)}" stroke="${escapeXml(element.stroke ?? '#636363')}" stroke-width="${formatNumber(element.strokeWidth ?? 2)}"${marker}/>`;
   }
 
   throw new Error(`Unsupported element type: ${element.type}`);
+}
+
+function renderMarker(element) {
+  const stroke = escapeXml(element.stroke ?? '#636363');
+  return [
+    `    <marker id="${escapeXml(markerId(element))}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">`,
+    `      <path d="M 0 0 L 10 5 L 0 10 z" fill="${stroke}"/>`,
+    '    </marker>'
+  ].join('\n');
+}
+
+function markerId(element) {
+  return `arrow-${element.id}`;
 }
 
 function isFiniteNumber(value) {
