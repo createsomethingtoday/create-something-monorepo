@@ -4,6 +4,17 @@ Standalone Performance Lab operator chat frontend for CREATE SOMETHING Dify agen
 
 The app uses CREATE SOMETHING Identity instead of a project-specific identity SDK. Identity Worker authenticates credentials and issues ES256 access tokens; Canon verifies the issuer, audience, signature, and expiry; the app then evaluates its explicit staff allow rules before returning agent inventory or calling Dify.
 
+## Agent Legibility Contract
+
+| Field | Value |
+| --- | --- |
+| Entry point | `src/routes/agents/+page.svelte`, `src/routes/agents/[agentId]/+page.svelte`, `src/lib/server/auth/identity-access.ts`, `src/lib/server/dify/client.ts` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm check && pnpm test && pnpm build` |
+| Validation surfaces | first-party ES256/JWKS policy tests, Dify proxy tests, SvelteKit check, Cloudflare adapter build |
+| UI validation path | start the controlled local identity harness and built preview; verify anonymous, allowed, blocked, persistent, and logout states |
+| Escalation rule | keep Dify keys server-side; production access requires owned issuer/audience verification plus an explicit staff allow rule |
+
 ## Runtime contract
 
 | Variable | Purpose |
