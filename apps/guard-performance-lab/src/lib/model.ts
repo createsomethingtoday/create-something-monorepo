@@ -1,10 +1,23 @@
-export const STORAGE_KEY = 'guard-performance-lab:v3';
-export const STATE_VERSION = 3;
+export const STORAGE_KEY = 'guard-performance-lab:v4';
+export const STATE_VERSION = 4;
 
 export type EvidenceSignal = 'scan' | 'angle' | 'security' | 'finish' | 'explain';
 export type EvidenceValue = 'emerging' | 'usable' | 'repeatable';
 
-export type Player = { id: string; name: string; createdAt: string };
+export type PlayerProfile = {
+  age: number | null;
+  gender: 'male' | 'female' | 'nonbinary' | 'self-described' | null;
+  primaryPosition: 'guard' | 'wing' | 'post' | null;
+  preferredName: string;
+  dominantHand: 'left' | 'right' | 'both' | null;
+  height: string;
+  goals: string;
+  experienceLevel: string;
+  jurisdiction: string;
+  notes: string;
+};
+export type PlayerProfileInput = Partial<PlayerProfile>;
+export type Player = { id: string; name: string; profile: PlayerProfile; createdAt: string };
 export type ProgramStage = 'prepare' | 'connect' | 'baseline' | 'advantage' | 'help' | 'misdirection' | 'live' | 'receipt';
 export type EngagementEvent = {
   id: string;
@@ -40,7 +53,7 @@ export type Receipt = {
   createdAt: string;
 };
 export type LabState = {
-  version: 3;
+  version: 4;
   revision: number;
   selectedPlayerId: string;
   players: Player[];
@@ -53,12 +66,42 @@ const evidence = (): Receipt['evidence'] => ({
   scan: 'emerging', angle: 'emerging', security: 'emerging', finish: 'emerging', explain: 'emerging'
 });
 
+export const emptyPlayerProfile = (): PlayerProfile => ({
+  age: null,
+  gender: null,
+  primaryPosition: null,
+  preferredName: '',
+  dominantHand: null,
+  height: '',
+  goals: '',
+  experienceLevel: '',
+  jurisdiction: '',
+  notes: ''
+});
+
+function normalizePlayerProfile(input: unknown): PlayerProfile {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return emptyPlayerProfile();
+  const value = input as Record<string, unknown>;
+  return {
+    age: typeof value.age === 'number' && Number.isInteger(value.age) && value.age >= 5 && value.age <= 99 ? value.age : null,
+    gender: ['male', 'female', 'nonbinary', 'self-described'].includes(String(value.gender)) ? value.gender as PlayerProfile['gender'] : null,
+    primaryPosition: ['guard', 'wing', 'post'].includes(String(value.primaryPosition)) ? value.primaryPosition as PlayerProfile['primaryPosition'] : null,
+    preferredName: typeof value.preferredName === 'string' ? value.preferredName.trim().slice(0, 100) : '',
+    dominantHand: ['left', 'right', 'both'].includes(String(value.dominantHand)) ? value.dominantHand as PlayerProfile['dominantHand'] : null,
+    height: typeof value.height === 'string' ? value.height.trim().slice(0, 40) : '',
+    goals: typeof value.goals === 'string' ? value.goals.trim().slice(0, 800) : '',
+    experienceLevel: typeof value.experienceLevel === 'string' ? value.experienceLevel.trim().slice(0, 120) : '',
+    jurisdiction: typeof value.jurisdiction === 'string' ? value.jurisdiction.trim().slice(0, 120) : '',
+    notes: typeof value.notes === 'string' ? value.notes.trim().slice(0, 800) : ''
+  };
+}
+
 export function createInitialState(now = new Date().toISOString()): LabState {
   return {
     version: STATE_VERSION,
     revision: 0,
     selectedPlayerId: 'developing-guard',
-    players: [{ id: 'developing-guard', name: 'Developing Guard', createdAt: now }],
+    players: [{ id: 'developing-guard', name: 'Developing Guard', profile: emptyPlayerProfile(), createdAt: now }],
     receipts: [],
     artifacts: [],
     engagements: []
@@ -69,9 +112,10 @@ export function parseState(raw: string | null): LabState {
   if (!raw) return createInitialState();
   try {
     const value = JSON.parse(raw) as Partial<LabState>;
-    if (![2, STATE_VERSION].includes(value.version as number) || !Array.isArray(value.players) || value.players.length === 0 || value.players.some((player) => !player || typeof player.id !== 'string' || typeof player.name !== 'string')) return createInitialState();
+    if (![2, 3, STATE_VERSION].includes(value.version as number) || !Array.isArray(value.players) || value.players.length === 0 || value.players.some((player) => !player || typeof player.id !== 'string' || typeof player.name !== 'string')) return createInitialState();
     const selected = value.players.some((p) => p.id === value.selectedPlayerId) ? value.selectedPlayerId! : value.players[0]!.id;
-    return { version: STATE_VERSION, revision: typeof value.revision === 'number' ? value.revision : 0, selectedPlayerId: selected, players: value.players, receipts: Array.isArray(value.receipts) ? value.receipts : [], artifacts: Array.isArray(value.artifacts) ? value.artifacts : [], engagements: Array.isArray(value.engagements) ? value.engagements : [] };
+    const players = value.players.map((player) => ({ ...player, profile: normalizePlayerProfile(player.profile) }));
+    return { version: STATE_VERSION, revision: typeof value.revision === 'number' ? value.revision : 0, selectedPlayerId: selected, players, receipts: Array.isArray(value.receipts) ? value.receipts : [], artifacts: Array.isArray(value.artifacts) ? value.artifacts : [], engagements: Array.isArray(value.engagements) ? value.engagements : [] };
   } catch {
     return createInitialState();
   }
@@ -81,15 +125,24 @@ export function parseAuthoritativeState(raw: string): LabState {
   let value: Record<string, unknown>;
   try { value = JSON.parse(raw) as Record<string, unknown>; }
   catch { throw new Error('The authoritative workspace contains invalid JSON. Restore or reset it explicitly.'); }
-  if (![2, STATE_VERSION].includes(value.version as number) || !Array.isArray(value.players) || value.players.length === 0 || !Array.isArray(value.receipts) || !Array.isArray(value.artifacts)) throw new Error('The authoritative workspace has an invalid schema. Restore or reset it explicitly.');
+  if (![2, 3, STATE_VERSION].includes(value.version as number) || !Array.isArray(value.players) || value.players.length === 0 || !Array.isArray(value.receipts) || !Array.isArray(value.artifacts)) throw new Error('The authoritative workspace has an invalid schema. Restore or reset it explicitly.');
   if (typeof value.selectedPlayerId !== 'string' || !value.players.some((player) => typeof player === 'object' && player !== null && (player as { id?: unknown }).id === value.selectedPlayerId)) throw new Error('The authoritative workspace has an invalid selected player. Restore or reset it explicitly.');
   return parseState(raw);
 }
 
-export function createPlayer(state: LabState, name: string, id: string = crypto.randomUUID(), now = new Date().toISOString()): LabState {
+export function createPlayer(state: LabState, name: string, id: string = crypto.randomUUID(), now = new Date().toISOString(), profile: PlayerProfileInput = {}): LabState {
   const clean = name.trim();
   if (!clean) return state;
-  return { ...state, selectedPlayerId: id, players: [...state.players, { id, name: clean, createdAt: now }] };
+  return { ...state, selectedPlayerId: id, players: [...state.players, { id, name: clean, profile: normalizePlayerProfile(profile), createdAt: now }] };
+}
+
+export function updatePlayerProfile(state: LabState, playerId: string, profile: PlayerProfileInput): LabState {
+  return {
+    ...state,
+    players: state.players.map((player) => player.id === playerId
+      ? { ...player, profile: normalizePlayerProfile({ ...player.profile, ...profile }) }
+      : player)
+  };
 }
 
 export type ReceiptDraft = Omit<Receipt, 'id' | 'playerId' | 'createdAt'>;

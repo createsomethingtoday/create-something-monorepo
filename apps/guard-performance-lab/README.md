@@ -1,6 +1,6 @@
 # Guard Performance Lab
 
-A standalone, private-first coaching system for developing guards. Version 0.3 adds first-party identity, exact operator/player authorization, remote MCP verification, and durable production storage to the court-side workflow.
+A standalone, private-first coaching system for developing guards. Version 0.4 adds player-owned structured profiles to the first-party identity, exact operator/player authorization, remote MCP verification, and durable production storage workflow.
 
 ## Privacy model
 
@@ -39,7 +39,7 @@ One typed guidance engine owns program stage, requested coach context, safety st
 - `POST /api/guide`;
 - the local stdio MCP server.
 
-Browser mutations use `POST /api/workspace/command` with one of five typed actions: select player, create player, save receipt, register evidence, or record engagement. Whole-workspace `PUT` replacement is intentionally unsupported.
+Browser mutations use `POST /api/workspace/command` with typed actions for selecting or creating a player, updating one player-owned profile, saving a receipt, registering evidence, or recording engagement. Whole-workspace `PUT` replacement is intentionally unsupported.
 
 The coach supplies short observations only when requested. The agent/program owns the sequence and receipt cues.
 

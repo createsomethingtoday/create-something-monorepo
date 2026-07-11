@@ -22,10 +22,23 @@ const engagementSchema = z.object({
   source: z.enum(['system', 'coach', 'player']),
   note: z.string().trim().min(1).max(800)
 });
+const playerProfileSchema = z.object({
+  age: z.number().int().min(5).max(99).nullable().optional(),
+  gender: z.enum(['male', 'female', 'nonbinary', 'self-described']).nullable().optional(),
+  primaryPosition: z.enum(['guard', 'wing', 'post']).nullable().optional(),
+  preferredName: z.string().trim().max(100).optional(),
+  dominantHand: z.enum(['left', 'right', 'both']).nullable().optional(),
+  height: z.string().trim().max(40).optional(),
+  goals: z.string().trim().max(800).optional(),
+  experienceLevel: z.string().trim().max(120).optional(),
+  jurisdiction: z.string().trim().max(120).optional(),
+  notes: z.string().trim().max(800).optional()
+});
 
 export const workspaceCommandSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('select-player'), playerId: z.string().min(1) }),
-  z.object({ action: z.literal('create-player'), name: z.string().trim().min(1).max(100) }),
+  z.object({ action: z.literal('create-player'), name: z.string().trim().min(1).max(100), profile: playerProfileSchema.optional() }),
+  z.object({ action: z.literal('update-player-profile'), playerId: z.string().min(1), profile: playerProfileSchema }),
   z.object({ action: z.literal('save-receipt'), playerId: z.string().min(1), receipt: receiptSchema }),
   z.object({ action: z.literal('register-evidence'), playerId: z.string().min(1), evidence: artifactSchema }),
   z.object({ action: z.literal('record-engagement'), playerId: z.string().min(1), engagement: engagementSchema })
@@ -48,11 +61,12 @@ export async function workspaceCommandResponse(
       }
     }
     const result = command.action === 'select-player' ? await service.selectPlayer(command.playerId)
-      : command.action === 'create-player' ? await service.createPlayer(command.name)
+      : command.action === 'create-player' ? await service.createPlayer(command.name, command.profile)
+      : command.action === 'update-player-profile' ? await service.updatePlayerProfile(command.playerId, command.profile)
       : command.action === 'save-receipt' ? await service.saveReceipt(command.playerId, command.receipt)
       : command.action === 'register-evidence' ? await service.registerEvidence(command.playerId, command.evidence)
       : await service.recordEngagement(command.playerId, command.engagement);
-    return Response.json(result);
+    return Response.json(isPlayerScope(scope) ? await service.getPlayerWorkspace(scope.playerId) : result);
   } catch (error) {
     if (error instanceof ZodError) return Response.json({ ok: false, error: 'Invalid workspace command.', issues: error.issues.map((issue) => ({ path: issue.path.join('.'), message: issue.message })) }, { status: 400 });
     return Response.json({ ok: false, error: error instanceof Error ? error.message : 'Workspace command failed.' }, { status: 409 });

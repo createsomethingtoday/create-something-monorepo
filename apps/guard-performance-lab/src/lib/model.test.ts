@@ -4,7 +4,23 @@ import { createInitialState, createPlayer, emptyReceipt, parseState, receiptsFor
 describe('guard performance local model', () => {
   it('recovers from missing and corrupt storage', () => {
     expect(parseState(null).players[0]?.name).toBe('Developing Guard');
-    expect(parseState('{broken').version).toBe(3);
+    expect(parseState('{broken').version).toBe(4);
+  });
+
+  it('upgrades an existing v3 player without inventing profile data', () => {
+    const state = parseState(JSON.stringify({
+      version: 3,
+      revision: 7,
+      selectedPlayerId: 'legacy-player',
+      players: [{ id: 'legacy-player', name: 'Private label', createdAt: '2026-07-11T00:00:00.000Z' }],
+      receipts: [],
+      artifacts: [],
+      engagements: []
+    }));
+
+    expect(state.version).toBe(4);
+    expect(state.revision).toBe(7);
+    expect(state.players[0]?.profile).toMatchObject({ age: null, gender: null, primaryPosition: null, preferredName: '' });
   });
 
   it('isolates receipts by player', () => {
