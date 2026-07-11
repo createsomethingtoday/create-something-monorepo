@@ -8,6 +8,7 @@ import {
   DEFAULT_AIRTABLE_BASE_ID,
   TABLE_IDS,
 } from '../src/schema.js';
+import { reviewerCaseCap } from '../src/reviewer-sampling.js';
 import { runPublishedSiteValidation } from '../src/validation.js';
 
 type AirtableRecord = {
@@ -332,7 +333,9 @@ async function selectVersions(apiKey: string, baseId: string, options: CliOption
   const warnings: string[] = [];
   const globalReviewerCounts: Record<string, number> = {};
   const fields = Object.values(CONFIRMED_VERSION_FIELDS);
-  const globalReviewerCap = options.balanceReviewers ? Math.max(1, Math.ceil(limit * options.maxReviewerShare)) : Number.POSITIVE_INFINITY;
+  const globalReviewerCap = options.balanceReviewers
+    ? reviewerCaseCap(limit, options.maxReviewerShare)
+    : Number.POSITIVE_INFINITY;
 
   for (const [stratum, target] of targetCounts(limit)) {
     const records = await listRecords({
@@ -348,7 +351,9 @@ async function selectVersions(apiKey: string, baseId: string, options: CliOption
 
     const chosenForStratum: SelectedVersion[] = [];
     const stratumReviewerCounts: Record<string, number> = {};
-    const stratumReviewerCap = options.balanceReviewers ? Math.max(1, Math.ceil(target * options.maxReviewerShare)) : Number.POSITIVE_INFINITY;
+    const stratumReviewerCap = options.balanceReviewers
+      ? reviewerCaseCap(target, options.maxReviewerShare)
+      : Number.POSITIVE_INFINITY;
 
     const tryAccept = (record: AirtableRecord, enforceReviewerCaps: boolean): boolean => {
       if (selected.size >= limit) return false;

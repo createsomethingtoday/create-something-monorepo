@@ -1,0 +1,42 @@
+{
+  "name": "@create-something/workflow-historical-context-reconciler",
+  "version": "0.1.0",
+  "description": "Reconcile sanitized historical workflow context without exposing private feedback or reviewer identity.",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "judgment",
+    "surface": "library",
+    "entrypoints": ["src/index.ts"],
+    "boot": "pnpm build",
+    "smoke": "pnpm check && pnpm test"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "workflow-historical-context-reconciler": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "pnpm --filter @create-something/workflow-compiler build && pnpm --filter @create-something/workflow-evidence-extractor build && tsc",
+    "check": "pnpm --filter @create-something/workflow-compiler build && pnpm --filter @create-something/workflow-evidence-extractor build && tsc --noEmit",
+    "reconcile": "node dist/cli.js reconcile",
+    "test": "pnpm build && node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@create-something/workflow-compiler": "workspace:*",
+    "@create-something/workflow-evidence-extractor": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}

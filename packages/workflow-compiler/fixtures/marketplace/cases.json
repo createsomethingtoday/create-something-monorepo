@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "workflow_replay_manifest.v0.1",
+  "workflowId": "webflow.marketplace.template-lifecycle",
+  "cases": [
+    {
+      "caseId": "complete-validation-passes",
+      "title": "Complete objective validation advances the submission",
+      "initialState": "submitted",
+      "actionId": "validate_submission",
+      "actorId": "workflow-runtime",
+      "evidence": {
+        "asset_id": "asset-fixture-001",
+        "version_id": "version-fixture-001",
+        "published_url": "https://fixture-template.webflow.io",
+        "validation_result": "pass"
+      },
+      "approvals": [],
+      "expectedOutcome": "pass",
+      "expectedState": "ready_for_review"
+    },
+    {
+      "caseId": "approval-waits-for-reviewer",
+      "title": "Approval remains reviewer-owned",
+      "initialState": "ready_for_review",
+      "actionId": "approve_template",
+      "actorId": "workflow-runtime",
+      "evidence": {
+        "version_id": "version-fixture-002",
+        "reviewer_id": "reviewer-fixture-001",
+        "review_summary": "All objective checks are complete; taste review remains human-owned.",
+        "validation_result": "pass"
+      },
+      "approvals": [],
+      "expectedOutcome": "approval_required",
+      "expectedState": "ready_for_review"
+    },
+    {
+      "caseId": "creator-message-policy-block",
+      "title": "Autonomous creator messaging remains blocked",
+      "initialState": "ready_for_review",
+      "actionId": "send_creator_decision",
+      "actorId": "workflow-runtime",
+      "evidence": {
+        "reviewer_id": "reviewer-fixture-001",
+        "human_send_confirmation": true,
+        "decision_receipt": "receipt-fixture-001"
+      },
+      "approvals": [],
+      "expectedOutcome": "blocked",
+      "expectedState": "ready_for_review"
+    },
+    {
+      "caseId": "missing-validation-evidence-blocks",
+      "title": "Incomplete validation cannot advance",
+      "initialState": "submitted",
+      "actionId": "validate_submission",
+      "actorId": "workflow-runtime",
+      "evidence": {
+        "asset_id": "asset-fixture-003",
+        "version_id": "version-fixture-003"
+      },
+      "approvals": [],
+      "expectedOutcome": "blocked",
+      "expectedState": "submitted"
+    },
+    {
+      "caseId": "unknown-action-blocks",
+      "title": "Unknown action fails closed",
+      "initialState": "submitted",
+      "actionId": "invented_publish_shortcut",
+      "actorId": "workflow-runtime",
+      "evidence": {},
+      "approvals": [],
+      "expectedOutcome": "blocked",
+      "expectedState": "submitted"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@create-something/workflow-evidence-extractor",
+  "version": "0.1.0",
+  "description": "Extract provenance-backed workflow-definition proposals from bounded operating evidence.",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "library",
+    "entrypoints": ["src/index.ts"],
+    "boot": "pnpm build",
+    "smoke": "pnpm check && pnpm test"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "workflow-evidence-extractor": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "pnpm --filter @create-something/workflow-compiler build && tsc",
+    "check": "pnpm --filter @create-something/workflow-compiler build && tsc --noEmit",
+    "propose": "node dist/cli.js propose",
+    "apply": "node dist/cli.js apply",
+    "test": "pnpm build && node --test test/*.test.mjs",
+    "test:acceptance": "pnpm build && node scripts/acceptance.mjs"
+  },
+  "dependencies": {
+    "@create-something/workflow-compiler": "workspace:*",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}
