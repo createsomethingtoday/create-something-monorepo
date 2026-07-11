@@ -9,7 +9,7 @@ import type { PerformanceMediaStudy } from './types';
 export const controlledFlowMedia = {
   src: controlledFlow,
   mobileSrc: controlledFlowMobile,
-  alt: 'Water routed through a concrete sluice in an engineered control facility',
+  alt: 'Aerated water moving over a sculptural concrete performance boundary',
   video: {
     mp4: controlledFlowMotionMp4,
     webm: controlledFlowMotionWebm,

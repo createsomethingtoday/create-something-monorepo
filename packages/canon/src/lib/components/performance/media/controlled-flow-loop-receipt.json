@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "method": "Decode at 30 fps, scale to 320x180 grayscale, compare mean absolute pixel difference between adjacent frames and the final-to-first seam.",
+  "acceptance": "The seam must not exceed the 95th percentile of ordinary adjacent-frame motion.",
+  "frames": 104,
+  "durationSeconds": 3.466,
+  "assets": {
+    "controlled-flow-motion.mp4": {
+      "sha256": "f85809325e5528a9ede7f37037e71bb5fab5af01a7c750092ca8c5844cd332e9",
+      "seamMad": 0.67,
+      "p95InternalMad": 7.639,
+      "seamToP95": 0.09
+    },
+    "controlled-flow-motion.webm": {
+      "sha256": "ebb6eb5b43f829402d5a3204d5bb8f2ff82d35c4f3db025ac7f72aec12a68e1d",
+      "seamMad": 0.388,
+      "p95InternalMad": 7.587,
+      "seamToP95": 0.05
+    }
+  }
+}
