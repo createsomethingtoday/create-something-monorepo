@@ -266,7 +266,6 @@
       >Read Shipping Guide</Button
     >
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
-    <Button href="/dify/n8n-vs-dify" variant="secondary">Read Dify vs n8n</Button>
     <Button href="https://createsomething.io/papers/policy-os-contract-bundle" variant="secondary">
       Read Contract Bundle Paper
     </Button>

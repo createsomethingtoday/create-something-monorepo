@@ -1,5 +1,4 @@
 export const AGENCY_DIFY_ARTICLE_PATHS = [
-  '/dify/n8n-vs-dify',
   '/dify/ship-dify-app-with-mcp-tools',
   '/dify/agent-eval-gates',
   '/dify/mcp-control-plane'

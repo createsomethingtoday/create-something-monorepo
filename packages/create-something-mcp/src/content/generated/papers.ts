@@ -4783,7 +4783,7 @@ Score: 7/10 — Minor disconnection found
 The README described three different deployment targets, creating systemic incoherence:
 // README claimed:
 1. Node.js + Railway (documented as primary)
-2. n8n (mentioned as future target)
+2. Legacy workflow platform (mentioned as future target)
 3. Cloudflare Workers (actual production)
 Additionally, the relationship between Kickstand → Half Dozen → CREATE SOMETHING was
 					undocumented within the system itself.

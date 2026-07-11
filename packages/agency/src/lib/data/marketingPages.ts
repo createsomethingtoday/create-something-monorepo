@@ -422,25 +422,6 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
   {
-    path: '/dify/n8n-vs-dify',
-    cluster: 'dify',
-    role: 'comparison',
-    decision: 'index',
-    audience: 'Teams comparing workflow automation with agent app surfaces.',
-    funnelStage: 'evaluate',
-    intent: 'Capture comparison intent and route it toward the governed Dify workflow path.',
-    primaryAction: 'Request workflow teardown',
-    requiredTerms: ['Dify', 'n8n', 'Cloudflare', 'agent app', 'automation'],
-    requiredLinks: ['/dify', '/dify/mcp-control-plane'],
-    schema: 'article',
-    search: {
-      changefreq: 'weekly',
-      priority: '0.85',
-      lastmod: '2026-06-22'
-    },
-    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
-  },
-  {
     path: '/products',
     cluster: 'products',
     role: 'pillar',

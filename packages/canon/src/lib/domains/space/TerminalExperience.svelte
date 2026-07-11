@@ -358,7 +358,7 @@
 							},
 							{
 								id: 4,
-								title: 'n8n Workflow Automation Patterns',
+								title: 'Workflow Automation Patterns',
 								category: 'automation',
 								reading_time: '10',
 								difficulty_level: 'Beginner'

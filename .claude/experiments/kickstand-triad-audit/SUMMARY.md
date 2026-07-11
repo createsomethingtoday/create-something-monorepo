@@ -41,7 +41,7 @@
 
 - 155 scripts, only ~20 actively needed
 - Obsolete Railway config still present
-- README references n8n/Railway (actual: Cloudflare)
+- README references a retired workflow platform and Railway (actual: Cloudflare)
 - 800-line noise filter may be unnecessary with AI validation
 
 **Action:** Archive 100+ scripts, remove obsolete configs
@@ -62,7 +62,7 @@
 
 1. **Unify to Workers** - Remove Node.js duplication (~3,200 lines)
 2. **Archive Scripts** - Move 100+ one-time scripts to archive
-3. **Update Documentation** - Remove Railway/n8n refs, document Cloudflare
+3. **Update Documentation** - Remove Railway and legacy workflow platform refs, document Cloudflare
 
 ---
 

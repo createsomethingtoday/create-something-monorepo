@@ -19,12 +19,6 @@ const VISUALS = [
     spec: 'packages/agency/static/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path-v2.spec.json',
     route: 'packages/agency/src/routes/dify/ship-dify-app-with-mcp-tools/+page.svelte',
     publicPath: '/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path-v2.svg'
-  },
-  {
-    name: 'operating layer map',
-    spec: 'packages/agency/static/images/articles/dify-vs-n8n/dify-n8n-layer-map-v2.spec.json',
-    route: 'packages/agency/src/routes/dify/n8n-vs-dify/+page.svelte',
-    publicPath: '/images/articles/dify-vs-n8n/dify-n8n-layer-map-v2.svg'
   }
 ];
 

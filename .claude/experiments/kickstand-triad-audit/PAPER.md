@@ -135,7 +135,7 @@ docs/
 ```
 
 **Good:** Docs are organized with explicit archive separation.
-**Concern:** Archive contains migration docs but README still references Railway/n8n deployment.
+**Concern:** Archive contains migration docs but README still references Railway and a retired workflow platform.
 
 ### Finding 2.3: Obsolete Deployment Configuration
 
@@ -172,7 +172,7 @@ This is **accretive complexity** - each false positive discovered adds another f
 The README describes three different deployment targets:
 
 1. **Node.js + Railway** (documented as primary)
-2. **n8n** (mentioned as future translation target)
+2. **Legacy workflow platform** (mentioned as future translation target)
 3. **Cloudflare Workers** (actual production)
 
 The system serves **one purpose** but has **three architectural narratives**. This disconnection creates:
@@ -237,7 +237,7 @@ Neither is wrong, but having both creates **systemic incoherence**.
 2. **Choose architectural philosophy:** Either:
    - Full AI (Workers approach) for simplicity
    - Hybrid (Node.js approach) for control
-3. **Update README:** Remove n8n/Railway references; document actual Cloudflare deployment
+3. **Update README:** Remove legacy workflow platform and Railway references; document actual Cloudflare deployment
 
 ---
 
@@ -251,7 +251,7 @@ Neither is wrong, but having both creates **systemic incoherence**.
 | Lines of code | ~25,000 |
 | Active services | 2 parallel implementations |
 | Scripts | 155 (35 archived) |
-| Documentation | Mixed Railway/n8n/Workers references |
+| Documentation | Mixed Railway, legacy workflow platform, and Workers references |
 
 ### Projected After Recommendations
 
