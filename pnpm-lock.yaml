@@ -4121,6 +4121,9 @@ importers:
       '@clerk/backend':
         specifier: ^3.11.2
         version: 3.11.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@cloudflare/puppeteer':
+        specifier: ^1.1.0
+        version: 1.1.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@create-something/mcp-core':
         specifier: workspace:*
         version: link:../../mcp-core
@@ -5363,6 +5366,10 @@ packages:
 
   '@cloudflare/puppeteer@1.0.5':
     resolution: {integrity: sha512-sKVtc9eTe+ulDqFGk1AcU1cgw3fuLvT75eqHDApvE1d/ZTesBD/r2Iey6elQ9uq/jBj0SjEOM1GVYi0Rojzeaw==}
+    engines: {node: '>=18'}
+
+  '@cloudflare/puppeteer@1.1.0':
+    resolution: {integrity: sha512-lN10En49avRDQvz8Gpv/WiIoGvjjDiP6P+v2y9bA6rfPT5WHfnlg2O6MwjHc1POm8A9LXf1sMdgrsdW8xWapOw==}
     engines: {node: '>=18'}
 
   '@cloudflare/sandbox@0.4.18':
@@ -20223,6 +20230,20 @@ snapshots:
       debug: 4.4.3
       devtools-protocol: 0.0.1299070
       ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - bare-abort-controller
+      - bare-buffer
+      - bufferutil
+      - react-native-b4a
+      - supports-color
+      - utf-8-validate
+
+  '@cloudflare/puppeteer@1.1.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@puppeteer/browsers': 2.2.4
+      debug: 4.4.3
+      devtools-protocol: 0.0.1299070
+      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer

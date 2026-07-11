@@ -4,6 +4,9 @@ compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
+# Cloudflare Browser Rendering for the published-site screenshot tool
+browser = { binding = "BROWSER" }
+
 [observability]
 enabled = true
 
@@ -18,6 +21,10 @@ enabled = true
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
 OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
 OAUTH_ALLOWED_EMAILS = "micah@webflow.com,eric.unger@webflow.com,mariana.segura@webflow.com"
+LANGFUSE_PROJECT_NAME = "CREATE SOMETHING"
+LANGFUSE_ENVIRONMENT = "production"
+# LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY are worker secrets
+# (Infisical prod:/webflow-template-review-mcp)
 WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
 GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
 

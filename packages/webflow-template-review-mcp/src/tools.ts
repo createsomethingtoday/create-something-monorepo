@@ -146,7 +146,19 @@ function assertReviewerScopedReviewOwner(value: unknown, reviewer: ReviewerProfi
 
 export interface ToolAccess {
   allowWrites: boolean;
+  /** Extra tools to hide for this session (e.g. tools that only make sense on a specific client path). */
+  hiddenTools?: ReadonlySet<string>;
 }
+
+/**
+ * Tools hidden from OAuth (Claude Enterprise connector) sessions. The E2B
+ * sandbox bundle prep only produces a job spec for an execution environment
+ * Claude cannot invoke — the Browser Rendering screenshot tool supersedes it
+ * there. Dify/legacy hub sessions keep it.
+ */
+export const OAUTH_HIDDEN_TOOL_NAMES: ReadonlySet<string> = new Set([
+  'template_review_prepare_published_site_sandbox',
+]);
 
 /**
  * Tools that mutate Airtable review state. Sessions without the
@@ -179,6 +191,7 @@ export function registerTools(
   const server = {
     tool: ((name: string, ...rest: unknown[]) => {
       if (!access.allowWrites && WRITE_TOOL_NAMES.has(name)) return undefined;
+      if (access.hiddenTools?.has(name)) return undefined;
       return registerOnServer(name, ...rest);
     }) as McpServer['tool'],
   };

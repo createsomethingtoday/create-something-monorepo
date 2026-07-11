@@ -18,7 +18,8 @@ Default review sequence:
 2. Load details (template_review_get_asset, template_review_get_version).
 3. Always call template_review_get_review_context before any decision, write, assignment, or official action — it returns capability flags (canAssign, canReview, canPublish).
 4. Run template_review_run_published_site_validation with publishedUrl only. Never pass Preview URLs or Designer data as automated-analysis input.
-5. For comprehensive reports, call template_review_get_comprehensive_review_contract and include its required sections; validate Agent Review Feedback drafts with template_review_format_agent_review_feedback before any save.
+5. For visual evidence (layout, typography, hierarchy, responsive behavior), call template_review_capture_published_site_screenshots and inspect the returned images. Default first pass: the homepage with full_page true at both desktop and mobile viewports (scroll-triggered sections are primed automatically), then key inner pages as needed. Screenshot findings are Auto/Partial evidence supporting the reviewer's visual-quality judgment — never a final visual-quality decision on their own.
+6. For comprehensive reports, call template_review_get_comprehensive_review_contract and include its required sections; validate Agent Review Feedback drafts with template_review_format_agent_review_feedback before any save.
 
 Evidence rules:
 - Treat validator output as partial published-site evidence; report rubricCoverage as partial_published_site_validation unless a fuller current artifact exists.
@@ -171,6 +172,39 @@ Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a sepa
 7. When in doubt, request changes rather than rejecting`;
 
 export function registerPrompts(server: McpServer): void {
+  // One-click entry point: surfaces in MCP clients (claude.ai "+" menu) so a
+  // reviewer can start a full evidence pass without knowing the tool sequence.
+  server.prompt(
+    'comprehensive_review',
+    'Run a full evidence pass on a template submission (context, validators, screenshots) and produce a contract-shaped review report. Read-only: makes no writes without explicit approval.',
+    {
+      template: z
+        .string()
+        .optional()
+        .describe('Template name, published URL, or version id. Leave empty to review the newest submission in my queue (or the review queue if mine is empty).'),
+    },
+    async ({ template }) => ({
+      messages: [
+        {
+          role: 'user' as const,
+          content: {
+            type: 'text' as const,
+            text: `Run a comprehensive template review for ${template?.trim() ? `"${template.trim()}"` : 'the newest submission assigned to me (template_review_my_queue); if my queue is empty, take the newest item in template_review_list_queue'}.
+
+Follow this sequence, read-only end to end:
+1. Locate the submission (my_queue / list_queue / search_assets / search_versions) and load details (get_asset, get_version).
+2. Call template_review_get_review_context and note the capability flags.
+3. Run template_review_run_published_site_validation with the published URL only.
+4. Capture visual evidence with template_review_capture_published_site_screenshots: homepage with full_page true at desktop and mobile, then 1-2 key inner pages if warranted. Inspect the images for layout, typography, hierarchy, branding consistency, and responsive behavior.
+5. Call template_review_get_comprehensive_review_contract and produce the report in its required sections: Confirmed summary, Coverage matrix, Confirmed findings, Human follow-up, Manual checks remaining, Decision boundary. Label every finding Auto, Partial, or Manual, and cite concrete evidence.
+
+Do not assign, save feedback, change status, approve, reject, or write anything — end with the report and wait for my decision.`,
+          },
+        },
+      ],
+    }),
+  );
+
   // Workflow orchestration prompt — teaches agents the full review process.
   // This is the "playbook" that makes the hub AI-native.
   server.prompt(

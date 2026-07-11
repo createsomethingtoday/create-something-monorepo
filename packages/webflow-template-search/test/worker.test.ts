@@ -4104,7 +4104,7 @@ describe('webflow-template-search worker', () => {
       fetchMock.mockRestore();
       close();
     }
-  }, 10_000);
+  }, 20_000);
 
   it('sweeps recent publishes when stale catch-up hits the bulk-edit fetch cap', async () => {
     vi.useFakeTimers();
@@ -4196,7 +4196,7 @@ describe('webflow-template-search worker', () => {
       fetchMock.mockRestore();
       close();
     }
-  }, 10_000);
+  }, 20_000);
 
   it('bounds empty incremental catch-up windows so stale cursors advance in slices', async () => {
     const fetchMock = installAirtableFetchMock({

@@ -7,7 +7,7 @@ import type { AirtableClient } from '../src/airtable.js';
 import { RUBRIC_DIMENSIONS } from '../src/comprehensive-review-contract.js';
 import type { ReviewerProfile } from '../src/reviewer-directory.js';
 import { METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
-import { registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
+import { OAUTH_HIDDEN_TOOL_NAMES, registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
 
 type ToolResult = { content: Array<{ text: string }>; isError?: boolean };
 type ToolHandler = (args: Record<string, unknown>) => Promise<ToolResult>;
@@ -1050,4 +1050,35 @@ test('default access keeps the full write surface', () => {
   for (const writeTool of WRITE_TOOL_NAMES) {
     assert.notEqual(names.indexOf(writeTool), -1, `expected ${writeTool} to be registered by default`);
   }
+});
+
+
+test('hiddenTools removes OAuth-hidden tools without touching the rest', () => {
+  const { server, names } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+    {},
+    { allowWrites: true, hiddenTools: OAUTH_HIDDEN_TOOL_NAMES },
+  );
+
+  assert.equal(names.includes('template_review_prepare_published_site_sandbox'), false);
+  assert.notEqual(names.indexOf('template_review_run_published_site_validation'), -1);
+  assert.notEqual(names.indexOf('template_review_approve_version'), -1);
+});
+
+test('default access keeps the sandbox prep tool for legacy sessions', () => {
+  const { server, names } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  assert.notEqual(names.indexOf('template_review_prepare_published_site_sandbox'), -1);
 });

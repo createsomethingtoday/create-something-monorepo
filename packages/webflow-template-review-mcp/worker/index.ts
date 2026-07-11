@@ -1,11 +1,20 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { createClerkClient } from '@clerk/backend';
+import puppeteer from '@cloudflare/puppeteer';
 import { enableTelemetry } from '@create-something/mcp-core';
+import { z } from 'zod';
 
 import { misconfiguredResponse } from '../src/auth.js';
 import { AirtableClient } from '../src/airtable.js';
 import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
+import {
+  SCREENSHOT_MAX_FULL_PAGE_HEIGHT,
+  SCREENSHOT_NAVIGATION_TIMEOUT_MS,
+  buildCaptureTarget,
+  clampScreenshotQuality,
+  resolveViewports,
+} from '../src/published-site-screenshots.js';
 import {
   SCOPE_READ,
   SCOPE_WRITE,
@@ -21,16 +30,22 @@ import {
   getReviewerProfileForAccount,
   getReviewerProfileForEmail,
 } from '../src/reviewer-directory.js';
-import { registerTools } from '../src/tools.js';
+import { OAUTH_HIDDEN_TOOL_NAMES, registerTools } from '../src/tools.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
+  BROWSER?: Fetcher;
   TELEMETRY_DB?: D1Database;
   MCP_ACCOUNT_ID?: string;
   MCP_API_KEY?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   REVIEWER_DIRECTORY_JSON?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_HOST?: string;
+  LANGFUSE_PROJECT_NAME?: string;
+  LANGFUSE_ENVIRONMENT?: string;
   CLERK_SECRET_KEY?: string;
   CLERK_PUBLISHABLE_KEY?: string;
   OAUTH_ALLOWED_EMAIL_DOMAIN?: string;
@@ -58,12 +73,29 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
   );
 
   async init() {
-    if (this.env.TELEMETRY_DB) {
+    // Emit tool-call telemetry to D1 (cs-telemetry) and, when configured, to
+    // Langfuse for tracing/evals. Traces are keyed by the resolved account
+    // (OAuth reviewer email or legacy bridge accountId) so per-reviewer
+    // activity is observable.
+    const langfuseEnabled = Boolean(this.env.LANGFUSE_PUBLIC_KEY && this.env.LANGFUSE_SECRET_KEY);
+    if (this.env.TELEMETRY_DB || langfuseEnabled) {
       enableTelemetry(
         this.server,
         this.env.TELEMETRY_DB as unknown as Parameters<typeof enableTelemetry>[1],
         'webflow-template-review-mcp',
         () => this.props?.accountId ?? this.env.MCP_ACCOUNT_ID?.trim() ?? 'operator',
+        langfuseEnabled
+          ? {
+              publicKey: this.env.LANGFUSE_PUBLIC_KEY,
+              secretKey: this.env.LANGFUSE_SECRET_KEY,
+              host: this.env.LANGFUSE_HOST,
+              projectName: this.env.LANGFUSE_PROJECT_NAME || 'CREATE SOMETHING',
+              environment: this.env.LANGFUSE_ENVIRONMENT || 'production',
+              // This worker runs as a short-lived subrequest behind the hub
+              // proxy; await the flush so traces aren't dropped on suspend.
+              awaitFlush: true,
+            }
+          : undefined,
       );
     }
 
@@ -103,9 +135,165 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
           ? Number(this.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS)
           : undefined,
       },
-      { allowWrites },
+      {
+        allowWrites,
+        // OAuth (Claude connector) sessions don't get the E2B bundle-prep
+        // tool — they can't execute its output, and the Browser Rendering
+        // screenshot tool supersedes it on that path.
+        ...(this.props?.authMode === 'oauth' ? { hiddenTools: OAUTH_HIDDEN_TOOL_NAMES } : {}),
+      },
     );
     registerPrompts(this.server);
+    this.registerScreenshotTool();
+  }
+
+  /**
+   * Visual evidence pass via Cloudflare Browser Rendering — supersedes the
+   * Dify-era E2B sandbox execution. Read-only, same-origin by construction,
+   * returns JPEG image content blocks the model can inspect directly for
+   * layout, typography, and responsive behavior.
+   */
+  private registerScreenshotTool() {
+    this.server.tool(
+      'template_review_capture_published_site_screenshots',
+      'Read-only visual evidence: capture screenshots of the published template site at desktop and/or mobile viewports using Cloudflare Browser Rendering. Accepts up to 3 site-relative paths per call (max 4 images total across paths x viewports). Use during comprehensive reviews to assess layout, typography, visual hierarchy, and responsive behavior. Same-origin only; findings from screenshots are Auto/Partial evidence, not a final visual-quality decision.',
+      {
+        published_url: z.string().url().describe('The published template site URL (https), e.g. from review context.'),
+        path: z.string().optional().describe('Optional single site-relative path to capture (must start with "/"). Defaults to the published URL path.'),
+        paths: z.array(z.string()).max(3).optional().describe('Up to 3 site-relative paths to capture in one call (each must start with "/"). Overrides `path`. Keep paths x viewports <= 4 images.'),
+        viewports: z.array(z.enum(['desktop', 'mobile'])).optional().describe('Viewports to capture. Defaults to both desktop (1280x1600) and mobile (390x844).'),
+        full_page: z.boolean().optional().describe('Capture the full page height (capped at 4000px) instead of the viewport. Defaults to false.'),
+        quality: z.number().int().min(30).max(80).optional().describe('JPEG quality 30-80. Defaults to 60. Lower it if responses are too large.'),
+      },
+      async ({ published_url, path, paths, viewports, full_page, quality }) => {
+        if (!this.env.BROWSER) {
+          return {
+            content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: { code: 'BROWSER_RENDERING_UNAVAILABLE', message: 'Browser Rendering binding is not configured for this deployment.' } }) }],
+            isError: true,
+          };
+        }
+
+        const requestedPaths = paths && paths.length > 0 ? paths : [path];
+        const targets: Array<{ path: string | undefined; url: string }> = [];
+        for (const requestedPath of requestedPaths) {
+          const target = buildCaptureTarget(published_url, requestedPath);
+          if (!target.ok) {
+            return {
+              content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: { code: 'INVALID_CAPTURE_TARGET', message: target.error } }) }],
+              isError: true,
+            };
+          }
+          targets.push({ path: requestedPath, url: target.url });
+        }
+
+        const jpegQuality = clampScreenshotQuality(quality);
+        const resolvedViewports = resolveViewports(viewports);
+
+        // Keep responses inspectable: cap the total images per call.
+        if (targets.length * resolvedViewports.length > 4) {
+          return {
+            content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: { code: 'TOO_MANY_CAPTURES', message: `Requested ${targets.length} paths x ${resolvedViewports.length} viewports = ${targets.length * resolvedViewports.length} images; the cap is 4 per call. Use fewer paths or a single viewport, or split into multiple calls.` } }) }],
+            isError: true,
+          };
+        }
+
+        const captures: Array<{ url: string; viewport: string; width: number; height: number; bytes: number; error?: string }> = [];
+        const content: Array<
+          | { type: 'text'; text: string }
+          | { type: 'image'; data: string; mimeType: string }
+        > = [];
+
+        const browser = await puppeteer.launch(this.env.BROWSER as never);
+        try {
+          for (const target of targets) {
+          for (const viewport of resolvedViewports) {
+            try {
+              const page = await browser.newPage();
+              await page.setViewport({ width: viewport.width, height: viewport.height });
+              await page.goto(target.url, {
+                waitUntil: 'networkidle0',
+                timeout: SCREENSHOT_NAVIGATION_TIMEOUT_MS,
+              });
+
+              // Prime reveal animations on every capture (Webflow IX2/GSAP
+              // elements start at opacity 0 until load/scroll triggers fire):
+              // step through the page so reveals run, then return to the top
+              // and let entrance animations settle. Viewport captures use a
+              // short pass; full-page captures walk the whole (capped) page.
+              // String-form evaluate keeps the worker typecheckable without
+              // the DOM lib — this code runs in the remote browser.
+              await page.evaluate(`(async () => {
+                const step = Math.max(window.innerHeight, 400);
+                const max = Math.min(document.documentElement.scrollHeight, ${SCREENSHOT_MAX_FULL_PAGE_HEIGHT});
+                const steps = Math.min(Math.ceil(max / step), ${full_page ? 16 : 3});
+                for (let i = 1; i <= steps; i++) {
+                  window.scrollTo(0, i * step);
+                  await new Promise((r) => setTimeout(r, 250));
+                }
+                window.scrollTo(0, 0);
+                await new Promise((r) => setTimeout(r, 700));
+              })()`);
+
+              let clip: { x: number; y: number; width: number; height: number } | undefined;
+              if (full_page) {
+                const pageHeight = await page.evaluate('document.documentElement.scrollHeight');
+                clip = {
+                  x: 0,
+                  y: 0,
+                  width: viewport.width,
+                  height: Math.min(Number(pageHeight) || viewport.height, SCREENSHOT_MAX_FULL_PAGE_HEIGHT),
+                };
+              }
+
+              const shot = (await page.screenshot({
+                type: 'jpeg',
+                quality: jpegQuality,
+                ...(clip ? { clip, captureBeyondViewport: true } : {}),
+              })) as Buffer;
+              await page.close();
+
+              const bytes = shot.byteLength;
+              captures.push({ url: target.url, viewport: viewport.name, width: viewport.width, height: clip?.height ?? viewport.height, bytes });
+              content.push({ type: 'image', data: shot.toString('base64'), mimeType: 'image/jpeg' });
+            } catch (error) {
+              captures.push({
+                url: target.url,
+                viewport: viewport.name,
+                width: viewport.width,
+                height: viewport.height,
+                bytes: 0,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+          }
+        } finally {
+          await browser.close().catch(() => {});
+        }
+
+        const anySuccess = captures.some((c) => !c.error);
+        content.unshift({
+          type: 'text',
+          text: JSON.stringify(
+            {
+              ok: anySuccess,
+              data: {
+                urls: targets.map((t) => t.url),
+                jpegQuality,
+                fullPage: Boolean(full_page),
+                captures,
+                evidenceLabel: 'Auto/Partial',
+                note: 'Screenshots are review evidence for reviewer-supported visual assessment, not an official visual-quality decision.',
+              },
+            },
+            null,
+            2,
+          ),
+        });
+
+        return { content, ...(anySuccess ? {} : { isError: true }) };
+      },
+    );
   }
 }
 
