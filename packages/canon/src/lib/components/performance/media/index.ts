@@ -8,4 +8,4 @@
 export { controlledFlowMedia } from './controlled-flow';
 export { pressureBoundaryMedia } from './pressure-boundary';
 export { traceControlPlaneMedia } from './trace-control-plane';
-export type { PerformanceMediaStudy } from './types';
+export type { PerformanceMediaStudy, PerformanceMediaVideo } from './types';
