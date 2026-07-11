@@ -52,7 +52,11 @@ const moduleCache = new Map<string, CachedJWKS>();
  * 3. Fetch from Identity Worker if cache miss/expired
  * 4. Update both KV and module cache on successful fetch
  */
-async function fetchJWKS(jwksUrl: string, env?: AuthEnv): Promise<JWK[]> {
+async function fetchJWKS(
+	jwksUrl: string,
+	env?: AuthEnv,
+	runtimeFetch: typeof globalThis.fetch = globalThis.fetch,
+): Promise<JWK[]> {
 	const now = Date.now();
 	const ttlMs = JWKS_KV_TTL * 1000;
 	const cacheKey = `identity:jwks:${jwksUrl}`;
@@ -79,7 +83,7 @@ async function fetchJWKS(jwksUrl: string, env?: AuthEnv): Promise<JWK[]> {
 
 	// Fetch from Identity Worker
 	try {
-		const response = await fetch(jwksUrl);
+		const response = await runtimeFetch(jwksUrl);
 		if (!response.ok) {
 			console.error('Failed to fetch JWKS:', response.status);
 			return cachedModuleEntry?.keys ?? [];
@@ -189,6 +193,98 @@ function extractUserFromPayload(payload: JWTPayload, env?: AuthEnv): User | null
 		source,
 	};
 }
+
+export interface IdentityVerificationConfig {
+	issuer: string;
+	jwksUrl: string;
+	audience?: string | string[];
+	fetch?: typeof globalThis.fetch;
+	now?: () => number;
+	cache?: AuthEnv;
+}
+
+export interface VerifiedIdentity {
+	subject: string;
+	email: string | null;
+	issuer: string;
+	audience: string[];
+	tier: User['tier'];
+	source: User['source'];
+	claims: JWTPayload;
+}
+
+function normalizeAudience(value: string | string[] | undefined): string[] {
+	if (!value) return [];
+	return Array.isArray(value) ? value : [value];
+}
+
+/**
+ * Verify a CREATE SOMETHING identity token against explicit provider configuration.
+ *
+ * This is the provider-neutral primitive for applications that need cryptographic
+ * identity without inheriting production URLs or framework-specific runtime state.
+ */
+export const verifyIdentityToken = async (
+	token: string,
+	config: IdentityVerificationConfig,
+): Promise<VerifiedIdentity | null> => {
+	try {
+		const [headerB64, payloadB64, signatureB64] = token.split('.');
+		if (!headerB64 || !payloadB64 || !signatureB64) return null;
+
+		const header = JSON.parse(
+			atob(headerB64.replace(/-/g, '+').replace(/_/g, '/')),
+		) as { kid?: string; alg?: string };
+		if (!header.kid || (header.alg !== 'ES256' && header.alg !== 'RS256')) return null;
+
+		const payload = parseJwtPayload(token);
+		if (!payload || payload.iss !== config.issuer || typeof payload.sub !== 'string') return null;
+
+		const tokenAudience = normalizeAudience(payload.aud);
+		const expectedAudience = normalizeAudience(config.audience);
+		if (expectedAudience.length > 0 && !expectedAudience.some((value) => tokenAudience.includes(value))) {
+			return null;
+		}
+
+		const now = (config.now ?? (() => Math.floor(Date.now() / 1000)))();
+		if (!Number.isFinite(payload.exp) || payload.exp <= now) return null;
+		if (typeof payload.iat === 'number' && payload.iat > now + 60) return null;
+
+		const keys = await fetchJWKS(config.jwksUrl, config.cache, config.fetch);
+		const jwk = keys.find((candidate) => candidate.kid === header.kid);
+		if (!jwk) return null;
+
+		const publicKey = await crypto.subtle.importKey(
+			'jwk',
+			header.alg === 'RS256'
+				? { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: jwk.alg }
+				: { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y, alg: jwk.alg },
+			getVerificationAlgorithm(header.alg),
+			true,
+			['verify'],
+		);
+		const valid = await crypto.subtle.verify(
+			getVerificationParams(header.alg),
+			publicKey,
+			base64UrlDecode(signatureB64),
+			new TextEncoder().encode(`${headerB64}.${payloadB64}`),
+		);
+		if (!valid) return null;
+
+		const user = extractUserFromPayload(payload);
+		return {
+			subject: payload.sub,
+			email: typeof payload.email === 'string' ? payload.email : null,
+			issuer: payload.iss,
+			audience: tokenAudience,
+			tier: user?.tier ?? 'free',
+			source: user?.source ?? 'space',
+			claims: payload,
+		};
+	} catch {
+		return null;
+	}
+};
 
 /**
  * Extract access token from a Request object

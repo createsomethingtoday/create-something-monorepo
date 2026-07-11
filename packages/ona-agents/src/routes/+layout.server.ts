@@ -1,9 +1,9 @@
 import type { LayoutServerLoad } from './$types';
-import { getClerkAccessState } from '$lib/server/auth/clerk-access';
+import { getIdentityAccessState } from '$lib/server/auth/identity-access';
 
-export const load: LayoutServerLoad = async ({ cookies, fetch, platform, request, url }) => {
+export const load: LayoutServerLoad = async ({ fetch, platform, request, url }) => {
   return {
-    clerkAccess: await getClerkAccessState({ cookies, fetch, platform, request, url }),
+    authAccess: await getIdentityAccessState({ fetch, platform, request, url }),
     currentPath: url.pathname
   };
 };

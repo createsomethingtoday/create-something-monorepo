@@ -181,6 +181,11 @@ docs/
 
 ## Suggested pairings
 
+- **Adding authentication to a CREATE SOMETHING application**:
+  [guides/FIRST_PARTY_AUTH_PLATFORM.md](./guides/FIRST_PARTY_AUTH_PLATFORM.md),
+  [REMOTE_MCP_IDENTITY_STANDARD.md](./REMOTE_MCP_IDENTITY_STANDARD.md),
+  [policies/v1/policy.partner-auth-governance.v1.md](./policies/v1/policy.partner-auth-governance.v1.md)
+
 - **Building or modifying an MCP**:
   [MCP_SCAFFOLD.md](./MCP_SCAFFOLD.md),
   [COMPOSIO_PATTERNS.md](./COMPOSIO_PATTERNS.md),

@@ -1,6 +1,6 @@
 import { error, fail, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { getClerkAccessState } from '$lib/server/auth/clerk-access';
+import { getIdentityAccessState } from '$lib/server/auth/identity-access';
 import { callDifyChat, type DifyChatOutput } from '$lib/server/dify/client';
 import {
   getDifyOperatorAgent,
@@ -187,13 +187,13 @@ function buildAssistantBody(output: DifyChatOutput, agent: DifyOperatorAgent): s
 
 export const load: PageServerLoad = async ({ parent, params, platform }) => {
   const parentData = await parent();
-  const accessAllowed = parentData.clerkAccess.status === 'allowed';
+  const accessAllowed = parentData.authAccess.status === 'allowed';
   const agent = getRequiredAgent(params.agentId);
 
   return {
     accessAllowed,
-    signInUrl: parentData.clerkAccess.signInUrl,
-    accessDetail: parentData.clerkAccess.detail,
+    signInUrl: parentData.authAccess.signInUrl,
+    accessDetail: parentData.authAccess.detail,
     agents: accessAllowed ? getDifyOperatorAgentViews(platform) : [],
     selectedAgent: accessAllowed ? toDifyOperatorAgentView(agent, platform) : null,
     initialMessages: accessAllowed ? getInitialMessages(agent) : [],
@@ -202,15 +202,14 @@ export const load: PageServerLoad = async ({ parent, params, platform }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ cookies, fetch, params, platform, request, url }) => {
-    const clerkAccess = await getClerkAccessState({
-      cookies,
+  default: async ({ fetch, params, platform, request, url }) => {
+    const identityAccess = await getIdentityAccessState({
       fetch,
       request,
       platform,
       url
     });
-    const accessAllowed = clerkAccess.status === 'allowed';
+    const accessAllowed = identityAccess.status === 'allowed';
     const agent = getRequiredAgent(params.agentId);
 
     const formData = await request.formData();
@@ -223,7 +222,7 @@ export const actions: Actions = {
         messages,
         conversationId,
         proofEvents: [],
-        submitError: 'A Clerk staff session is required before calling Dify agents.'
+        submitError: 'A verified staff identity is required before calling Dify agents.'
       } satisfies OperatorActionResult);
     }
 
@@ -240,7 +239,7 @@ export const actions: Actions = {
       ...messages,
       createOperatorMessage({
         role: 'user',
-        author: clerkAccess.email ?? 'Operator',
+        author: identityAccess.email ?? 'Operator',
         body: query,
         state: 'ready'
       })
@@ -249,7 +248,7 @@ export const actions: Actions = {
       agent,
       query,
       conversationId,
-      user: `ona-operator-${clerkAccess.subject ?? 'unknown'}`,
+      user: `ona-operator-${identityAccess.subject ?? 'unknown'}`,
       platform,
       fetch
     });
@@ -269,9 +268,8 @@ export const actions: Actions = {
       submitError: output.ok || output.skipped ? undefined : output.error
     } satisfies OperatorActionResult;
   },
-  reset: async ({ cookies, fetch, params, platform, request, url }) => {
-    const clerkAccess = await getClerkAccessState({
-      cookies,
+  reset: async ({ fetch, params, platform, request, url }) => {
+    const identityAccess = await getIdentityAccessState({
       fetch,
       request,
       platform,
@@ -279,12 +277,12 @@ export const actions: Actions = {
     });
     const agent = getRequiredAgent(params.agentId);
 
-    if (clerkAccess.status !== 'allowed') {
+    if (identityAccess.status !== 'allowed') {
       return fail(403, {
         messages: [],
         conversationId: '',
         proofEvents: [],
-        submitError: 'A Clerk staff session is required before resetting an operator chat.'
+        submitError: 'A verified staff identity is required before resetting an operator chat.'
       } satisfies OperatorActionResult);
     }
 

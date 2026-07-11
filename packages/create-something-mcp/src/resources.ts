@@ -4,6 +4,11 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import {
+  createAuthOpenApi,
+  createAuthPlatformContract,
+  PRODUCTION_IDENTITY_ORIGIN
+} from '@create-something/auth-platform';
 import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
 import { CANON_REGISTRY_MANIFEST } from './content/generated/canon-registry.js';
@@ -53,6 +58,38 @@ export function registerResources(server: McpServer) {
     buildCanonOverlayCandidatePromotionApprovalTargetTemplateCollection();
   const canonApprovalValidationReports =
     buildCanonOverlayCandidatePromotionApprovalValidationReportCollection();
+
+  server.resource(
+    'auth-platform-contract',
+    'auth://platform/contract',
+    {
+      description: 'Versioned AI-readable CREATE SOMETHING auth platform discovery contract',
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(createAuthPlatformContract(PRODUCTION_IDENTITY_ORIGIN), null, 2)
+      }]
+    })
+  );
+
+  server.resource(
+    'auth-platform-openapi',
+    'auth://platform/openapi',
+    {
+      description: 'Auth-focused OpenAPI 3.1 contract for the CREATE SOMETHING identity API',
+      mimeType: 'application/json'
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(createAuthOpenApi(PRODUCTION_IDENTITY_ORIGIN), null, 2)
+      }]
+    })
+  );
 
   // ==========================================================================
   // Papers (.io)

@@ -6,8 +6,8 @@ The single entry point to all CREATE SOMETHING content: philosophy, research, de
 
 | Tier | MCP Primitive | Role in This Server |
 |------|---------------|---------------------|
-| **Database** | Resources | Papers, Canon design system, patterns, masters, framework, graph, praxis, products, playbooks |
-| **Automation** | Tools | Cross-property search, knowledge graph traversal, component classification, triad analysis, design audit |
+| **Database** | Resources | Auth platform contracts, papers, Canon design system, patterns, masters, framework, graph, praxis, products, playbooks |
+| **Automation** | Tools | Read-only auth integration validation, cross-property search, knowledge graph traversal, component classification, triad analysis, design audit |
 | **Judgment** | Prompts | Architecture review, design review, triad analysis, MCP design, research dive, workflow setup, host comparison, project structure |
 
 ## Resources (Database Tier)
@@ -16,6 +16,7 @@ Content from all CREATE SOMETHING properties.
 
 | URI Pattern | Property | Description |
 |-------------|----------|-------------|
+| `auth://platform/contract`, `auth://platform/openapi` | platform | Versioned auth discovery and OpenAPI contracts for agents |
 | `papers://list`, `papers://{slug}` | .io | Research papers on methodology, architecture, philosophy |
 | `canon://list`, `canon://{slug}` | .ltd | Canon Design System pages (foundations, concepts, guidelines) |
 | `canon://registry`, `canon://registry/list`, `canon://registry/{id}` | .ltd | Machine-readable Canon registry for components, tokens, templates, adapters, policies, and modalities |
@@ -41,6 +42,7 @@ Content from all CREATE SOMETHING properties.
 
 | Tool | Purpose |
 |------|---------|
+| `auth_config_validate` | Deterministically validate a non-secret auth integration proposal without network access or mutation. |
 | `search` | Cross-property full-text search across all content types, including full property markdown documents. Supports type and property filtering. |
 | `relate` | Knowledge graph traversal. Find related concepts with configurable depth. |
 | `classify_component` | Classify a component into Three-Tier Framework tier(s) with confidence and rationale. |
