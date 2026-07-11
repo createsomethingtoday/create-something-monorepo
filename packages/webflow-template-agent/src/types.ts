@@ -4,6 +4,22 @@ export interface Env {
   SEARCH_API_BASE: string;
   ALLOWED_ORIGINS?: string;
   ENVIRONMENT?: string;
+  SESSION_SIGNING_SECRET?: string;
+  CONTEXT_SIGNING_SECRET?: string;
+  AGENT_PROXY_SECRET?: string;
+  TURNSTILE_SECRET_KEY?: string;
+  TURNSTILE_EXPECTED_HOSTNAME?: string;
+  AGENT_RATE_LIMITER?: RateLimit;
+  AGENT_GUARD?: DurableObjectNamespace;
+  MAX_SESSION_TURNS?: string;
+  MAX_CONCURRENT_TURNS?: string;
+  DAILY_BUDGET_MICRO_USD?: string;
+  TURN_RESERVATION_MICRO_USD?: string;
+  INPUT_USD_PER_MILLION_TOKENS?: string;
+  OUTPUT_USD_PER_MILLION_TOKENS?: string;
+  CACHE_WRITE_USD_PER_MILLION_TOKENS?: string;
+  CACHE_READ_USD_PER_MILLION_TOKENS?: string;
+  AGENT_ANALYTICS?: AnalyticsEngineDataset;
 }
 
 // ── Chat protocol (client <-> agent worker) ──────────────────────────────────
@@ -20,10 +36,18 @@ export interface ChatRequestBody {
   // display/compare templates surfaced in earlier turns (the worker is
   // stateless across requests).
   context?: ChatContext;
+  contextToken?: string;
+}
+
+export interface AgentUsage {
+  cacheCreationInputTokens: number;
+  cacheReadInputTokens: number;
+  inputTokens: number;
+  outputTokens: number;
 }
 
 export interface ChatContext {
-  known_templates: TemplateSearchItem[];
+  known_templates?: TemplateSearchItem[];
   // Client viewport hint: 'compact' = narrow docked panel, 'immersive' = wide
   // fullscreen/inline canvas. Steers layout and item-count choices.
   surface?: ChatSurface;
@@ -66,7 +90,7 @@ export type AgentSseEvent =
   | { type: 'page_action'; payload: PageActionPayload }
   // Continuity snapshot: templates this conversation has verified via tools.
   // The client stores it and echoes it back as `context` on the next request.
-  | { type: 'context'; payload: ChatContext }
+  | { type: 'context'; payload: ChatContext | { context_token: string } }
   | { type: 'done' }
   | { type: 'error'; message: string };
 
