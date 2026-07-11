@@ -1,4 +1,5 @@
 import type {
+	CanvasKernelEmphasis,
 	CanvasKernelPalette,
 	CanvasKernelProjection
 } from '@create-something/canvas-kernel';
@@ -269,6 +270,27 @@ export const PUBLIC_SUBSTRATE_CANVAS_ACTIVE_NODE_IDS = new Set([
 	'substrate_graph',
 	'receipt_graph'
 ]);
+
+export const PUBLIC_SUBSTRATE_CANVAS_PROOF_NODE_IDS = new Set([
+	'signal_queue',
+	'substrate_graph',
+	'decision_gate',
+	'client_delivery',
+	'receipt_graph'
+]);
+
+export const PUBLIC_SUBSTRATE_CANVAS_PROOF_EDGE_IDS = new Set([
+	'signal-to-substrate',
+	'substrate-to-decision',
+	'decision-to-client',
+	'client-to-receipt'
+]);
+
+export const PUBLIC_SUBSTRATE_CANVAS_PROOF_EMPHASIS: CanvasKernelEmphasis = {
+	dimUnfocused: true,
+	edgeIds: PUBLIC_SUBSTRATE_CANVAS_PROOF_EDGE_IDS,
+	nodeIds: PUBLIC_SUBSTRATE_CANVAS_PROOF_NODE_IDS
+};
 
 export const PUBLIC_SUBSTRATE_CANVAS_PALETTE: CanvasKernelPalette = {
 	activeRing: [0.02, 0.08, 0.18, 0.36],

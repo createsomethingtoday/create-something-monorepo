@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./fonts/geist-mono-variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
   --hd-ink: #090909;
   --hd-paper: #ffffff;
@@ -368,43 +376,15 @@ button:focus-visible {
 }
 
 .hd-client-chip {
-  display: inline-block;
+  display: block;
   width: 54px;
   height: 58px;
-  clip-path: polygon(50% 0, 95% 24%, 95% 76%, 50% 100%, 5% 76%, 5% 24%);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.45), transparent 45%),
-    var(--chip, #08b6df);
-  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.15);
+  object-fit: contain;
   transition: transform 220ms var(--hd-ease);
 }
 
 .hd-client:hover .hd-client-chip {
   transform: rotate(12deg) scale(1.04);
-}
-
-.hd-client-chip--1 {
-  --chip: #0db7d8;
-}
-
-.hd-client-chip--2 {
-  --chip: #ff7a15;
-}
-
-.hd-client-chip--3 {
-  --chip: #9a36d6;
-}
-
-.hd-client-chip--4 {
-  --chip: #0456ff;
-}
-
-.hd-client-chip--5 {
-  --chip: #171717;
-}
-
-.hd-client-chip--6 {
-  --chip: #d73120;
 }
 
 .hd-ticker {
@@ -426,14 +406,18 @@ button:focus-visible {
 .hd-ticker span {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   height: 94px;
-  padding: 0 38px;
-  font-family: var(--hd-display);
-  font-size: 27px;
-  font-weight: 900;
-  line-height: 0.9;
-  opacity: 0.94;
-  text-transform: uppercase;
+  width: 133px;
+  padding: 10px 14px;
+}
+
+.hd-ticker img {
+  display: block;
+  width: min(100%, calc(48px * var(--logo-ratio, 1)));
+  max-width: 120px;
+  max-height: 58px;
+  object-fit: contain;
 }
 
 @keyframes hdTicker {
@@ -451,26 +435,6 @@ button:focus-visible {
   overflow: hidden;
   background: var(--hd-cyan);
   isolation: isolate;
-}
-
-.hd-details::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 235px;
-  z-index: 1;
-  width: min(650px, 62vw);
-  height: min(240px, 22vw);
-  border-radius: 46px;
-  background: linear-gradient(135deg, #ff9b21, var(--hd-orange));
-  box-shadow:
-    0 72px 0 #f58418,
-    0 144px 0 #f26a14,
-    0 42px 32px rgba(0, 0, 0, 0.18),
-    0 178px 38px rgba(0, 0, 0, 0.18);
-  transform: translateX(-50%) perspective(820px) rotateX(56deg) rotateZ(-1deg);
-  transform-origin: center;
-  animation: hdStackHover 8s ease-in-out infinite;
 }
 
 .hd-details::after {
@@ -493,15 +457,20 @@ button:focus-visible {
   padding: 70px clamp(22px, 4vw, 60px) 148px;
   color: #030303;
   text-align: center;
+  animation: hdServiceIn 300ms ease-out both;
 }
 
 .hd-service-card span {
+  position: relative;
+  z-index: 2;
   font-family: var(--hd-display);
   font-size: clamp(56px, 5.2vw, 80px);
   line-height: 1;
 }
 
 .hd-service-card p {
+  position: relative;
+  z-index: 2;
   max-width: 700px;
   margin: 28px 0 0;
   font-family: var(--hd-mono);
@@ -512,6 +481,8 @@ button:focus-visible {
 }
 
 .hd-service-card h2 {
+  position: relative;
+  z-index: 2;
   align-self: end;
   margin: 0;
   font-family: var(--hd-display);
@@ -520,6 +491,20 @@ button:focus-visible {
   letter-spacing: 0;
   line-height: 0.88;
   text-transform: uppercase;
+}
+
+.hd-service-artwork {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  z-index: 1;
+  display: block;
+  width: min(74vw, 990px);
+  max-height: 720px;
+  object-fit: contain;
+  transform: translate(-50%, -50%) rotate(var(--service-rotation, 0deg));
+  transform-origin: center;
+  animation: hdServiceArtworkIn 300ms ease-out both;
 }
 
 .hd-service-rail {
@@ -538,8 +523,11 @@ button:focus-visible {
   text-transform: uppercase;
 }
 
-.hd-service-rail span {
+.hd-service-rail button {
   display: grid;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   gap: 9px;
   min-height: 86px;
   padding: 13px 12px;
@@ -547,6 +535,18 @@ button:focus-visible {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.26);
   backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition:
+    background 180ms var(--hd-ease),
+    border-color 180ms var(--hd-ease),
+    transform 180ms var(--hd-ease);
+}
+
+.hd-service-rail button:hover,
+.hd-service-rail button.is-active {
+  border-color: rgba(0, 0, 0, 0.58);
+  background: rgba(255, 255, 255, 0.66);
+  transform: translateY(-2px);
 }
 
 .hd-service-rail strong {
@@ -722,21 +722,12 @@ button:focus-visible {
   box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.22);
 }
 
+.hd-talk.is-visible {
+  animation: hdTalkPanelIn 669.233ms ease-out 195.92ms both;
+}
+
 .hd-talk::before {
-  content: "";
-  position: absolute;
-  right: -115px;
-  bottom: -128px;
-  z-index: 0;
-  width: min(560px, 84%);
-  aspect-ratio: 1.16;
-  background:
-    linear-gradient(130deg, transparent 0 24%, rgba(39, 39, 34, 0.62) 24% 39%, transparent 39% 61%, rgba(39, 39, 34, 0.62) 61% 77%, transparent 77%),
-    linear-gradient(40deg, transparent 0 28%, rgba(39, 39, 34, 0.48) 28% 45%, transparent 45% 100%);
-  clip-path: polygon(18% 38%, 68% 14%, 96% 34%, 46% 58%, 84% 77%, 62% 90%, 12% 64%, 42% 50%);
-  opacity: 0.82;
-  transform: rotate(-4deg);
-  animation: hdTalkMark 7.2s ease-in-out infinite;
+  content: none;
 }
 
 .hd-talk::after {
@@ -756,6 +747,18 @@ button:focus-visible {
   flex-direction: column;
   justify-content: flex-start;
   padding: 74px clamp(28px, 6vw, 90px);
+}
+
+.hd-talk__mark {
+  position: absolute;
+  right: -16%;
+  bottom: -5%;
+  z-index: 1;
+  display: block;
+  width: min(660px, 92%);
+  height: auto;
+  opacity: 0.6;
+  animation: hdTalkMark 5.052848s ease-in-out infinite;
 }
 
 .hd-talk small {
@@ -789,8 +792,9 @@ button:focus-visible {
   gap: 95px;
   min-height: 858px;
   padding: 49px 60px;
-  background: var(--hd-lime);
+  background: var(--testimonial-bg, var(--hd-lime));
   isolation: isolate;
+  transition: background 300ms ease-out;
 }
 
 .hd-testimonial__image {
@@ -807,6 +811,7 @@ button:focus-visible {
   display: grid;
   grid-template-rows: auto 1fr auto;
   padding: 24px 0;
+  animation: hdTestimonialIn 300ms ease-out both;
 }
 
 .hd-testimonial__logos {
@@ -814,14 +819,34 @@ button:focus-visible {
   flex-wrap: wrap;
   align-items: center;
   gap: 22px;
-  font-family: var(--hd-mono);
-  font-size: 14px;
-  font-weight: 950;
-  text-transform: uppercase;
 }
 
-.hd-testimonial__logos span:not(:first-child) {
-  opacity: 0.18;
+.hd-testimonial__logos button {
+  display: grid;
+  place-items: center;
+  width: 100px;
+  height: 54px;
+  padding: 3px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.2;
+  transition:
+    opacity 180ms var(--hd-ease),
+    transform 180ms var(--hd-ease);
+}
+
+.hd-testimonial__logos button:hover,
+.hd-testimonial__logos button.is-active {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.hd-testimonial__logos img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .hd-testimonial blockquote {
@@ -831,6 +856,11 @@ button:focus-visible {
   font-size: clamp(34px, 2.85vw, 45px);
   line-height: 1.04;
   text-wrap: balance;
+}
+
+.hd-testimonial blockquote.is-long {
+  font-size: 34px;
+  line-height: 1.08;
 }
 
 .hd-testimonial cite {
@@ -859,10 +889,11 @@ button:focus-visible {
 }
 
 .hd-slider-dots span:first-child {
-  width: 38px;
+  display: block;
+  height: 100%;
   border-radius: 999px;
   background: #030303;
-  animation: hdSliderDot 5s var(--hd-ease) infinite;
+  transition: width 300ms ease-out;
 }
 
 .hd-footer {
@@ -874,8 +905,23 @@ button:focus-visible {
   color: #d9d9d9;
 }
 
-.hd-footer .hd-logo {
+.hd-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 3vw, 44px);
   max-width: 100%;
+  font-family: var(--hd-display);
+  font-size: clamp(64px, 11vw, 174px);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.hd-footer__mark {
+  display: block;
+  width: clamp(74px, 12.5vw, 188px);
+  height: auto;
+  flex: 0 0 auto;
+  animation: hdFooterMark 2s cubic-bezier(0.5, 0, 0.1, 1) infinite;
 }
 
 .hd-footer__bottom {
@@ -1084,7 +1130,7 @@ button:focus-visible {
     font-size: 9px;
   }
 
-  .hd-service-rail span {
+  .hd-service-rail button {
     min-height: 58px;
     gap: 5px;
     padding: 9px 8px;
@@ -1095,19 +1141,13 @@ button:focus-visible {
     font-size: 11px;
   }
 
-  .hd-details::before {
-    bottom: 245px;
-    width: 106vw;
-    height: 160px;
-    border-radius: 34px;
-    box-shadow:
-      0 54px 0 #f58418,
-      0 108px 0 #f26a14,
-      0 28px 24px rgba(0, 0, 0, 0.16),
-      0 134px 30px rgba(0, 0, 0, 0.16);
+  .hd-service-artwork {
+    top: 54%;
+    width: min(116vw, 660px);
+    max-height: 510px;
   }
 
-  .hd-talk::before {
+  .hd-talk__mark {
     right: -118px;
     bottom: -48px;
     width: 120%;
@@ -1158,8 +1198,13 @@ button:focus-visible {
 
   .hd-testimonial blockquote {
     margin-top: 46px;
-    font-size: 31px;
+    font-size: 28px;
     line-height: 1.03;
+  }
+
+  .hd-testimonial blockquote.is-long {
+    font-size: 23px;
+    line-height: 1.08;
   }
 
   .hd-testimonial cite {
@@ -1172,14 +1217,12 @@ button:focus-visible {
     margin-top: 34px;
   }
 
-  .hd-logo--inverted {
+  .hd-footer__brand {
     font-size: clamp(42px, 13vw, 58px);
   }
 
-  .hd-logo--inverted .hd-logo-mark {
-    grid-template-columns: repeat(2, 18px);
-    grid-template-rows: repeat(2, 18px);
-    gap: 4px;
+  .hd-footer__mark {
+    width: clamp(52px, 18vw, 82px);
   }
 
   .hd-footer__bottom {
@@ -1187,163 +1230,81 @@ button:focus-visible {
   }
 }
 
-@keyframes hdNavIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes hdHeadlineReveal {
-  from {
-    opacity: 0.96;
-    transform: translateY(8%) rotate(0.4deg);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) rotate(0);
-  }
-}
-
-@keyframes hdHeroCardIn {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 34px, 0) scale(0.94);
-  }
-
-  70% {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@keyframes hdHeroPhotoIn {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 60px, 0) scale(0.95);
-  }
-
-  72% {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@keyframes hdMetaIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes hdSocialIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.86);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes hdHeroPulse {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(0.96) rotate(-4deg);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.04) rotate(-3deg);
-  }
-}
-
-@keyframes hdFadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes hdFloatCard {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) rotate(-4deg);
-  }
-
-  50% {
-    transform: translate3d(0, -12px, 0) rotate(-2.4deg);
-  }
-}
-
-@keyframes hdFloatPhoto {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) rotate(-14deg);
-  }
-
-  50% {
-    transform: translate3d(0, 14px, 0) rotate(-12.8deg);
-  }
-}
-
-@keyframes hdStackHover {
-  0%,
-  100% {
-    transform: translateX(-50%) perspective(820px) rotateX(56deg) rotateZ(-1deg);
-  }
-
-  50% {
-    transform: translateX(-50%) translateY(-10px) perspective(820px) rotateX(56deg) rotateZ(1deg);
-  }
-}
-
 @keyframes hdTalkMark {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) rotate(-4deg);
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
   }
 
-  50% {
-    transform: translate3d(-12px, -8px, 0) rotate(-1deg);
+  20% {
+    transform: translate3d(-2px, -10px, 0);
+  }
+
+  40% {
+    transform: translate3d(4px, -2px, 0);
+  }
+
+  60% {
+    transform: translate3d(-2px, 0, 0);
+  }
+
+  80% {
+    transform: translate3d(2px, -8px, 0);
   }
 }
 
-@keyframes hdSliderDot {
-  0%,
-  100% {
+@keyframes hdTalkPanelIn {
+  from {
+    opacity: 0;
+    transform: translateX(200px);
+  }
+
+  to {
+    opacity: 1;
     transform: translateX(0);
   }
+}
 
-  50% {
-    transform: translateX(56px);
+@keyframes hdServiceIn {
+  from {
+    opacity: 0.6;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hdServiceArtworkIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) rotate(var(--service-rotation, 0deg)) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--service-rotation, 0deg)) scale(1);
+  }
+}
+
+@keyframes hdTestimonialIn {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes hdFooterMark {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }
 

@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "workflow_historical_context_policy.v0.1",
+  "discrepancyLabels": [
+    "sandbox_found_substantive_signal_on_approved_case",
+    "sandbox_did_not_explain_human_rejection",
+    "sandbox_did_not_explain_iterative_review"
+  ],
+  "rules": [
+    {
+      "id": "policy-or-duplicate-context",
+      "selectionStrata": ["policy_or_duplicate"],
+      "classification": "policy_or_duplicate_context",
+      "status": "context_supported",
+      "confidence": 0.98
+    },
+    {
+      "id": "manual-quality-context",
+      "selectionStrata": ["rejected_low_quality"],
+      "classification": "manual_quality_context",
+      "status": "context_supported",
+      "confidence": 0.95
+    },
+    {
+      "id": "iterative-feedback-context",
+      "selectionStrata": ["iterative_review"],
+      "requiresReviewFeedback": true,
+      "classification": "iterative_feedback_context",
+      "status": "context_supported",
+      "confidence": 0.98
+    },
+    {
+      "id": "approved-substantive-ambiguity",
+      "alignmentLabels": ["sandbox_found_substantive_signal_on_approved_case"],
+      "classification": "historical_snapshot_or_override_ambiguity",
+      "status": "ambiguous",
+      "confidence": 1
+    }
+  ],
+  "evaluationProposals": {
+    "contextSupported": {
+      "confidence": 0.95,
+      "evaluation": {
+        "id": "historical-context-evidence-required",
+        "title": "Change requests retain controlled historical-context evidence",
+        "actionId": "request_changes",
+        "expectedOutcome": "approval_required",
+        "requiredEvidence": ["historical_context_category", "case_receipt_id", "source_hash", "source_pointer", "observed_outcome", "policy_snapshot_id"]
+      }
+    },
+    "ambiguity": {
+      "confidence": 1,
+      "evaluation": {
+        "id": "historical-ambiguity-escalation",
+        "title": "Approved outcomes that conflict with objective evidence require snapshot or override resolution",
+        "actionId": "approve_template",
+        "expectedOutcome": "approval_required",
+        "requiredEvidence": ["current_snapshot", "historical_decision_receipt", "override_or_exception_record", "objective_findings"]
+      }
+    }
+  },
+  "ambiguityConflict": {
+    "id": "conflict:historical-snapshot-or-override",
+    "targetPath": "/judgment/historical-context/snapshot-or-override"
+  }
+}

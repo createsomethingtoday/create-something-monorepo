@@ -6,7 +6,8 @@ import {
   CANVAS_KERNEL_RENDERER,
   SHARED_CANVAS_STATE_VERSION,
   SUBSTRATE_COMPUTE_SNAPSHOT_VERSION,
-  canvasKernelDrawPlan
+  canvasKernelDrawPlan,
+  canvasKernelEmphasisLevel
 } from '../dist/index.js';
 
 test('exports the shared canvas-state contract identity', () => {
@@ -29,6 +30,15 @@ test('large maps use a low-noise overview draw plan at fit zoom', () => {
     mode: 'map',
     renderEdges: true
   });
+});
+
+test('resolves focused and dimmed elements through one renderer-neutral emphasis contract', () => {
+  const focusedIds = new Set(['decision-to-client', 'client-to-receipt']);
+
+  assert.equal(canvasKernelEmphasisLevel('decision-to-client', focusedIds, true), 'focused');
+  assert.equal(canvasKernelEmphasisLevel('substrate-to-stop', focusedIds, true), 'dimmed');
+  assert.equal(canvasKernelEmphasisLevel('substrate-to-stop', focusedIds, false), 'default');
+  assert.equal(canvasKernelEmphasisLevel('substrate-to-stop', undefined, true), 'default');
 });
 
 test('exports the Substrate compute snapshot contract identity', () => {

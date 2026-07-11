@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "workflow_observation_policy.v0.1",
+  "metrics": {
+    "selected_count": {
+      "pattern": "\\\"selected_count\\\":\\s*(\\d+)",
+      "confidence": 1
+    },
+    "usable_evidence_count": {
+      "pattern": "\\\"usable\\\":\\s*(\\d+)",
+      "confidence": 1
+    },
+    "approved_minor_signal_count": {
+      "pattern": "\\\"sandbox_minor_signals_on_approved_case\\\":\\s*(\\d+)",
+      "confidence": 1
+    },
+    "approved_substantive_signal_count": {
+      "pattern": "\\\"sandbox_found_substantive_signal_on_approved_case\\\":\\s*(\\d+)",
+      "confidence": 1
+    },
+    "unexplained_rejected_or_policy_count": {
+      "pattern": "\\\"sandbox_did_not_explain_human_rejection\\\":\\s*(\\d+)",
+      "confidence": 1
+    },
+    "unexplained_iterative_count": {
+      "pattern": "\\\"sandbox_did_not_explain_iterative_review\\\":\\s*(\\d+)",
+      "confidence": 1
+    },
+    "introx_substantive_finding_count": {
+      "pattern": "\\\"template_name\\\":\\s*\\\"Introx\\\"[\\s\\S]*?\\\"substantive_finding_count\\\":\\s*(\\d+)",
+      "confidence": 1
+    },
+    "automatia_substantive_finding_count": {
+      "pattern": "\\\"template_name\\\":\\s*\\\"Automatia\\\"[\\s\\S]*?\\\"substantive_finding_count\\\":\\s*(\\d+)",
+      "confidence": 1
+    },
+    "max_reviewer_share_percent": {
+      "pattern": "Mariana Segura is (\\d+)% of the slice",
+      "confidence": 1
+    }
+  },
+  "alignments": [
+    {
+      "id": "objective-evidence-collector-stable",
+      "statement": "The calibration produced usable objective evidence for 49 of 50 selected cases.",
+      "evidenceIds": ["selected_count", "usable_evidence_count"],
+      "confidence": 1
+    },
+    {
+      "id": "human-owned-final-decision-supported",
+      "statement": "Historical outcomes require human judgment beyond objective sandbox findings, consistent with the documented approval boundary.",
+      "evidenceIds": ["approved_minor_signal_count", "approved_substantive_signal_count", "unexplained_rejected_or_policy_count", "unexplained_iterative_count"],
+      "confidence": 0.98
+    }
+  ],
+  "discrepancies": [
+    {
+      "id": "decision-surface-classification-missing",
+      "statement": "The documented workflow does not require a structured distinction between objective findings and subjective quality evidence at approval time.",
+      "evidenceIds": ["approved_minor_signal_count", "approved_substantive_signal_count", "unexplained_rejected_or_policy_count"],
+      "confidence": 0.98
+    },
+    {
+      "id": "appeal-equity-comparison-missing",
+      "statement": "The documented workflow does not require same-context comparison evidence when technically clean rejected work is reviewed against approved work with objective findings.",
+      "evidenceIds": ["introx_substantive_finding_count", "automatia_substantive_finding_count"],
+      "confidence": 0.95
+    }
+  ],
+  "limitations": [
+    {
+      "id": "reviewer-concentration-above-target",
+      "statement": "The largest reviewer share was 36 percent against a requested 35 percent ceiling, so subjective thresholds cannot be generalized without operator review.",
+      "evidenceIds": ["max_reviewer_share_percent"],
+      "confidence": 1
+    }
+  ],
+  "evaluationProposals": [
+    {
+      "findingId": "decision-surface-classification-missing",
+      "confidence": 0.98,
+      "evaluation": {
+        "id": "decision-surface-classification",
+        "title": "Approval evidence distinguishes objective findings from subjective quality judgment",
+        "actionId": "approve_template",
+        "expectedOutcome": "approval_required",
+        "requiredEvidence": ["objective_findings", "subjective_quality_evidence", "historical_review_state", "comparison_evidence"]
+      }
+    },
+    {
+      "findingId": "appeal-equity-comparison-missing",
+      "confidence": 0.95,
+      "evaluation": {
+        "id": "appeal-equity-comparison",
+        "title": "Change requests include comparable-case evidence when objective findings do not explain the outcome",
+        "actionId": "request_changes",
+        "expectedOutcome": "approval_required",
+        "requiredEvidence": ["approved_comparison_findings", "target_findings", "same_reviewer_context", "snapshot_currency"]
+      }
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "conflict:observed-subjective-threshold-generalization",
+      "targetPath": "/judgment/subjective-threshold-generalization",
+      "baselineValue": "not_defined",
+      "claimValue": "blocked_pending_reviewer_balanced_evidence",
+      "evidenceIds": ["max_reviewer_share_percent"]
+    }
+  ]
+}

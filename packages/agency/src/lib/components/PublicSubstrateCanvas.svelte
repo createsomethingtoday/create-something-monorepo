@@ -4,11 +4,13 @@
 		PUBLIC_SUBSTRATE_CANVAS_ACTIVE_NODE_IDS,
 		PUBLIC_SUBSTRATE_CANVAS_MOBILE_PROJECTION,
 		PUBLIC_SUBSTRATE_CANVAS_PALETTE,
+		PUBLIC_SUBSTRATE_CANVAS_PROOF_EMPHASIS,
 		PUBLIC_SUBSTRATE_CANVAS_PROJECTION,
 		publicSubstrateCanvasDetail
 	} from '$lib/atlas/public-substrate-canvas';
 	import type {
 		CanvasKernelFocusRequest,
+		CanvasKernelProjection,
 		CanvasKernelRenderBackend,
 		CanvasKernelViewport
 	} from '@create-something/canvas-kernel';
@@ -29,6 +31,7 @@
 	let fitRequest = 0;
 	let focusRequest: CanvasKernelFocusRequest = null;
 	let isCompactCanvas = false;
+	let proofModeActive = false;
 	let viewport: CanvasKernelViewport = { x: 0, y: 0, zoom: 1 };
 	let renderBackend: CanvasKernelRenderBackend = 'unavailable';
 
@@ -38,30 +41,47 @@
 		: PUBLIC_SUBSTRATE_CANVAS_PROJECTION;
 	$: nodeCount = projection.nodes.length;
 	$: edgeCount = projection.edges.length;
-	$: renderKernel();
+	$: renderKernel(proofModeActive, fitRequest, focusRequest, projection, selectedNodeId);
 
 	function requestFit() {
 		fitRequest += 1;
 		focusRequest = null;
 	}
 
-	function focusNode(nodeId: string) {
-		selectedNodeId = nodeId;
-		focusRequest = { nodeId, requestId: Date.now() };
+	function toggleProofMode() {
+		proofModeActive = !proofModeActive;
+		selectedNodeId = proofModeActive ? 'receipt_graph' : 'agency_canvas';
+		focusRequest = null;
+		fitRequest += 1;
 	}
 
-	function renderKernel() {
+	function handleProofKeydown(event: KeyboardEvent) {
+		if (event.key !== 'Enter' && event.key !== ' ') return;
+		event.preventDefault();
+		toggleProofMode();
+	}
+
+	function renderKernel(
+		proofMode: boolean,
+		currentFitRequest: number,
+		currentFocusRequest: CanvasKernelFocusRequest,
+		currentProjection: CanvasKernelProjection,
+		currentSelectedNodeId: string | null
+	) {
 		if (!root || !createElement || !CanvasKernelComponent) return;
 		root.render(
 			createElement(CanvasKernelComponent, {
 				activeNodeIds: PUBLIC_SUBSTRATE_CANVAS_ACTIVE_NODE_IDS,
 				ariaLabel: 'CREATE SOMETHING public Substrate canvas',
-				fitRequest,
-				focusRequest,
+				emphasis: proofMode ? PUBLIC_SUBSTRATE_CANVAS_PROOF_EMPHASIS : undefined,
+				fitRequest: currentFitRequest,
+				focusRequest: currentFocusRequest,
 				onNodeSelect: (nodeId: string) => {
+					proofModeActive = false;
 					selectedNodeId = nodeId;
 				},
 				onPaneClick: () => {
+					proofModeActive = false;
 					selectedNodeId = 'agency_canvas';
 				},
 				onViewportChange: (nextViewport: CanvasKernelViewport) => {
@@ -74,8 +94,8 @@
 							: 'canvas-2d';
 				},
 				palette: PUBLIC_SUBSTRATE_CANVAS_PALETTE,
-				projection,
-				selectedNodeId
+				projection: currentProjection,
+				selectedNodeId: currentSelectedNodeId
 			})
 		);
 	}
@@ -104,7 +124,7 @@
 		createElement = react.createElement as ReactCreateElement;
 		CanvasKernelComponent = kernel.CanvasKernel;
 		root = reactDom.createRoot(canvasMount) as ReactRoot;
-		renderKernel();
+		renderKernel(proofModeActive, fitRequest, focusRequest, projection, selectedNodeId);
 	});
 
 	onDestroy(() => {
@@ -115,7 +135,12 @@
 	});
 </script>
 
-<section class="public-substrate-canvas" data-public-substrate-canvas aria-labelledby="substrate-canvas-title">
+<section
+	class="public-substrate-canvas"
+	data-public-substrate-canvas
+	data-proof-mode={proofModeActive ? 'active' : 'inactive'}
+	aria-labelledby="substrate-canvas-title"
+>
 	<div class="public-substrate-canvas__chrome">
 		<div>
 			<p class="public-substrate-canvas__eyebrow">Signal / Decision / Proof</p>
@@ -137,27 +162,78 @@
 
 	<div class="public-substrate-canvas__surface">
 		<div class="public-substrate-canvas__viewport" bind:this={canvasMount}></div>
-		<aside class="public-substrate-canvas__inspector" aria-live="polite">
-			<span class="public-substrate-canvas__kicker">{selectedDetail.kicker}</span>
-			<h4>{selectedDetail.label}</h4>
-			<p>{selectedDetail.body}</p>
-			<dl>
-				<div>
-					<dt>State</dt>
-					<dd data-status={selectedDetail.status}>{selectedDetail.status}</dd>
-				</div>
-				<div>
-					<dt>Receipt</dt>
-					<dd>{selectedDetail.proof}</dd>
-				</div>
-				<div>
-					<dt>View</dt>
-					<dd>{Math.round(viewport.zoom * 100)}%</dd>
-				</div>
-			</dl>
+		<aside
+			id="public-substrate-receipt"
+			class="public-substrate-canvas__inspector"
+			aria-live="polite"
+		>
+			{#if proofModeActive}
+				<span class="public-substrate-canvas__kicker">Proof trace</span>
+				<h4>Representative public receipt</h4>
+				<p>
+					This example shows what the highlighted path preserves after an approved workflow action.
+				</p>
+				<dl class="public-substrate-canvas__receipt">
+					<div>
+						<dt>Source</dt>
+						<dd>Signal queue · approved change request</dd>
+					</div>
+					<div>
+						<dt>Decision</dt>
+						<dd>Named operator approved the delivery lane</dd>
+					</div>
+					<div>
+						<dt>Action</dt>
+						<dd>Agent prepared and delivered the scoped change</dd>
+					</div>
+					<div>
+						<dt>Result</dt>
+						<dd>Change verified · no blocked state observed</dd>
+					</div>
+					<div>
+						<dt>Timestamp</dt>
+						<dd>2026-07-10T20:53:00-05:00 · example</dd>
+					</div>
+					<div>
+						<dt>Rollback</dt>
+						<dd>Restore the previous approved version</dd>
+					</div>
+				</dl>
+				<p class="public-substrate-canvas__boundary">
+					Representative schema only. No private client records are shown.
+				</p>
+				<a class="public-substrate-canvas__proof-link" href="/products/proof">Explore Proof</a>
+			{:else}
+				<span class="public-substrate-canvas__kicker">{selectedDetail.kicker}</span>
+				<h4>{selectedDetail.label}</h4>
+				<p>{selectedDetail.body}</p>
+				<dl>
+					<div>
+						<dt>State</dt>
+						<dd data-status={selectedDetail.status}>{selectedDetail.status}</dd>
+					</div>
+					<div>
+						<dt>Receipt</dt>
+						<dd>{selectedDetail.proof}</dd>
+					</div>
+					<div>
+						<dt>View</dt>
+						<dd>{Math.round(viewport.zoom * 100)}%</dd>
+					</div>
+				</dl>
+			{/if}
 			<div class="public-substrate-canvas__actions">
 				<button type="button" on:click={requestFit}>Fit map</button>
-				<button type="button" on:click={() => focusNode('receipt_graph')}>Show receipts</button>
+				<button
+					type="button"
+					data-proof-trace-toggle
+					aria-controls="public-substrate-receipt"
+					aria-pressed={proofModeActive}
+					on:click={toggleProofMode}
+					on:keydown={handleProofKeydown}
+				>
+					{proofModeActive ? 'Exit proof view' : 'Trace proof'}
+				</button>
 			</div>
 		</aside>
 	</div>
@@ -312,6 +388,23 @@
 		color: #a12b36;
 	}
 
+	.public-substrate-canvas__boundary {
+		margin-top: 0.1rem;
+		border-left: 2px solid rgba(10, 14, 25, 0.24);
+		padding-left: 0.75rem;
+		font-size: 0.78rem !important;
+	}
+
+	.public-substrate-canvas__proof-link {
+		display: inline-flex;
+		width: fit-content;
+		border-bottom: 1px solid currentColor;
+		color: var(--color-performance-ink, #090909);
+		font-size: 0.82rem;
+		font-weight: 760;
+		text-decoration: none;
+	}
+
 	.public-substrate-canvas__actions {
 		display: flex;
 		flex-wrap: wrap;
@@ -378,9 +471,14 @@
 	}
 
 	:global(.public-substrate-canvas .fast-node-label.selected),
-	:global(.public-substrate-canvas .fast-node-label.active) {
+	:global(.public-substrate-canvas .fast-node-label.active),
+	:global(.public-substrate-canvas .fast-node-label.focused) {
 		border-color: rgba(10, 14, 25, 0.3);
 		background: #fff;
+	}
+
+	:global(.public-substrate-canvas .fast-node-label.dimmed) {
+		opacity: 0.28;
 	}
 
 	@media (max-width: 880px) {

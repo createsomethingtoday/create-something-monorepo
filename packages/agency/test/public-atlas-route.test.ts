@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
 	AGENCY_ATLAS_PROOF_PATHS,
@@ -154,7 +154,19 @@ test('public Performance routes use the natural water image series', () => {
 
 	assert.ok(homeRoute.includes('/images/performance-lab/pressure-boundary-natural.webp'));
 	assert.ok(servicesRoute.includes('/images/performance-lab/trace-wake-natural.webp'));
-	assert.ok(productsRoute.includes('/images/performance-lab/controlled-flow-natural.webp'));
+	assert.ok(productsRoute.includes('/images/performance-lab/product-system-natural.webp'));
+	assert.ok(productsRoute.includes('/images/performance-lab/product-system-natural-mobile.webp'));
+	assert.equal(productsRoute.includes('/images/performance-lab/controlled-flow-natural.webp'), false);
+	assert.equal(
+		existsSync(new URL('../static/images/performance-lab/product-system-natural.webp', import.meta.url)),
+		true
+	);
+	assert.equal(
+		existsSync(
+			new URL('../static/images/performance-lab/product-system-natural-mobile.webp', import.meta.url)
+		),
+		true
+	);
 });
 
 test('home route uses the shared canvas kernel as a transparent proof object', () => {
@@ -294,7 +306,7 @@ test('agency public Substrate canvas mounts the shared canvas kernel', () => {
 	assert.ok(agencySubstrateCanvasWrapper.includes('The canvas is the proof object.'));
 	assert.ok(agencySubstrateCanvasWrapper.includes('Signal / Decision / Proof'));
 	assert.ok(agencySubstrateCanvasWrapper.includes('shared kernel'));
-	assert.ok(agencySubstrateCanvasWrapper.includes('Show receipts'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('Trace proof'));
 	assert.ok(agencySubstrateCanvasModule.includes("from '@create-something/canvas-kernel'"));
 	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROJECTION'));
 	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_MOBILE_PROJECTION'));
@@ -302,6 +314,24 @@ test('agency public Substrate canvas mounts the shared canvas kernel', () => {
 	assert.ok(agencySubstrateCanvasModule.includes("'receipt_graph'"));
 	assert.ok(agencySubstrateCanvasModule.includes('Public proof surface'));
 	assert.ok(agencySubstrateCanvasModule.includes('Stop condition'));
+});
+
+test('agency public Substrate canvas turns receipt selection into an accessible proof trace', () => {
+	assert.ok(agencySubstrateCanvasWrapper.includes('Trace proof'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('aria-pressed={proofModeActive}'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('aria-controls="public-substrate-receipt"'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('on:keydown={handleProofKeydown}'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('PUBLIC_SUBSTRATE_CANVAS_PROOF_EMPHASIS'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('id="public-substrate-receipt"'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('href="/products/proof"'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('Representative public receipt'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Source</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Decision</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Action</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Result</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Rollback</dt>'));
+	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROOF_NODE_IDS'));
+	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROOF_EDGE_IDS'));
 });
 
 test('agency public Substrate canvas keeps a readable mobile projection', () => {
@@ -362,4 +392,11 @@ test('compact mobile privacy prompt stays below navigation and away from campaig
 	assert.ok(agencyPrivacyAnalytics.includes('top: max(4.5rem, calc(4rem + env(safe-area-inset-top)))'));
 	assert.ok(agencyPrivacyAnalytics.includes('bottom: auto'));
 	assert.ok(agencyPrivacyAnalytics.includes("content: 'Privacy'"));
+});
+
+test('short desktop campaigns keep the property switcher away from primary actions', () => {
+	assert.ok(layoutRoute.includes('@media (max-height: 47.5rem) and (min-width: 48rem)'));
+	assert.ok(layoutRoute.includes(':global(.layout-root .mode-indicator)'));
+	assert.ok(layoutRoute.includes('top: calc(72px + var(--space-md, 1rem))'));
+	assert.ok(layoutRoute.includes('bottom: auto'));
 });

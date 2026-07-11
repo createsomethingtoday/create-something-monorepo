@@ -1,0 +1,45 @@
+{
+  "name": "@create-something/workflow-compiler",
+  "version": "0.1.0",
+  "description": "Compile versioned operating workflows into governed runtime, replay, and operator-console artifacts.",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "library",
+    "entrypoints": [
+      "src/index.ts"
+    ],
+    "boot": "pnpm build",
+    "smoke": "pnpm check && pnpm test"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "workflow-compiler": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "compile": "node dist/cli.js compile",
+    "serve": "node dist/cli.js serve",
+    "test": "pnpm build && node --test test/*.test.mjs",
+    "test:acceptance": "pnpm build && node scripts/acceptance.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}

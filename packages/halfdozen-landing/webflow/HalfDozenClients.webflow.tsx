@@ -9,12 +9,13 @@ export default declareComponent(ClientsSection, {
   group: 'Half Dozen',
   options: { ssr: true },
   props: {
+    assetBaseUrl: props.Text({ name: 'Asset base URL', defaultValue: 'https://halfdozen-landing.pages.dev' }),
     heroFullbleedMotion: props.Text({
-      name: 'Full-bleed motion video URL',
-      defaultValue: '/assets/hero-fullbleed-motion.mp4'
+      name: 'Full-bleed motion video path',
+      defaultValue: '/media/hero-fullbleed-motion.mp4'
     }),
     heroFullbleedPoster: props.Text({
-      name: 'Full-bleed motion poster URL',
+      name: 'Full-bleed motion poster path',
       defaultValue: '/assets/hero-fullbleed-poster.jpg'
     })
   }
