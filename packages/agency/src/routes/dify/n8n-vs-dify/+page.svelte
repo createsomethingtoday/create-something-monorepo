@@ -219,12 +219,12 @@
   {#snippet after()}
     <PerformanceCardGrid items={layerFit} columns={3} ariaLabel="Dify n8n layer fit" />
     <ArticleVisualFigure
-      src="/images/articles/dify-vs-n8n/dify-n8n-layer-map.png"
+      src="/images/articles/dify-vs-n8n/dify-n8n-layer-map-v2.svg"
       alt="Layer map comparing n8n for internal automation, Cloudflare for runtime ownership, Dify for client-facing agent surfaces, and Policy OS for governance."
-      eyebrow="Generated visual"
+      eyebrow="Verified diagram"
       title="Choose the tool by the operating layer."
       caption="This owned layer map keeps the comparison from becoming a winner-take-all ranking: n8n, Cloudflare, Dify, MCP, and Policy OS each have a different job."
-      sourceLabel="Created by CREATE SOMETHING for this article."
+      sourceLabel="Verified SVG generated from a structured CREATE SOMETHING specification."
     />
   {/snippet}
 </PerformancePageSection>
