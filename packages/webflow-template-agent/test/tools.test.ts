@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildSearchUrl, TemplateToolExecutor, TEMPLATE_FEATURES } from '../src/tools.js';
+import { SYSTEM_PROMPT } from '../src/prompt.js';
+import { AGENT_TOOLS, buildSearchUrl, TemplateToolExecutor, TEMPLATE_FEATURES } from '../src/tools.js';
 import type { Env, TemplateSearchItem } from '../src/types.js';
 
 const ENV: Env = {
@@ -79,6 +80,93 @@ describe('buildSearchUrl', () => {
     expect(url.searchParams.get('page_size')).toBe('24');
     expect(url.searchParams.get('free_only')).toBeNull();
     expect(url.searchParams.get('q')).toBeNull();
+  });
+});
+
+describe('TemplateToolExecutor search intent routing', () => {
+  function mockLiveTaxonomySearch() {
+    return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+
+      if (url.searchParams.get('include') === 'facets,pills') {
+        return Response.json({
+          items: [],
+          pagination: { total_items: 0 },
+          category_pills: [{ name: 'Documentation', slug: 'documentation-websites', count: 58 }],
+          available_facets: { styles: [] },
+        });
+      }
+
+      const isDocumentationCategory =
+        url.searchParams.get('category_group_slug') === 'documentation-websites' && !url.searchParams.has('q');
+      const items = isDocumentationCategory
+        ? [
+            searchItem('flowguide-website-template'),
+            searchItem('notate-website-template'),
+            searchItem('knowledgehub-x-help-center-website-template'),
+            searchItem('bytefix-template-website-template'),
+          ]
+        : url.searchParams.get('q') === 'yoga studio'
+          ? [searchItem('yoga-studio-template')]
+          : [searchItem('helpdesk-documentation-website-template')];
+
+      return Response.json({
+        items,
+        pagination: { total_items: items.length },
+        applied_filters: {},
+        category_pills: [{ name: 'Documentation', slug: 'documentation-websites', count: 58 }],
+      });
+    });
+  }
+
+  it('routes an exact broad category request through the canonical Popular category', async () => {
+    const fetchMock = mockLiveTaxonomySearch();
+    const executor = new TemplateToolExecutor(ENV);
+
+    const result = JSON.parse(
+      await executor.searchTemplates({ q: 'documentation template', sort: 'popular', page_size: 4 }),
+    ) as { items: Array<{ template_slug: string }> };
+
+    expect(result.items.map((item) => item.template_slug)).toEqual([
+      'flowguide-website-template',
+      'notate-website-template',
+      'knowledgehub-x-help-center-website-template',
+      'bytefix-template-website-template',
+    ]);
+    const searchUrl = new URL(String(fetchMock.mock.calls.at(-1)?.[0]));
+    expect(searchUrl.searchParams.get('category_group_slug')).toBe('documentation-websites');
+    expect(searchUrl.searchParams.has('q')).toBe(false);
+
+    const { payload } = executor.buildDisplayPayload({
+      layout: 'shortlist',
+      title: 'Documentation templates',
+      items: [
+        { template_slug: 'knowledgehub-x-help-center-website-template', reason: 'A flexible help center.' },
+        { template_slug: 'bytefix-template-website-template', reason: 'A compact support site.' },
+        { template_slug: 'flowguide-website-template', reason: 'A strong guide layout.' },
+      ],
+      followups: ['Show more'],
+    });
+
+    expect(payload?.items.map((item) => item.template_slug)).toEqual([
+      'flowguide-website-template',
+      'notate-website-template',
+      'knowledgehub-x-help-center-website-template',
+    ]);
+  });
+
+  it('preserves full-text search for an unrecognized topic', async () => {
+    const fetchMock = mockLiveTaxonomySearch();
+    const executor = new TemplateToolExecutor(ENV);
+
+    const result = JSON.parse(await executor.searchTemplates({ q: 'yoga studio', sort: 'popular' })) as {
+      items: Array<{ template_slug: string }>;
+    };
+
+    expect(result.items.map((item) => item.template_slug)).toEqual(['yoga-studio-template']);
+    const searchUrl = new URL(String(fetchMock.mock.calls.at(-1)?.[0]));
+    expect(searchUrl.searchParams.get('q')).toBe('yoga studio');
+    expect(searchUrl.searchParams.has('category_group_slug')).toBe(false);
   });
 });
 
@@ -196,8 +284,26 @@ describe('surface hints', () => {
   it('maps surfaces to layout guidance and stays silent without a hint', async () => {
     const { surfaceNote } = await import('../src/prompt.js');
     expect(surfaceNote('immersive')).toContain('6-12');
-    expect(surfaceNote('compact')).toContain('2-6');
+    expect(surfaceNote('compact')).toContain('2-4');
+    expect(surfaceNote('compact')).toContain('show more');
     expect(surfaceNote(undefined)).toBeNull();
+  });
+});
+
+describe('ranking policy', () => {
+  it('uses Popular for general discovery and reserves Best selling for explicit lifetime intent', () => {
+    const searchTool = AGENT_TOOLS.find((tool) => tool.name === 'search_templates');
+    const schema = searchTool?.input_schema as {
+      properties?: { sort?: { description?: string } };
+    };
+    const policy = `${searchTool?.description ?? ''} ${schema.properties?.sort?.description ?? ''}`;
+
+    expect(policy).toContain('General discovery defaults to "popular"');
+    expect(policy).toContain('only when the user explicitly asks');
+    expect(policy).not.toContain('recent sales');
+    expect(SYSTEM_PROMPT).toContain('General discovery defaults to popular');
+    expect(SYSTEM_PROMPT).toContain('Do not infer recent sales or conversion');
+    expect(SYSTEM_PROMPT).not.toContain('selling well right now');
   });
 });
 

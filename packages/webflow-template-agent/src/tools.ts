@@ -42,17 +42,59 @@ const MAX_DISPLAY_ITEMS = 12;
 // Cap on the continuity snapshot echoed between turns (keeps the request body
 // and the model's context note bounded).
 const MAX_KNOWN_ITEMS = 40;
+const CATEGORY_INTENT_FILLER = new Set([
+  'a',
+  'am',
+  'an',
+  'find',
+  'for',
+  'i',
+  'looking',
+  'me',
+  'need',
+  'show',
+  'site',
+  'sites',
+  'template',
+  'templates',
+  'want',
+  'webflow',
+  'website',
+  'websites',
+]);
+
+function categoryIntentKey(value: string): string {
+  return (value.toLowerCase().match(/[a-z0-9]+/g) ?? [])
+    .filter((token) => !CATEGORY_INTENT_FILLER.has(token))
+    .join(' ');
+}
+
+function exactCategorySlug(
+  query: string,
+  pills: TemplateSearchResponse['category_pills'],
+): string | null {
+  const queryKey = categoryIntentKey(query);
+  if (!queryKey) return null;
+
+  const match = (pills ?? []).find(
+    (pill) => categoryIntentKey(pill.name) === queryKey || categoryIntentKey(pill.slug) === queryKey,
+  );
+  return match?.slug ?? null;
+}
 
 export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
   {
     name: 'search_templates',
     description:
-      'Search the Webflow Template Marketplace. Call this whenever the user describes what they need — translate their intent into filters. Sorts: "popular" = current demand (recent sales), "best_selling" = all-time sales, "newest" = recently published. Feature filters use AND semantics.',
+      'Search the Webflow Template Marketplace. Call this whenever the user describes what they need — translate their intent into filters. For a broad request that names an existing marketplace category, use category_group_slug and leave q null so its requested sort controls the ordering; use q for unstructured topics and template names. General discovery defaults to "popular", a marketplace ranking signal. Use "best_selling" only when the user explicitly asks for best sellers, most purchased, lifetime sales, or all-time favorites. "newest" = recently published. Do not imply that Popular measures recency or conversion. Feature filters use AND semantics.',
     strict: true,
     input_schema: {
       type: 'object',
       properties: {
-        q: { type: ['string', 'null'], description: 'Free-text keywords (template names, topics). Omit for pure filter queries.' },
+        q: {
+          type: ['string', 'null'],
+          description: 'Free-text keywords for unstructured topics or template names. Leave null for category-only queries.',
+        },
         category_group_slug: {
           type: ['string', 'null'],
           description: 'Category slug from list_categories_and_styles, e.g. "medical", "technology".',
@@ -79,7 +121,8 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
         free_only: { type: ['boolean', 'null'], description: 'Only free templates.' },
         sort: {
           anyOf: [{ type: 'string', enum: [...SORT_VALUES] }, { type: 'null' }],
-          description: 'Default "popular".',
+          description:
+            'General discovery defaults to "popular". Use "best_selling" only when the user explicitly asks for lifetime popularity such as best sellers or most purchased.',
         },
         page_size: { type: ['integer', 'null'], description: '1-24, default 12.' },
       },
@@ -109,7 +152,7 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
   {
     name: 'display_results',
     description:
-      'Render templates to the user in the chat UI. Call this after searching — the user cannot see raw search results, only what you display. Layouts: "gallery" (browsing several), "carousel" (a strip), "spotlight" (one strong recommendation), "comparison" (2-4 side by side), "shortlist" (ranked picks, each with a reason). Only slugs returned by earlier tool calls in this conversation will render. Include 2-4 short follow-up suggestions the user might tap next.',
+      'Render templates to the user in the chat UI. Call this after searching — the user cannot see raw search results, only what you display. Layouts: "gallery" (browsing several), "carousel" (a strip), "spotlight" (one strong recommendation), "comparison" (2-4 side by side), "shortlist" (ranked picks, each with a reason). For a broad category search, use a 2-4 item prefix in the exact returned order; do not re-curate the ranked results. Only slugs returned by earlier tool calls in this conversation will render. Include 2-4 short follow-up suggestions the user might tap next.',
     strict: true,
     input_schema: {
       type: 'object',
@@ -257,6 +300,10 @@ export class TemplateToolExecutor {
   // Anti-hallucination registry: display_results only renders slugs the
   // conversation has actually seen from tool results.
   private readonly knownItems = new Map<string, TemplateSearchItem>();
+  // Category browse results have an explicit marketplace ordering. Keep the
+  // leading compact prefix at the validation boundary so model curation cannot
+  // silently turn Popular into a different ranking.
+  private rankedCategorySlugs: string[] | null = null;
 
   constructor(private readonly env: Env) {}
 
@@ -286,20 +333,46 @@ export class TemplateToolExecutor {
   }
 
   async searchTemplates(input: SearchToolInput): Promise<string> {
-    const response = await fetch(buildSearchUrl(this.env.SEARCH_API_BASE, input), {
+    this.rankedCategorySlugs = null;
+    let searchInput = input;
+    let searchUrl = new URL(buildSearchUrl(this.env.SEARCH_API_BASE, searchInput));
+    if (input.q && !input.category_group_slug) searchUrl.searchParams.set('include', 'items,pills');
+
+    let response = await fetch(searchUrl, {
       headers: { 'User-Agent': 'webflow-template-agent/0.1' },
     });
     if (!response.ok) {
       return JSON.stringify({ error: `Search failed (${response.status}). Try adjusting the filters.` });
     }
 
-    const data = (await response.json()) as TemplateSearchResponse;
+    let data = (await response.json()) as TemplateSearchResponse;
+    const categorySlug = input.q && !input.category_group_slug ? exactCategorySlug(input.q, data.category_pills) : null;
+    if (categorySlug) {
+      searchInput = { ...input, q: null, category_group_slug: categorySlug };
+      response = await fetch(buildSearchUrl(this.env.SEARCH_API_BASE, searchInput), {
+        headers: { 'User-Agent': 'webflow-template-agent/0.1' },
+      });
+      if (!response.ok) {
+        return JSON.stringify({ error: `Search failed (${response.status}). Try adjusting the filters.` });
+      }
+      data = (await response.json()) as TemplateSearchResponse;
+    }
+
     for (const item of data.items) this.knownItems.set(item.template_slug, item);
+    if (searchInput.category_group_slug && !searchInput.q) {
+      this.rankedCategorySlugs = data.items.slice(0, 4).map((item) => item.template_slug);
+    }
 
     return JSON.stringify({
       total_items: data.pagination.total_items,
       returned: data.items.length,
       items: data.items.map(itemSummary),
+      ...(this.rankedCategorySlugs
+        ? {
+            display_prefix: this.rankedCategorySlugs,
+            display_instruction: 'Display a 2-4 item prefix in this exact order.',
+          }
+        : {}),
     });
   }
 
@@ -353,11 +426,24 @@ export class TemplateToolExecutor {
     followups?: string[] | null;
   }): { payload: DisplayPayload | null; dropped: string[] } {
     const dropped: string[] = [];
+    const requested = input.items.slice(0, MAX_DISPLAY_ITEMS);
+    const reasons = new Map(requested.map((entry) => [entry.template_slug, entry.reason ?? undefined]));
+    for (const entry of requested) {
+      if (!this.knownItems.has(entry.template_slug)) dropped.push(entry.template_slug);
+    }
+
+    const rankedCount = requested.length > 0 ? Math.min(Math.max(requested.length, 2), 4) : 0;
+    const entries =
+      this.rankedCategorySlugs && rankedCount > 0
+        ? this.rankedCategorySlugs.slice(0, rankedCount).map((template_slug) => ({
+            template_slug,
+            reason: reasons.get(template_slug),
+          }))
+        : requested;
     const items = [];
-    for (const entry of input.items.slice(0, MAX_DISPLAY_ITEMS)) {
+    for (const entry of entries) {
       const known = this.knownItems.get(entry.template_slug);
       if (!known) {
-        dropped.push(entry.template_slug);
         continue;
       }
       items.push({ template_slug: entry.template_slug, reason: entry.reason ?? undefined, item: known });

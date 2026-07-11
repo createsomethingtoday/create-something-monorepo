@@ -13,19 +13,24 @@ import {
   backfillCreatorFieldsFromLookup,
   acquireSyncJobLock,
   bumpPublicSearchCacheVersion,
+  countTemplateMrpRowsAfter,
   deleteTemplateDocuments,
   filterMissingOrStaleTemplateLookupTargets,
   finishSyncJobLock,
+  getMrpBackfillState,
   getSyncCursor,
   heartbeatSyncJobLock,
   listTemplateDocumentIds,
+  listTemplateMrpRows,
   listTemplateImageBackfillRows,
   listTemplateImageRefreshRows,
   markTemplateImageBackfillAttempts,
+  mrpCoverage,
   publicSyncJobRecord,
   recordSyncSummary,
   refreshTemplateImageUrls,
   setSyncCursor,
+  setMrpBackfillState,
   templateImageSourceStats,
   type TemplateImageUpdateInput,
   type TemplateImageRefreshRow,
@@ -33,6 +38,7 @@ import {
   updateTemplateCapabilitiesFromWebflow,
   updateTemplateDocumentImages,
   updateTemplateImagesFromWebflow,
+  updateTemplateMrpIds,
   updateTemplateReviewerPickReasonsFromWebflow,
   upsertSlugAliases,
   upsertTemplateDocuments,
@@ -55,6 +61,8 @@ import type {
   Env,
   ImageRefreshSummary,
   LookupMaps,
+  MrpBackfillState,
+  MrpBackfillSummary,
   SyncSummary,
   TemplateDocumentInput,
   TemplateImageBackfillSummary,
@@ -83,6 +91,9 @@ const SYNC_HEARTBEAT_INTERVAL_MS = 30 * 1000;
 const LONG_SYNC_STALE_HEARTBEAT_MS = 10 * 60 * 1000;
 const RECORD_SYNC_STALE_HEARTBEAT_MS = 5 * 60 * 1000;
 const INCREMENTAL_SYNC_STALE_HEARTBEAT_MS = 10 * 60 * 1000;
+const MRP_BACKFILL_DEFAULT_BATCH_SIZE = 25;
+const MRP_BACKFILL_MAX_BATCH_SIZE = 50;
+const MRP_BACKFILL_SOURCE_TIMEOUT_MS = 20 * 1000;
 
 interface SyncWarning {
   source: string;
@@ -95,10 +106,35 @@ function staleHeartbeatMsForMode(mode: string): number | undefined {
   if (mode === 'records') return RECORD_SYNC_STALE_HEARTBEAT_MS;
   if (mode === 'creator_backfill') return RECORD_SYNC_STALE_HEARTBEAT_MS;
   if (mode === 'incremental') return INCREMENTAL_SYNC_STALE_HEARTBEAT_MS;
+  if (mode === 'mrp_backfill') return RECORD_SYNC_STALE_HEARTBEAT_MS;
   if (['full', 'image_refresh', 'creator_refresh', 'image_backfill', 'image_prune'].includes(mode)) {
     return LONG_SYNC_STALE_HEARTBEAT_MS;
   }
   return undefined;
+}
+
+function airtableMrpId(record: AirtableRecord<AirtableAssetFields>): string | null {
+  const raw = record.fields['ℹ️MRP ID'];
+  if (typeof raw === 'string') return raw.trim() || null;
+  if (Array.isArray(raw) && typeof raw[0] === 'string') return raw[0].trim() || null;
+  return null;
+}
+
+function initialMrpBackfillState(startedAt: string): MrpBackfillState {
+  return {
+    mode: 'mrp_backfill',
+    status: 'running',
+    started_at: startedAt,
+    updated_at: startedAt,
+    finished_at: null,
+    cursor: '',
+    scanned_records: 0,
+    updated_records: 0,
+    missing_source_records: 0,
+    missing_mrp_records: 0,
+    remaining_records: 0,
+    error: null,
+  };
 }
 
 async function withPeriodicHeartbeat<T>(heartbeat: SyncHeartbeat, work: Promise<T>): Promise<T> {
@@ -1101,6 +1137,121 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
     }
     await recordSyncSummaryAndWarnings(env, summary, 'last_record_sync', warnings);
     return summary;
+  });
+}
+
+export async function getMrpBackfillStatus(env: Env) {
+  const [state, coverage] = await Promise.all([getMrpBackfillState(env.DB), mrpCoverage(env.DB)]);
+  return { status: 'ok', state, coverage };
+}
+
+export async function backfillTemplateMrpIds(
+  env: Env,
+  options: { batchSize?: number; dryRun?: boolean; restart?: boolean } = {},
+): Promise<MrpBackfillSummary> {
+  const batchSize = clamp(Math.floor(options.batchSize ?? MRP_BACKFILL_DEFAULT_BATCH_SIZE), 1, MRP_BACKFILL_MAX_BATCH_SIZE);
+  const dryRun = options.dryRun === true;
+  const restart = options.restart === true;
+  const existingState = restart ? null : await getMrpBackfillState(env.DB);
+
+  if (!dryRun && existingState?.status === 'complete') {
+    return {
+      ...existingState,
+      dry_run: false,
+      batch_size: batchSize,
+      batch_scanned_records: 0,
+      batch_updated_records: 0,
+      batch_missing_source_records: 0,
+      batch_missing_mrp_records: 0,
+    };
+  }
+
+  const executeBatch = async (heartbeat?: SyncHeartbeat): Promise<MrpBackfillSummary> => {
+    const now = nowIso();
+    const baseState = existingState ?? initialMrpBackfillState(now);
+    const rows = await listTemplateMrpRows(env.DB, baseState.cursor, batchSize);
+    const assets =
+      rows.length > 0
+        ? await fetchAssetRecordsByIds(env, rows.map((row) => row.id), {
+            signal: AbortSignal.timeout(MRP_BACKFILL_SOURCE_TIMEOUT_MS),
+          })
+        : [];
+    await heartbeat?.();
+
+    const assetsById = new Map(assets.map((record) => [record.id, record]));
+    const updates: Array<{ id: string; mrpId: string }> = [];
+    let missingSource = 0;
+    let missingMrp = 0;
+
+    for (const row of rows) {
+      const source = assetsById.get(row.id);
+      if (!source) {
+        missingSource += 1;
+        continue;
+      }
+      const sourceMrpId = airtableMrpId(source);
+      if (!sourceMrpId) {
+        missingMrp += 1;
+        continue;
+      }
+      if (row.mrp_id !== sourceMrpId) updates.push({ id: row.id, mrpId: sourceMrpId });
+    }
+
+    if (!dryRun) {
+      await updateTemplateMrpIds(env.DB, updates);
+      if (updates.length > 0) await bumpPublicSearchCacheVersion(env.DB, 'mrp_backfill');
+    }
+    await heartbeat?.();
+
+    const cursor = rows.at(-1)?.id ?? baseState.cursor;
+    const remainingRecords = await countTemplateMrpRowsAfter(env.DB, cursor);
+    const isComplete = remainingRecords === 0;
+    const updatedAt = nowIso();
+    const state: MrpBackfillState = {
+      mode: 'mrp_backfill',
+      status: isComplete ? 'complete' : 'running',
+      started_at: baseState.started_at,
+      updated_at: updatedAt,
+      finished_at: isComplete ? updatedAt : null,
+      cursor,
+      scanned_records: baseState.scanned_records + rows.length,
+      updated_records: baseState.updated_records + updates.length,
+      missing_source_records: baseState.missing_source_records + missingSource,
+      missing_mrp_records: baseState.missing_mrp_records + missingMrp,
+      remaining_records: remainingRecords,
+      error: null,
+    };
+
+    if (!dryRun) await setMrpBackfillState(env.DB, state);
+
+    return {
+      ...state,
+      dry_run: dryRun,
+      batch_size: batchSize,
+      batch_scanned_records: rows.length,
+      batch_updated_records: updates.length,
+      batch_missing_source_records: missingSource,
+      batch_missing_mrp_records: missingMrp,
+    };
+  };
+
+  if (dryRun) return executeBatch();
+
+  return runWithSyncJobLock(env, 'mrp_backfill', async (heartbeat) => {
+    try {
+      return await executeBatch(heartbeat);
+    } catch (error) {
+      const failedAt = nowIso();
+      const failedState: MrpBackfillState = {
+        ...(existingState ?? initialMrpBackfillState(failedAt)),
+        status: 'failed',
+        updated_at: failedAt,
+        finished_at: failedAt,
+        error: errorMessage(error),
+      };
+      await setMrpBackfillState(env.DB, failedState);
+      throw error;
+    }
   });
 }
 

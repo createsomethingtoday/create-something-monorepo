@@ -11,6 +11,7 @@ Cloudflare Worker and D1 search index for the Webflow template marketplace.
 - `POST /api/templates/admin/sync`
 - `POST /api/templates/admin/sync-records`
 - `GET /api/templates/admin/sync-status`
+- `GET|POST /api/templates/admin/backfill-mrp`
 - `POST /api/templates/admin/refresh-images`
 - `POST /api/templates/admin/refresh-reviewer-picks`
 - `POST /api/templates/admin/backfill-images`
@@ -155,6 +156,56 @@ Use `GET /api/templates/admin/sync-status` with the sync admin token to inspect 
 lock, latest sync job, health counts, and recent sync summaries/errors/skips in one response.
 Successful sync summaries clear a stale `sync_state.last_sync_error` for the same mode; failed
 jobs remain visible on the latest job row until another job replaces the lock record.
+
+## Safe MRP ID backfill
+
+`mrp_id` powers the direct marketplace checkout URL returned as `purchase_url`. Historical rows
+must be filled through the authenticated `backfill-mrp` workflow, not Wrangler file imports,
+scratch scripts, or direct Cloudflare API writes.
+
+The CLI defaults to the production Worker. Use the service-specific
+`WEBFLOW_TEMPLATE_SEARCH_URL` environment variable for a preview or local override; generic
+`WORKER_URL` variables from shared secret-manager environments are intentionally ignored.
+
+```bash
+# Inspect durable checkpoint and coverage without writing.
+SYNC_ADMIN_TOKEN=... pnpm backfill:mrp -- --status
+
+# Compare the next bounded batch with Airtable without writing or advancing the checkpoint.
+SYNC_ADMIN_TOKEN=... pnpm backfill:mrp -- --dry-run --batch-size 25
+
+# Resume from the stored D1 cursor. The CLI probes queryless and FTS search and stops on failure.
+SYNC_ADMIN_TOKEN=... pnpm backfill:mrp -- --resume --batch-size 25
+
+# Explicitly rescan from the beginning; equal values remain no-ops.
+SYNC_ADMIN_TOKEN=... pnpm backfill:mrp -- --resume --restart --batch-size 25
+```
+
+Each POST processes at most 50 D1 rows in stable ID order, fetches only those Airtable records,
+updates only rows whose non-empty source MRP ID differs, and records cursor, cumulative counts,
+source mismatches, missing MRP IDs, completion, or failure in `sync_state.mrp_backfill`. Every write
+batch uses the shared `template_sync` lease. A killed CLI can be rerun with `--resume`; it never
+needs to restart at batch zero. If an incremental sync or maintenance job owns the lease between
+batches, the CLI waits up to ten minutes and continues automatically rather than treating the
+expected `409` response as failed backfill work.
+
+Public search keeps the strict ten-second circuit breaker. Admin batch requests have a separate
+30-second timeout because they include an Airtable lookup; transient admin timeouts and network
+resets are retried up to six times with search probes and backoff. Since every request reads the
+durable cursor first and writes only changed values, a response lost after commit is safe to retry.
+The Worker also aborts the targeted Airtable lookup after 20 seconds so a slow source request is
+recorded as failed and releases the shared lease before the client retry begins.
+`Ctrl-C` is graceful: the CLI finishes any in-flight bounded batch, records the checkpoint, runs
+the final search probes/status readback, and exits before starting another write request.
+
+The CLI runs both queryless and FTS public search probes before work, every five batches by
+default, and after completion. It stops if either probe fails, returns no items, or exceeds ten
+seconds. Treat `missing_source_records` and `missing_mrp_records` as explicit reconciliation work;
+do not claim complete MRP coverage merely because the D1 scan finished.
+
+Rollback: stop the CLI (the checkpoint is durable), redeploy the previous Worker version if
+needed, and leave populated `mrp_id` values in place. The values are additive and the search
+payload already falls back to the template detail URL when `mrp_id` is null.
 
 ## D1 migration history
 

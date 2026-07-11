@@ -111,6 +111,7 @@ interface FetchOptions {
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
   maxRecords?: number;
+  signal?: AbortSignal;
 }
 
 function parseConfiguredSearchVisibilityFields(env: Env): string[] {
@@ -157,6 +158,7 @@ async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
           Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
           'Content-Type': 'application/json',
         },
+        signal: options.signal,
       });
 
       if (!response.ok) {
@@ -265,6 +267,7 @@ export async function fetchModifiedAssetsSince(
 export async function fetchAssetRecordsByIds(
   env: Env,
   recordIds: string[],
+  options: { signal?: AbortSignal } = {},
 ): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
   const uniqueIds = uniqueStrings(recordIds.map((id) => id.trim()).filter(Boolean));
   if (uniqueIds.length === 0) return [];
@@ -275,6 +278,7 @@ export async function fetchAssetRecordsByIds(
     optionalFields: parseConfiguredSearchVisibilityFields(env),
     formula: buildRecordIdFormula(uniqueIds),
     sortField: '📅LMT',
+    signal: options.signal,
   });
 }
 

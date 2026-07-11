@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { TemplateCard, TEMPLATE_CARD_STYLES } from '../cards/TemplateCard';
+import { UiIcon } from '../primitives/UiIcon';
 import { trackMarketplaceEvent, type MarketplaceAnalyticsData } from '../marketplace/analytics';
 import { useMarketplaceComponentErrorTracking } from '../marketplace/MarketplaceComponentErrorBoundary';
 import {
@@ -247,6 +248,7 @@ const CHAT_STYLES = `
 .tmchat-panel.immersive .tmchat-preview-bar { padding: 10px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)); }
 .tmchat-input {
   flex: 1 1 auto; min-height: 40px; max-height: 120px; padding: 9px 12px;
+  box-sizing: border-box;
   border: 1px solid #e0e0e0; border-radius: 8px; font: inherit; resize: none; overflow-y: auto;
 }
 .tmchat-input:focus-visible { outline: 2px solid #146ef5; outline-offset: 1px; }
@@ -319,9 +321,39 @@ const CHAT_STYLES = `
   color: #757575; font-size: 13px; pointer-events: none;
 }
 @media (max-width: 560px) {
-  .tmchat-panel { right: 8px; bottom: 8px; width: calc(100vw - 16px); height: calc(100vh - 16px); }
+  .tmchat-panel {
+    inset: 0; width: 100vw; height: 100vh; height: 100dvh;
+    border: 0; border-radius: 0; box-shadow: none;
+  }
   .tmchat-panel.immersive { top: 0; bottom: 0; width: 100vw; border-radius: 0; }
-  .tmchat-grid, .tmchat-panel.immersive .tmchat-grid { grid-template-columns: 1fr; }
+  .tmchat-inputrow, .tmchat-panel.immersive .tmchat-inputrow {
+    padding: 10px 12px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  .tmchat-header, .tmchat-panel.immersive .tmchat-header { padding: 8px 10px; }
+  .tmchat-scroll, .tmchat-panel.immersive .tmchat-scroll { padding: 12px 16px 16px; gap: 12px; }
+  .tmchat-iconbtn { width: 40px; height: 40px; }
+  .tmchat-expand { display: none; }
+  .tmchat-grid:not(.single), .tmchat-panel.immersive .tmchat-grid:not(.single) {
+    grid-template-columns: none; grid-auto-flow: column;
+    grid-auto-columns: min(76vw, 280px); justify-content: start;
+    overflow-x: auto; overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory; padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tmchat-grid:not(.single) > *, .tmchat-panel.immersive .tmchat-grid:not(.single) > * { scroll-snap-align: start; }
+  .tmchat-grid.single, .tmchat-panel.immersive .tmchat-grid.single {
+    grid-template-columns: 1fr; overflow: visible;
+  }
+  .tmchat-followups {
+    flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity; padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tmchat-followups > * { flex: 0 0 auto; scroll-snap-align: start; }
+  .tmchat-preview-bar, .tmchat-panel.immersive .tmchat-preview-bar { flex-wrap: nowrap; gap: 8px; padding: 8px 10px; }
+  .tmchat-preview-back, .tmchat-preview-cta { height: 40px; }
+  .tmchat-devicetoggle, .tmchat-preview-open, .tmchat-preview-sep { display: none; }
   .tmchat-preview-stage.mobile, .tmchat-preview-stage.tablet { padding: 0; }
   .tmchat-preview-stage.mobile .tmchat-preview-frame, .tmchat-preview-stage.tablet .tmchat-preview-frame { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
 }
@@ -335,102 +367,6 @@ const CHAT_STYLES = `
   .tmchat-chip:hover, .tmchat-launcher:hover, .tmchat-send:active:not(:disabled) { transform: none; }
 }
 ` + TEMPLATE_CARD_STYLES;
-
-// Standardized 16px stroke icons (Feather-style geometry, currentColor) —
-// Unicode glyphs render inconsistently across platforms/fonts.
-function ChatIcon({
-  name,
-  size = 16,
-}: {
-  name: 'sparkle' | 'refresh' | 'expand' | 'collapse' | 'close' | 'down' | 'back' | 'external' | 'desktop' | 'tablet' | 'mobile';
-  size?: number;
-}): React.ReactElement {
-  const paths: Record<string, React.ReactNode> = {
-    back: (
-      <>
-        <line x1="19" y1="12" x2="5" y2="12" />
-        <polyline points="12 19 5 12 12 5" />
-      </>
-    ),
-    external: (
-      <>
-        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-        <polyline points="15 3 21 3 21 9" />
-        <line x1="10" y1="14" x2="21" y2="3" />
-      </>
-    ),
-    desktop: (
-      <>
-        <rect x="2" y="3" width="20" height="14" rx="2" />
-        <line x1="8" y1="21" x2="16" y2="21" />
-        <line x1="12" y1="17" x2="12" y2="21" />
-      </>
-    ),
-    tablet: (
-      <>
-        <rect x="4" y="2" width="16" height="20" rx="2" />
-        <line x1="11" y1="18" x2="13" y2="18" />
-      </>
-    ),
-    mobile: (
-      <>
-        <rect x="7" y="2" width="10" height="20" rx="2" />
-        <line x1="11" y1="18" x2="13" y2="18" />
-      </>
-    ),
-    sparkle: <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" fill="currentColor" stroke="none" />,
-    refresh: (
-      <>
-        <polyline points="1 4 1 10 7 10" />
-        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-      </>
-    ),
-    expand: (
-      <>
-        <polyline points="15 3 21 3 21 9" />
-        <polyline points="9 21 3 21 3 15" />
-        <line x1="21" y1="3" x2="14" y2="10" />
-        <line x1="3" y1="21" x2="10" y2="14" />
-      </>
-    ),
-    collapse: (
-      <>
-        <polyline points="4 14 10 14 10 20" />
-        <polyline points="20 10 14 10 14 4" />
-        <line x1="14" y1="10" x2="21" y2="3" />
-        <line x1="3" y1="21" x2="10" y2="14" />
-      </>
-    ),
-    close: (
-      <>
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </>
-    ),
-    down: (
-      <>
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <polyline points="19 12 12 19 5 12" />
-      </>
-    ),
-  };
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      {paths[name]}
-    </svg>
-  );
-}
 
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
@@ -903,7 +839,7 @@ function TemplatePreviewPane({
     >
       <div className="tmchat-preview-bar">
         <button ref={backRef} type="button" className="tmchat-preview-back" onClick={requestClose}>
-          <ChatIcon name="back" size={14} /> Back to chat
+          <UiIcon name="arrow-left" size={14} /> Back to chat
         </button>
         <span className="tmchat-preview-sep" aria-hidden="true" />
         <div className="tmchat-preview-meta">
@@ -917,7 +853,7 @@ function TemplatePreviewPane({
             aria-pressed={device === 'desktop'}
             onClick={() => switchDevice('desktop')}
           >
-            <ChatIcon name="desktop" size={14} /> Desktop
+            <UiIcon name="monitor" size={14} /> Desktop
           </button>
           <button
             type="button"
@@ -925,7 +861,7 @@ function TemplatePreviewPane({
             aria-pressed={device === 'tablet'}
             onClick={() => switchDevice('tablet')}
           >
-            <ChatIcon name="tablet" size={14} /> Tablet
+            <UiIcon name="tablet" size={14} /> Tablet
           </button>
           <button
             type="button"
@@ -933,7 +869,7 @@ function TemplatePreviewPane({
             aria-pressed={device === 'mobile'}
             onClick={() => switchDevice('mobile')}
           >
-            <ChatIcon name="mobile" size={14} /> Mobile
+            <UiIcon name="smartphone" size={14} /> Mobile
           </button>
         </div>
         {item.website_url ? (
@@ -944,7 +880,7 @@ function TemplatePreviewPane({
             rel="noopener noreferrer"
             onClick={() => onEvent?.('live_preview_site_opened', { template_slug: item.template_slug })}
           >
-            Open site <ChatIcon name="external" size={12} />
+            Open site <UiIcon name="external-link" size={12} />
           </a>
         ) : null}
         {item.purchase_url || item.url ? (
@@ -1012,6 +948,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   );
   const [open, setOpen] = useState(isInline || defaultOpen || Boolean(persisted?.open));
   const [immersive, setImmersive] = useState(defaultImmersive);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(persisted?.messages ?? []);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -1034,6 +971,17 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   // Echoed back with each request so the stateless worker can compare or
   // re-display earlier results instead of "forgetting" them between turns.
   const knownTemplatesRef = useRef(new Map<string, AgentTemplateItem>(persisted?.known.map((item) => [item.template_slug, item])));
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(max-width: 560px)');
+    const sync = () => setIsMobileViewport(media.matches);
+    sync();
+    media.addEventListener?.('change', sync);
+    return () => media.removeEventListener?.('change', sync);
+  }, []);
+
+  const isModalSurface = immersive || (!isInline && open && isMobileViewport);
 
   const starters = starterPrompts
     .split(/[,\n]/)
@@ -1193,19 +1141,20 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     );
   }, [immersive]);
 
-  // Immersive is a modal: lock the page scroll behind the backdrop.
+  // Immersive and phone-sized floating chats are modal surfaces: lock the page
+  // behind them so swipe/keyboard interactions stay inside the conversation.
   useEffect(() => {
-    if (!immersive || typeof document === 'undefined') return;
+    if (!isModalSurface || typeof document === 'undefined') return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [immersive]);
+  }, [isModalSurface]);
 
-  // Keep Tab focus inside the immersive dialog.
+  // Keep Tab focus inside any modal conversation surface.
   useEffect(() => {
-    if (!immersive) return;
+    if (!isModalSurface) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Tab') return;
       const root = panelRef.current;
@@ -1227,7 +1176,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [immersive]);
+  }, [isModalSurface]);
 
   // Esc closes the live preview first, then collapses the immersive state,
   // then closes a floating panel.
@@ -1245,8 +1194,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [open, immersive, isInline, preview, setImmersiveAnimated]);
 
-  // The preview reads best on a wide canvas: opening one from the docked
-  // panel expands to immersive; closing the preview returns to the chat as-is.
+  // The preview reads best on a wide canvas: opening one from a desktop docked
+  // panel expands to immersive. Phones already use the full-screen surface, so
+  // toggling desktop immersive state there would only reintroduce wide padding.
   const openPreview = useCallback(
     (item: AgentTemplateItem, position: number, layout: string) => {
       if (!item.website_url) return;
@@ -1258,9 +1208,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         is_free: item.is_free,
         price: item.price,
       });
-      if (!immersive) setImmersiveAnimated(true);
+      if (!immersive && !isMobileViewport) setImmersiveAnimated(true);
     },
-    [immersive, setImmersiveAnimated, track],
+    [immersive, isMobileViewport, setImmersiveAnimated, track],
   );
 
   // Card clicks to the template detail page — writes the same attribution
@@ -1492,7 +1442,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       <>
         <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
         <button type="button" className="tmchat-launcher" onMouseEnter={warmUp} onClick={() => setOpen(true)}>
-          <ChatIcon name="sparkle" /> {launcherLabel}
+          <UiIcon name="sparkles" /> {launcherLabel}
         </button>
       </>
     );
@@ -1524,17 +1474,17 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           <div className="tmchat-header-actions">
             {messages.length > 0 ? (
               <button type="button" className="tmchat-iconbtn" aria-label="New chat" title="New chat" onClick={resetChat}>
-                <ChatIcon name="refresh" />
+                <UiIcon name="refresh-cw" />
               </button>
             ) : null}
             <button
               type="button"
-              className="tmchat-iconbtn"
+              className="tmchat-iconbtn tmchat-expand"
               aria-label={immersive ? 'Exit fullscreen' : 'Expand to fullscreen'}
               title={immersive ? 'Exit fullscreen' : 'Expand'}
               onClick={() => setImmersiveAnimated((current) => !current)}
             >
-              <ChatIcon name={immersive ? 'collapse' : 'expand'} />
+              <UiIcon name={immersive ? 'minimize-2' : 'maximize-2'} />
             </button>
             {!isInline || immersive ? (
               <button
@@ -1547,7 +1497,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                   if (!isInline) setOpen(false);
                 }}
               >
-                <ChatIcon name="close" />
+                <UiIcon name="x" />
               </button>
             ) : null}
           </div>
@@ -1631,7 +1581,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
 
         {!atBottom && messages.length > 0 ? (
           <button type="button" className="tmchat-jump" onClick={() => scrollToBottom('smooth')}>
-            <ChatIcon name="down" size={14} /> Latest
+            <UiIcon name="arrow-down" size={14} /> Latest
           </button>
         ) : null}
         </div>

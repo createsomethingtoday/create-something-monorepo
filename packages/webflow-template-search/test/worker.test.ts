@@ -2202,6 +2202,35 @@ describe('webflow-template-search worker', () => {
       const defaultQueryPayload = (await defaultQuerySearch.json()) as { items: Array<{ name: string }> };
       expect(defaultQueryPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow', 'Catalis']);
 
+      // Popularity and cumulative purchases deliberately disagree in these
+      // fixtures. Keep both public sort values and their ranking semantics
+      // covered so a stale or incomplete Worker deploy cannot collapse Best
+      // Sellers back to Popular unnoticed.
+      const popularSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?sort=popular&page_size=10'),
+        env,
+      );
+      const popularPayload = (await popularSearch.json()) as {
+        sort: string;
+        items: Array<{ name: string }>;
+      };
+      expect(popularPayload.sort).toBe('popular');
+      expect(popularPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow', 'Catalis']);
+
+      const bestSellingSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?sort=best_selling&page_size=10'),
+        env,
+      );
+      const bestSellingPayload = (await bestSellingSearch.json()) as {
+        sort: string;
+        items: Array<{ name: string }>;
+      };
+      expect(bestSellingPayload.sort).toBe('best_selling');
+      expect(bestSellingPayload.items.map((item) => item.name)).toEqual(['Agentflow', 'Setrex', 'Catalis']);
+      expect(bestSellingPayload.items.map((item) => item.name)).not.toEqual(
+        popularPayload.items.map((item) => item.name),
+      );
+
       const newestQuerySearch = await callWorker(
         new Request('https://templates.test/api/templates/search?q=technology&sort=newest&page_size=10'),
         env,
