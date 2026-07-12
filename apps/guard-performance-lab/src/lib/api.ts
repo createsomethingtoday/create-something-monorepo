@@ -1,5 +1,13 @@
 import { ZodError } from 'zod';
+import { programMap } from './data.js';
 import { getNextInteraction } from './guide.js';
+
+export function programResponse(): Response {
+  return Response.json(
+    { ok: true, program: programMap },
+    { headers: { 'cache-control': 'private, no-store' } }
+  );
+}
 
 export async function guideResponse(request: Request): Promise<Response> {
   try {

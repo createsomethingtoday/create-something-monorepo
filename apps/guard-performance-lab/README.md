@@ -1,6 +1,6 @@
 # Guard Performance Lab
 
-A standalone, private-first coaching system for developing guards. Version 0.4 adds player-owned structured profiles to the first-party identity, exact operator/player authorization, remote MCP verification, and durable production storage workflow.
+A standalone, private-first coaching system for developing guards. Version 0.5 completes the first-session introduction map across player autonomy, system/coach/Codex roles, the coach-instance-to-player-account access handoff, level transitions, clock orientation, scheme/read/misdirection sequencing, a staged guard scheme-literacy library, and the source-to-receipt evidence path. Version 0.4 added player-owned structured profiles to the first-party identity, exact operator/player authorization, remote MCP verification, and durable production storage workflow.
 
 ## Privacy model
 
@@ -38,6 +38,8 @@ One typed guidance engine owns program stage, requested coach context, safety st
 - the in-app Agent + Evidence workspace;
 - `POST /api/guide`;
 - the local stdio MCP server.
+
+The complete canonical introduction map is available through authenticated `GET /api/program` and the read-only MCP resource `guard://program/session-01`. Both return the same v0.5 program object used by the app.
 
 Browser mutations use `POST /api/workspace/command` with typed actions for selecting or creating a player, updating one player-owned profile, saving a receipt, registering evidence, or recording engagement. Whole-workspace `PUT` replacement is intentionally unsupported.
 
