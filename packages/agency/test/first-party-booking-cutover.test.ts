@@ -79,3 +79,9 @@ test('Atlas attribution is normalized and bounded before it crosses the origin',
 		atlasSessionId: 'a'.repeat(100)
 	});
 });
+
+test('direct booking does not invent zero-valued Atlas attribution', () => {
+	const iframe = new URL(buildFirstPartySchedulerUrl());
+	assert.equal(iframe.search, '');
+	assert.deepEqual(schedulerHandoffContext(), {});
+});
