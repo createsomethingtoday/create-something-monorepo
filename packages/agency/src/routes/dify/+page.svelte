@@ -128,13 +128,6 @@
       detail:
         'Turn one workflow into a Dify app with scoped MCP tools, approvals, eval gates, and proof.',
       href: '/dify/ship-dify-app-with-mcp-tools'
-    },
-    {
-      eyebrow: 'Compare',
-      icon: 'document',
-      title: 'Dify vs n8n',
-      detail: 'Use the layer comparison when teams are deciding between automation and agent apps.',
-      href: '/dify/n8n-vs-dify'
     }
   ];
 

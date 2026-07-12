@@ -73,6 +73,66 @@ export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = {
       "handoffUri": "canon://overlays/candidates/overlay.atlas-studio-desktop.surface-brief/handoff"
     },
     {
+      "id": "overlay.guard-performance-lab:overlay.guard-performance-lab.surface-brief",
+      "overlayId": "overlay.guard-performance-lab",
+      "overlayName": "Guard Performance Lab Overlay",
+      "manifestPath": "apps/guard-performance-lab/canon-overlay/manifest.ts",
+      "intakeId": "overlay.guard-performance-lab.surface-brief",
+      "title": "Surface Brief Template",
+      "summary": "A reusable project-overlay brief for documenting workflow state, Canon reuse, local artifacts, evidence, and extension-intake needs.",
+      "owner": "performance-lab",
+      "sourcePackage": "@create-something/guard-performance-lab",
+      "sourcePath": "canon-overlay/templates/surface-brief.md",
+      "requestedKind": "template",
+      "requestedModalities": [
+        "web",
+        "chat",
+        "app",
+        "voice",
+        "glasses"
+      ],
+      "tags": [
+        "overlay",
+        "brief",
+        "surface",
+        "evidence"
+      ],
+      "surfaces": [
+        {
+          "surfaceId": "web-guard-performance-lab-brief-1",
+          "name": "Web project overlay brief",
+          "modality": "web",
+          "sourcePath": "canon-overlay/templates/surface-brief.md",
+          "proof": "Copyable template names Canon reuse, local overlay artifacts, evidence, and extension intake."
+        },
+        {
+          "surfaceId": "chat-guard-performance-lab-brief-2",
+          "name": "Chat project overlay brief",
+          "modality": "chat",
+          "sourcePath": "canon-overlay/templates/surface-brief.md",
+          "proof": "The same structure summarizes cleanly for agent/chat handoff."
+        }
+      ],
+      "dependencies": [
+        "template.canon-project-overlay-manifest",
+        "template.canon-extension-intake",
+        "policy.signal-decision-proof"
+      ],
+      "requiredEvidence": [
+        "Source-adjacent implementation path.",
+        "At least two surface proofs or client receipts.",
+        "Accessibility, evidence, motion, and extension contract notes.",
+        "Registry dependencies and modality list."
+      ],
+      "stopBeforeStable": [
+        "Do not mark stable until Canon owns export path, docs, tests, and compatibility notes."
+      ],
+      "rationale": "The proposal has evidence from at least two surfaces, so Canon should evaluate it as a shared candidate instead of leaving it project-local.",
+      "reviewUri": "canon://overlays/intake/overlay.guard-performance-lab",
+      "candidateUri": "canon://overlays/candidates/overlay.guard-performance-lab.surface-brief",
+      "handoffUri": "canon://overlays/candidates/overlay.guard-performance-lab.surface-brief/handoff"
+    },
+    {
       "id": "overlay.marketplace-template-submission-cloud:overlay.marketplace-template-submission-cloud.surface-brief",
       "overlayId": "overlay.marketplace-template-submission-cloud",
       "overlayName": "Marketplace Template Submission Cloud Overlay",
@@ -526,6 +586,126 @@ export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = {
       "reviewUri": "canon://overlays/intake/overlay.the-stack",
       "candidateUri": "canon://overlays/candidates/overlay.the-stack.surface-brief",
       "handoffUri": "canon://overlays/candidates/overlay.the-stack.surface-brief/handoff"
+    },
+    {
+      "id": "overlay.app-governance-dashboard:overlay.app-governance-dashboard.surface-brief",
+      "overlayId": "overlay.app-governance-dashboard",
+      "overlayName": "App Governance Dashboard Overlay",
+      "manifestPath": "packages/app-governance-db/dashboard/canon-overlay/manifest.ts",
+      "intakeId": "overlay.app-governance-dashboard.surface-brief",
+      "title": "Surface Brief Template",
+      "summary": "A reusable project-overlay brief for documenting workflow state, Canon reuse, local artifacts, evidence, and extension-intake needs.",
+      "owner": "app-governance-team",
+      "sourcePackage": "app-governance-dashboard",
+      "sourcePath": "canon-overlay/templates/surface-brief.md",
+      "requestedKind": "template",
+      "requestedModalities": [
+        "web",
+        "chat",
+        "app",
+        "voice",
+        "glasses"
+      ],
+      "tags": [
+        "overlay",
+        "brief",
+        "surface",
+        "evidence"
+      ],
+      "surfaces": [
+        {
+          "surfaceId": "web-app-governance-dashboard-brief-1",
+          "name": "Web project overlay brief",
+          "modality": "web",
+          "sourcePath": "canon-overlay/templates/surface-brief.md",
+          "proof": "Copyable template names Canon reuse, local overlay artifacts, evidence, and extension intake."
+        },
+        {
+          "surfaceId": "chat-app-governance-dashboard-brief-2",
+          "name": "Chat project overlay brief",
+          "modality": "chat",
+          "sourcePath": "canon-overlay/templates/surface-brief.md",
+          "proof": "The same structure summarizes cleanly for agent/chat handoff."
+        }
+      ],
+      "dependencies": [
+        "template.canon-project-overlay-manifest",
+        "template.canon-extension-intake",
+        "policy.signal-decision-proof"
+      ],
+      "requiredEvidence": [
+        "Source-adjacent implementation path.",
+        "At least two surface proofs or client receipts.",
+        "Accessibility, evidence, motion, and extension contract notes.",
+        "Registry dependencies and modality list."
+      ],
+      "stopBeforeStable": [
+        "Do not mark stable until Canon owns export path, docs, tests, and compatibility notes."
+      ],
+      "rationale": "The proposal has evidence from at least two surfaces, so Canon should evaluate it as a shared candidate instead of leaving it project-local.",
+      "reviewUri": "canon://overlays/intake/overlay.app-governance-dashboard",
+      "candidateUri": "canon://overlays/candidates/overlay.app-governance-dashboard.surface-brief",
+      "handoffUri": "canon://overlays/candidates/overlay.app-governance-dashboard.surface-brief/handoff"
+    },
+    {
+      "id": "overlay.app-governance-desktop:overlay.app-governance-desktop.surface-brief",
+      "overlayId": "overlay.app-governance-desktop",
+      "overlayName": "App Governance Desktop Overlay",
+      "manifestPath": "packages/app-governance-desktop/canon-overlay/manifest.ts",
+      "intakeId": "overlay.app-governance-desktop.surface-brief",
+      "title": "Surface Brief Template",
+      "summary": "A reusable project-overlay brief for documenting workflow state, Canon reuse, local artifacts, evidence, and extension-intake needs.",
+      "owner": "app-governance-team",
+      "sourcePackage": "app-governance-desktop",
+      "sourcePath": "canon-overlay/templates/surface-brief.md",
+      "requestedKind": "template",
+      "requestedModalities": [
+        "web",
+        "chat",
+        "app",
+        "voice",
+        "glasses"
+      ],
+      "tags": [
+        "overlay",
+        "brief",
+        "surface",
+        "evidence"
+      ],
+      "surfaces": [
+        {
+          "surfaceId": "web-app-governance-desktop-brief-1",
+          "name": "Web project overlay brief",
+          "modality": "web",
+          "sourcePath": "canon-overlay/templates/surface-brief.md",
+          "proof": "Copyable template names Canon reuse, local overlay artifacts, evidence, and extension intake."
+        },
+        {
+          "surfaceId": "chat-app-governance-desktop-brief-2",
+          "name": "Chat project overlay brief",
+          "modality": "chat",
+          "sourcePath": "canon-overlay/templates/surface-brief.md",
+          "proof": "The same structure summarizes cleanly for agent/chat handoff."
+        }
+      ],
+      "dependencies": [
+        "template.canon-project-overlay-manifest",
+        "template.canon-extension-intake",
+        "policy.signal-decision-proof"
+      ],
+      "requiredEvidence": [
+        "Source-adjacent implementation path.",
+        "At least two surface proofs or client receipts.",
+        "Accessibility, evidence, motion, and extension contract notes.",
+        "Registry dependencies and modality list."
+      ],
+      "stopBeforeStable": [
+        "Do not mark stable until Canon owns export path, docs, tests, and compatibility notes."
+      ],
+      "rationale": "The proposal has evidence from at least two surfaces, so Canon should evaluate it as a shared candidate instead of leaving it project-local.",
+      "reviewUri": "canon://overlays/intake/overlay.app-governance-desktop",
+      "candidateUri": "canon://overlays/candidates/overlay.app-governance-desktop.surface-brief",
+      "handoffUri": "canon://overlays/candidates/overlay.app-governance-desktop.surface-brief/handoff"
     },
     {
       "id": "overlay.clearway-conversion:overlay.clearway-conversion.surface-brief",
@@ -1188,12 +1368,12 @@ export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = {
     {
       "id": "overlay.ona-agents:overlay.ona-agents.surface-brief",
       "overlayId": "overlay.ona-agents",
-      "overlayName": "Ona Agents Overlay",
+      "overlayName": "Performance Agents Overlay",
       "manifestPath": "packages/ona-agents/canon-overlay/manifest.ts",
       "intakeId": "overlay.ona-agents.surface-brief",
       "title": "Surface Brief Template",
       "summary": "A reusable project-overlay brief for documenting workflow state, Canon reuse, local artifacts, evidence, and extension-intake needs.",
-      "owner": "ona-team",
+      "owner": "performance-lab",
       "sourcePackage": "@create-something/ona-agents",
       "sourcePath": "canon-overlay/templates/surface-brief.md",
       "requestedKind": "template",
@@ -1790,34 +1970,34 @@ export const CANON_OVERLAY_CANDIDATE_QUEUE: CanonOverlayCandidateQueue = {
     }
   ],
   "summary": {
-    "total": 24,
-    "overlays": 24,
+    "total": 27,
+    "overlays": 27,
     "byRequestedKind": [
       {
         "kind": "template",
-        "count": 24
+        "count": 27
       }
     ],
     "byModality": [
       {
         "modality": "app",
-        "count": 24
+        "count": 27
       },
       {
         "modality": "chat",
-        "count": 24
+        "count": 27
       },
       {
         "modality": "glasses",
-        "count": 24
+        "count": 27
       },
       {
         "modality": "voice",
-        "count": 24
+        "count": 27
       },
       {
         "modality": "web",
-        "count": 24
+        "count": 27
       }
     ]
   },

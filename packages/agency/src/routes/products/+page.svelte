@@ -121,6 +121,29 @@
     }
   ];
 
+  const productHierarchy = [
+    {
+      layer: 'Foundation',
+      name: 'Substrate',
+      detail: 'Owned objects, state, permissions, events, approvals, runs, and receipts.'
+    },
+    {
+      layer: 'Design surface',
+      name: 'Atlas',
+      detail: 'The workflow map: systems, owners, handoffs, constraints, and required evidence.'
+    },
+    {
+      layer: 'Runtime surfaces',
+      name: 'Signal / Decision / Proof',
+      detail: 'Watch the change, route the judgment, and preserve the evidence and outcome.'
+    },
+    {
+      layer: 'Delivery method',
+      name: 'Map / Pilot / Operate',
+      detail: 'Understand one handoff, prove one controlled lane, then maintain the live system.'
+    }
+  ] as const;
+
   function productCard(product: Product): PerformanceCardItem {
     const points = [product.tagline, product.npmPackage, product.client, product.timeline].filter(
       Boolean
@@ -193,6 +216,25 @@
     </Button>
   {/snippet}
 </PerformanceCampaignOpening>
+
+<PerformancePageSection
+  variant="white"
+  eyebrow="Product hierarchy"
+  title="One system, from record to operation."
+  description="Each name has one stable job. The foundation stores the operating record, Atlas designs the boundary, the runtime surfaces make work inspectable, and the delivery method moves one workflow into service."
+>
+  {#snippet after()}
+    <div class="product-hierarchy" aria-label="CREATE SOMETHING product hierarchy">
+      {#each productHierarchy as item, index}
+        <article class="product-hierarchy__item">
+          <span>{String(index + 1).padStart(2, '0')} · {item.layer}</span>
+          <strong>{item.name}</strong>
+          <p>{item.detail}</p>
+        </article>
+      {/each}
+    </div>
+  {/snippet}
+</PerformancePageSection>
 
 <PerformanceContrastChapter
   eyebrow="System anatomy"
@@ -326,6 +368,45 @@
 </PerformanceConversionHandoff>
 
 <style>
+  .product-hierarchy {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-block: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .product-hierarchy__item {
+    display: grid;
+    align-content: start;
+    gap: 0.62rem;
+    min-height: 14rem;
+    padding: 1.3rem;
+  }
+
+  .product-hierarchy__item + .product-hierarchy__item {
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .product-hierarchy__item span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-mono);
+    font-size: 0.69rem;
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+  }
+
+  .product-hierarchy__item strong {
+    color: var(--color-performance-ink, #090909);
+    font-size: 1.08rem;
+    font-weight: var(--font-medium);
+  }
+
+  .product-hierarchy__item p {
+    margin: 0;
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.91rem;
+    line-height: 1.5;
+  }
+
   .product-system-artifact {
     display: grid;
     gap: 0.95rem;
@@ -334,6 +415,36 @@
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-panel, #ffffff);
     box-shadow: 0 24px 70px rgb(10 14 25 / 0.08);
+  }
+
+  @media (max-width: 800px) {
+    .product-hierarchy {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .product-hierarchy__item:nth-child(3) {
+      border-left: 0;
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .product-hierarchy__item:nth-child(4) {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+  }
+
+  @media (max-width: 520px) {
+    .product-hierarchy {
+      grid-template-columns: 1fr;
+    }
+
+    .product-hierarchy__item {
+      min-height: 0;
+    }
+
+    .product-hierarchy__item + .product-hierarchy__item {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+      border-left: 0;
+    }
   }
 
   .product-system-artifact__header {

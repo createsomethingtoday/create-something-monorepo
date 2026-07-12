@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:deploy": "pnpm --filter @create-something/auth-platform build && pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/canon package && pnpm --filter @create-something/mcp-core build",
     "dev": "node ../../../scripts/run-wrangler.mjs dev",
-    "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
+    "deploy": "pnpm run build:deploy && node ../../../scripts/run-wrangler.mjs deploy",
     "tail": "node ../../../scripts/run-wrangler.mjs tail"
   },
   "dependencies": {

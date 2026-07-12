@@ -22,7 +22,7 @@ import {
 const ACCESS_TOKEN_TTL = 15 * 60; // 15 minutes
 const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days
 const ISSUER = 'https://id.createsomething.space';
-const AUDIENCES = ['workway', 'templates', 'io', 'space'];
+export const IDENTITY_TOKEN_AUDIENCES = ['workway', 'templates', 'io', 'space', 'ona-agents', 'guard-performance-lab'] as const;
 
 /**
  * Generate access and refresh tokens for a user
@@ -41,7 +41,7 @@ export async function generateTokens(
 		tier: user.tier,
 		source: user.source,
 		iss: ISSUER,
-		aud: AUDIENCES,
+		aud: [...IDENTITY_TOKEN_AUDIENCES],
 		iat: now,
 		exp: now + ACCESS_TOKEN_TTL,
 	};
@@ -123,7 +123,7 @@ export async function refreshTokens(
 		tier: user.tier,
 		source: user.source,
 		iss: ISSUER,
-		aud: AUDIENCES,
+		aud: [...IDENTITY_TOKEN_AUDIENCES],
 		iat: now,
 		exp: now + ACCESS_TOKEN_TTL,
 	};

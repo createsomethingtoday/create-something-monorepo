@@ -115,7 +115,7 @@ export interface JWTPayload {
 	tier: User['tier'];
 	source: User['source'];
 	iss: string; // issuer: https://id.createsomething.space
-	aud: string[]; // audience: ['workway', 'templates', 'io', 'space']
+	aud: string[]; // application audiences declared by the Identity Worker
 	iat: number; // issued at
 	exp: number; // expiration
 }

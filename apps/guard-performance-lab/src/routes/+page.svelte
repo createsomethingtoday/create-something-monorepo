@@ -1,15 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import type { PageData } from './$types';
   import { glossary, progressionPhases, sessionBlocks } from '$lib/data.js';
   import type { GuideOutput } from '$lib/guide.js';
   import type { WorkspaceCommand } from '$lib/workspace-api.js';
   import {
-    STORAGE_KEY,
     createInitialState,
     artifactsForSelected,
     engagementsForSelected,
     emptyReceipt,
-    parseState,
     receiptsForSelected,
     validateReceipt,
     validateArtifact,
@@ -17,9 +16,12 @@
     type EvidenceSignal,
     type EvidenceValue,
     type LabState,
+    type PlayerProfile,
     type ProgramStage,
     type ReceiptDraft
   } from '$lib/model.js';
+
+  let { data }: { data: PageData } = $props();
 
   type View = 'dashboard' | 'guide' | 'plan' | 'language' | 'reads' | 'receipt' | 'progress' | 'players';
   const views: { key: View; label: string }[] = [
@@ -44,7 +46,21 @@
   let search = $state('');
   let termPhase = $state<'all' | 'now' | 'next' | 'later'>('all');
   let activeRead = $state<keyof typeof readAnswers>('none');
-  let playerName = $state('');
+  let playerName = $state('Player 01');
+  let newPlayerAge = $state<number | null>(12);
+  let newPlayerGender = $state<PlayerProfile['gender'] | ''>('male');
+  let newPlayerPosition = $state<PlayerProfile['primaryPosition'] | ''>('guard');
+  let profileAge = $state<number | null>(null);
+  let profileGender = $state<PlayerProfile['gender'] | ''>('');
+  let profilePosition = $state<PlayerProfile['primaryPosition'] | ''>('');
+  let profilePreferredName = $state('');
+  let profileDominantHand = $state<PlayerProfile['dominantHand'] | ''>('');
+  let profileHeight = $state('');
+  let profileGoals = $state('');
+  let profileExperience = $state('');
+  let profileJurisdiction = $state('');
+  let profileNotes = $state('');
+  let profileSaved = $state(false);
   let resetArmed = $state(false);
   let hydrated = $state(false);
   let commandBusy = $state(false);
@@ -57,6 +73,7 @@
   let engagementNote = $state('');
   let artifactErrors = $state<string[]>([]);
   let artifactDraft = $state<EvidenceDraft>({ kind: 'coach-observation', title: '', sourceLabel: 'Coach', sourceUrl: '', level: 'youth', jurisdiction: '', observation: '' });
+  let operator = $derived(data.guardAccess.scope?.role === 'operator');
 
   let player = $derived(labState.players.find((item) => item.id === labState.selectedPlayerId) ?? labState.players[0]);
   let receipts = $derived(receiptsForSelected(labState));
@@ -68,13 +85,29 @@
     return matchesPhase && (!needle || `${term} ${meaning}`.toLowerCase().includes(needle));
   }));
 
+  $effect(() => {
+    const profile = player?.profile;
+    if (!profile) return;
+    profileAge = profile.age;
+    profileGender = profile.gender ?? '';
+    profilePosition = profile.primaryPosition ?? '';
+    profilePreferredName = profile.preferredName;
+    profileDominantHand = profile.dominantHand ?? '';
+    profileHeight = profile.height;
+    profileGoals = profile.goals;
+    profileExperience = profile.experienceLevel;
+    profileJurisdiction = profile.jurisdiction;
+    profileNotes = profile.notes;
+    profileSaved = false;
+  });
+
   onMount(async () => {
     try {
       const response = await fetch('/api/workspace');
-      const body = await response.json();
-      labState = body.ok ? body.workspace : parseState(localStorage.getItem(STORAGE_KEY));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(labState));
-    } catch { labState = parseState(localStorage.getItem(STORAGE_KEY)); }
+      const body = await response.json() as { ok?: boolean; workspace?: LabState; error?: string };
+      if (!response.ok || !body.ok || !body.workspace) throw new Error(body.error ?? 'The private workspace could not be loaded.');
+      labState = body.workspace;
+    } catch (error) { syncError = error instanceof Error ? error.message : 'The private workspace could not be loaded.'; }
     hydrated = true;
   });
 
@@ -86,7 +119,6 @@
       const body = await response.json();
       if (!response.ok || !body.ok) throw new Error(body.error ?? 'The local datastore did not accept the update.');
       labState = body.workspace;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(body.workspace));
       return true;
     } catch (error) {
       syncError = error instanceof Error ? error.message : 'The local datastore could not be reached.';
@@ -102,9 +134,34 @@
 
   async function addPlayer() {
     if (!playerName.trim()) return;
-    if (!await runCommand({ action: 'create-player', name: playerName })) return;
-    playerName = '';
-    view = 'dashboard';
+    if (!await runCommand({
+      action: 'create-player',
+      name: playerName,
+      profile: { age: newPlayerAge, gender: newPlayerGender || null, primaryPosition: newPlayerPosition || null }
+    })) return;
+    view = 'players';
+  }
+
+  async function savePlayerProfile() {
+    if (!player) return;
+    profileSaved = false;
+    if (!await runCommand({
+      action: 'update-player-profile',
+      playerId: player.id,
+      profile: {
+        age: profileAge,
+        gender: profileGender || null,
+        primaryPosition: profilePosition || null,
+        preferredName: profilePreferredName,
+        dominantHand: profileDominantHand || null,
+        height: profileHeight,
+        goals: profileGoals,
+        experienceLevel: profileExperience,
+        jurisdiction: profileJurisdiction,
+        notes: profileNotes
+      }
+    })) return;
+    profileSaved = true;
   }
 
   async function submitReceipt() {
@@ -152,7 +209,6 @@
       const body = await response.json();
       if (!response.ok || !body.ok) throw new Error(body.error ?? 'Reset failed.');
       labState = body.workspace;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(body.workspace));
       draft = emptyReceipt();
       resetArmed = false;
       view = 'dashboard';
@@ -170,12 +226,17 @@
 <div class="shell property-performance" aria-busy={commandBusy}>
   <header class="topbar">
     <div class="brand"><span>GUARD PERFORMANCE LAB</span><small class="mono">FIELD TEST 01</small></div>
-    <div class="privacy">LOCAL / REV {labState.revision}</div>
+    <div class="privacy">PRIVATE / REV {labState.revision}</div>
     <div class="player-select">
-      <label for="player">Active player</label>
-      <select id="player" value={labState.selectedPlayerId} onchange={(event) => selectPlayer(event.currentTarget.value)}>
-        {#each labState.players as item}<option value={item.id}>{item.name}</option>{/each}
-      </select>
+      {#if operator}
+        <label for="player">Active player</label>
+        <select id="player" value={labState.selectedPlayerId} onchange={(event) => selectPlayer(event.currentTarget.value)}>
+          {#each labState.players as item}<option value={item.id}>{item.name}</option>{/each}
+        </select>
+      {:else}
+        <span class="assigned-player"><small>Assigned player</small><strong>{player?.name}</strong></span>
+      {/if}
+      <a class="sign-out" href="/api/auth/logout">Sign out</a>
     </div>
   </header>
 
@@ -185,7 +246,7 @@
     {/each}
   </nav>
 
-  {#if syncError}<div class="errors sync-error" role="alert"><strong>Local save needs attention.</strong> {syncError} Your browser copy is retained so you can retry.</div>{/if}
+  {#if syncError}<div class="errors sync-error" role="alert"><strong>Workspace save needs attention.</strong> {syncError} Retry after the authenticated server connection is restored.</div>{/if}
 
   <main class="main" id="main-content" tabindex="-1">
     {#if view === 'dashboard'}
@@ -317,18 +378,46 @@
         <fieldset class="evidence"><legend>Evidence snapshot</legend>
           {#each Object.entries(evidenceLabels) as [signal, label]}<div class="evidence-row"><strong>{label}</strong>{#each ['emerging', 'usable', 'repeatable'] as value}<label class="radio"><input type="radio" name={signal} checked={draft.evidence[signal as EvidenceSignal] === value} onchange={() => setEvidence(signal as EvidenceSignal, value as EvidenceValue)} /> {value}</label>{/each}</div>{/each}
         </fieldset>
-        <div class="actions"><button class="button primary" disabled={commandBusy} type="submit">Save receipt</button>{#if saved}<span class="success" role="status">RECEIPT SAVED / LOCAL ONLY</span>{/if}</div>
+        <div class="actions"><button class="button primary" disabled={commandBusy} type="submit">Save receipt</button>{#if saved}<span class="success" role="status">RECEIPT SAVED / PRIVATE WORKSPACE</span>{/if}</div>
       </form>
 
     {:else if view === 'progress'}
       <div class="section-head"><h2>Mastery before calendar</h2><p>Phases are gates, not promises tied to a fixed number of weeks.</p></div>
       <div class="table-wrap"><table><thead><tr><th>Phase</th><th>Development focus</th><th>Proof to advance</th></tr></thead><tbody>{#each progressionPhases as row}<tr>{#each row as cell}<td>{cell}</td>{/each}</tr>{/each}</tbody></table></div>
-      <div class="section-head"><h2>Receipt history</h2><p>Each entry belongs only to {player?.name} in the private local workspace.</p></div>
+      <div class="section-head"><h2>Receipt history</h2><p>Each entry belongs only to {player?.name} in the authenticated private workspace.</p></div>
       <div class="history">{#each receipts as item}<article class="receipt"><time>{item.date}</time><div><strong>{item.strength}</strong><p>{item.playerWords}</p></div><div><strong>Next: {item.nextFocus}</strong><p>{item.session}</p></div></article>{:else}<div class="empty">No progression receipts yet.</div>{/each}</div>
 
     {:else if view === 'players'}
-      <div class="section-head"><h2>Players + local data</h2><p>The app-owned local datastore is authoritative; this browser keeps a recovery cache. No analytics or external write is used.</p></div>
-      <section class="profile-box"><p class="eyebrow">Add a player profile</p><div class="profile-row"><input class="input" aria-label="New player name" bind:value={playerName} placeholder="Player name or private label" /><button class="button primary" disabled={commandBusy} onclick={addPlayer}>Add profile</button></div></section>
+      <div class="section-head"><h2>Players + private data</h2><p>The authenticated server response is authoritative. Protected workspace records are never restored from browser storage, and no analytics are used.</p></div>
+      {#if operator}
+        <section class="profile-box">
+          <p class="eyebrow">Add a private player profile</p>
+          <div class="profile-grid create-profile">
+            <label class="field"><span>Private label</span><input class="input" bind:value={playerName} placeholder="Player 01" /></label>
+            <label class="field"><span>Age</span><input class="input" type="number" min="5" max="99" bind:value={newPlayerAge} /></label>
+            <label class="field"><span>Gender</span><select class="input" bind:value={newPlayerGender}><option value="">Not entered</option><option value="male">Male</option><option value="female">Female</option><option value="nonbinary">Nonbinary</option><option value="self-described">Self-described</option></select></label>
+            <label class="field"><span>Primary position</span><select class="input" bind:value={newPlayerPosition}><option value="">Not entered</option><option value="guard">Guard</option><option value="wing">Wing</option><option value="post">Post</option></select></label>
+            <button class="button primary profile-submit" disabled={commandBusy} onclick={addPlayer}>Add profile</button>
+          </div>
+          <p class="privacy-note">Start with only known basketball context. The player can complete optional fields from his own scoped workspace.</p>
+        </section>
+      {/if}
+      <section class="profile-box profile-editor">
+        <div class="section-head compact"><div><p class="eyebrow">Player-owned profile</p><h2>{player?.name}</h2></div><p>Only this private workspace can read these fields. Contact, school, guardian, medical, ranking, and recruiting data are not requested.</p></div>
+        <form class="profile-grid" onsubmit={(event) => { event.preventDefault(); savePlayerProfile(); }}>
+          <label class="field"><span>Preferred name</span><input class="input" bind:value={profilePreferredName} autocomplete="off" /></label>
+          <label class="field"><span>Age</span><input class="input" type="number" min="5" max="99" bind:value={profileAge} /></label>
+          <label class="field"><span>Gender</span><select class="input" bind:value={profileGender}><option value="">Not entered</option><option value="male">Male</option><option value="female">Female</option><option value="nonbinary">Nonbinary</option><option value="self-described">Self-described</option></select></label>
+          <label class="field"><span>Primary position</span><select class="input" bind:value={profilePosition}><option value="">Not entered</option><option value="guard">Guard</option><option value="wing">Wing</option><option value="post">Post</option></select></label>
+          <label class="field"><span>Dominant hand</span><select class="input" bind:value={profileDominantHand}><option value="">Not entered</option><option value="left">Left</option><option value="right">Right</option><option value="both">Both</option></select></label>
+          <label class="field"><span>Height</span><input class="input" bind:value={profileHeight} placeholder="Optional, in his own words" /></label>
+          <label class="field"><span>Experience</span><input class="input" bind:value={profileExperience} placeholder="Optional playing context" /></label>
+          <label class="field"><span>State / jurisdiction</span><input class="input" bind:value={profileJurisdiction} placeholder="Optional, for rules and film context" /></label>
+          <label class="field full"><span>What do you want to improve?</span><textarea class="input" bind:value={profileGoals}></textarea></label>
+          <label class="field full"><span>Anything else the program should know?</span><textarea class="input" bind:value={profileNotes}></textarea></label>
+          <div class="actions"><button class="button primary" disabled={commandBusy} type="submit">Save my profile</button>{#if profileSaved}<span class="success" role="status">PROFILE SAVED / PRIVATE WORKSPACE</span>{/if}</div>
+        </form>
+      </section>
       <div class="section-head"><h2>Codex access boundary</h2><p>Both people work with the program. Neither needs a coach persona.</p></div>
       <div class="role-grid">
         <article><span class="mono">Program agent</span><strong>Guides the sequence</strong><p>Requests context, applies safety policy, separates evidence, and proposes the next interaction.</p></article>
@@ -336,10 +425,10 @@
         <article><span class="mono">Player Codex</span><strong>Own records only</strong><p>Can review and save personal receipts, source links, reflections, and engagement events—never another player or reset controls.</p></article>
         <article><span class="mono">Operator Codex</span><strong>Manages the system</strong><p>Creates profiles, reviews the full workspace, manages evidence, and performs confirmation-gated reset.</p></article>
       </div>
-      <div class="section-head"><h2>Data control</h2><p>Reset returns the app to its generic starter profile. This cannot be undone.</p></div>
-      <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset local data'}</button>
+      {#if operator}<div class="section-head"><h2>Data control</h2><p>Reset returns the app to its generic starter profile. This cannot be undone.</p></div>
+      <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset workspace'}</button>{/if}
     {/if}
 
-    <footer class="footer">FIELD TEST / V0.2 &nbsp; STATUS / {hydrated ? 'LOCAL READY' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; NO EXTERNAL WRITES</footer>
+    <footer class="footer">FIELD TEST / V0.4 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
   </main>
 </div>

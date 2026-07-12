@@ -6,6 +6,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { renderCanonDesignAudit } from '@create-something/canon/design-audit';
+import { validateAuthIntegration } from '@create-something/auth-platform';
 import { search, findRelated } from './search.js';
 import {
   createCanonOverlayInstantiatePreview,
@@ -130,6 +131,39 @@ const CANON_OVERLAY_ARTIFACT_KIND_VALUES = [
 ] as const;
 
 export function registerTools(server: McpServer) {
+  server.tool(
+    'auth_config_validate',
+    'Validate a proposed CREATE SOMETHING auth integration without network access or mutation. Never send passwords, tokens, API keys, private keys, or other secrets.',
+    {
+      environment: z.enum(['development', 'preview', 'production']),
+      issuer: z.string().optional(),
+      jwksUrl: z.string().optional(),
+      audiences: z.array(z.string()).optional(),
+      allowSubjects: z.array(z.string()).optional(),
+      allowEmails: z.array(z.string()).optional(),
+      allowEmailDomains: z.array(z.string()).optional(),
+      allowTenants: z.array(z.string()).optional(),
+      allowRoles: z.array(z.string()).optional(),
+      allowAnyAuthenticated: z.boolean().optional(),
+      preview: z.boolean().optional(),
+      secret: z.string().optional().describe('Forbidden: present only so accidental secret input is rejected'),
+      password: z.string().optional().describe('Forbidden: present only so accidental secret input is rejected'),
+      token: z.string().optional().describe('Forbidden: present only so accidental secret input is rejected'),
+      apiKey: z.string().optional().describe('Forbidden: present only so accidental secret input is rejected'),
+      privateKey: z.string().optional().describe('Forbidden: present only so accidental secret input is rejected')
+    },
+    async ({ secret, password, token, apiKey, privateKey, ...input }) => ({
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify(validateAuthIntegration({
+          ...input,
+          hasSecretMaterial: [secret, password, token, apiKey, privateKey].some((value) => Boolean(value))
+        }), null, 2),
+        ...USER_VISIBLE
+      }]
+    })
+  );
+
   // ==========================================================================
   // search — Cross-property full-text search
   // ==========================================================================

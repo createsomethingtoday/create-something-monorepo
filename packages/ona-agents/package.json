@@ -10,7 +10,7 @@
     "entrypoints": [
       "src/routes/agents/+page.svelte",
       "src/routes/agents/[agentId]/+page.svelte",
-      "src/lib/server/auth/clerk-access.ts",
+      "src/lib/server/auth/identity-access.ts",
       "src/lib/server/dify/client.ts"
     ],
     "boot": "pnpm dev",

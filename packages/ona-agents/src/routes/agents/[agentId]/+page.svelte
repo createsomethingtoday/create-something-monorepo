@@ -28,10 +28,10 @@
 {#if !data.accessAllowed || !selectedAgent}
   <section class="access-shell performance-paper">
     <div class="access-copy">
-      <div class="eyebrow">Clerk Access</div>
-      <h1 class="section-title">Sign in with Clerk to use Dify operator chat.</h1>
+      <div class="eyebrow">Staff access</div>
+      <h1 class="section-title">Sign in with CREATE SOMETHING to use Dify operator chat.</h1>
       <p class="muted">
-        The chat proxy will not call Dify until a staff Clerk session is active for this browser.
+        The chat proxy will not call Dify until a verified staff session is active for this browser.
         {data.accessDetail}
       </p>
     </div>

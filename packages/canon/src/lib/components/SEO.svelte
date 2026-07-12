@@ -330,7 +330,6 @@
       api: 'API',
       dify: 'Dify',
       mcp: 'MCP',
-      n8n: 'n8n',
       seo: 'SEO'
     };
 

@@ -1,0 +1,19 @@
+name = "guard-performance-lab"
+compatibility_date = "2026-06-24"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+[vars]
+ENVIRONMENT = "production"
+CS_IDENTITY_ISSUER = "https://id.createsomething.space"
+CS_IDENTITY_JWKS_URL = "https://id.createsomething.space/.well-known/jwks.json"
+CS_IDENTITY_AUDIENCE = "guard-performance-lab"
+CS_AUTH_SIGN_IN_URL = "/sign-in"
+ALLOW_CS_AUTH_PREVIEW = "false"
+GUARD_LAB_OPERATOR_SUBJECTS = "b8adb839-ddbb-4747-968e-7668687cf140"
+
+[[d1_databases]]
+binding = "GUARD_LAB_DB"
+database_name = "guard-performance-lab"
+database_id = "ff5bae4e-ff86-46a3-a0bd-f95f5805d953"
+migrations_dir = "migrations"

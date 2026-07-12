@@ -72,7 +72,7 @@ The codebase has **two parallel implementations** of core functionality:
 
 #### Finding 2.2: Obsolete Deployment Config
 - `railway.json` still present (system now on Cloudflare)
-- README references Railway/n8n (actual: Cloudflare Workers)
+- README references Railway and a retired workflow platform (actual: Cloudflare Workers)
 
 #### Finding 2.3: The 800-Line Noise Filter
 - `_isValidArtistName()` has 200+ noise words, 50+ regex patterns
@@ -86,7 +86,7 @@ The codebase has **two parallel implementations** of core functionality:
 #### Finding 3.1: Architectural Confusion
 Three deployment narratives coexist:
 1. Node.js + Railway (documented)
-2. n8n (mentioned as future)
+2. Legacy workflow platform (mentioned as future)
 3. Cloudflare Workers (actual production)
 
 #### Finding 3.2: Relationship to Half Dozen

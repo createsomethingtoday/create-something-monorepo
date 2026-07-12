@@ -25,6 +25,10 @@ const productsRoute = readFileSync(
 	new URL('../src/routes/products/+page.svelte', import.meta.url),
 	'utf8'
 );
+const marketplaceWorkflowRoute = readFileSync(
+	new URL('../src/routes/proof/marketplace-workflow/+page.svelte', import.meta.url),
+	'utf8'
+);
 const bookRoute = readFileSync(new URL('../src/routes/book/+page.svelte', import.meta.url), 'utf8');
 const difyControlPlaneRoute = readFileSync(
 	new URL('../src/routes/dify/mcp-control-plane/+page.svelte', import.meta.url),
@@ -91,6 +95,7 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 		'/methodology',
 		'/stack',
 		'/products',
+		'/proof/marketplace-workflow',
 		'/products/signal',
 		'/products/decision',
 		'/products/proof'
@@ -103,6 +108,7 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 	assert.equal(usesCompactAgencyPrivacyPrompt('/'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/services'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/dify/mcp-control-plane/'), true);
+	assert.equal(usesCompactAgencyPrivacyPrompt('/proof/marketplace-workflow'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/contact'), false);
 });
 
@@ -213,6 +219,20 @@ test('products route exposes the governance product contract surfaces', () => {
 	assert.ok(productsRoute.includes('Atlas maps the workflow.'));
 	assert.ok(productsRoute.includes("href: product.id === 'atlas' ? '/atlas' : `/products/${product.id}`"));
 	assert.equal(productsRoute.includes('<PublicAtlasCanvas'), false);
+});
+
+test('public proof path distinguishes the workflow compiler prototype from live operation', () => {
+	assert.ok(homeRoute.includes('href="/proof/marketplace-workflow"'));
+	assert.ok(homeRoute.includes('Stop watching the workflow. Keep the judgment.'));
+	assert.ok(productsRoute.includes('Foundation'));
+	assert.ok(productsRoute.includes('Substrate'));
+	assert.ok(productsRoute.includes('Map / Pilot / Operate'));
+	assert.ok(marketplaceWorkflowRoute.includes('Active development'));
+	assert.ok(marketplaceWorkflowRoute.includes('representative local fixtures'));
+	assert.ok(marketplaceWorkflowRoute.includes('no production writes'));
+	assert.ok(marketplaceWorkflowRoute.includes('deterministic: true'));
+	assert.ok(marketplaceWorkflowRoute.includes("{ value: '15'"));
+	assert.ok(marketplaceWorkflowRoute.includes("{ value: '5'"));
 });
 
 test('Signal Decision and Proof product pages attach back to Atlas and each other', () => {

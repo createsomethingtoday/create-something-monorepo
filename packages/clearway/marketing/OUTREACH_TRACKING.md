@@ -180,7 +180,7 @@ Track weekly:
 
 ## Automation Ideas (Future)
 
-### If using Zapier / Make / n8n:
+### If using a workflow automation platform:
 
 1. **Auto-add to sheet:** New contact form submission → Add row to sheet
 2. **Reminder emails:** Next Action Date = Today → Send reminder email

@@ -208,6 +208,18 @@
 			"types": "./dist/auth/server.d.ts",
 			"default": "./dist/auth/server.js"
 		},
+		"./auth/access": {
+			"types": "./dist/auth/access.d.ts",
+			"default": "./dist/auth/access.js"
+		},
+		"./auth/cookies": {
+			"types": "./dist/auth/cookies.d.ts",
+			"default": "./dist/auth/cookies.js"
+		},
+		"./auth/handlers": {
+			"types": "./dist/auth/handlers.d.ts",
+			"default": "./dist/auth/handlers.js"
+		},
 		"./auth/components": {
 			"types": "./dist/auth/components/index.d.ts",
 			"svelte": "./dist/auth/components/index.js"

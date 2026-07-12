@@ -69,6 +69,7 @@ import {
 } from './db/queries';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
 import type { RolloutConfig } from '@create-something/policy-os-engine';
+import { createAuthOpenApi, createAuthPlatformContract } from '@create-something/auth-platform';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -106,6 +107,16 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/.well-known/jwks.json' && method === 'GET') {
 		const jwks = await getJWKS(env.DB);
 		return json(jwks, 200, { 'Cache-Control': 'public, max-age=3600' });
+	}
+	if (path === '/.well-known/create-something-auth' && method === 'GET') {
+		return json(createAuthPlatformContract(new URL(request.url).origin), 200, {
+			'Cache-Control': 'public, max-age=300',
+		});
+	}
+	if (path === '/v1/auth/openapi.json' && method === 'GET') {
+		return json(createAuthOpenApi(new URL(request.url).origin), 200, {
+			'Cache-Control': 'public, max-age=300',
+		});
 	}
 	if (path === '/.well-known/oauth-authorization-server' && method === 'GET') {
 		return json(buildOAuthAuthorizationServerMetadata(new URL(request.url), env), 200, {

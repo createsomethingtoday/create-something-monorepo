@@ -108,12 +108,24 @@ export {
 export {
 	validateToken,
 	validateToken as validateTokenWithKV,
+	verifyIdentityToken,
 	requireAuth as requireAuthFromRequest,
 	getTokenFromRequest,
 	getOptionalUser,
 	clearJWKSCache,
 	AuthenticationError,
+	type IdentityVerificationConfig,
+	type VerifiedIdentity,
 } from './server.js';
+
+export {
+	resolveApplicationAccess,
+	type ApplicationAccessPolicy,
+	type ApplicationAccessSource,
+	type ApplicationAccessState,
+	type ApplicationAccessStatus,
+	type ResolveApplicationAccessInput,
+} from './access.js';
 
 // Auth endpoint handlers (DRY utilities)
 export {

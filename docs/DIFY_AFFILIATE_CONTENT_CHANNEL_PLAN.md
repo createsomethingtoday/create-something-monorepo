@@ -118,10 +118,9 @@ and link back to the canonical page.
 |        3 | `How To Ship A Dify App With MCP Tools`          | Builders and agencies               | Read `/dify/ship-dify-app-with-mcp-tools` or book mapping session | "A practical shipping checklist for Dify plus MCP."        |
 |        4 | `Client-Safe Dify Delivery Evidence`             | Client buyers and agency partners   | See proof packet or book mapping session               | "What proof can be public without leaking traces."         |
 |        5 | `Dify Template Marketplace Workflow`             | Marketplace builders                | Read marketplace proof and setup steps                 | "Turn a Dify workflow into a reusable asset."              |
-|        6 | `Dify vs n8n: Workflow Automation vs Agent Apps` | Operators and automation builders   | Read `/dify/n8n-vs-dify` or book mapping session       | "The job changed: n8n for workflows, Dify for agent apps." |
-|        7 | `Dify vs Custom Agent Stack For Operators`       | Business operators                  | Book mapping session                                   | "When Dify is enough and when it needs a control layer."   |
-|        8 | `Dify Affiliate Starter Kit For Agencies`        | Agencies and consultants            | Approved affiliate link after acceptance               | "How agencies should route self-serve Dify leads."         |
-|        9 | `Dify Governance Checklist`                      | Operators                           | Download checklist or book mapping session             | "The preflight before connecting Dify to real tools."      |
+|        6 | `Dify vs Custom Agent Stack For Operators`       | Business operators                  | Book mapping session                                   | "When Dify is enough and when it needs a control layer."   |
+|        7 | `Dify Affiliate Starter Kit For Agencies`        | Agencies and consultants            | Approved affiliate link after acceptance               | "How agencies should route self-serve Dify leads."         |
+|        8 | `Dify Governance Checklist`                      | Operators                           | Download checklist or book mapping session             | "The preflight before connecting Dify to real tools."      |
 
 ## Weekly Publishing Rhythm
 
