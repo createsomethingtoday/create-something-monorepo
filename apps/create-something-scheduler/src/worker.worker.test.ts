@@ -1,0 +1,410 @@
+import { env, runInDurableObject, SELF } from 'cloudflare:test';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DurableOAuthStore } from './auth/durable-oauth-store.js';
+
+afterEach(() => vi.restoreAllMocks());
+
+describe('scheduler Worker transport', () => {
+  it('serves health, OpenAPI, and the public link contract', async () => {
+    const health = await SELF.fetch('https://scheduler.local/health');
+    expect(await health.json()).toEqual({
+      ok: true,
+      service: 'create-something-scheduler'
+    });
+
+    const openapi = await SELF.fetch('https://scheduler.local/openapi.json');
+    expect(await openapi.json()).toMatchObject({
+      openapi: '3.1.0',
+      info: { title: 'CREATE SOMETHING Scheduler API' }
+    });
+
+    const link = await SELF.fetch(
+      'https://scheduler.local/api/v1/links/createsomething/together'
+    );
+    expect(await link.json()).toMatchObject({
+      slug: 'createsomething/together',
+      durationMinutes: 30,
+      timezone: 'America/Chicago'
+    });
+
+    const page = await SELF.fetch('https://scheduler.local/createsomething/together');
+    expect(page.headers.get('content-type')).toContain('text/html');
+    expect(page.headers.get('content-security-policy')).toContain(
+      'frame-ancestors https://createsomething.agency'
+    );
+    expect(await page.text()).toContain('Create Something Together');
+
+    const room = await SELF.fetch('https://scheduler.local/rooms/room_controlled');
+    expect(room.status).toBe(200);
+    expect(room.headers.get('cache-control')).toBe('no-store');
+    expect(room.headers.get('permissions-policy')).toContain('display-capture=(self)');
+    expect(room.headers.get('content-security-policy')).toContain('https://*.realtime.cloudflare.com');
+    expect(room.headers.get('content-security-policy')).toContain('https://*.dyte.in');
+    expect(room.headers.get('content-security-policy')).toContain('wss://*.dyte.io');
+    expect(room.headers.get('content-security-policy')).toContain('https://api.fontshare.com');
+    expect(room.headers.get('content-security-policy')).toContain('https://cdn.fontshare.com');
+    expect(room.headers.get('content-security-policy')).toContain('https://cdn.jsdelivr.net');
+    expect(await room.text()).toContain('data-room-id="room_controlled"');
+  });
+
+  it('fails closed instead of exposing slots when OAuth credentials are absent', async () => {
+    const readiness = await SELF.fetch('https://scheduler.local/ready');
+    expect(readiness.status).toBe(503);
+    expect(await readiness.json()).toEqual({
+      ready: false,
+      service: 'create-something-scheduler'
+    });
+    const response = await SELF.fetch(
+      'https://scheduler.local/api/v1/availability?from=2026-07-14T00%3A00%3A00Z&to=2026-07-15T00%3A00%3A00Z&timezone=America%2FChicago'
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      status: 'retryable',
+      reason: 'provider_unavailable',
+      slots: []
+    });
+  });
+
+  it('retries Calendar discovery through an operator-only recovery route', async () => {
+    const stub = env.SCHEDULER.getByName('micah-johnson');
+    await runInDurableObject(stub, async (_instance, state) => {
+      await new DurableOAuthStore(state, 'controlled-oauth-encryption-secret').write({
+        accessToken: 'controlled-access-token',
+        refreshToken: 'controlled-refresh-token',
+        expiresAt: '2099-07-11T18:00:00Z',
+        grantedScopes: [
+          'https://www.googleapis.com/auth/calendar.events',
+          'https://www.googleapis.com/auth/calendar.freebusy',
+          'https://www.googleapis.com/auth/calendar.calendarlist.readonly'
+        ]
+      });
+    });
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      expect(String(input)).toContain('/calendar/v3/users/me/calendarList');
+      return Response.json({
+        items: [{
+          id: 'micah@createsomething.io',
+          selected: true,
+          accessRole: 'owner',
+          conferenceProperties: { allowedConferenceSolutionTypes: ['hangoutsMeet'] }
+        }]
+      });
+    });
+
+    const unauthorized = await SELF.fetch(
+      'https://scheduler.local/api/v1/operator/calendars/discover',
+      { method: 'POST' }
+    );
+    expect(unauthorized.status).toBe(403);
+
+    const response = await SELF.fetch(
+      'https://scheduler.local/api/v1/operator/calendars/discover',
+      {
+        method: 'POST',
+        headers: { authorization: 'Bearer controlled-operator-token' }
+      }
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      status: 'available',
+      selectedCalendarIds: ['micah@createsomething.io'],
+      eventCalendarId: 'micah@createsomething.io'
+    });
+  });
+
+  it('opens and rolls back a bounded date through the operator availability override API', async () => {
+    const stub = env.SCHEDULER.getByName('micah-johnson');
+    await runInDurableObject(stub, async (_instance, state) => {
+      await new DurableOAuthStore(state, 'controlled-oauth-encryption-secret').write({
+        accessToken: 'controlled-access-token',
+        refreshToken: 'controlled-refresh-token',
+        expiresAt: '2099-07-11T18:00:00Z',
+        grantedScopes: [
+          'https://www.googleapis.com/auth/calendar.events',
+          'https://www.googleapis.com/auth/calendar.freebusy',
+          'https://www.googleapis.com/auth/calendar.calendarlist.readonly'
+        ]
+      });
+      state.storage.kv.put('google:calendar-configuration', {
+        selectedCalendarIds: ['micah@createsomething.io'],
+        eventCalendarId: 'micah@createsomething.io'
+      });
+    });
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      expect(String(input)).toBe('https://www.googleapis.com/calendar/v3/freeBusy');
+      return Response.json({
+        calendars: { 'micah@createsomething.io': { busy: [] } }
+      });
+    });
+
+    const endpoint = 'https://scheduler.local/api/v1/operator/availability-overrides';
+    expect((await SELF.fetch(endpoint)).status).toBe(403);
+
+    const applied = await SELF.fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer controlled-operator-token',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        overrideId: 'worker-wednesday-2026-07-15',
+        date: '2026-07-15',
+        opensAt: '13:00',
+        closesAt: '15:00',
+        timezone: 'America/Chicago',
+        reason: 'Controlled client meeting window',
+        explicitIntent: true
+      })
+    });
+    expect(applied.status).toBe(200);
+    expect(await applied.json()).toMatchObject({
+      status: 'applied',
+      override: { overrideId: 'worker-wednesday-2026-07-15', date: '2026-07-15' }
+    });
+
+    const listed = await SELF.fetch(endpoint, {
+      headers: { authorization: 'Bearer controlled-operator-token' }
+    });
+    expect(await listed.json()).toMatchObject({
+      status: 'available',
+      overrides: [{ overrideId: 'worker-wednesday-2026-07-15' }]
+    });
+
+    const availabilityUrl = 'https://scheduler.local/api/v1/availability?from=2026-07-15T00%3A00%3A00Z&to=2026-07-16T00%3A00%3A00Z&timezone=America%2FChicago';
+    const opened = await SELF.fetch(availabilityUrl);
+    const openedBody = await opened.json() as { status: string; slots: Array<{ start: string; end: string }> };
+    expect(openedBody).toMatchObject({
+      status: 'available',
+      slots: expect.arrayContaining([
+        { start: '2026-07-15T18:00:00Z', end: '2026-07-15T18:30:00Z' }
+      ])
+    });
+    expect(openedBody.slots).toHaveLength(4);
+
+    const oneHour = await SELF.fetch(`${availabilityUrl}&durationMinutes=60`);
+    const oneHourBody = await oneHour.json() as {
+      durationMinutes: number;
+      slots: Array<{ start: string; end: string }>;
+    };
+    expect(oneHourBody.durationMinutes).toBe(60);
+    expect(oneHourBody.slots).toHaveLength(3);
+    expect(oneHourBody.slots.at(-1)).toEqual({
+      start: '2026-07-15T19:00:00Z',
+      end: '2026-07-15T20:00:00Z'
+    });
+
+    const deleted = await SELF.fetch(`${endpoint}/worker-wednesday-2026-07-15`, {
+      method: 'DELETE',
+      headers: {
+        authorization: 'Bearer controlled-operator-token',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ explicitIntent: true })
+    });
+    expect(deleted.status).toBe(200);
+    expect(await deleted.json()).toMatchObject({
+      status: 'deleted',
+      overrideId: 'worker-wednesday-2026-07-15'
+    });
+
+    const closed = await SELF.fetch(availabilityUrl);
+    expect(await closed.json()).toMatchObject({ status: 'available', slots: [] });
+  });
+
+  it('prepares, commits, and reads a booking through the Worker and host Durable Object', async () => {
+    const stub = env.SCHEDULER.getByName('micah-johnson');
+    await runInDurableObject(stub, async (_instance, state) => {
+      await new DurableOAuthStore(state, 'controlled-oauth-encryption-secret').write({
+        accessToken: 'controlled-access-token',
+        refreshToken: 'controlled-refresh-token',
+        expiresAt: '2099-07-11T18:00:00Z',
+        grantedScopes: [
+          'https://www.googleapis.com/auth/calendar.events',
+          'https://www.googleapis.com/auth/calendar.freebusy',
+          'https://www.googleapis.com/auth/calendar.calendarlist.readonly'
+        ]
+      });
+      state.storage.kv.put('google:calendar-configuration', {
+        selectedCalendarIds: ['micah@createsomething.io'],
+        eventCalendarId: 'micah@createsomething.io'
+      });
+    });
+    let freeBusyCalls = 0;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === 'https://challenges.cloudflare.com/turnstile/v0/siteverify') {
+        return Response.json({ success: true, hostname: 'scheduler.local' });
+      }
+      if (url === 'https://www.googleapis.com/calendar/v3/freeBusy') {
+        freeBusyCalls += 1;
+        return Response.json({
+          calendars: { 'micah@createsomething.io': { busy: [] } }
+        });
+      }
+      if (url.startsWith(
+        'https://www.googleapis.com/calendar/v3/calendars/micah%40createsomething.io/events?'
+      )) {
+        return Response.json({
+          id: 'google-event-worker',
+          hangoutLink: 'https://meet.google.com/worker-test'
+        });
+      }
+      throw new Error(`Unexpected provider request: ${url}`);
+    });
+
+    const readiness = await SELF.fetch('https://scheduler.local/ready');
+    expect(readiness.status).toBe(200);
+    expect(await readiness.json()).toEqual({
+      ready: true,
+      service: 'create-something-scheduler'
+    });
+    const operatorStatus = await SELF.fetch('https://scheduler.local/api/v1/operator/status', {
+      headers: { authorization: 'Bearer controlled-operator-token' }
+    });
+    expect(await operatorStatus.json()).toMatchObject({
+      ready: true,
+      oauthConnected: true,
+      calendarDiscovered: true,
+      selectedCalendarCount: 1,
+      configuration: {
+        googleOAuth: true,
+        reminders: true,
+        browserProof: true
+      }
+    });
+
+    const prepare = await SELF.fetch('https://scheduler.local/api/v1/bookings/prepare', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        slot: { start: '2026-07-14T16:00:00Z', end: '2026-07-14T16:30:00Z' },
+        scheduler: { name: 'Controlled Worker', email: 'controlled@example.com' }
+      })
+    });
+    expect(prepare.status).toBe(200);
+    const proposal = await prepare.json() as { proposalToken: string };
+
+    const commit = await SELF.fetch('https://scheduler.local/api/v1/bookings', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-browser-proof': 'controlled-turnstile-proof'
+      },
+      body: JSON.stringify({
+        proposalToken: proposal.proposalToken,
+        idempotencyKey: 'worker-controlled-commit',
+        explicitIntent: true
+      })
+    });
+    expect(commit.status).toBe(200);
+    const committed = await commit.json() as {
+      actionToken: string;
+      booking: { bookingId: string };
+    };
+    expect(committed).toMatchObject({
+      booking: { provider: { meetUrl: 'https://meet.google.com/worker-test' } }
+    });
+
+    const read = await SELF.fetch(
+      `https://scheduler.local/api/v1/bookings/${committed.booking.bookingId}`,
+      { headers: { 'x-booking-action-token': committed.actionToken } }
+    );
+    expect(read.status).toBe(200);
+    expect(await read.json()).toMatchObject({
+      status: 'committed',
+      booking: { bookingId: committed.booking.bookingId }
+    });
+    expect(freeBusyCalls).toBe(2);
+  });
+
+  it('enforces a durable fixed-window rate limit without storing the raw subject', async () => {
+    const stub = env.SCHEDULER.getByName('rate-limit-test');
+    const input = {
+      bucket: 'controlled',
+      subjectHash: 'already-hashed-subject',
+      limit: 2,
+      windowMilliseconds: 60_000,
+      now: Date.parse('2026-07-11T18:00:00Z')
+    };
+    await expect(stub.consumeRateLimit(input)).resolves.toBe(true);
+    await expect(stub.consumeRateLimit(input)).resolves.toBe(true);
+    await expect(stub.consumeRateLimit(input)).resolves.toBe(false);
+  });
+
+  it('answers MCP initialize over stateless Streamable HTTP and rejects a foreign Origin', async () => {
+    const initialize = await SELF.fetch('https://scheduler.local/mcp', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json, text/event-stream',
+        origin: 'https://scheduler.local'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-06-18',
+          capabilities: {},
+          clientInfo: { name: 'worker-transport-test', version: '1.0.0' }
+        }
+      })
+    });
+    expect(initialize.status).toBe(200);
+    expect(await initialize.json()).toMatchObject({
+      jsonrpc: '2.0',
+      id: 1,
+      result: {
+        serverInfo: { name: 'create-something-scheduler', version: '0.1.0' }
+      }
+    });
+
+    const publicTools = await mcpRequest('tools/list', {}, 2);
+    expect(publicTools.status).toBe(200);
+    const publicBody = await publicTools.json() as {
+      result: { tools: Array<{ name: string }> };
+    };
+    expect(publicBody.result.tools.map((tool) => tool.name)).toContain('scheduler_list_availability');
+    expect(publicBody.result.tools.map((tool) => tool.name)).not.toContain('scheduler_commit_booking');
+
+    const operatorTools = await mcpRequest('tools/list', {}, 3, {
+      authorization: 'Bearer controlled-operator-token'
+    });
+    const operatorBody = await operatorTools.json() as {
+      result: { tools: Array<{ name: string }> };
+    };
+    expect(operatorBody.result.tools.map((tool) => tool.name)).toContain('scheduler_commit_booking');
+
+    const foreign = await SELF.fetch('https://scheduler.local/mcp', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://attacker.example'
+      },
+      body: '{}'
+    });
+    expect(foreign.status).toBe(403);
+    expect(await foreign.json()).toMatchObject({
+      error: { code: 'origin_not_allowed' }
+    });
+  });
+});
+
+function mcpRequest(
+  method: string,
+  params: Record<string, unknown>,
+  id: number,
+  headers: Record<string, string> = {}
+) {
+  return SELF.fetch('https://scheduler.local/mcp', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json, text/event-stream',
+      origin: 'https://scheduler.local',
+      ...headers
+    },
+    body: JSON.stringify({ jsonrpc: '2.0', id, method, params })
+  });
+}

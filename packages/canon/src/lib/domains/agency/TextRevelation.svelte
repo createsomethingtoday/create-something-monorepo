@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import SavvyCalButton from './SavvyCalButton.svelte';
+	import ScheduleButton from './ScheduleButton.svelte';
 
 	let container: HTMLElement;
 	let scrollProgress = $state(0);
@@ -119,7 +119,7 @@
 			style="--above-fold-opacity: {aboveFoldOpacity};"
 			class:hidden={aboveFoldOpacity <= 0}
 		>
-			<SavvyCalButton variant="primary" size="lg" />
+			<ScheduleButton variant="primary" size="lg" />
 			<span class="scroll-hint">or scroll to learn more</span>
 		</div>
 
