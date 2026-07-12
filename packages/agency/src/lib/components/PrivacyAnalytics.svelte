@@ -330,6 +330,28 @@
       font-size: 0.68rem;
     }
 
+    .privacy-pill--compact {
+      min-height: 2.75rem;
+      padding: 0 0.4rem;
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+      color: var(--color-performance-muted, #5e6268);
+      font-family: var(--font-mono);
+    }
+
+    .privacy-pill--compact:hover {
+      border-color: transparent;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .privacy-pill--compact:focus-visible {
+      outline: 2px solid var(--color-performance-ink, #090909);
+      outline-offset: 2px;
+    }
+
     .privacy-pill > span:first-child {
       display: none;
     }
@@ -341,7 +363,7 @@
 
     .privacy-pill--compact > span:first-child::before {
       content: 'Privacy';
-      font-size: 0.68rem;
+      font-size: 0.62rem;
     }
 
     .privacy-pill__sub {

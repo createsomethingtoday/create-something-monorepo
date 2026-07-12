@@ -280,15 +280,15 @@
 
   <PerformancePageSection
     variant="soft"
-    eyebrow="Current agent environment"
-    title="Built primarily with OpenAI Codex. Designed to outlast any model."
-    description="We choose OpenAI deliberately for Codex and agent reasoning. The durable client system remains yours: workflow data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts, routing, fallback, and recovery."
+    eyebrow="How we build"
+    title="Built with OpenAI Codex. Designed to remain yours."
+    description="We use Codex to map, build, and maintain the workflow. Your team keeps the data, connections, approval rules, tests, operating history, and recovery path. If the model or agent environment changes, the system does not have to start over."
   >
     {#snippet actions()}
       <Button href="/stack">See what you keep</Button>
       <Button
         href="https://createsomething.ltd/canon/concepts/conviction-without-dependence"
-        variant="secondary">Read the Canon</Button
+        variant="secondary">Why we build this way</Button
       >
     {/snippet}
   </PerformancePageSection>

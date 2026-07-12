@@ -142,7 +142,12 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
     'utf8'
   );
 
-  assert.match(home, /Built primarily with OpenAI Codex\. Designed to outlast any model\./);
+  assert.match(home, /eyebrow="How we build"/);
+  assert.match(home, /Built with OpenAI Codex\. Designed to remain yours\./);
+  assert.match(home, /We use Codex to map, build, and maintain the workflow\./);
+  assert.match(home, /If the model or agent environment changes, the system does not have to start over\./);
+  assert.match(home, />Why we build this way</);
+  assert.doesNotMatch(home, /Current agent environment|Designed to outlast any model|MCP contracts, harnesses/);
   assert.match(home, /https:\/\/createsomething\.ltd\/canon\/concepts\/conviction-without-dependence/);
   assert.match(stack, /Model-opinionated in practice\. Model-portable by design\./);
   assert.match(stack, /data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts/i);
@@ -258,7 +263,8 @@ test('agency README documents the public copy contract', () => {
   assert.match(source, /Run `pnpm copy:check`/);
   assert.match(source, /Run `pnpm copy:heal`/);
   assert.match(source, /### Platform Conviction Contract/);
-  assert.match(source, /Built primarily with OpenAI Codex\. Designed to outlast any model\./);
+  assert.match(source, /Built with OpenAI Codex\. Designed to remain yours\./);
+  assert.match(source, /plain customer ownership\s+language/);
   assert.match(source, /### Current System Stack Contract/);
   assert.match(source, /Substrate is the owned database and operator layer/);
   assert.match(source, /OpenAI, Dify, and\s+> Cloudflare are the active external stack/);
