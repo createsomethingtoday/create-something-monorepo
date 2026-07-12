@@ -4,11 +4,13 @@ import {
   saveArtifact,
   saveEngagement,
   saveReceipt,
+  updatePlayerProfile,
   validateArtifact,
   validateReceipt,
   type EvidenceDraft,
   type EngagementDraft,
   type LabState,
+  type PlayerProfileInput,
   type ReceiptDraft
 } from '../model.js';
 import { labStore, type LabStore } from './store.js';
@@ -28,16 +30,23 @@ export class LabService {
     return { ok: true, workspace: scopeWorkspace(workspace, playerId) };
   }
 
-  async createPlayer(name: string): Promise<ServiceResult> {
+  async createPlayer(name: string, profile: PlayerProfileInput = {}): Promise<ServiceResult> {
     const clean = name.trim();
     if (!clean) throw new Error('Player name is required.');
-    return { ok: true, workspace: await this.store.mutate((state) => createPlayer(state, clean)) };
+    return { ok: true, workspace: await this.store.mutate((state) => createPlayer(state, clean, undefined, undefined, profile)) };
   }
 
   async selectPlayer(playerId: string): Promise<ServiceResult> {
     return { ok: true, workspace: await this.store.mutate((state) => {
       requirePlayer(state, playerId);
       return { ...state, selectedPlayerId: playerId };
+    }) };
+  }
+
+  async updatePlayerProfile(playerId: string, profile: PlayerProfileInput): Promise<ServiceResult> {
+    return { ok: true, workspace: await this.store.mutate((state) => {
+      requirePlayer(state, playerId);
+      return updatePlayerProfile(state, playerId, profile);
     }) };
   }
 

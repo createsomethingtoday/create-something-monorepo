@@ -16,6 +16,7 @@
     type EvidenceSignal,
     type EvidenceValue,
     type LabState,
+    type PlayerProfile,
     type ProgramStage,
     type ReceiptDraft
   } from '$lib/model.js';
@@ -45,7 +46,21 @@
   let search = $state('');
   let termPhase = $state<'all' | 'now' | 'next' | 'later'>('all');
   let activeRead = $state<keyof typeof readAnswers>('none');
-  let playerName = $state('');
+  let playerName = $state('Player 01');
+  let newPlayerAge = $state<number | null>(12);
+  let newPlayerGender = $state<PlayerProfile['gender'] | ''>('male');
+  let newPlayerPosition = $state<PlayerProfile['primaryPosition'] | ''>('guard');
+  let profileAge = $state<number | null>(null);
+  let profileGender = $state<PlayerProfile['gender'] | ''>('');
+  let profilePosition = $state<PlayerProfile['primaryPosition'] | ''>('');
+  let profilePreferredName = $state('');
+  let profileDominantHand = $state<PlayerProfile['dominantHand'] | ''>('');
+  let profileHeight = $state('');
+  let profileGoals = $state('');
+  let profileExperience = $state('');
+  let profileJurisdiction = $state('');
+  let profileNotes = $state('');
+  let profileSaved = $state(false);
   let resetArmed = $state(false);
   let hydrated = $state(false);
   let commandBusy = $state(false);
@@ -69,6 +84,22 @@
     const needle = search.trim().toLowerCase();
     return matchesPhase && (!needle || `${term} ${meaning}`.toLowerCase().includes(needle));
   }));
+
+  $effect(() => {
+    const profile = player?.profile;
+    if (!profile) return;
+    profileAge = profile.age;
+    profileGender = profile.gender ?? '';
+    profilePosition = profile.primaryPosition ?? '';
+    profilePreferredName = profile.preferredName;
+    profileDominantHand = profile.dominantHand ?? '';
+    profileHeight = profile.height;
+    profileGoals = profile.goals;
+    profileExperience = profile.experienceLevel;
+    profileJurisdiction = profile.jurisdiction;
+    profileNotes = profile.notes;
+    profileSaved = false;
+  });
 
   onMount(async () => {
     try {
@@ -103,9 +134,34 @@
 
   async function addPlayer() {
     if (!playerName.trim()) return;
-    if (!await runCommand({ action: 'create-player', name: playerName })) return;
-    playerName = '';
-    view = 'dashboard';
+    if (!await runCommand({
+      action: 'create-player',
+      name: playerName,
+      profile: { age: newPlayerAge, gender: newPlayerGender || null, primaryPosition: newPlayerPosition || null }
+    })) return;
+    view = 'players';
+  }
+
+  async function savePlayerProfile() {
+    if (!player) return;
+    profileSaved = false;
+    if (!await runCommand({
+      action: 'update-player-profile',
+      playerId: player.id,
+      profile: {
+        age: profileAge,
+        gender: profileGender || null,
+        primaryPosition: profilePosition || null,
+        preferredName: profilePreferredName,
+        dominantHand: profileDominantHand || null,
+        height: profileHeight,
+        goals: profileGoals,
+        experienceLevel: profileExperience,
+        jurisdiction: profileJurisdiction,
+        notes: profileNotes
+      }
+    })) return;
+    profileSaved = true;
   }
 
   async function submitReceipt() {
@@ -333,7 +389,35 @@
 
     {:else if view === 'players'}
       <div class="section-head"><h2>Players + private data</h2><p>The authenticated server response is authoritative. Protected workspace records are never restored from browser storage, and no analytics are used.</p></div>
-      {#if operator}<section class="profile-box"><p class="eyebrow">Add a player profile</p><div class="profile-row"><input class="input" aria-label="New player name" bind:value={playerName} placeholder="Player name or private label" /><button class="button primary" disabled={commandBusy} onclick={addPlayer}>Add profile</button></div></section>{/if}
+      {#if operator}
+        <section class="profile-box">
+          <p class="eyebrow">Add a private player profile</p>
+          <div class="profile-grid create-profile">
+            <label class="field"><span>Private label</span><input class="input" bind:value={playerName} placeholder="Player 01" /></label>
+            <label class="field"><span>Age</span><input class="input" type="number" min="5" max="99" bind:value={newPlayerAge} /></label>
+            <label class="field"><span>Gender</span><select class="input" bind:value={newPlayerGender}><option value="">Not entered</option><option value="male">Male</option><option value="female">Female</option><option value="nonbinary">Nonbinary</option><option value="self-described">Self-described</option></select></label>
+            <label class="field"><span>Primary position</span><select class="input" bind:value={newPlayerPosition}><option value="">Not entered</option><option value="guard">Guard</option><option value="wing">Wing</option><option value="post">Post</option></select></label>
+            <button class="button primary profile-submit" disabled={commandBusy} onclick={addPlayer}>Add profile</button>
+          </div>
+          <p class="privacy-note">Start with only known basketball context. The player can complete optional fields from his own scoped workspace.</p>
+        </section>
+      {/if}
+      <section class="profile-box profile-editor">
+        <div class="section-head compact"><div><p class="eyebrow">Player-owned profile</p><h2>{player?.name}</h2></div><p>Only this private workspace can read these fields. Contact, school, guardian, medical, ranking, and recruiting data are not requested.</p></div>
+        <form class="profile-grid" onsubmit={(event) => { event.preventDefault(); savePlayerProfile(); }}>
+          <label class="field"><span>Preferred name</span><input class="input" bind:value={profilePreferredName} autocomplete="off" /></label>
+          <label class="field"><span>Age</span><input class="input" type="number" min="5" max="99" bind:value={profileAge} /></label>
+          <label class="field"><span>Gender</span><select class="input" bind:value={profileGender}><option value="">Not entered</option><option value="male">Male</option><option value="female">Female</option><option value="nonbinary">Nonbinary</option><option value="self-described">Self-described</option></select></label>
+          <label class="field"><span>Primary position</span><select class="input" bind:value={profilePosition}><option value="">Not entered</option><option value="guard">Guard</option><option value="wing">Wing</option><option value="post">Post</option></select></label>
+          <label class="field"><span>Dominant hand</span><select class="input" bind:value={profileDominantHand}><option value="">Not entered</option><option value="left">Left</option><option value="right">Right</option><option value="both">Both</option></select></label>
+          <label class="field"><span>Height</span><input class="input" bind:value={profileHeight} placeholder="Optional, in his own words" /></label>
+          <label class="field"><span>Experience</span><input class="input" bind:value={profileExperience} placeholder="Optional playing context" /></label>
+          <label class="field"><span>State / jurisdiction</span><input class="input" bind:value={profileJurisdiction} placeholder="Optional, for rules and film context" /></label>
+          <label class="field full"><span>What do you want to improve?</span><textarea class="input" bind:value={profileGoals}></textarea></label>
+          <label class="field full"><span>Anything else the program should know?</span><textarea class="input" bind:value={profileNotes}></textarea></label>
+          <div class="actions"><button class="button primary" disabled={commandBusy} type="submit">Save my profile</button>{#if profileSaved}<span class="success" role="status">PROFILE SAVED / PRIVATE WORKSPACE</span>{/if}</div>
+        </form>
+      </section>
       <div class="section-head"><h2>Codex access boundary</h2><p>Both people work with the program. Neither needs a coach persona.</p></div>
       <div class="role-grid">
         <article><span class="mono">Program agent</span><strong>Guides the sequence</strong><p>Requests context, applies safety policy, separates evidence, and proposes the next interaction.</p></article>
@@ -345,6 +429,6 @@
       <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset workspace'}</button>{/if}
     {/if}
 
-    <footer class="footer">FIELD TEST / V0.3 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
+    <footer class="footer">FIELD TEST / V0.4 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
   </main>
 </div>
