@@ -261,15 +261,18 @@
   @media (max-width: 640px) {
     .privacy-choice {
       right: max(0.5rem, env(safe-area-inset-right));
-      bottom: max(0.5rem, env(safe-area-inset-bottom));
+      top: max(4.5rem, calc(4rem + env(safe-area-inset-top)));
+      bottom: auto;
+      left: auto;
+      max-width: max-content;
+    }
+
+    .privacy-choice:has(.privacy-panel) {
       left: max(0.5rem, env(safe-area-inset-left));
       max-width: none;
     }
 
     .privacy-choice--compact {
-      top: max(4.5rem, calc(4rem + env(safe-area-inset-top)));
-      bottom: auto;
-      left: auto;
       max-width: max-content;
     }
 

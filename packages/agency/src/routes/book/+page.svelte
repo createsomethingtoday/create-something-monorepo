@@ -69,7 +69,7 @@
 	>
 		{#snippet actions()}
 			<Button href="#first-party-scheduler">Choose a time</Button>
-			<Button href="/atlas" variant="secondary">Map the workflow first</Button>
+			<Button href="/atlas" variant="secondary">Map one workflow first</Button>
 		{/snippet}
 	</PerformanceCampaignOpening>
 

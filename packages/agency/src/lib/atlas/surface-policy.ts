@@ -16,7 +16,7 @@ export const AGENCY_ATLAS_PROOF_PATHS = [
   '/products/proof'
 ] as const;
 
-export const AGENCY_COMPACT_PRIVACY_PATHS = ['/', ...AGENCY_ATLAS_PROOF_PATHS] as const;
+export const AGENCY_COMPACT_PRIVACY_PATHS = ['/', '/book', ...AGENCY_ATLAS_PROOF_PATHS] as const;
 
 function normalizeAgencyPathname(pathname: string): string {
   const normalized = pathname.split(/[?#]/)[0]?.replace(/\/+$/, '') || '/';

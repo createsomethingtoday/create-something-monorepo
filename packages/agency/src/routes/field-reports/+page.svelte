@@ -108,7 +108,7 @@
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
       <Button href="/book?source=field-reports&intent=workflow-mapping&lane=workflow_infrastructure" variant="secondary">
-        Talk through a workflow
+        Talk through one workflow
       </Button>
     {/snippet}
   </PerformanceConversionHandoff>

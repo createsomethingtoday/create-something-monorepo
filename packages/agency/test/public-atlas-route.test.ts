@@ -101,7 +101,7 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 		'/products/proof'
 	]);
 	assert.ok(AGENCY_COMPACT_PRIVACY_PATHS.includes('/'));
-	assert.equal(AGENCY_DIFY_ARTICLE_PATHS.length, 4);
+	assert.equal(AGENCY_DIFY_ARTICLE_PATHS.length, 3);
 	assert.equal(isAgencyAtlasProofPath('/atlas/'), true);
 	assert.equal(isAgencyAtlasProofPath('/book'), false);
 	assert.equal(isAgencyDifyArticlePath('/dify/content-engine'), false);
@@ -109,6 +109,7 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 	assert.equal(usesCompactAgencyPrivacyPrompt('/services'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/dify/mcp-control-plane/'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/proof/marketplace-workflow'), true);
+	assert.equal(usesCompactAgencyPrivacyPrompt('/book'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/contact'), false);
 });
 
@@ -411,6 +412,7 @@ test('compact mobile privacy prompt stays below navigation and away from campaig
 	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice--compact'));
 	assert.ok(agencyPrivacyAnalytics.includes('top: max(4.5rem, calc(4rem + env(safe-area-inset-top)))'));
 	assert.ok(agencyPrivacyAnalytics.includes('bottom: auto'));
+	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice:has(.privacy-panel)'));
 	assert.ok(agencyPrivacyAnalytics.includes("content: 'Privacy'"));
 });
 

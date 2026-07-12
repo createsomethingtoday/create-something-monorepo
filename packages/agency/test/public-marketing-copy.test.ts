@@ -171,19 +171,37 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.doesNotMatch(home, /Train the workflow/);
 
   assert.match(services, /Bring one handoff your team still checks manually/);
-  assert.match(services, /Keep the work moving without giving up the decision/);
+  assert.match(services, /See the workflow before deciding to build/);
+  assert.doesNotMatch(services, /PerformanceFieldSequence|PerformanceThesisConditions/);
 
-  assert.match(productsPage, /title="One workflow\. Four visible jobs\."/);
-  assert.match(productsPage, /Map the work\. Watch changes\. Route decisions\. Keep the record\./);
-  assert.ok(
-    productsPage.indexOf("value: 'Map'") < productsPage.indexOf("value: 'Signal'"),
-    'the product sequence should begin with the map before live signals'
-  );
+  assert.match(productsPage, /title="One workflow map\. Three places to operate\."/);
+  assert.match(productsPage, /Atlas maps the workflow\. Signal watches changes\. Decision routes judgment\. Proof keeps the record\./);
+  assert.doesNotMatch(productsPage, /Product hierarchy|Product protocol|Operating sequence/);
 
   assert.match(stack, /You keep the accounts, data, approval rights, and operating history/);
+  assert.match(stack, /title="What You Keep \| CREATE SOMETHING \.agency"/);
   assert.match(proof, /title="Turn a watched review queue into a testable workflow\."/);
   assert.match(proof, /title="Spend less time rebuilding context\."/);
   assert.match(proof, /prototype measurements, not customer ROI claims/);
+});
+
+test('commercial decision routes use one primary and one conversational action', () => {
+  const messaging = readFileSync(new URL('../src/lib/data/marketingCopy.ts', import.meta.url), 'utf8');
+  const routes = [
+    '../src/routes/+layout.svelte',
+    '../src/routes/+page.svelte',
+    '../src/routes/services/+page.svelte',
+    '../src/routes/products/+page.svelte',
+    '../src/routes/book/+page.svelte',
+    '../src/routes/stack/+page.svelte',
+    '../src/routes/proof/marketplace-workflow/+page.svelte'
+  ].map((route) => readFileSync(new URL(route, import.meta.url), 'utf8')).join('\n');
+
+  assert.match(messaging, /startWithWorkflowLabel: 'Map one workflow'/);
+  assert.match(messaging, /selfMapLabel: 'Map one workflow'/);
+  assert.match(messaging, /bookMappingSessionLabel: 'Talk through one workflow'/);
+  assert.match(routes, />Map one workflow first</);
+  assert.doesNotMatch(routes, /Start Workflow Map|Talk Through a Workflow|Map the workflow first|Map your workflow/);
 });
 
 test('public stack positioning names Substrate and the active OpenAI, Dify, Cloudflare stack', () => {

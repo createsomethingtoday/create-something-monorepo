@@ -199,7 +199,7 @@
 </script>
 
 <SEO
-  title="Stack Boundary | CREATE SOMETHING .agency"
+  title="What You Keep | CREATE SOMETHING .agency"
   description="CREATE SOMETHING separates what your team owns, what vendors provide, and what the workflow needs before delegated work becomes production work."
   keywords="delegated work control, workflow control layer, Substrate database, transparent AI stack, MCP stack, vendor boundaries, Cloudflare, Dify, OpenAI"
   ogImage="/og-image.png"
