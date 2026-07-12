@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
+	import { getAnalytics } from '@create-something/canon/analytics';
 	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
 	import {
 		buildFirstPartySchedulerUrl,
 		FIRST_PARTY_SCHEDULER_ORIGIN,
+		normalizeSchedulerLifecycleMessage,
 		schedulerHandoffContext
 	} from '$lib/scheduling/first-party';
 
@@ -19,11 +21,27 @@
 		);
 	}
 
+	function receiveSchedulerLifecycle(event: MessageEvent) {
+		if (event.origin !== FIRST_PARTY_SCHEDULER_ORIGIN) return;
+		if (event.source !== schedulerFrame?.contentWindow) return;
+		const lifecycle = normalizeSchedulerLifecycleMessage(event.data);
+		if (!lifecycle) return;
+
+		if (lifecycle.action === 'booking_form_started') {
+			getAnalytics()?.track('interaction', lifecycle.action, { metadata: lifecycle.metadata });
+			return;
+		}
+
+		getAnalytics()?.conversion(lifecycle.action, lifecycle.metadata);
+	}
+
 	onMount(() => {
+		window.addEventListener('message', receiveSchedulerLifecycle);
 		schedulerHref = buildFirstPartySchedulerUrl(window.location.search);
 		const warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
 		handoffContext = schedulerHandoffContext(window.location.search, warmupNotes);
 		sendSchedulerContext();
+		return () => window.removeEventListener('message', receiveSchedulerLifecycle);
 	});
 </script>
 

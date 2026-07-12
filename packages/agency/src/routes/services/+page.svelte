@@ -109,7 +109,7 @@
 </script>
 
 <SEO
-  title="AI Workflow Systems | How I Work"
+  title="AI Workflow Systems | How It Works"
   description="How CREATE SOMETHING turns one messy business handoff into a reliable AI-assisted workflow with connected tools, approvals, stop conditions, and an audit trail."
   keywords="AI workflow systems, workflow mapping, AI interaction design, governed AI workflow, workflow pilot, production automation, agent reliability"
   ogImage="/og-image.png"
@@ -120,9 +120,9 @@
 
 <div class="services-performance property-performance">
   <PerformanceCampaignOpening
-    eyebrow="How I Work"
+    eyebrow="How It Works"
     title="Map the workflow before deciding to build."
-    lede="Bring one real handoff your team still protects by hand. Atlas maps the signal, owner, AI boundary, approval pause, stop condition, and proof record before anything touches customers, money, production, or accounts."
+    lede="Bring one handoff your team still checks manually. We map the owner, systems, safe actions, approval point, stop condition, and evidence before anything touches customers, money, production, or accounts."
     media={{ src: '/images/performance-lab/pressure-boundary-natural.webp', mobileSrc: '/images/performance-lab/pressure-boundary-natural-mobile.webp', alt: 'Black-and-white wave impact against a concrete boundary' }}
     proof={[{ label: 'Boundary', value: 'Named' }, { label: 'Pressure', value: 'Held' }, { label: 'Evidence', value: 'Attached' }]}
   >
@@ -138,13 +138,13 @@
 
   <PerformanceFieldSequence
     eyebrow="Service condition"
-    title="Governance is the channel, not the dam."
+    title="Keep the work moving without giving up the decision."
     studies={[{
       image: '/images/performance-lab/trace-wake-natural.webp',
       mobileImage: '/images/performance-lab/trace-wake-natural-mobile.webp',
       alt: 'Aerial black-and-white view of a survey craft leaving a directional wake.',
-      title: 'Control the conditions.',
-      description: 'The work does not stop moving. It enters a designed boundary where ownership, approval, evidence, and recovery make the next action reliable.',
+      title: 'Give each next step a boundary.',
+      description: 'Safe work can move. Consequential work waits for a named owner, with the evidence and recovery path attached.',
       principle: 'Every action leaves a wake.',
       metrics: pressureStudyMetrics,
       proof: pressureStudyProof,

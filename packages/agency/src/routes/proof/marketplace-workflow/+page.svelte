@@ -121,8 +121,8 @@
 <div class="marketplace-workflow property-performance">
   <PerformanceCampaignOpening
     eyebrow="Complete workflow · Active development"
-    title="From a watched queue to a compiled control system."
-    lede="This worked example shows the Marketplace template lifecycle from submission through monitoring. It uses representative local fixtures and a shadow-only compiler: no production writes, approvals, rejections, publishing, or credential changes."
+    title="Turn a watched review queue into a testable workflow."
+    lede="This worked example maps the Marketplace template lifecycle from submission through monitoring, then tests it with representative local fixtures. It runs in shadow mode only: no production writes, approvals, rejections, publishing, or credential changes."
     media={{
       src: '/images/performance-lab/trace-wake-natural.webp',
       mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp',
@@ -144,7 +144,7 @@
   <PerformancePageSection
     variant="white"
     eyebrow="Operational change"
-    title="The result is not more activity. It is less reconstruction."
+    title="Spend less time rebuilding context."
     description="The prototype turns a known operating path into explicit contracts and replayable decisions. These are prototype measurements, not customer ROI claims."
   >
     {#snippet after()}

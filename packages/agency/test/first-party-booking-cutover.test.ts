@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
 	buildFirstPartySchedulerUrl,
+	normalizeSchedulerLifecycleMessage,
 	schedulerHandoffContext
 } from '../src/lib/scheduling/first-party.ts';
 
@@ -15,6 +16,10 @@ const textRevelation = readFileSync(
 );
 const agencyDomainIndex = readFileSync(
 	new URL('../../canon/src/lib/domains/agency/index.ts', import.meta.url),
+	'utf8'
+);
+const schedulerPage = readFileSync(
+	new URL('../../../apps/create-something-scheduler/src/ui/page.ts', import.meta.url),
 	'utf8'
 );
 
@@ -84,6 +89,62 @@ test('direct booking does not invent zero-valued Atlas attribution', () => {
 	const iframe = new URL(buildFirstPartySchedulerUrl());
 	assert.equal(iframe.search, '');
 	assert.deepEqual(schedulerHandoffContext(), {});
+});
+
+test('explicit test traffic survives the owned scheduler handoff without forwarding arbitrary query data', () => {
+	const iframe = new URL(
+		buildFirstPartySchedulerUrl('?traffic_class=test&source=homepage&secret=do-not-forward')
+	);
+	assert.equal(iframe.searchParams.get('traffic_class'), 'test');
+	assert.equal(iframe.searchParams.get('source'), 'homepage');
+	assert.equal(iframe.searchParams.has('secret'), false);
+	assert.deepEqual(schedulerHandoffContext('?traffic_class=test'), { trafficClass: 'test' });
+	assert.deepEqual(schedulerHandoffContext('?traffic_class=customer'), {});
+});
+
+test('scheduler lifecycle messages are allowlisted and stripped to privacy-safe booking lineage', () => {
+	assert.deepEqual(
+		normalizeSchedulerLifecycleMessage({
+			type: 'create-something:scheduler-lifecycle',
+			action: 'booking_completed',
+			schedulerSessionId: 'scheduler_session_123',
+			trafficClass: 'test',
+			bookingId: 'booking_123',
+			receiptId: 'receipt_123',
+			durationMinutes: 30,
+			email: 'must-not-cross@example.com'
+		}),
+		{
+			action: 'booking_completed',
+			metadata: {
+				surface: 'first-party-scheduler',
+				schedulerSessionId: 'scheduler_session_123',
+				trafficClass: 'test',
+				bookingId: 'booking_123',
+				receiptId: 'receipt_123',
+				durationMinutes: 30
+			}
+		}
+	);
+	assert.equal(
+		normalizeSchedulerLifecycleMessage({
+			type: 'create-something:scheduler-lifecycle',
+			action: 'booking_refunded'
+		}),
+		null
+	);
+});
+
+test('scheduler and parent wire the allowlisted lifecycle bridge across the exact owned origin', () => {
+	assert.ok(bookRoute.includes("from '@create-something/canon/analytics'"));
+	assert.ok(bookRoute.includes('normalizeSchedulerLifecycleMessage'));
+	assert.ok(bookRoute.includes('event.origin !== FIRST_PARTY_SCHEDULER_ORIGIN'));
+	assert.ok(bookRoute.includes('event.source !== schedulerFrame?.contentWindow'));
+	assert.ok(bookRoute.includes('getAnalytics()?.conversion(lifecycle.action'));
+	assert.ok(schedulerPage.includes("notifyParent('booking_form_started'"));
+	assert.ok(schedulerPage.includes("notifyParent('booking_initiated'"));
+	assert.ok(schedulerPage.includes("notifyParent('booking_completed'"));
+	assert.ok(schedulerPage.includes("'create-something:scheduler-lifecycle'"));
 });
 
 test('the client updates iframe attribution only after hydration', () => {

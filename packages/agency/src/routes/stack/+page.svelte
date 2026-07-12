@@ -211,9 +211,9 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Stack Boundary"
+  eyebrow="What You Keep"
   title="Know what you own before any tool acts."
-  description="Your team should be able to see who owns the accounts, where secrets live, which actions can run, which decisions need approval, what stops, and what evidence travels with the handoff."
+  description="You keep the accounts, data, approval rights, and operating history. Vendors provide replaceable infrastructure, and the workflow makes every boundary visible."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>

@@ -602,6 +602,37 @@ pnpm --filter=agency exec tsc --noEmit
 pnpm --filter=agency build && wrangler pages deploy packages/agency/.svelte-kit/cloudflare --project-name=create-something-agency
 ```
 
+## Commercial clarity evidence
+
+Do not use CTA clicks as a proxy for completed bookings. The commercial funnel
+report classifies sessions as `external`, `internal`, `preview`, `automated`, or
+`test`, then reports the owned booking stages separately:
+
+```bash
+# Inspect the read-only SQL before running it
+pnpm --filter @create-something/agency analytics:commercial-funnel -- --days 30
+
+# Execute the same SELECT-only report against remote D1
+CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a \
+  pnpm --filter @create-something/agency analytics:commercial-funnel -- --days 30 --remote
+```
+
+Use `?traffic_class=internal` or `?traffic_class=test` at the start of a
+controlled production session. The server derives preview and automated traffic
+from the host and user agent and stores the classification in unified event
+metadata. The first-party scheduler returns only allowlisted lifecycle actions
+and privacy-safe opaque lineage to the `.agency` parent; names and email
+addresses remain inside the scheduler booking boundary.
+
+Capture a deterministic snapshot of the five public decision routes with:
+
+```bash
+pnpm --filter @create-something/agency research:clarity-capture
+```
+
+The capture hashes visible copy, fails closed when a route is unavailable, and
+is useful for before/after review. It is not evidence of human comprehension.
+
 ## Auth0 And Infisical
 
 `.agency` now treats Auth0 as the identity source of truth. Browser login flows redirect through Auth0 Universal Login, the Auth0 callback is handled at `/auth/callback`, and server-side session validation accepts Auth0-issued tokens through the shared Canon auth layer.
