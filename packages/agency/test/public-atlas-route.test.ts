@@ -416,7 +416,7 @@ test('compact mobile privacy prompt stays below navigation and away from campaig
 	assert.ok(agencyPrivacyAnalytics.includes("content: 'Privacy'"));
 	assert.match(
 		agencyPrivacyAnalytics,
-		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill--compact \{[\s\S]*?min-height: 2\.75rem;[\s\S]*?border-color: transparent;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/
+		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill \{[\s\S]*?min-height: 2\.75rem;[\s\S]*?border-color: transparent;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/
 	);
 	assert.match(
 		agencyPrivacyAnalytics,
