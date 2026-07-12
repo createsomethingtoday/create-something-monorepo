@@ -1,0 +1,43 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "create-something-scheduler",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-07-11",
+  "vars": {
+    "GOOGLE_EVENT_CALENDAR_ID": "micah@createsomething.io",
+    "GOOGLE_SELECTED_CALENDAR_IDS": "micah@createsomething.io",
+    "GOOGLE_REDIRECT_URI": "https://create-something-scheduler.createsomething.workers.dev/oauth/google/callback",
+    "RESEND_FROM": "CREATE SOMETHING <noreply@createsomething.io>",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAADz8zw7ebYd-V5eU",
+    "TURNSTILE_EXPECTED_HOSTNAME": "create-something-scheduler.createsomething.workers.dev",
+    "REALTIMEKIT_APP_ID": "8011e22d-a0e9-40f8-8a7a-27d3e5982744",
+    "REALTIMEKIT_HOST_PRESET_ID": "5015ba09-150e-40d2-9724-54bc6350d547",
+    "REALTIMEKIT_GUEST_PRESET_ID": "9227fe9f-0586-4c49-aa45-87780f4867e0",
+    "SCHEDULER_PUBLIC_ORIGIN": "https://create-something-scheduler.createsomething.workers.dev",
+    "CONFERENCING_PROVIDER": "google_meet"
+  },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SCHEDULER",
+        "class_name": "SchedulerDurableObject"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["SchedulerDurableObject"]
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

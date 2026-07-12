@@ -6,7 +6,7 @@
     type PerformanceCardItem
   } from '@create-something/canon';
   import { getAnalytics } from '@create-something/canon/analytics';
-  import { SavvyCalButton } from '@create-something/canon/domains/agency';
+  import { ScheduleButton } from '@create-something/canon/domains/agency';
   import FunnelLadder from '$lib/components/FunnelLadder.svelte';
   import type { PageData } from './$types';
 
@@ -359,7 +359,7 @@
         decision, and what needs to be decided.
       </p>
       <div class="cal-button">
-        <SavvyCalButton variant="primary" size="lg" />
+        <ScheduleButton variant="primary" size="lg" />
         <a href="/book" class="calendar-link">Book a mapping session</a>
       </div>
     </div>

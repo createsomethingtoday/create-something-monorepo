@@ -238,10 +238,10 @@ When call scheduled:
 
 ## Calendar Link Setup
 
-**SavvyCal settings for mapping sessions**:
-- Duration: 20 minutes (can extend if needed)
-- Buffer: 15 minutes after
-- Availability: Business hours + limited evenings
+**First-party scheduler settings for mapping sessions**:
+- Duration: 30 or 60 minutes
+- Start times: Hour or half-hour only
+- Availability: Verified CREATE SOMETHING openings
 - Questions:
   - "Which workflow is highest-cost when it fails?"
   - "Which systems must stay in sync?"

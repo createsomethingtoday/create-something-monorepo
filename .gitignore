@@ -48,6 +48,8 @@ output/playwright/
 # Client apps (in development)
 # Keep apps ignored by default, but track Meeting Capture.
 apps/*
+!apps/create-something-scheduler/
+!apps/create-something-scheduler/**
 !apps/guard-performance-lab/
 !apps/guard-performance-lab/**
 apps/guard-performance-lab/.data/

@@ -50,7 +50,7 @@ const WALKTHROUGH_URL = 'https://share.descript.com/view/GQzi5ETGHey';
 const CLAUDE_DOCS_URL =
   'https://support.claude.com/en/articles/11176164-use-connectors-to-extend-claude-s-capabilities';
 const CODEX_DOCS_URL = 'https://developers.openai.com/codex/mcp';
-const SUPPORT_URL = 'https://savvycal.com/createsomething/together';
+const SUPPORT_URL = 'https://createsomething.agency/book';
 const HALFDOZEN_EMAIL = 'dm@halfdozen.co';
 
 const REDACTED_PLACEHOLDER = '[bearer token will be inserted for live send]';

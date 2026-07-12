@@ -19,7 +19,7 @@ export { default as AssessmentStep } from './AssessmentStep.svelte';
 export { default as EmailCaptureModal } from './EmailCaptureModal.svelte';
 export { default as ProgressIndicator } from './ProgressIndicator.svelte';
 export { default as RevelationLine } from './RevelationLine.svelte';
-export { default as SavvyCalButton } from './SavvyCalButton.svelte';
+export { default as ScheduleButton } from './ScheduleButton.svelte';
 export { default as SocialProofStrip } from './SocialProofStrip.svelte';
 export { default as Terminal } from './Terminal.svelte';
 export { default as Terminal3DBackground } from './Terminal3DBackground.svelte';

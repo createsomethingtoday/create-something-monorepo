@@ -2,11 +2,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 
-// SavvyCal embed API
-interface Window {
-	SavvyCal?: (action: string, options?: { link?: string }) => void;
-}
-
 declare global {
 	namespace App {
 		// interface Error {}
@@ -52,8 +47,6 @@ declare global {
 				DIFY_ABUNDANCE_HUB_API_KEY?: string;
 				DIFY_ABUNDANCE_HUB_BASE_URL?: string;
 				ABUNDANCE_STAFF_ONBOARDING_TOKEN?: string;
-				// SavvyCal
-				SAVVYCAL_API_KEY?: string;
 				// Identity Worker (LMS provisioning)
 				IDENTITY_WORKER_URL?: string;
 				IDENTITY_WORKER_SECRET?: string;
