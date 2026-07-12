@@ -217,19 +217,18 @@ export async function resolveIdentityOAuthRequest(input: {
 
 /**
  * Central access policy for OAuth-authenticated sessions:
- * - email must belong to the allowed domain
- * - when an explicit allowlist is configured, the email must be on it
+ * - an explicit email allowlist is authoritative when configured
+ * - otherwise email must belong to the allowed domain
  * - allowlisted users and directory-listed reviewers get write scope;
  *   everyone else is read-only
  */
 export function resolveOAuthAccess(input: OAuthAccessInput): OAuthAccessResult {
   const email = input.email?.trim().toLowerCase();
   if (!email) return { allowed: false, reason: 'missing_email' };
-  if (!email.endsWith(`@${input.allowedDomain}`)) {
-    return { allowed: false, reason: 'domain_not_allowed' };
-  }
-  if (input.allowedEmails.size > 0 && !input.allowedEmails.has(email)) {
-    return { allowed: false, reason: 'email_not_allowlisted' };
+  if (input.allowedEmails.size > 0) {
+    if (!input.allowedEmails.has(email)) return { allowed: false, reason: 'email_not_allowlisted' };
+  } else if (!email.endsWith(`@${input.allowedDomain}`)) {
+      return { allowed: false, reason: 'domain_not_allowed' };
   }
 
   const reviewerProfile = getReviewerProfileForEmail(input.directory, email);

@@ -301,12 +301,30 @@ test('resolveOAuthAccess rejects non-allowlisted domain users when an allowlist 
 test('resolveOAuthAccess rejects other domains and missing emails', () => {
   assert.deepEqual(
     resolveOAuthAccess({ email: 'x@gmail.com', allowedDomain: 'webflow.com', allowedEmails: allowlist, directory }),
-    { allowed: false, reason: 'domain_not_allowed' },
+    { allowed: false, reason: 'email_not_allowlisted' },
   );
   assert.deepEqual(
     resolveOAuthAccess({ email: null, allowedDomain: 'webflow.com', allowedEmails: allowlist, directory }),
     { allowed: false, reason: 'missing_email' },
   );
+});
+
+test('resolveOAuthAccess can authorize one exact external alias without opening its domain', () => {
+  const result = resolveOAuthAccess({
+    email: 'approved.operator@createsomething.io',
+    allowedDomain: 'webflow.com',
+    allowedEmails: new Set(['approved.operator@createsomething.io']),
+    directory,
+  });
+  const denied = resolveOAuthAccess({
+    email: 'someone.else@createsomething.io',
+    allowedDomain: 'webflow.com',
+    allowedEmails: new Set(['approved.operator@createsomething.io']),
+    directory,
+  });
+
+  assert.equal(result.allowed, true);
+  assert.deepEqual(denied, { allowed: false, reason: 'email_not_allowlisted' });
 });
 
 test('resolveOAuthAccess defaults to read-only for domain users without an allowlist', () => {
