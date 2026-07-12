@@ -22,6 +22,7 @@
 						<li><a href="/services">How I Work</a></li>
 						<li><a href="/stack">Stack & Boundaries</a></li>
 						<li><a href="/products">Products</a></li>
+						<li><a href="/field-reports">Field Reports</a></li>
 						<li><a href={agencyCoreMessaging.startWithWorkflowHref}>Start Self-Map</a></li>
 					</ul>
 				</div>

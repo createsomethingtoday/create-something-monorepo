@@ -4,6 +4,7 @@
     PerformanceCampaignOpening,
     PerformanceContrastChapter,
     PerformanceConversionHandoff,
+    PerformanceEvidenceIndex,
     PerformanceFieldSequence,
     PerformancePageSection,
     PerformanceThesisConditions,
@@ -11,6 +12,7 @@
     SEO,
     type PerformanceCampaignProof,
     type PerformanceCondition,
+    type PerformanceEvidenceItem,
     type PerformanceFieldStudyMetric,
     type PerformanceFieldStudyProof
   } from '@create-something/canon';
@@ -171,6 +173,18 @@
       detail: 'Safe work moves, exceptions reach a named owner, and unsafe actions stop with a reason.'
     }
   ] as const;
+
+  const fieldReportProof: PerformanceEvidenceItem[] = [
+    {
+      id: '#FR-2026-01',
+      kind: 'Review operations',
+      title: 'Prepare the evidence. Keep the judgment human.',
+      detail: '49 of 50 usable evidence packets, 98 screenshots, zero external writes, and one promotion gate that held.',
+      state: 'verified',
+      date: 'May–June 2026',
+      href: '/field-reports/template-review'
+    }
+  ];
 </script>
 
 <SEO
@@ -284,6 +298,14 @@
       </div>
     {/snippet}
   </PerformancePageSection>
+
+  <PerformanceEvidenceIndex
+    eyebrow="Field result"
+    title="See what passed—and what did not."
+    description="The first Field Report connects a governed template-review map to measured evidence, a failed promotion gate, and the reviewer-time question that remains unmeasured."
+    items={fieldReportProof}
+    ariaLabel="Featured CREATE SOMETHING Field Report"
+  />
 
   <PerformancePageSection
     variant="soft"

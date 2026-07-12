@@ -48,7 +48,8 @@
   const navLinks = [
     { label: 'How I Work', href: '/services' },
     { label: 'Stack Boundary', href: '/stack' },
-    { label: 'Products', href: '/products' }
+    { label: 'Products', href: '/products' },
+    { label: 'Field Reports', href: '/field-reports' }
   ];
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
@@ -62,6 +63,7 @@
         { label: 'How I Work', href: '/services' },
         { label: 'Stack Boundary', href: '/stack' },
         { label: 'Products', href: '/products' },
+        { label: 'Field Reports', href: '/field-reports' },
         { label: 'About', href: '/about' }
       ]
     },
@@ -235,6 +237,14 @@
       href: '/products',
       icon: '📦',
       keywords: ['portfolio', 'tools', 'integrations', 'product surfaces', 'proof surfaces']
+    },
+    {
+      id: 'nav-field-reports',
+      label: 'Field Reports',
+      description: 'Measured workflow results, failed gates, evidence, and human decision boundaries',
+      href: '/field-reports',
+      icon: 'FR',
+      keywords: ['field reports', 'case studies', 'evidence', 'results', 'proof']
     },
     {
       id: 'nav-self-map',
