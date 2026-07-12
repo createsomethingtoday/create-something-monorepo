@@ -4425,6 +4425,25 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/workflow-shadow-pilot:
+    dependencies:
+      '@create-something/workflow-compiler':
+        specifier: workspace:*
+        version: link:../workflow-compiler
+      '@create-something/workflow-historical-context-reconciler':
+        specifier: workspace:*
+        version: link:../workflow-historical-context-reconciler
+      '@create-something/workflow-receipt-reconciler':
+        specifier: workspace:*
+        version: link:../workflow-receipt-reconciler
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/zendesk-mcp:
     dependencies:
       '@create-something/mcp-core':

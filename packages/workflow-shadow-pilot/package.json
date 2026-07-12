@@ -1,0 +1,40 @@
+{
+  "name": "@create-something/workflow-shadow-pilot",
+  "version": "0.1.0",
+  "description": "Compose workflow discovery, compilation, reconciliation, privacy proof, measurement, and operator evidence in read-only shadow mode.",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "library",
+    "entrypoints": ["src/index.ts"],
+    "boot": "pnpm build",
+    "smoke": "pnpm check && pnpm test"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "pnpm --filter @create-something/workflow-compiler build && pnpm --filter @create-something/workflow-receipt-reconciler build && pnpm --filter @create-something/workflow-historical-context-reconciler build && tsc",
+    "check": "pnpm --filter @create-something/workflow-compiler build && pnpm --filter @create-something/workflow-receipt-reconciler build && pnpm --filter @create-something/workflow-historical-context-reconciler build && tsc --noEmit",
+    "test": "pnpm build && node --test test/*.test.mjs",
+    "test:acceptance": "pnpm build && node scripts/acceptance.mjs"
+  },
+  "dependencies": {
+    "@create-something/workflow-compiler": "workspace:*",
+    "@create-something/workflow-historical-context-reconciler": "workspace:*",
+    "@create-something/workflow-receipt-reconciler": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}
