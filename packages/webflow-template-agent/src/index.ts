@@ -350,7 +350,7 @@ export function createTemplateAgentWorker(
         if (!trustedContext) {
           dependencies.recordEvent(env, { type: 'request_rejected', reason: 'invalid_context' });
           return Response.json(
-            { error: 'Template Finder continuity is invalid or expired.' },
+            { code: 'invalid_context', error: 'Template Finder continuity is invalid or expired.' },
             { status: 400, headers: corsHeaders(request, env) },
           );
         }

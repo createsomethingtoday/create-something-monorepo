@@ -331,6 +331,10 @@ describe('webflow-template-agent worker abuse boundaries', () => {
     );
 
     expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      code: 'invalid_context',
+      error: 'Template Finder continuity is invalid or expired.',
+    });
     expect(runTurn).not.toHaveBeenCalled();
   });
 
