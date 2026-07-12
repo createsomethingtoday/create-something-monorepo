@@ -88,10 +88,14 @@ export {
 	createAnalyticsHealthHandler,
 	createUserAnalyticsHandler,
 	processEventBatch,
+	classifyAnalyticsTraffic,
 	updateSessionSummary,
 	queryEvents,
 	getDailyAggregates,
 	type AnalyticsQueryOptions,
+	type AnalyticsTrafficClass,
+	type AnalyticsTrafficClassSource,
+	type AnalyticsTrafficClassification,
 } from './server.js';
 
 // Shared tracking handler (for /api/analytics/track endpoints)

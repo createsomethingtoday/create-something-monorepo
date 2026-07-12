@@ -140,7 +140,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
 <script nonce="${input.nonce}">
 (() => {
   const config = ${configuration};
-  const state = { slots: [], selected: null, selectedDay: null, durationMinutes: 30, browserProof: null, booking: null, actionToken: null, mode: 'book', context: null };
+  const state = { slots: [], selected: null, selectedDay: null, durationMinutes: 30, browserProof: null, booking: null, actionToken: null, mode: 'book', context: null, schedulerSessionId: crypto.randomUUID(), formStarted: false };
   const status = document.querySelector('#status');
   const statusState = document.querySelector('#status-state');
   const statusMessage = document.querySelector('#status-message');
@@ -161,6 +161,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     for (const key of ['source','intent','lane','warmup','readiness','atlasSessionId']) {
       if (typeof input[key] === 'string' && input[key].trim()) context[key]=input[key].trim();
     }
+    if (input.trafficClass === 'internal' || input.trafficClass === 'test') context.trafficClass=input.trafficClass;
     for (const key of ['score','agentMessages']) {
       if (Number.isInteger(Number(input[key]))) context[key]=Number(input[key]);
     }
@@ -168,11 +169,22 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     return Object.keys(context).length ? context : null;
   }
   const query=new URLSearchParams(location.search);
-  state.context=schedulerContext({source:query.get('source'),intent:query.get('intent'),lane:query.get('lane'),warmup:query.get('warmup'),readiness:query.get('readiness'),score:query.get('score'),atlasSessionId:query.get('atlas_session_id'),agentMessages:query.get('agent_messages')});
+  state.context=schedulerContext({source:query.get('source'),intent:query.get('intent'),lane:query.get('lane'),warmup:query.get('warmup'),readiness:query.get('readiness'),trafficClass:query.get('traffic_class'),score:query.get('score'),atlasSessionId:query.get('atlas_session_id'),agentMessages:query.get('agent_messages')});
   addEventListener('message',event=>{
     if (event.source !== parent || event.origin !== 'https://createsomething.agency' || event.data?.type !== 'create-something:scheduler-context') return;
     state.context=schedulerContext(event.data.context);
   });
+
+  function notifyParent(action, details={}) {
+    if (parent === window || !['booking_form_started','booking_initiated','booking_completed'].includes(action)) return;
+    parent.postMessage({
+      type:'create-something:scheduler-lifecycle',
+      action,
+      schedulerSessionId:state.schedulerSessionId,
+      ...(state.context?.trafficClass ? {trafficClass:state.context.trafficClass} : {}),
+      ...details
+    },'https://createsomething.agency');
+  }
 
   function setStatus(message, kind = 'controlled') { const labels={controlled:'Controlled',ready:'Ready',review:'Review',stop:'Stop'}; statusState.textContent=labels[kind] || 'Controlled'; statusMessage.textContent=message; status.dataset.kind=kind; }
   function updateSteps(current) { for (const step of stepNodes) { if (Number(step.dataset.step) === current) step.setAttribute('aria-current','step'); else step.removeAttribute('aria-current'); } }
@@ -249,6 +261,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     form.hidden = false; form.querySelector('input').focus();
     selectedSummary.textContent=formatDay(slot.start)+' · '+formatTime(slot.start)+' · '+state.durationMinutes+' min'; updateSteps(2);
     setStatus('Selected ' + formatDay(slot.start) + ' at ' + formatTime(slot.start) + ' for '+state.durationMinutes+' minutes.','review');
+    if (!state.formStarted) { state.formStarted=true; notifyParent('booking_form_started',{durationMinutes:state.durationMinutes}); }
   }
 
   form.addEventListener('submit',async event => {
@@ -256,6 +269,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     if (!state.selected) return;
     if (config.turnstileSiteKey && !state.browserProof) { setStatus('Complete the verification before booking.','review'); return; }
     const submit = form.querySelector('button[type=submit]'); submit.disabled=true; updateSteps(3); setStatus('Confirming your meeting…','controlled');
+    notifyParent('booking_initiated',{durationMinutes:state.durationMinutes});
     try {
       const data = new FormData(form);
       const prepared = await api('/api/v1/bookings/prepare',{method:'POST',body:JSON.stringify({slot:state.selected,scheduler:{name:data.get('name'),email:data.get('email')},...(state.context?{context:state.context}:{})})});
@@ -263,6 +277,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
       state.booking=committed.booking; state.actionToken=committed.actionToken;
       sessionStorage.setItem(tokenKey(state.booking.bookingId),state.actionToken);
       history.replaceState({},'',location.pathname+'?booking='+encodeURIComponent(state.booking.bookingId));
+      notifyParent('booking_completed',{bookingId:state.booking.bookingId,receiptId:committed.receiptId,durationMinutes:state.durationMinutes});
       showBooking(committed);
     } catch (error) { setStatus(error.message,'stop'); submit.disabled=false; }
   });

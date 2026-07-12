@@ -201,13 +201,13 @@
   <PerformanceCampaignOpening
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Make one workflow safe to delegate."
-    lede="CREATE SOMETHING turns a handoff your team still watches by hand into a controlled operating path. Routine work can move, judgment reaches the right owner, unsafe actions stop, and every consequential step leaves proof."
+    lede="Choose one handoff your team still checks manually. We map what can run automatically, what must wait for a person, what must stop, and what record proves what happened."
     media={controlledFlowMedia}
     proof={heroProofItems}
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>Map one workflow</Button>
-      <Button href="/proof/marketplace-workflow" variant="secondary">See one complete workflow</Button>
+      <Button href="/proof/marketplace-workflow" variant="secondary">See a worked example</Button>
     {/snippet}
   </PerformanceCampaignOpening>
 
@@ -232,14 +232,14 @@
 
   <PerformanceFieldSequence
     eyebrow="Performance principle"
-    title="Train the workflow under pressure."
-    description="One ordered field sequence keeps the operating principle, measured conditions, and receipt together."
+    title="Test the boundary before work moves."
+    description="One ordered review keeps the operating principle, measured conditions, and receipt together."
     studies={[{
       image: '/images/performance-lab/pressure-boundary-natural.webp',
       mobileImage: '/images/performance-lab/pressure-boundary-natural-mobile.webp',
       alt: 'Black-and-white field study of water meeting a designed boundary.',
-      title: 'Train the system before it runs.',
-      description: 'Work moves. Governance gives it a channel: map the signal, route the decision, define the stop, and preserve the trace before authority expands.',
+      title: 'Decide what can move before it runs.',
+      description: 'Map the change, route the decision, define the stop, and preserve the record before authority expands.',
       principle: 'Governance directs flow.',
       metrics: flowStudyMetrics,
       proof: flowStudyProof,
@@ -248,8 +248,8 @@
   />
 
   <PerformanceThesisConditions
-    title="Train the workflow before it runs."
-    description="A workflow earns delegation through explicit coverage, decision pressure, and attached proof."
+    title="Earn authority one decision at a time."
+    description="A workflow earns delegation when its owners, decision points, stop conditions, and proof are explicit."
     conditions={labReadinessItems}
   />
 

@@ -1,0 +1,47 @@
+{
+  "protocolVersion": "agency-zero-context-v1",
+  "conditionId": "agency-zero-context-f3d82cfec3d7abfa",
+  "baseUrl": "https://createsomething.agency",
+  "capturedAt": "2026-07-12T19:13:35.372Z",
+  "routes": [
+    {
+      "path": "/",
+      "status": 200,
+      "wordCount": 1005,
+      "textHash": "c448c167cc29300cba0c419fa17992f8d0cdb81ae2777917178c6869a628049c",
+      "first300Hash": "81794d8874b2bb336683c239071475f2aa58c85ddbccedc547730dc62734138d"
+    },
+    {
+      "path": "/services",
+      "status": 200,
+      "wordCount": 896,
+      "textHash": "eb606cceb62bc5f01ef21af52127bf504ab378d293cd3bc1500cc627ea53c178",
+      "first300Hash": "463042d3f6f9337875c1a576b3dfe53094cbd79c5282fa42e0027b8ce5558af4"
+    },
+    {
+      "path": "/products",
+      "status": 200,
+      "wordCount": 883,
+      "textHash": "5697c6567a509bdb206ce1a5f3bc6737fe5ca4d8269c498accfc9897a527ff22",
+      "first300Hash": "701bf5d37a9fa070c0bb14242f08bbfc394d6dc031203939164ef6a506f9f845"
+    },
+    {
+      "path": "/proof/marketplace-workflow",
+      "status": 200,
+      "wordCount": 670,
+      "textHash": "4a933ba87e4f16aca045d035246fbcd51459be0b6ac44da55b21ca5518cf093e",
+      "first300Hash": "e06439ac71285d96678cb56d90a7385937f86f6d366afefa85e0c6ffa1cdfcfd"
+    },
+    {
+      "path": "/book",
+      "status": 200,
+      "wordCount": 267,
+      "textHash": "24b835c922ce7de258f2ea95e3ed79c393f4d1c14edca9fcf4429b58627c27d1",
+      "first300Hash": "24b835c922ce7de258f2ea95e3ed79c393f4d1c14edca9fcf4429b58627c27d1"
+    }
+  ],
+  "verification": {
+    "repeatCaptureConditionId": "agency-zero-context-f3d82cfec3d7abfa",
+    "stableAcrossTwoConsecutiveCaptures": true
+  }
+}

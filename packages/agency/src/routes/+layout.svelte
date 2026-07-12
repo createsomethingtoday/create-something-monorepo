@@ -46,8 +46,8 @@
   });
 
   const navLinks = [
-    { label: 'How I Work', href: '/services' },
-    { label: 'Stack Boundary', href: '/stack' },
+    { label: 'How It Works', href: '/services' },
+    { label: 'What You Keep', href: '/stack' },
     { label: 'Products', href: '/products' },
     { label: 'Field Reports', href: '/field-reports' }
   ];
@@ -60,8 +60,8 @@
       title: 'Commercial',
       ariaLabel: 'Commercial paths',
       links: [
-        { label: 'How I Work', href: '/services' },
-        { label: 'Stack Boundary', href: '/stack' },
+        { label: 'How It Works', href: '/services' },
+        { label: 'What You Keep', href: '/stack' },
         { label: 'Products', href: '/products' },
         { label: 'Field Reports', href: '/field-reports' },
         { label: 'About', href: '/about' }
@@ -118,7 +118,7 @@
   const quickAccessItems = [
     {
       id: 'nav-services',
-      label: 'How I Work',
+      label: 'How It Works',
       description: 'Workflow maps, controlled pilots, and operating evidence',
       href: '/services',
       icon: '🔨',
@@ -135,8 +135,8 @@
     },
     {
       id: 'nav-stack',
-      label: 'Stack Boundary',
-      description: 'Vendor boundaries, ownership, and the control layer around the workflow',
+      label: 'What You Keep',
+      description: 'Your accounts, data, approval rights, and operating record',
       href: '/stack',
       icon: '🧭',
       keywords: [

@@ -150,6 +150,42 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
   assert.match(partners, /open-weight and custom models/i);
 });
 
+test('commercial decision routes lead with plain meaning before owned terminology', () => {
+  const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+  const services = readFileSync(new URL('../src/routes/services/+page.svelte', import.meta.url), 'utf8');
+  const productsPage = readFileSync(new URL('../src/routes/products/+page.svelte', import.meta.url), 'utf8');
+  const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
+  const proof = readFileSync(
+    new URL('../src/routes/proof/marketplace-workflow/+page.svelte', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(layout, /label: 'How It Works', href: '\/services'/);
+  assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
+  assert.doesNotMatch(layout, /label: 'How I Work'/);
+  assert.doesNotMatch(layout, /label: 'Stack Boundary'/);
+
+  assert.match(home, /Choose one handoff your team still checks manually/);
+  assert.match(home, />See a worked example</);
+  assert.doesNotMatch(home, /Train the workflow/);
+
+  assert.match(services, /Bring one handoff your team still checks manually/);
+  assert.match(services, /Keep the work moving without giving up the decision/);
+
+  assert.match(productsPage, /title="One workflow\. Four visible jobs\."/);
+  assert.match(productsPage, /Map the work\. Watch changes\. Route decisions\. Keep the record\./);
+  assert.ok(
+    productsPage.indexOf("value: 'Map'") < productsPage.indexOf("value: 'Signal'"),
+    'the product sequence should begin with the map before live signals'
+  );
+
+  assert.match(stack, /You keep the accounts, data, approval rights, and operating history/);
+  assert.match(proof, /title="Turn a watched review queue into a testable workflow\."/);
+  assert.match(proof, /title="Spend less time rebuilding context\."/);
+  assert.match(proof, /prototype measurements, not customer ROI claims/);
+});
+
 test('public stack positioning names Substrate and the active OpenAI, Dify, Cloudflare stack', () => {
   const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');

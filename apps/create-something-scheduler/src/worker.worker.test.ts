@@ -32,7 +32,13 @@ describe('scheduler Worker transport', () => {
     expect(page.headers.get('content-security-policy')).toContain(
       'frame-ancestors https://createsomething.agency'
     );
-    expect(await page.text()).toContain('Create Something Together');
+    const pageHtml = await page.text();
+    expect(pageHtml).toContain('Create Something Together');
+    expect(pageHtml).toContain("type:'create-something:scheduler-lifecycle'");
+    expect(pageHtml).toContain("notifyParent('booking_form_started'");
+    expect(pageHtml).toContain("notifyParent('booking_initiated'");
+    expect(pageHtml).toContain("notifyParent('booking_completed'");
+    expect(pageHtml).not.toContain('must-not-cross@example.com');
 
     const room = await SELF.fetch('https://scheduler.local/rooms/room_controlled');
     expect(room.status).toBe(200);

@@ -98,6 +98,75 @@ describe('processEventBatch', () => {
 		expect(metadata).not.toContain('micah@example.com');
 		expect(metadata).not.toContain('sk-proj-secret');
 	});
+
+	it('classifies traffic before URL sanitization and stores the server-derived class in metadata', async () => {
+		const cases = [
+			{
+				name: 'declared test',
+				url: 'https://createsomething.agency/book?traffic_class=test&email=micah@example.com',
+				userAgent: 'Mozilla/5.0',
+				expectedClass: 'test',
+				expectedSource: 'declared'
+			},
+			{
+				name: 'declared internal',
+				url: 'https://createsomething.agency/?traffic_class=internal',
+				userAgent: 'Mozilla/5.0',
+				expectedClass: 'internal',
+				expectedSource: 'declared'
+			},
+			{
+				name: 'preview host',
+				url: 'https://preview.create-something-agency.pages.dev/',
+				userAgent: 'Mozilla/5.0',
+				expectedClass: 'preview',
+				expectedSource: 'host'
+			},
+			{
+				name: 'automated client',
+				url: 'https://createsomething.agency/',
+				userAgent: 'Playwright/1.58',
+				expectedClass: 'automated',
+				expectedSource: 'user_agent'
+			},
+			{
+				name: 'ordinary external traffic',
+				url: 'https://createsomething.agency/',
+				userAgent: 'Mozilla/5.0',
+				expectedClass: 'external',
+				expectedSource: 'default'
+			}
+		];
+
+		for (const entry of cases) {
+			const { db, statements } = createMockDb();
+			const result = await processEventBatch(
+				db,
+				{
+					sentAt: '2026-07-12T18:00:01.000Z',
+					events: [
+						baseEvent({
+							eventId: `evt_${entry.expectedClass}`,
+							property: 'agency',
+							url: entry.url
+						})
+					]
+				},
+				{ userAgent: entry.userAgent }
+			);
+
+			expect(result, entry.name).toMatchObject({ success: true, received: 1 });
+			const insert = statements.find((statement) =>
+				statement.query.includes('INSERT INTO unified_events')
+			);
+			const metadata = JSON.parse(String(insert?.values[12]));
+			expect(metadata.trafficClass, entry.name).toBe(entry.expectedClass);
+			expect(metadata.trafficClassSource, entry.name).toBe(entry.expectedSource);
+			if (entry.expectedClass === 'test') {
+				expect(insert?.values[8], entry.name).toBe('https://createsomething.agency/book');
+			}
+		}
+	});
 });
 
 describe('createUserAnalyticsHandler', () => {

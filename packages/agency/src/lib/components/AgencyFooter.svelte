@@ -19,8 +19,8 @@
 				<div class="footer-column">
 					<h6 class="footer-heading">Start Here</h6>
 					<ul class="footer-links">
-						<li><a href="/services">How I Work</a></li>
-						<li><a href="/stack">Stack & Boundaries</a></li>
+						<li><a href="/services">How It Works</a></li>
+						<li><a href="/stack">What You Keep</a></li>
 						<li><a href="/products">Products</a></li>
 						<li><a href="/field-reports">Field Reports</a></li>
 						<li><a href={agencyCoreMessaging.startWithWorkflowHref}>Start Self-Map</a></li>

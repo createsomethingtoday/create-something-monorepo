@@ -46,6 +46,11 @@
 
   const proofStripItems: ProofStateItem[] = [
     {
+      icon: 'objects',
+      value: 'Map',
+      label: 'Atlas shows where the decision sits, which systems it touches, and who owns the path.'
+    },
+    {
       icon: 'actions',
       value: 'Signal',
       label: 'Slack posts, API changes, PRs, schema diffs, tool calls, and exceptions enter one queue.'
@@ -54,11 +59,6 @@
       icon: 'states',
       value: 'Decision',
       label: 'Human, agent, or policy judgment routes the next action before risk moves downstream.'
-    },
-    {
-      icon: 'objects',
-      value: 'Map',
-      label: 'Atlas shows where the decision sits, which systems it touches, and who owns the path.'
     },
     {
       icon: 'receipts',
@@ -83,16 +83,16 @@
 
   const proofPathItems = [
     {
+      label: 'Map',
+      detail: 'Show the affected systems, downstream impact, and review owner before action.'
+    },
+    {
       label: 'Signal',
       detail: 'Name the source, change, account owner, and authority boundary.'
     },
     {
       label: 'Decision',
       detail: 'Route the judgment to the right human, agent, policy, or workflow state.'
-    },
-    {
-      label: 'Map',
-      detail: 'Show the affected systems, downstream impact, and review owner before action.'
     },
     {
       label: 'Proof',
@@ -202,8 +202,8 @@
 
 <PerformanceCampaignOpening
   eyebrow="Product system"
-  title="One map. Three operating surfaces."
-  lede="Atlas maps the workflow. Signal watches what changes. Decision routes the judgment. Proof preserves the record. Together they make AI work inspectable before it becomes autonomous."
+  title="One workflow. Four visible jobs."
+  lede="Map the work. Watch changes. Route decisions. Keep the record. Atlas, Signal, Decision, and Proof each own one job so automation never hides who is responsible."
   media={{ src: '/images/performance-lab/product-system-natural.webp', mobileSrc: '/images/performance-lab/product-system-natural-mobile.webp', alt: 'Aerial black-and-white view of one water-control structure dividing flow across three channels' }}
   proof={[{ label: 'Atlas', value: 'Map' }, { label: 'Signal', value: 'Watch' }, { label: 'Decision', value: 'Route' }, { label: 'Proof', value: 'Record' }]}
 >

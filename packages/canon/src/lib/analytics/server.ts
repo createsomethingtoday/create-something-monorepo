@@ -20,6 +20,20 @@ const MAX_METADATA_JSON_LENGTH = 4096;
 const DEFAULT_USER_ANALYTICS_DAYS = 30;
 const MAX_USER_ANALYTICS_DAYS = 90;
 
+export type AnalyticsTrafficClass =
+	| 'external'
+	| 'internal'
+	| 'preview'
+	| 'automated'
+	| 'test';
+
+export type AnalyticsTrafficClassSource = 'declared' | 'host' | 'user_agent' | 'default';
+
+export type AnalyticsTrafficClassification = {
+	trafficClass: AnalyticsTrafficClass;
+	trafficClassSource: AnalyticsTrafficClassSource;
+};
+
 // =============================================================================
 // SHARED REQUEST HANDLERS
 // =============================================================================
@@ -436,6 +450,54 @@ function sanitizeMetadata(metadata: unknown): Record<string, unknown> | undefine
 	return { truncated: true };
 }
 
+function declaredTrafficClass(value: unknown): 'internal' | 'test' | null {
+	if (typeof value !== 'string') return null;
+	const normalized = value.trim().toLowerCase();
+	return normalized === 'internal' || normalized === 'test' ? normalized : null;
+}
+
+export function classifyAnalyticsTraffic(input: {
+	url?: unknown;
+	userAgent?: string;
+	metadata?: unknown;
+}): AnalyticsTrafficClassification {
+	const metadata =
+		input.metadata && typeof input.metadata === 'object' && !Array.isArray(input.metadata)
+			? (input.metadata as Record<string, unknown>)
+			: {};
+	let parsedUrl: URL | null = null;
+	try {
+		parsedUrl = typeof input.url === 'string' ? new URL(input.url) : null;
+	} catch {
+		parsedUrl = null;
+	}
+
+	const declared =
+		declaredTrafficClass(parsedUrl?.searchParams.get('traffic_class')) ??
+		declaredTrafficClass(metadata.trafficClass) ??
+		declaredTrafficClass(metadata.traffic_class);
+	if (declared) {
+		return { trafficClass: declared, trafficClassSource: 'declared' };
+	}
+
+	const hostname = parsedUrl?.hostname.toLowerCase() ?? '';
+	if (
+		hostname === 'localhost' ||
+		hostname === '127.0.0.1' ||
+		hostname === '::1' ||
+		hostname.endsWith('.pages.dev')
+	) {
+		return { trafficClass: 'preview', trafficClassSource: 'host' };
+	}
+
+	const userAgent = input.userAgent?.toLowerCase() ?? '';
+	if (/(?:bot|crawler|spider|headless|playwright|lighthouse)/.test(userAgent)) {
+		return { trafficClass: 'automated', trafficClassSource: 'user_agent' };
+	}
+
+	return { trafficClass: 'external', trafficClassSource: 'default' };
+}
+
 function sanitizeAnalyticsEvent(event: unknown): AnalyticsEvent | null {
 	if (!event || typeof event !== 'object') return null;
 	const candidate = event as AnalyticsEvent;
@@ -509,6 +571,16 @@ export async function processEventBatch(
 				errors.push(`Invalid event: ${eventId}`);
 				continue;
 			}
+
+			const trafficClassification = classifyAnalyticsTraffic({
+				url: event.url,
+				userAgent: context.userAgent,
+				metadata: event.metadata
+			});
+			sanitizedEvent.metadata = sanitizeMetadata({
+				...(sanitizedEvent.metadata ?? {}),
+				...trafficClassification
+			});
 
 			// Prepare insert statement
 			const stmt = db
