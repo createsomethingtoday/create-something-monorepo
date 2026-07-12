@@ -36,8 +36,8 @@
     {
       id: '#FR-2026-01',
       kind: 'Review operations',
-      title: 'Prepare the evidence. Keep the judgment human.',
-      detail: '49 of 50 usable evidence packets, 98 screenshots, zero external writes, and one promotion gate that held.',
+      title: 'Automation prepared the evidence. Human judgment still decided.',
+      detail: 'Evidence collection completed for 49 of 50 selected cases. Automated judgment remains blocked, and reviewer time savings are not yet measured.',
       state: 'verified',
       date: 'May–June 2026',
       href: '/field-reports/template-review'
@@ -56,7 +56,7 @@
   <PerformanceCampaignOpening
     eyebrow="Performance Lab / Public evidence"
     title="Field Reports"
-    lede="The work should survive inspection: the pressure, map, operating boundary, measured result, failed gate, and next question in one public record."
+    lede="Each report answers four questions: what was tested, what happened, what did not earn authority, and what still needs to be measured."
     media={{
       src: '/images/performance-lab/controlled-flow-natural.webp',
       mobileSrc: '/images/performance-lab/controlled-flow-natural-mobile.webp',

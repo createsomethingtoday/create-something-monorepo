@@ -155,8 +155,8 @@
     {
       id: '#FR-2026-01',
       kind: 'Review operations',
-      title: 'Prepare the evidence. Keep the judgment human.',
-      detail: '49 of 50 usable evidence packets, 98 screenshots, zero external writes, and one promotion gate that held.',
+      title: 'Automation prepared the evidence. Human judgment still decided.',
+      detail: 'Evidence collection completed for 49 of 50 selected cases. Automated judgment remains blocked, and reviewer time savings are not yet measured.',
       state: 'verified',
       date: 'May–June 2026',
       href: '/field-reports/template-review'
