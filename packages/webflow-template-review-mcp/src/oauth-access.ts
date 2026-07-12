@@ -250,7 +250,7 @@ export function buildProtectedResourceMetadata(options: {
   return {
     resource: `${options.resourceOrigin}${options.resourcePath}`,
     authorization_servers: [options.authorizationServer],
-    scopes_supported: [SCOPE_READ, SCOPE_WRITE],
+    scopes_supported: [SCOPE_QUEUE_READ, SCOPE_READ, SCOPE_WRITE],
     bearer_methods_supported: ['header'],
     resource_name: 'Webflow Template Review MCP',
   };
