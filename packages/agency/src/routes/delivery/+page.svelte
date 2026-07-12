@@ -174,7 +174,7 @@
       </p>
       <div class="delivery-actions">
         <a class="delivery-action delivery-action--primary" href="/contact?intent=workflow-map">
-          Start Workflow Map
+          Map one workflow
         </a>
       </div>
     </div>

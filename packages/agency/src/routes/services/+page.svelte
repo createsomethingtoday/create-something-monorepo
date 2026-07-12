@@ -3,12 +3,7 @@
     Button,
     PerformanceCampaignOpening,
     PerformanceContrastChapter,
-    PerformanceFieldSequence,
-    PerformanceThesisConditions,
-    SEO,
-    type PerformanceCondition,
-    type PerformanceFieldStudyMetric,
-    type PerformanceFieldStudyProof
+    SEO
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
@@ -71,41 +66,6 @@
     }
   ];
 
-  const readinessItems: PerformanceCondition[] = [
-    {
-      label: 'Boundary',
-      title: 'Named',
-      detail: 'Object, owner, allowed action, and stop condition before build',
-      tone: 'signal'
-    },
-    {
-      label: 'Pressure',
-      title: 'Held',
-      detail: 'Customer, money, production, and account-touching work pauses for proof',
-      tone: 'pressure'
-    },
-    {
-      label: 'Evidence',
-      title: 'Attached',
-      detail: 'Map, approval, runbook, and proof record travel with the pilot',
-      tone: 'growth'
-    }
-  ];
-
-  const pressureStudyMetrics: PerformanceFieldStudyMetric[] = [
-    { label: 'Boundary', value: 'Named', detail: 'Allowed action, approval pause, and stop are explicit.' },
-    { label: 'Pressure', value: 'Held', detail: 'Customer, money, production, and account work stay gated.' },
-    { label: 'Recovery', value: 'Required', detail: 'The downstream path is visible before implementation.' }
-  ];
-
-  const pressureStudyProof: PerformanceFieldStudyProof = {
-    id: 'SERVICE-METHOD-20260710',
-    owner: 'CREATE SOMETHING',
-    state: 'BOUNDARY NAMED',
-    verified: '2026-07-10',
-    version: 'v1',
-    classification: 'Public service method'
-  };
 </script>
 
 <SEO
@@ -123,7 +83,7 @@
     eyebrow="How It Works"
     title="Map the workflow before deciding to build."
     lede="Bring one handoff your team still checks manually. We map the owner, systems, safe actions, approval point, stop condition, and evidence before anything touches customers, money, production, or accounts."
-    media={{ src: '/images/performance-lab/pressure-boundary-natural.webp', mobileSrc: '/images/performance-lab/pressure-boundary-natural-mobile.webp', alt: 'Black-and-white wave impact against a concrete boundary' }}
+    media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
     proof={[{ label: 'Boundary', value: 'Named' }, { label: 'Pressure', value: 'Held' }, { label: 'Evidence', value: 'Attached' }]}
   >
     {#snippet actions()}
@@ -135,30 +95,6 @@
       </Button>
     {/snippet}
   </PerformanceCampaignOpening>
-
-  <PerformanceFieldSequence
-    eyebrow="Service condition"
-    title="Keep the work moving without giving up the decision."
-    studies={[{
-      image: '/images/performance-lab/trace-wake-natural.webp',
-      mobileImage: '/images/performance-lab/trace-wake-natural-mobile.webp',
-      alt: 'Aerial black-and-white view of a survey craft leaving a directional wake.',
-      title: 'Give each next step a boundary.',
-      description: 'Safe work can move. Consequential work waits for a named owner, with the evidence and recovery path attached.',
-      principle: 'Every action leaves a wake.',
-      metrics: pressureStudyMetrics,
-      proof: pressureStudyProof,
-      stage: 'pressure-visible',
-      mediaSide: 'right'
-    }]}
-  />
-
-  <PerformanceThesisConditions
-    title="Build only when the workflow is ready."
-    description="The first map establishes the boundary, pressure gate, and evidence package before implementation begins."
-    conditions={readinessItems}
-    ariaLabel="Delegation readiness"
-  />
 
   <div id="atlas-warmup">
   <PerformanceContrastChapter

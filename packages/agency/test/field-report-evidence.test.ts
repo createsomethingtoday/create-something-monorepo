@@ -60,7 +60,9 @@ test('Products explains one map and three operating surfaces without a four-surf
   assert.match(products, /One map coordinates three operating surfaces\./);
   assert.match(products, /Atlas holds the map\./);
   assert.match(products, /Signal watches, Decision routes, and Proof records\./);
+  assert.match(products, /One workflow map\. Three places to operate\./);
   assert.doesNotMatch(products, /Four inspectable surfaces/);
+  assert.doesNotMatch(products, /Four visible jobs/);
 });
 
 test('booking carries the Field Report handoff into the owned mapping scheduler', () => {

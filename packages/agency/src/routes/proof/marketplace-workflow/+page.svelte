@@ -136,7 +136,7 @@
     ]}
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.selfMapHref}>Map your workflow</Button>
+      <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
       <Button href="/products" variant="secondary">See the product system</Button>
     {/snippet}
   </PerformanceCampaignOpening>

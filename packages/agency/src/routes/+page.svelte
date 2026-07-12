@@ -7,11 +7,9 @@
     PerformanceEvidenceIndex,
     PerformanceFieldSequence,
     PerformancePageSection,
-    PerformanceThesisConditions,
     PerformanceWorkflowMiniArtifact,
     SEO,
     type PerformanceCampaignProof,
-    type PerformanceCondition,
     type PerformanceEvidenceItem,
     type PerformanceFieldStudyMetric,
     type PerformanceFieldStudyProof
@@ -125,27 +123,6 @@
     }
   ] as const;
 
-  const labReadinessItems: PerformanceCondition[] = [
-    {
-      label: 'Mapped',
-      title: '7/7 coverage',
-      detail: 'Actor, AI task, human task, system, artifact, constraint, touchpoint',
-      tone: 'signal'
-    },
-    {
-      label: 'Decision pressure',
-      title: 'Run / Wait / Stop',
-      detail: 'Every action has an owner, approval pause, or stop condition',
-      tone: 'pressure'
-    },
-    {
-      label: 'Proof attached',
-      title: '3 receipts',
-      detail: 'Workflow map, owner approval, proof record before build commitment',
-      tone: 'growth'
-    }
-  ];
-
   const flowStudyMetrics: PerformanceFieldStudyMetric[] = [
     { label: 'Flow boundary', value: '1 controlled path', detail: 'Scope the first lane before adding authority.' },
     { label: 'Decision gates', value: 'Run / Wait / Stop', detail: 'Every branch names who decides.' },
@@ -247,12 +224,6 @@
     }]}
   />
 
-  <PerformanceThesisConditions
-    title="Earn authority one decision at a time."
-    description="A workflow earns delegation when its owners, decision points, stop conditions, and proof are explicit."
-    conditions={labReadinessItems}
-  />
-
   <PerformanceContrastChapter
     eyebrow="Workflow plan"
     title="Map the work before AI runs it."
@@ -314,7 +285,7 @@
     description="We choose OpenAI deliberately for Codex and agent reasoning. The durable client system remains yours: workflow data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts, routing, fallback, and recovery."
   >
     {#snippet actions()}
-      <Button href="/stack">See the stack boundary</Button>
+      <Button href="/stack">See what you keep</Button>
       <Button
         href="https://createsomething.ltd/canon/concepts/conviction-without-dependence"
         variant="secondary">Read the Canon</Button

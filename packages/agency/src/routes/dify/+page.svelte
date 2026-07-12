@@ -174,7 +174,7 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/stack" variant="secondary">See Stack Boundary</Button>
+    <Button href="/stack" variant="secondary">See what you keep</Button>
   {/snippet}
 
   {#snippet aside()}
