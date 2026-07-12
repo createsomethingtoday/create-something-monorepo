@@ -414,6 +414,14 @@ test('compact mobile privacy prompt stays below navigation and away from campaig
 	assert.ok(agencyPrivacyAnalytics.includes('bottom: auto'));
 	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice:has(.privacy-panel)'));
 	assert.ok(agencyPrivacyAnalytics.includes("content: 'Privacy'"));
+	assert.match(
+		agencyPrivacyAnalytics,
+		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill--compact \{[\s\S]*?min-height: 2\.75rem;[\s\S]*?border-color: transparent;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/
+	);
+	assert.match(
+		agencyPrivacyAnalytics,
+		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill--compact > span:first-child::before \{[\s\S]*?font-size: 0\.62rem;/
+	);
 });
 
 test('short desktop campaigns keep the property switcher away from primary actions', () => {

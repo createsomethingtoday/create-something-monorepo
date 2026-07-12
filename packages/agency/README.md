@@ -108,7 +108,10 @@ Validation:
 Public platform language follows
 [Conviction Without Dependence](https://createsomething.ltd/canon/concepts/conviction-without-dependence):
 
-> Built primarily with OpenAI Codex. Designed to outlast any model.
+> Built with OpenAI Codex. Designed to remain yours.
+
+On public decision routes, express this conviction in plain customer ownership
+language before listing the technical artifacts that make portability real.
 
 Apply the contract in this order:
 
