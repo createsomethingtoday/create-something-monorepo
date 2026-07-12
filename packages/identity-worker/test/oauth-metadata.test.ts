@@ -21,6 +21,16 @@ test('identity worker serves oauth authorization server metadata', async () => {
   const body = await response.json() as Record<string, unknown>;
   assert.equal(body.authorization_endpoint, 'https://id.createsomething.space/oauth/authorize');
   assert.equal(body.token_endpoint, 'https://id.createsomething.space/oauth/token');
+  assert.deepEqual(body.scopes_supported, [
+    'openid',
+    'profile',
+    'email',
+    'mcp',
+    'offline_access',
+    'template-review:read',
+    'template-review:write',
+    'template-review:queue-read',
+  ]);
 });
 
 test('identity worker renders oauth authorize page', async () => {

@@ -93,8 +93,8 @@ test('Atlas Studio session surfaces topology diagnostics for business review', (
   assert.ok(diagnosticsObservation.text.includes('0 hard gaps'));
   assert.ok(diagnosticsObservation.text.includes('6 review signals'));
   assert.ok(diagnosticsStep);
-  assert.ok(diagnosticsStep.summary.includes('Automation has 237'));
-  assert.ok(diagnosticsStep.summary.includes('Database has 21'));
+  assert.ok(diagnosticsStep.summary.includes('Automation has 245'));
+  assert.ok(diagnosticsStep.summary.includes('Database has 25'));
   assert.ok(diagnosticsStep.proof.includes('0 hard gaps'));
   assert.ok(session.story.callouts.some((callout) => callout.id.startsWith('diagnostic_callout_')));
 });

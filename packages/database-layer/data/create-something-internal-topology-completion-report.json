@@ -2,11 +2,11 @@
   "id": "substrate:create-something:topology:completion-report:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-07-08T18:21:41.279Z",
+  "generatedAt": "2026-07-12T22:50:06.919Z",
   "totals": {
-    "nodes": 440,
-    "edges": 898,
-    "mapped": 440,
+    "nodes": 453,
+    "edges": 929,
+    "mapped": 453,
     "gaps": 0,
     "gapCounts": {
       "needs_atlas": 0,
@@ -22,7 +22,7 @@
     {
       "status": "mapped",
       "surface": "app",
-      "count": 6
+      "count": 8
     },
     {
       "status": "mapped",
@@ -42,7 +42,7 @@
     {
       "status": "mapped",
       "surface": "guide",
-      "count": 55
+      "count": 56
     },
     {
       "status": "mapped",
@@ -52,7 +52,7 @@
     {
       "status": "mapped",
       "surface": "package",
-      "count": 40
+      "count": 48
     },
     {
       "status": "mapped",
@@ -67,19 +67,19 @@
     {
       "status": "mapped",
       "surface": "worker",
-      "count": 146
+      "count": 148
     }
   ],
   "statusByTier": [
     {
       "tier": "Automation",
       "status": "mapped",
-      "count": 237
+      "count": 245
     },
     {
       "tier": "Database",
       "status": "mapped",
-      "count": 21
+      "count": 25
     },
     {
       "tier": "Judgment",
@@ -89,7 +89,7 @@
     {
       "tier": "Mixed",
       "status": "mapped",
-      "count": 89
+      "count": 90
     }
   ],
   "clientOverlays": [

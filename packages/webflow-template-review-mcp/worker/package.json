@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node ../../../scripts/run-wrangler.mjs dev",
-    "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
+    "build:deps": "pnpm --filter @create-something/mcp-core build",
+    "dev": "pnpm run build:deps && node ../../../scripts/run-wrangler.mjs dev",
+    "deploy": "pnpm run build:deps && node ../../../scripts/run-wrangler.mjs deploy",
     "tail": "node ../../../scripts/run-wrangler.mjs tail"
   },
   "dependencies": {
-    "@clerk/backend": "^3.11.2",
     "@create-something/mcp-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "agents": "^0.3.10",

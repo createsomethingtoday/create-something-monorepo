@@ -10,29 +10,29 @@ topology-affecting changes with `pnpm substrate:refresh`.
 
 | Status | Count |
 | --- | --- |
-| mapped | 440 |
+| mapped | 453 |
 
 ## Tiers
 
 | Tier | Count |
 | --- | --- |
-| Automation | 237 |
+| Automation | 245 |
 | Judgment | 93 |
-| Mixed | 89 |
-| Database | 21 |
+| Mixed | 90 |
+| Database | 25 |
 
 ## Surfaces
 
 | Surface | Count | Representative records |
 | --- | --- | --- |
-| worker | 146 | apps/bettermode-marketplace-creator-agent/wrangler.jsonc (Automation); apps/marketplace-template-submission-cloud/wrangler.json (Automation); apps/webflow-dashboard-cloud/wrangler.json (Automation); apps/webflow-marketplace-category-cloud/wrangler.json (Automation) |
+| worker | 148 | apps/bettermode-marketplace-creator-agent/wrangler.jsonc (Automation); apps/create-something-scheduler/wrangler.jsonc (Automation); apps/guard-performance-lab/wrangler.toml (Automation); apps/marketplace-template-submission-cloud/wrangler.json (Automation) |
 | mcp | 72 | packages/abundance-jobs-mcp (Automation); packages/abundance-jobs-mcp/worker (Automation); packages/agent-kit (Judgment); packages/app-governance-db (Judgment) |
+| guide | 56 | docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md (Mixed); docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md (Mixed); docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md (Mixed); docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md (Mixed) |
 | policy | 56 | docs/policies/generated/fallback/policy.hub-route-authorization.v1.json (Judgment); docs/policies/generated/fallback/policy.judgment-baseline.v1.json (Judgment); docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json (Judgment); docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json (Judgment) |
-| guide | 55 | docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md (Mixed); docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md (Mixed); docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md (Mixed); docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md (Mixed) |
-| package | 40 | @create-something/monorepo (Database); .archive/components-deprecated (Judgment); packages/app-governance-desktop (Mixed); packages/ascii-renderer (Mixed) |
+| package | 48 | @create-something/monorepo (Database); .archive/components-deprecated (Judgment); packages/app-governance-desktop (Mixed); packages/ascii-renderer (Mixed) |
 | agent | 28 | config/dify-agents/aaron-hub.json (Automation); config/dify-agents/abundance-hub.json (Automation); config/dify-agents/bettermode-marketplace-creator-agent.json (Automation); config/dify-agents/blondish-hub.json (Automation) |
 | config | 24 | config/dify-mcp-intake/cs-telemetry.json (Automation); config/dify-mcp-intake/gmail-notion-mcp.json (Automation); config/dify-mcp-intake/gmail-sync.json (Automation); config/dify-mcp-intake/halfdozen-gmail-sync-fillip.json (Automation) |
-| app | 6 | apps/atlas-studio-desktop (Mixed); apps/bettermode-marketplace-creator-agent (Automation); apps/even-operator-brief (Automation); apps/marketplace-template-submission-cloud (Mixed) |
+| app | 8 | apps/atlas-studio-desktop (Mixed); apps/bettermode-marketplace-creator-agent (Automation); apps/create-something-scheduler (Automation); apps/even-operator-brief (Automation) |
 | client | 6 | packages/agency/clients/cato-supply-insights-review (Automation); packages/agency/clients/jandjhomehealth (Mixed); packages/agency/clients/outerfields (Mixed); packages/agency/clients/outerfields/mcp-remote (Automation) |
 | doc | 6 | docs/CANON_DATABASE_LAYER_DESIGN.md (Mixed); docs/CREATE_SOMETHING_DATABASE_LAYER.md (Mixed); docs/MCP_FIRST_THESIS.md (Mixed); docs/MCP_HUB_CONTROL_PLANE.md (Mixed) |
 | repo | 1 | . (Mixed) |
@@ -51,9 +51,9 @@ topology-affecting changes with `pnpm substrate:refresh`.
 
 - Exact duplicate paths: No exact duplicate paths are present in the topology.
 - Isolated topology records: No isolated nodes are present in the topology.
-- Automation and Database balance: Automation has 237 record(s); Database has 21 record(s). This is a business-shape review signal, not a hard gap.
-- Worker surface concentration: 146 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.
-- worker surface review: 146 record(s) are classified as worker.
+- Automation and Database balance: Automation has 245 record(s); Database has 25 record(s). This is a business-shape review signal, not a hard gap.
+- Worker surface concentration: 148 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.
+- worker surface review: 148 record(s) are classified as worker.
 - mcp surface review: 72 record(s) are classified as mcp.
 - policy surface review: 56 record(s) are classified as policy.
-- guide surface review: 55 record(s) are classified as guide.
+- guide surface review: 56 record(s) are classified as guide.

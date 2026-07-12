@@ -1,6 +1,5 @@
 import { sanitizeCanonContextId, type CanonWorkflowContext } from '$lib/canon/workflow-context';
 import { ABUNDANCE_CONTEXT_ID, abundanceWorkflowContext } from './abundance-context';
-import { SHIVWORKS_CONTEXT_ID, shivworksWorkflowContext } from './shivworks-context';
 
 /**
  * Deploy-time fallbacks for delivery engagement contexts, keyed by context ID.
@@ -10,8 +9,7 @@ import { SHIVWORKS_CONTEXT_ID, shivworksWorkflowContext } from './shivworks-cont
  * (docs/DELIVERY_SURFACE_SPEC.md).
  */
 const deliveryFallbacks: Record<string, CanonWorkflowContext> = {
-	[ABUNDANCE_CONTEXT_ID]: abundanceWorkflowContext,
-	[SHIVWORKS_CONTEXT_ID]: shivworksWorkflowContext
+	[ABUNDANCE_CONTEXT_ID]: abundanceWorkflowContext
 };
 
 export function resolveDeliveryFallback(rawContextId: unknown): CanonWorkflowContext | undefined {

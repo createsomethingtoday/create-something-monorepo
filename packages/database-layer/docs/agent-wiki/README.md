@@ -32,18 +32,18 @@ than inferred as a second documentation truth surface.
 | --- | --- |
 | Topology ID | substrate:create-something:topology:internal |
 | Atlas canvas | create-something-internal-operating-topology |
-| Topology nodes | 440 |
-| Topology edges | 898 |
-| Node status | mapped: 440 |
-| Tier counts | Automation: 237, Judgment: 93, Mixed: 89, Database: 21 |
+| Topology nodes | 453 |
+| Topology edges | 929 |
+| Node status | mapped: 453 |
+| Tier counts | Automation: 245, Judgment: 93, Mixed: 90, Database: 25 |
 | Management posture | agent_native |
-| Management resources | 507 |
+| Management resources | 522 |
 | Management operations | 29 |
 | Business recommendation lanes | 4 |
 | Diagnostics value state | connected_map_with_review_signals |
 | Hard gaps | 0 |
 | Review signals | 6 |
-| Operating slices | 22 |
+| Operating slices | 23 |
 | Atlas story steps | 6 |
 
 ## Pages
