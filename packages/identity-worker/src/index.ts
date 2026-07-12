@@ -3910,6 +3910,18 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
 		.map(([key, value]) => `<input type="hidden" name="${escapeHtml(key)}" value="${escapeHtml(value)}" />`)
 		.join('\n');
 	const hubUrl = escapeHtml(env.MCP_HUB_URL ?? DEFAULT_OAUTH_RESOURCE);
+	const requestedResource = normalizeOAuthResource(
+		params.get('resource') ?? env.MCP_HUB_URL ?? DEFAULT_OAUTH_RESOURCE,
+	);
+	const applicationPolicy = resolveOAuthApplicationAccessPolicy(requestedResource);
+	const requestedScopes = normalizeScope(params.get('scope') ?? 'openid mcp');
+	const accessEyebrow = applicationPolicy ? 'Application MCP Access' : 'Managed MCP Access';
+	const accessDescription = applicationPolicy
+		? 'Sign in to CREATE SOMETHING to connect this MCP app. Authorization issues a short-lived access token bound to this resource and the requested scopes. Access remains subject to active identity and application policy.'
+		: 'Sign in to CREATE SOMETHING to connect this MCP app. The resulting access token is your managed MCP bearer token and remains subject to live entitlement checks.';
+	const accessMetadata = applicationPolicy
+		? `Resource: ${escapeHtml(applicationPolicy.resource)}<br />Scopes: ${escapeHtml(requestedScopes)}`
+		: `Hub: ${hubUrl}`;
 	return `<!doctype html>
 <html lang="en">
 <head>
@@ -4065,9 +4077,9 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
       <div>CREATE SOMETHING</div>
     </div>
     <main class="card">
-    <p class="eyebrow">Managed MCP Access</p>
+    <p class="eyebrow">${accessEyebrow}</p>
     <h1>Authorize MCP Access</h1>
-    <p class="lede">Sign in to CREATE SOMETHING to connect this MCP app. The resulting access token is your managed MCP bearer token and remains subject to live entitlement checks.</p>
+    <p class="lede">${accessDescription}</p>
     ${errorMessage ? `<div class="error">${escapeHtml(errorMessage)}</div>` : ''}
     <form method="post" action="/oauth/authorize">
       ${hidden}
@@ -4075,7 +4087,7 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
       <label>Password<input type="password" name="password" autocomplete="current-password" required /></label>
       <button type="submit">Authorize</button>
     </form>
-    <div class="meta">Hub: ${hubUrl}</div>
+    <div class="meta">${accessMetadata}</div>
   </main>
   </div>
 </body>
