@@ -348,6 +348,6 @@ test('buildProtectedResourceMetadata points at CREATE SOMETHING Identity', () =>
   });
   assert.equal(metadata.resource, 'https://wf-template-review.mcp.createsomething.agency/mcp');
   assert.deepEqual(metadata.authorization_servers, ['https://id.createsomething.space']);
-  assert.deepEqual(metadata.scopes_supported, [SCOPE_READ, SCOPE_WRITE]);
+  assert.deepEqual(metadata.scopes_supported, [SCOPE_QUEUE_READ, SCOPE_READ, SCOPE_WRITE]);
   assert.deepEqual(metadata.bearer_methods_supported, ['header']);
 });
