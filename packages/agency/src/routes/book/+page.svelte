@@ -25,6 +25,7 @@
 	}
 
 	onMount(() => {
+		schedulerHref = buildFirstPartySchedulerUrl(window.location.search);
 		const warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
 		handoffContext = schedulerHandoffContext(window.location.search, warmupNotes);
 		sendSchedulerContext();

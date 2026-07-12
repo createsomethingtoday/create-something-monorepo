@@ -52,11 +52,15 @@ export function schedulerHandoffContext(search = '', warmupNotes?: string): Sche
 	copy('warmup', 'warmup', 64);
 	copy('readiness', 'readiness', 64);
 	copy('atlas_session_id', 'atlasSessionId', 100);
-	const score = Number(params.get('score'));
-	if (Number.isInteger(score) && score >= 0 && score <= 100) context.score = score;
-	const agentMessages = Number(params.get('agent_messages'));
-	if (Number.isInteger(agentMessages) && agentMessages >= 0 && agentMessages <= 200) {
-		context.agentMessages = agentMessages;
+	if (params.has('score')) {
+		const score = Number(params.get('score'));
+		if (Number.isInteger(score) && score >= 0 && score <= 100) context.score = score;
+	}
+	if (params.has('agent_messages')) {
+		const agentMessages = Number(params.get('agent_messages'));
+		if (Number.isInteger(agentMessages) && agentMessages >= 0 && agentMessages <= 200) {
+			context.agentMessages = agentMessages;
+		}
 	}
 	const notes = warmupNotes
 		?.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '')
