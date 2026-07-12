@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-readiness:internal",
-  "generatedAt": "2026-07-08T18:21:41.506Z",
+  "generatedAt": "2026-07-12T22:50:07.137Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReviewId": "substrate:create-something:operating-slice-review:internal",
@@ -13,20 +13,20 @@
       "tier": "Automation",
       "surface": "worker",
       "owner": "CREATE SOMETHING",
-      "recordCount": 123,
-      "mappedRecordCount": 123,
+      "recordCount": 125,
+      "mappedRecordCount": 125,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "123/123 slice records exist in the internal topology.",
+          "summary": "125/125 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "123/123 slice records are mapped.",
+          "summary": "125/125 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
@@ -50,7 +50,7 @@
         {
           "id": "cloudflare_runtime_configs_joined",
           "status": "pass",
-          "summary": "99/99 Wrangler config node(s) join to runtime binding coverage.",
+          "summary": "101/101 Wrangler config node(s) join to runtime binding coverage.",
           "evidence": "packages/database-layer/data/create-something-runtime-binding-coverage.json"
         },
         {
@@ -69,23 +69,23 @@
       "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation.",
       "workerRuntime": {
         "runtime": "cloudflare",
-        "runtimeConfigRecords": 99,
+        "runtimeConfigRecords": 101,
         "workerPackageRecords": 24,
-        "bindingRefs": 465,
+        "bindingRefs": 493,
         "routeRefs": 21,
         "bindingKinds": {
-          "assets": 6,
+          "assets": 7,
           "d1": 80,
-          "durable_object": 38,
+          "durable_object": 39,
           "kv": 35,
           "queue": 16,
           "r2": 21,
           "route": 21,
-          "var": 246,
+          "var": 272,
           "vectorize": 2
         },
         "workersWithD1": 68,
-        "workersWithDurableObjects": 36,
+        "workersWithDurableObjects": 37,
         "workersWithQueues": 10,
         "workersWithR2": 21,
         "secretHandling": "Readiness uses binding names, route refs, and environment variable keys from repo config. It does not capture secret values."
@@ -150,20 +150,20 @@
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
-      "recordCount": 55,
-      "mappedRecordCount": 55,
+      "recordCount": 56,
+      "mappedRecordCount": 56,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "55/55 slice records exist in the internal topology.",
+          "summary": "56/56 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "55/55 slice records are mapped.",
+          "summary": "56/56 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
@@ -397,27 +397,27 @@
       "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     },
     {
-      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
-      "title": "Judgment package Atlas coverage",
+      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-package",
+      "title": "Automation package Atlas coverage",
       "status": "review_ready",
       "productionStatus": "approval_required",
-      "tier": "Judgment",
+      "tier": "Automation",
       "surface": "package",
       "owner": "CREATE SOMETHING",
-      "recordCount": 12,
-      "mappedRecordCount": 12,
+      "recordCount": 14,
+      "mappedRecordCount": 14,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "12/12 slice records exist in the internal topology.",
+          "summary": "14/14 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "12/12 slice records are mapped.",
+          "summary": "14/14 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
@@ -498,6 +498,56 @@
       "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
     },
     {
+      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+      "title": "Judgment package Atlas coverage",
+      "status": "review_ready",
+      "productionStatus": "approval_required",
+      "tier": "Judgment",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "recordCount": 11,
+      "mappedRecordCount": 11,
+      "missingRecordIds": [],
+      "gates": [
+        {
+          "id": "topology_records_exist",
+          "status": "pass",
+          "summary": "11/11 slice records exist in the internal topology.",
+          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+        },
+        {
+          "id": "topology_records_mapped",
+          "status": "pass",
+          "summary": "11/11 slice records are mapped.",
+          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+        },
+        {
+          "id": "validation_commands_declared",
+          "status": "pass",
+          "summary": "1 validation command(s) are attached to the slice.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        },
+        {
+          "id": "evidence_paths_declared",
+          "status": "pass",
+          "summary": "11 evidence path(s) are attached to the slice.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        },
+        {
+          "id": "approval_boundary_declared",
+          "status": "pass",
+          "summary": "Production mutation remains approval-gated.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        }
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
+    },
+    {
       "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-worker",
       "title": "Judgment worker Atlas coverage",
       "status": "review_ready",
@@ -572,56 +622,6 @@
         "workersWithR2": 0,
         "secretHandling": "Readiness uses binding names, route refs, and environment variable keys from repo config. It does not capture secret values."
       }
-    },
-    {
-      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-package",
-      "title": "Automation package Atlas coverage",
-      "status": "review_ready",
-      "productionStatus": "approval_required",
-      "tier": "Automation",
-      "surface": "package",
-      "owner": "CREATE SOMETHING",
-      "recordCount": 9,
-      "mappedRecordCount": 9,
-      "missingRecordIds": [],
-      "gates": [
-        {
-          "id": "topology_records_exist",
-          "status": "pass",
-          "summary": "9/9 slice records exist in the internal topology.",
-          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-        },
-        {
-          "id": "topology_records_mapped",
-          "status": "pass",
-          "summary": "9/9 slice records are mapped.",
-          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-        },
-        {
-          "id": "validation_commands_declared",
-          "status": "pass",
-          "summary": "1 validation command(s) are attached to the slice.",
-          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-        },
-        {
-          "id": "evidence_paths_declared",
-          "status": "pass",
-          "summary": "9 evidence path(s) are attached to the slice.",
-          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-        },
-        {
-          "id": "approval_boundary_declared",
-          "status": "pass",
-          "summary": "Production mutation remains approval-gated.",
-          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-        }
-      ],
-      "validationCommands": [
-        "pnpm --filter @create-something/database-layer test"
-      ],
-      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     },
     {
       "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-database-mcp",
@@ -749,6 +749,56 @@
         "workersWithR2": 0,
         "secretHandling": "Readiness uses binding names, route refs, and environment variable keys from repo config. It does not capture secret values."
       }
+    },
+    {
+      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
+      "title": "Database package Atlas coverage",
+      "status": "review_ready",
+      "productionStatus": "approval_required",
+      "tier": "Database",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "recordCount": 7,
+      "mappedRecordCount": 7,
+      "missingRecordIds": [],
+      "gates": [
+        {
+          "id": "topology_records_exist",
+          "status": "pass",
+          "summary": "7/7 slice records exist in the internal topology.",
+          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+        },
+        {
+          "id": "topology_records_mapped",
+          "status": "pass",
+          "summary": "7/7 slice records are mapped.",
+          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+        },
+        {
+          "id": "validation_commands_declared",
+          "status": "pass",
+          "summary": "1 validation command(s) are attached to the slice.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        },
+        {
+          "id": "evidence_paths_declared",
+          "status": "pass",
+          "summary": "6 evidence path(s) are attached to the slice.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        },
+        {
+          "id": "approval_boundary_declared",
+          "status": "pass",
+          "summary": "Production mutation remains approval-gated.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        }
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     },
     {
       "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-doc",
@@ -928,6 +978,56 @@
       }
     },
     {
+      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-automation-app",
+      "title": "Automation app Atlas coverage",
+      "status": "review_ready",
+      "productionStatus": "approval_required",
+      "tier": "Automation",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "recordCount": 3,
+      "mappedRecordCount": 3,
+      "missingRecordIds": [],
+      "gates": [
+        {
+          "id": "topology_records_exist",
+          "status": "pass",
+          "summary": "3/3 slice records exist in the internal topology.",
+          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+        },
+        {
+          "id": "topology_records_mapped",
+          "status": "pass",
+          "summary": "3/3 slice records are mapped.",
+          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+        },
+        {
+          "id": "validation_commands_declared",
+          "status": "pass",
+          "summary": "1 validation command(s) are attached to the slice.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        },
+        {
+          "id": "evidence_paths_declared",
+          "status": "pass",
+          "summary": "3 evidence path(s) are attached to the slice.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        },
+        {
+          "id": "approval_boundary_declared",
+          "status": "pass",
+          "summary": "Production mutation remains approval-gated.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        }
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
+    },
+    {
       "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-client",
       "title": "Automation client Atlas coverage",
       "status": "review_ready",
@@ -976,56 +1076,6 @@
       "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
       "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
       "nextAction": "Review client overlay boundaries and promote approved slices into client-specific Atlas sessions."
-    },
-    {
-      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
-      "title": "Database package Atlas coverage",
-      "status": "review_ready",
-      "productionStatus": "approval_required",
-      "tier": "Database",
-      "surface": "package",
-      "owner": "CREATE SOMETHING",
-      "recordCount": 3,
-      "mappedRecordCount": 3,
-      "missingRecordIds": [],
-      "gates": [
-        {
-          "id": "topology_records_exist",
-          "status": "pass",
-          "summary": "3/3 slice records exist in the internal topology.",
-          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-        },
-        {
-          "id": "topology_records_mapped",
-          "status": "pass",
-          "summary": "3/3 slice records are mapped.",
-          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-        },
-        {
-          "id": "validation_commands_declared",
-          "status": "pass",
-          "summary": "1 validation command(s) are attached to the slice.",
-          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-        },
-        {
-          "id": "evidence_paths_declared",
-          "status": "pass",
-          "summary": "2 evidence path(s) are attached to the slice.",
-          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-        },
-        {
-          "id": "approval_boundary_declared",
-          "status": "pass",
-          "summary": "Production mutation remains approval-gated.",
-          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-        }
-      ],
-      "validationCommands": [
-        "pnpm --filter @create-something/database-layer test"
-      ],
-      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     },
     {
       "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-agent",
@@ -1129,56 +1179,6 @@
       "nextAction": "Review client overlay boundaries and promote approved slices into client-specific Atlas sessions."
     },
     {
-      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-automation-app",
-      "title": "Automation app Atlas coverage",
-      "status": "review_ready",
-      "productionStatus": "approval_required",
-      "tier": "Automation",
-      "surface": "app",
-      "owner": "CREATE SOMETHING",
-      "recordCount": 2,
-      "mappedRecordCount": 2,
-      "missingRecordIds": [],
-      "gates": [
-        {
-          "id": "topology_records_exist",
-          "status": "pass",
-          "summary": "2/2 slice records exist in the internal topology.",
-          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-        },
-        {
-          "id": "topology_records_mapped",
-          "status": "pass",
-          "summary": "2/2 slice records are mapped.",
-          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
-        },
-        {
-          "id": "validation_commands_declared",
-          "status": "pass",
-          "summary": "1 validation command(s) are attached to the slice.",
-          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-        },
-        {
-          "id": "evidence_paths_declared",
-          "status": "pass",
-          "summary": "2 evidence path(s) are attached to the slice.",
-          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-        },
-        {
-          "id": "approval_boundary_declared",
-          "status": "pass",
-          "summary": "Production mutation remains approval-gated.",
-          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
-        }
-      ],
-      "validationCommands": [
-        "pnpm --filter @create-something/database-layer test"
-      ],
-      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
-    },
-    {
       "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
       "title": "Database agent Atlas coverage",
       "status": "review_ready",
@@ -1228,6 +1228,56 @@
       "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
       "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
       "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
+    },
+    {
+      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
+      "title": "Judgment app Atlas coverage",
+      "status": "review_ready",
+      "productionStatus": "approval_required",
+      "tier": "Judgment",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "recordCount": 1,
+      "mappedRecordCount": 1,
+      "missingRecordIds": [],
+      "gates": [
+        {
+          "id": "topology_records_exist",
+          "status": "pass",
+          "summary": "1/1 slice records exist in the internal topology.",
+          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+        },
+        {
+          "id": "topology_records_mapped",
+          "status": "pass",
+          "summary": "1/1 slice records are mapped.",
+          "evidence": "packages/database-layer/data/create-something-internal-topology.json"
+        },
+        {
+          "id": "validation_commands_declared",
+          "status": "pass",
+          "summary": "1 validation command(s) are attached to the slice.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        },
+        {
+          "id": "evidence_paths_declared",
+          "status": "pass",
+          "summary": "1 evidence path(s) are attached to the slice.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        },
+        {
+          "id": "approval_boundary_declared",
+          "status": "pass",
+          "summary": "Production mutation remains approval-gated.",
+          "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
+        }
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     }
   ]
 }

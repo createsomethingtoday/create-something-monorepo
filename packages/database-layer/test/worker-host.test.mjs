@@ -18,7 +18,7 @@ test('database-layer Worker host serves operating slices through fetch', async (
     response.headers.get('access-control-allow-origin'),
     'https://app-governance-dash.createsomething.agency'
   );
-  assert.equal(body.slices.length, 22);
+  assert.equal(body.slices.length, 23);
   assert.equal(body.slices[0].title, 'Automation worker Atlas coverage');
 });
 

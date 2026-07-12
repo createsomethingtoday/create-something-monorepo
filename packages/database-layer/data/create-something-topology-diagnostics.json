@@ -2,34 +2,34 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-07-08T18:21:41.279Z",
+  "generatedAt": "2026-07-12T22:50:06.919Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 440,
-    "edges": 898,
-    "mapped": 440,
+    "nodes": 453,
+    "edges": 929,
+    "mapped": 453,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
     "isolatedNodeCount": 0,
     "surfaceCounts": {
       "repo": 1,
-      "package": 40,
-      "app": 6,
+      "package": 48,
+      "app": 8,
       "mcp": 72,
       "client": 6,
-      "worker": 146,
+      "worker": 148,
       "agent": 28,
       "doc": 6,
       "policy": 56,
-      "guide": 55,
+      "guide": 56,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 89,
+      "Mixed": 90,
       "Judgment": 93,
-      "Automation": 237,
-      "Database": 21
+      "Automation": 245,
+      "Database": 25
     }
   },
   "signals": [
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 237 record(s); Database has 21 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 245 record(s); Database has 25 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=237",
-        "Database=21",
-        "Total nodes=440"
+        "Automation=245",
+        "Database=25",
+        "Total nodes=453"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,7 +75,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "146 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "148 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
         "worker: packages/agency",
         "worker: packages/agency/workers/social-poster",
@@ -145,7 +145,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "146 record(s) are classified as worker.",
+      "summary": "148 record(s) are classified as worker.",
       "evidence": [
         "@create-something/agency: packages/agency",
         "social-poster-worker: packages/agency/workers/social-poster",
@@ -274,7 +274,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "55 record(s) are classified as guide.",
+      "summary": "56 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",

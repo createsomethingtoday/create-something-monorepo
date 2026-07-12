@@ -620,6 +620,13 @@ interface OAuthRefreshTokenClaims extends JWTPayload {
 	toolkit_profile?: string[];
 }
 
+interface OAuthAccessTokenClaims extends JWTPayload {
+	kind: 'oauth_access_token';
+	client_id: string;
+	scope: string;
+	resource: string;
+}
+
 interface CreateMcpSessionBody {
 	tenant_id?: string;
 	host?: string;
@@ -817,12 +824,58 @@ const WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES = [
 const DEFAULT_OAUTH_RESOURCE = DEFAULT_MCP_HUB_URL;
 const OAUTH_AUTHORIZATION_CODE_TTL_SECONDS = 300;
 const OAUTH_MANAGED_BEARER_EXPIRES_IN = 31536000;
+const OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN = 3600;
 const OAUTH_ID_TOKEN_TTL_SECONDS = 3600;
 const OAUTH_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
+const OAUTH_SUPPORTED_SCOPES = [
+	'openid',
+	'profile',
+	'email',
+	'mcp',
+	'offline_access',
+	'template-review:read',
+	'template-review:write',
+	'template-review:queue-read',
+];
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
 const MAX_MCP_LEGACY_KEY_TTL_SECONDS = 30 * 24 * 60 * 60;
 const MAX_LEGACY_COMPAT_SUNSET_DAYS = 90;
+
+const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
+	applicationId: string;
+	resource: string;
+	expiresIn: number;
+}>([
+	[
+		'https://webflow-template-review-mcp.createsomething.workers.dev/mcp',
+		{
+			applicationId: 'webflow-template-review-mcp',
+			resource: 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
+]);
+
+export function resolveOAuthApplicationAccessPolicy(resource: string): {
+	applicationId: string;
+	resource: string;
+	expiresIn: number;
+} | null {
+	return OAUTH_APPLICATION_ACCESS_POLICIES.get(resource.trim().replace(/\/+$/, '')) ?? null;
+}
+
+export function isOAuthAccessTokenClaimsForApplication(payload: OAuthAccessTokenClaims): boolean {
+	return payload.kind === 'oauth_access_token'
+		&& Boolean(payload.resource)
+		&& Array.isArray(payload.aud)
+		&& payload.aud.includes(payload.resource)
+		&& resolveOAuthApplicationAccessPolicy(payload.resource) !== null;
+}
+
+export function isOAuthUserInfoIdentityActive(user: User | null): user is User {
+	return Boolean(user && !user.deleted_at);
+}
 
 async function handleOAuthRegister(request: Request, _env: Env): Promise<Response> {
 	const body = await parseJSON<OAuthRegisterBody>(request);
@@ -995,32 +1048,69 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	}
 
 	try {
-		const issued = await issueManagedBearerToken(env, {
-			authSubject: user.id,
-			authEmail: user.email,
-			tenantId: claims.tenant_id ?? null,
-			accountId: claims.account_id ?? null,
-			toolMode: claims.tool_mode,
-			toolkitProfile: Array.isArray(claims.toolkit_profile) ? claims.toolkit_profile : [],
-			actor: `oauth:${user.id}`,
-			actorRole: 'user',
-			actionName: 'issue_user_bearer_token_oauth',
-			metadata: {
-				issued_via: 'oauth_token_exchange',
+		const applicationPolicy = resolveOAuthApplicationAccessPolicy(claims.resource);
+		let accessToken: string;
+		let expiresIn: number;
+		if (applicationPolicy) {
+			expiresIn = applicationPolicy.expiresIn;
+			const now = Math.floor(Date.now() / 1000);
+			accessToken = await createSignedToken(env.DB, {
+				sub: user.id,
+				email: user.email,
+				tier: user.tier,
+				source: user.source,
+				iss: getOauthIssuer(new URL(request.url), env),
+				aud: [applicationPolicy.resource],
+				iat: now,
+				exp: now + expiresIn,
+				kind: 'oauth_access_token',
 				client_id: claims.client_id,
-				resource: claims.resource,
+				resource: applicationPolicy.resource,
 				scope: claims.scope,
-				...('redirect_uri' in claims && claims.redirect_uri ? { redirect_uri: claims.redirect_uri } : {}),
-			},
-		});
-		if (!issued.ok) {
-			return oauthErrorResponse('access_denied', issued.status, issued.message);
+			} satisfies OAuthAccessTokenClaims);
+			await createMcpAuthEvent(env.DB, {
+				id: generateUUID(),
+				session_id: null,
+				user_id: user.id,
+				event_type: 'oauth_application_access_token_issued',
+				event_data_json: JSON.stringify({
+					application_id: applicationPolicy.applicationId,
+					client_id: claims.client_id,
+					resource: applicationPolicy.resource,
+					scope: claims.scope,
+					expires_in: expiresIn,
+				}),
+			});
+		} else {
+			const issued = await issueManagedBearerToken(env, {
+				authSubject: user.id,
+				authEmail: user.email,
+				tenantId: claims.tenant_id ?? null,
+				accountId: claims.account_id ?? null,
+				toolMode: claims.tool_mode,
+				toolkitProfile: Array.isArray(claims.toolkit_profile) ? claims.toolkit_profile : [],
+				actor: `oauth:${user.id}`,
+				actorRole: 'user',
+				actionName: 'issue_user_bearer_token_oauth',
+				metadata: {
+					issued_via: 'oauth_token_exchange',
+					client_id: claims.client_id,
+					resource: claims.resource,
+					scope: claims.scope,
+					...('redirect_uri' in claims && claims.redirect_uri ? { redirect_uri: claims.redirect_uri } : {}),
+				},
+			});
+			if (!issued.ok) {
+				return oauthErrorResponse('access_denied', issued.status, issued.message);
+			}
+			accessToken = issued.token;
+			expiresIn = OAUTH_MANAGED_BEARER_EXPIRES_IN;
 		}
 
 		const responseBody: Record<string, unknown> = {
-			access_token: issued.token,
+			access_token: accessToken,
 			token_type: 'Bearer',
-			expires_in: OAUTH_MANAGED_BEARER_EXPIRES_IN,
+			expires_in: expiresIn,
 			scope: claims.scope,
 			resource: claims.resource,
 		};
@@ -1090,6 +1180,22 @@ async function handleOAuthUserInfo(request: Request, env: Env): Promise<Response
 	}
 
 	const tokenHash = await hashToken(token);
+	const oauthToken = await validateOAuthAccessToken(token, env);
+	if (oauthToken) {
+		const user = await findUserById(env.DB, oauthToken.sub);
+		if (!isOAuthUserInfoIdentityActive(user)) {
+			return oauthErrorResponse('invalid_token', 401, 'OAuth identity is no longer available.');
+		}
+		return json({
+			sub: user.id,
+			email: user.email,
+			email_verified: Boolean(user.email_verified),
+			name: user.name,
+			client_id: oauthToken.client_id,
+			resource: oauthToken.resource,
+			scope: oauthToken.scope,
+		});
+	}
 	const managedToken = await findMcpLongLivedTokenByTokenHash(env.DB, tokenHash);
 	if (!managedToken || managedToken.revoked_at) {
 		return oauthErrorResponse('invalid_token', 401, 'Managed bearer token not found.');
@@ -3753,7 +3859,7 @@ function buildOAuthAuthorizationServerMetadata(url: URL, env: Env) {
 		registration_endpoint: `${issuer}/oauth/register`,
 		userinfo_endpoint: `${issuer}/oauth/userinfo`,
 		jwks_uri: `${issuer}/.well-known/jwks.json`,
-		scopes_supported: ['openid', 'profile', 'email', 'mcp', 'offline_access'],
+		scopes_supported: OAUTH_SUPPORTED_SCOPES,
 		response_types_supported: ['code'],
 		grant_types_supported: ['authorization_code', 'refresh_token'],
 		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
@@ -3774,7 +3880,7 @@ function buildOpenIdConfigurationMetadata(url: URL, env: Env) {
 		grant_types_supported: ['authorization_code', 'refresh_token'],
 		subject_types_supported: ['public'],
 		id_token_signing_alg_values_supported: ['ES256'],
-		scopes_supported: ['openid', 'profile', 'email', 'mcp', 'offline_access'],
+		scopes_supported: OAUTH_SUPPORTED_SCOPES,
 		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
 		code_challenge_methods_supported: ['S256', 'plain'],
 		claims_supported: ['sub', 'email', 'email_verified', 'name', 'nonce'],
@@ -4023,6 +4129,18 @@ async function validateOAuthRefreshToken(token: string, env: Env): Promise<OAuth
 		const publicKey = await importPublicKey(jwk);
 		const payload = (await validateJWT(token, publicKey)) as OAuthRefreshTokenClaims | null;
 		if (payload?.kind === 'oauth_refresh_token') {
+			return payload;
+		}
+	}
+	return null;
+}
+
+async function validateOAuthAccessToken(token: string, env: Env): Promise<OAuthAccessTokenClaims | null> {
+	const jwks = await getJWKS(env.DB);
+	for (const jwk of jwks.keys) {
+		const publicKey = await importPublicKey(jwk);
+		const payload = (await validateJWT(token, publicKey)) as OAuthAccessTokenClaims | null;
+		if (payload && isOAuthAccessTokenClaimsForApplication(payload)) {
 			return payload;
 		}
 	}

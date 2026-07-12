@@ -180,7 +180,7 @@ INSERT INTO canon_workflow_contexts (
     {
       "id": "runtime-secrets",
       "label": "Vendor runtime secrets",
-      "detail": "Clerk, Stripe, Resend, Circle, and Cloudflare Stream credentials are runtime secrets, not GitHub artifacts or frontend handoff notes.",
+      "detail": "Identity, Stripe, Resend, Circle, and Cloudflare Stream credentials are runtime secrets, not GitHub artifacts or frontend handoff notes.",
       "source": "Runtime secret storage",
       "visibility": "private",
       "tone": "warning"
@@ -379,9 +379,9 @@ INSERT INTO canon_workflow_contexts (
       "tier": "Automation"
     },
     {
-      "system": "App admin (Clerk + members table)",
+      "system": "App admin (identity + members table)",
       "status": "idle",
-      "detail": "Admin role is set in D1 after the user signs in through Clerk.",
+      "detail": "Admin role is set in D1 after the user signs in through the application identity service.",
       "tier": "Judgment"
     }
   ],
@@ -480,7 +480,7 @@ INSERT INTO canon_workflow_contexts (
       "label": "App Admin",
       "owner": "ShivWorks product admin",
       "scope": "Admin role inside the members table",
-      "action": "After the person signs in through Clerk, set their member role to admin in D1 when they need product admin access."
+      "action": "After the person signs in through the application identity service, set their member role to admin in D1 when they need product admin access."
     }
   ],
   "runbookCommands": [

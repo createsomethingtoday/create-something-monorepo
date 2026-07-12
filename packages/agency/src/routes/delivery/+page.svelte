@@ -12,14 +12,6 @@
       detail:
         'A client-safe record of the nurse-facing Concierge pilot, public job discovery, recruiter gates, and remaining owner decisions.',
       status: 'Pilot review'
-    },
-    {
-      label: 'ShivWorks',
-      title: 'Backend handoff',
-      href: '/delivery/shivworks',
-      detail:
-        'A forwardable runbook for repo, secrets, database, app admin, acceptance checks, and ownership-transfer choices.',
-      status: 'Handoff review'
     }
   ];
 
@@ -99,7 +91,6 @@
         <a class="delivery-action delivery-action--primary" href="/delivery/abundance">
           Review Abundance
         </a>
-        <a class="delivery-action" href="/delivery/shivworks">Review ShivWorks</a>
       </div>
     </div>
 

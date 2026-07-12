@@ -31,6 +31,8 @@ Then call `auth_config_validate` with a proposed environment, issuer, audiences,
 
 MCP deliberately has no credential issuance, access-grant, secret-rotation, or production-mutation tool. Those actions stay in the owning Identity Worker/application workflow and require the approval boundary below.
 
+For approved OAuth MCP resources, authorization-code plus PKCE exchange mints a short-lived ES256 access token whose audience is the exact protected-resource URL. `/oauth/userinfo` validates signature, issuer, expiration, resource policy, and active user state before returning identity, resource, and granted scope. The adopting resource must require its own audience and intersect token scope with its application allow policy. These application tokens do not require or imply a commercial `.agency` entitlement. They expire after one hour; soft-deleting the Identity user revokes userinfo immediately, while ordinary token retirement relies on that bounded expiration rather than a long-lived credential record.
+
 ## Security invariants
 
 - Verify the JWT signature, exact issuer, accepted audience, and expiration before evaluating access policy.

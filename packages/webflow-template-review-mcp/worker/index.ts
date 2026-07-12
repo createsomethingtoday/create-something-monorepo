@@ -1,6 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
-import { createClerkClient } from '@clerk/backend';
 import { enableTelemetry } from '@create-something/mcp-core';
 
 import { misconfiguredResponse } from '../src/auth.js';
@@ -8,11 +7,11 @@ import { AirtableClient } from '../src/airtable.js';
 import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
 import {
   SCOPE_READ,
+  SCOPE_QUEUE_READ,
   SCOPE_WRITE,
   buildProtectedResourceMetadata,
-  clerkFrontendApiFromPublishableKey,
   parseAllowedEmails,
-  resolveOAuthAccess,
+  resolveIdentityOAuthRequest,
 } from '../src/oauth-access.js';
 import { registerPrompts, SERVER_INSTRUCTIONS } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
@@ -31,8 +30,7 @@ interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   REVIEWER_DIRECTORY_JSON?: string;
-  CLERK_SECRET_KEY?: string;
-  CLERK_PUBLISHABLE_KEY?: string;
+  CS_IDENTITY_ISSUER?: string;
   OAUTH_ALLOWED_EMAIL_DOMAIN?: string;
   OAUTH_ALLOWED_EMAILS?: string;
   WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL?: string;
@@ -90,6 +88,11 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
     // issued to allowlisted reviewers at sign-in.
     const allowWrites =
       this.props?.authMode !== 'oauth' || (this.props?.scopes ?? []).includes(SCOPE_WRITE);
+    const queueReadOnly =
+      this.props?.authMode === 'oauth'
+      && (this.props?.scopes ?? []).includes(SCOPE_QUEUE_READ)
+      && !(this.props?.scopes ?? []).includes(SCOPE_READ)
+      && !(this.props?.scopes ?? []).includes(SCOPE_WRITE);
 
     registerResources(this.server, getClient, getReviewer);
     registerTools(
@@ -103,7 +106,10 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
           ? Number(this.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS)
           : undefined,
       },
-      { allowWrites },
+      {
+        allowWrites,
+        ...(queueReadOnly ? { allowedToolNames: new Set(['template_review_list_queue']) } : {}),
+      },
     );
     registerPrompts(this.server);
   }
@@ -151,77 +157,50 @@ function forbidden(message: string): Response {
   });
 }
 
-// Per-isolate cache of Clerk userId → identity so steady-state MCP traffic
-// does not call the Clerk Users API on every request.
-const clerkUserCache = new Map<string, { email: string | null; name: string | null }>();
+function identityIssuer(env: Env): string {
+  return env.CS_IDENTITY_ISSUER?.trim().replace(/\/+$/, '') ?? '';
+}
 
-async function authenticateWithClerk(
+async function authenticateWithIdentity(
   request: Request,
   env: Env,
   origin: string,
 ): Promise<{ props: RequestProps } | Response> {
-  if (!env.CLERK_SECRET_KEY || !env.CLERK_PUBLISHABLE_KEY) {
-    return misconfiguredResponse('Clerk is not configured (CLERK_SECRET_KEY / CLERK_PUBLISHABLE_KEY missing).');
+  const issuer = identityIssuer(env);
+  if (!issuer) {
+    return misconfiguredResponse('CREATE SOMETHING Identity is not configured (CS_IDENTITY_ISSUER missing).');
   }
 
-  const clerk = createClerkClient({
-    secretKey: env.CLERK_SECRET_KEY,
-    publishableKey: env.CLERK_PUBLISHABLE_KEY,
-  });
-
-  const requestState = await clerk.authenticateRequest(request, { acceptsToken: 'oauth_token' });
-  if (!requestState.isAuthenticated) {
-    return unauthorized(origin, 'Missing or invalid OAuth access token.');
-  }
-
-  const auth = requestState.toAuth() as { userId: string | null };
-  if (!auth.userId) {
-    return unauthorized(origin, 'OAuth token is not associated with a user.');
-  }
-
-  let identity = clerkUserCache.get(auth.userId);
-  if (!identity) {
-    const user = await clerk.users.getUser(auth.userId);
-    const primaryEmail =
-      user.emailAddresses.find((entry) => entry.id === user.primaryEmailAddressId) ?? user.emailAddresses[0];
-    identity = {
-      email: primaryEmail?.emailAddress ?? null,
-      name: [user.firstName, user.lastName].filter(Boolean).join(' ') || null,
-    };
-    clerkUserCache.set(auth.userId, identity);
-  }
-
-  const access = resolveOAuthAccess({
-    email: identity.email,
+  const result = await resolveIdentityOAuthRequest({
+    request,
+    issuer,
+    expectedResource: `${origin}/mcp`,
     allowedDomain: allowedDomain(env),
     allowedEmails: parseAllowedEmails(env.OAUTH_ALLOWED_EMAILS),
     directory: parseReviewerDirectory(env.REVIEWER_DIRECTORY_JSON),
+    fetch,
   });
-
-  if (!access.allowed) {
-    const messages = {
-      missing_email: 'Your account has no email address Clerk can share.',
-      domain_not_allowed: `Template Review MCP is limited to @${allowedDomain(env)} accounts.`,
-      email_not_allowlisted: 'You are not on the Template Review access list. Ask the review team lead to add you.',
-    } as const;
-    return forbidden(messages[access.reason]);
+  if (result.ok === false) {
+    if (result.status === 401) return unauthorized(origin, result.message);
+    if (result.status === 403) return forbidden(result.message);
+    return misconfiguredResponse(result.message);
   }
 
   return {
     props: {
       authMode: 'oauth',
-      accountId: access.reviewerProfile?.accountId ?? `oauth:${access.email}`,
-      email: access.email,
-      name: identity.name,
-      scopes: access.scopes,
+      accountId: result.accountId,
+      email: result.email,
+      name: result.name,
+      scopes: result.scopes,
     },
   };
 }
 
 function protectedResourceResponse(env: Env, origin: string, resourcePath: string): Response {
-  const authorizationServer = clerkFrontendApiFromPublishableKey(env.CLERK_PUBLISHABLE_KEY);
+  const authorizationServer = identityIssuer(env);
   if (!authorizationServer) {
-    return misconfiguredResponse('CLERK_PUBLISHABLE_KEY is missing or malformed; cannot advertise the authorization server.');
+    return misconfiguredResponse('CS_IDENTITY_ISSUER is missing; cannot advertise the authorization server.');
   }
   return new Response(
     JSON.stringify(buildProtectedResourceMetadata({ resourceOrigin: origin, resourcePath, authorizationServer }), null, 2),
@@ -265,8 +244,8 @@ export default {
         });
       }
 
-      // Everyone else authenticates with a Clerk-issued OAuth token.
-      const result = await authenticateWithClerk(request, env, url.origin);
+      // Everyone else authenticates through CREATE SOMETHING Identity.
+      const result = await authenticateWithIdentity(request, env, url.origin);
       if (result instanceof Response) return result;
       return serve.fetch(request, env, { ...ctx, props: result.props });
     }
@@ -282,9 +261,9 @@ export default {
             auth: {
               modes: {
                 oauth: {
-                  flow: 'OAuth 2.1 + PKCE with Dynamic Client Registration (Clerk authorization server)',
-                  authorizationServer: clerkFrontendApiFromPublishableKey(env.CLERK_PUBLISHABLE_KEY),
-                  configured: Boolean(env.CLERK_SECRET_KEY && env.CLERK_PUBLISHABLE_KEY),
+                  flow: 'OAuth 2.1 + PKCE with Dynamic Client Registration (CREATE SOMETHING Identity)',
+                  authorizationServer: identityIssuer(env) || null,
+                  configured: Boolean(identityIssuer(env)),
                   discovery: '/.well-known/oauth-protected-resource',
                   scopes: [SCOPE_READ, SCOPE_WRITE],
                 },

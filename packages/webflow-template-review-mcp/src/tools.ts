@@ -146,6 +146,7 @@ function assertReviewerScopedReviewOwner(value: unknown, reviewer: ReviewerProfi
 
 export interface ToolAccess {
   allowWrites: boolean;
+  allowedToolNames?: ReadonlySet<string>;
 }
 
 /**
@@ -178,6 +179,7 @@ export function registerTools(
   const registerOnServer = mcpServer.tool.bind(mcpServer) as (...args: unknown[]) => unknown;
   const server = {
     tool: ((name: string, ...rest: unknown[]) => {
+      if (access.allowedToolNames && !access.allowedToolNames.has(name)) return undefined;
       if (!access.allowWrites && WRITE_TOOL_NAMES.has(name)) return undefined;
       return registerOnServer(name, ...rest);
     }) as McpServer['tool'],
