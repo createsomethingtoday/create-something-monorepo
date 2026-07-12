@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
 	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
@@ -12,10 +11,6 @@
 	let schedulerHref = buildFirstPartySchedulerUrl();
 	let schedulerFrame: HTMLIFrameElement;
 	let handoffContext = schedulerHandoffContext();
-
-	if (browser) {
-		schedulerHref = buildFirstPartySchedulerUrl(window.location.search);
-	}
 
 	function sendSchedulerContext() {
 		schedulerFrame?.contentWindow?.postMessage(

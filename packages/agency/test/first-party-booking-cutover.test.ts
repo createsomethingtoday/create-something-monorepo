@@ -85,3 +85,10 @@ test('direct booking does not invent zero-valued Atlas attribution', () => {
 	assert.equal(iframe.search, '');
 	assert.deepEqual(schedulerHandoffContext(), {});
 });
+
+test('the client updates iframe attribution only after hydration', () => {
+	assert.equal(bookRoute.includes("from '$app/environment'"), false);
+	assert.equal(bookRoute.includes('if (browser)'), false);
+	assert.ok(bookRoute.includes('onMount(() =>'));
+	assert.ok(bookRoute.includes('schedulerHref = buildFirstPartySchedulerUrl(window.location.search)'));
+});
