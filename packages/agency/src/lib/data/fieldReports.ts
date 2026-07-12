@@ -135,7 +135,7 @@ export const templateReviewFieldReport: TemplateReviewFieldReport = {
       kind: 'Runtime eval record',
       artifact: '2026-07-12-template-review-dify-eval-evidence.md',
       date: 'July 12, 2026',
-      href: 'https://github.com/createsomethingtoday/create-something-monorepo/blob/main/docs/deliveries/webflow-marketplace/2026-07-12-template-review-dify-eval-evidence.md',
+      href: 'https://github.com/createsomethingtoday/create-something-monorepo/blob/1e32ebbfd1db06b98e3a6bf45c92120f06775115/docs/deliveries/webflow-marketplace/2026-07-12-template-review-dify-eval-evidence.md',
       state: 'verified'
     }
   ]
