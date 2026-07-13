@@ -83,9 +83,9 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: rgba(255, 255, 255, 0.08);
 		color: rgba(255, 255, 255, 0.74);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.76rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.15;
 		text-transform: uppercase;
@@ -96,7 +96,7 @@
 		max-width: 15ch;
 		color: #ffffff;
 		font-size: clamp(3rem, 7vw, 5.2rem);
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 0.98;
 		text-wrap: balance;
@@ -135,9 +135,9 @@
 
 	.clear-action-footer__items span {
 		color: rgba(255, 255, 255, 0.62);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.12;
 		text-transform: uppercase;
@@ -146,7 +146,7 @@
 	.clear-action-footer__items strong {
 		color: #ffffff;
 		font-size: 0.98rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.22;
 	}
 

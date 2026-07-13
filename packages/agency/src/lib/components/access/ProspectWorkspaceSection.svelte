@@ -395,7 +395,7 @@
 
 <style>
 	.empty-copy {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.callout-actions {
@@ -467,7 +467,7 @@
 		margin: 0.18rem 0 0;
 		font-size: 0.82rem;
 		line-height: 1.6;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.prospect-card-body {
@@ -500,7 +500,7 @@
 		margin: 0;
 		font-size: 0.78rem;
 		line-height: 1.55;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.prospect-readiness-grid {
@@ -516,7 +516,7 @@
 		gap: 0.7rem;
 		padding-top: 0.1rem;
 		font-size: 0.76rem;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.prospect-toolkit-row {
@@ -538,7 +538,7 @@
 		margin: 0.18rem 0 0;
 		font-size: 0.78rem;
 		line-height: 1.5;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.prospect-toolkit-actions {
@@ -569,7 +569,7 @@
 	}
 
 	.prospect-toolkit-state.idle {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.prospect-state {

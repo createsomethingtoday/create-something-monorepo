@@ -234,8 +234,8 @@
 
 	/* Platforms */
 	.platform {
-		fill: var(--color-fg-subtle, rgba(255, 255, 255, 0.1));
-		stroke: var(--color-fg-muted, rgba(255, 255, 255, 0.3));
+		fill: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.1));
+		stroke: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.3));
 		stroke-width: 0.5;
 		opacity: 0;
 	}
@@ -252,32 +252,32 @@
 
 	/* Markers */
 	.marker {
-		fill: var(--color-fg-primary, white);
+		fill: var(--color-performance-fg-primary, white);
 		opacity: 0;
 	}
 
 	/* Labels */
 	.level-label {
-		font-family: var(--font-sans, system-ui);
+		font-family: var(--font-performance-sans, system-ui);
 		font-size: 9px;
-		fill: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		fill: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8));
 		opacity: 0;
 	}
 
 	.iteration-num {
-		font-family: var(--font-mono, monospace);
+		font-family: var(--font-performance-mono, monospace);
 		font-size: 10px;
 		font-weight: 600;
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		opacity: 0;
 	}
 
 	/* Title */
 	.spiral-title {
-		font-family: var(--font-sans, system-ui);
+		font-family: var(--font-performance-sans, system-ui);
 		font-size: 11px;
 		font-style: italic;
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		opacity: 0;
 	}
 </style>

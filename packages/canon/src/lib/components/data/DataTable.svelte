@@ -15,7 +15,7 @@
 		label: string;
 		/** Cell alignment; numbers and timestamps go right */
 		align?: 'left' | 'right';
-		/** Render cell (and header alignment context) in --font-mono with tabular-nums */
+		/** Render cell (and header alignment context) in --font-performance-mono with tabular-nums */
 		mono?: boolean;
 		/** Fixed width, e.g. '6rem' (otherwise auto) */
 		width?: string;
@@ -168,8 +168,8 @@
 	.data-table {
 		width: 100%;
 		border-collapse: collapse;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.sr-only {
@@ -183,15 +183,15 @@
 
 	/* Header: typographic hierarchy, no fills beyond a quiet surface */
 	thead th {
-		background: var(--color-shell-surface-secondary);
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
+		background: var(--color-performance-shell-surface-secondary);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
 		text-align: left;
-		padding: var(--space-xs) var(--space-sm);
-		border-bottom: 1px solid var(--color-border-emphasis);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-bottom: 1px solid var(--color-performance-border-emphasis);
 	}
 
 	.sticky-header thead th {
@@ -215,40 +215,40 @@
 	}
 
 	.sort-button:hover {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.sort-button:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
 	.sort-glyph {
-		color: var(--color-fg-subtle);
-		transition: color var(--duration-micro) var(--ease-standard);
+		color: var(--color-performance-fg-subtle);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.sort-glyph.active {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Rows: 1px separators only — no zebra striping, no cell borders */
 	tbody td {
-		padding: var(--space-xs) var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-bottom: 1px solid var(--color-performance-border-default);
 		vertical-align: top;
 	}
 
 	.dense tbody td {
-		padding: calc(var(--space-xs) / 2) var(--space-sm);
+		padding: calc(var(--space-performance-xs) / 2) var(--space-performance-sm);
 	}
 
 	tbody tr {
-		transition: background var(--duration-micro) var(--ease-standard);
+		transition: background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	tbody tr:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	tbody tr.clickable {
@@ -256,15 +256,15 @@
 	}
 
 	tbody tr.clickable:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: -2px;
 	}
 
 	/* Machine values: ids, cursors, timestamps, counts */
 	td.mono {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-variant-numeric: tabular-nums;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.align-right {
@@ -272,11 +272,11 @@
 	}
 
 	.empty-cell {
-		padding: var(--space-md) var(--space-sm);
+		padding: var(--space-performance-md) var(--space-performance-sm);
 	}
 
 	.empty-message {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 	}
 </style>

@@ -31,20 +31,20 @@
 
 <style>
   .page-title {
-    font-size: var(--text-h1);
+    font-size: var(--text-performance-h1);
     font-weight: 700;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .date-text {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .animate-reveal {
     opacity: 0;
     transform: translateY(20px);
-    animation: reveal var(--duration-standard) var(--ease-standard) forwards;
+    animation: reveal var(--duration-performance-standard) var(--ease-performance-standard) forwards;
   }
 
   @keyframes reveal {

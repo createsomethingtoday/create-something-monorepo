@@ -128,7 +128,7 @@
 			case 'semantic':
 				return 'rgba(255, 255, 255, 0.1)';
 			case 'infrastructure':
-				return 'var(--color-data-4, #fbbf24)'; // amber - high visibility for hidden coupling
+				return 'var(--color-performance-data-4, #fbbf24)'; // amber - high visibility for hidden coupling
 			default:
 				return 'rgba(255, 255, 255, 0.3)';
 		}
@@ -246,7 +246,7 @@
 	.graph-container {
 		width: 100%;
 		height: 100%;
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-md);
 	}
 </style>

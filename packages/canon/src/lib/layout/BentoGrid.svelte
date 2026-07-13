@@ -59,15 +59,15 @@
 
 	/* Gap sizes */
 	.bento--gap-sm {
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.bento--gap-md {
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.bento--gap-lg {
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 	}
 
 	/* Responsive - stack on mobile */

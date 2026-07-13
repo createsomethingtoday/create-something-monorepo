@@ -175,13 +175,13 @@ flex, grid, items-*, justify-*, p-*, m-*, gap-*
 ## Design Utilities (Avoid) → Use Canon
 | Tailwind     | Canon Token              |
 |--------------|--------------------------|
-| rounded-md   | var(--radius-md)         |
-| bg-white/10  | var(--color-bg-surface)  |
-| text-white/60| var(--color-fg-tertiary) |
+| rounded-md   | var(--radius-performance-scale-md)         |
+| bg-white/10  | var(--color-performance-bg-surface)  |
+| text-white/60| var(--color-performance-fg-tertiary) |
 
 ## Token Reference
---space-md: 1.618rem  /* Golden ratio */
---duration-micro: 200ms`}</code></pre>
+--space-performance-md: 1.618rem  /* Golden ratio */
+--duration-performance-micro: 200ms`}</code></pre>
 		<p class="annotation">Claude applies these rules automatically.</p>
 	</Slide>
 

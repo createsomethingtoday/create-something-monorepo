@@ -2,6 +2,6 @@
 
 <style>
 	:global(body) {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 </style>

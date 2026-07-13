@@ -54,12 +54,12 @@
 		margin: 0;
 		line-height: 1.62;
 		font-size: 0.92rem;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		max-width: 38rem;
 	}
 
 	a {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		text-decoration: underline;
 		text-underline-offset: 0.18em;
 		font-size: 0.82rem;

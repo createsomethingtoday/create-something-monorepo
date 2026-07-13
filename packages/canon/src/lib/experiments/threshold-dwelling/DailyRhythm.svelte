@@ -222,8 +222,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-sm);
-		font-family: var(--font-sans, system-ui, sans-serif);
+		gap: var(--space-performance-sm);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		width: 100%;
 	}
 
@@ -235,14 +235,14 @@
 
 	/* Hour grid */
 	.hour-line {
-		stroke: var(--color-border-default);
+		stroke: var(--color-performance-border-default);
 		stroke-width: 1;
 		stroke-dasharray: 2 2;
 	}
 
 	.hour-label {
 		font-size: 9px;
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 		text-anchor: middle;
 	}
 
@@ -257,7 +257,7 @@
 
 	.space-label {
 		font-size: 10px;
-		fill: var(--color-fg-tertiary);
+		fill: var(--color-performance-fg-tertiary);
 		text-anchor: end;
 		dominant-baseline: middle;
 	}
@@ -265,15 +265,15 @@
 	/* Activities */
 	.activity {
 		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.activity-bar {
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.activity.active .activity-bar {
-		stroke: var(--color-fg-secondary);
+		stroke: var(--color-performance-fg-secondary);
 		stroke-width: 1;
 	}
 
@@ -282,20 +282,20 @@
 	}
 
 	.activity:focus .activity-bar {
-		stroke: var(--color-fg-primary);
+		stroke: var(--color-performance-fg-primary);
 		stroke-width: 2;
 	}
 
 	.activity:focus-visible .activity-bar {
-		stroke: var(--color-fg-primary);
+		stroke: var(--color-performance-fg-primary);
 		stroke-width: 2;
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
 	.activity-label {
 		font-size: 8px;
-		fill: var(--color-bg-pure);
+		fill: var(--color-performance-bg-pure);
 		text-anchor: middle;
 		dominant-baseline: middle;
 		pointer-events: none;
@@ -305,7 +305,7 @@
 	.title {
 		font-size: 11px;
 		font-weight: 500;
-		fill: var(--color-fg-secondary);
+		fill: var(--color-performance-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 	}
@@ -313,7 +313,7 @@
 	/* Legend */
 	.legend {
 		display: flex;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 		flex-wrap: wrap;
 		justify-content: center;
 	}
@@ -331,8 +331,8 @@
 	}
 
 	.legend-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* Tooltip */
@@ -341,32 +341,32 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 0.125rem;
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.tooltip-name {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		font-weight: 500;
 	}
 
 	.tooltip-time {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.tooltip-person {
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
 		font-style: italic;
 	}
 
 	/* Caption */
 	.caption {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-align: center;
 		margin: 0;
 	}

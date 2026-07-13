@@ -220,22 +220,22 @@
 	   ========================================================================== */
 
 	.face-top {
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 		opacity: var(--face-opacity, 1);
 	}
 
 	.face-left {
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 		opacity: var(--face-opacity, 0.6);
 	}
 
 	.face-right {
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 		opacity: var(--face-opacity, 0.3);
 	}
 
 	.face-top-assemble path {
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 		opacity: var(--face-opacity, 1);
 	}
 
@@ -246,7 +246,7 @@
 	.cube-reveal .face-top,
 	.cube-reveal .face-left,
 	.cube-reveal .face-right {
-		animation: face-reveal var(--duration-complex, 500ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+		animation: face-reveal var(--duration-performance-complex, 500ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
 	}
 
 	.cube-reveal .face-top {
@@ -275,7 +275,7 @@
 	   ========================================================================== */
 
 	.cube-pulse {
-		animation: cube-pulse var(--duration-complex, 500ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)) infinite alternate;
+		animation: cube-pulse var(--duration-performance-complex, 500ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)) infinite alternate;
 	}
 
 	@keyframes cube-pulse {

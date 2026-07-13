@@ -119,13 +119,13 @@
 
 <style>
 	.ascii-hero {
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 		overflow: hidden;
 	}
 
 	.ascii-art {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		font-size: 0.7rem;
 		line-height: 1.2;
 		font-family: monospace;
@@ -140,7 +140,7 @@
 	}
 
 	.ascii-placeholder {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		font-size: 0.8rem;
 		line-height: 1.2;
 		font-family: monospace;
@@ -150,11 +150,11 @@
 	.category-tag {
 		display: inline-block;
 		padding: 0.5rem 1rem;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-body-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 500;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -162,13 +162,13 @@
 	.article-title {
 		font-size: clamp(2rem, 5vw, 3.5rem);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		line-height: 1.2;
 	}
 
 	.excerpt {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-tertiary);
 		line-height: 1.6;
 	}
 
@@ -179,32 +179,32 @@
 	}
 
 	.metadata-row {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		padding-top: 1.5rem;
 	}
 
 	.difficulty-dot {
 		width: 0.5rem;
 		height: 0.5rem;
-		border-radius: var(--radius-full);
-		background: var(--color-fg-secondary);
+		border-radius: var(--radius-performance-scale-full);
+		background: var(--color-performance-fg-secondary);
 	}
 
 	.difficulty-text {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.tags-label {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.tech-tag {
 		padding: 0.25rem 0.5rem;
-		font-size: var(--text-caption);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.animate-reveal {

@@ -189,7 +189,7 @@ function expectPublicComponentBarrelCovered(options: {
     expect(item?.importPath, id).toBe('@create-something/canon');
     expect(item?.docsPath, id).toBe(options.docsPath);
     expect(item?.tags, id).toContain(options.tag);
-    expect(item?.dependencies, id).toContain('token.canon-core');
+    expect(item?.dependencies, id).toContain('token.performance-core');
   }
 }
 
@@ -397,7 +397,7 @@ describe('Canon registry manifest', () => {
       expect(item?.sourcePath, promoted.id).toBe(promoted.sourcePath);
       expect(item?.importPath, promoted.id).toBe(promoted.importPath);
       expect(item?.tags, promoted.id).toContain(promoted.tag);
-      expect(item?.dependencies, promoted.id).toContain('token.canon-core');
+      expect(item?.dependencies, promoted.id).toContain('token.performance-core');
       expect(classification?.registryPolicy, promoted.exportName).toBe('registry-covered');
     }
   });
@@ -416,7 +416,7 @@ describe('Canon registry manifest', () => {
         exportName: 'BentoItem',
         sourcePath: 'packages/canon/src/lib/layout/BentoItem.svelte',
         tag: 'grid-item',
-        dependency: 'token.canon-core'
+        dependency: 'token.performance-core'
       },
       {
         id: 'component.layout-split-section',
@@ -436,7 +436,7 @@ describe('Canon registry manifest', () => {
       expect(item?.sourcePath, promoted.id).toBe(promoted.sourcePath);
       expect(item?.importPath, promoted.id).toBe('@create-something/canon/layout');
       expect(item?.tags, promoted.id).toContain(promoted.tag);
-      expect(item?.dependencies, promoted.id).toContain('token.canon-core');
+      expect(item?.dependencies, promoted.id).toContain('token.performance-core');
       expect(item?.dependencies, promoted.id).toContain(promoted.dependency);
       expect(classification?.registryPolicy, promoted.exportName).toBe('registry-covered');
     }
@@ -461,7 +461,7 @@ describe('Canon registry manifest', () => {
     expect(item?.tags).toContain('layout');
     expect(item?.tags).toContain('project-grid');
     expect(item?.dependencies).toEqual([
-      'token.canon-core',
+      'token.performance-core',
       'component.layout-section',
       'component.layout-bento-grid',
       'component.layout-bento-item'
@@ -485,7 +485,7 @@ describe('Canon registry manifest', () => {
     expect(item?.importPath).toBe('@create-something/canon/icons');
     expect(item?.tags).toContain('icon');
     expect(item?.tags).toContain('accessibility');
-    expect(item?.dependencies).toContain('token.canon-core');
+    expect(item?.dependencies).toContain('token.performance-core');
     expect(item?.modalities).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
     expect(classification?.registryPolicy).toBe('registry-covered');
     expect(helperClassification?.registryPolicy).toBe('candidate-review');
@@ -514,7 +514,7 @@ describe('Canon registry manifest', () => {
       expect(item?.docsPath, id).toBe('/canon/components/diagrams');
       expect(item?.tags, id).toContain('diagrams');
       expect(item?.tags, id).toContain(tag);
-      expect(item?.dependencies, id).toContain('token.canon-core');
+      expect(item?.dependencies, id).toContain('token.performance-core');
       expect(item?.modalities, id).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
       expect(item?.contract.accessibility, id).toBeTruthy();
       expect(item?.contract.evidence, id).toBeTruthy();
@@ -539,7 +539,7 @@ describe('Canon registry manifest', () => {
     expect(item?.docsPath).toBe('/canon/components/typography');
     expect(item?.tags).toContain('typography');
     expect(item?.tags).toContain('hero');
-    expect(item?.dependencies).toEqual(['token.canon-core', 'component.heading']);
+    expect(item?.dependencies).toEqual(['token.performance-core', 'component.heading']);
     expect(item?.modalities).toEqual(['web', 'app', 'chat', 'voice', 'glasses']);
     expect(item?.contract.accessibility).toContain('semantic heading structure');
     expect(item?.contract.evidence).toContain('page claim');
@@ -554,7 +554,7 @@ describe('Canon registry manifest', () => {
         id: 'component.atlas-atlas-flow',
         exportName: 'AtlasFlow',
         tag: 'workflow-map',
-        dependency: 'token.canon-core'
+        dependency: 'token.performance-core'
       },
       {
         id: 'component.atlas-atlas-story-canvas',
@@ -644,7 +644,7 @@ describe('Canon registry manifest', () => {
       expect(item?.docsPath, candidate.id).toBe('/canon/components/forms');
       expect(item?.tags, candidate.id).toContain('forms');
       expect(item?.tags, candidate.id).toContain(candidate.tag);
-      expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+      expect(item?.dependencies, candidate.id).toContain('token.performance-core');
       for (const dependency of candidate.dependencies) {
         expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
       }
@@ -736,7 +736,7 @@ describe('Canon registry manifest', () => {
       expect(item?.docsPath, candidate.id).toBe('/canon/components/patterns');
       expect(item?.tags, candidate.id).toContain('patterns');
       expect(item?.tags, candidate.id).toContain(candidate.tag);
-      expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+      expect(item?.dependencies, candidate.id).toContain('token.performance-core');
       for (const dependency of candidate.dependencies) {
         expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
       }
@@ -837,7 +837,7 @@ describe('Canon registry manifest', () => {
       expect(item?.docsPath, candidate.id).toBe('/canon/components/navigation');
       expect(item?.tags, candidate.id).toContain('navigation');
       expect(item?.tags, candidate.id).toContain(candidate.tag);
-      expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+      expect(item?.dependencies, candidate.id).toContain('token.performance-core');
       for (const dependency of candidate.dependencies) {
         expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
       }
@@ -904,7 +904,7 @@ describe('Canon registry manifest', () => {
       expect(item?.docsPath, candidate.id).toBe('/canon/components/filtering');
       expect(item?.tags, candidate.id).toContain('filtering');
       expect(item?.tags, candidate.id).toContain(candidate.tag);
-      expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+      expect(item?.dependencies, candidate.id).toContain('token.performance-core');
       for (const dependency of candidate.dependencies) {
         expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
       }
@@ -960,7 +960,7 @@ describe('Canon registry manifest', () => {
       expect(item?.docsPath, candidate.id).toBe('/canon/components/insights');
       expect(item?.tags, candidate.id).toContain('insights');
       expect(item?.tags, candidate.id).toContain(candidate.tag);
-      expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+      expect(item?.dependencies, candidate.id).toContain('token.performance-core');
       for (const dependency of candidate.dependencies) {
         expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
       }
@@ -1018,7 +1018,7 @@ describe('Canon registry manifest', () => {
       expect(item?.docsPath, candidate.id).toBe('/canon/components/content');
       expect(item?.tags, candidate.id).toContain('content');
       expect(item?.tags, candidate.id).toContain(candidate.tag);
-      expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+      expect(item?.dependencies, candidate.id).toContain('token.performance-core');
       for (const dependency of candidate.dependencies) {
         expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
       }
@@ -1157,7 +1157,7 @@ describe('Canon registry manifest', () => {
       expect(item?.docsPath, candidate.id).toBe('/canon/components');
       expect(item?.tags, candidate.id).toContain('components');
       expect(item?.tags, candidate.id).toContain(candidate.tag);
-      expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+      expect(item?.dependencies, candidate.id).toContain('token.performance-core');
       for (const dependency of candidate.dependencies) {
         expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
       }
@@ -1277,7 +1277,7 @@ describe('Canon registry manifest', () => {
       expect(item?.docsPath, candidate.id).toBe('/canon/components/interactive');
       expect(item?.tags, candidate.id).toContain('interactive');
       expect(item?.tags, candidate.id).toContain(candidate.tag);
-      expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+      expect(item?.dependencies, candidate.id).toContain('token.performance-core');
       for (const dependency of candidate.dependencies) {
         expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
       }
@@ -1351,7 +1351,7 @@ describe('Canon registry manifest', () => {
       expect(item?.tags, candidate.id).toContain('brand');
       expect(item?.tags, candidate.id).toContain('3d');
       expect(item?.tags, candidate.id).toContain(candidate.tag);
-      expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+      expect(item?.dependencies, candidate.id).toContain('token.performance-core');
       for (const dependency of candidate.dependencies) {
         expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
       }
@@ -1425,7 +1425,7 @@ describe('Canon registry manifest', () => {
       expect(item?.docsPath, candidate.id).toBe('/canon/components/conversion');
       expect(item?.tags, candidate.id).toContain('conversion');
       expect(item?.tags, candidate.id).toContain(candidate.tag);
-      expect(item?.dependencies, candidate.id).toContain('token.canon-core');
+      expect(item?.dependencies, candidate.id).toContain('token.performance-core');
       for (const dependency of candidate.dependencies) {
         expect(item?.dependencies, `${candidate.id} -> ${dependency}`).toContain(dependency);
       }
@@ -1593,7 +1593,7 @@ describe('Canon registry manifest', () => {
     expect(item?.dependencies).toEqual([
       'template.canon-project-overlay-manifest',
       'template.canon-extension-intake',
-      'token.canon-core',
+      'token.performance-core',
       'policy.signal-decision-proof'
     ]);
     expect(item?.contract.extension).toContain('instead of forks');

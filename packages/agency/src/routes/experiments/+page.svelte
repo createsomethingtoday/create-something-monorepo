@@ -152,21 +152,21 @@
 <style>
 	/* Page wrapper */
 	.page-wrapper {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	/* Navigation bar */
 	.nav-bar {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	/* Nav CTA button */
 	.nav-cta-button {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		font-size: var(--text-body-sm);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 	}
 
 	.nav-cta-button:hover {
@@ -175,32 +175,32 @@
 
 	/* Sort control container */
 	.sort-control {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	/* Sort buttons */
 	.sort-button {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		border-radius: var(--radius-md);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.sort-button:hover {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.sort-button-active {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.sort-button-active:hover {
-		background: var(--color-fg-primary);
+		background: var(--color-performance-fg-primary);
 	}
 
 	/* Page footer */
 	.page-footer {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 </style>

@@ -53,39 +53,39 @@
 	.scroll-reveal-stagger.visible :global(> *) {
 		opacity: 0;
 		transform: translateY(20px);
-		animation: cascade-in var(--duration-standard) var(--ease-standard) forwards;
+		animation: cascade-in var(--duration-performance-standard) var(--ease-performance-standard) forwards;
 	}
 
 	/* Stagger each child using nth-child */
 	.scroll-reveal-stagger.visible :global(> *:nth-child(1)) {
-		animation-delay: calc(var(--cascade-step) * 0);
+		animation-delay: calc(var(--cascade-performance-step) * 0);
 	}
 	.scroll-reveal-stagger.visible :global(> *:nth-child(2)) {
-		animation-delay: calc(var(--cascade-step) * 1);
+		animation-delay: calc(var(--cascade-performance-step) * 1);
 	}
 	.scroll-reveal-stagger.visible :global(> *:nth-child(3)) {
-		animation-delay: calc(var(--cascade-step) * 2);
+		animation-delay: calc(var(--cascade-performance-step) * 2);
 	}
 	.scroll-reveal-stagger.visible :global(> *:nth-child(4)) {
-		animation-delay: calc(var(--cascade-step) * 3);
+		animation-delay: calc(var(--cascade-performance-step) * 3);
 	}
 	.scroll-reveal-stagger.visible :global(> *:nth-child(5)) {
-		animation-delay: calc(var(--cascade-step) * 4);
+		animation-delay: calc(var(--cascade-performance-step) * 4);
 	}
 	.scroll-reveal-stagger.visible :global(> *:nth-child(6)) {
-		animation-delay: calc(var(--cascade-step) * 5);
+		animation-delay: calc(var(--cascade-performance-step) * 5);
 	}
 	.scroll-reveal-stagger.visible :global(> *:nth-child(7)) {
-		animation-delay: calc(var(--cascade-step) * 6);
+		animation-delay: calc(var(--cascade-performance-step) * 6);
 	}
 	.scroll-reveal-stagger.visible :global(> *:nth-child(8)) {
-		animation-delay: calc(var(--cascade-step) * 7);
+		animation-delay: calc(var(--cascade-performance-step) * 7);
 	}
 	.scroll-reveal-stagger.visible :global(> *:nth-child(9)) {
-		animation-delay: calc(var(--cascade-step) * 8);
+		animation-delay: calc(var(--cascade-performance-step) * 8);
 	}
 	.scroll-reveal-stagger.visible :global(> *:nth-child(10)) {
-		animation-delay: calc(var(--cascade-step) * 9);
+		animation-delay: calc(var(--cascade-performance-step) * 9);
 	}
 
 	@keyframes cascade-in {

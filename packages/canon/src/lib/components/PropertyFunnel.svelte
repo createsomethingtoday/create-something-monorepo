@@ -201,9 +201,9 @@
   .property-funnel__step-index,
   .property-funnel__step-label {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.76rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     letter-spacing: 0;
     line-height: 1.2;
     text-transform: uppercase;
@@ -213,7 +213,7 @@
     margin: 0;
     color: var(--color-performance-ink, #090909);
     font-size: 3.1rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     letter-spacing: 0;
     line-height: 1.02;
     text-wrap: balance;
@@ -240,7 +240,7 @@
   .property-funnel__status strong {
     color: var(--color-performance-ink, #090909);
     font-size: 1rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.25;
   }
 
@@ -271,8 +271,8 @@
     text-decoration: none;
     opacity: 1;
     transition:
-      border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard);
+      border-color var(--duration-performance-micro) var(--ease-performance-standard),
+      background var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .property-funnel__step:hover {
@@ -298,7 +298,7 @@
   .property-funnel__step strong {
     color: var(--color-performance-ink, #090909);
     font-size: 1.18rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.18;
     text-wrap: balance;
   }
@@ -328,14 +328,14 @@
     border: 1px solid transparent;
     border-radius: var(--radius-performance-sm, 4px);
     font-size: 0.94rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     letter-spacing: 0;
     line-height: 1.2;
     text-align: center;
     text-decoration: none;
     transition:
-      border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard);
+      border-color var(--duration-performance-micro) var(--ease-performance-standard),
+      background var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .property-funnel__button--primary {

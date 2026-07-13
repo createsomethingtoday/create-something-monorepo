@@ -46,20 +46,20 @@
 		justify-content: center;
 		background: transparent;
 		border: none;
-		padding: var(--space-xs, 0.5rem);
+		padding: var(--space-performance-xs, 0.5rem);
 		cursor: pointer;
 		width: 44px;
 		height: 44px;
-		border-radius: var(--radius-sm, 6px);
-		transition: background var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		border-radius: var(--radius-performance-scale-sm, 6px);
+		transition: background var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.menu-button:hover {
-		background: var(--color-hover, rgba(255, 255, 255, 0.05));
+		background: var(--color-performance-hover, rgba(255, 255, 255, 0.05));
 	}
 
 	.menu-button:focus-visible {
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline: 2px solid var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 		outline-offset: 2px;
 	}
 
@@ -67,9 +67,9 @@
 		display: block;
 		width: 18px;
 		height: 2px;
-		background: var(--color-fg-primary, #fff);
+		background: var(--color-performance-fg-primary, #fff);
 		position: relative;
-		transition: background var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: background var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.hamburger::before,
@@ -79,8 +79,8 @@
 		left: 0;
 		width: 18px;
 		height: 2px;
-		background: var(--color-fg-primary, #fff);
-		transition: transform var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		background: var(--color-performance-fg-primary, #fff);
+		transition: transform var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.hamburger::before {

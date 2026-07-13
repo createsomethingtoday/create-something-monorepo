@@ -97,10 +97,10 @@
 
 <style>
 	.statement-text {
-		font-weight: var(--font-medium, 500);
-		line-height: var(--leading-tight, 1.25);
-		letter-spacing: var(--tracking-tight, -0.02em);
-		color: var(--color-fg-primary);
+		font-weight: var(--font-performance-medium, 500);
+		line-height: var(--leading-performance-tight, 1.25);
+		letter-spacing: var(--tracking-performance-tight, -0.02em);
+		color: var(--color-performance-fg-primary);
 		text-align: center;
 		transition: font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1),
 					font-weight 0.8s cubic-bezier(0.4, 0, 0.2, 1);
@@ -108,30 +108,30 @@
 
 	/* Size variants */
 	.size-display {
-		font-size: var(--text-h1, 2.5rem);
+		font-size: var(--text-performance-h1, 2.5rem);
 	}
 
 	.size-display.coalesced {
-		font-size: var(--text-display, clamp(2.5rem, 4vw + 1.5rem, 5rem));
-		font-weight: var(--font-bold, 700);
+		font-size: var(--text-performance-display, clamp(2.5rem, 4vw + 1.5rem, 5rem));
+		font-weight: var(--font-performance-bold, 700);
 	}
 
 	.size-headline {
-		font-size: var(--text-h2, 1.875rem);
+		font-size: var(--text-performance-h2, 1.875rem);
 	}
 
 	.size-headline.coalesced {
-		font-size: var(--text-h1, 2.5rem);
-		font-weight: var(--font-bold, 700);
+		font-size: var(--text-performance-h1, 2.5rem);
+		font-weight: var(--font-performance-bold, 700);
 	}
 
 	.size-body {
-		font-size: var(--text-body-lg, 1.125rem);
+		font-size: var(--text-performance-body-lg, 1.125rem);
 	}
 
 	.size-body.coalesced {
-		font-size: var(--text-h3, 1.5rem);
-		font-weight: var(--font-semibold, 600);
+		font-size: var(--text-performance-h3, 1.5rem);
+		font-weight: var(--font-performance-semibold, 600);
 	}
 
 	/* Word styling */
@@ -146,11 +146,11 @@
 	}
 
 	.word.keep {
-		font-weight: var(--font-semibold, 600);
+		font-weight: var(--font-performance-semibold, 600);
 	}
 
 	.word.emphasis {
-		font-weight: var(--font-bold, 700);
+		font-weight: var(--font-performance-bold, 700);
 	}
 
 	/* Ghosted words collapse at end of animation */
@@ -165,7 +165,7 @@
 		top: 55%;
 		height: 0.12em;
 		width: calc(var(--strike, 0) * 100%);
-		background: var(--color-fg-primary);
+		background: var(--color-performance-fg-primary);
 		transform: translateY(-50%);
 		pointer-events: none;
 	}
@@ -189,11 +189,11 @@
 	/* Responsive */
 	@media (max-width: 768px) {
 		.size-display {
-			font-size: var(--text-h2, 1.875rem);
+			font-size: var(--text-performance-h2, 1.875rem);
 		}
 
 		.size-display.coalesced {
-			font-size: var(--text-h1, 2.5rem);
+			font-size: var(--text-performance-h1, 2.5rem);
 		}
 	}
 </style>

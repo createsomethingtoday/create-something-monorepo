@@ -51,12 +51,12 @@
 	.btn {
 		border-radius: var(--radius-performance-sm);
 		border: 1px solid transparent;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		transition:
-			background var(--duration-micro) var(--ease-standard),
-			border-color var(--duration-micro) var(--ease-standard),
-			color var(--duration-micro) var(--ease-standard);
+			background var(--duration-performance-micro) var(--ease-performance-standard),
+			border-color var(--duration-performance-micro) var(--ease-performance-standard),
+			color var(--duration-performance-micro) var(--ease-performance-standard);
 		-webkit-tap-highlight-color: transparent;
 	}
 
@@ -67,15 +67,15 @@
 
 	/* Size Variants */
 	.btn-sm {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.btn-md {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 	}
 
 	.btn-lg {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.btn-primary {

@@ -313,7 +313,7 @@
 	.tabs {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md, 1.618rem);
+		gap: var(--space-performance-md, 1.618rem);
 	}
 
 	.tabs.vertical {
@@ -324,7 +324,7 @@
 	.tab-list {
 		position: relative;
 		display: flex;
-		gap: var(--space-xs, 0.5rem);
+		gap: var(--space-performance-xs, 0.5rem);
 	}
 
 	.tabs.horizontal .tab-list {
@@ -349,25 +349,25 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: var(--space-xs, 0.5rem);
+		gap: var(--space-performance-xs, 0.5rem);
 		background: transparent;
 		border: none;
-		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
 		font-family: inherit;
 		cursor: pointer;
 		white-space: nowrap;
 		transition:
-			color var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-			background var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-			border-color var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+			color var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			background var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			border-color var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.tab:hover:not(.disabled) {
-		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8));
 	}
 
 	.tab.active {
-		color: var(--color-fg-primary, #fff);
+		color: var(--color-performance-fg-primary, #fff);
 	}
 
 	.tab.disabled {
@@ -376,34 +376,34 @@
 	}
 
 	.tab:focus-visible {
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline: 2px solid var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 		outline-offset: 2px;
 	}
 
 	/* Size variants */
 	.tabs.size-sm .tab {
-		padding: var(--space-xs, 0.5rem) var(--space-sm, 1rem);
-		font-size: var(--text-body-sm, 0.875rem);
+		padding: var(--space-performance-xs, 0.5rem) var(--space-performance-sm, 1rem);
+		font-size: var(--text-performance-body-sm, 0.875rem);
 	}
 
 	.tabs.size-md .tab {
-		padding: var(--space-sm, 1rem) var(--space-md, 1.618rem);
-		font-size: var(--text-body, 1rem);
+		padding: var(--space-performance-sm, 1rem) var(--space-performance-md, 1.618rem);
+		font-size: var(--text-performance-body, 1rem);
 	}
 
 	.tabs.size-lg .tab {
-		padding: var(--space-md, 1.618rem) var(--space-lg, 2.618rem);
-		font-size: var(--text-body-lg, 1.125rem);
+		padding: var(--space-performance-md, 1.618rem) var(--space-performance-lg, 2.618rem);
+		font-size: var(--text-performance-body-lg, 1.125rem);
 	}
 
 	/* Underline variant */
 	.tabs.underline .tab-list {
-		border-bottom: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-bottom: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
 	}
 
 	.tabs.underline.vertical .tab-list {
 		border-bottom: none;
-		border-right: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-right: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
 	}
 
 	.tabs.underline .tab {
@@ -423,9 +423,9 @@
 		bottom: 0;
 		left: 0;
 		height: 2px;
-		background: var(--color-fg-primary, #fff);
-		transition: transform var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-			width var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		background: var(--color-performance-fg-primary, #fff);
+		transition: transform var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			width var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.tabs.vertical .tab-indicator {
@@ -435,36 +435,36 @@
 		top: 0;
 		width: 2px;
 		height: auto;
-		transition: transform var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-			height var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: transform var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			height var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	/* Pills variant */
 	.tabs.pills .tab-list {
-		background: var(--color-bg-subtle, #1a1a1a);
+		background: var(--color-performance-bg-subtle, #1a1a1a);
 		padding: 4px;
-		border-radius: var(--radius-lg, 12px);
+		border-radius: var(--radius-performance-scale-lg, 12px);
 	}
 
 	.tabs.pills .tab {
-		border-radius: var(--radius-md, 8px);
+		border-radius: var(--radius-performance-scale-md, 8px);
 	}
 
 	.tabs.pills .tab.active {
-		background: var(--color-bg-surface, #111);
-		box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.2));
+		background: var(--color-performance-bg-surface, #111);
+		box-shadow: var(--shadow-performance-scale-sm, 0 2px 8px rgba(0, 0, 0, 0.2));
 	}
 
 	/* Bordered variant */
 	.tabs.bordered .tab {
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-md, 8px);
-		background: var(--color-bg-surface, #111);
+		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-md, 8px);
+		background: var(--color-performance-bg-surface, #111);
 	}
 
 	.tabs.bordered .tab.active {
-		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
-		background: var(--color-bg-subtle, #1a1a1a);
+		border-color: var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
+		background: var(--color-performance-bg-subtle, #1a1a1a);
 	}
 
 	/* Tab Icon */
@@ -485,7 +485,7 @@
 
 	.tab-panel.active {
 		display: block;
-		animation: fadeIn var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		animation: fadeIn var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	@keyframes fadeIn {

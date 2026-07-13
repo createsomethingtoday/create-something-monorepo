@@ -18,10 +18,10 @@ npm install @createsomething/canon-tokens
 @import '@createsomething/canon-tokens';
 
 .card {
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
+  background: var(--color-performance-bg-surface);
+  border: 1px solid var(--color-performance-border-default);
+  border-radius: var(--radius-performance-scale-lg);
+  padding: var(--space-performance-md);
 }
 ```
 
@@ -55,30 +55,30 @@ module.exports = {
     extend: {
       colors: {
         bg: {
-          pure: 'var(--color-bg-pure)',
-          elevated: 'var(--color-bg-elevated)',
-          surface: 'var(--color-bg-surface)',
-          subtle: 'var(--color-bg-subtle)',
+          pure: 'var(--color-performance-bg-pure)',
+          elevated: 'var(--color-performance-bg-elevated)',
+          surface: 'var(--color-performance-bg-surface)',
+          subtle: 'var(--color-performance-bg-subtle)',
         },
         fg: {
-          primary: 'var(--color-fg-primary)',
-          secondary: 'var(--color-fg-secondary)',
-          tertiary: 'var(--color-fg-tertiary)',
-          muted: 'var(--color-fg-muted)',
+          primary: 'var(--color-performance-fg-primary)',
+          secondary: 'var(--color-performance-fg-secondary)',
+          tertiary: 'var(--color-performance-fg-tertiary)',
+          muted: 'var(--color-performance-fg-muted)',
         }
       },
       spacing: {
-        xs: 'var(--space-xs)',
-        sm: 'var(--space-sm)',
-        md: 'var(--space-md)',
-        lg: 'var(--space-lg)',
-        xl: 'var(--space-xl)',
+        xs: 'var(--space-performance-xs)',
+        sm: 'var(--space-performance-sm)',
+        md: 'var(--space-performance-md)',
+        lg: 'var(--space-performance-lg)',
+        xl: 'var(--space-performance-xl)',
       },
       borderRadius: {
-        sm: 'var(--radius-sm)',
-        md: 'var(--radius-md)',
-        lg: 'var(--radius-lg)',
-        xl: 'var(--radius-xl)',
+        sm: 'var(--radius-performance-scale-sm)',
+        md: 'var(--radius-performance-scale-md)',
+        lg: 'var(--radius-performance-scale-lg)',
+        xl: 'var(--radius-performance-scale-xl)',
       }
     }
   }
@@ -91,14 +91,14 @@ module.exports = {
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--color-bg-pure` | `#000000` | Page background |
-| `--color-bg-elevated` | `#0a0a0a` | Slightly raised surfaces |
-| `--color-bg-surface` | `#111111` | Cards, modals |
-| `--color-bg-subtle` | `#1a1a1a` | Subtle backgrounds |
-| `--color-fg-primary` | `#ffffff` | Main content |
-| `--color-fg-secondary` | `rgba(255,255,255,0.8)` | Supporting content |
-| `--color-fg-tertiary` | `rgba(255,255,255,0.6)` | De-emphasized |
-| `--color-fg-muted` | `rgba(255,255,255,0.46)` | Very subtle (WCAG AA) |
+| `--color-performance-bg-pure` | `#000000` | Page background |
+| `--color-performance-bg-elevated` | `#0a0a0a` | Slightly raised surfaces |
+| `--color-performance-bg-surface` | `#111111` | Cards, modals |
+| `--color-performance-bg-subtle` | `#1a1a1a` | Subtle backgrounds |
+| `--color-performance-fg-primary` | `#ffffff` | Main content |
+| `--color-performance-fg-secondary` | `rgba(255,255,255,0.8)` | Supporting content |
+| `--color-performance-fg-tertiary` | `rgba(255,255,255,0.6)` | De-emphasized |
+| `--color-performance-fg-muted` | `rgba(255,255,255,0.46)` | Very subtle (WCAG AA) |
 
 ### Spacing (Golden Ratio)
 
@@ -106,42 +106,42 @@ Based on φ = 1.618:
 
 | Token | Value | Formula |
 |-------|-------|---------|
-| `--space-xs` | `0.618rem` | 1/φ |
-| `--space-sm` | `1rem` | base |
-| `--space-md` | `1.618rem` | φ |
-| `--space-lg` | `2.618rem` | φ² |
-| `--space-xl` | `4.236rem` | φ³ |
-| `--space-2xl` | `6.854rem` | φ⁴ |
+| `--space-performance-xs` | `0.618rem` | 1/φ |
+| `--space-performance-sm` | `1rem` | base |
+| `--space-performance-md` | `1.618rem` | φ |
+| `--space-performance-lg` | `2.618rem` | φ² |
+| `--space-performance-xl` | `4.236rem` | φ³ |
+| `--space-performance-2xl` | `6.854rem` | φ⁴ |
 
 ### Typography (Golden Ratio)
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--text-display` | `clamp(2.618rem, 4vw + 1.5rem, 4.236rem)` | Hero text |
-| `--text-h1` | `clamp(1.618rem, 3vw + 1rem, 2.618rem)` | Page titles |
-| `--text-h2` | `clamp(1.2rem, 2vw + 0.5rem, 1.618rem)` | Section titles |
-| `--text-body` | `1rem` | Body text |
-| `--text-body-sm` | `0.913rem` | Small text |
-| `--text-caption` | `0.833rem` | Captions |
+| `--text-performance-display` | `clamp(2.618rem, 4vw + 1.5rem, 4.236rem)` | Hero text |
+| `--text-performance-h1` | `clamp(1.618rem, 3vw + 1rem, 2.618rem)` | Page titles |
+| `--text-performance-h2` | `clamp(1.2rem, 2vw + 0.5rem, 1.618rem)` | Section titles |
+| `--text-performance-body` | `1rem` | Body text |
+| `--text-performance-body-sm` | `0.913rem` | Small text |
+| `--text-performance-caption` | `0.833rem` | Captions |
 
 ### Border Radius
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--radius-sm` | `6px` | Small elements |
-| `--radius-md` | `8px` | Buttons, badges |
-| `--radius-lg` | `12px` | Cards, modals |
-| `--radius-xl` | `16px` | Large containers |
-| `--radius-full` | `9999px` | Pills, avatars |
+| `--radius-performance-scale-sm` | `6px` | Small elements |
+| `--radius-performance-scale-md` | `8px` | Buttons, badges |
+| `--radius-performance-scale-lg` | `12px` | Cards, modals |
+| `--radius-performance-scale-xl` | `16px` | Large containers |
+| `--radius-performance-scale-full` | `9999px` | Pills, avatars |
 
 ### Animation
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--ease-standard` | `cubic-bezier(0.4, 0.0, 0.2, 1)` | Most transitions |
-| `--duration-micro` | `200ms` | Hover states |
-| `--duration-standard` | `300ms` | Page transitions |
-| `--duration-complex` | `500ms` | Multi-step |
+| `--ease-performance-standard` | `cubic-bezier(0.4, 0.0, 0.2, 1)` | Most transitions |
+| `--duration-performance-micro` | `200ms` | Hover states |
+| `--duration-performance-standard` | `300ms` | Page transitions |
+| `--duration-performance-complex` | `500ms` | Multi-step |
 
 ### Glass Effects
 
@@ -149,10 +149,10 @@ For frosted glass / glassmorphism:
 
 ```css
 .glass-card {
-  background: var(--glass-bg-medium);
-  backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-  border: 1px solid var(--glass-border-light);
-  box-shadow: var(--glass-shadow-md);
+  background: var(--glass-performance-bg-medium);
+  backdrop-filter: blur(var(--glass-performance-blur-md)) var(--glass-performance-saturate-md);
+  border: 1px solid var(--glass-performance-border-light);
+  box-shadow: var(--glass-performance-shadow-md);
 }
 ```
 
@@ -167,7 +167,7 @@ Apply `data-theme="light"` to enable light mode:
 ## Accessibility
 
 - All semantic colors are **WCAG AA compliant** (4.5:1+ contrast)
-- `--color-fg-muted` at 46% opacity = 4.56:1 contrast ratio
+- `--color-performance-fg-muted` at 46% opacity = 4.56:1 contrast ratio
 - High contrast mode support via `@media (prefers-contrast: more)`
 - Reduced motion support via `@media (prefers-reduced-motion)`
 

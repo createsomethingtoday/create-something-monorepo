@@ -35,72 +35,72 @@
   }
 
   body {
-    font-family: var(--font-sans);
+    font-family: var(--font-performance-sans);
     font-optical-sizing: auto;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
-    background: var(--color-bg-pure);
-    color: var(--color-fg-primary);
+    background: var(--color-performance-bg-pure);
+    color: var(--color-performance-fg-primary);
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
-    letter-spacing: var(--tracking-tight);
+    letter-spacing: var(--tracking-performance-tight);
   }
 
   /* Typography - Golden Ratio Implementation */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading, var(--font-display, var(--font-sans)));
+    font-family: var(--font-performance-heading, var(--font-performance-display, var(--font-performance-sans)));
     font-optical-sizing: auto;
   }
 
   h1 {
-    font-size: var(--text-display-xl);
-    font-weight: var(--font-semibold);
+    font-size: var(--text-performance-display-xl);
+    font-weight: var(--font-performance-semibold);
     line-height: 1.05;
-    letter-spacing: var(--tracking-tighter);
+    letter-spacing: var(--tracking-performance-tighter);
   }
 
   h2 {
-    font-size: var(--text-h1);
-    font-weight: var(--font-semibold);
-    line-height: var(--leading-tight);
-    letter-spacing: var(--tracking-tighter);
+    font-size: var(--text-performance-h1);
+    font-weight: var(--font-performance-semibold);
+    line-height: var(--leading-performance-tight);
+    letter-spacing: var(--tracking-performance-tighter);
   }
 
   h3 {
-    font-size: var(--text-h2);
-    font-weight: var(--font-semibold);
-    line-height: var(--leading-snug);
-    letter-spacing: var(--tracking-tight);
+    font-size: var(--text-performance-h2);
+    font-weight: var(--font-performance-semibold);
+    line-height: var(--leading-performance-snug);
+    letter-spacing: var(--tracking-performance-tight);
   }
 
   h4 {
-    font-size: var(--text-h3);
-    font-weight: var(--font-semibold);
-    line-height: var(--leading-snug);
+    font-size: var(--text-performance-h3);
+    font-weight: var(--font-performance-semibold);
+    line-height: var(--leading-performance-snug);
   }
 
   h5 {
-    font-size: var(--text-h4);
-    font-weight: var(--font-semibold);
+    font-size: var(--text-performance-h4);
+    font-weight: var(--font-performance-semibold);
   }
 
   h6 {
-    font-size: var(--text-h5);
-    font-weight: var(--font-semibold);
+    font-size: var(--text-performance-h5);
+    font-weight: var(--font-performance-semibold);
   }
 
   p {
-    font-size: var(--text-body);
-    line-height: var(--leading-relaxed);
-    letter-spacing: var(--tracking-tight);
+    font-size: var(--text-performance-body);
+    line-height: var(--leading-performance-relaxed);
+    letter-spacing: var(--tracking-performance-tight);
   }
 
   /* Code and monospace elements */
   code, pre, .font-mono {
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
   }
 }
 
@@ -110,46 +110,46 @@
 
 ::-webkit-scrollbar {
   width: 10px;
-  background-color: var(--color-bg-pure);
+  background-color: var(--color-performance-bg-pure);
 }
 
 ::-webkit-scrollbar-track {
-  background-color: var(--color-bg-pure);
+  background-color: var(--color-performance-bg-pure);
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--color-bg-surface);
-  border-radius: var(--radius-sm);
+  background-color: var(--color-performance-bg-surface);
+  border-radius: var(--radius-performance-scale-sm);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-fg-muted);
+  background-color: var(--color-performance-fg-muted);
 }
 
 /* ==========================================================================
    Section & Content Spacing
    
    Note: Use practical values for page-level padding, not the golden ratio 
-   upper scale (--space-2xl = 110px, --space-3xl = 177px are too large).
+   upper scale (--space-performance-2xl = 110px, --space-performance-3xl = 177px are too large).
    See CLAUDE.md "Spacing Guidance" for rationale.
    ========================================================================== */
 
 section {
-  padding-top: var(--space-xl);    /* ~68px - practical for sections */
-  padding-bottom: var(--space-xl);
+  padding-top: var(--space-performance-xl);    /* ~68px - practical for sections */
+  padding-bottom: var(--space-performance-xl);
 }
 
 .hero {
   padding-top: 6rem;               /* 96px - hero emphasis without excess */
-  padding-bottom: var(--space-xl); /* ~68px */
+  padding-bottom: var(--space-performance-xl); /* ~68px */
 }
 
 h2 + p {
-  margin-top: var(--space-lg);
+  margin-top: var(--space-performance-lg);
 }
 
 p + p {
-  margin-top: var(--space-md);
+  margin-top: var(--space-performance-md);
 }
 
 /* ==========================================================================
@@ -157,7 +157,7 @@ p + p {
    ========================================================================== */
 
 a {
-  transition: opacity var(--duration-micro) var(--ease-standard);
+  transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 a:hover {
@@ -165,11 +165,11 @@ a:hover {
 }
 
 .card {
-  transition: all var(--duration-standard) var(--ease-standard);
+  transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 }
 
 .card:hover {
-  border-color: var(--color-border-strong);
+  border-color: var(--color-performance-border-strong);
   transform: translateX(2px);
 }
 
@@ -178,12 +178,12 @@ a:hover {
    ========================================================================== */
 
 ::selection {
-  background-color: var(--color-focus);
-  color: var(--color-fg-primary);
+  background-color: var(--color-performance-focus);
+  color: var(--color-performance-fg-primary);
 }
 
 *:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--color-performance-focus);
   outline-offset: 2px;
 }
 
@@ -197,7 +197,7 @@ a:hover {
    ========================================================================== */
 
 /* Page Title - For entity names, section headers, and page titles
- * Uses --text-display (28-36px mobile) instead of h1's --text-display-xl (36-56px)
+ * Uses --text-performance-display (28-36px mobile) instead of h1's --text-performance-display-xl (36-56px)
  * Prevents overflow on long names like "Ludwig Mies van der Rohe"
  * 
  * Use for:
@@ -206,31 +206,31 @@ a:hover {
  * - Section landing pages (e.g., "Masters", "Experiments")
  * 
  * Don't use for:
- * - Hero marketing headlines (use default h1 or --text-display-xl)
+ * - Hero marketing headlines (use default h1 or --text-performance-display-xl)
  */
 .page-title {
-  font-size: var(--text-display);
-  font-weight: var(--font-bold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-  color: var(--color-fg-primary);
+  font-size: var(--text-performance-display);
+  font-weight: var(--font-performance-bold);
+  line-height: var(--leading-performance-tight);
+  letter-spacing: var(--tracking-performance-tight);
+  color: var(--color-performance-fg-primary);
 }
 
 .link-muted {
-  opacity: var(--opacity-muted);
-  transition: opacity var(--duration-micro) var(--ease-standard);
+  opacity: var(--opacity-performance-muted);
+  transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .link-muted:hover {
-  opacity: var(--opacity-full);
+  opacity: var(--opacity-performance-full);
 }
 
 .card-gradient-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom right, var(--color-fg-subtle), transparent);
+  background: linear-gradient(to bottom right, var(--color-performance-fg-subtle), transparent);
   opacity: 0;
-  transition: opacity var(--duration-micro) var(--ease-standard);
+  transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
   pointer-events: none;
 }
 
@@ -244,11 +244,11 @@ a:hover {
    ========================================================================== */
 
 ::view-transition-old(root) {
-  animation: view-transition-fade-out var(--view-transition-duration) var(--ease-standard);
+  animation: view-transition-fade-out var(--duration-performance-view-transition) var(--ease-performance-standard);
 }
 
 ::view-transition-new(root) {
-  animation: view-transition-fade-in var(--view-transition-duration) var(--ease-standard);
+  animation: view-transition-fade-in var(--duration-performance-view-transition) var(--ease-performance-standard);
 }
 
 @keyframes view-transition-fade-out {
@@ -262,7 +262,7 @@ a:hover {
 }
 
 body.transitioning-out {
-  animation: cross-property-exit var(--duration-standard) var(--ease-standard) forwards;
+  animation: cross-property-exit var(--duration-performance-standard) var(--ease-performance-standard) forwards;
 }
 
 @keyframes cross-property-exit {
@@ -271,7 +271,7 @@ body.transitioning-out {
 }
 
 body.transitioning-in {
-  animation: cross-property-entry var(--duration-complex) var(--ease-standard);
+  animation: cross-property-entry var(--duration-performance-complex) var(--ease-performance-standard);
 }
 
 @keyframes cross-property-entry {
@@ -311,75 +311,75 @@ body.transitioning-in {
 @media (prefers-contrast: more) {
   :root {
     /* Background colors - darker, more separation */
-    --color-bg-pure: #000000;
-    --color-bg-elevated: #050505;
-    --color-bg-surface: #0a0a0a;
-    --color-bg-subtle: #121212;
+    --color-performance-bg-pure: #000000;
+    --color-performance-bg-elevated: #050505;
+    --color-performance-bg-surface: #0a0a0a;
+    --color-performance-bg-subtle: #121212;
 
     /* Foreground colors - brighter, higher contrast
        All achieve WCAG AAA (7:1+) on pure black */
-    --color-fg-primary: #ffffff;
-    --color-fg-secondary: rgba(255, 255, 255, 0.95);
-    --color-fg-tertiary: rgba(255, 255, 255, 0.85);
-    --color-fg-muted: rgba(255, 255, 255, 0.75); /* Increased from 0.46 */
-    --color-fg-subtle: rgba(255, 255, 255, 0.5); /* Increased from 0.2 */
+    --color-performance-fg-primary: #ffffff;
+    --color-performance-fg-secondary: rgba(255, 255, 255, 0.95);
+    --color-performance-fg-tertiary: rgba(255, 255, 255, 0.85);
+    --color-performance-fg-muted: rgba(255, 255, 255, 0.75); /* Increased from 0.46 */
+    --color-performance-fg-subtle: rgba(255, 255, 255, 0.5); /* Increased from 0.2 */
 
     /* Border colors - more visible */
-    --color-border-default: rgba(255, 255, 255, 0.3); /* Increased from 0.1 */
-    --color-border-emphasis: rgba(255, 255, 255, 0.5); /* Increased from 0.2 */
-    --color-border-strong: rgba(255, 255, 255, 0.7); /* Increased from 0.3 */
+    --color-performance-border-default: rgba(255, 255, 255, 0.3); /* Increased from 0.1 */
+    --color-performance-border-emphasis: rgba(255, 255, 255, 0.5); /* Increased from 0.2 */
+    --color-performance-border-strong: rgba(255, 255, 255, 0.7); /* Increased from 0.3 */
 
     /* Interactive states - more prominent */
-    --color-hover: rgba(255, 255, 255, 0.15); /* Increased from 0.05 */
-    --color-active: rgba(255, 255, 255, 0.25); /* Increased from 0.1 */
-    --color-focus: rgba(255, 255, 255, 0.9); /* Increased from 0.5 */
+    --color-performance-hover: rgba(255, 255, 255, 0.15); /* Increased from 0.05 */
+    --color-performance-active: rgba(255, 255, 255, 0.25); /* Increased from 0.1 */
+    --color-performance-focus: rgba(255, 255, 255, 0.9); /* Increased from 0.5 */
 
     /* Semantic colors - brighter for high contrast
        All achieve WCAG AAA (7:1+) on pure black */
-    --color-success: #5ddb5d; /* Brighter green: 10.8:1 */
-    --color-success-muted: rgba(93, 219, 93, 0.3);
-    --color-success-border: rgba(93, 219, 93, 0.5);
+    --color-performance-success: #5ddb5d; /* Brighter green: 10.8:1 */
+    --color-performance-success-muted: rgba(93, 219, 93, 0.3);
+    --color-performance-success-border: rgba(93, 219, 93, 0.5);
 
-    --color-error: #ff6b6b; /* Brighter red: 6.77:1 */
-    --color-error-muted: rgba(255, 107, 107, 0.3);
-    --color-error-border: rgba(255, 107, 107, 0.5);
+    --color-performance-error: #ff6b6b; /* Brighter red: 6.77:1 */
+    --color-performance-error-muted: rgba(255, 107, 107, 0.3);
+    --color-performance-error-border: rgba(255, 107, 107, 0.5);
 
-    --color-warning: #ffc857; /* Brighter amber: 12.4:1 */
-    --color-warning-muted: rgba(255, 200, 87, 0.3);
-    --color-warning-border: rgba(255, 200, 87, 0.5);
+    --color-performance-warning: #ffc857; /* Brighter amber: 12.4:1 */
+    --color-performance-warning-muted: rgba(255, 200, 87, 0.3);
+    --color-performance-warning-border: rgba(255, 200, 87, 0.5);
 
-    --color-info: #7eb8ff; /* Brighter blue: 9.17:1 */
-    --color-info-muted: rgba(126, 184, 255, 0.3);
-    --color-info-border: rgba(126, 184, 255, 0.5);
+    --color-performance-info: #7eb8ff; /* Brighter blue: 9.17:1 */
+    --color-performance-info-muted: rgba(126, 184, 255, 0.3);
+    --color-performance-info-border: rgba(126, 184, 255, 0.5);
 
     /* Data visualization - brighter palette */
-    --color-data-1: #93c5fd; /* Brighter blue */
-    --color-data-2: #4ade80; /* Brighter green */
-    --color-data-3: #d8b4fe; /* Brighter purple */
-    --color-data-4: #fcd34d; /* Brighter amber */
-    --color-data-5: #f9a8d4; /* Brighter pink */
-    --color-data-6: #fde047; /* Brighter yellow */
+    --color-performance-data-1: #93c5fd; /* Brighter blue */
+    --color-performance-data-2: #4ade80; /* Brighter green */
+    --color-performance-data-3: #d8b4fe; /* Brighter purple */
+    --color-performance-data-4: #fcd34d; /* Brighter amber */
+    --color-performance-data-5: #f9a8d4; /* Brighter pink */
+    --color-performance-data-6: #fde047; /* Brighter yellow */
   }
 
   /* Enhanced focus visible state for high contrast */
   *:focus-visible {
-    outline: 3px solid var(--color-focus);
+    outline: 3px solid var(--color-performance-focus);
     outline-offset: 3px;
   }
 
   /* Enhanced selection for high contrast */
   ::selection {
-    background-color: var(--color-focus);
-    color: var(--color-bg-pure);
+    background-color: var(--color-performance-focus);
+    color: var(--color-performance-bg-pure);
   }
 
   /* Enhanced scrollbar visibility */
   ::-webkit-scrollbar-thumb {
-    background-color: var(--color-fg-muted);
+    background-color: var(--color-performance-fg-muted);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-fg-secondary);
+    background-color: var(--color-performance-fg-secondary);
   }
 
   /* Enhanced link visibility */
@@ -390,7 +390,7 @@ body.transitioning-in {
 
   /* Enhanced card hover state */
   .card:hover {
-    border-color: var(--color-fg-primary);
+    border-color: var(--color-performance-fg-primary);
   }
 }
 
@@ -402,21 +402,21 @@ body.transitioning-in {
   display: block;
   overflow-x: auto;
   padding: 1em;
-  background: var(--color-bg-subtle);
-  color: var(--color-fg-secondary);
+  background: var(--color-performance-bg-subtle);
+  color: var(--color-performance-fg-secondary);
 }
 
 .hljs-comment,
 .hljs-quote {
-  color: var(--color-fg-muted);
+  color: var(--color-performance-fg-muted);
   font-style: italic;
 }
 
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-subst {
-  color: var(--color-fg-primary);
-  font-weight: var(--font-semibold);
+  color: var(--color-performance-fg-primary);
+  font-weight: var(--font-performance-semibold);
 }
 
 .hljs-number,
@@ -424,62 +424,62 @@ body.transitioning-in {
 .hljs-variable,
 .hljs-template-variable,
 .hljs-tag .hljs-attr {
-  color: var(--color-fg-tertiary);
+  color: var(--color-performance-fg-tertiary);
 }
 
 .hljs-string,
 .hljs-doctag {
-  color: var(--color-fg-secondary);
+  color: var(--color-performance-fg-secondary);
 }
 
 .hljs-title,
 .hljs-section,
 .hljs-selector-id {
-  color: var(--color-fg-primary);
-  font-weight: var(--font-bold);
+  color: var(--color-performance-fg-primary);
+  font-weight: var(--font-performance-bold);
 }
 
 .hljs-type,
 .hljs-class .hljs-title {
-  color: var(--color-fg-secondary);
-  font-weight: var(--font-semibold);
+  color: var(--color-performance-fg-secondary);
+  font-weight: var(--font-performance-semibold);
 }
 
 .hljs-tag,
 .hljs-name,
 .hljs-attribute {
-  color: var(--color-fg-primary);
-  font-weight: var(--font-regular);
+  color: var(--color-performance-fg-primary);
+  font-weight: var(--font-performance-regular);
 }
 
 .hljs-regexp,
 .hljs-link {
-  color: var(--color-fg-secondary);
+  color: var(--color-performance-fg-secondary);
 }
 
 .hljs-symbol,
 .hljs-bullet {
-  color: var(--color-fg-tertiary);
+  color: var(--color-performance-fg-tertiary);
 }
 
 .hljs-built_in,
 .hljs-builtin-name {
-  color: var(--color-fg-secondary);
+  color: var(--color-performance-fg-secondary);
 }
 
 .hljs-meta {
-  color: var(--color-fg-muted);
-  font-weight: var(--font-semibold);
+  color: var(--color-performance-fg-muted);
+  font-weight: var(--font-performance-semibold);
 }
 
 .hljs-deletion {
-  background: var(--color-error-muted);
-  color: var(--color-error);
+  background: var(--color-performance-error-muted);
+  color: var(--color-performance-error);
 }
 
 .hljs-addition {
-  background: var(--color-success-muted);
-  color: var(--color-success);
+  background: var(--color-performance-success-muted);
+  color: var(--color-performance-success);
 }
 
 .hljs-emphasis {
@@ -491,9 +491,9 @@ body.transitioning-in {
 }
 
 pre code.hljs {
-  border-radius: var(--radius-md);
-  font-size: var(--text-body-sm);
-  line-height: var(--leading-relaxed);
+  border-radius: var(--radius-performance-scale-md);
+  font-size: var(--text-performance-body-sm);
+  line-height: var(--leading-performance-relaxed);
 }
 
 /* ==========================================================================
@@ -502,7 +502,7 @@ pre code.hljs {
 
 @layer components {
   .fade-in {
-    animation: fadeIn var(--duration-complex) ease-out;
+    animation: fadeIn var(--duration-performance-complex) ease-out;
   }
 
   @keyframes fadeIn {
@@ -517,16 +517,16 @@ pre code.hljs {
   }
 
   .card-lift {
-    transition: all var(--duration-standard) var(--ease-standard);
+    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .card-lift:hover {
     transform: translateY(-8px);
-    box-shadow: var(--shadow-2xl);
+    box-shadow: var(--shadow-performance-scale-2xl);
   }
 
   .page-transition {
-    animation: pageEnter var(--duration-standard) var(--ease-decelerate);
+    animation: pageEnter var(--duration-performance-standard) var(--ease-performance-decelerate);
   }
 
   @keyframes pageEnter {
@@ -551,20 +551,20 @@ pre code.hljs {
 
      Design Decision: Tailwind opacity utilities (e.g., bg-white/5) create
      transparent overlays. Canon uses solid semantic colors for consistency
-     across all backgrounds. On --color-bg-pure (#000), the visual effect
+     across all backgrounds. On --color-performance-bg-pure (#000), the visual effect
      is identical while providing better predictability.
 
      Migration guide (Tailwind → Canon class → CSS token):
-       bg-white/5    → .bg-subtle     → var(--color-bg-subtle)     // #1a1a1a - card/section backgrounds
-       bg-white/10   → .bg-surface    → var(--color-bg-surface)    // #111111 - elevated surfaces
-       bg-white/5    → .bg-hover      → var(--color-hover)         // rgba(255,255,255,0.05) - interactive hover only
-       bg-white/10   → .bg-active     → var(--color-active)        // rgba(255,255,255,0.1) - active/pressed states
-       text-white/40 → .text-muted    → var(--color-fg-muted)      // rgba(255,255,255,0.4)
-       text-white/60 → .text-tertiary → var(--color-fg-tertiary)   // rgba(255,255,255,0.6)
-       text-white/80 → .text-secondary → var(--color-fg-secondary) // rgba(255,255,255,0.8)
-       border-white/10 → .border-default → var(--color-border-default)   // rgba(255,255,255,0.1)
-       border-white/20 → .border-emphasis → var(--color-border-emphasis) // rgba(255,255,255,0.2)
-       border-white/30 → .border-strong → var(--color-border-strong)     // rgba(255,255,255,0.3)
+       bg-white/5    → .bg-subtle     → var(--color-performance-bg-subtle)     // #1a1a1a - card/section backgrounds
+       bg-white/10   → .bg-surface    → var(--color-performance-bg-surface)    // #111111 - elevated surfaces
+       bg-white/5    → .bg-hover      → var(--color-performance-hover)         // rgba(255,255,255,0.05) - interactive hover only
+       bg-white/10   → .bg-active     → var(--color-performance-active)        // rgba(255,255,255,0.1) - active/pressed states
+       text-white/40 → .text-muted    → var(--color-performance-fg-muted)      // rgba(255,255,255,0.4)
+       text-white/60 → .text-tertiary → var(--color-performance-fg-tertiary)   // rgba(255,255,255,0.6)
+       text-white/80 → .text-secondary → var(--color-performance-fg-secondary) // rgba(255,255,255,0.8)
+       border-white/10 → .border-default → var(--color-performance-border-default)   // rgba(255,255,255,0.1)
+       border-white/20 → .border-emphasis → var(--color-performance-border-emphasis) // rgba(255,255,255,0.2)
+       border-white/30 → .border-strong → var(--color-performance-border-strong)     // rgba(255,255,255,0.3)
 
      Context guidance:
        - For static backgrounds (cards, panels): use .bg-subtle or .bg-surface
@@ -576,44 +576,44 @@ pre code.hljs {
   /* Background Opacity Wrappers
    * Maps Tailwind bg-white/XX to Canon background tokens
    */
-  .bg-pure { background-color: var(--color-bg-pure); }
-  .bg-elevated { background-color: var(--color-bg-elevated); }
-  .bg-surface { background-color: var(--color-bg-surface); }
-  .bg-subtle { background-color: var(--color-bg-subtle); }
-  .bg-hover { background-color: var(--color-hover); }
-  .bg-active { background-color: var(--color-active); }
+  .bg-pure { background-color: var(--color-performance-bg-pure); }
+  .bg-elevated { background-color: var(--color-performance-bg-elevated); }
+  .bg-surface { background-color: var(--color-performance-bg-surface); }
+  .bg-subtle { background-color: var(--color-performance-bg-subtle); }
+  .bg-hover { background-color: var(--color-performance-hover); }
+  .bg-active { background-color: var(--color-performance-active); }
 
   /* Text Opacity Wrappers
    * Maps Tailwind text-white/XX to Canon foreground tokens
    */
-  .text-primary { color: var(--color-fg-primary); }
-  .text-secondary { color: var(--color-fg-secondary); }
-  .text-tertiary { color: var(--color-fg-tertiary); }
-  .text-muted { color: var(--color-fg-muted); }
-  .text-subtle { color: var(--color-fg-subtle); }
+  .text-primary { color: var(--color-performance-fg-primary); }
+  .text-secondary { color: var(--color-performance-fg-secondary); }
+  .text-tertiary { color: var(--color-performance-fg-tertiary); }
+  .text-muted { color: var(--color-performance-fg-muted); }
+  .text-subtle { color: var(--color-performance-fg-subtle); }
 
   /* Border Opacity Wrappers
    * Maps Tailwind border-white/XX to Canon border tokens
    */
-  .border-default { border-color: var(--color-border-default); }
-  .border-emphasis { border-color: var(--color-border-emphasis); }
-  .border-strong { border-color: var(--color-border-strong); }
+  .border-default { border-color: var(--color-performance-border-default); }
+  .border-emphasis { border-color: var(--color-performance-border-emphasis); }
+  .border-strong { border-color: var(--color-performance-border-strong); }
 
   /* Semantic State Colors */
-  .text-success { color: var(--color-success); }
-  .text-error { color: var(--color-error); }
-  .text-warning { color: var(--color-warning); }
-  .text-info { color: var(--color-info); }
+  .text-success { color: var(--color-performance-success); }
+  .text-error { color: var(--color-performance-error); }
+  .text-warning { color: var(--color-performance-warning); }
+  .text-info { color: var(--color-performance-info); }
 
-  .bg-success { background-color: var(--color-success-muted); }
-  .bg-error { background-color: var(--color-error-muted); }
-  .bg-warning { background-color: var(--color-warning-muted); }
-  .bg-info { background-color: var(--color-info-muted); }
+  .bg-success { background-color: var(--color-performance-success-muted); }
+  .bg-error { background-color: var(--color-performance-error-muted); }
+  .bg-warning { background-color: var(--color-performance-warning-muted); }
+  .bg-info { background-color: var(--color-performance-info-muted); }
 
-  .border-success { border-color: var(--color-success-border); }
-  .border-error { border-color: var(--color-error-border); }
-  .border-warning { border-color: var(--color-warning-border); }
-  .border-info { border-color: var(--color-info-border); }
+  .border-success { border-color: var(--color-performance-success-border); }
+  .border-error { border-color: var(--color-performance-error-border); }
+  .border-warning { border-color: var(--color-performance-warning-border); }
+  .border-info { border-color: var(--color-performance-info-border); }
 
   /* ==========================================================================
      Border Radius Utilities
@@ -623,32 +623,32 @@ pre code.hljs {
      Use these instead of hardcoded border-radius values.
 
      Migration guide (Tailwind → Canon):
-       rounded-sm   → .rounded-sm   → var(--radius-sm)   // 6px
-       rounded-md   → .rounded-md   → var(--radius-md)   // 8px
-       rounded-lg   → .rounded-lg   → var(--radius-lg)   // 12px
-       rounded-xl   → .rounded-xl   → var(--radius-xl)   // 16px
-       rounded-full → .rounded-full → var(--radius-full) // 9999px
+       rounded-sm   → .rounded-sm   → var(--radius-performance-scale-sm)   // 6px
+       rounded-md   → .rounded-md   → var(--radius-performance-scale-md)   // 8px
+       rounded-lg   → .rounded-lg   → var(--radius-performance-scale-lg)   // 12px
+       rounded-xl   → .rounded-xl   → var(--radius-performance-scale-xl)   // 16px
+       rounded-full → .rounded-full → var(--radius-performance-scale-full) // 9999px
 
      Philosophy: Consistent border radii create visual harmony. These values
      follow a subtle progression that feels natural without being mechanical.
      ========================================================================== */
 
-  .rounded-sm { border-radius: var(--radius-sm); }
-  .rounded-md { border-radius: var(--radius-md); }
-  .rounded-lg { border-radius: var(--radius-lg); }
-  .rounded-xl { border-radius: var(--radius-xl); }
-  .rounded-full { border-radius: var(--radius-full); }
+  .rounded-sm { border-radius: var(--radius-performance-scale-sm); }
+  .rounded-md { border-radius: var(--radius-performance-scale-md); }
+  .rounded-lg { border-radius: var(--radius-performance-scale-lg); }
+  .rounded-xl { border-radius: var(--radius-performance-scale-xl); }
+  .rounded-full { border-radius: var(--radius-performance-scale-full); }
 
   /* Shadow Utilities
    * Canon-compliant alternatives to Tailwind's shadow-* utilities.
    * Use these for consistent elevation and depth across the system.
    *
    * Migration guide (Tailwind → Canon):
-   *   shadow-sm  → .shadow-sm  → var(--shadow-sm)      // Subtle card shadow
-   *   shadow-md  → .shadow-md  → var(--shadow-md)      // Standard elevation
-   *   shadow-lg  → .shadow-lg  → var(--shadow-lg)      // Prominent elevation
-   *   shadow-xl  → .shadow-xl  → var(--shadow-xl)      // High elevation
-   *   shadow-2xl → .shadow-2xl → var(--shadow-2xl)     // Maximum elevation
+   *   shadow-sm  → .shadow-sm  → var(--shadow-performance-scale-sm)      // Subtle card shadow
+   *   shadow-md  → .shadow-md  → var(--shadow-performance-scale-md)      // Standard elevation
+   *   shadow-lg  → .shadow-lg  → var(--shadow-performance-scale-lg)      // Prominent elevation
+   *   shadow-xl  → .shadow-xl  → var(--shadow-performance-scale-xl)      // High elevation
+   *   shadow-2xl → .shadow-2xl → var(--shadow-performance-scale-2xl)     // Maximum elevation
    *
    * Special shadows for specific use cases:
    *   .shadow-glow-sm → Subtle glow effect
@@ -659,14 +659,14 @@ pre code.hljs {
    * element needs elevation. Reserve higher shadows for modals and overlays.
    */
 
-  .shadow-sm { box-shadow: var(--shadow-sm); }
-  .shadow-md { box-shadow: var(--shadow-md); }
-  .shadow-lg { box-shadow: var(--shadow-lg); }
-  .shadow-xl { box-shadow: var(--shadow-xl); }
-  .shadow-2xl { box-shadow: var(--shadow-2xl); }
-  .shadow-glow-sm { box-shadow: var(--shadow-glow-sm); }
-  .shadow-glow-md { box-shadow: var(--shadow-glow-md); }
-  .shadow-glow-lg { box-shadow: var(--shadow-glow-lg); }
+  .shadow-sm { box-shadow: var(--shadow-performance-scale-sm); }
+  .shadow-md { box-shadow: var(--shadow-performance-scale-md); }
+  .shadow-lg { box-shadow: var(--shadow-performance-scale-lg); }
+  .shadow-xl { box-shadow: var(--shadow-performance-scale-xl); }
+  .shadow-2xl { box-shadow: var(--shadow-performance-scale-2xl); }
+  .shadow-glow-sm { box-shadow: var(--shadow-performance-scale-glow-sm); }
+  .shadow-glow-md { box-shadow: var(--shadow-performance-scale-glow-md); }
+  .shadow-glow-lg { box-shadow: var(--shadow-performance-scale-glow-lg); }
   .shadow-none { box-shadow: none; }
 
   /* ==========================================================================
@@ -676,36 +676,36 @@ pre code.hljs {
 
   /* Eyebrow - Context label above headings */
   .eyebrow {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     text-transform: uppercase;
-    letter-spacing: var(--tracking-widest);
-    color: var(--color-fg-tertiary);
-    margin-bottom: var(--space-md);
+    letter-spacing: var(--tracking-performance-widest);
+    color: var(--color-performance-fg-tertiary);
+    margin-bottom: var(--space-performance-md);
   }
 
   /* Hero Title - Primary assertion, largest display text */
   .hero-title {
-    font-size: var(--text-display-xl);
-    font-weight: var(--font-light);
+    font-size: var(--text-performance-display-xl);
+    font-weight: var(--font-performance-light);
     line-height: 1.05;
-    letter-spacing: var(--tracking-tighter);
-    margin-bottom: var(--space-md);
+    letter-spacing: var(--tracking-performance-tighter);
+    margin-bottom: var(--space-performance-md);
   }
 
   /* Hero Subtitle - Supporting statement */
   .hero-subtitle {
-    font-size: var(--text-h3);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
+    font-size: var(--text-performance-h3);
+    color: var(--color-performance-fg-secondary);
+    line-height: var(--leading-performance-relaxed);
     max-width: 42rem;
-    margin: 0 auto var(--space-sm);
+    margin: 0 auto var(--space-performance-sm);
   }
 
   /* Hero Description - Additional context */
   .hero-description {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-tertiary);
+    line-height: var(--leading-performance-relaxed);
     max-width: 36rem;
     margin: 0 auto;
   }
@@ -715,23 +715,23 @@ pre code.hljs {
   }
 
   .bg-gradient-dark {
-    background: linear-gradient(180deg, var(--color-bg-pure) 0%, var(--color-bg-elevated) 100%);
+    background: linear-gradient(180deg, var(--color-performance-bg-pure) 0%, var(--color-performance-bg-elevated) 100%);
   }
 
   .bg-gradient-subtle {
-    background: linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-bg-surface) 100%);
+    background: linear-gradient(135deg, var(--color-performance-bg-elevated) 0%, var(--color-performance-bg-surface) 100%);
   }
 
   .border-gradient {
     border: 1px solid transparent;
-    background-image: linear-gradient(var(--color-bg-surface), var(--color-bg-surface)),
-                      linear-gradient(135deg, var(--color-border-emphasis), var(--color-border-default));
+    background-image: linear-gradient(var(--color-performance-bg-surface), var(--color-performance-bg-surface)),
+                      linear-gradient(135deg, var(--color-performance-border-emphasis), var(--color-performance-border-default));
     background-origin: border-box;
     background-clip: padding-box, border-box;
   }
 
   .transition-smooth {
-    transition: all var(--duration-standard) var(--ease-standard);
+    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .line-clamp-2 {
@@ -759,30 +759,30 @@ pre code.hljs {
        .a11y-focus       - Apply to focusable elements (buttons, links, interactive)
        .a11y-focus-within - Apply to containers whose children receive focus
 
-     These use var(--color-focus) for consistent focus indication.
+     These use var(--color-performance-focus) for consistent focus indication.
      ========================================================================== */
 
   /* Standard focus ring for interactive elements */
   .a11y-focus:focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--color-performance-focus);
     outline-offset: 2px;
   }
 
   /* Focus state for containers (shows when any descendant is focused) */
   .a11y-focus-within:focus-within {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--color-performance-focus);
     outline-offset: 2px;
   }
 
   /* Variant with no outline offset (for tight layouts) */
   .a11y-focus-tight:focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--color-performance-focus);
     outline-offset: 0;
   }
 
   /* Variant with inward offset (for nested elements) */
   .a11y-focus-inset:focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--color-performance-focus);
     outline-offset: -2px;
   }
 
@@ -806,22 +806,22 @@ pre code.hljs {
     top: -100%;
     left: 50%;
     transform: translateX(-50%);
-    z-index: var(--z-tooltip);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--color-bg-surface);
-    color: var(--color-fg-primary);
-    border: 1px solid var(--color-border-emphasis);
-    border-radius: var(--radius-md);
-    font-size: var(--text-body-sm);
-    font-weight: var(--font-medium);
+    z-index: var(--z-performance-tooltip);
+    padding: var(--space-performance-sm) var(--space-performance-md);
+    background: var(--color-performance-bg-surface);
+    color: var(--color-performance-fg-primary);
+    border: 1px solid var(--color-performance-border-emphasis);
+    border-radius: var(--radius-performance-scale-md);
+    font-size: var(--text-performance-body-sm);
+    font-weight: var(--font-performance-medium);
     text-decoration: none;
     white-space: nowrap;
-    transition: top var(--duration-micro) var(--ease-standard);
+    transition: top var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .skip-to-content:focus {
-    top: var(--space-sm);
-    outline: 2px solid var(--color-focus);
+    top: var(--space-performance-sm);
+    outline: 2px solid var(--color-performance-focus);
     outline-offset: 2px;
   }
 
@@ -850,9 +850,9 @@ pre code.hljs {
 
   /* Base item styles with cascade transition delay */
   .highlight-item {
-    transition: opacity var(--duration-standard) var(--ease-standard),
-                transform var(--duration-micro) var(--ease-standard);
-    transition-delay: calc(var(--cascade-step) * var(--index, 0));
+    transition: opacity var(--duration-performance-standard) var(--ease-performance-standard),
+                transform var(--duration-performance-micro) var(--ease-performance-standard);
+    transition-delay: calc(var(--cascade-performance-step) * var(--index, 0));
   }
 
   /* Default highlight: 0.5 opacity for non-hovered siblings */
@@ -874,7 +874,7 @@ pre code.hljs {
   /* Hovered item: full opacity + slight scale for emphasis */
   .highlight-item:hover {
     opacity: 1;
-    transform: scale(var(--scale-micro));
+    transform: scale(var(--scale-performance-micro));
   }
 
   /* Reduced motion: instant transitions, no cascade delay */
@@ -907,8 +907,8 @@ pre code.hljs {
   .cascade-item {
     opacity: 0;
     transform: translateY(20px);
-    animation: cascadeIn var(--duration-standard) var(--ease-standard) forwards;
-    animation-delay: calc(var(--cascade-step) * var(--index, 0));
+    animation: cascadeIn var(--duration-performance-standard) var(--ease-performance-standard) forwards;
+    animation-delay: calc(var(--cascade-performance-step) * var(--index, 0));
   }
 
   @keyframes cascadeIn {
@@ -920,13 +920,13 @@ pre code.hljs {
 
   /* Fast cascade - for dense lists */
   .cascade-fast .cascade-item {
-    animation-duration: var(--duration-micro);
+    animation-duration: var(--duration-performance-micro);
   }
 
   /* Slow cascade - for hero sections */
   .cascade-slow .cascade-item {
-    animation-duration: var(--duration-complex);
-    animation-delay: calc(var(--cascade-group) * var(--index, 0));
+    animation-duration: var(--duration-performance-complex);
+    animation-delay: calc(var(--cascade-performance-group) * var(--index, 0));
   }
 
   /* Reduced motion: no animation */
@@ -964,7 +964,7 @@ pre code.hljs {
     width: 0;
     height: 1px;
     background: currentColor;
-    transition: width var(--duration-micro) var(--ease-standard);
+    transition: width var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .underline-reveal:hover::after {
@@ -992,17 +992,17 @@ pre code.hljs {
      ========================================================================== */
 
   .interactive-scale {
-    transition: transform var(--duration-micro) var(--ease-standard),
-                border-color var(--duration-micro) var(--ease-standard);
+    transition: transform var(--duration-performance-micro) var(--ease-performance-standard),
+                border-color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .interactive-scale:hover {
-    transform: scale(var(--scale-micro));
-    border-color: var(--color-border-emphasis);
+    transform: scale(var(--scale-performance-micro));
+    border-color: var(--color-performance-border-emphasis);
   }
 
   .interactive-scale:active {
-    transform: scale(var(--scale-subtle));
+    transform: scale(var(--scale-performance-subtle));
   }
 
   /* Reduced motion: no transform */
@@ -1056,8 +1056,8 @@ pre code.hljs {
     margin-left: -0.5em;
     border: 2px solid currentColor;
     border-top-color: transparent;
-    border-radius: var(--radius-full);
-    animation: btn-spin var(--duration-slow) linear infinite;
+    border-radius: var(--radius-performance-scale-full);
+    animation: btn-spin var(--duration-performance-slow) linear infinite;
   }
 
   @keyframes btn-spin {
@@ -1066,25 +1066,25 @@ pre code.hljs {
 
   /* Active/pressed state - scale down for tactile feedback */
   .btn-press:active {
-    transform: scale(var(--scale-subtle));
+    transform: scale(var(--scale-performance-subtle));
   }
 
   /* Icon button - square with centered icon */
   .btn-icon {
-    padding: var(--space-sm);
+    padding: var(--space-performance-sm);
     aspect-ratio: 1;
   }
 
   /* Small button variant */
   .btn-sm {
-    padding: var(--space-xs) var(--space-sm);
-    font-size: var(--text-body-sm);
+    padding: var(--space-performance-xs) var(--space-performance-sm);
+    font-size: var(--text-performance-body-sm);
   }
 
   /* Large button variant */
   .btn-lg {
-    padding: var(--space-md) var(--space-lg);
-    font-size: var(--text-body-lg);
+    padding: var(--space-performance-md) var(--space-performance-lg);
+    font-size: var(--text-performance-body-lg);
   }
 
   /* Reduced motion: no spin animation */
@@ -1116,53 +1116,53 @@ pre code.hljs {
 
   /* Interactive card - lifts and highlights on hover */
   .card-interactive {
-    transition: all var(--duration-standard) var(--ease-standard);
+    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .card-interactive:hover {
     transform: translateY(-4px);
-    border-color: var(--color-border-emphasis);
-    box-shadow: var(--shadow-lg);
+    border-color: var(--color-performance-border-emphasis);
+    box-shadow: var(--shadow-performance-scale-lg);
   }
 
   .card-interactive:active {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-performance-scale-md);
   }
 
   /* Subtle card - minimal border, surface background */
   .card-subtle {
-    background: var(--color-bg-surface);
+    background: var(--color-performance-bg-surface);
     border-color: transparent;
   }
 
   .card-subtle:hover {
-    border-color: var(--color-border-default);
+    border-color: var(--color-performance-border-default);
   }
 
   /* Gradient border card */
   .card-gradient {
     border: 1px solid transparent;
-    background-image: linear-gradient(var(--color-bg-elevated), var(--color-bg-elevated)),
-                      linear-gradient(135deg, var(--color-border-emphasis), var(--color-border-default));
+    background-image: linear-gradient(var(--color-performance-bg-elevated), var(--color-performance-bg-elevated)),
+                      linear-gradient(135deg, var(--color-performance-border-emphasis), var(--color-performance-border-default));
     background-origin: border-box;
     background-clip: padding-box, border-box;
   }
 
   /* Glow card - soft glow on hover */
   .card-glow:hover {
-    box-shadow: var(--shadow-glow-md);
+    box-shadow: var(--shadow-performance-scale-glow-md);
   }
 
   /* Slide card - horizontal movement on hover */
   .card-slide {
-    transition: transform var(--duration-micro) var(--ease-standard),
-                border-color var(--duration-micro) var(--ease-standard);
+    transition: transform var(--duration-performance-micro) var(--ease-performance-standard),
+                border-color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .card-slide:hover {
     transform: translateX(4px);
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-performance-border-emphasis);
   }
 
   /* Reduced motion: no transforms */
@@ -1199,57 +1199,57 @@ pre code.hljs {
 
   /* Base glass effect - applies blur + saturation and sets up stacking context */
   .glass {
-    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-    background-color: var(--glass-bg-light);
-    border: 1px solid var(--glass-border-light);
+    backdrop-filter: blur(var(--glass-performance-blur-md)) var(--glass-performance-saturate-md);
+    background-color: var(--glass-performance-bg-light);
+    border: 1px solid var(--glass-performance-border-light);
   }
 
   /* Glass variants by intensity */
   .glass-sm {
-    backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
-    background-color: var(--glass-bg-subtle);
-    border: 1px solid var(--glass-border-subtle);
+    backdrop-filter: blur(var(--glass-performance-blur-sm)) var(--glass-performance-saturate-sm);
+    background-color: var(--glass-performance-bg-subtle);
+    border: 1px solid var(--glass-performance-border-subtle);
   }
 
   .glass-lg {
-    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-    background-color: var(--glass-bg-medium);
-    border: 1px solid var(--glass-border-medium);
+    backdrop-filter: blur(var(--glass-performance-blur-lg)) var(--glass-performance-saturate-lg);
+    background-color: var(--glass-performance-bg-medium);
+    border: 1px solid var(--glass-performance-border-medium);
   }
 
   .glass-xl {
-    backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-    background-color: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border-strong);
+    backdrop-filter: blur(var(--glass-performance-blur-xl)) var(--glass-performance-saturate-xl);
+    background-color: var(--glass-performance-bg-strong);
+    border: 1px solid var(--glass-performance-border-strong);
   }
 
   .glass-2xl {
-    backdrop-filter: blur(var(--glass-blur-2xl)) var(--glass-saturate-xl);
-    background-color: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border-strong);
+    backdrop-filter: blur(var(--glass-performance-blur-2xl)) var(--glass-performance-saturate-xl);
+    background-color: var(--glass-performance-bg-strong);
+    border: 1px solid var(--glass-performance-border-strong);
   }
 
   /* Glass with shadow - for floating elements (dropdowns, modals) */
   .glass-elevated {
-    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-    background-color: var(--glass-bg-medium);
-    border: 1px solid var(--glass-border-medium);
-    box-shadow: var(--glass-shadow-md);
+    backdrop-filter: blur(var(--glass-performance-blur-lg)) var(--glass-performance-saturate-lg);
+    background-color: var(--glass-performance-bg-medium);
+    border: 1px solid var(--glass-performance-border-medium);
+    box-shadow: var(--glass-performance-shadow-md);
   }
 
   /* Glass card - for workflow cards, reinforces "layer" metaphor */
   .glass-card {
-    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-    background-color: var(--glass-bg-light);
-    border: 1px solid var(--glass-border-light);
-    border-radius: var(--radius-lg);
-    transition: all var(--duration-standard) var(--ease-standard);
+    backdrop-filter: blur(var(--glass-performance-blur-md)) var(--glass-performance-saturate-md);
+    background-color: var(--glass-performance-bg-light);
+    border: 1px solid var(--glass-performance-border-light);
+    border-radius: var(--radius-performance-scale-lg);
+    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .glass-card:hover {
-    background-color: var(--glass-bg-medium);
-    border-color: var(--glass-border-medium);
-    box-shadow: var(--glass-shadow-sm);
+    background-color: var(--glass-performance-bg-medium);
+    border-color: var(--glass-performance-border-medium);
+    box-shadow: var(--glass-performance-shadow-sm);
   }
 
   /* ==========================================================================
@@ -1273,8 +1273,8 @@ pre code.hljs {
     .glass-elevated,
     .glass-card {
       backdrop-filter: none;
-      background-color: var(--color-bg-surface);
-      border-color: var(--color-border-emphasis);
+      background-color: var(--color-performance-bg-surface);
+      border-color: var(--color-performance-border-emphasis);
     }
   }
 
@@ -1287,9 +1287,9 @@ pre code.hljs {
     .glass-2xl,
     .glass-elevated,
     .glass-card {
-      backdrop-filter: blur(var(--glass-blur-sm));
+      backdrop-filter: blur(var(--glass-performance-blur-sm));
       background-color: rgba(0, 0, 0, 0.90);
-      border: 2px solid var(--color-border-strong);
+      border: 2px solid var(--color-performance-border-strong);
     }
   }
 
@@ -1331,9 +1331,9 @@ pre code.hljs {
   .liquid-glass {
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-    background-color: var(--glass-bg-light);
-    border: 1px solid var(--glass-border-medium);
+    backdrop-filter: blur(var(--glass-performance-blur-lg)) var(--glass-performance-saturate-lg);
+    background-color: var(--glass-performance-bg-light);
+    border: 1px solid var(--glass-performance-border-medium);
   }
 
   /* Highlight shimmer layer */
@@ -1341,7 +1341,7 @@ pre code.hljs {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--liquid-glass-highlight-primary);
+    background: var(--liquid-glass-performance-highlight-primary);
     border-radius: inherit;
     pointer-events: none;
   }
@@ -1354,7 +1354,7 @@ pre code.hljs {
     left: 0;
     right: 0;
     height: 1px;
-    background: var(--liquid-glass-edge-glow);
+    background: var(--liquid-glass-performance-edge-glow);
     pointer-events: none;
   }
 
@@ -1365,10 +1365,10 @@ pre code.hljs {
     justify-content: center;
     background-color: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-performance-scale-md);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(8px);
-    transition: all var(--duration-standard) var(--ease-standard);
+    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .liquid-glass-icon:hover {
@@ -1380,44 +1380,44 @@ pre code.hljs {
 
   /* Semantic tint variants */
   .liquid-glass-tint-purple {
-    background-color: color-mix(in srgb, var(--liquid-glass-tint-purple) 12%, var(--glass-bg-light));
+    background-color: color-mix(in srgb, var(--liquid-glass-performance-tint-purple) 12%, var(--glass-performance-bg-light));
   }
 
   .liquid-glass-tint-blue {
-    background-color: color-mix(in srgb, var(--liquid-glass-tint-blue) 12%, var(--glass-bg-light));
+    background-color: color-mix(in srgb, var(--liquid-glass-performance-tint-blue) 12%, var(--glass-performance-bg-light));
   }
 
   .liquid-glass-tint-emerald {
-    background-color: color-mix(in srgb, var(--liquid-glass-tint-emerald) 12%, var(--glass-bg-light));
+    background-color: color-mix(in srgb, var(--liquid-glass-performance-tint-emerald) 12%, var(--glass-performance-bg-light));
   }
 
   .liquid-glass-tint-amber {
-    background-color: color-mix(in srgb, var(--liquid-glass-tint-amber) 10%, var(--glass-bg-light));
+    background-color: color-mix(in srgb, var(--liquid-glass-performance-tint-amber) 10%, var(--glass-performance-bg-light));
   }
 
   .liquid-glass-tint-rose {
-    background-color: color-mix(in srgb, var(--liquid-glass-tint-rose) 10%, var(--glass-bg-light));
+    background-color: color-mix(in srgb, var(--liquid-glass-performance-tint-rose) 10%, var(--glass-performance-bg-light));
   }
 
   .liquid-glass-tint-cyan {
-    background-color: color-mix(in srgb, var(--liquid-glass-tint-cyan) 12%, var(--glass-bg-light));
+    background-color: color-mix(in srgb, var(--liquid-glass-performance-tint-cyan) 12%, var(--glass-performance-bg-light));
   }
 
   /* Liquid glass dropdown - elevated variant for menus */
   .liquid-glass-dropdown {
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-    background-color: var(--glass-bg-medium);
-    border: 1px solid var(--glass-border-medium);
-    box-shadow: var(--glass-shadow-md);
+    backdrop-filter: blur(var(--glass-performance-blur-xl)) var(--glass-performance-saturate-xl);
+    background-color: var(--glass-performance-bg-medium);
+    border: 1px solid var(--glass-performance-border-medium);
+    box-shadow: var(--glass-performance-shadow-md);
   }
 
   .liquid-glass-dropdown::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--liquid-glass-highlight-subtle);
+    background: var(--liquid-glass-performance-highlight-subtle);
     border-radius: inherit;
     pointer-events: none;
   }
@@ -1429,7 +1429,7 @@ pre code.hljs {
     left: 0;
     right: 0;
     height: 1px;
-    background: var(--liquid-glass-edge-glow);
+    background: var(--liquid-glass-performance-edge-glow);
     pointer-events: none;
   }
 
@@ -1437,17 +1437,17 @@ pre code.hljs {
   .liquid-glass-modal {
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-    background-color: var(--glass-bg-medium);
-    border: 1px solid var(--glass-border-strong);
-    box-shadow: var(--glass-shadow-lg), var(--liquid-glass-inner-shadow);
+    backdrop-filter: blur(var(--glass-performance-blur-xl)) var(--glass-performance-saturate-xl);
+    background-color: var(--glass-performance-bg-medium);
+    border: 1px solid var(--glass-performance-border-strong);
+    box-shadow: var(--glass-performance-shadow-lg), var(--liquid-glass-performance-inner-shadow);
   }
 
   .liquid-glass-modal::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--liquid-glass-highlight-primary);
+    background: var(--liquid-glass-performance-highlight-primary);
     border-radius: inherit;
     pointer-events: none;
   }
@@ -1459,7 +1459,7 @@ pre code.hljs {
     left: 0;
     right: 0;
     height: 1px;
-    background: var(--liquid-glass-edge-glow);
+    background: var(--liquid-glass-performance-edge-glow);
     pointer-events: none;
   }
 
@@ -1482,7 +1482,7 @@ pre code.hljs {
     .liquid-glass-dropdown,
     .liquid-glass-modal {
       backdrop-filter: none;
-      background-color: var(--color-bg-surface);
+      background-color: var(--color-performance-bg-surface);
     }
 
     .liquid-glass::before,
@@ -1500,7 +1500,7 @@ pre code.hljs {
     .liquid-glass,
     .liquid-glass-dropdown,
     .liquid-glass-modal {
-      backdrop-filter: blur(var(--glass-blur-sm));
+      backdrop-filter: blur(var(--glass-performance-blur-sm));
       background-color: rgba(0, 0, 0, 0.90);
       border-color: rgba(255, 255, 255, 0.3);
     }

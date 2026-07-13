@@ -95,7 +95,7 @@ font_size: 15pt ← canonical body (16-20px)
 
 line_height: 1.5 ← canonical body (1.5-1.6)
 
-padding: 26px ← golden ratio (--space-md)
+padding: 26px ← golden ratio (--space-performance-md)
 
 colors: muted ← functional, not decorative
 
@@ -109,7 +109,7 @@ font_size: 15pt ← canonical body (16-20px)
 
 line_height: 1.5 ← canonical body (1.5-1.6)
 
-padding: 26px ← golden ratio (--space-md)
+padding: 26px ← golden ratio (--space-performance-md)
 
 colors: muted ← functional, not decorative
 

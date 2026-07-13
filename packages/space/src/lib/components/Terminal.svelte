@@ -339,77 +339,77 @@ Contact Create Something:
 
 <style>
 	.terminal-container {
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.terminal-header {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.path-display {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.command-counter {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 	}
 
 	.suggestion-bar {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.suggestion-content {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.suggestion-label {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.suggested-command {
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.suggestion-description {
-		color: var(--color-fg-subtle);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-subtle);
+		font-size: var(--text-performance-caption);
 	}
 
 	.suggestion-button {
-		background: var(--color-bg-surface);
-		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-lg);
-		font-size: var(--text-caption);
-		transition: background var(--duration-micro) var(--ease-standard);
+		background: var(--color-performance-bg-surface);
+		color: var(--color-performance-fg-primary);
+		border: 1px solid var(--color-performance-border-emphasis);
+		border-radius: var(--radius-performance-scale-lg);
+		font-size: var(--text-performance-caption);
+		transition: background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.suggestion-button:hover {
-		background: var(--color-active);
+		background: var(--color-performance-active);
 	}
 
 	.terminal-content {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.prompt {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.terminal-input {
 		background: transparent;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.terminal-input::placeholder {
-		color: var(--color-fg-subtle);
+		color: var(--color-performance-fg-subtle);
 	}
 
 	.cursor {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 </style>

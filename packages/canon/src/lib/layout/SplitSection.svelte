@@ -91,19 +91,19 @@
 
 	/* Gap sizes */
 	.split--gap-sm {
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.split--gap-md {
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.split--gap-lg {
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 	}
 
 	.split--gap-xl {
-		gap: var(--space-xl);
+		gap: var(--space-performance-xl);
 	}
 
 	/* Vertical alignment */

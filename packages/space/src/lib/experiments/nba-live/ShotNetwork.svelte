@@ -109,7 +109,7 @@
 			.attr('orient', 'auto')
 			.append('path')
 			.attr('d', 'M0,-5L10,0L0,5')
-			.attr('fill', 'var(--color-fg-subtle)');
+			.attr('fill', 'var(--color-performance-fg-subtle)');
 
 		// Draw edges (links)
 		const link = svg
@@ -118,7 +118,7 @@
 			.selectAll('line')
 			.data(edgesCopy)
 			.join('line')
-			.attr('stroke', 'var(--color-fg-subtle)')
+			.attr('stroke', 'var(--color-performance-fg-subtle)')
 			.attr('stroke-width', (d) => edgeWidth(d))
 			.attr('stroke-opacity', 0.6)
 			.attr('marker-end', `url(#arrow-${teamAbbr})`);
@@ -131,8 +131,8 @@
 			.data(nodesCopy)
 			.join('circle')
 			.attr('r', (d) => nodeRadius(d))
-			.attr('fill', (d) => (d.shotCreation > 0 ? 'var(--color-data-1)' : 'var(--color-fg-muted)'))
-			.attr('stroke', 'var(--color-bg-pure)')
+			.attr('fill', (d) => (d.shotCreation > 0 ? 'var(--color-performance-data-1)' : 'var(--color-performance-fg-muted)'))
+			.attr('stroke', 'var(--color-performance-bg-pure)')
 			.attr('stroke-width', 2)
 			.attr('opacity', 0.9);
 
@@ -146,7 +146,7 @@
 			.text((d) => shortName(d.name))
 			.attr('font-size', '10px')
 			.attr('font-family', 'inherit')
-			.attr('fill', 'var(--color-fg-secondary)')
+			.attr('fill', 'var(--color-performance-fg-secondary)')
 			.attr('text-anchor', 'middle')
 			.attr('dy', (d) => nodeRadius(d) + 12);
 
@@ -161,7 +161,7 @@
 			.attr('font-size', '9px')
 			.attr('font-weight', '600')
 			.attr('font-family', 'inherit')
-			.attr('fill', 'var(--color-bg-pure)')
+			.attr('fill', 'var(--color-performance-bg-pure)')
 			.attr('text-anchor', 'middle')
 			.attr('dy', 3);
 
@@ -247,23 +247,23 @@
 
 <style>
 	.network-container {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.network-title {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.empty-message {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 		text-align: center;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.network-svg {
@@ -275,9 +275,9 @@
 	.network-stats {
 		display: flex;
 		justify-content: center;
-		gap: var(--space-lg);
-		padding-top: var(--space-sm);
-		margin-top: var(--space-sm);
+		gap: var(--space-performance-lg);
+		padding-top: var(--space-performance-sm);
+		margin-top: var(--space-performance-sm);
 	}
 
 	.stat-group {
@@ -288,14 +288,14 @@
 	}
 
 	.stat-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.stat-value {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -303,33 +303,33 @@
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: center;
-		gap: var(--space-md);
-		margin-top: var(--space-sm);
-		padding-top: var(--space-xs);
+		gap: var(--space-performance-md);
+		margin-top: var(--space-performance-sm);
+		padding-top: var(--space-performance-xs);
 	}
 
 	.legend-item {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		gap: var(--space-performance-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.legend-circle {
 		width: 10px;
 		height: 10px;
-		border-radius: var(--radius-full);
-		background: var(--color-fg-muted);
+		border-radius: var(--radius-performance-scale-full);
+		background: var(--color-performance-fg-muted);
 	}
 
 	.legend-circle.active {
-		background: var(--color-data-1);
+		background: var(--color-performance-data-1);
 	}
 
 	.legend-line {
 		width: 16px;
 		height: 2px;
-		background: var(--color-fg-subtle);
+		background: var(--color-performance-fg-subtle);
 	}
 </style>

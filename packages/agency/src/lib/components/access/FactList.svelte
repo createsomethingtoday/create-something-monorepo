@@ -32,7 +32,7 @@
 		font-size: 0.72rem;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	dd {

@@ -144,7 +144,7 @@ END:VCALENDAR`;
 		flex-direction: column;
 		align-items: center;
 		text-align: center;
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 	}
 
 	.success-icon {
@@ -153,10 +153,10 @@ END:VCALENDAR`;
 		justify-content: center;
 		width: 64px;
 		height: 64px;
-		background: var(--color-success-muted);
-		border: 2px solid var(--color-success);
+		background: var(--color-performance-success-muted);
+		border: 2px solid var(--color-performance-success);
 		border-radius: 50%;
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.success-icon svg {
@@ -165,14 +165,14 @@ END:VCALENDAR`;
 	}
 
 	.title {
-		font-size: var(--text-h2);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h2);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.message {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		max-width: 400px;
 		line-height: 1.6;
 	}
@@ -180,12 +180,12 @@ END:VCALENDAR`;
 	.details-card {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 		width: 100%;
 		max-width: 320px;
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.detail {
@@ -195,66 +195,66 @@ END:VCALENDAR`;
 	}
 
 	.detail-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.detail-value {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
-		font-weight: var(--font-medium);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
+		font-weight: var(--font-performance-medium);
 	}
 
 	.calendar-links {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.calendar-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.calendar-buttons {
 		display: flex;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		flex-wrap: wrap;
 		justify-content: center;
 	}
 
 	.calendar-button {
-		padding: var(--space-xs) var(--space-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
 		background: transparent;
-		border-radius: var(--radius-md);
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-secondary);
 		text-decoration: none;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.calendar-button:hover {
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
+		border-color: var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.calendar-button:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
 	.back-home {
-		margin-top: var(--space-md);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		margin-top: var(--space-performance-md);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		text-decoration: none;
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.back-home:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 </style>

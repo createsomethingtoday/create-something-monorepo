@@ -287,65 +287,65 @@ Contact Create Something:
 
 <style>
 	.terminal {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		font-family: monospace;
 	}
 
 	.terminal-header {
-		background: var(--color-bg-surface);
+		background: var(--color-performance-bg-surface);
 	}
 
 	.traffic-light {
 		width: 0.75rem;
 		height: 0.75rem;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 	}
 
 	.traffic-light-red {
-		background: var(--color-error);
+		background: var(--color-performance-error);
 	}
 
 	.traffic-light-yellow {
-		background: var(--color-warning);
+		background: var(--color-performance-warning);
 	}
 
 	.traffic-light-green {
-		background: var(--color-success);
+		background: var(--color-performance-success);
 	}
 
 	.terminal-title {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.terminal-subtitle {
-		color: var(--color-fg-subtle);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-subtle);
+		font-size: var(--text-performance-caption);
 	}
 
 	.terminal-content {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.terminal-line {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.terminal-prompt {
-		color: var(--color-info);
+		color: var(--color-performance-info);
 	}
 
 	.terminal-input {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.terminal-cursor {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.terminal-footer {
-		background: var(--color-bg-surface);
-		font-size: var(--text-caption);
-		color: var(--color-fg-subtle);
+		background: var(--color-performance-bg-surface);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-subtle);
 	}
 </style>

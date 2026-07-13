@@ -120,10 +120,10 @@
 	.date-picker {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
 		width: fit-content;
 	}
 
@@ -136,15 +136,15 @@
 		height: 28px;
 		padding: 0;
 		background: transparent;
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-tertiary);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-tertiary);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.nav-button:hover:not(:disabled) {
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
+		border-color: var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.nav-button:disabled {
@@ -160,19 +160,19 @@
 	.date-label {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-xs) var(--space-sm);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
 		cursor: pointer;
 		user-select: none;
 	}
 
 	.date-label :global(.calendar-icon) {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.date-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
 		font-weight: 500;
 		font-variant-numeric: tabular-nums;
 	}
@@ -188,18 +188,18 @@
 
 	/* Today button (only shows when not on today) */
 	.today-button {
-		padding: var(--space-xs) var(--space-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
 		background: transparent;
-		border-radius: var(--radius-sm);
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.today-button:hover {
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
-		background: var(--color-hover);
+		border-color: var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-hover);
 	}
 </style>

@@ -200,25 +200,25 @@
 <style>
 	.shell-inner { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 	.hero { margin-bottom: 2rem; }
-	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-fg-tertiary); }
-	.hero p { max-width: 70ch; color: var(--color-fg-secondary); }
+	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-performance-fg-tertiary); }
+	.hero p { max-width: 70ch; color: var(--color-performance-fg-secondary); }
 	.subnav { display: flex; gap: 1rem; margin-top: 1rem; }
 	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
-	.subnav a[aria-current='page'] { border-color: var(--color-focus); }
+	.subnav a[aria-current='page'] { border-color: var(--color-performance-focus); }
 	.toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
 	.toolbar input, td input { width: 100%; border-radius: var(--radius-performance-sm); border: 1px solid var(--color-performance-line); background: var(--color-performance-panel); color: inherit; padding: 0.75rem 0.9rem; }
 	.toolbar button, td button { border: 1px solid var(--color-performance-ink); border-radius: var(--radius-performance-sm); padding: 0.75rem 1rem; font: inherit; font-weight: 700; background: var(--color-performance-ink); color: var(--color-performance-panel); box-shadow: none; }
 	.table-wrap { overflow-x: auto; border: 1px solid var(--color-performance-line); border-radius: var(--radius-performance-md); background: var(--color-performance-panel); }
 	table { width: 100%; border-collapse: collapse; }
-	th, td { padding: 1rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border-default); }
-	.muted { color: var(--color-fg-tertiary); font-size: 0.85rem; margin-top: 0.25rem; }
-	.allowed { color: var(--color-success); }
-	.blocked { color: var(--color-error); }
+	th, td { padding: 1rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-performance-border-default); }
+	.muted { color: var(--color-performance-fg-tertiary); font-size: 0.85rem; margin-top: 0.25rem; }
+	.allowed { color: var(--color-performance-success); }
+	.blocked { color: var(--color-performance-error); }
 	.checks { display: flex; flex-wrap: wrap; gap: 0.5rem; min-width: 260px; }
 	.checks button { padding: 0.45rem 0.8rem; }
-	.check-on { background: var(--color-success); color: var(--color-bg-pure); }
-	.check-off { background: var(--color-border-default); color: var(--color-fg-primary); }
+	.check-on { background: var(--color-performance-success); color: var(--color-performance-bg-pure); }
+	.check-off { background: var(--color-performance-border-default); color: var(--color-performance-fg-primary); }
 	form { display: flex; gap: 0.5rem; min-width: 280px; }
-	.success { color: var(--color-success); }
-	.error { color: var(--color-error); }
+	.success { color: var(--color-performance-success); }
+	.error { color: var(--color-performance-error); }
 </style>

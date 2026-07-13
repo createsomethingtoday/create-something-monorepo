@@ -31,20 +31,20 @@
 
 <style>
   .eyebrow {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .page-title {
-    font-size: var(--text-h1);
+    font-size: var(--text-performance-h1);
     font-weight: 700;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .date-text {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
   }
 </style>

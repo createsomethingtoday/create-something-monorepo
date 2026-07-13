@@ -249,7 +249,7 @@
     padding-top: 0.75rem;
     border-top: 1px solid rgba(255, 255, 255, 0.62);
     color: #fff;
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.7rem;
     letter-spacing: 0;
     line-height: 1.3;
@@ -286,7 +286,7 @@
     gap: 1rem;
     padding-bottom: 0.8rem;
     border-bottom: 1px solid currentColor;
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.68rem;
     line-height: 1.25;
     text-transform: uppercase;
@@ -300,9 +300,9 @@
   .performance-field-study h2 {
     max-width: 12ch;
     margin: auto 0 0;
-    font-family: var(--font-performance-display, var(--font-display, var(--font-sans)));
+    font-family: var(--font-performance-display, var(--font-performance-display, var(--font-performance-sans)));
     font-size: clamp(2.5rem, 5.5vw, 5.75rem);
-    font-weight: var(--font-performance-display-weight, var(--font-medium, 500));
+    font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500));
     font-kerning: normal;
     font-feature-settings: "kern" 1, "liga" 1;
     letter-spacing: var(--tracking-performance-display, -0.03em);
@@ -339,7 +339,7 @@
   .performance-field-study__metric small,
   .performance-field-study__proof dt,
   .performance-field-study__proof dd {
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.67rem;
     line-height: 1.35;
   }
@@ -352,7 +352,7 @@
   }
 
   .performance-field-study__metric strong {
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.82rem;
     line-height: 1.2;
     text-align: right;

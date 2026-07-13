@@ -84,36 +84,36 @@
 <style>
 	/* Typography */
 	.type-sm {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.type-lg {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.type-xl {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 	}
 
 	.type-3xl {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 	}
 
 	/* Opacity as color tokens */
 	.opacity-40-canon {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.opacity-60-canon {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.opacity-70-canon {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Borders */
 	.border-canon {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 </style>

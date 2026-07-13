@@ -543,10 +543,10 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 
 <style>
 	.paper-container {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 		border-radius: 20px;
-		box-shadow: var(--shadow-md);
-		color: var(--color-fg-primary);
+		box-shadow: var(--shadow-performance-scale-md);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.paper-header {
@@ -642,26 +642,26 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 
 	.metric-table {
 		border-collapse: collapse;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 		overflow: hidden;
 	}
 
 	.metric-table th {
-		background: var(--color-bg-subtle);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-subtle);
+		padding: var(--space-performance-md);
 		text-align: left;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		border-bottom: 1px solid var(--color-border-emphasis);
+		border-bottom: 1px solid var(--color-performance-border-emphasis);
 	}
 
 	.metric-table td {
-		padding: var(--space-md);
-		color: var(--color-fg-tertiary);
+		padding: var(--space-performance-md);
+		color: var(--color-performance-fg-tertiary);
 		vertical-align: top;
 	}
 
@@ -671,9 +671,9 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 
 	.metric-table code {
 		font-family: 'Stack Sans', monospace;
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		padding: 0.125rem 0.375rem;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		font-size: 0.9em;
 	}
 

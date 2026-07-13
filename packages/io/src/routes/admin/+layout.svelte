@@ -61,51 +61,51 @@
 
 <style>
 	:global(body) {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.admin-layout {
 		min-height: 100vh;
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.admin-nav {
-		background: var(--color-bg-surface);
+		background: var(--color-performance-bg-surface);
 	}
 
 	.nav-link {
-		padding: var(--space-sm) 0;
+		padding: var(--space-performance-sm) 0;
 		border-bottom: 2px solid transparent;
-		transition: all var(--duration-standard) var(--ease-standard);
-		color: var(--color-fg-tertiary);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.nav-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.nav-link.active {
-		border-bottom-color: var(--color-fg-primary);
-		color: var(--color-fg-primary);
+		border-bottom-color: var(--color-performance-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.utility-link {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
-		transition: color var(--duration-standard) var(--ease-standard);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		transition: color var(--duration-performance-standard) var(--ease-performance-standard);
 		background: transparent;
 		border: none;
 		cursor: pointer;
 	}
 
 	.utility-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.admin-content {
 		max-width: 80rem;
 		margin: 0 auto;
-		padding: var(--space-lg) var(--space-md);
+		padding: var(--space-performance-lg) var(--space-performance-md);
 	}
 </style>

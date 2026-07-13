@@ -57,7 +57,7 @@
 
 <style>
 	.papers-section {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 		overflow-x: clip;
 	}
 
@@ -77,26 +77,26 @@
 	}
 
 	.section-title {
-		font-size: var(--text-h2);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h2);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.section-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	@media (max-width: 640px) {
 		.papers-section {
-			padding: var(--space-md) 1rem var(--space-xl);
+			padding: var(--space-performance-md) 1rem var(--space-performance-xl);
 		}
 
 		.section-header {
-			margin-bottom: var(--space-md);
+			margin-bottom: var(--space-performance-md);
 		}
 
 		.papers-list {
-			gap: var(--space-sm);
+			gap: var(--space-performance-sm);
 		}
 	}
 
@@ -105,12 +105,12 @@
 	}
 
 	.empty-title {
-		font-size: var(--text-h2);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h2);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.empty-text {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Fade in animation - CSS only */

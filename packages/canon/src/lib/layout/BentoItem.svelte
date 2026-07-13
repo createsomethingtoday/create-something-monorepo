@@ -35,9 +35,9 @@
 
 <style>
 	.bento-item {
-		padding: var(--space-lg);
-		border-radius: var(--radius-lg);
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		padding: var(--space-performance-lg);
+		border-radius: var(--radius-performance-scale-lg);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
 		min-height: 12rem;
 		display: flex;
 		flex-direction: column;
@@ -66,19 +66,19 @@
 
 	/* Variant styles */
 	.bento-item--default {
-		background: var(--color-bg-surface);
+		background: var(--color-performance-bg-surface);
 	}
 
 	.bento-item--default:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.bento-item--elevated {
-		box-shadow: var(--shadow-md);
+		box-shadow: var(--shadow-performance-scale-md);
 	}
 
 	.bento-item--elevated:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.bento-item--glass {
@@ -87,7 +87,7 @@
 	}
 
 	.bento-item--glass:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 		background: rgba(255, 255, 255, 0.05);
 	}
 

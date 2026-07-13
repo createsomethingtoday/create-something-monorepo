@@ -273,7 +273,7 @@ Follow patterns from packages/bundle-scanner/.
 		max-width: 48rem;
 		margin: 0 auto;
 		padding: 4rem 1.5rem;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.experiment-header {
@@ -286,8 +286,8 @@ Follow patterns from packages/bundle-scanner/.
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		margin-bottom: 1rem;
 	}
 
@@ -297,20 +297,20 @@ Follow patterns from packages/bundle-scanner/.
 	}
 
 	.status.validated {
-		color: var(--color-success, #22c55e);
+		color: var(--color-performance-success, #22c55e);
 		font-weight: 600;
 	}
 
 	h1 {
-		font-size: var(--text-display);
+		font-size: var(--text-performance-display);
 		font-weight: 700;
 		line-height: 1.2;
 		margin-bottom: 1rem;
 	}
 
 	.subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.6;
 	}
 
@@ -319,7 +319,7 @@ Follow patterns from packages/bundle-scanner/.
 		padding: 1.5rem;
 		border-radius: 0.5rem;
 		overflow-x: auto;
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		line-height: 1.4;
 		margin-bottom: 3rem;
 		border: 1px solid var(--color-border);
@@ -330,14 +330,14 @@ Follow patterns from packages/bundle-scanner/.
 	}
 
 	.section h2 {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 600;
 		margin-bottom: 1rem;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.section h3 {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
 		margin-top: 1.5rem;
 		margin-bottom: 0.75rem;
@@ -346,7 +346,7 @@ Follow patterns from packages/bundle-scanner/.
 	.section p {
 		line-height: 1.7;
 		margin-bottom: 1rem;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.section ul {
@@ -357,7 +357,7 @@ Follow patterns from packages/bundle-scanner/.
 	.section li {
 		line-height: 1.7;
 		margin-bottom: 0.5rem;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	code {
@@ -384,7 +384,7 @@ Follow patterns from packages/bundle-scanner/.
 	}
 
 	.assessment-item.pass .value {
-		color: var(--color-success, #22c55e);
+		color: var(--color-performance-success, #22c55e);
 		font-weight: 600;
 	}
 
@@ -409,8 +409,8 @@ Follow patterns from packages/bundle-scanner/.
 	}
 
 	.phase .time {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		font-weight: 400;
 	}
 
@@ -435,15 +435,15 @@ Follow patterns from packages/bundle-scanner/.
 
 	.result .metric {
 		display: block;
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.result .label {
 		display: block;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		margin-top: 0.25rem;
 	}
 
@@ -452,7 +452,7 @@ Follow patterns from packages/bundle-scanner/.
 		padding: 1.5rem;
 		border-radius: 0.5rem;
 		overflow-x: auto;
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		line-height: 1.4;
 		margin: 1.5rem 0;
 		border: 1px solid var(--color-border);
@@ -463,7 +463,7 @@ Follow patterns from packages/bundle-scanner/.
 		padding: 1.5rem;
 		border-radius: 0.5rem;
 		overflow-x: auto;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		line-height: 1.6;
 		margin-top: 1rem;
 		border: 1px solid var(--color-border);
@@ -477,7 +477,7 @@ Follow patterns from packages/bundle-scanner/.
 		}
 
 		h1 {
-			font-size: var(--text-h1);
+			font-size: var(--text-performance-h1);
 		}
 	}
 </style>

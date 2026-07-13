@@ -316,7 +316,7 @@
 	.file-upload {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md, 1.618rem);
+		gap: var(--space-performance-md, 1.618rem);
 	}
 
 	.file-upload.disabled {
@@ -329,28 +329,28 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-xl, 4.236rem) var(--space-lg, 2.618rem);
-		background: var(--color-bg-surface, #111);
-		border: 2px dashed var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-lg, 12px);
+		padding: var(--space-performance-xl, 4.236rem) var(--space-performance-lg, 2.618rem);
+		background: var(--color-performance-bg-surface, #111);
+		border: 2px dashed var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-lg, 12px);
 		cursor: pointer;
-		transition: all var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: all var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.drop-zone:hover {
-		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
-		background: var(--color-bg-subtle, #1a1a1a);
+		border-color: var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
+		background: var(--color-performance-bg-subtle, #1a1a1a);
 	}
 
 	.drop-zone:focus-visible {
 		outline: none;
-		border-color: var(--color-border-strong, rgba(255, 255, 255, 0.3));
-		box-shadow: 0 0 0 3px var(--color-focus, rgba(255, 255, 255, 0.5));
+		border-color: var(--color-performance-border-strong, rgba(255, 255, 255, 0.3));
+		box-shadow: 0 0 0 3px var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 	}
 
 	.drop-zone.dragging {
-		border-color: var(--color-info, #5082b9);
-		background: var(--color-info-muted, rgba(80, 130, 185, 0.2));
+		border-color: var(--color-performance-info, #5082b9);
+		background: var(--color-performance-info-muted, rgba(80, 130, 185, 0.2));
 	}
 
 	.file-input {
@@ -369,25 +369,25 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-sm, 1rem);
+		gap: var(--space-performance-sm, 1rem);
 		text-align: center;
 	}
 
 	.upload-icon {
 		width: 48px;
 		height: 48px;
-		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
 	}
 
 	.drop-zone-label {
-		font-size: var(--text-body, 1rem);
-		color: var(--color-fg-primary, #fff);
+		font-size: var(--text-performance-body, 1rem);
+		color: var(--color-performance-fg-primary, #fff);
 		margin: 0;
 	}
 
 	.drop-zone-hint {
-		font-size: var(--text-caption, 0.75rem);
-		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		font-size: var(--text-performance-caption, 0.75rem);
+		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
 		margin: 0;
 	}
 
@@ -398,24 +398,24 @@
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs, 0.5rem);
+		gap: var(--space-performance-xs, 0.5rem);
 	}
 
 	.file-item {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm, 1rem);
-		padding: var(--space-sm, 1rem);
-		background: var(--color-bg-surface, #111);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-md, 8px);
+		gap: var(--space-performance-sm, 1rem);
+		padding: var(--space-performance-sm, 1rem);
+		background: var(--color-performance-bg-surface, #111);
+		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-md, 8px);
 	}
 
 	.file-preview {
 		width: 40px;
 		height: 40px;
 		object-fit: cover;
-		border-radius: var(--radius-sm, 6px);
+		border-radius: var(--radius-performance-scale-sm, 6px);
 		flex-shrink: 0;
 	}
 
@@ -438,35 +438,35 @@
 	}
 
 	.file-name {
-		font-size: var(--text-body-sm, 0.875rem);
-		color: var(--color-fg-primary, #fff);
+		font-size: var(--text-performance-body-sm, 0.875rem);
+		color: var(--color-performance-fg-primary, #fff);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
 
 	.file-size {
-		font-size: var(--text-caption, 0.75rem);
-		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		font-size: var(--text-performance-caption, 0.75rem);
+		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
 	}
 
 	.file-progress {
 		width: 60px;
 		height: 4px;
-		background: var(--color-bg-subtle, #1a1a1a);
+		background: var(--color-performance-bg-subtle, #1a1a1a);
 		border-radius: 2px;
 		overflow: hidden;
 	}
 
 	.progress-bar {
 		height: 100%;
-		background: var(--color-info, #5082b9);
-		transition: width var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		background: var(--color-performance-info, #5082b9);
+		transition: width var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.file-error {
-		font-size: var(--text-caption, 0.75rem);
-		color: var(--color-error, #d44d4d);
+		font-size: var(--text-performance-caption, 0.75rem);
+		color: var(--color-performance-error, #d44d4d);
 	}
 
 	.file-remove {
@@ -477,20 +477,20 @@
 		height: 28px;
 		background: transparent;
 		border: none;
-		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
 		cursor: pointer;
-		border-radius: var(--radius-sm, 6px);
+		border-radius: var(--radius-performance-scale-sm, 6px);
 		flex-shrink: 0;
-		transition: all var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: all var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.file-remove:hover {
-		background: var(--color-error-muted, rgba(212, 77, 77, 0.2));
-		color: var(--color-error, #d44d4d);
+		background: var(--color-performance-error-muted, rgba(212, 77, 77, 0.2));
+		color: var(--color-performance-error, #d44d4d);
 	}
 
 	.file-remove:focus-visible {
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline: 2px solid var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 		outline-offset: 2px;
 	}
 

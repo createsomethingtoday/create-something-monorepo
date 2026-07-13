@@ -121,27 +121,27 @@
 
 <style>
   .diagram {
-    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    font-family: var(--font-performance-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   }
 
   .bg {
-    fill: var(--color-bg-pure, #000000);
+    fill: var(--color-performance-bg-pure, #000000);
   }
 
   .title {
-    fill: var(--color-fg-primary, #ffffff);
-    font-size: var(--text-h2, 1.5rem);
+    fill: var(--color-performance-fg-primary, #ffffff);
+    font-size: var(--text-performance-h2, 1.5rem);
     font-weight: 600;
   }
 
   .grid-line {
-    stroke: var(--color-border-default, rgba(255, 255, 255, 0.1));
+    stroke: var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
     stroke-width: 1;
   }
 
   .axis-label {
-    fill: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
-    font-size: var(--text-caption, 0.75rem);
+    fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
+    font-size: var(--text-performance-caption, 0.75rem);
   }
 
   .bar {
@@ -153,12 +153,12 @@
   }
 
   .value-label {
-    fill: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
-    font-size: var(--text-caption, 0.75rem);
+    fill: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8));
+    font-size: var(--text-performance-caption, 0.75rem);
   }
 
   .branding {
-    fill: var(--color-fg-subtle, rgba(255, 255, 255, 0.2));
-    font-size: var(--text-caption, 0.75rem);
+    fill: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.2));
+    font-size: var(--text-performance-caption, 0.75rem);
   }
 </style>

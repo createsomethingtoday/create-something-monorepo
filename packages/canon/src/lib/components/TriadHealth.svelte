@@ -71,11 +71,11 @@
 	function getStatusColor(status: 'pass' | 'warn' | 'fail'): string {
 		switch (status) {
 			case 'pass':
-				return 'var(--color-success, #22c55e)';
+				return 'var(--color-performance-success, #22c55e)';
 			case 'warn':
-				return 'var(--color-warning, #eab308)';
+				return 'var(--color-performance-warning, #eab308)';
 			case 'fail':
-				return 'var(--color-error, #ef4444)';
+				return 'var(--color-performance-error, #ef4444)';
 		}
 	}
 
@@ -226,8 +226,8 @@
 
 <style>
 	.triad-health {
-		font-family: var(--font-mono);
-		border-radius: var(--radius-md);
+		font-family: var(--font-performance-mono);
+		border-radius: var(--radius-performance-scale-md);
 		padding: 1.5rem;
 	}
 
@@ -246,7 +246,7 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 2rem;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.loading-text {
@@ -286,19 +286,19 @@
 
 	.score-label {
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-size: 0.875rem;
 	}
 
 	.score-sublabel {
 		font-size: 0.75rem;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.score-bar {
 		font-size: 0.75rem;
 		letter-spacing: -0.05em;
-		color: var(--status-color, var(--color-fg-muted));
+		color: var(--status-color, var(--color-performance-fg-muted));
 	}
 
 	.score-value {
@@ -312,7 +312,7 @@
 		font-weight: bold;
 		text-align: center;
 		font-size: 0.875rem;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.violations-summary {
@@ -325,67 +325,67 @@
 	}
 
 	.violations-label {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.no-violations {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.violation {
 		padding: 0.125rem 0.5rem;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		font-size: 0.75rem;
 	}
 
 	.violation.critical {
-		background: color-mix(in srgb, var(--color-error) 20%, transparent);
-		color: var(--color-error);
+		background: color-mix(in srgb, var(--color-performance-error) 20%, transparent);
+		color: var(--color-performance-error);
 	}
 
 	.violation.high {
-		background: color-mix(in srgb, var(--color-warning) 20%, transparent);
-		color: var(--color-warning);
+		background: color-mix(in srgb, var(--color-performance-warning) 20%, transparent);
+		color: var(--color-performance-warning);
 	}
 
 	.violation.medium {
-		background: color-mix(in srgb, var(--color-warning) 15%, transparent);
-		color: var(--color-warning);
+		background: color-mix(in srgb, var(--color-performance-warning) 15%, transparent);
+		color: var(--color-performance-warning);
 	}
 
 	.violation.low {
-		background: color-mix(in srgb, var(--color-success) 20%, transparent);
-		color: var(--color-success);
+		background: color-mix(in srgb, var(--color-performance-success) 20%, transparent);
+		color: var(--color-performance-success);
 	}
 
 	.self-audit {
 		margin-top: 1rem;
 		padding: 0.75rem;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		font-size: 0.8rem;
-		background: var(--color-bg-surface);
-		border: 1px dashed var(--color-border-default);
+		background: var(--color-performance-bg-surface);
+		border: 1px dashed var(--color-performance-border-default);
 	}
 
 	.self-audit.valid {
-		border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+		border-color: color-mix(in srgb, var(--color-performance-success) 30%, transparent);
 	}
 
 	.self-audit-label {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		margin-right: 0.5rem;
 	}
 
 	.self-audit-status.valid {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.self-audit-status.acceptable {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	.self-audit-status.warning {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	.metadata {
@@ -393,11 +393,11 @@
 		display: flex;
 		gap: 1rem;
 		font-size: 0.7rem;
-		color: var(--color-fg-subtle);
+		color: var(--color-performance-fg-subtle);
 	}
 
 	.commit {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 	}
 
 	@keyframes pulse {

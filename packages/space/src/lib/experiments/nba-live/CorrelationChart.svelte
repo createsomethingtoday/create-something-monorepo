@@ -138,7 +138,7 @@
 				y1={padding.top}
 				x2={padding.left}
 				y2={height - padding.bottom}
-				stroke="var(--color-border-emphasis)"
+				stroke="var(--color-performance-border-emphasis)"
 				stroke-width="1"
 			/>
 			<line
@@ -146,7 +146,7 @@
 				y1={height - padding.bottom}
 				x2={width - padding.right}
 				y2={height - padding.bottom}
-				stroke="var(--color-border-emphasis)"
+				stroke="var(--color-performance-border-emphasis)"
 				stroke-width="1"
 			/>
 
@@ -157,7 +157,7 @@
 					y1={height - padding.bottom}
 					x2={padding.left + scaleX(tick)}
 					y2={height - padding.bottom + 5}
-					stroke="var(--color-fg-muted)"
+					stroke="var(--color-performance-fg-muted)"
 					stroke-width="1"
 				/>
 				<text
@@ -177,7 +177,7 @@
 					y1={padding.top + scaleY(tick)}
 					x2={padding.left}
 					y2={padding.top + scaleY(tick)}
-					stroke="var(--color-fg-muted)"
+					stroke="var(--color-performance-fg-muted)"
 					stroke-width="1"
 				/>
 				<text
@@ -215,7 +215,7 @@
 				y1={padding.top + trendLine().y1}
 				x2={padding.left + trendLine().x2}
 				y2={padding.top + trendLine().y2}
-				stroke="var(--color-data-1)"
+				stroke="var(--color-performance-data-1)"
 				stroke-width="2"
 				stroke-dasharray="5,5"
 				opacity="0.6"
@@ -229,8 +229,8 @@
 						cx={padding.left + scaleX(point.assists)}
 						cy={padding.top + scaleY(point.totalPoints)}
 						r="6"
-						fill="var(--color-data-2)"
-						stroke="var(--color-bg-pure)"
+						fill="var(--color-performance-data-2)"
+						stroke="var(--color-performance-bg-pure)"
 						stroke-width="2"
 						opacity="0.8"
 					/>
@@ -272,23 +272,23 @@
 
 <style>
 	.correlation-chart {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.chart-title {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.empty-message {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 		text-align: center;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.chart-svg {
@@ -298,20 +298,20 @@
 
 	.axis-label {
 		font-size: 11px;
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 		font-family: inherit;
 	}
 
 	.axis-title {
 		font-size: 12px;
-		fill: var(--color-fg-secondary);
+		fill: var(--color-performance-fg-secondary);
 		font-weight: 500;
 		font-family: inherit;
 	}
 
 	.point-label {
 		font-size: 10px;
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 		font-weight: 600;
 		font-family: inherit;
 		pointer-events: none;
@@ -319,29 +319,29 @@
 
 	.correlation-label {
 		font-size: 13px;
-		fill: var(--color-data-1);
+		fill: var(--color-performance-data-1);
 		font-weight: 600;
 		font-family: inherit;
 	}
 
 	.chart-insight {
-		margin-top: var(--space-md);
-		padding-top: var(--space-sm);
+		margin-top: var(--space-performance-md);
+		padding-top: var(--space-performance-sm);
 	}
 
 	.chart-insight p {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.5;
 	}
 
 	.chart-insight strong {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.data-point {
 		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.data-point:hover {

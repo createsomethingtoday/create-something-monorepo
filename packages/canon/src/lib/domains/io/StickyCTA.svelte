@@ -97,38 +97,38 @@
 
 <style>
 	.sticky-reset {
-		background: var(--color-hover);
-		color: var(--color-fg-tertiary);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-hover);
+		color: var(--color-performance-fg-tertiary);
+		border-radius: var(--radius-performance-scale-full);
 		backdrop-filter: blur(12px);
-		transition: all var(--duration-standard);
+		transition: all var(--duration-performance-standard);
 	}
 
 	.sticky-reset:hover {
-		color: var(--color-fg-primary);
-		background: var(--color-active);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-active);
 	}
 
 	.sticky-launch {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		border-radius: var(--radius-full);
-		box-shadow: var(--shadow-lg);
-		transition: all var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-full);
+		box-shadow: var(--shadow-performance-scale-lg);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.sticky-launch.default {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.sticky-launch.default:hover {
-		background: var(--color-fg-secondary);
+		background: var(--color-performance-fg-secondary);
 	}
 
 	.sticky-launch.completed {
-		background: var(--color-success);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-success);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.sticky-launch.completed:hover {

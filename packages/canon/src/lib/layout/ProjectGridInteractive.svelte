@@ -66,15 +66,15 @@
 
 <style>
 	.project-grid-interactive {
-		padding: var(--space-2xl) 0;
-		background: var(--color-bg-pure);
+		padding: var(--space-performance-2xl) 0;
+		background: var(--color-performance-bg-pure);
 	}
 
 		.highlight-grid {
 			display: grid;
 			grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-			gap: var(--space-xs);
-			padding: 0 var(--space-md);
+			gap: var(--space-performance-xs);
+			padding: 0 var(--space-performance-md);
 			max-width: 1400px;
 			margin: 0 auto;
 		}
@@ -85,8 +85,8 @@
 		overflow: hidden;
 		text-decoration: none;
 		transition:
-			opacity var(--duration-standard) var(--ease-standard),
-			transform var(--duration-standard) var(--ease-standard);
+			opacity var(--duration-performance-standard) var(--ease-performance-standard),
+			transform var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	/* CalArts pattern: grid highlights hovered item, dims siblings */
@@ -96,7 +96,7 @@
 
 	.project-card {
 		position: relative;
-		transition: opacity var(--duration-standard) var(--ease-standard);
+		transition: opacity var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 		.project-image-container {
@@ -110,11 +110,11 @@
 			width: 100%;
 			height: 100%;
 			object-fit: cover;
-			transition: transform var(--duration-standard) var(--ease-standard);
+			transition: transform var(--duration-performance-standard) var(--ease-performance-standard);
 		}
 
 		.project-card:hover .project-image {
-			transform: scale(var(--scale-micro));
+			transform: scale(var(--scale-performance-micro));
 		}
 
 	/* Meta overlay */
@@ -123,16 +123,16 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		padding: var(--space-md);
+		padding: var(--space-performance-md);
 		background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		opacity: 0;
 		transform: translateY(10px);
 		transition:
-			opacity var(--duration-standard) var(--ease-standard),
-			transform var(--duration-standard) var(--ease-standard);
+			opacity var(--duration-performance-standard) var(--ease-performance-standard),
+			transform var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 		.project-card:hover .project-meta {
@@ -141,15 +141,15 @@
 		}
 
 	.project-title {
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body);
+		font-weight: var(--font-performance-medium);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.project-location {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
-		letter-spacing: var(--tracking-wide);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-secondary);
+		letter-spacing: var(--tracking-performance-wide);
 		text-transform: uppercase;
 	}
 

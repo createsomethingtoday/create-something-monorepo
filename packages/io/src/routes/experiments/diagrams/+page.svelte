@@ -250,44 +250,44 @@
   .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: var(--space-lg, 2.618rem);
+    padding: var(--space-performance-lg, 2.618rem);
   }
 
   header {
-    margin-bottom: var(--space-xl, 4.236rem);
+    margin-bottom: var(--space-performance-xl, 4.236rem);
   }
 
   h1 {
-    font-size: var(--text-h1, 2.5rem);
-    color: var(--color-fg-primary, #ffffff);
-    margin-bottom: var(--space-sm, 1rem);
+    font-size: var(--text-performance-h1, 2.5rem);
+    color: var(--color-performance-fg-primary, #ffffff);
+    margin-bottom: var(--space-performance-sm, 1rem);
   }
 
   h2 {
-    font-size: var(--text-h3, 1.5rem);
-    color: var(--color-fg-primary, #ffffff);
-    margin-bottom: var(--space-md, 1.618rem);
+    font-size: var(--text-performance-h3, 1.5rem);
+    color: var(--color-performance-fg-primary, #ffffff);
+    margin-bottom: var(--space-performance-md, 1.618rem);
   }
 
   .subtitle {
-    font-size: var(--text-body, 1rem);
-    color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+    font-size: var(--text-performance-body, 1rem);
+    color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
   }
 
   .description {
-    font-size: var(--text-body-sm, 0.875rem);
-    color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
-    margin-bottom: var(--space-md, 1.618rem);
+    font-size: var(--text-performance-body-sm, 0.875rem);
+    color: var(--color-performance-fg-tertiary, rgba(255, 255, 255, 0.6));
+    margin-bottom: var(--space-performance-md, 1.618rem);
   }
 
   .diagram-section {
-    margin-bottom: var(--space-xl, 4.236rem);
+    margin-bottom: var(--space-performance-xl, 4.236rem);
   }
 
   .diagram-wrapper {
     display: inline-block;
-    border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-    border-radius: var(--radius-lg, 12px);
+    border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+    border-radius: var(--radius-performance-scale-lg, 12px);
     overflow: hidden;
   }
 
@@ -300,14 +300,14 @@
   .diagram-row {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-md, 1.618rem);
+    gap: var(--space-performance-md, 1.618rem);
   }
 
   .label {
     display: block;
     text-align: center;
-    padding: var(--space-xs, 0.5rem);
-    font-size: var(--text-caption, 0.75rem);
-    color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+    padding: var(--space-performance-xs, 0.5rem);
+    font-size: var(--text-performance-caption, 0.75rem);
+    color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
   }
 </style>

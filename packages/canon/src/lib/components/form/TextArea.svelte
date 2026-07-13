@@ -140,18 +140,18 @@
 	.textarea {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	/* Label */
 	.textarea-label {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		font-weight: var(--font-performance-medium);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.required-indicator {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 		margin-left: 2px;
 	}
 
@@ -159,70 +159,70 @@
 	.textarea-input {
 		box-sizing: border-box;
 		width: 100%;
-		padding: var(--space-sm) var(--space-md);
-		border-radius: var(--radius-md);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body);
 		font-family: inherit;
-		line-height: var(--leading-relaxed);
-		transition: border-color var(--duration-micro) var(--ease-standard),
-			box-shadow var(--duration-micro) var(--ease-standard);
+		line-height: var(--leading-performance-relaxed);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard),
+			box-shadow var(--duration-performance-micro) var(--ease-performance-standard);
 		min-height: 100px;
 	}
 
 	.textarea-input::placeholder {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.textarea-input:hover:not(:disabled):not(:focus) {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.textarea-input:focus {
 		outline: none;
-		border-color: var(--color-border-emphasis);
-		box-shadow: 0 0 0 3px var(--color-focus);
+		border-color: var(--color-performance-border-emphasis);
+		box-shadow: 0 0 0 3px var(--color-performance-focus);
 	}
 
 	.textarea-input:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.textarea-input:read-only {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		cursor: default;
 	}
 
 	/* Error state */
 	.has-error .textarea-input {
-		border-color: var(--color-error);
+		border-color: var(--color-performance-error);
 	}
 
 	.has-error .textarea-input:focus {
-		box-shadow: 0 0 0 3px var(--color-error-muted);
+		box-shadow: 0 0 0 3px var(--color-performance-error-muted);
 	}
 
 	/* Size variants */
 	.textarea-sm .textarea-input {
-		padding: var(--space-xs) var(--space-sm);
-		font-size: var(--text-body-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		font-size: var(--text-performance-body-sm);
 		min-height: 80px;
 	}
 
 	.textarea-sm .textarea-label {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.textarea-lg .textarea-input {
-		padding: var(--space-md) var(--space-lg);
-		font-size: var(--text-body-lg);
+		padding: var(--space-performance-md) var(--space-performance-lg);
+		font-size: var(--text-performance-body-lg);
 		min-height: 120px;
 	}
 
 	.textarea-lg .textarea-label {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 	}
 
 	/* Footer with description/error and char count */
@@ -230,34 +230,34 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	/* Description */
 	.textarea-description {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		margin: 0;
 		flex: 1;
 	}
 
 	/* Error message */
 	.textarea-error {
-		font-size: var(--text-caption);
-		color: var(--color-error);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-error);
 		margin: 0;
 		flex: 1;
 	}
 
 	/* Character count */
 	.textarea-charcount {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		font-family: var(--font-mono);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
+		font-family: var(--font-performance-mono);
 		flex-shrink: 0;
 	}
 
 	.textarea-charcount.near-limit {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 </style>

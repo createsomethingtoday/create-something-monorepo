@@ -10,7 +10,7 @@
  * Import via:
  *   @import '@create-something/canon/styles/spacing.css';
  *
- * The golden ratio scale (--space-xs through --space-3xl) remains the
+ * The golden ratio scale (--space-performance-xs through --space-performance-3xl) remains the
  * canonical source. This file adds complementary tokens for cases where
  * the golden ratio progression is too coarse.
  */

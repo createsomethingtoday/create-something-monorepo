@@ -2,7 +2,7 @@
 	import CopyButton from './CopyButton.svelte';
 
 	interface Props {
-		/** CSS variable name (e.g., '--color-bg-pure') */
+		/** CSS variable name (e.g., '--color-performance-bg-pure') */
 		token: string;
 		/** Resolved value (e.g., '#000000') */
 		value: string;
@@ -77,15 +77,15 @@
 <style>
 	.token-swatch {
 		display: flex;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.token-swatch:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	/* Swatch preview box */
@@ -94,7 +94,7 @@
 		height: 64px;
 		flex-shrink: 0;
 		background: var(--swatch-color);
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-performance-scale-md);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -112,21 +112,21 @@
 
 	/* Foreground swatches show text on dark background */
 	.swatch-foreground {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.swatch-text {
-		font-size: var(--text-h2);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-performance-h2);
+		font-weight: var(--font-performance-semibold);
 	}
 
 	/* Transparent swatches get a checkerboard */
 	.swatch-transparent {
 		background-image:
-			linear-gradient(45deg, var(--color-bg-subtle) 25%, transparent 25%),
-			linear-gradient(-45deg, var(--color-bg-subtle) 25%, transparent 25%),
-			linear-gradient(45deg, transparent 75%, var(--color-bg-subtle) 75%),
-			linear-gradient(-45deg, transparent 75%, var(--color-bg-subtle) 75%);
+			linear-gradient(45deg, var(--color-performance-bg-subtle) 25%, transparent 25%),
+			linear-gradient(-45deg, var(--color-performance-bg-subtle) 25%, transparent 25%),
+			linear-gradient(45deg, transparent 75%, var(--color-performance-bg-subtle) 75%),
+			linear-gradient(-45deg, transparent 75%, var(--color-performance-bg-subtle) 75%);
 		background-size: 8px 8px;
 		background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
 	}
@@ -148,14 +148,14 @@
 	.swatch-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		margin-bottom: 4px;
 	}
 
 	.swatch-token {
-		font-family: var(--font-mono);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
 		flex: 1;
 		white-space: nowrap;
 		overflow: hidden;
@@ -167,56 +167,56 @@
 	}
 
 	.swatch-value code {
-		font-family: var(--font-mono);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.swatch-description {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-secondary);
 		margin: 0 0 4px 0;
-		line-height: var(--leading-snug);
+		line-height: var(--leading-performance-snug);
 	}
 
 	/* Contrast ratio display */
 	.swatch-contrast {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		font-size: var(--text-caption);
+		gap: var(--space-performance-xs);
+		font-size: var(--text-performance-caption);
 	}
 
 	.contrast-label {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.contrast-value {
-		font-family: var(--font-mono);
-		color: var(--color-fg-secondary);
+		font-family: var(--font-performance-mono);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.contrast-badge {
 		padding: 1px 6px;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		font-size: 10px;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		text-transform: uppercase;
 		letter-spacing: 0.5px;
 	}
 
 	.contrast-pass .contrast-badge {
-		background: var(--color-success-muted);
-		color: var(--color-success);
+		background: var(--color-performance-success-muted);
+		color: var(--color-performance-success);
 	}
 
 	.contrast-aaa .contrast-badge {
-		background: var(--color-info-muted);
-		color: var(--color-info);
+		background: var(--color-performance-info-muted);
+		color: var(--color-performance-info);
 	}
 
 	.contrast-fail {
-		background: var(--color-error-muted);
-		color: var(--color-error);
+		background: var(--color-performance-error-muted);
+		color: var(--color-performance-error);
 	}
 </style>

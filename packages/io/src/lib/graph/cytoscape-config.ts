@@ -19,7 +19,7 @@ interface StylesheetEntry {
  * Colors don't demand attention; structure speaks.
  */
 export const PACKAGE_COLORS: Record<string, string> = {
-  io: 'rgba(255, 255, 255, 0.8)', // --color-fg-secondary
+  io: 'rgba(255, 255, 255, 0.8)', // --color-performance-fg-secondary
   space: 'rgba(255, 255, 255, 0.8)',
   agency: 'rgba(255, 255, 255, 0.8)',
   ltd: 'rgba(255, 255, 255, 0.8)',
@@ -30,7 +30,7 @@ export const PACKAGE_COLORS: Record<string, string> = {
   'templates-platform': 'rgba(255, 255, 255, 0.8)',
   verticals: 'rgba(255, 255, 255, 0.8)',
   'cloudflare-sdk': 'rgba(255, 255, 255, 0.8)',
-  root: 'rgba(255, 255, 255, 0.46)', // --color-fg-muted (no package)
+  root: 'rgba(255, 255, 255, 0.46)', // --color-performance-fg-muted (no package)
 };
 
 /**
@@ -47,11 +47,11 @@ export function createStylesheet(): StylesheetEntry[] {
         'background-color': 'data(color)',
         'background-opacity': 0.15,
         'border-width': 1,
-        'border-color': 'rgba(255, 255, 255, 0.3)', // --color-border-strong
+        'border-color': 'rgba(255, 255, 255, 0.3)', // --color-performance-border-strong
         label: 'data(label)',
         'font-size': 8,
         'font-family': '"Geist Sans", "Inter", system-ui, sans-serif',
-        color: 'rgba(255, 255, 255, 0.8)', // --color-fg-secondary
+        color: 'rgba(255, 255, 255, 0.8)', // --color-performance-fg-secondary
         'text-valign': 'center',
         'text-halign': 'center',
         'text-wrap': 'ellipsis',
@@ -67,7 +67,7 @@ export function createStylesheet(): StylesheetEntry[] {
       selector: 'node:active',
       style: {
         'border-width': 2,
-        'border-color': 'rgba(255, 255, 255, 0.5)', // --color-focus
+        'border-color': 'rgba(255, 255, 255, 0.5)', // --color-performance-focus
       },
     },
 
@@ -76,7 +76,7 @@ export function createStylesheet(): StylesheetEntry[] {
       selector: 'node:selected',
       style: {
         'border-width': 3,
-        'border-color': '#ffffff', // --color-fg-primary
+        'border-color': '#ffffff', // --color-performance-fg-primary
         'background-opacity': 1,
       },
     },
@@ -112,8 +112,8 @@ export function createStylesheet(): StylesheetEntry[] {
         label: 'data(label)',
         'font-size': 9,
         'font-family': '"Geist Mono", "SF Mono", Monaco, monospace',
-        color: 'rgba(255, 255, 255, 0.6)', // --color-fg-tertiary
-        'text-background-color': '#000000', // --color-bg-pure
+        color: 'rgba(255, 255, 255, 0.6)', // --color-performance-fg-tertiary
+        'text-background-color': '#000000', // --color-performance-bg-pure
         'text-background-opacity': 0.8,
         'text-background-padding': 3,
       },
@@ -123,7 +123,7 @@ export function createStylesheet(): StylesheetEntry[] {
     {
       selector: 'edge.explicit',
       style: {
-        'line-color': 'rgba(255, 255, 255, 0.6)', // --color-fg-tertiary
+        'line-color': 'rgba(255, 255, 255, 0.6)', // --color-performance-fg-tertiary
         'target-arrow-color': 'rgba(255, 255, 255, 0.6)',
         width: 2,
         'line-style': 'solid',
@@ -135,7 +135,7 @@ export function createStylesheet(): StylesheetEntry[] {
     {
       selector: 'edge.cross-reference',
       style: {
-        'line-color': 'rgba(255, 255, 255, 0.46)', // --color-fg-muted
+        'line-color': 'rgba(255, 255, 255, 0.46)', // --color-performance-fg-muted
         'target-arrow-color': 'rgba(255, 255, 255, 0.46)',
         width: 1.5,
         'line-style': 'solid',
@@ -147,7 +147,7 @@ export function createStylesheet(): StylesheetEntry[] {
     {
       selector: 'edge.concept',
       style: {
-        'line-color': 'rgba(255, 255, 255, 0.2)', // --color-border-emphasis
+        'line-color': 'rgba(255, 255, 255, 0.2)', // --color-performance-border-emphasis
         'target-arrow-color': 'rgba(255, 255, 255, 0.2)',
         width: 1,
         'line-style': 'dashed',
@@ -159,7 +159,7 @@ export function createStylesheet(): StylesheetEntry[] {
     {
       selector: 'edge.semantic',
       style: {
-        'line-color': 'rgba(255, 255, 255, 0.1)', // --color-border-default
+        'line-color': 'rgba(255, 255, 255, 0.1)', // --color-performance-border-default
         'target-arrow-color': 'rgba(255, 255, 255, 0.1)',
         width: 1,
         'line-style': 'dotted',
@@ -171,7 +171,7 @@ export function createStylesheet(): StylesheetEntry[] {
     {
       selector: 'edge.infrastructure',
       style: {
-        'line-color': '#fbbf24', // --color-data-4 (amber)
+        'line-color': '#fbbf24', // --color-performance-data-4 (amber)
         'target-arrow-color': '#fbbf24',
         width: 2.5,
         'line-style': 'solid',

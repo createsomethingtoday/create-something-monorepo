@@ -110,16 +110,16 @@
     gap: 0.4rem;
     padding: 0.48rem 0.55rem;
     border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-performance-scale-full);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);
-    z-index: var(--z-fixed);
+    z-index: var(--z-performance-fixed);
     opacity: 0.92;
     box-shadow: var(--shadow-performance-panel, none);
     transition:
-      opacity var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      box-shadow var(--duration-micro) var(--ease-standard);
+      opacity var(--duration-performance-micro) var(--ease-performance-standard),
+      border-color var(--duration-performance-micro) var(--ease-performance-standard),
+      box-shadow var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .mode-indicator:hover {
@@ -136,12 +136,12 @@
     min-width: 1.3rem;
     min-height: 1.3rem;
     padding: 0.2rem;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-performance-scale-full);
     text-decoration: none;
     transition:
-      background var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      transform var(--duration-micro) var(--ease-standard);
+      background var(--duration-performance-micro) var(--ease-performance-standard),
+      border-color var(--duration-performance-micro) var(--ease-performance-standard),
+      transform var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .mode-item:hover:not(.active) {
@@ -156,12 +156,12 @@
   .mode-dot {
     width: 0.42rem;
     height: 0.42rem;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-performance-scale-full);
     background: var(--color-performance-line-strong, #9c9c96);
     transition:
-      background var(--duration-micro) var(--ease-standard),
-      transform var(--duration-micro) var(--ease-standard),
-      box-shadow var(--duration-micro) var(--ease-standard);
+      background var(--duration-performance-micro) var(--ease-performance-standard),
+      transform var(--duration-performance-micro) var(--ease-performance-standard),
+      box-shadow var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .mode-item:hover:not(.active) .mode-dot {
@@ -175,10 +175,10 @@
   }
 
   .mode-label {
-    font-family: var(--font-mono);
-    font-size: var(--text-caption);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
     color: var(--color-performance-muted, #5e6268);
-    transition: color var(--duration-micro) var(--ease-standard);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .mode-item:hover:not(.active) .mode-label {
@@ -196,7 +196,7 @@
 
   .mode-tooltip {
     position: absolute;
-    bottom: calc(100% + var(--space-xs));
+    bottom: calc(100% + var(--space-performance-xs));
     left: 50%;
     transform: translateX(-50%);
     display: grid;
@@ -206,12 +206,12 @@
     border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 4px;
     background: var(--color-performance-panel, #ffffff);
-    font-size: var(--text-caption);
+    font-size: var(--text-performance-caption);
     color: var(--color-performance-muted, #5e6268);
     white-space: nowrap;
     pointer-events: none;
     box-shadow: var(--shadow-performance-panel, none);
-    animation: fadeIn var(--duration-micro) var(--ease-standard);
+    animation: fadeIn var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .mode-tooltip strong,
@@ -222,9 +222,9 @@
 
   .mode-tooltip strong {
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
-    font-weight: var(--font-semibold, 600);
+    font-weight: var(--font-performance-semibold, 600);
   }
 
   .mode-tooltip span {

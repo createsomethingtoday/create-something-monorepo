@@ -62,9 +62,9 @@
 
 	.clear-logo-strip__eyebrow {
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.12;
 		text-transform: uppercase;
@@ -97,7 +97,7 @@
 
 	.clear-logo-strip__item strong {
 		font-size: 0.94rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.16;
 	}
 

@@ -44,7 +44,7 @@ export function setupViewTransitions(mode: Mode = 'io'): void {
 
 		// Set mode-specific duration via CSS custom property
 		document.documentElement.style.setProperty(
-			'--view-transition-duration',
+			'--duration-performance-view-transition',
 			`${MODE_DURATIONS[mode]}ms`
 		);
 

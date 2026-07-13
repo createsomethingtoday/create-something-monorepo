@@ -144,14 +144,14 @@
 		<defs>
 			<!-- Shadow gradient -->
 			<linearGradient id="shadow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-				<stop offset="0%" stop-color="var(--color-bg-pure)" stop-opacity="0.6" />
-				<stop offset="100%" stop-color="var(--color-bg-pure)" stop-opacity="0" />
+				<stop offset="0%" stop-color="var(--color-performance-bg-pure)" stop-opacity="0.6" />
+				<stop offset="100%" stop-color="var(--color-performance-bg-pure)" stop-opacity="0" />
 			</linearGradient>
 
 			<!-- Sun glow -->
 			<radialGradient id="sun-glow">
-				<stop offset="0%" stop-color="var(--color-data-4)" stop-opacity="1" />
-				<stop offset="100%" stop-color="var(--color-data-4)" stop-opacity="0" />
+				<stop offset="0%" stop-color="var(--color-performance-data-4)" stop-opacity="1" />
+				<stop offset="100%" stop-color="var(--color-performance-data-4)" stop-opacity="0" />
 			</radialGradient>
 		</defs>
 
@@ -328,8 +328,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-sm);
-		font-family: var(--font-sans, system-ui, sans-serif);
+		gap: var(--space-performance-sm);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.light-study {
@@ -340,8 +340,8 @@
 
 	/* Building footprint */
 	.building-footprint {
-		fill: var(--color-bg-surface);
-		stroke: var(--color-fg-secondary);
+		fill: var(--color-performance-bg-surface);
+		stroke: var(--color-performance-fg-secondary);
 		stroke-width: 1.5;
 	}
 
@@ -372,14 +372,14 @@
 	/* Overhangs */
 	.overhang {
 		fill: none;
-		stroke: var(--color-fg-muted);
+		stroke: var(--color-performance-fg-muted);
 		stroke-width: 1;
 		stroke-dasharray: 4 2;
 	}
 
 	/* Shadow projection */
 	.shadow-projection {
-		fill: var(--color-bg-pure);
+		fill: var(--color-performance-bg-pure);
 		opacity: 0.4;
 	}
 
@@ -389,7 +389,7 @@
 		stroke-width: 1.5;
 		stroke-dasharray: 4 2;
 		opacity: 0.3;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.sun-path.active {
@@ -401,7 +401,7 @@
 	/* Sun positions */
 	.sun-position {
 		opacity: 0.5;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.sun-position.active {
@@ -409,15 +409,15 @@
 	}
 
 	.sun-marker {
-		transition: r var(--duration-micro) var(--ease-standard);
+		transition: r var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.sun-time-label {
 		font-size: 9px;
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 		text-anchor: middle;
 		opacity: 0;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.sun-position.active .sun-time-label {
@@ -427,7 +427,7 @@
 	/* Compass */
 	.compass-label {
 		font-size: 10px;
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 		text-anchor: middle;
 		dominant-baseline: middle;
 	}
@@ -435,21 +435,21 @@
 	/* Labels */
 	.label {
 		font-size: 10px;
-		fill: var(--color-fg-tertiary);
+		fill: var(--color-performance-fg-tertiary);
 		text-anchor: middle;
 		dominant-baseline: middle;
 	}
 
 	.label.small {
 		font-size: 8px;
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 	}
 
 	/* Title */
 	.title {
 		font-size: 11px;
 		font-weight: 500;
-		fill: var(--color-fg-secondary);
+		fill: var(--color-performance-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 	}
@@ -457,7 +457,7 @@
 	/* Controls */
 	.controls {
 		display: flex;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 		flex-wrap: wrap;
 		justify-content: center;
 	}
@@ -465,12 +465,12 @@
 	.control-group {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.control-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -481,38 +481,38 @@
 	}
 
 	.control-btn {
-		background: var(--color-bg-surface);
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-caption);
+		background: var(--color-performance-bg-surface);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-caption);
 		padding: 0.25rem 0.5rem;
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.control-btn:first-child {
-		border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm) 0 0 var(--radius-performance-scale-sm);
 	}
 
 	.control-btn:last-child {
-		border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+		border-radius: 0 var(--radius-performance-scale-sm) var(--radius-performance-scale-sm) 0;
 	}
 
 	.control-btn:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	/* Focus styles handled by .a11y-focus-tight utility class */
 
 	.control-btn.active {
-		background: var(--accent, var(--color-fg-subtle));
-		color: var(--color-bg-pure);
-		border-color: var(--accent, var(--color-fg-subtle));
+		background: var(--accent, var(--color-performance-fg-subtle));
+		color: var(--color-performance-bg-pure);
+		border-color: var(--accent, var(--color-performance-fg-subtle));
 	}
 
 	/* Caption */
 	.caption {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-align: center;
 		margin: 0;
 	}

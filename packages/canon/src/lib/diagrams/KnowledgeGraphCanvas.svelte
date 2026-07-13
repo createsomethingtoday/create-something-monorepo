@@ -95,16 +95,16 @@
 			styles.getPropertyValue(prop).trim() || fallback;
 		
 		resolvedColors = {
-			bgPure: get('--color-bg-pure', '#0a0a0a'),
-			fgPrimary: get('--color-fg-primary', '#ffffff'),
-			fgMuted: get('--color-fg-muted', '#6b7280'),
-			data1: get('--color-data-1', '#6366f1'),
-			data2: get('--color-data-2', '#22c55e'),
-			data3: get('--color-data-3', '#f59e0b'),
-			data4: get('--color-data-4', '#ef4444'),
-			borderEmphasis: get('--color-border-emphasis', '#4f46e5'),
-			borderStrong: get('--color-border-strong', '#9ca3af'),
-			borderDefault: get('--color-border-default', '#404040')
+			bgPure: get('--color-performance-bg-pure', '#0a0a0a'),
+			fgPrimary: get('--color-performance-fg-primary', '#ffffff'),
+			fgMuted: get('--color-performance-fg-muted', '#6b7280'),
+			data1: get('--color-performance-data-1', '#6366f1'),
+			data2: get('--color-performance-data-2', '#22c55e'),
+			data3: get('--color-performance-data-3', '#f59e0b'),
+			data4: get('--color-performance-data-4', '#ef4444'),
+			borderEmphasis: get('--color-performance-border-emphasis', '#4f46e5'),
+			borderStrong: get('--color-performance-border-strong', '#9ca3af'),
+			borderDefault: get('--color-performance-border-default', '#404040')
 		};
 	}
 
@@ -598,8 +598,8 @@
 <style>
 	.knowledge-graph-container {
 		position: relative;
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 		overflow: hidden;
 	}
 
@@ -618,51 +618,51 @@
 
 	.controls {
 		position: absolute;
-		top: var(--space-sm);
-		right: var(--space-sm);
+		top: var(--space-performance-sm);
+		right: var(--space-performance-sm);
 		display: flex;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		align-items: center;
 	}
 
 	.controls button {
-		padding: var(--space-xs);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-secondary);
+		padding: var(--space-performance-xs);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-secondary);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.controls button:hover {
-		background: var(--color-hover);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-hover);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.node-count {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		padding: 0 var(--space-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
+		padding: 0 var(--space-performance-xs);
 	}
 
 	.tooltip {
 		position: absolute;
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
 		pointer-events: none;
 		z-index: 10;
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.type-badge {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		padding: 2px 6px;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-muted);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-muted);
 	}
 </style>

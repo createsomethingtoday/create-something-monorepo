@@ -78,34 +78,34 @@
 	}
 
 	.header {
-		margin-bottom: var(--space-lg);
+		margin-bottom: var(--space-performance-lg);
 	}
 
 	.eyebrow {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		margin-bottom: var(--space-xs);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.title {
-		font-size: var(--text-display);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-display);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-tertiary);
 		max-width: 44rem;
 	}
 
 	.grid {
 		display: grid;
 		grid-template-columns: repeat(1, minmax(0, 1fr));
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	@media (min-width: 768px) {
@@ -116,30 +116,30 @@
 
 	.card {
 		display: block;
-		padding: var(--space-lg);
-		border: 1px solid var(--glass-border-light);
-		background: var(--glass-bg-light);
-		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-		border-radius: var(--radius-lg);
+		padding: var(--space-performance-lg);
+		border: 1px solid var(--glass-performance-border-light);
+		background: var(--glass-performance-bg-light);
+		backdrop-filter: blur(var(--glass-performance-blur-md)) var(--glass-performance-saturate-md);
+		border-radius: var(--radius-performance-scale-lg);
 		text-decoration: none;
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.card:hover {
-		border-color: var(--glass-border-medium);
-		background: var(--glass-bg-medium);
+		border-color: var(--glass-performance-border-medium);
+		background: var(--glass-performance-bg-medium);
 		transform: translateY(-2px);
 	}
 
 	.card-title {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.card-description {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		line-height: var(--leading-relaxed);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
+		line-height: var(--leading-performance-relaxed);
 	}
 </style>

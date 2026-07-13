@@ -23,7 +23,7 @@
 		font-size: 0.7rem;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.summary-value {
@@ -39,7 +39,7 @@
 		margin-top: 0.35rem;
 		font-size: 0.82rem;
 		line-height: 1.5;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	@media (max-width: 900px) {

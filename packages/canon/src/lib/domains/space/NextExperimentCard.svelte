@@ -55,51 +55,51 @@
 
 <style>
 	.next-card {
-		background: linear-gradient(to bottom right, var(--color-active), var(--color-hover));
-		border-radius: var(--radius-xl);
+		background: linear-gradient(to bottom right, var(--color-performance-active), var(--color-performance-hover));
+		border-radius: var(--radius-performance-scale-xl);
 	}
 
 	.glow-effect {
-		background: var(--color-data-3-muted);
+		background: var(--color-performance-data-3-muted);
 		filter: blur(3rem);
 	}
 
 	.badge {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-full);
-		font-size: var(--text-caption);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-full);
+		font-size: var(--text-performance-caption);
 		font-weight: 500;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.card-title {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: bold;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.card-subtitle {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.highlight {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-weight: 500;
 	}
 
 	.cta-btn {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 		font-weight: bold;
-		border-radius: var(--radius-full);
-		box-shadow: var(--shadow-lg);
-		transition: all var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-full);
+		box-shadow: var(--shadow-performance-scale-lg);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.cta-btn:hover {
-		background: var(--color-fg-secondary);
-		transform: scale(var(--scale-small));
-		box-shadow: var(--shadow-xl);
+		background: var(--color-performance-fg-secondary);
+		transform: scale(var(--scale-performance-small));
+		box-shadow: var(--shadow-performance-scale-xl);
 	}
 
 	.animate-reveal {

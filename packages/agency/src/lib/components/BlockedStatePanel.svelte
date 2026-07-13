@@ -82,19 +82,19 @@
     font-size: 0.72rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-fg-muted, rgba(255, 255, 255, 0.6));
+    color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.6));
   }
 
   .blocked-copy h2 {
     margin: 0;
-    color: var(--color-fg-primary, #fff);
+    color: var(--color-performance-fg-primary, #fff);
     font-size: clamp(1.55rem, 2.6vw, 2.35rem);
     line-height: 1.06;
   }
 
   .blocked-copy p {
     margin: 0;
-    color: var(--color-fg-secondary, rgba(255, 255, 255, 0.76));
+    color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.76));
     line-height: 1.7;
   }
 
@@ -116,7 +116,7 @@
 
   .blocked-card h3 {
     margin: 0 0 0.65rem;
-    color: var(--color-fg-primary, #fff);
+    color: var(--color-performance-fg-primary, #fff);
     font-size: 1rem;
     line-height: 1.25;
   }
@@ -125,7 +125,7 @@
   .blocked-card span {
     display: block;
     margin: 0;
-    color: var(--color-fg-secondary, rgba(255, 255, 255, 0.76));
+    color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.76));
     line-height: 1.6;
     font-size: 0.92rem;
   }

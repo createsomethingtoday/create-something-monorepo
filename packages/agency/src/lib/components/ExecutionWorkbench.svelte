@@ -423,7 +423,7 @@
   .console-label,
   .session-id {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.68rem;
     line-height: 1.2;
     text-transform: uppercase;
@@ -432,7 +432,7 @@
   .workbench__bar-copy strong {
     color: var(--color-performance-ink, #090909);
     font-size: 1rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.1;
   }
 
@@ -445,7 +445,7 @@
     border: 1px solid transparent;
     border-radius: 4px;
     color: #ffffff;
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
     line-height: 1;
     text-transform: uppercase;
@@ -502,7 +502,7 @@
   .workflow-image__copy h4 {
     margin: 0;
     color: var(--color-performance-ink, #090909);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.1;
   }
 
@@ -536,8 +536,8 @@
     background: var(--color-performance-panel, #ffffff);
     text-align: left;
     transition:
-      border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard);
+      border-color var(--duration-performance-micro) var(--ease-performance-standard),
+      background var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .scenario-tab:hover,
@@ -561,13 +561,13 @@
   .scenario-tab__label {
     color: var(--color-performance-ink, #090909);
     font-size: 0.9rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.2;
   }
 
   .scenario-tab__summary {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.65rem;
     line-height: 1.35;
     text-transform: uppercase;
@@ -669,7 +669,7 @@
     border-radius: 4px;
     background: var(--color-performance-paper, #f3f3f0);
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.66rem;
     line-height: 1.15;
   }
@@ -696,7 +696,7 @@
     overflow: hidden;
     color: var(--color-performance-ink, #090909);
     font-size: 0.78rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -770,9 +770,9 @@
 
   .sandbox-cell strong {
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.68rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
   }
 
   .sandbox-cell span:last-child {

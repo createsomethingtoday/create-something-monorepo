@@ -123,13 +123,13 @@
 	.dialog-backdrop {
 		position: fixed;
 		inset: 0;
-		z-index: var(--z-modal, 50);
+		z-index: var(--z-performance-modal, 50);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-md);
-		background: var(--color-overlay);
-		animation: backdropIn var(--duration-standard) var(--ease-standard);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-overlay);
+		animation: backdropIn var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	@keyframes backdropIn {
@@ -145,14 +145,14 @@
 		position: relative;
 		display: flex;
 		flex-direction: column;
-		max-height: calc(100vh - var(--space-lg) * 2);
+		max-height: calc(100vh - var(--space-performance-lg) * 2);
 		/* Glass Design System - "The Automation Layer" */
-		background-color: var(--glass-bg-medium);
-		backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-		border: 1px solid var(--glass-border-medium);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--glass-shadow-lg);
-		animation: dialogIn var(--duration-standard) var(--ease-standard);
+		background-color: var(--glass-performance-bg-medium);
+		backdrop-filter: blur(var(--glass-performance-blur-xl)) var(--glass-performance-saturate-xl);
+		border: 1px solid var(--glass-performance-border-medium);
+		border-radius: var(--radius-performance-scale-lg);
+		box-shadow: var(--glass-performance-shadow-lg);
+		animation: dialogIn var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	@keyframes dialogIn {
@@ -184,8 +184,8 @@
 
 	.dialog-full {
 		width: 100%;
-		max-width: calc(100vw - var(--space-lg) * 2);
-		max-height: calc(100vh - var(--space-lg) * 2);
+		max-width: calc(100vw - var(--space-performance-lg) * 2);
+		max-height: calc(100vh - var(--space-performance-lg) * 2);
 	}
 
 	/* Header */
@@ -193,14 +193,14 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: var(--space-sm);
-		padding: var(--space-md) var(--space-lg);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-md) var(--space-performance-lg);
 	}
 
 	.dialog-title {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
 		margin: 0;
 	}
 
@@ -212,19 +212,19 @@
 		padding: 6px;
 		background: none;
 		border: none;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		cursor: pointer;
-		border-radius: var(--radius-md);
-		transition: all var(--duration-micro) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-md);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.dialog-close:hover {
-		color: var(--color-fg-primary);
-		background: var(--color-hover);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-hover);
 	}
 
 	.dialog-close:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
@@ -235,21 +235,21 @@
 
 	.dialog-close-absolute {
 		position: absolute;
-		top: var(--space-sm);
-		right: var(--space-sm);
+		top: var(--space-performance-sm);
+		right: var(--space-performance-sm);
 	}
 
 	/* Body */
 	.dialog-body {
 		flex: 1;
 		overflow-y: auto;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.dialog-description {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		margin: 0 0 var(--space-md) 0;
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
+		margin: 0 0 var(--space-performance-md) 0;
 		line-height: 1.6;
 	}
 
@@ -258,8 +258,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: flex-end;
-		gap: var(--space-sm);
-		padding: var(--space-md) var(--space-lg);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-md) var(--space-performance-lg);
 	}
 
 	/* Reduced motion */

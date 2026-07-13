@@ -713,48 +713,48 @@ Co-Authored-By: Claude Sonnet 4.5 &lt;noreply@anthropic.com&gt;</pre>
 
 	/* Container */
 	.paper-container {
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Header */
 
 	.paper-id {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.paper-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 	}
 
 	.paper-subtitle {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-lg);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.paper-meta {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Abstract */
 	.abstract-section {
-		border-left: 4px solid var(--color-border-emphasis);
+		border-left: 4px solid var(--color-performance-border-emphasis);
 	}
 
 	/* Typography */
 	.section-heading {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 	}
 
 	.subsection-heading {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.body-text {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.stat-large {
@@ -762,135 +762,135 @@ Co-Authored-By: Claude Sonnet 4.5 &lt;noreply@anthropic.com&gt;</pre>
 	}
 
 	.stat-medium {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 	}
 
 	/* Code */
 	.code-inline {
-		background: var(--color-bg-surface);
+		background: var(--color-performance-bg-surface);
 		padding: 0.125rem 0.25rem;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		font-family: monospace;
 		font-size: 0.875em;
 	}
 
 	/* Quote Box */
 	.quote-box {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.quote-text {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-lg);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	/* Code Blocks */
 	.code-block {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		font-size: var(--text-body-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.code-secondary {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Comparison Cards */
 	.comparison-success {
-		background: var(--color-success-muted);
-		border: 1px solid var(--color-success-border);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-success-muted);
+		border: 1px solid var(--color-performance-success-border);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.comparison-warning {
-		background: var(--color-warning-muted);
-		border: 1px solid var(--color-warning-border);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-warning-muted);
+		border: 1px solid var(--color-performance-warning-border);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.comparison-error {
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-error-muted);
+		border: 1px solid var(--color-performance-error-border);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.comparison-heading {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.comparison-success-heading {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.comparison-warning-heading {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	.comparison-error-heading {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.comparison-list {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Info Cards */
 	.info-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.card-heading {
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.card-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Callout */
 	.callout-info {
-		background: var(--color-info-muted);
-		border: 1px solid var(--color-info-border);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-info-muted);
+		border: 1px solid var(--color-performance-info-border);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.callout-heading {
-		font-size: var(--text-h3);
-		color: var(--color-info);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-info);
 	}
 
 	/* References */
 	.references-list {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 	.footer-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.footer-link {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.footer-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Links */
 	.text-link {
 		text-decoration: underline;
-		color: var(--color-fg-secondary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		color: var(--color-performance-fg-secondary);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.text-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 </style>

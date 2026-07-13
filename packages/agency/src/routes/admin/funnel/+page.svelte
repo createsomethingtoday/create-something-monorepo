@@ -10,11 +10,11 @@
 
 	// Stage colors
 	const stageColors: Record<string, string> = {
-		awareness: 'var(--color-info)',
-		consideration: 'var(--color-warning)',
-		decision: 'var(--color-data-3)',
-		won: 'var(--color-success)',
-		lost: 'var(--color-error)'
+		awareness: 'var(--color-performance-info)',
+		consideration: 'var(--color-performance-warning)',
+		decision: 'var(--color-performance-data-3)',
+		won: 'var(--color-performance-success)',
+		lost: 'var(--color-performance-error)'
 	};
 </script>
 
@@ -191,66 +191,66 @@
 	.dashboard {
 		max-width: var(--content-width-xl);
 		margin: 0 auto;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.header {
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.header h1 {
-		font-size: var(--text-h1);
-		margin: 0 0 var(--space-xs) 0;
+		font-size: var(--text-performance-h1);
+		margin: 0 0 var(--space-performance-xs) 0;
 	}
 
 	.period {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.section {
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.section-title {
-		font-size: var(--text-h3);
-		color: var(--color-fg-secondary);
-		margin: 0 0 var(--space-md) 0;
-		padding-bottom: var(--space-xs);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-secondary);
+		margin: 0 0 var(--space-performance-md) 0;
+		padding-bottom: var(--space-performance-xs);
 	}
 
 	.metrics-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.metric-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.metric-value {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
 	}
 
 	.metric-delta {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.metric-delta.positive {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.pipeline {
 		display: flex;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 		align-items: flex-end;
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.pipeline-stage {
@@ -258,14 +258,14 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.stage-bar {
 		width: 100%;
 		min-height: 60px;
-		background: var(--stage-color, var(--color-bg-subtle));
-		border-radius: var(--radius-sm);
+		background: var(--stage-color, var(--color-performance-bg-subtle));
+		border-radius: var(--radius-performance-scale-sm);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -273,22 +273,22 @@
 	}
 
 	.stage-count {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.stage-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: capitalize;
 	}
 
 	.pipeline-value {
 		display: flex;
 		justify-content: space-between;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.leads-table {
@@ -302,52 +302,52 @@
 
 	th,
 	td {
-		padding: var(--space-sm);
+		padding: var(--space-performance-sm);
 		text-align: left;
 	}
 
 	th {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	td {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.stage-badge {
 		display: inline-block;
 		padding: 2px 8px;
-		background: var(--stage-color, var(--color-bg-subtle));
-		border-radius: var(--radius-sm);
-		font-size: var(--text-caption);
+		background: var(--stage-color, var(--color-performance-bg-subtle));
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-caption);
 		text-transform: capitalize;
 		opacity: 0.8;
 	}
 
 	.empty-state {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-style: italic;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 		text-align: center;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.action-button {
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		color: var(--color-fg-primary);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-primary);
 		text-decoration: none;
-		font-size: var(--text-body-sm);
-		transition: all var(--duration-micro) var(--ease-standard);
+		font-size: var(--text-performance-body-sm);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.action-button:hover {
-		background: var(--color-hover);
-		border-color: var(--color-border-emphasis);
+		background: var(--color-performance-hover);
+		border-color: var(--color-performance-border-emphasis);
 	}
 </style>

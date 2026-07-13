@@ -94,7 +94,7 @@
 <style>
 	.fade-in {
 		opacity: 0;
-		transition: opacity var(--duration, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: opacity var(--duration, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.fade-in.visible {

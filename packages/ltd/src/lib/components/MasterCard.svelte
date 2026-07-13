@@ -26,24 +26,24 @@
 
 <style>
 	.card {
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
 		height: 100%;
 	}
 
 	.card:hover {
-		border-color: var(--color-fg-primary);
+		border-color: var(--color-performance-fg-primary);
 	}
 
 	.discipline {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.title {
-		font-size: var(--text-h3);
-		line-height: var(--leading-tight);
+		font-size: var(--text-performance-h3);
+		line-height: var(--leading-performance-tight);
 		/* Keep card heights consistent even when a name wraps (e.g., "Ludwig Mies van der Rohe"). */
-		min-height: calc(2em * var(--leading-tight));
+		min-height: calc(2em * var(--leading-performance-tight));
 		text-wrap: balance;
 	}
 
@@ -52,12 +52,12 @@
 	}
 
 	.dates {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.tagline {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 </style>

@@ -29,13 +29,13 @@
 	.grid {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.title {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		margin: 0;
@@ -44,10 +44,10 @@
 	.tokens {
 		display: grid;
 		grid-template-columns: repeat(var(--columns), 1fr);
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.compact .tokens {
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 </style>

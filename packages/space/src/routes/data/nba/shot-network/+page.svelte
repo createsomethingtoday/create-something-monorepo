@@ -197,7 +197,7 @@
 					<li><strong>Blue nodes</strong> = Shot creators (at least one assist)</li>
 					<li><strong>Numbers</strong> = Total assists by that player</li>
 				</ul>
-				<p class="nba-methodology-text" style="margin-top: var(--space-sm);">
+				<p class="nba-methodology-text" style="margin-top: var(--space-performance-sm);">
 					A tightly connected graph suggests ball movement. Isolated nodes suggest isolation scoring.
 				</p>
 			</div>

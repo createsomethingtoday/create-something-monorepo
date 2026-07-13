@@ -81,10 +81,10 @@ published: true
 
 <style>
   .custom-box {
-    padding: var(--space-md);
-    background: var(--color-bg-subtle);
-    border-radius: var(--radius-lg);
-    color: var(--color-fg-primary);
+    padding: var(--space-performance-md);
+    background: var(--color-performance-bg-subtle);
+    border-radius: var(--radius-performance-scale-lg);
+    color: var(--color-performance-fg-primary);
   }
 </style>`}</code></pre>
 </div>
@@ -100,27 +100,27 @@ published: true
 <tbody>
 <tr>
 <td>Color</td>
-<td><code>--color-fg-primary</code></td>
+<td><code>--color-performance-fg-primary</code></td>
 <td>Primary text</td>
 </tr>
 <tr>
 <td>Color</td>
-<td><code>--color-bg-subtle</code></td>
+<td><code>--color-performance-bg-subtle</code></td>
 <td>Card backgrounds</td>
 </tr>
 <tr>
 <td>Spacing</td>
-<td><code>--space-md</code></td>
+<td><code>--space-performance-md</code></td>
 <td>Medium spacing (1.618rem)</td>
 </tr>
 <tr>
 <td>Radius</td>
-<td><code>--radius-lg</code></td>
+<td><code>--radius-performance-scale-lg</code></td>
 <td>Large border radius (12px)</td>
 </tr>
 <tr>
 <td>Typography</td>
-<td><code>--text-body</code></td>
+<td><code>--text-performance-body</code></td>
 <td>Body text size (1rem)</td>
 </tr>
 </tbody>

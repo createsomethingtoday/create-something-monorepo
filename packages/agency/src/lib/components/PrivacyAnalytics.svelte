@@ -125,7 +125,7 @@
     z-index: 80;
     max-width: min(24rem, calc(100vw - 2rem));
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-sans);
+    font-family: var(--font-performance-sans);
   }
 
   .privacy-panel {
@@ -153,9 +153,9 @@
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.68rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     letter-spacing: 0;
     line-height: 1.12;
     text-transform: uppercase;
@@ -179,7 +179,7 @@
     width: fit-content;
     color: var(--color-performance-ink, #090909);
     font-size: 0.8rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     text-decoration: underline;
     text-underline-offset: 0.18em;
   }
@@ -242,7 +242,7 @@
 
   .privacy-pill__sub {
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.62rem;
     letter-spacing: 0;
     text-transform: uppercase;
@@ -331,7 +331,7 @@
       background: transparent;
       box-shadow: none;
       color: var(--color-performance-muted, #5e6268);
-      font-family: var(--font-mono);
+      font-family: var(--font-performance-mono);
       font-size: 0.68rem;
     }
 

@@ -1261,11 +1261,11 @@
 
 	.dwelling {
 		min-height: 100vh;
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 		display: grid;
 		grid-template-rows: auto 1fr auto auto auto;
-		gap: var(--space-md);
-		padding: var(--space-lg);
+		gap: var(--space-performance-md);
+		padding: var(--space-performance-lg);
 		max-width: 1400px;
 		margin: 0 auto;
 	}
@@ -1273,23 +1273,23 @@
 	/* Header: Minimal identification */
 	.dwelling-header {
 		text-align: center;
-		padding: var(--space-sm) 0;
+		padding: var(--space-performance-sm) 0;
 	}
 
 	.dwelling-title {
-		font-family: var(--font-sans, system-ui, sans-serif);
-		font-size: var(--text-h3);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
+		font-size: var(--text-performance-h3);
 		font-weight: 300;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 		letter-spacing: 0.02em;
 	}
 
 	.dwelling-meta {
-		font-family: var(--font-sans, system-ui, sans-serif);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin: var(--space-xs) 0 0 0;
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
+		margin: var(--space-performance-xs) 0 0 0;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
 	}
@@ -1305,8 +1305,8 @@
 	.secondary-views {
 		display: grid;
 		grid-template-columns: 1fr 1.618fr;
-		gap: var(--space-md);
-		padding-top: var(--space-md);
+		gap: var(--space-performance-md);
+		padding-top: var(--space-performance-md);
 	}
 
 	.secondary-left,
@@ -1320,8 +1320,8 @@
 	.tertiary-views {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-md);
-		padding-top: var(--space-md);
+		gap: var(--space-performance-md);
+		padding-top: var(--space-performance-md);
 	}
 
 	.tertiary-item {
@@ -1334,8 +1334,8 @@
 	.dwelling-footer {
 		display: flex;
 		justify-content: center;
-		gap: var(--space-xl);
-		padding-top: var(--space-md);
+		gap: var(--space-performance-xl);
+		padding-top: var(--space-performance-md);
 	}
 
 	.metric {
@@ -1346,24 +1346,24 @@
 	}
 
 	.metric-value {
-		font-family: var(--font-sans, system-ui, sans-serif);
-		font-size: var(--text-body-lg);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 300;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.metric-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 	}
 
 	.metric.clickable {
 		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.metric.clickable:hover {
@@ -1377,8 +1377,8 @@
 	/* Budget Details - Collapsible price sheet */
 	.budget-details,
 	.materials-details {
-		padding: var(--space-lg) 0;
-		font-family: var(--font-sans, system-ui, sans-serif);
+		padding: var(--space-performance-lg) 0;
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.materials-details {
@@ -1390,39 +1390,39 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.budget-title {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 300;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 	}
 
 	.budget-meta {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.budget-categories {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 	}
 
 	.budget-category {
-		padding: var(--space-sm) 0;
+		padding: var(--space-performance-sm) 0;
 	}
 
 	.category-name {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		font-weight: 500;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin: 0 0 var(--space-sm) 0;
-		padding-bottom: var(--space-xs);
+		margin: 0 0 var(--space-performance-sm) 0;
+		padding-bottom: var(--space-performance-xs);
 	}
 
 	.budget-item {
@@ -1433,45 +1433,45 @@
 	}
 
 	.item-desc {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.item-amount {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.item-notes {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		margin: 0.125rem 0 0.5rem 0;
 		font-style: italic;
 	}
 
 	.budget-assumptions {
-		margin-top: var(--space-lg);
-		padding-top: var(--space-md);
+		margin-top: var(--space-performance-lg);
+		padding-top: var(--space-performance-md);
 	}
 
 	.budget-assumptions h3 {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		font-weight: 500;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin: 0 0 var(--space-sm) 0;
+		margin: 0 0 var(--space-performance-sm) 0;
 	}
 
 	.budget-assumptions ul {
 		margin: 0;
-		padding: 0 0 0 var(--space-sm);
+		padding: 0 0 0 var(--space-performance-sm);
 	}
 
 	.budget-assumptions li {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		margin: 0.25rem 0;
 	}
 
@@ -1483,7 +1483,7 @@
 		border: none;
 		padding: 0;
 		cursor: zoom-in;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.expand-trigger:hover {
@@ -1491,13 +1491,13 @@
 	}
 
 	.expand-trigger:focus-visible {
-		outline: 1px solid var(--color-border-emphasis);
-		outline-offset: var(--space-xs);
+		outline: 1px solid var(--color-performance-border-emphasis);
+		outline-offset: var(--space-performance-xs);
 	}
 
 	/* View panel states */
 	.view-panel {
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.view-panel.hidden {
@@ -1508,11 +1508,11 @@
 		position: fixed;
 		inset: 0;
 		z-index: 100;
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.view-panel.expanded .expand-trigger {
@@ -1538,15 +1538,15 @@
 	/* Escape hint - minimal, recedes */
 	.escape-hint {
 		position: fixed;
-		bottom: var(--space-md);
+		bottom: var(--space-performance-md);
 		left: 50%;
 		transform: translateX(-50%);
 		z-index: 101;
-		font-family: var(--font-sans, system-ui, sans-serif);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		opacity: 0.7;
 		pointer-events: none;
 	}
@@ -1566,8 +1566,8 @@
 
 	@media (max-width: 768px) {
 		.dwelling {
-			padding: var(--space-md);
-			gap: var(--space-sm);
+			padding: var(--space-performance-md);
+			gap: var(--space-performance-sm);
 		}
 
 		.tertiary-views {
@@ -1576,7 +1576,7 @@
 
 		.dwelling-footer {
 			flex-wrap: wrap;
-			gap: var(--space-md);
+			gap: var(--space-performance-md);
 		}
 	}
 </style>

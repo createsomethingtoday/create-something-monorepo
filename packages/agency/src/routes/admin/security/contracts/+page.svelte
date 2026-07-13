@@ -244,15 +244,15 @@
 <style>
 	.shell-inner { max-width: 1320px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 	.hero { margin-bottom: 2rem; }
-	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-fg-tertiary); }
-	.hero p { max-width: 72ch; color: var(--color-fg-secondary); }
+	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-performance-fg-tertiary); }
+	.hero p { max-width: 72ch; color: var(--color-performance-fg-secondary); }
 	.subnav { display: flex; gap: 1rem; margin-top: 1rem; }
 	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
-	.subnav a[aria-current='page'] { border-color: var(--color-focus); }
+	.subnav a[aria-current='page'] { border-color: var(--color-performance-focus); }
 	.layout { display: grid; grid-template-columns: minmax(320px, 420px) 1fr; gap: 1.5rem; align-items: start; }
 	.editor, .records { border: 1px solid var(--color-performance-line); border-radius: var(--radius-performance-md); background: var(--color-performance-panel); padding: 1.25rem; }
 	.form-grid { display: grid; grid-template-columns: 1fr; gap: 0.85rem; }
-	label span { display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-fg-tertiary); margin-bottom: 0.35rem; }
+	label span { display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-performance-fg-tertiary); margin-bottom: 0.35rem; }
 	input, select { width: 100%; border-radius: var(--radius-performance-sm); border: 1px solid var(--color-performance-line); background: var(--color-performance-panel); color: inherit; padding: 0.75rem 0.9rem; font: inherit; }
 	.toggles { display: flex; flex-direction: column; gap: 0.75rem; margin: 1rem 0; }
 	.toggles label { display: flex; align-items: center; gap: 0.65rem; }
@@ -261,14 +261,14 @@
 	button { border: 1px solid var(--color-performance-ink); border-radius: var(--radius-performance-sm); padding: 0.75rem 1rem; font: inherit; font-weight: 700; background: var(--color-performance-ink); color: var(--color-performance-panel); box-shadow: none; }
 	.table-wrap { overflow-x: auto; }
 	table { width: 100%; border-collapse: collapse; }
-	th, td { padding: 0.95rem 0.8rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border-default); }
+	th, td { padding: 0.95rem 0.8rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-performance-border-default); }
 	tbody tr { cursor: pointer; }
-	tbody tr:hover { background: var(--color-hover); }
-	.muted { color: var(--color-fg-tertiary); font-size: 0.85rem; margin-top: 0.25rem; }
-	.good { color: var(--color-success); }
-	.bad { color: var(--color-error); }
-	.success { color: var(--color-success); margin-top: 1rem; }
-	.error { color: var(--color-error); margin-top: 1rem; }
+	tbody tr:hover { background: var(--color-performance-hover); }
+	.muted { color: var(--color-performance-fg-tertiary); font-size: 0.85rem; margin-top: 0.25rem; }
+	.good { color: var(--color-performance-success); }
+	.bad { color: var(--color-performance-error); }
+	.success { color: var(--color-performance-success); margin-top: 1rem; }
+	.error { color: var(--color-performance-error); margin-top: 1rem; }
 	@media (max-width: 980px) {
 		.layout { grid-template-columns: 1fr; }
 		.records-header, .toolbar { flex-direction: column; align-items: stretch; }

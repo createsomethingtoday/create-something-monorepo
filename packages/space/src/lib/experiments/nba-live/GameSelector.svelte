@@ -98,79 +98,79 @@
 	/* Empty state */
 	.empty-state {
 		text-align: center;
-		padding: var(--space-xl) var(--space-md);
-		color: var(--color-fg-muted);
+		padding: var(--space-performance-xl) var(--space-performance-md);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.empty-state :global(svg) {
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.empty-text {
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-xs);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.empty-subtext {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	/* Grid */
 	.games-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	/* Card */
 	.game-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		padding: var(--space-sm) var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		padding: var(--space-performance-sm) var(--space-performance-md);
 		cursor: pointer;
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
 		text-align: left;
 		width: 100%;
 	}
 
 	.game-card:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.game-card.selected {
-		border-color: var(--color-fg-primary);
+		border-color: var(--color-performance-fg-primary);
 	}
 
 	.game-card.live {
-		border-left: 3px solid var(--color-success);
+		border-left: 3px solid var(--color-performance-success);
 	}
 
 	/* Header */
 	.game-header {
-		margin-bottom: var(--space-xs);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.status-indicator {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.game-card :global(.status-icon) {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.game-card :global(.status-icon--live) {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.status-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.status-label--live {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 		font-weight: 500;
 	}
 
@@ -178,31 +178,31 @@
 	.matchup {
 		display: flex;
 		align-items: baseline;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.team-abbr {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.score {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 700;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.at {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* Game clock */
 	.game-clock {
-		font-size: var(--text-caption);
-		color: var(--color-success);
-		margin-top: var(--space-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-success);
+		margin-top: var(--space-performance-xs);
 	}
 </style>

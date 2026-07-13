@@ -13,7 +13,7 @@
  * </script>
  *
  * <Icon name="home" size="md" />
- * <Icon name="search" size={24} color="var(--color-fg-muted)" />
+ * <Icon name="search" size={24} color="var(--color-performance-fg-muted)" />
  * <Icon name="success" label="Success indicator" />
  * ```
  */

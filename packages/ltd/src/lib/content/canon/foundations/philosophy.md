@@ -49,7 +49,7 @@ published: true
 </blockquote>
 <p>
 		Canon's goal is Zuhandenheit: a design system that disappears into use. When you reach for
-		<code>var(--space-md)</code>, you shouldn't think about the golden ratio—you
+		<code>var(--space-performance-md)</code>, you shouldn't think about the golden ratio—you
 		achieve the spacing that feels right.
 	</p>
 
@@ -183,27 +183,27 @@ published: true
 </div>
 <div class="phi-values">
 <div class="phi-row">
-<code>--space-xs</code>
+<code>--space-performance-xs</code>
 <span>0.5rem</span>
 <span class="phi-note">φ⁻²</span>
 </div>
 <div class="phi-row">
-<code>--space-sm</code>
+<code>--space-performance-sm</code>
 <span>1rem</span>
 <span class="phi-note">φ⁻¹</span>
 </div>
 <div class="phi-row">
-<code>--space-md</code>
+<code>--space-performance-md</code>
 <span>1.618rem</span>
 <span class="phi-note">φ⁰ × base</span>
 </div>
 <div class="phi-row">
-<code>--space-lg</code>
+<code>--space-performance-lg</code>
 <span>2.618rem</span>
 <span class="phi-note">φ¹</span>
 </div>
 <div class="phi-row">
-<code>--space-xl</code>
+<code>--space-performance-xl</code>
 <span>4.236rem</span>
 <span class="phi-note">φ²</span>
 </div>
@@ -222,7 +222,7 @@ published: true
 <div class="callout-info">
 <h3 class="callout-heading">Why This Matters</h3>
 <p>
-			The golden ratio isn't decoration—it's practical. When spacing follows φ, layouts compose predictably. A card with <code>--space-md</code> padding naturally nests inside a section with <code>--space-lg</code> margins. The proportions align without manual adjustment. This is why Zuhandenheit works: the system makes correct spacing automatic.
+			The golden ratio isn't decoration—it's practical. When spacing follows φ, layouts compose predictably. A card with <code>--space-performance-md</code> padding naturally nests inside a section with <code>--space-performance-lg</code> margins. The proportions align without manual adjustment. This is why Zuhandenheit works: the system makes correct spacing automatic.
 		</p>
 </div>
 
@@ -270,20 +270,20 @@ published: true
 /* Subtractive Triad Applied */
 .card {
   /* 1. DRY: Use existing tokens, don't reinvent */
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
+  padding: var(--space-performance-md);
+  border-radius: var(--radius-performance-scale-lg);
   
   /* 2. Rams: Only necessary properties */
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border-default);
+  background: var(--color-performance-bg-surface);
+  border: 1px solid var(--color-performance-border-default);
   
   /* 3. Heidegger: Serve the system's coherence */
-  transition: all var(--duration-micro) var(--ease-standard);
+  transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .card:hover {
   /* Consistent hover states with other components */
-  border-color: var(--color-border-emphasis);
+  border-color: var(--color-performance-border-emphasis);
   /* No gradients, shadows, or decoration */
 }
 ```

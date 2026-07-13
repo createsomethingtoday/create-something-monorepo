@@ -147,7 +147,7 @@ export const CANON_OVERLAY_CATALOG: CanonOverlayCatalog = {
             "path": "packages/canon/src/lib/overlays/project-template/theme.css",
             "description": "Project-local CSS aliases that point back to Canon tokens.",
             "registryItemIds": [
-              "token.canon-core"
+              "token.performance-core"
             ]
           },
           {
@@ -155,7 +155,7 @@ export const CANON_OVERLAY_CATALOG: CanonOverlayCatalog = {
             "path": "packages/canon/src/lib/overlays/project-template/tokens.json",
             "description": "Design-token aliases for project-specific names without a new token scale.",
             "registryItemIds": [
-              "token.canon-core"
+              "token.performance-core"
             ]
           },
           {

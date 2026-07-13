@@ -97,9 +97,9 @@
 	.clear-metadata-rail__group h3 {
 		margin: 0;
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.15;
 		text-transform: uppercase;
@@ -108,7 +108,7 @@
 	.clear-metadata-rail__header strong {
 		color: var(--color-performance-ink, #090909);
 		font-size: 1.3rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.16;
 		text-wrap: balance;
 	}
@@ -165,7 +165,7 @@
 	.clear-metadata-rail__row strong {
 		color: var(--color-performance-ink, #090909);
 		font-size: 0.88rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.3;
 		overflow-wrap: anywhere;
 	}
@@ -186,9 +186,9 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-paper, #f3f3f0);
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.15;
 	}
 

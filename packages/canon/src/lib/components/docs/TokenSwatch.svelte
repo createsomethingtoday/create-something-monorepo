@@ -24,20 +24,20 @@
 	.swatch {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.color {
 		width: 24px;
 		height: 24px;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		flex-shrink: 0;
 	}
 
 	.label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		font-family: var(--font-mono);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
+		font-family: var(--font-performance-mono);
 	}
 
 	.sm .color {
@@ -46,7 +46,7 @@
 	}
 
 	.sm .label {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.lg .color {

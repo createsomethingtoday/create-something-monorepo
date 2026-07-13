@@ -271,9 +271,9 @@
 
 <style>
 	.source-note {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		line-height: var(--leading-relaxed);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
+		line-height: var(--leading-performance-relaxed);
 	}
 
 	:global(.slide-split ul.compact-list) {
@@ -282,21 +282,21 @@
 		margin: 0;
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	:global(.slide-split ul.compact-list li) {
 		position: relative;
-		padding-left: var(--space-lg);
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
+		padding-left: var(--space-performance-lg);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
+		line-height: var(--leading-performance-relaxed);
 	}
 
 	:global(.slide-split ul.compact-list li::before) {
 		content: '—';
 		position: absolute;
 		left: 0;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 </style>

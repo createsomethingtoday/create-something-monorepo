@@ -113,13 +113,13 @@
 
 	.popover {
 		position: absolute;
-		z-index: var(--z-popover, 30);
+		z-index: var(--z-performance-popover, 30);
 		min-width: 200px;
 		max-width: 320px;
-		padding: var(--space-md);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-lg);
-		animation: popoverIn var(--duration-micro) var(--ease-standard);
+		padding: var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-lg);
+		box-shadow: var(--shadow-performance-scale-lg);
+		animation: popoverIn var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	@keyframes popoverIn {

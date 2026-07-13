@@ -87,7 +87,7 @@
 		display: inline-block;
 		position: relative;
 		overflow: hidden;
-		border-radius: var(--radius-sm, 4px);
+		border-radius: var(--radius-performance-scale-sm, 4px);
 	}
 
 	.cube-mark-3d :global(canvas) {

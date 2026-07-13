@@ -14,28 +14,28 @@ Consistent max-widths for content containment.
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--container-sm` | 640px | Narrow content |
-| `--container-md` | 768px | Articles, forms |
-| `--container-lg` | 1024px | Standard pages |
-| `--container-xl` | 1280px | Wide layouts |
-| `--container-2xl` | 1536px | Full-width |
+| `--container-performance-sm` | 640px | Narrow content |
+| `--container-performance-md` | 768px | Articles, forms |
+| `--container-performance-lg` | 1024px | Standard pages |
+| `--container-performance-xl` | 1280px | Wide layouts |
+| `--container-performance-2xl` | 1536px | Full-width |
 
 ## Container Usage
 
 ```css
 .container {
   width: 100%;
-  max-width: var(--container-lg);
+  max-width: var(--container-performance-lg);
   margin: 0 auto;
-  padding: 0 var(--space-lg);
+  padding: 0 var(--space-performance-lg);
 }
 
 .container-narrow {
-  max-width: var(--container-md);
+  max-width: var(--container-performance-md);
 }
 
 .container-wide {
-  max-width: var(--container-xl);
+  max-width: var(--container-performance-xl);
 }
 ```
 
@@ -47,7 +47,7 @@ A 12-column grid for flexible layouts.
 .grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: var(--space-lg);
+  gap: var(--space-performance-lg);
 }
 
 .col-span-4 { grid-column: span 4; }
@@ -63,7 +63,7 @@ A 12-column grid for flexible layouts.
 ```css
 .responsive-grid {
   display: grid;
-  gap: var(--space-lg);
+  gap: var(--space-performance-lg);
   grid-template-columns: 1fr;
 }
 
@@ -85,7 +85,7 @@ A 12-column grid for flexible layouts.
 ```css
 .auto-grid {
   display: grid;
-  gap: var(--space-lg);
+  gap: var(--space-performance-lg);
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 ```
@@ -94,11 +94,11 @@ A 12-column grid for flexible layouts.
 
 | Token | Value | Target |
 |-------|-------|--------|
-| `--breakpoint-sm` | 640px | Mobile landscape |
-| `--breakpoint-md` | 768px | Tablet |
-| `--breakpoint-lg` | 1024px | Desktop |
-| `--breakpoint-xl` | 1280px | Large desktop |
-| `--breakpoint-2xl` | 1536px | Ultra-wide |
+| `--breakpoint-performance-sm` | 640px | Mobile landscape |
+| `--breakpoint-performance-md` | 768px | Tablet |
+| `--breakpoint-performance-lg` | 1024px | Desktop |
+| `--breakpoint-performance-xl` | 1280px | Large desktop |
+| `--breakpoint-performance-2xl` | 1536px | Ultra-wide |
 
 ## Flexbox Utilities
 
@@ -107,5 +107,5 @@ A 12-column grid for flexible layouts.
 .flex-col { flex-direction: column; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
-.gap-md { gap: var(--space-md); }
+.gap-md { gap: var(--space-performance-md); }
 ```

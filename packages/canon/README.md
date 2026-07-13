@@ -149,7 +149,7 @@ Canon uses CSS custom properties for all design decisions:
 |----------|--------|
 | **Colors** | `--color-bg-*`, `--color-fg-*`, `--color-border-*` |
 | **Typography** | `--text-*`, `--font-*`, `--leading-*` |
-| **Spacing** | `--space-xs` through `--space-3xl` (Golden Ratio) |
+| **Spacing** | `--space-performance-xs` through `--space-performance-3xl` (Golden Ratio) |
 | **Glass** | `--glass-blur-*`, `--glass-bg-*`, `--liquid-glass-*` |
 | **Performance Lab** | `--color-performance-*`, `--radius-performance-*`, `--shadow-performance-*` |
 | **Legacy compatibility** | `--color-clear-*`, `Clear*` exports, and `component.clear-*` registry IDs resolve to Performance Lab but are not used by new surfaces. |
@@ -162,10 +162,10 @@ surfaces need stable scanning:
 
 | Role | Tokens | Use |
 |------|--------|-----|
-| Interface prose | `--font-interface`, `--font-prose` | Human-readable labels, controls, public Atlas copy |
-| Records | `--font-record`, `--text-record`, `--text-record-meta` | IDs, counts, timestamps, receipts, source bindings |
-| Topology labels | `--font-topology-label`, `--text-topology-label`, `--tracking-topology-label` | Atlas graph labels, edge text, run/wait/stop badges |
-| Code and payloads | `--font-code` | CLI commands, JSON payloads, terminal output |
+| Interface prose | `--font-performance-interface`, `--font-performance-prose` | Human-readable labels, controls, public Atlas copy |
+| Records | `--font-performance-record`, `--text-performance-record`, `--text-performance-record-meta` | IDs, counts, timestamps, receipts, source bindings |
+| Topology labels | `--font-performance-topology-label`, `--text-performance-topology-label`, `--tracking-performance-topology-label` | Atlas graph labels, edge text, run/wait/stop badges |
+| Code and payloads | `--font-performance-code` | CLI commands, JSON payloads, terminal output |
 
 Topology and record labels use `letter-spacing: 0` and tabular numerics where
 the value is machine-shaped. Do not hard-code route-local font families in

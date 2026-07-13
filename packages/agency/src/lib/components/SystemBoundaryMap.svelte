@@ -88,8 +88,8 @@
   .boundary-map__eyebrow,
   .boundary-node span,
   .boundary-map__notes span {
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
+    color: var(--color-performance-fg-muted);
+    font-family: var(--font-performance-mono);
     font-size: 0.7rem;
     letter-spacing: 0.11em;
     text-transform: uppercase;
@@ -97,7 +97,7 @@
 
   .boundary-map__copy h3 {
     margin: 0;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     font-size: clamp(1.75rem, 3vw, 2.8rem);
     line-height: 1.02;
     letter-spacing: -0.04em;
@@ -107,7 +107,7 @@
   .boundary-map__copy p,
   .boundary-map__notes p {
     margin: 0;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     line-height: 1.68;
     text-wrap: pretty;
   }
@@ -134,21 +134,21 @@
   }
 
   .boundary-node--core {
-    border-color: color-mix(in srgb, var(--color-brand-primary-border, #315cff) 72%, transparent);
+    border-color: color-mix(in srgb, var(--color-performance-brand-primary-border, #315cff) 72%, transparent);
     background:
       linear-gradient(135deg, rgba(49, 92, 255, 0.16), rgba(45, 212, 191, 0.055)),
       rgba(0, 0, 0, 0.4);
   }
 
   .boundary-node strong {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     font-size: 1.08rem;
     line-height: 1.2;
     text-wrap: balance;
   }
 
   .boundary-node small {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     font-size: 0.9rem;
     line-height: 1.5;
   }
@@ -168,7 +168,7 @@
   }
 
   .vendor-mark-grid :global(.vendor-mark) {
-    color: var(--color-brand-ink);
+    color: var(--color-performance-brand-ink);
   }
 
   .boundary-map__notes {

@@ -62,7 +62,7 @@
 				{gradientSize}px circle at {mouseX}px {mouseY}px,
 				{gradientFrom},
 				{gradientTo},
-				var(--color-border-default, rgba(255, 255, 255, 0.1)) 100%
+				var(--color-performance-border-default, rgba(255, 255, 255, 0.1)) 100%
 			);
 		"
 	></div>
@@ -112,7 +112,7 @@
 		position: absolute;
 		inset: 1px;
 		border-radius: inherit;
-		background: var(--color-bg-pure, #000000);
+		background: var(--color-performance-bg-pure, #000000);
 	}
 	
 	.hover-gradient {

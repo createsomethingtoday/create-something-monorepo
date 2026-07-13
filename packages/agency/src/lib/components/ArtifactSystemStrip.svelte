@@ -106,19 +106,19 @@
     font-size: 0.72rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-fg-muted, rgba(255, 255, 255, 0.6));
+    color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.6));
   }
 
   .artifact-copy h2 {
     margin: 0;
-    color: var(--color-fg-primary, #fff);
+    color: var(--color-performance-fg-primary, #fff);
     font-size: clamp(1.55rem, 2.6vw, 2.4rem);
     line-height: 1.06;
   }
 
   .artifact-copy p {
     margin: 0;
-    color: var(--color-fg-secondary, rgba(255, 255, 255, 0.76));
+    color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.76));
     line-height: 1.7;
   }
 
@@ -174,7 +174,7 @@
 
   .artifact-card h3 {
     margin: 0;
-    color: var(--color-fg-primary, #fff);
+    color: var(--color-performance-fg-primary, #fff);
     font-size: clamp(0.95rem, 0.2vw + 0.9rem, 1rem);
     line-height: 1.25;
     word-break: normal;
@@ -185,7 +185,7 @@
 
   .artifact-card p {
     margin: 0;
-    color: var(--color-fg-secondary, rgba(255, 255, 255, 0.72));
+    color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.72));
     line-height: 1.6;
     font-size: 0.92rem;
   }

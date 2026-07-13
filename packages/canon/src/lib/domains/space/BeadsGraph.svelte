@@ -68,9 +68,9 @@
 			.attr('class', 'link')
 			.style('stroke', (d) => {
 				// Semantic colors by dependency type
-				if (d.type === 'blocks') return 'var(--color-border-emphasis)';
-				if (d.type === 'parent') return 'var(--color-border-strong)';
-				return 'var(--color-border-default)';
+				if (d.type === 'blocks') return 'var(--color-performance-border-emphasis)';
+				if (d.type === 'parent') return 'var(--color-performance-border-strong)';
+				return 'var(--color-performance-border-default)';
 			})
 			.style('stroke-width', (d) => {
 				if (d.type === 'blocks') return 2;
@@ -96,11 +96,11 @@
 			})
 			.style('fill', (d) => {
 				// Semantic colors by status
-				if (d.status === 'completed') return 'var(--color-success)';
-				if (d.status === 'in-progress') return 'var(--color-fg-primary)';
-				return 'var(--color-fg-muted)';
+				if (d.status === 'completed') return 'var(--color-performance-success)';
+				if (d.status === 'in-progress') return 'var(--color-performance-fg-primary)';
+				return 'var(--color-performance-fg-muted)';
 			})
-			.style('stroke', 'var(--color-bg-pure)')
+			.style('stroke', 'var(--color-performance-bg-pure)')
 			.style('stroke-width', 2)
 			.style('cursor', 'pointer');
 
@@ -113,8 +113,8 @@
 			.attr('class', 'label')
 			.attr('text-anchor', 'middle')
 			.attr('dy', -15)
-			.style('font-size', 'var(--text-caption)')
-			.style('fill', 'var(--color-fg-secondary)')
+			.style('font-size', 'var(--text-performance-caption)')
+			.style('fill', 'var(--color-performance-fg-secondary)')
 			.style('pointer-events', 'none')
 			.text((d) => d.id);
 
@@ -142,12 +142,12 @@
 
 <style>
 	.beads-graph {
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	:global(.beads-graph .node) {
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	:global(.beads-graph .node:hover) {
@@ -156,6 +156,6 @@
 	}
 
 	:global(.beads-graph .link) {
-		transition: stroke var(--duration-micro) var(--ease-standard);
+		transition: stroke var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 </style>

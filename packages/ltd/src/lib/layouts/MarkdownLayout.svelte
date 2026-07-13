@@ -114,51 +114,51 @@ ${section ? `**Section**: ${section}\n` : ''}
 <style>
 	/* Canon typography and spacing */
 	:global(.prose-ltd h2) {
-		margin-top: var(--space-xl);
-		margin-bottom: var(--space-md);
-		font-size: var(--text-h2);
+		margin-top: var(--space-performance-xl);
+		margin-bottom: var(--space-performance-md);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	:global(.prose-ltd h3) {
-		margin-top: var(--space-lg);
-		margin-bottom: var(--space-sm);
-		font-size: var(--text-h3);
+		margin-top: var(--space-performance-lg);
+		margin-bottom: var(--space-performance-sm);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	:global(.prose-ltd p) {
-		margin-bottom: var(--space-md);
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-performance-md);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.8;
 	}
 
 	:global(.prose-ltd ul),
 	:global(.prose-ltd ol) {
-		margin-bottom: var(--space-md);
-		padding-left: var(--space-lg);
+		margin-bottom: var(--space-performance-md);
+		padding-left: var(--space-performance-lg);
 	}
 
 	:global(.prose-ltd li) {
-		margin-bottom: var(--space-sm);
-		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-performance-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	:global(.prose-ltd blockquote) {
-		border-left: 2px solid var(--color-border-emphasis);
-		padding-left: var(--space-md);
-		margin: var(--space-lg) 0;
+		border-left: 2px solid var(--color-performance-border-emphasis);
+		padding-left: var(--space-performance-md);
+		margin: var(--space-performance-lg) 0;
 		font-style: italic;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	:global(.prose-ltd table) {
 		width: 100%;
 		table-layout: fixed;
-		margin: var(--space-lg) 0;
+		margin: var(--space-performance-lg) 0;
 		border-collapse: collapse;
 	}
 
@@ -168,34 +168,34 @@ ${section ? `**Section**: ${section}\n` : ''}
 	}
 
 	:global(.prose-ltd th) {
-		background: var(--color-bg-subtle);
-		padding: var(--space-sm);
+		background: var(--color-performance-bg-subtle);
+		padding: var(--space-performance-sm);
 		text-align: left;
 		font-weight: 600;
-		border-bottom: 1px solid var(--color-border-emphasis);
-		color: var(--color-fg-primary);
+		border-bottom: 1px solid var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-primary);
 	}
 
 	:global(.prose-ltd td) {
-		padding: var(--space-sm);
-		color: var(--color-fg-secondary);
+		padding: var(--space-performance-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	:global(.prose-ltd code) {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		padding: 0.2em 0.4em;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		font-family: 'Stack Sans Mono', monospace;
 		font-size: 0.9em;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	:global(.prose-ltd pre) {
-		background: var(--color-bg-subtle);
-		padding: var(--space-md);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-subtle);
+		padding: var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
 		overflow-x: auto;
-		margin: var(--space-lg) 0;
+		margin: var(--space-performance-lg) 0;
 	}
 
 	:global(.prose-ltd pre code) {

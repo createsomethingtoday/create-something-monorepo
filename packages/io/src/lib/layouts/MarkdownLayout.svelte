@@ -134,20 +134,20 @@ ${abstract ? `### Abstract\n${abstract}\n\n` : ''}
 	.paper-container {
 		max-width: 42rem;
 		margin: 0 auto;
-		padding: var(--space-xl) var(--space-md);
+		padding: var(--space-performance-xl) var(--space-performance-md);
 	}
 
 	.paper-header {
-		margin-bottom: var(--space-2xl);
-		padding-bottom: var(--space-lg);
+		margin-bottom: var(--space-performance-2xl);
+		padding-bottom: var(--space-performance-lg);
 	}
 
 	.metadata {
 		display: flex;
-		gap: var(--space-md);
-		margin-bottom: var(--space-sm);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		gap: var(--space-performance-md);
+		margin-bottom: var(--space-performance-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.category {
@@ -157,78 +157,78 @@ ${abstract ? `### Abstract\n${abstract}\n\n` : ''}
 	}
 
 	.title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin: 0;
 		line-height: 1.2;
 	}
 
 	.subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-		margin: var(--space-sm) 0 0;
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
+		margin: var(--space-performance-sm) 0 0;
 		font-style: italic;
 	}
 
 	.authors {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin: var(--space-xs) 0 0;
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		margin: var(--space-performance-xs) 0 0;
 	}
 
 	.header-actions {
-		margin-top: var(--space-md);
+		margin-top: var(--space-performance-md);
 	}
 
 	.paper-content {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		line-height: 1.7;
 	}
 
 	/* Prose styles - typography for markdown content */
 	:global(.prose h2) {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 700;
-		margin: var(--space-xl) 0 var(--space-md);
-		color: var(--color-fg-primary);
+		margin: var(--space-performance-xl) 0 var(--space-performance-md);
+		color: var(--color-performance-fg-primary);
 	}
 
 	:global(.prose h3) {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		margin: var(--space-lg) 0 var(--space-sm);
-		color: var(--color-fg-primary);
+		margin: var(--space-performance-lg) 0 var(--space-performance-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	:global(.prose p) {
-		margin: var(--space-md) 0;
+		margin: var(--space-performance-md) 0;
 	}
 
 	:global(.prose ul),
 	:global(.prose ol) {
-		margin: var(--space-md) 0;
-		padding-left: var(--space-lg);
+		margin: var(--space-performance-md) 0;
+		padding-left: var(--space-performance-lg);
 	}
 
 	:global(.prose li) {
-		margin: var(--space-xs) 0;
+		margin: var(--space-performance-xs) 0;
 	}
 
 	:global(.prose code) {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		padding: 0.125rem 0.25rem;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		font-size: 0.9em;
 		font-family: 'Stack Sans', monospace;
 	}
 
 	:global(.prose pre) {
-		background: var(--color-bg-subtle);
-		padding: var(--space-md);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-subtle);
+		padding: var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
 		overflow-x: auto;
-		margin: var(--space-md) 0;
+		margin: var(--space-performance-md) 0;
 	}
 
 	:global(.prose pre code) {
@@ -237,44 +237,44 @@ ${abstract ? `### Abstract\n${abstract}\n\n` : ''}
 	}
 
 	:global(.prose a) {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		text-decoration: underline;
-		text-decoration-color: var(--color-border-emphasis);
+		text-decoration-color: var(--color-performance-border-emphasis);
 		text-underline-offset: 0.2em;
-		transition: text-decoration-color var(--duration-micro) var(--ease-standard);
+		transition: text-decoration-color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	:global(.prose a:hover) {
-		text-decoration-color: var(--color-fg-primary);
+		text-decoration-color: var(--color-performance-fg-primary);
 	}
 
 	:global(.prose blockquote) {
-		border-left: 2px solid var(--color-border-emphasis);
-		padding-left: var(--space-md);
-		margin: var(--space-md) 0;
-		color: var(--color-fg-secondary);
+		border-left: 2px solid var(--color-performance-border-emphasis);
+		padding-left: var(--space-performance-md);
+		margin: var(--space-performance-md) 0;
+		color: var(--color-performance-fg-secondary);
 		font-style: italic;
 	}
 
 	:global(.prose table) {
 		width: 100%;
 		border-collapse: collapse;
-		margin: var(--space-md) 0;
+		margin: var(--space-performance-md) 0;
 	}
 
 	:global(.prose th),
 	:global(.prose td) {
-		padding: var(--space-sm);
+		padding: var(--space-performance-sm);
 		text-align: left;
 	}
 
 	:global(.prose th) {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		font-weight: 600;
 	}
 
 	.related-content-section {
-		margin-top: var(--space-2xl);
-		padding-top: var(--space-xl);
+		margin-top: var(--space-performance-2xl);
+		padding-top: var(--space-performance-xl);
 	}
 </style>

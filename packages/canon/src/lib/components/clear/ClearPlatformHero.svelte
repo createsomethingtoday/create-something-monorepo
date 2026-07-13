@@ -135,9 +135,9 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.76rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.15;
 		text-transform: uppercase;
@@ -148,7 +148,7 @@
 		max-width: 13ch;
 		color: var(--color-performance-ink, #090909);
 		font-size: 5.45rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 0.98;
 		text-wrap: balance;
@@ -191,9 +191,9 @@
 
 	.clear-platform-hero__meta small {
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.68rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.12;
 		text-transform: uppercase;
@@ -202,7 +202,7 @@
 	.clear-platform-hero__meta strong {
 		color: var(--color-performance-ink, #090909);
 		font-size: 0.92rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.2;
 	}
 
@@ -252,9 +252,9 @@
 
 	.clear-platform-hero__proof strong {
 		color: var(--color-performance-ink, #090909);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.95rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.15;
 	}

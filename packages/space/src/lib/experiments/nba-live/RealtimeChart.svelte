@@ -88,18 +88,18 @@
 			styles.getPropertyValue(prop).trim() || fallback;
 
 		colors = {
-			bgPure: get('--color-bg-pure', '#0a0a0a'),
-			bgElevated: get('--color-bg-elevated', '#1a1a1a'),
-			fgPrimary: get('--color-fg-primary', '#ffffff'),
-			fgMuted: get('--color-fg-muted', '#888888'),
-			borderDefault: get('--color-border-default', '#333333'),
-			borderStrong: get('--color-border-strong', '#666666'),
+			bgPure: get('--color-performance-bg-pure', '#0a0a0a'),
+			bgElevated: get('--color-performance-bg-elevated', '#1a1a1a'),
+			fgPrimary: get('--color-performance-fg-primary', '#ffffff'),
+			fgMuted: get('--color-performance-fg-muted', '#888888'),
+			borderDefault: get('--color-performance-border-default', '#333333'),
+			borderStrong: get('--color-performance-border-strong', '#666666'),
 			data: [
-				get('--color-data-1', '#6366f1'),
-				get('--color-data-2', '#22c55e'),
-				get('--color-data-3', '#f59e0b'),
-				get('--color-data-4', '#ef4444'),
-				get('--color-data-5', '#8b5cf6')
+				get('--color-performance-data-1', '#6366f1'),
+				get('--color-performance-data-2', '#22c55e'),
+				get('--color-performance-data-3', '#f59e0b'),
+				get('--color-performance-data-4', '#ef4444'),
+				get('--color-performance-data-5', '#8b5cf6')
 			]
 		};
 	}
@@ -542,8 +542,8 @@
 <style>
 	.realtime-chart {
 		position: relative;
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 		overflow: hidden;
 	}
 
@@ -554,29 +554,29 @@
 
 	.legend {
 		position: absolute;
-		top: var(--space-sm);
-		right: var(--space-sm);
+		top: var(--space-performance-sm);
+		right: var(--space-performance-sm);
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.legend-item {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.legend-color {
 		width: 12px;
 		height: 12px;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.legend-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-secondary);
 	}
 </style>

@@ -65,18 +65,18 @@
 
 	.tooltip {
 		position: absolute;
-		z-index: var(--z-tooltip, 40);
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
+		z-index: var(--z-performance-tooltip, 40);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
+		font-size: var(--text-performance-caption);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.4;
 		white-space: nowrap;
-		border-radius: var(--radius-sm);
-		box-shadow: var(--shadow-md);
+		border-radius: var(--radius-performance-scale-sm);
+		box-shadow: var(--shadow-performance-scale-md);
 		pointer-events: none;
-		animation: tooltipIn var(--duration-micro) var(--ease-standard);
+		animation: tooltipIn var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	@keyframes tooltipIn {
@@ -95,7 +95,7 @@
 		position: absolute;
 		width: 8px;
 		height: 8px;
-		background: var(--color-fg-primary);
+		background: var(--color-performance-fg-primary);
 		transform: rotate(45deg);
 	}
 

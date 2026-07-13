@@ -179,27 +179,27 @@
 		justify-content: center;
 		min-width: 36px;
 		height: 36px;
-		padding: 0 var(--space-xs);
+		padding: 0 var(--space-performance-xs);
 		background: none;
 		border: 1px solid transparent;
-		border-radius: var(--radius-md);
-		color: var(--color-fg-muted);
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body);
+		font-weight: var(--font-performance-medium);
 		font-variant-numeric: tabular-nums;
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.pagination-button:hover:not(:disabled),
 	.pagination-page:hover:not(:disabled) {
-		background: var(--color-hover);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-hover);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.pagination-button:focus-visible,
 	.pagination-page:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
@@ -211,14 +211,14 @@
 
 	/* Active page */
 	.pagination-page.active {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border-color: var(--color-fg-primary);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
+		border-color: var(--color-performance-fg-primary);
 	}
 
 	.pagination-page.active:hover {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 	}
 
 	/* Arrow buttons */
@@ -234,8 +234,8 @@
 		justify-content: center;
 		min-width: 36px;
 		height: 36px;
-		color: var(--color-fg-muted);
-		font-size: var(--text-body);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body);
 		user-select: none;
 	}
 
@@ -244,7 +244,7 @@
 	.pagination-sm .pagination-page {
 		min-width: 28px;
 		height: 28px;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.pagination-sm .pagination-button svg {
@@ -255,14 +255,14 @@
 	.pagination-sm .pagination-ellipsis {
 		min-width: 28px;
 		height: 28px;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.pagination-lg .pagination-button,
 	.pagination-lg .pagination-page {
 		min-width: 44px;
 		height: 44px;
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.pagination-lg .pagination-button svg {
@@ -273,6 +273,6 @@
 	.pagination-lg .pagination-ellipsis {
 		min-width: 44px;
 		height: 44px;
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 </style>

@@ -15,15 +15,15 @@ export const typography = {
 		sans:
 			'Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 		display:
-			'Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+			'"Satoshi", "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 		mono:
-			'ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace',
+			'"IBM Plex Mono", "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace',
 		serif: 'Georgia, "Times New Roman", serif',
-		interface: 'var(--font-sans)',
-		prose: 'var(--font-sans)',
-		record: 'var(--font-mono)',
-		'topology-label': 'var(--font-mono)',
-		code: 'var(--font-mono)'
+		interface: 'var(--font-performance-sans)',
+		prose: 'var(--font-performance-sans)',
+		record: 'var(--font-performance-mono)',
+		'topology-label': 'var(--font-performance-mono)',
+		code: 'var(--font-performance-mono)'
 	},
 
 	// Font weights
@@ -79,8 +79,8 @@ export const typography = {
 		overline: '0.618rem', // 1/φ
 
 		// Role sizes
-		record: 'var(--text-body-sm)',
-		'record-meta': 'var(--text-caption)',
+		record: 'var(--text-performance-body-sm)',
+		'record-meta': 'var(--text-performance-caption)',
 		'operator-label': '0.72rem',
 		'topology-label': '0.72rem'
 	}
@@ -97,62 +97,62 @@ export type TypeScale = keyof typeof typography.scale;
  */
 export const typographyVars = {
 	// Families
-	'--font-sans': typography.family.sans,
-	'--font-display': typography.family.display,
-	'--font-mono': typography.family.mono,
-	'--font-serif': typography.family.serif,
-	'--font-interface': typography.family.interface,
-	'--font-prose': typography.family.prose,
-	'--font-record': typography.family.record,
-	'--font-topology-label': typography.family['topology-label'],
-	'--font-code': typography.family.code,
+	'--font-performance-sans': typography.family.sans,
+	'--font-performance-display': typography.family.display,
+	'--font-performance-mono': typography.family.mono,
+	'--font-performance-serif': typography.family.serif,
+	'--font-performance-interface': typography.family.interface,
+	'--font-performance-prose': typography.family.prose,
+	'--font-performance-record': typography.family.record,
+	'--font-performance-topology-label': typography.family['topology-label'],
+	'--font-performance-code': typography.family.code,
 
 	// Weights
-	'--font-regular': typography.weight.regular,
-	'--font-medium': typography.weight.medium,
-	'--font-semibold': typography.weight.semibold,
-	'--font-bold': typography.weight.bold,
+	'--font-performance-regular': typography.weight.regular,
+	'--font-performance-medium': typography.weight.medium,
+	'--font-performance-semibold': typography.weight.semibold,
+	'--font-performance-bold': typography.weight.bold,
 
 	// Line heights
-	'--leading-tight': typography.leading.tight,
-	'--leading-snug': typography.leading.snug,
-	'--leading-normal': typography.leading.normal,
-	'--leading-relaxed': typography.leading.relaxed,
-	'--leading-loose': typography.leading.loose,
+	'--leading-performance-tight': typography.leading.tight,
+	'--leading-performance-snug': typography.leading.snug,
+	'--leading-performance-normal': typography.leading.normal,
+	'--leading-performance-relaxed': typography.leading.relaxed,
+	'--leading-performance-loose': typography.leading.loose,
 
 	// Letter spacing
-	'--tracking-tighter': typography.tracking.tighter,
-	'--tracking-tight': typography.tracking.tight,
-	'--tracking-normal': typography.tracking.normal,
-	'--tracking-wide': typography.tracking.wide,
-	'--tracking-wider': typography.tracking.wider,
-	'--tracking-widest': typography.tracking.widest,
-	'--tracking-record': typography.tracking.normal,
-	'--tracking-operator-label': typography.tracking.normal,
-	'--tracking-topology-label': typography.tracking.normal,
+	'--tracking-performance-tighter': typography.tracking.tighter,
+	'--tracking-performance-tight': typography.tracking.tight,
+	'--tracking-performance-normal': typography.tracking.normal,
+	'--tracking-performance-wide': typography.tracking.wide,
+	'--tracking-performance-wider': typography.tracking.wider,
+	'--tracking-performance-widest': typography.tracking.widest,
+	'--tracking-performance-record': typography.tracking.normal,
+	'--tracking-performance-operator-label': typography.tracking.normal,
+	'--tracking-performance-topology-label': typography.tracking.normal,
 
 	// Type scale
-	'--text-display-xl': typography.scale['display-xl'],
-	'--text-display': typography.scale.display,
-	'--text-h1': typography.scale.h1,
-	'--text-h2': typography.scale.h2,
-	'--text-h3': typography.scale.h3,
-	'--text-h4': typography.scale.h4,
-	'--text-h5': typography.scale.h5,
-	'--text-h6': typography.scale.h6,
-	'--text-body-lg': typography.scale['body-lg'],
-	'--text-body': typography.scale.body,
-	'--text-body-sm': typography.scale['body-sm'],
-	'--text-caption': typography.scale.caption,
-	'--text-overline': typography.scale.overline,
-	'--text-record': typography.scale.record,
-	'--text-record-meta': typography.scale['record-meta'],
-	'--text-operator-label': typography.scale['operator-label'],
-	'--text-topology-label': typography.scale['topology-label'],
+	'--text-performance-display-xl': typography.scale['display-xl'],
+	'--text-performance-display': typography.scale.display,
+	'--text-performance-h1': typography.scale.h1,
+	'--text-performance-h2': typography.scale.h2,
+	'--text-performance-h3': typography.scale.h3,
+	'--text-performance-h4': typography.scale.h4,
+	'--text-performance-h5': typography.scale.h5,
+	'--text-performance-h6': typography.scale.h6,
+	'--text-performance-body-lg': typography.scale['body-lg'],
+	'--text-performance-body': typography.scale.body,
+	'--text-performance-body-sm': typography.scale['body-sm'],
+	'--text-performance-caption': typography.scale.caption,
+	'--text-performance-overline': typography.scale.overline,
+	'--text-performance-record': typography.scale.record,
+	'--text-performance-record-meta': typography.scale['record-meta'],
+	'--text-performance-operator-label': typography.scale['operator-label'],
+	'--text-performance-topology-label': typography.scale['topology-label'],
 
 	// Role line heights
-	'--leading-record': '1.35',
-	'--leading-topology-label': '1.2'
+	'--leading-performance-record': '1.35',
+	'--leading-performance-topology-label': '1.2'
 } as const;
 
 /**

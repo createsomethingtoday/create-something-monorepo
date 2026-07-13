@@ -454,182 +454,182 @@
 
 <style>
   .overview-card {
-    border-radius: var(--radius-lg);
-    background: var(--color-overlay);
+    border-radius: var(--radius-performance-scale-lg);
+    background: var(--color-performance-overlay);
   }
 
   .overview-card:hover {
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-performance-border-emphasis);
   }
 
   .overview-title {
-    font-size: var(--text-h2);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-h2);
+    color: var(--color-performance-fg-primary);
   }
 
   .overview-icon {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .overview-description {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .steps-badge {
-    background: var(--color-bg-surface);
-    color: var(--color-fg-primary);
-    border: 1px solid var(--color-border-emphasis);
-    border-radius: var(--radius-full);
-    font-size: var(--text-body-sm);
+    background: var(--color-performance-bg-surface);
+    color: var(--color-performance-fg-primary);
+    border: 1px solid var(--color-performance-border-emphasis);
+    border-radius: var(--radius-performance-scale-full);
+    font-size: var(--text-performance-body-sm);
   }
 
   .setup-section {
-    background: var(--color-hover);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-hover);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .setup-title {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .setup-description {
-    color: var(--color-fg-secondary);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-performance-body-sm);
   }
 
   .steps-heading {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .command-item {
-    background: var(--color-hover);
-    border-radius: var(--radius-md);
+    background: var(--color-performance-hover);
+    border-radius: var(--radius-performance-scale-md);
   }
 
   .command-item:hover {
-    background: var(--color-active);
-    border-color: var(--color-border-emphasis);
+    background: var(--color-performance-active);
+    border-color: var(--color-performance-border-emphasis);
   }
 
   .command-number {
-    background: var(--color-bg-surface);
-    color: var(--color-fg-primary);
-    border-radius: var(--radius-full);
-    font-size: var(--text-caption);
+    background: var(--color-performance-bg-surface);
+    color: var(--color-performance-fg-primary);
+    border-radius: var(--radius-performance-scale-full);
+    font-size: var(--text-performance-caption);
   }
 
   .command-text {
-    color: var(--color-fg-secondary);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-performance-body-sm);
   }
 
   .command-description {
-    color: var(--color-fg-muted);
-    font-size: var(--text-caption);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-caption);
   }
 
   .more-steps {
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-body-sm);
   }
 
   .start-button {
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-fg-primary);
+    color: var(--color-performance-bg-pure);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .start-button:hover {
-    background: var(--color-fg-secondary);
+    background: var(--color-performance-fg-secondary);
   }
 
   .runtime-container {
-    border: 1px solid var(--color-border-emphasis);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-performance-border-emphasis);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .runtime-header {
-    background: var(--color-hover);
+    background: var(--color-performance-hover);
   }
 
   .status-indicator {
-    background: var(--color-fg-primary);
-    border-radius: var(--radius-full);
+    background: var(--color-performance-fg-primary);
+    border-radius: var(--radius-performance-scale-full);
   }
 
   .runtime-title {
-    color: var(--color-fg-primary);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-primary);
+    font-size: var(--text-performance-body-sm);
   }
 
   .runtime-stats {
-    color: var(--color-fg-tertiary);
-    font-size: var(--text-caption);
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-caption);
   }
 
   .metric-card {
-    background: var(--color-overlay);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-overlay);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .metric-card:hover {
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-performance-border-emphasis);
   }
 
   .metric-label {
-    color: var(--color-fg-muted);
-    font-size: var(--text-caption);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-caption);
   }
 
   .metric-value {
-    font-size: var(--text-display);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-display);
+    color: var(--color-performance-fg-primary);
   }
 
   .metric-detail {
-    color: var(--color-fg-muted);
-    font-size: var(--text-caption);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-caption);
   }
 
   .completion-card {
-    border: 1px solid var(--color-border-emphasis);
-    background: var(--color-hover);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-performance-border-emphasis);
+    background: var(--color-performance-hover);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .completion-icon {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .completion-heading {
-    font-size: var(--text-h3);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-h3);
+    color: var(--color-performance-fg-primary);
   }
 
   .completion-message {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .browse-button {
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-emphasis);
-    color: var(--color-fg-primary);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-bg-surface);
+    border: 1px solid var(--color-performance-border-emphasis);
+    color: var(--color-performance-fg-primary);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .browse-button:hover {
-    background: var(--color-active);
+    background: var(--color-performance-active);
   }
 
   .retry-button {
-    background: var(--color-fg-primary);
-    border: 1px solid var(--color-border-emphasis);
-    color: var(--color-bg-pure);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-fg-primary);
+    border: 1px solid var(--color-performance-border-emphasis);
+    color: var(--color-performance-bg-pure);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .retry-button:hover {
-    background: var(--color-fg-secondary);
+    background: var(--color-performance-fg-secondary);
   }
 
   .animate-fade-in {

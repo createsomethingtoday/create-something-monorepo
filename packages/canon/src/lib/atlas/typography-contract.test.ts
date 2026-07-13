@@ -14,15 +14,15 @@ describe('Atlas typography contract', () => {
 		const tokens = read('packages/canon/src/lib/styles/tokens.css');
 
 		for (const token of [
-			'--font-interface',
-			'--font-record',
-			'--font-topology-label',
-			'--text-record',
-			'--text-record-meta',
-			'--text-operator-label',
-			'--text-topology-label',
-			'--tracking-topology-label',
-			'--leading-topology-label'
+			'--font-performance-interface',
+			'--font-performance-record',
+			'--font-performance-topology-label',
+			'--text-performance-record',
+			'--text-performance-record-meta',
+			'--text-performance-operator-label',
+			'--text-performance-topology-label',
+			'--tracking-performance-topology-label',
+			'--leading-performance-topology-label'
 		]) {
 			expect(tokens).toContain(token);
 		}
@@ -33,11 +33,11 @@ describe('Atlas typography contract', () => {
 		const atlasFlowSvelte = read('packages/canon/src/lib/atlas/AtlasFlow.svelte');
 		const atlasStory = read('packages/canon/src/lib/atlas/AtlasStoryCanvas.svelte');
 
-		expect(atlasFlowCss).toMatch(/var\(\s*--font-interface/);
-		expect(atlasFlowCss).toMatch(/var\(\s*--font-topology-label/);
-		expect(atlasFlowSvelte).toContain('var(--font-topology-label');
-		expect(atlasStory).toContain('var(--font-topology-label');
-		expect(atlasStory).toContain('var(--font-record');
+		expect(atlasFlowCss).toMatch(/var\(\s*--font-performance-interface/);
+		expect(atlasFlowCss).toMatch(/var\(\s*--font-performance-topology-label/);
+		expect(atlasFlowSvelte).toContain('var(--font-performance-topology-label');
+		expect(atlasStory).toContain('var(--font-performance-topology-label');
+		expect(atlasStory).toContain('var(--font-performance-record');
 		expect(atlasFlowCss).not.toMatch(/font-family:\s*ABCDiatype/);
 		expect(atlasFlowCss).not.toMatch(/font-family:\s*Inter/);
 	});
@@ -46,11 +46,11 @@ describe('Atlas typography contract', () => {
 		const studioCss = read('packages/interaction-atlas-mcp/src/studio/client/styles.css');
 		const desktopShell = read('apps/atlas-studio-desktop/web/index.html');
 
-		expect(studioCss).toContain('--font-interface');
-		expect(studioCss).toContain('--font-topology-label');
-		expect(studioCss).toContain('font-family: var(--font-interface');
-		expect(studioCss).toContain('font-family: var(--font-topology-label');
-		expect(desktopShell).toContain('--font-interface');
+		expect(studioCss).toContain('--font-performance-interface');
+		expect(studioCss).toContain('--font-performance-topology-label');
+		expect(studioCss).toContain('font-family: var(--font-performance-interface');
+		expect(studioCss).toContain('font-family: var(--font-performance-topology-label');
+		expect(desktopShell).toContain('--font-performance-interface');
 		expect(desktopShell).toContain('Arial, "Helvetica Neue", Helvetica');
 		expect(desktopShell).not.toContain('ona.com/fonts');
 		expect(desktopShell).not.toMatch(/font-family:\s*"ABCDiatype"/);

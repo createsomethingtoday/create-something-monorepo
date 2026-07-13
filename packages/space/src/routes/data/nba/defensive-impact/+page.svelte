@@ -194,7 +194,7 @@
 					<li><strong>Expected</strong> = Shot value × Player's baseline FG% for that zone</li>
 					<li><strong>Delta</strong> = Actual − Expected (negative = good defense)</li>
 				</ul>
-				<p class="nba-methodology-text" style="margin-top: var(--space-sm); color: var(--color-fg-muted);">
+				<p class="nba-methodology-text" style="margin-top: var(--space-performance-sm); color: var(--color-performance-fg-muted);">
 					<em>Note: True defensive impact requires tracking data (Second Spectrum) for matchup-level analysis.
 					This uses shot zones as a proxy.</em>
 				</p>

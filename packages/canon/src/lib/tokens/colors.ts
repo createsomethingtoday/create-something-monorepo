@@ -93,32 +93,32 @@ export type ColorCategory = keyof typeof colors;
  */
 export const colorVars = {
 	// Backgrounds
-	'--color-bg-pure': colors.background.pure,
-	'--color-bg-elevated': colors.background.elevated,
-	'--color-bg-surface': colors.background.surface,
-	'--color-bg-subtle': colors.background.subtle,
+	'--color-performance-bg-pure': colors.background.pure,
+	'--color-performance-bg-elevated': colors.background.elevated,
+	'--color-performance-bg-surface': colors.background.surface,
+	'--color-performance-bg-subtle': colors.background.subtle,
 
 	// Foreground
-	'--color-fg-primary': colors.foreground.primary,
-	'--color-fg-secondary': colors.foreground.secondary,
-	'--color-fg-tertiary': colors.foreground.tertiary,
-	'--color-fg-muted': colors.foreground.muted,
-	'--color-fg-subtle': colors.foreground.subtle,
+	'--color-performance-fg-primary': colors.foreground.primary,
+	'--color-performance-fg-secondary': colors.foreground.secondary,
+	'--color-performance-fg-tertiary': colors.foreground.tertiary,
+	'--color-performance-fg-muted': colors.foreground.muted,
+	'--color-performance-fg-subtle': colors.foreground.subtle,
 
 	// Borders
-	'--color-border-default': colors.border.default,
-	'--color-border-emphasis': colors.border.emphasis,
-	'--color-border-strong': colors.border.strong,
+	'--color-performance-border-default': colors.border.default,
+	'--color-performance-border-emphasis': colors.border.emphasis,
+	'--color-performance-border-strong': colors.border.strong,
 
 	// Accents
-	'--color-success': colors.accent.success,
-	'--color-success-muted': colors.accent.successMuted,
-	'--color-error': colors.accent.error,
-	'--color-error-muted': colors.accent.errorMuted,
-	'--color-warning': colors.accent.warning,
-	'--color-warning-muted': colors.accent.warningMuted,
-	'--color-info': colors.accent.info,
-	'--color-info-muted': colors.accent.infoMuted,
+	'--color-performance-success': colors.accent.success,
+	'--color-performance-success-muted': colors.accent.successMuted,
+	'--color-performance-error': colors.accent.error,
+	'--color-performance-error-muted': colors.accent.errorMuted,
+	'--color-performance-warning': colors.accent.warning,
+	'--color-performance-warning-muted': colors.accent.warningMuted,
+	'--color-performance-info': colors.accent.info,
+	'--color-performance-info-muted': colors.accent.infoMuted,
 
 	// Performance Lab
 	'--color-performance-paper': colors.performance.paper,
@@ -150,9 +150,9 @@ export const colorVars = {
 	'--color-performance-stop-soft': colors.performance.riskSoft,
 
 	// Interactive
-	'--color-hover': colors.interactive.hover,
-	'--color-active': colors.interactive.active,
-	'--color-focus': colors.interactive.focus
+	'--color-performance-hover': colors.interactive.hover,
+	'--color-performance-active': colors.interactive.active,
+	'--color-performance-focus': colors.interactive.focus
 } as const;
 
 /**

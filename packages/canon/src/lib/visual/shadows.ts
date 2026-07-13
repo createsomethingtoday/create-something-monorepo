@@ -334,7 +334,7 @@ export function generateShadowCssVars(): string {
 	// Drop shadows
 	for (const [step, shadow] of Object.entries(shadows) as [ShadowStep, Shadow][]) {
 		if (step === 'none') {
-			lines.push('--shadow-none: none;');
+			lines.push('--shadow-performance-scale-none: none;');
 		} else {
 			lines.push(`--shadow-${step}: ${shadowToCss(shadow)};`);
 		}
@@ -350,8 +350,8 @@ export function generateShadowCssVars(): string {
 	lines.push('');
 
 	// Inner shadows
-	lines.push(`--shadow-inner: ${shadowLayerToCss(inner.base)};`);
-	lines.push(`--shadow-inner-lg: ${shadowLayerToCss(inner.lg)};`);
+	lines.push(`--shadow-performance-scale-inner: ${shadowLayerToCss(inner.base)};`);
+	lines.push(`--shadow-performance-scale-inner-lg: ${shadowLayerToCss(inner.lg)};`);
 
 	return lines.join('\n');
 }

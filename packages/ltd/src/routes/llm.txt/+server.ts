@@ -131,10 +131,10 @@ function generateCanonicalContext(): string {
 	// Relationship mappings
 	lines.push('## Relationship Mappings');
 	lines.push('');
-	lines.push('Rams -> minimalism -> --color-fg-muted, --radius-*');
+	lines.push('Rams -> minimalism -> --color-performance-fg-muted, --radius-*');
 	lines.push('Swiss Design -> typography -> --text-*, grid spacing');
-	lines.push('Braun -> industrial -> --radius-sm, --radius-lg');
-	lines.push('Motion Language -> animation -> --duration-*, --ease-standard');
+	lines.push('Braun -> industrial -> --radius-performance-scale-sm, --radius-performance-scale-lg');
+	lines.push('Motion Language -> animation -> --duration-*, --ease-performance-standard');
 	lines.push('');
 
 	return lines.join('\n');

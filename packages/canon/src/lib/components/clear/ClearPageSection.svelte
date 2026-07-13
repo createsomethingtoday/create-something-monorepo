@@ -153,9 +153,9 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.76rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.15;
 		text-transform: uppercase;
@@ -164,9 +164,9 @@
 	.clear-page-section__title {
 		margin: 0;
 		color: var(--color-performance-ink, #090909);
-		font-family: var(--font-performance-display, var(--font-display, var(--font-sans)));
+		font-family: var(--font-performance-display, var(--font-performance-display, var(--font-performance-sans)));
 		font-size: 3.1rem;
-		font-weight: var(--font-performance-display-weight, var(--font-medium, 500));
+		font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500));
 		font-kerning: normal;
 		font-feature-settings: "kern" 1, "liga" 1;
 		line-height: 1;
@@ -177,7 +177,7 @@
 	.clear-page-section--hero .clear-page-section__title {
 		max-width: 13ch;
 		font-size: 5.45rem;
-		font-weight: var(--font-performance-display-weight, var(--font-medium, 500));
+		font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500));
 		line-height: var(--leading-performance-display, 0.94);
 	}
 

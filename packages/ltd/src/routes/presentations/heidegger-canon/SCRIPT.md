@@ -494,7 +494,7 @@ Rules files capture breakdowns as repair. Cloudflare patterns. CSS canon. Beads 
 
 [PAUSE]
 
-Canon tokens give you CSS values that trace to principles. You don't think about spacing—you use `--space-md`.
+Canon tokens give you CSS values that trace to principles. You don't think about spacing—you use `--space-performance-md`.
 
 [PAUSE]
 

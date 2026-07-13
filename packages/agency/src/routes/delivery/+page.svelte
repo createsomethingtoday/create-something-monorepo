@@ -181,6 +181,6 @@
   .delivery-record-card p strong {
     margin-right: 0.45rem;
     color: var(--color-performance-ink, #090909);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
   }
 </style>

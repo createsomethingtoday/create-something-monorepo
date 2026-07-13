@@ -27,11 +27,11 @@ export function getRadius(key: RadiusKey): string {
  * CSS custom property names for radius
  */
 export const radiusVars = {
-	sm: '--radius-sm',
-	md: '--radius-md',
-	lg: '--radius-lg',
-	xl: '--radius-xl',
-	full: '--radius-full'
+	sm: '--radius-performance-scale-sm',
+	md: '--radius-performance-scale-md',
+	lg: '--radius-performance-scale-lg',
+	xl: '--radius-performance-scale-xl',
+	full: '--radius-performance-scale-full'
 } as const;
 
 /**

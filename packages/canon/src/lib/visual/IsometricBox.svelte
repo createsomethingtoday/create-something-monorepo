@@ -90,23 +90,23 @@
 
 <style>
 	.isometric-box {
-		--face-stroke: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		--face-stroke: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 	}
 
 	.face {
 		stroke: var(--face-stroke);
-		transition: fill var(--duration-micro, 200ms) var(--ease-standard, ease);
+		transition: fill var(--duration-performance-micro, 200ms) var(--ease-performance-standard, ease);
 	}
 
 	.face-top {
-		fill: var(--color-fg-subtle, rgba(255, 255, 255, 0.2));
+		fill: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.2));
 	}
 
 	.face-left {
-		fill: var(--color-bg-subtle, rgba(255, 255, 255, 0.1));
+		fill: var(--color-performance-bg-subtle, rgba(255, 255, 255, 0.1));
 	}
 
 	.face-right {
-		fill: var(--color-bg-elevated, rgba(255, 255, 255, 0.05));
+		fill: var(--color-performance-bg-elevated, rgba(255, 255, 255, 0.05));
 	}
 </style>

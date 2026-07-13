@@ -14,8 +14,8 @@
 
 		// Get Canon colors from CSS custom properties
 		const styles = getComputedStyle(document.documentElement);
-		const bgPure = styles.getPropertyValue('--color-bg-pure').trim() || '#000000';
-		const fgFocus = styles.getPropertyValue('--color-focus').trim() || 'rgba(255, 255, 255, 0.5)';
+		const bgPure = styles.getPropertyValue('--color-performance-bg-pure').trim() || '#000000';
+		const fgFocus = styles.getPropertyValue('--color-performance-focus').trim() || 'rgba(255, 255, 255, 0.5)';
 
 		// Simple animated background
 		const particles: { x: number; y: number; vx: number; vy: number }[] = [];
@@ -78,6 +78,6 @@
 
 <style>
 	.canvas-bg {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 </style>

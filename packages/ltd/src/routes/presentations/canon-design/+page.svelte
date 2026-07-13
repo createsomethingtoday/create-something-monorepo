@@ -118,21 +118,21 @@
 		<h2>Color Hierarchy</h2>
 		<div class="token-columns">
 			<TokenGrid title="Background" columns={1} compact>
-				<TokenSwatch token="--color-bg-pure" label="pure" size="sm" />
-				<TokenSwatch token="--color-bg-elevated" label="elevated" size="sm" />
-				<TokenSwatch token="--color-bg-surface" label="surface" size="sm" />
-				<TokenSwatch token="--color-bg-subtle" label="subtle" size="sm" />
+				<TokenSwatch token="--color-performance-bg-pure" label="pure" size="sm" />
+				<TokenSwatch token="--color-performance-bg-elevated" label="elevated" size="sm" />
+				<TokenSwatch token="--color-performance-bg-surface" label="surface" size="sm" />
+				<TokenSwatch token="--color-performance-bg-subtle" label="subtle" size="sm" />
 			</TokenGrid>
 			<TokenGrid title="Foreground" columns={1} compact>
-				<TokenSwatch token="--color-fg-primary" label="primary" size="sm" />
-				<TokenSwatch token="--color-fg-secondary" label="secondary" size="sm" />
-				<TokenSwatch token="--color-fg-tertiary" label="tertiary" size="sm" />
-				<TokenSwatch token="--color-fg-muted" label="muted (AA)" size="sm" />
+				<TokenSwatch token="--color-performance-fg-primary" label="primary" size="sm" />
+				<TokenSwatch token="--color-performance-fg-secondary" label="secondary" size="sm" />
+				<TokenSwatch token="--color-performance-fg-tertiary" label="tertiary" size="sm" />
+				<TokenSwatch token="--color-performance-fg-muted" label="muted (AA)" size="sm" />
 			</TokenGrid>
 			<TokenGrid title="Border" columns={1} compact>
-				<TokenSwatch token="--color-border-default" label="default" size="sm" />
-				<TokenSwatch token="--color-border-emphasis" label="emphasis" size="sm" />
-				<TokenSwatch token="--color-border-strong" label="strong" size="sm" />
+				<TokenSwatch token="--color-performance-border-default" label="default" size="sm" />
+				<TokenSwatch token="--color-performance-border-emphasis" label="emphasis" size="sm" />
+				<TokenSwatch token="--color-performance-border-strong" label="strong" size="sm" />
 			</TokenGrid>
 		</div>
 		<p class="muted">Live tokens — when Canon changes, this presentation updates automatically.</p>
@@ -144,10 +144,10 @@
 		<h2>Semantic Colors</h2>
 		<p>Beyond neutral grays, semantic colors carry meaning:</p>
 		<TokenGrid columns={2}>
-			<TokenSwatch token="--color-success" label="success (7.08:1)" />
-			<TokenSwatch token="--color-error" label="error (4.97:1)" />
-			<TokenSwatch token="--color-warning" label="warning (6.31:1)" />
-			<TokenSwatch token="--color-info" label="info (5.23:1)" />
+			<TokenSwatch token="--color-performance-success" label="success (7.08:1)" />
+			<TokenSwatch token="--color-performance-error" label="error (4.97:1)" />
+			<TokenSwatch token="--color-performance-warning" label="warning (6.31:1)" />
+			<TokenSwatch token="--color-performance-info" label="info (5.23:1)" />
 		</TokenGrid>
 		<p class="muted">
 			All WCAG AA compliant on pure black. Each includes muted and border variants.
@@ -162,12 +162,12 @@
 			Spacing tokens follow the golden ratio, creating harmonic proportions:
 		</p>
 		<ul>
-			<li><code>--space-xs</code> = 0.5rem</li>
-			<li><code>--space-sm</code> = 1rem</li>
-			<li><code>--space-md</code> = 1.618rem</li>
-			<li><code>--space-lg</code> = 2.618rem</li>
-			<li><code>--space-xl</code> = 4.236rem</li>
-			<li><code>--space-2xl</code> = 6.854rem</li>
+			<li><code>--space-performance-xs</code> = 0.5rem</li>
+			<li><code>--space-performance-sm</code> = 1rem</li>
+			<li><code>--space-performance-md</code> = 1.618rem</li>
+			<li><code>--space-performance-lg</code> = 2.618rem</li>
+			<li><code>--space-performance-xl</code> = 4.236rem</li>
+			<li><code>--space-performance-2xl</code> = 6.854rem</li>
 		</ul>
 		<p class="muted">
 			Natural proportions create visual rhythm without thinking about it.
@@ -185,21 +185,21 @@
 TYPOGRAPHY SCALE
 
 Display (Large)
-├── --text-display-xl: clamp(3.5rem, 5vw + 2rem, 7rem)
-└── --text-display: clamp(2.5rem, 4vw + 1.5rem, 5rem)
+├── --text-performance-display-xl: clamp(3.5rem, 5vw + 2rem, 7rem)
+└── --text-performance-display: clamp(2.5rem, 4vw + 1.5rem, 5rem)
 
 Heading
-├── --text-h1: clamp(2rem, 3vw + 1rem, 3.5rem)
-├── --text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem)
-└── --text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem)
+├── --text-performance-h1: clamp(2rem, 3vw + 1rem, 3.5rem)
+├── --text-performance-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem)
+└── --text-performance-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem)
 
 Body (Reading)
-├── --text-body-lg: 1.125rem
-├── --text-body: 1rem
-└── --text-body-sm: 0.875rem
+├── --text-performance-body-lg: 1.125rem
+├── --text-performance-body: 1rem
+└── --text-performance-body-sm: 0.875rem
 
 Small
-└── --text-caption: 0.75rem
+└── --text-performance-caption: 0.75rem
 `}</pre>
 	</Slide>
 
@@ -211,12 +211,12 @@ Small
 			Motion should reveal state changes, not seek attention:
 		</p>
 		<ul>
-			<li><code>--duration-micro</code> = 200ms — Hover states, toggles</li>
-			<li><code>--duration-standard</code> = 300ms — Page transitions, modals</li>
-			<li><code>--duration-complex</code> = 500ms — Orchestrated sequences</li>
+			<li><code>--duration-performance-micro</code> = 200ms — Hover states, toggles</li>
+			<li><code>--duration-performance-standard</code> = 300ms — Page transitions, modals</li>
+			<li><code>--duration-performance-complex</code> = 500ms — Orchestrated sequences</li>
 		</ul>
 		<p class="muted">
-			<code>--ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1)</code> for all animations.
+			<code>--ease-performance-standard: cubic-bezier(0.4, 0.0, 0.2, 1)</code> for all animations.
 		</p>
 	</Slide>
 
@@ -259,7 +259,7 @@ Is the value dynamic/computed at runtime?
          │
          └── No → Is it a design/aesthetic concern?
                   ├── Yes → Use Canon token in scoped styles
-                  │         color: var(--color-fg-primary)
+                  │         color: var(--color-performance-fg-primary)
                   │
                   └── No → Reconsider if needed at all
 `}</pre>
@@ -274,7 +274,7 @@ Is the value dynamic/computed at runtime?
 		</p>
 		<ul>
 			<li><strong>Tailwind</strong> for composition: <code>flex items-center gap-4 p-6</code></li>
-			<li><strong>Canon</strong> for design: <code>background: var(--color-bg-surface)</code></li>
+			<li><strong>Canon</strong> for design: <code>background: var(--color-performance-bg-surface)</code></li>
 			<li><strong>Inline styles</strong> for dynamic values: <code>style="--delay: &#123;index * 100&#125;ms"</code></li>
 		</ul>
 		<p class="muted">
@@ -290,9 +290,9 @@ Is the value dynamic/computed at runtime?
 			What breaks Canon coherence:
 		</p>
 		<ul>
-			<li>❌ Hardcoded colors: <code>bg-white/10</code> instead of <code>var(--color-bg-surface)</code></li>
+			<li>❌ Hardcoded colors: <code>bg-white/10</code> instead of <code>var(--color-performance-bg-surface)</code></li>
 			<li>❌ Inline styles for static values: <code>style="border-radius: 12px"</code></li>
-			<li>❌ Arbitrary typography: <code>text-3xl</code> instead of <code>var(--text-h2)</code></li>
+			<li>❌ Arbitrary typography: <code>text-3xl</code> instead of <code>var(--text-performance-h2)</code></li>
 			<li>❌ Utility classes for motion: <code>transition: all 0.2s</code> instead of Canon tokens</li>
 		</ul>
 		<p class="muted">
@@ -327,7 +327,7 @@ Is the value dynamic/computed at runtime?
 <style>
 	.token-columns {
 		display: flex;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 		justify-content: center;
 	}
 </style>

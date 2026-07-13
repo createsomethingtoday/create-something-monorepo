@@ -20,27 +20,27 @@ Themes should extend, not replace. Canon provides a complete token system that e
 These tokens form the theming surface. Override them to create custom themes.
 
 ### Background Tokens
-- `--color-bg-pure`
+- `--color-performance-bg-pure`
 - `--color-bg-base`
-- `--color-bg-surface`
-- `--color-bg-elevated`
+- `--color-performance-bg-surface`
+- `--color-performance-bg-elevated`
 
 ### Foreground Tokens
-- `--color-fg-primary`
-- `--color-fg-secondary`
-- `--color-fg-tertiary`
-- `--color-fg-muted`
+- `--color-performance-fg-primary`
+- `--color-performance-fg-secondary`
+- `--color-performance-fg-tertiary`
+- `--color-performance-fg-muted`
 
 ### Border Tokens
-- `--color-border-default`
-- `--color-border-emphasis`
-- `--color-border-strong`
+- `--color-performance-border-default`
+- `--color-performance-border-emphasis`
+- `--color-performance-border-strong`
 
 ### Semantic Tokens
-- `--color-success`
-- `--color-error`
-- `--color-warning`
-- `--color-info`
+- `--color-performance-success`
+- `--color-performance-error`
+- `--color-performance-warning`
+- `--color-performance-info`
 
 ## Creating a Custom Theme
 
@@ -53,10 +53,10 @@ Override Canon's tokens at the root level:
   --color-accent-muted: rgba(99, 102, 241, 0.1);
   
   /* Custom backgrounds */
-  --color-bg-pure: #0f0f23;
+  --color-performance-bg-pure: #0f0f23;
   --color-bg-base: #1a1a2e;
-  --color-bg-surface: #252538;
-  --color-bg-elevated: #2f2f45;
+  --color-performance-bg-surface: #252538;
+  --color-performance-bg-elevated: #2f2f45;
 }
 ```
 
@@ -67,18 +67,18 @@ Canon defaults to dark mode. Add light mode with a theme attribute:
 ```css
 /* Dark mode (default) */
 :root {
-  --color-bg-pure: #000000;
+  --color-performance-bg-pure: #000000;
   --color-bg-base: #0a0a0a;
-  --color-fg-primary: rgba(255, 255, 255, 1);
-  --color-fg-secondary: rgba(255, 255, 255, 0.8);
+  --color-performance-fg-primary: rgba(255, 255, 255, 1);
+  --color-performance-fg-secondary: rgba(255, 255, 255, 0.8);
 }
 
 /* Light mode override */
 [data-theme="light"] {
-  --color-bg-pure: #ffffff;
+  --color-performance-bg-pure: #ffffff;
   --color-bg-base: #fafafa;
-  --color-fg-primary: rgba(0, 0, 0, 0.9);
-  --color-fg-secondary: rgba(0, 0, 0, 0.7);
+  --color-performance-fg-primary: rgba(0, 0, 0, 0.9);
+  --color-performance-fg-secondary: rgba(0, 0, 0, 0.7);
 }
 ```
 
@@ -103,7 +103,7 @@ Respect user's system preference:
 ```css
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --color-bg-pure: #ffffff;
+    --color-performance-bg-pure: #ffffff;
     --color-bg-base: #fafafa;
     /* ... light mode tokens ... */
   }
@@ -123,24 +123,24 @@ Respect user's system preference:
 ```css
 [data-theme="light"] {
   /* Backgrounds - inverted */
-  --color-bg-pure: #ffffff;
+  --color-performance-bg-pure: #ffffff;
   --color-bg-base: #fafafa;
-  --color-bg-surface: #f5f5f5;
-  --color-bg-elevated: #ffffff;
+  --color-performance-bg-surface: #f5f5f5;
+  --color-performance-bg-elevated: #ffffff;
   
   /* Foregrounds - dark text */
-  --color-fg-primary: rgba(0, 0, 0, 0.9);
-  --color-fg-secondary: rgba(0, 0, 0, 0.7);
-  --color-fg-tertiary: rgba(0, 0, 0, 0.5);
-  --color-fg-muted: rgba(0, 0, 0, 0.4);
+  --color-performance-fg-primary: rgba(0, 0, 0, 0.9);
+  --color-performance-fg-secondary: rgba(0, 0, 0, 0.7);
+  --color-performance-fg-tertiary: rgba(0, 0, 0, 0.5);
+  --color-performance-fg-muted: rgba(0, 0, 0, 0.4);
   
   /* Borders - adjusted for light bg */
-  --color-border-default: rgba(0, 0, 0, 0.1);
-  --color-border-emphasis: rgba(0, 0, 0, 0.2);
-  --color-border-strong: rgba(0, 0, 0, 0.3);
+  --color-performance-border-default: rgba(0, 0, 0, 0.1);
+  --color-performance-border-emphasis: rgba(0, 0, 0, 0.2);
+  --color-performance-border-strong: rgba(0, 0, 0, 0.3);
   
   /* Interactive - adjusted */
-  --color-hover: rgba(0, 0, 0, 0.05);
-  --color-active: rgba(0, 0, 0, 0.1);
+  --color-performance-hover: rgba(0, 0, 0, 0.05);
+  --color-performance-active: rgba(0, 0, 0, 0.1);
 }
 ```

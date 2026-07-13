@@ -117,27 +117,27 @@
 					<tbody>
 						<tr>
 							<td><code>--webflow-blue</code> (focus)</td>
-							<td><code>--color-border-emphasis</code></td>
+							<td><code>--color-performance-border-emphasis</code></td>
 							<td>Functional feedback</td>
 						</tr>
 						<tr>
 							<td><code>--webflow-blue</code> (active)</td>
-							<td><code>--color-active</code></td>
+							<td><code>--color-performance-active</code></td>
 							<td>State indication</td>
 						</tr>
 						<tr>
 							<td><code>--webflow-blue</code> (button)</td>
-							<td><code>--color-fg-primary</code></td>
+							<td><code>--color-performance-fg-primary</code></td>
 							<td>High contrast</td>
 						</tr>
 						<tr>
 							<td><code>--webflow-blue</code> (link)</td>
-							<td><code>--color-fg-secondary</code></td>
+							<td><code>--color-performance-fg-secondary</code></td>
 							<td>Receding hierarchy</td>
 						</tr>
 						<tr>
 							<td><code>--webflow-blue</code> (logo)</td>
-							<td><code>--color-fg-primary</code></td>
+							<td><code>--color-performance-fg-primary</code></td>
 							<td>System branding</td>
 						</tr>
 					</tbody>
@@ -840,76 +840,76 @@ await db.deployments.create({
 
 <style>
 	.paper-container {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.paper-id {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		letter-spacing: 0.1em;
 	}
 
 	.paper-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h1);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
 		line-height: 1.2;
 	}
 
 	.paper-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.paper-meta {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.section-heading {
-		font-size: var(--text-h2);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		padding-bottom: var(--space-sm);
+		font-size: var(--text-performance-h2);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
+		padding-bottom: var(--space-performance-sm);
 	}
 
 	.subsection-heading {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-top: var(--space-md);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
+		margin-top: var(--space-performance-md);
 	}
 
 	.abstract-section {
-		border-left: 3px solid var(--color-border-emphasis);
+		border-left: 3px solid var(--color-performance-border-emphasis);
 	}
 
 	.body-text {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	:global(.text-emphasis) {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.text-success {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.text-warning {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	.text-error {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.text-muted {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.text-link {
-		color: var(--color-info);
+		color: var(--color-performance-info);
 		text-decoration: underline;
 		text-underline-offset: 2px;
 	}
@@ -919,93 +919,93 @@ await db.deployments.create({
 	}
 
 	.metric-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 		text-align: center;
 	}
 
 	.metric-value {
-		font-size: var(--text-h2);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h2);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.metric-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
-		margin-top: var(--space-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
+		margin-top: var(--space-performance-xs);
 	}
 
 	.metric-success {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.data-table {
 		border-collapse: collapse;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.data-table th,
 	.data-table td {
-		padding: var(--space-sm);
+		padding: var(--space-performance-sm);
 		text-align: left;
 	}
 
 	.data-table th {
-		color: var(--color-fg-tertiary);
-		font-weight: var(--font-medium);
-		background: var(--color-bg-subtle);
+		color: var(--color-performance-fg-tertiary);
+		font-weight: var(--font-performance-medium);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.data-table td {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	:global(.code-block) {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		padding: var(--space-performance-md);
 		overflow-x: auto;
 		font-family: ui-monospace, monospace;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		white-space: pre;
 	}
 
 	code {
 		font-family: ui-monospace, monospace;
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		padding: 0.125rem 0.375rem;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		font-size: 0.9em;
 	}
 
 	.callout-box {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		border-left: 3px solid var(--color-info);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		border-left: 3px solid var(--color-performance-info);
 	}
 
 	:global(.code-block-success) {
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-success, var(--color-border-default));
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-subtle);
+		border: 1px solid var(--color-border-success, var(--color-performance-border-default));
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 		overflow-x: auto;
 		font-family: ui-monospace, monospace;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		white-space: pre;
 	}
 
 	:global(.code-secondary) {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.emphasis-text {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.list-small {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 </style>

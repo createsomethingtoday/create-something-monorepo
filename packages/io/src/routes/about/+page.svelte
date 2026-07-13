@@ -130,23 +130,23 @@
 <style>
 	.hero-section {
 		position: relative;
-		padding: 6rem var(--space-md) var(--space-xl);
+		padding: 6rem var(--space-performance-md) var(--space-performance-xl);
 	}
 
 	.intro-text {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.intro-highlight {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
-		font-weight: var(--font-medium);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-primary);
+		font-weight: var(--font-performance-medium);
 	}
 
 	.text-link {
-		color: var(--color-fg-primary);
-		transition: opacity var(--duration-standard) var(--ease-standard);
+		color: var(--color-performance-fg-primary);
+		transition: opacity var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.text-link:hover {
@@ -154,62 +154,62 @@
 	}
 
 	.philosophy-card {
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.card-title {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.card-text {
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
+		color: var(--color-performance-fg-secondary);
+		line-height: var(--leading-performance-relaxed);
 	}
 
 	.background-text {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body);
 	}
 
 	.section-border {
-		padding: var(--space-xl) var(--space-md);
+		padding: var(--space-performance-xl) var(--space-performance-md);
 	}
 
 
 	.section-text {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
+		line-height: var(--leading-performance-relaxed);
 	}
 
 	.topic-card {
-		padding: var(--space-md);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.topic-title {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.topic-description {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.animate-reveal {
 		opacity: 0;
 		transform: translate3d(0, 20px, 0); /* GPU-accelerated */
-		animation: reveal var(--duration-complex) var(--ease-standard) forwards;
-		animation-delay: calc(var(--delay, 0) * var(--cascade-step));
+		animation: reveal var(--duration-performance-complex) var(--ease-performance-standard) forwards;
+		animation-delay: calc(var(--delay, 0) * var(--cascade-performance-step));
 		will-change: transform, opacity;
 	}
 

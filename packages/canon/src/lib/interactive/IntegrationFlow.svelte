@@ -191,7 +191,7 @@
 
 	.description {
 		color: rgba(255, 255, 255, 0.5);
-		font-size: var(--text-body-sm, 0.875rem);
+		font-size: var(--text-performance-body-sm, 0.875rem);
 		margin: 0;
 		line-height: 1.5;
 	}

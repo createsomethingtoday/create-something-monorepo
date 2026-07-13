@@ -389,117 +389,117 @@
 <style>
 	/* Page Layout */
 	.page-container {
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Typography */
 	.page-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h1);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.page-subtitle {
-		font-size: var(--text-h3);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.section-title {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.cta-title {
 		font-size: clamp(1.5rem, 3vw, 2rem);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.card-title {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.card-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.body-text {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.list-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.caption-text {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.text-primary {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Launch Badge */
 	.launch-badge {
-		font-size: var(--text-body-sm);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		background: var(--color-performance-bg-surface);
+		border: 1px solid var(--color-performance-border-emphasis);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Feature Cards */
 	.feature-card {
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	/* Philosophy Card */
 	.philosophy-card {
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	/* Pricing Cards */
 	.pricing-card {
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.pricing-card-featured {
-		background: var(--color-bg-surface);
-		border: 2px solid var(--color-border-strong);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border: 2px solid var(--color-performance-border-strong);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.tier-label {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-family: ui-monospace, monospace;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.tier-label-featured {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-family: ui-monospace, monospace;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.tier-price {
 		font-size: clamp(1.5rem, 3vw, 2rem);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.tier-period {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.recommended-badge {
@@ -508,74 +508,74 @@
 		left: 50%;
 		transform: translateX(-50%);
 		padding: 0.25rem 0.75rem;
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		font-size: var(--text-caption);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
+		font-size: var(--text-performance-caption);
 		font-weight: 700;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 	}
 
 	/* Icons */
 	:global(.icon-secondary) {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	:global(.icon-success) {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	:global(.icon-muted) {
-		color: var(--color-fg-subtle);
+		color: var(--color-performance-fg-subtle);
 	}
 
 	/* Form Elements */
 	.success-banner {
-		background: var(--color-success-muted);
-		border: 1px solid var(--color-success-border);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-success-muted);
+		border: 1px solid var(--color-performance-success-border);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.success-title {
-		color: var(--color-success);
-		font-size: var(--text-body-lg);
+		color: var(--color-performance-success);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 500;
 	}
 
 	.success-description {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.error-banner {
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		border-radius: var(--radius-sm);
-		color: var(--color-error);
-		font-size: var(--text-body-sm);
+		background: var(--color-performance-error-muted);
+		border: 1px solid var(--color-performance-error-border);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-error);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.email-input {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-surface);
+		border: 1px solid var(--color-performance-border-emphasis);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.email-input::placeholder {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.email-input:focus {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
-		border-color: var(--color-border-strong);
+		border-color: var(--color-performance-border-strong);
 	}
 
 	.submit-button {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.submit-button:hover {
@@ -583,21 +583,21 @@
 	}
 
 	.submit-button:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 	.footer-section {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.footer-link {
 		text-decoration: underline;
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.footer-link:hover {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Screen reader only - visually hidden but accessible */

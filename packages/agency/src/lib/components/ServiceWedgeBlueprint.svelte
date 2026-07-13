@@ -129,8 +129,8 @@
   .path-stage__label,
   .policy-card span,
   .path-axis span {
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
+    color: var(--color-performance-fg-muted);
+    font-family: var(--font-performance-mono);
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
@@ -141,7 +141,7 @@
 
   .path-copy h3 {
     margin: 0;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     font-size: clamp(1.85rem, 3.2vw, 3rem);
     line-height: 1.02;
     letter-spacing: -0.045em;
@@ -150,7 +150,7 @@
 
   .path-copy p {
     margin: 0;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     line-height: 1.72;
     text-wrap: pretty;
   }
@@ -236,7 +236,7 @@
     height: 2rem;
     border-radius: 999px;
     background: rgba(49, 92, 255, 0.14);
-    color: color-mix(in srgb, var(--color-brand-primary, #315cff) 72%, white);
+    color: color-mix(in srgb, var(--color-performance-brand-primary, #315cff) 72%, white);
     font-size: 0.68rem;
   }
 
@@ -247,14 +247,14 @@
 
   .path-stage h4 {
     margin: 0.28rem 0 0.34rem;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     font-size: 1rem;
     line-height: 1.15;
   }
 
   .path-stage p {
     margin: 0;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     font-size: 0.84rem;
     line-height: 1.52;
   }
@@ -265,14 +265,14 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.85rem 0.95rem;
-    border: 1px solid color-mix(in srgb, var(--color-brand-primary-border) 78%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-performance-brand-primary-border) 78%, transparent);
     border-radius: 1rem;
     background: rgba(49, 92, 255, 0.1);
   }
 
   .policy-card span {
     flex: 0 0 auto;
-    color: color-mix(in srgb, var(--color-brand-primary, #315cff) 62%, white);
+    color: color-mix(in srgb, var(--color-performance-brand-primary, #315cff) 62%, white);
     font-size: 0.64rem;
   }
 
@@ -287,7 +287,7 @@
     padding: 0.38rem 0.58rem;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     font-size: 0.78rem;
     font-weight: 600;
     line-height: 1;

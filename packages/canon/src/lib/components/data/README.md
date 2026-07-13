@@ -45,7 +45,7 @@ controlled sorting.
 
 `DataTableColumn`: `{ key, label, align?: 'left' | 'right', mono?, width?, sortable? }`.
 Numbers, counts, and timestamps go `align: 'right'` with `mono: true`
-(`--font-mono` + `tabular-nums`). Never center columns.
+(`--font-performance-mono` + `tabular-nums`). Never center columns.
 
 ### Accessibility contract
 
@@ -92,8 +92,8 @@ Numbers, counts, and timestamps go `align: 'right'` with `mono: true`
 | `mono: true` for ids, cursors, timestamps, counts | Render machine values in the prose face |
 | Right-align numeric/timestamp columns | Center columns (breaks scan lines) |
 | Compose `EmptyState` in the `empty` snippet | Leave a blank region when a query is empty |
-| Solid `--color-shell-surface` under rows | Glass on dense data (readability suffers) |
-| 1px `--color-border-default` row separators | Zebra striping, cell borders, filled headers |
+| Solid `--color-performance-shell-surface` under rows | Glass on dense data (readability suffers) |
+| 1px `--color-performance-border-default` row separators | Zebra striping, cell borders, filled headers |
 
 ---
 

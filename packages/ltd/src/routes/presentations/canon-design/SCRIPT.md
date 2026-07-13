@@ -204,12 +204,12 @@ Spacing tokens follow the golden ratio. [PAUSE] Phi equals 1.618.
 
 [PAUSE]
 
-`--space-xs` is 0.5 rem.
-`--space-sm` is 1 rem.
-`--space-md` is 1.618 rem.
-`--space-lg` is 2.618 rem.
-`--space-xl` is 4.236 rem.
-`--space-2xl` is 6.854 rem.
+`--space-performance-xs` is 0.5 rem.
+`--space-performance-sm` is 1 rem.
+`--space-performance-md` is 1.618 rem.
+`--space-performance-lg` is 2.618 rem.
+`--space-performance-xl` is 4.236 rem.
+`--space-performance-2xl` is 6.854 rem.
 
 [PAUSE 2s]
 
@@ -217,7 +217,7 @@ Each step multiplies by phi. [PAUSE] Natural proportions create visual rhythm—
 
 [PAUSE]
 
-When you use `--space-md`, you're using mathematics that's been aesthetically validated for millennia.
+When you use `--space-performance-md`, you're using mathematics that's been aesthetically validated for millennia.
 
 ---
 
@@ -235,9 +235,9 @@ Display sizes use clamp functions—they scale fluidly between viewport sizes.
 
 [PAUSE]
 
-`--text-display-xl` starts at 3.5 rem, scales up to 7 rem.
+`--text-performance-display-xl` starts at 3.5 rem, scales up to 7 rem.
 
-`--text-display` starts at 2.5 rem, scales up to 5 rem.
+`--text-performance-display` starts at 2.5 rem, scales up to 5 rem.
 
 Headings—H1, H2, H3—follow the same fluid pattern.
 
@@ -263,15 +263,15 @@ Motion should reveal state changes, not seek attention.
 
 [PAUSE]
 
-`--duration-micro` is 200 milliseconds. [PAUSE] Use for hover states, toggles, micro-interactions.
+`--duration-performance-micro` is 200 milliseconds. [PAUSE] Use for hover states, toggles, micro-interactions.
 
-`--duration-standard` is 300 milliseconds. [PAUSE] Use for page transitions, modals.
+`--duration-performance-standard` is 300 milliseconds. [PAUSE] Use for page transitions, modals.
 
-`--duration-complex` is 500 milliseconds. [PAUSE] Use for orchestrated sequences.
+`--duration-performance-complex` is 500 milliseconds. [PAUSE] Use for orchestrated sequences.
 
 [PAUSE 2s]
 
-One easing curve for everything: `--ease-standard`. [PAUSE] Cubic bezier 0.4, 0, 0.2, 1.
+One easing curve for everything: `--ease-performance-standard`. [PAUSE] Cubic bezier 0.4, 0, 0.2, 1.
 
 [PAUSE]
 
@@ -339,7 +339,7 @@ Most components use all three approaches together.
 
 Tailwind for composition: `flex items-center gap-4 p-6`
 
-Canon for design: `background: var(--color-bg-surface)`
+Canon for design: `background: var(--color-performance-bg-surface)`
 
 Inline styles for dynamic values: `style="--delay: {index * 100}ms"`
 
@@ -363,11 +363,11 @@ What breaks Canon coherence.
 
 [PAUSE]
 
-Hardcoded colors. [PAUSE] `bg-white/10` instead of `var(--color-bg-surface)`.
+Hardcoded colors. [PAUSE] `bg-white/10` instead of `var(--color-performance-bg-surface)`.
 
-Inline styles for static values. [PAUSE] `style="border-radius: 12px"` instead of `var(--radius-lg)`.
+Inline styles for static values. [PAUSE] `style="border-radius: 12px"` instead of `var(--radius-performance-scale-lg)`.
 
-Arbitrary typography. [PAUSE] `text-3xl` instead of `var(--text-h2)`.
+Arbitrary typography. [PAUSE] `text-3xl` instead of `var(--text-performance-h2)`.
 
 Utility classes for motion. [PAUSE] `transition: all 0.2s` instead of Canon tokens.
 

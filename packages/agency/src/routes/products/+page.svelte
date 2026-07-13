@@ -236,18 +236,18 @@
   .product-system-artifact__atlas span,
   .product-surface-list__label {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     letter-spacing: 0;
     text-transform: uppercase;
   }
 
   .product-system-artifact__header strong {
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     line-height: 1.2;
     text-align: right;
     text-transform: uppercase;
@@ -269,7 +269,7 @@
   .product-system-artifact__atlas strong {
     color: var(--color-performance-ink, #090909);
     font-size: 1.08rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.15;
   }
 
@@ -312,9 +312,9 @@
   .product-system-artifact__surfaces strong {
     justify-self: end;
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.74rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     letter-spacing: 0;
     text-transform: uppercase;
   }
@@ -403,7 +403,7 @@
   .product-surface-list__item strong {
     color: var(--color-performance-ink, #090909);
     font-size: 1rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.2;
   }
 

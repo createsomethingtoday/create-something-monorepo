@@ -264,7 +264,7 @@
     border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: 4px;
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
     background: rgba(255, 255, 255, 0.68);
   }
@@ -326,7 +326,7 @@
   .decision-pill strong {
     color: var(--color-performance-ink, #090909);
     font-size: 0.8rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.1;
   }
 
@@ -357,7 +357,7 @@
     border: 1px solid rgba(10, 14, 25, 0.1);
     border-radius: 5px;
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.58rem;
     background: color-mix(in srgb, var(--governed-accent) 34%, white);
   }

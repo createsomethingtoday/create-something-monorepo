@@ -32,10 +32,10 @@
 	// Map radius tokens to CSS values
 	const radiusMap: Record<string, string> = {
 		none: '0',
-		sm: 'var(--radius-sm)',
-		md: 'var(--radius-md)',
-		lg: 'var(--radius-lg)',
-		full: 'var(--radius-full)'
+		sm: 'var(--radius-performance-scale-sm)',
+		md: 'var(--radius-performance-scale-md)',
+		lg: 'var(--radius-performance-scale-lg)',
+		full: 'var(--radius-performance-scale-full)'
 	};
 
 	const computedRadius = $derived(
@@ -62,7 +62,7 @@
 
 <style>
 	.skeleton {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.skeleton.animate {
@@ -82,7 +82,7 @@
 	/* Text variant - single line of text */
 	.skeleton-text {
 		height: 1em;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		width: 100%;
 	}
 
@@ -90,14 +90,14 @@
 	.skeleton-circular {
 		width: 40px;
 		height: 40px;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 	}
 
 	/* Rectangular variant - images, cards */
 	.skeleton-rectangular {
 		width: 100%;
 		height: 120px;
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	/* Reduced motion */

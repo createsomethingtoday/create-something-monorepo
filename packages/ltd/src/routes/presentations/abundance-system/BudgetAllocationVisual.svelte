@@ -70,69 +70,69 @@
 		width: 100%;
 		display: grid;
 		grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 	}
 
 	.scenario-list,
 	.benchmark-card {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.scenario-card,
 	.benchmark-card {
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 		border: 1px solid var(--color-border-subtle);
-		border-radius: var(--radius-lg);
-		background: var(--color-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		background: var(--color-performance-bg-surface);
 	}
 
 	.eyebrow {
 		margin: 0 0 0.4rem;
-		font-size: var(--text-caption);
-		letter-spacing: var(--tracking-widest);
+		font-size: var(--text-performance-caption);
+		letter-spacing: var(--tracking-performance-widest);
 		text-transform: uppercase;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	h3,
 	.column-title {
 		margin: 0;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	h3 {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 	}
 
 	.scenario-note,
 	.scope-copy {
-		margin: var(--space-sm) 0 0;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		margin: var(--space-performance-sm) 0 0;
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.5;
 	}
 
 	.scope-pill {
 		display: inline-flex;
 		align-self: flex-start;
-		margin-top: var(--space-md);
+		margin-top: var(--space-performance-md);
 		padding: 0.4rem 0.7rem;
 		border-radius: 999px;
 		background: rgba(37, 99, 235, 0.08);
 		color: #1d4ed8;
-		font-size: var(--text-caption);
-		font-family: var(--font-mono);
+		font-size: var(--text-performance-caption);
+		font-family: var(--font-performance-mono);
 	}
 
 	.column-title {
-		font-size: var(--text-body);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-body);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.benchmark-block + .benchmark-block {
-		margin-top: var(--space-lg);
+		margin-top: var(--space-performance-lg);
 	}
 
 	.benchmark-card ul {
@@ -147,8 +147,8 @@
 	.benchmark-card li {
 		position: relative;
 		padding-left: 0.9rem;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.45;
 	}
 

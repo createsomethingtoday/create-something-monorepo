@@ -50,7 +50,7 @@
 		{
 			type: 'infrastructure',
 			label: 'Infrastructure (D1/KV/R2)',
-			color: 'var(--color-data-4, #fbbf24)',
+			color: 'var(--color-performance-data-4, #fbbf24)',
 			style: 'solid',
 			description: 'Shared Cloudflare resources'
 		}
@@ -107,22 +107,22 @@
 	.legend {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-lg);
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		gap: var(--space-performance-lg);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.legend-section {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.section-title {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		margin: 0;
@@ -131,26 +131,26 @@
 	.legend-items {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.legend-item {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-xs);
-		border-radius: var(--radius-sm);
-		transition: background var(--duration-micro) var(--ease-standard);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-xs);
+		border-radius: var(--radius-performance-scale-sm);
+		transition: background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.legend-item:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.color-box {
 		width: 16px;
 		height: 16px;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		flex-shrink: 0;
 	}
 
@@ -165,12 +165,12 @@
 	}
 
 	.legend-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.legend-description {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 </style>

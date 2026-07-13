@@ -426,7 +426,7 @@
     margin: 0 0 0.65rem;
     color: var(--color-performance-ink, #090909);
     font-size: 1.75rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.1;
   }
 
@@ -447,7 +447,7 @@
 	.calendar-link {
 		color: var(--color-performance-ink, #090909);
 		font-size: 0.95rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		text-decoration: underline;
 		text-underline-offset: 0.18em;
 	}
@@ -485,9 +485,9 @@
 
   .form-label {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.76rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     letter-spacing: 0;
     text-transform: uppercase;
   }
@@ -563,7 +563,7 @@
     border-radius: var(--radius-performance-sm, 4px);
     color: var(--color-performance-ink, #090909);
     font-size: 1rem;
-    transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
+    transition: border-color var(--duration-performance-micro, 200ms) var(--ease-performance-standard);
   }
 
   .form-input::placeholder {
@@ -571,7 +571,7 @@
   }
 
   .form-input:focus {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--color-performance-focus);
     outline-offset: 2px;
     border-color: var(--color-performance-signal, #0057b8);
   }
@@ -586,14 +586,14 @@
     background: var(--color-performance-ink, #090909);
     color: #ffffff;
     font-size: 1rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     border: 1px solid var(--color-performance-ink, #090909);
     border-radius: var(--radius-performance-sm, 4px);
     cursor: pointer;
     transition:
-      background var(--duration-micro, 200ms) var(--ease-standard),
-      border-color var(--duration-micro, 200ms) var(--ease-standard),
-      opacity var(--duration-micro, 200ms) var(--ease-standard);
+      background var(--duration-performance-micro, 200ms) var(--ease-performance-standard),
+      border-color var(--duration-performance-micro, 200ms) var(--ease-performance-standard),
+      opacity var(--duration-performance-micro, 200ms) var(--ease-performance-standard);
   }
 
   .form-submit:hover:not(:disabled) {
@@ -616,15 +616,15 @@
   }
 
   .form-message.success {
-    background: var(--color-success-muted);
-    color: var(--color-success);
-    border: 1px solid var(--color-success-border);
+    background: var(--color-performance-success-muted);
+    color: var(--color-performance-success);
+    border: 1px solid var(--color-performance-success-border);
   }
 
   .form-message.error {
-    background: var(--color-error-muted);
-    color: var(--color-error);
-    border: 1px solid var(--color-error-border);
+    background: var(--color-performance-error-muted);
+    color: var(--color-performance-error);
+    border: 1px solid var(--color-performance-error-border);
   }
 
   .email-section {
@@ -642,8 +642,8 @@
 
   .email-link {
     color: var(--color-performance-ink, #090909);
-    font-weight: var(--font-medium);
-    transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
+    font-weight: var(--font-performance-medium);
+    transition: opacity var(--duration-performance-micro, 200ms) var(--ease-performance-standard);
   }
 
   .email-link:hover {

@@ -151,7 +151,7 @@
 	}
 
 	.frame-container {
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		overflow-x: auto;
 		padding: 1rem;
 	}
@@ -160,7 +160,7 @@
 		font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
 		font-size: 0.65rem;
 		line-height: 1.3;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 		white-space: pre;
 	}
@@ -186,18 +186,18 @@
 
 	.control-btn {
 		padding: 0.5rem 1rem;
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		font-family: inherit;
 		background: transparent;
-		border: 1px solid var(--color-border-emphasis);
-		color: var(--color-fg-tertiary);
+		border: 1px solid var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-tertiary);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.control-btn:hover:not(:disabled) {
-		border-color: var(--color-fg-muted);
-		color: var(--color-fg-secondary);
+		border-color: var(--color-performance-fg-muted);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.control-btn:disabled {
@@ -206,18 +206,18 @@
 	}
 
 	.control-btn.primary {
-		border-color: var(--color-fg-muted);
-		color: var(--color-fg-secondary);
+		border-color: var(--color-performance-fg-muted);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.caption {
 		text-align: center;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		margin-top: 0.75rem;
 	}
 
 	.revealed {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 </style>

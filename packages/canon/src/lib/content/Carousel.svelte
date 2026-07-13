@@ -226,20 +226,20 @@
 	}
 
 	.carousel:focus-visible {
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline: 2px solid var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 		outline-offset: 4px;
-		border-radius: var(--radius-md, 8px);
+		border-radius: var(--radius-performance-scale-md, 8px);
 	}
 
 	.carousel-viewport {
 		overflow: hidden;
-		border-radius: var(--radius-lg, 12px);
+		border-radius: var(--radius-performance-scale-lg, 12px);
 	}
 
 	.carousel-track {
 		display: flex;
-		transition: transform var(--duration-standard, 300ms)
-			var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: transform var(--duration-performance-standard, 300ms)
+			var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.carousel-slide {
@@ -258,9 +258,9 @@
 		align-items: center;
 		justify-content: center;
 		height: 300px;
-		background: var(--color-bg-surface, #111);
-		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
-		font-size: var(--text-body, 1rem);
+		background: var(--color-performance-bg-surface, #111);
+		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
+		font-size: var(--text-performance-body, 1rem);
 	}
 
 	/* Navigation Arrows */
@@ -270,26 +270,26 @@
 		transform: translateY(-50%);
 		width: 44px;
 		height: 44px;
-		background: var(--color-bg-elevated, #0a0a0a);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		background: var(--color-performance-bg-elevated, #0a0a0a);
+		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
 		border-radius: 50%;
-		color: var(--color-fg-primary, #fff);
+		color: var(--color-performance-fg-primary, #fff);
 		cursor: pointer;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		transition: all var(--duration-micro, 200ms)
-			var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: all var(--duration-performance-micro, 200ms)
+			var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 		z-index: 2;
 	}
 
 	.carousel-arrow:hover:not(:disabled) {
-		background: var(--color-bg-surface, #111);
-		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		background: var(--color-performance-bg-surface, #111);
+		border-color: var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
 	}
 
 	.carousel-arrow:focus-visible {
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline: 2px solid var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 		outline-offset: 2px;
 	}
 
@@ -304,44 +304,44 @@
 	}
 
 	.carousel-arrow-prev {
-		left: var(--space-sm, 1rem);
+		left: var(--space-performance-sm, 1rem);
 	}
 
 	.carousel-arrow-next {
-		right: var(--space-sm, 1rem);
+		right: var(--space-performance-sm, 1rem);
 	}
 
 	/* Dot Indicators */
 	.carousel-dots {
 		display: flex;
 		justify-content: center;
-		gap: var(--space-xs, 0.5rem);
-		margin-top: var(--space-md, 1.618rem);
+		gap: var(--space-performance-xs, 0.5rem);
+		margin-top: var(--space-performance-md, 1.618rem);
 	}
 
 	.carousel-dot {
 		width: 8px;
 		height: 8px;
-		background: var(--color-fg-subtle, rgba(255, 255, 255, 0.2));
+		background: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.2));
 		border: none;
 		border-radius: 50%;
 		cursor: pointer;
 		padding: 0;
-		transition: all var(--duration-micro, 200ms)
-			var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: all var(--duration-performance-micro, 200ms)
+			var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.carousel-dot:hover {
-		background: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		background: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
 	}
 
 	.carousel-dot:focus-visible {
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline: 2px solid var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 		outline-offset: 2px;
 	}
 
 	.carousel-dot.active {
-		background: var(--color-fg-primary, #fff);
+		background: var(--color-performance-fg-primary, #fff);
 		width: 24px;
 		border-radius: 4px;
 	}

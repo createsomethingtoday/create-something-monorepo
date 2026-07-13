@@ -112,14 +112,14 @@
 		position: fixed;
 		inset: 0;
 		z-index: 40;
-		background: var(--color-overlay, rgba(0, 0, 0, 0.5));
-		animation: fadeIn var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		background: var(--color-performance-overlay, rgba(0, 0, 0, 0.5));
+		animation: fadeIn var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.drawer {
 		position: fixed;
 		z-index: 50;
-		background: var(--color-bg-elevated, #0a0a0a);
+		background: var(--color-performance-bg-elevated, #0a0a0a);
 		display: flex;
 		flex-direction: column;
 	}
@@ -130,8 +130,8 @@
 		left: 0;
 		bottom: 0;
 		width: min(320px, 85vw);
-		border-right: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		animation: slideInLeft var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		border-right: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		animation: slideInLeft var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	/* Right drawer */
@@ -140,8 +140,8 @@
 		right: 0;
 		bottom: 0;
 		width: min(320px, 85vw);
-		border-left: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		animation: slideInRight var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		border-left: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		animation: slideInRight var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	/* Bottom drawer (sheet) */
@@ -150,15 +150,15 @@
 		right: 0;
 		bottom: 0;
 		max-height: 85vh;
-		border-top: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0;
-		animation: slideInUp var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		border-top: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-xl, 16px) var(--radius-performance-scale-xl, 16px) 0 0;
+		animation: slideInUp var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.drawer-content {
 		flex: 1;
 		overflow-y: auto;
-		padding: var(--space-lg, 2.618rem) var(--space-md, 1.618rem);
+		padding: var(--space-performance-lg, 2.618rem) var(--space-performance-md, 1.618rem);
 	}
 
 	/* Bottom sheet handle */
@@ -167,9 +167,9 @@
 		display: block;
 		width: 32px;
 		height: 4px;
-		background: var(--color-fg-subtle, rgba(255, 255, 255, 0.2));
-		border-radius: var(--radius-full, 9999px);
-		margin: 0 auto var(--space-md, 1.618rem);
+		background: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.2));
+		border-radius: var(--radius-performance-scale-full, 9999px);
+		margin: 0 auto var(--space-performance-md, 1.618rem);
 	}
 
 	/* Animations */

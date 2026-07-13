@@ -2,7 +2,7 @@
 	import CopyButton from './CopyButton.svelte';
 
 	interface Props {
-		/** CSS variable name (e.g., '--space-md') */
+		/** CSS variable name (e.g., '--space-performance-md') */
 		token: string;
 		/** Resolved value (e.g., '1.618rem') */
 		value: string;
@@ -56,15 +56,15 @@
 	.token-value {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.token-value:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	/* Preview boxes */
@@ -75,13 +75,13 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-md);
 		overflow: hidden;
 	}
 
 	.preview-spacing {
-		background: var(--color-fg-muted);
+		background: var(--color-performance-fg-muted);
 		max-width: 100%;
 		max-height: 100%;
 	}
@@ -89,20 +89,20 @@
 	.preview-radius {
 		width: 48px;
 		height: 48px;
-		background: var(--color-fg-muted);
+		background: var(--color-performance-fg-muted);
 	}
 
 	.preview-shadow {
 		width: 40px;
 		height: 40px;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.preview-duration {
 		width: 100%;
 		height: 4px;
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 		border-radius: 2px;
 		overflow: hidden;
 	}
@@ -110,7 +110,7 @@
 	.duration-bar {
 		width: 100%;
 		height: 100%;
-		background: var(--color-fg-primary);
+		background: var(--color-performance-fg-primary);
 		transform: translateX(-100%);
 		animation: slide-right infinite ease-in-out;
 	}
@@ -129,14 +129,14 @@
 	.token-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		margin-bottom: 2px;
 	}
 
 	.token-name {
-		font-family: var(--font-mono);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
 		flex: 1;
 		white-space: nowrap;
 		overflow: hidden;
@@ -145,16 +145,16 @@
 
 	.token-resolved {
 		display: block;
-		font-family: var(--font-mono);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		margin-bottom: 4px;
 	}
 
 	.token-description {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
-		line-height: var(--leading-snug);
+		line-height: var(--leading-performance-snug);
 	}
 </style>

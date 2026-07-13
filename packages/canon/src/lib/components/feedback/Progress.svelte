@@ -68,7 +68,7 @@
 	.progress {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		width: 100%;
 	}
 
@@ -77,26 +77,26 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.progress-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.progress-value {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		font-weight: var(--font-performance-medium);
+		color: var(--color-performance-fg-primary);
 		font-variant-numeric: tabular-nums;
 	}
 
 	/* Track */
 	.progress-track {
 		width: 100%;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-full);
 		overflow: hidden;
 	}
 
@@ -115,35 +115,35 @@
 
 	.progress-sm .progress-label,
 	.progress-sm .progress-value {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.progress-lg .progress-label,
 	.progress-lg .progress-value {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 	}
 
 	/* Fill */
 	.progress-fill {
 		height: 100%;
-		border-radius: var(--radius-full);
-		transition: width var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-full);
+		transition: width var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.progress-fill-default {
-		background: var(--color-fg-primary);
+		background: var(--color-performance-fg-primary);
 	}
 
 	.progress-fill-success {
-		background: var(--color-success);
+		background: var(--color-performance-success);
 	}
 
 	.progress-fill-warning {
-		background: var(--color-warning);
+		background: var(--color-performance-warning);
 	}
 
 	.progress-fill-error {
-		background: var(--color-error);
+		background: var(--color-performance-error);
 	}
 
 	/* Reduced motion */

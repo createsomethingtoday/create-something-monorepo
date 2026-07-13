@@ -596,7 +596,7 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 	.annotation-block p,
 	.annotation-copy {
 		margin: 0;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-size: 0.82rem;
 		line-height: 1.6;
 	}
@@ -619,7 +619,7 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 		font-size: 0.76rem;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.form-stack input {
@@ -684,14 +684,14 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 
 	.panel-head p {
 		margin: 0.22rem 0 0;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-size: 0.8rem;
 		line-height: 1.55;
 	}
 
 	code,
 	pre {
-		font-family: var(--font-mono, monospace);
+		font-family: var(--font-performance-mono, monospace);
 		font-size: 0.86rem;
 	}
 
@@ -749,7 +749,7 @@ Optional compatibility flow. Use the OAuth host password shown above in MCP Acce
 		font-size: 0.72rem;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.instruction-row strong {

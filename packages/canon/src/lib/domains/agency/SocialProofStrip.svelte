@@ -42,13 +42,13 @@
 
 <style>
 	.social-proof-strip {
-		padding: var(--space-lg) var(--space-md);
+		padding: var(--space-performance-lg) var(--space-performance-md);
 	}
 
 	.metrics-grid {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 		max-width: 64rem;
 		margin: 0 auto;
 	}
@@ -58,51 +58,51 @@
 		flex-direction: column;
 		align-items: center;
 		text-align: center;
-		padding: var(--space-sm);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-md);
 		text-decoration: none;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.metric-card:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.metric-card:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
 	.metric-value {
 		font-size: clamp(2rem, 4vw, 3rem);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		line-height: 1;
 	}
 
 	.metric-label {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		margin-top: 0.25rem;
 	}
 
 	.metric-context {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		margin-top: 0.5rem;
 	}
 
 	@media (max-width: 640px) {
 		.metrics-grid {
 			grid-template-columns: 1fr;
-			gap: var(--space-sm);
+			gap: var(--space-performance-sm);
 		}
 
 		.metric-card {
 			flex-direction: row;
 			justify-content: space-between;
 			text-align: left;
-			padding: var(--space-sm) var(--space-md);
+			padding: var(--space-performance-sm) var(--space-performance-md);
 		}
 
 		.metric-value {

@@ -16,13 +16,13 @@ export const CANON_PROJECT_OVERLAY_TEMPLATE_MANIFEST: CanonProjectOverlayManifes
 			kind: 'theme',
 			path: `${CANON_PROJECT_OVERLAY_TEMPLATE_ROOT}/theme.css`,
 			description: 'Project-local CSS aliases that point back to Canon tokens.',
-			registryItemIds: ['token.canon-core']
+			registryItemIds: ['token.performance-core']
 		},
 		{
 			kind: 'tokens',
 			path: `${CANON_PROJECT_OVERLAY_TEMPLATE_ROOT}/tokens.json`,
 			description: 'Design-token aliases for project-specific names without a new token scale.',
-			registryItemIds: ['token.canon-core']
+			registryItemIds: ['token.performance-core']
 		},
 		{
 			kind: 'templates',

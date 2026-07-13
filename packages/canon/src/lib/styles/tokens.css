@@ -27,65 +27,72 @@
    * These form the dark canvas on which content appears.
    * Use elevation to create hierarchy, not color.
    */
-  --color-bg-pure: #000000;
-  --color-bg-elevated: #0a0a0a;
-  --color-bg-surface: #111111;
-  --color-bg-subtle: #1a1a1a;
+  --color-performance-bg-pure: #000000;
+  --color-performance-bg-elevated: #0a0a0a;
+  --color-performance-bg-surface: #111111;
+  --color-performance-bg-subtle: #1a1a1a;
+  --color-performance-bg-surface-hover: #1a1a1a;
 
   /* Foreground - White with semantic opacity
    * Opacity creates hierarchy. Primary for headlines,
    * muted for captions, subtle for disabled.
    */
-  --color-fg-primary: #ffffff;
-  --color-fg-secondary: rgba(255, 255, 255, 0.8);
-  --color-fg-tertiary: rgba(255, 255, 255, 0.6);
-  --color-fg-muted: rgba(255, 255, 255, 0.46); /* WCAG AA compliant: 4.56:1 on pure black */
-  --color-fg-subtle: rgba(255, 255, 255, 0.2);
+  --color-performance-fg-primary: #ffffff;
+  --color-performance-fg-secondary: rgba(255, 255, 255, 0.8);
+  --color-performance-fg-tertiary: rgba(255, 255, 255, 0.6);
+  --color-performance-fg-muted: rgba(255, 255, 255, 0.46); /* WCAG AA compliant: 4.56:1 on pure black */
+  --color-performance-fg-subtle: rgba(255, 255, 255, 0.2);
 
   /* Borders - Subtle separation */
-  --color-border-default: rgba(255, 255, 255, 0.1);
-  --color-border-emphasis: rgba(255, 255, 255, 0.2);
-  --color-border-strong: rgba(255, 255, 255, 0.3);
+  --color-performance-border-default: rgba(255, 255, 255, 0.1);
+  --color-performance-border-emphasis: rgba(255, 255, 255, 0.2);
+  --color-performance-border-strong: rgba(255, 255, 255, 0.3);
 
   /* Shell surfaces - OpenAI-aligned neutral layers for nav/search/footer
    * Keep the same black foundation while introducing clearer surface steps.
    */
-  --color-shell-surface: #0d0d0d;
-  --color-shell-surface-secondary: #101010;
-  --color-shell-surface-tertiary: #131313;
-  --color-shell-surface-elevated: #161616;
-  --color-shell-surface-hover: #1c1c1c;
-  --color-shell-border-subtle: rgba(255, 255, 255, 0.06);
-  --color-shell-border-default: rgba(255, 255, 255, 0.12);
-  --color-shell-border-strong: rgba(255, 255, 255, 0.2);
-  --color-shell-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  --color-shell-shadow-strong: 0 20px 50px rgba(0, 0, 0, 0.55);
+  --color-performance-shell-surface: #0d0d0d;
+  --color-performance-shell-surface-secondary: #101010;
+  --color-performance-shell-surface-tertiary: #131313;
+  --color-performance-shell-surface-elevated: #161616;
+  --color-performance-shell-surface-hover: #1c1c1c;
+  --color-performance-shell-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-performance-shell-border-default: rgba(255, 255, 255, 0.12);
+  --color-performance-shell-border-strong: rgba(255, 255, 255, 0.2);
+  --color-performance-shell-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --color-performance-shell-shadow-strong: 0 20px 50px rgba(0, 0, 0, 0.55);
 
   /* Product accent - restrained cobalt surface language
    * Used for productized shells, proof panels, and governance surfaces.
    */
-  --color-brand-primary: #315cff;
-  --color-brand-primary-soft: rgba(49, 92, 255, 0.14);
-  --color-brand-primary-muted: rgba(49, 92, 255, 0.08);
-  --color-brand-primary-border: rgba(49, 92, 255, 0.28);
-  --color-brand-secondary: #a7b8ff;
-  --color-brand-ink: #dce4ff;
+  --color-performance-brand-primary: #315cff;
+  --color-performance-brand-primary-soft: rgba(49, 92, 255, 0.14);
+  --color-performance-brand-primary-muted: rgba(49, 92, 255, 0.08);
+  --color-performance-brand-primary-border: rgba(49, 92, 255, 0.28);
+  --color-performance-brand-secondary: #a7b8ff;
+  --color-performance-brand-ink: #dce4ff;
 
   /* Semantic colors - Functional, not decorative
    * All colors are WCAG AA compliant (4.5:1+ on pure black).
    */
-  --color-success: #44aa44;               /* 7.08:1 */
-  --color-success-muted: rgba(68, 170, 68, 0.2);
-  --color-success-border: rgba(68, 170, 68, 0.3);
-  --color-error: #d44d4d;                 /* 4.97:1 */
-  --color-error-muted: rgba(212, 77, 77, 0.2);
-  --color-error-border: rgba(212, 77, 77, 0.3);
-  --color-warning: #aa8844;               /* 6.31:1 */
-  --color-warning-muted: rgba(170, 136, 68, 0.2);
-  --color-warning-border: rgba(170, 136, 68, 0.3);
-  --color-info: #5082b9;                  /* 5.23:1 */
-  --color-info-muted: rgba(80, 130, 185, 0.2);
-  --color-info-border: rgba(80, 130, 185, 0.3);
+  --color-performance-success: #44aa44;               /* 7.08:1 */
+  --color-performance-success-muted: rgba(68, 170, 68, 0.2);
+  --color-performance-success-border: rgba(68, 170, 68, 0.3);
+  --color-performance-success-bg: var(--color-performance-growth-soft);
+  --color-performance-success-text: var(--color-performance-growth);
+  --color-performance-error: #d44d4d;                 /* 4.97:1 */
+  --color-performance-error-muted: rgba(212, 77, 77, 0.2);
+  --color-performance-error-border: rgba(212, 77, 77, 0.3);
+  --color-performance-warning: #aa8844;               /* 6.31:1 */
+  --color-performance-warning-muted: rgba(170, 136, 68, 0.2);
+  --color-performance-warning-border: rgba(170, 136, 68, 0.3);
+  --color-performance-warning-background: var(--color-performance-gold-soft);
+  --color-performance-warning-subtle: var(--color-performance-gold-soft);
+  --color-performance-warning-text: var(--color-performance-gold);
+  --color-performance-info: #5082b9;                  /* 5.23:1 */
+  --color-performance-info-muted: rgba(80, 130, 185, 0.2);
+  --color-performance-info-border: rgba(80, 130, 185, 0.3);
+  --color-performance-info-subtle: var(--color-performance-signal-soft);
 
   /* Performance Lab - readiness, testing, and decision intensity
    * Inspired by elite performance-product discipline: precise contrast,
@@ -132,38 +139,16 @@
    * Keep these for registry and downstream compatibility only. New surfaces
    * must use the Performance Lab tokens above.
    */
-  --color-clear-porcelain: var(--color-performance-paper);
-  --color-clear-porcelain-soft: var(--color-performance-court);
-  --color-clear-panel: var(--color-performance-panel);
-  --color-clear-onyx: var(--color-performance-ink);
-  --color-clear-chocolate: var(--color-performance-pressure);
-  --color-clear-grey: var(--color-performance-muted);
-  --color-clear-grey-quiet: var(--color-performance-muted);
-  --color-clear-border: var(--color-performance-line);
-  --color-clear-border-strong: var(--color-performance-line-strong);
-  --color-clear-moss: var(--color-performance-growth);
-  --color-clear-fern: var(--color-performance-growth);
-  --color-clear-link-green: var(--color-performance-growth);
-  --color-clear-ocean: var(--color-performance-signal);
-  --color-clear-pastel-blue: var(--color-performance-signal-soft);
-  --color-clear-frosted-mint: var(--color-performance-growth-soft);
-  --color-clear-candy-purple: var(--color-performance-pressure-soft);
-  --color-clear-pistachio: var(--color-performance-growth-soft);
-  --color-clear-pill-active: var(--color-performance-signal-soft);
-  --color-clear-stop: var(--color-performance-risk);
-  --content-width-clear: var(--content-width-performance);
-  --radius-clear-sm: var(--radius-performance-sm);
-  --radius-clear-md: var(--radius-performance-md);
-  --shadow-clear-restraint: var(--shadow-performance-panel);
 
   /* Interactive states */
-  --color-hover: rgba(255, 255, 255, 0.05);
-  --color-active: rgba(255, 255, 255, 0.1);
-  --color-focus: rgba(255, 255, 255, 0.5); /* WCAG AA compliant: 5.28:1 for focus indicators */
+  --color-performance-hover: rgba(255, 255, 255, 0.05);
+  --color-performance-active: rgba(255, 255, 255, 0.1);
+  --color-performance-focus: rgba(255, 255, 255, 0.5); /* WCAG AA compliant: 5.28:1 for focus indicators */
+  --color-performance-focus-ring: var(--color-performance-focus);
 
   /* Overlay - for modals, dialogs, backdrops */
-  --color-overlay: rgba(0, 0, 0, 0.5);
-  --color-overlay-heavy: rgba(0, 0, 0, 0.7);
+  --color-performance-overlay: rgba(0, 0, 0, 0.5);
+  --color-performance-overlay-heavy: rgba(0, 0, 0, 0.7);
 
   /* ==========================================================================
      Glass Design System - "The Automation Layer"
@@ -206,11 +191,11 @@
    * | xl   | 64px  | Modals, prominent overlays         |
    * | 2xl  | 80px  | Maximum texture, hero glass        |
    */
-  --glass-blur-sm: 20px;
-  --glass-blur-md: 32px;
-  --glass-blur-lg: 48px;
-  --glass-blur-xl: 64px;
-  --glass-blur-2xl: 80px;
+  --glass-performance-blur-sm: 20px;
+  --glass-performance-blur-md: 32px;
+  --glass-performance-blur-lg: 48px;
+  --glass-performance-blur-xl: 64px;
+  --glass-performance-blur-2xl: 80px;
 
   /* Glass saturation levels - adds color richness to blurred content
    * Higher saturation at higher blur levels compensates for color loss.
@@ -222,10 +207,10 @@
    * | lg   | 130%  | Elevated UI, navigation            |
    * | xl   | 140%  | Maximum richness for modals        |
    */
-  --glass-saturate-sm: saturate(110%);
-  --glass-saturate-md: saturate(120%);
-  --glass-saturate-lg: saturate(130%);
-  --glass-saturate-xl: saturate(140%);
+  --glass-performance-saturate-sm: saturate(110%);
+  --glass-performance-saturate-md: saturate(120%);
+  --glass-performance-saturate-lg: saturate(130%);
+  --glass-performance-saturate-xl: saturate(140%);
 
   /* Glass background - dark/black tinted for true obsidian effect
    * Black backgrounds ensure glass stays dark regardless of content behind.
@@ -240,10 +225,10 @@
    * | medium | 0.78    | rgba(0, 0, 0, 0.78)     | Elevated glass         |
    * | strong | 0.85    | rgba(0, 0, 0, 0.85)     | Prominent glass panels |
    */
-  --glass-bg-subtle: rgba(0, 0, 0, 0.65);
-  --glass-bg-light: rgba(0, 0, 0, 0.72);
-  --glass-bg-medium: rgba(0, 0, 0, 0.78);
-  --glass-bg-strong: rgba(0, 0, 0, 0.85);
+  --glass-performance-bg-subtle: rgba(0, 0, 0, 0.65);
+  --glass-performance-bg-light: rgba(0, 0, 0, 0.72);
+  --glass-performance-bg-medium: rgba(0, 0, 0, 0.78);
+  --glass-performance-bg-strong: rgba(0, 0, 0, 0.85);
 
   /* Glass border styles
    * Subtle white borders define edges like light catching obsidian.
@@ -255,10 +240,10 @@
    * | medium | 0.15    | rgba(255, 255, 255, 0.15) | Emphasized edge       |
    * | strong | 0.22    | rgba(255, 255, 255, 0.22) | High contrast edge    |
    */
-  --glass-border-subtle: rgba(255, 255, 255, 0.06);
-  --glass-border-light: rgba(255, 255, 255, 0.10);
-  --glass-border-medium: rgba(255, 255, 255, 0.15);
-  --glass-border-strong: rgba(255, 255, 255, 0.22);
+  --glass-performance-border-subtle: rgba(255, 255, 255, 0.06);
+  --glass-performance-border-light: rgba(255, 255, 255, 0.10);
+  --glass-performance-border-medium: rgba(255, 255, 255, 0.15);
+  --glass-performance-border-strong: rgba(255, 255, 255, 0.22);
 
   /* Glass shadows - deeper shadows for dramatic floating effect
    * Higher opacity creates more prominent depth separation.
@@ -269,9 +254,9 @@
    * | md   | 8px      | 40px  | 0.5     | Standard elevation  |
    * | lg   | 16px     | 64px  | 0.6     | Prominent floating  |
    */
-  --glass-shadow-sm: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --glass-shadow-md: 0 8px 40px rgba(0, 0, 0, 0.5);
-  --glass-shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.6);
+  --glass-performance-shadow-sm: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --glass-performance-shadow-md: 0 8px 40px rgba(0, 0, 0, 0.5);
+  --glass-performance-shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.6);
 
   /* ==========================================================================
      Liquid Glass Design System - Apple-style Refraction Effect
@@ -294,9 +279,9 @@
    * | medium | 8     | Balanced effect, cards             |
    * | strong | 14    | Heavy refraction, hero sections    |
    */
-  --liquid-glass-refraction-subtle: 4;
-  --liquid-glass-refraction-medium: 8;
-  --liquid-glass-refraction-strong: 14;
+  --liquid-glass-performance-refraction-subtle: 4;
+  --liquid-glass-performance-refraction-medium: 8;
+  --liquid-glass-performance-refraction-strong: 14;
 
   /* Highlight gradients - simulating overhead light reflection
    * Creates the appearance of light catching the glass surface.
@@ -307,19 +292,19 @@
    * | subtle  | 8%→2%     | Secondary elements            |
    * | strong  | 18%→6%    | Hero sections, featured items |
    */
-  --liquid-glass-highlight-primary: linear-gradient(
+  --liquid-glass-performance-highlight-primary: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.12) 0%,
     rgba(255, 255, 255, 0.04) 30%,
     transparent 60%
   );
-  --liquid-glass-highlight-subtle: linear-gradient(
+  --liquid-glass-performance-highlight-subtle: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.08) 0%,
     rgba(255, 255, 255, 0.02) 40%,
     transparent 70%
   );
-  --liquid-glass-highlight-strong: linear-gradient(
+  --liquid-glass-performance-highlight-strong: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.18) 0%,
     rgba(255, 255, 255, 0.06) 25%,
@@ -329,7 +314,7 @@
   /* Top edge glow - simulates overhead light source
    * Creates a subtle bright line at the top edge of glass elements.
    */
-  --liquid-glass-edge-glow: linear-gradient(
+  --liquid-glass-performance-edge-glow: linear-gradient(
     90deg,
     transparent,
     rgba(255, 255, 255, 0.3),
@@ -339,7 +324,7 @@
   /* Inner shadow - creates depth and "thickness" to the glass
    * Makes elements feel like they have physical presence.
    */
-  --liquid-glass-inner-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+  --liquid-glass-performance-inner-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
 
   /* Semantic tint colors - functional color overlays
    * Each tint serves a specific semantic purpose in the UI.
@@ -354,37 +339,37 @@
    * | rose    | Error, critical              | #fb7185  |
    * | cyan    | SDK, developer tools         | #22d3ee  |
    */
-  --liquid-glass-tint-purple: #a78bfa;
-  --liquid-glass-tint-blue: #60a5fa;
-  --liquid-glass-tint-emerald: #34d399;
-  --liquid-glass-tint-amber: #fbbf24;
-  --liquid-glass-tint-rose: #fb7185;
-  --liquid-glass-tint-cyan: #22d3ee;
+  --liquid-glass-performance-tint-purple: #a78bfa;
+  --liquid-glass-performance-tint-blue: #60a5fa;
+  --liquid-glass-performance-tint-emerald: #34d399;
+  --liquid-glass-performance-tint-amber: #fbbf24;
+  --liquid-glass-performance-tint-rose: #fb7185;
+  --liquid-glass-performance-tint-cyan: #22d3ee;
 
   /* Tint mix percentages - how much color to blend with glass background */
-  --liquid-glass-tint-mix-standard: 12%;
-  --liquid-glass-tint-mix-subtle: 8%;
+  --liquid-glass-performance-tint-mix-standard: 12%;
+  --liquid-glass-performance-tint-mix-subtle: 8%;
 
   /* Data Visualization Palette */
-  --color-data-1: #60a5fa; /* Blue */
-  --color-data-1-muted: rgba(96, 165, 250, 0.2);
-  --color-data-2: #22c55e; /* Green */
-  --color-data-2-muted: rgba(34, 197, 94, 0.2);
-  --color-data-3: #c084fc; /* Purple */
-  --color-data-3-muted: rgba(192, 132, 252, 0.2);
-  --color-data-3-border: rgba(192, 132, 252, 0.3);
-  --color-data-4: #fbbf24; /* Amber/Gold */
-  --color-data-4-muted: rgba(251, 191, 36, 0.2);
-  --color-data-5: #f472b6; /* Pink */
-  --color-data-5-muted: rgba(244, 114, 182, 0.2);
-  --color-data-6: #facc15; /* Yellow */
-  --color-data-6-muted: rgba(250, 204, 21, 0.2);
+  --color-performance-data-1: #60a5fa; /* Blue */
+  --color-performance-data-1-muted: rgba(96, 165, 250, 0.2);
+  --color-performance-data-2: #22c55e; /* Green */
+  --color-performance-data-2-muted: rgba(34, 197, 94, 0.2);
+  --color-performance-data-3: #c084fc; /* Purple */
+  --color-performance-data-3-muted: rgba(192, 132, 252, 0.2);
+  --color-performance-data-3-border: rgba(192, 132, 252, 0.3);
+  --color-performance-data-4: #fbbf24; /* Amber/Gold */
+  --color-performance-data-4-muted: rgba(251, 191, 36, 0.2);
+  --color-performance-data-5: #f472b6; /* Pink */
+  --color-performance-data-5-muted: rgba(244, 114, 182, 0.2);
+  --color-performance-data-6: #facc15; /* Yellow */
+  --color-performance-data-6-muted: rgba(250, 204, 21, 0.2);
 
   /* Rank colors - for leaderboards, medals, badges */
-  --color-rank-gold: #ca8a04;              /* Gold/1st place */
-  --color-rank-gold-muted: rgba(202, 138, 4, 0.2);
-  --color-rank-bronze: #c2410c;            /* Bronze/3rd place */
-  --color-rank-bronze-muted: rgba(194, 65, 12, 0.2);
+  --color-performance-rank-gold: #ca8a04;              /* Gold/1st place */
+  --color-performance-rank-gold-muted: rgba(202, 138, 4, 0.2);
+  --color-performance-rank-bronze: #c2410c;            /* Bronze/3rd place */
+  --color-performance-rank-bronze-muted: rgba(194, 65, 12, 0.2);
 
   /* ==========================================================================
      Typography - Golden Ratio Scale (φ = 1.618)
@@ -399,43 +384,41 @@
      ========================================================================== */
 
   /* Font families */
-  --font-sans: Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-heading: var(--font-sans);
-  --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --font-performance-sans: Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-performance-heading: var(--font-performance-sans);
   --font-performance-display: "Satoshi", "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-performance-mono: "IBM Plex Mono", "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace;
   --font-performance-display-weight: 500;
   --tracking-performance-display: -0.03em;
   --leading-performance-display: 0.94;
-  --font-serif: Georgia, "Times New Roman", serif;
-  --font-interface: var(--font-sans);
-  --font-prose: var(--font-sans);
-  --font-record: var(--font-mono);
-  --font-topology-label: var(--font-mono);
-  --font-code: var(--font-mono);
+  --font-performance-serif: Georgia, "Times New Roman", serif;
+  --font-performance-interface: var(--font-performance-sans);
+  --font-performance-prose: var(--font-performance-sans);
+  --font-performance-record: var(--font-performance-mono);
+  --font-performance-topology-label: var(--font-performance-mono);
+  --font-performance-code: var(--font-performance-mono);
 
   /* Font weights */
-  --font-light: 300;
-  --font-regular: 400;
-  --font-medium: 500;
-  --font-semibold: 600;
-  --font-bold: 700;
+  --font-performance-light: 300;
+  --font-performance-regular: 400;
+  --font-performance-medium: 500;
+  --font-performance-semibold: 600;
+  --font-performance-bold: 700;
 
   /* Line heights */
-  --leading-tight: 1.25;
-  --leading-snug: 1.375;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.618; /* φ - Golden ratio */
-  --leading-loose: 1.75;
+  --leading-performance-tight: 1.25;
+  --leading-performance-snug: 1.375;
+  --leading-performance-normal: 1.5;
+  --leading-performance-relaxed: 1.618; /* φ - Golden ratio */
+  --leading-performance-loose: 1.75;
 
   /* Letter spacing */
-  --tracking-tighter: -0.025em;
-  --tracking-tight: -0.015em;
-  --tracking-normal: 0;
-  --tracking-wide: 0.025em;
-  --tracking-wider: 0.05em;
-  --tracking-widest: 0.1em;
+  --tracking-performance-tighter: -0.025em;
+  --tracking-performance-tight: -0.015em;
+  --tracking-performance-normal: 0;
+  --tracking-performance-wide: 0.025em;
+  --tracking-performance-wider: 0.05em;
+  --tracking-performance-widest: 0.1em;
 
   /* Type scale - DERIVED from mathematical foundations
    *
@@ -457,28 +440,31 @@
    * | caption    | 1.2⁻¹ | 0.833   | 1 / 1.2        |
    * | overline   | φ⁻¹   | 0.618   | 1 / φ          |
    */
-  --text-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem);  /* φ⁴ max */
-  --text-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);   /* φ³ max */
-  --text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);          /* φ² max */
-  --text-h2: clamp(1.2rem, 2vw + 0.5rem, 1.618rem);          /* φ¹ max */
-  --text-h3: clamp(1.02rem, 1vw + 0.5rem, 1.2rem);           /* 1.2¹ max */
-  --text-h4: clamp(0.931rem, 0.5vw + 0.5rem, 1.095rem);      /* √1.2 max */
-  --text-h5: 1rem;                                            /* base */
-  --text-h6: 0.913rem;                                        /* 1/√1.2 */
-  --text-body-lg: 1.095rem;                                   /* √1.2 */
-  --text-body: 1rem;                                          /* base */
-  --text-body-sm: 0.913rem;                                   /* 1/√1.2 */
-  --text-caption: 0.833rem;                                   /* 1/1.2 */
-  --text-overline: 0.618rem;                                  /* 1/φ */
-  --text-record: var(--text-body-sm);
-  --text-record-meta: var(--text-caption);
-  --text-operator-label: 0.72rem;
-  --text-topology-label: 0.72rem;
-  --tracking-record: 0;
-  --tracking-operator-label: 0;
-  --tracking-topology-label: 0;
-  --leading-record: 1.35;
-  --leading-topology-label: 1.2;
+  --text-performance-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem);  /* φ⁴ max */
+  --text-performance-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);   /* φ³ max */
+  --text-performance-display-sm: clamp(1.618rem, 3vw + 1rem, 2.618rem);
+  --text-performance-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);          /* φ² max */
+  --text-performance-h2: clamp(1.2rem, 2vw + 0.5rem, 1.618rem);          /* φ¹ max */
+  --text-performance-h3: clamp(1.02rem, 1vw + 0.5rem, 1.2rem);           /* 1.2¹ max */
+  --text-performance-h4: clamp(0.931rem, 0.5vw + 0.5rem, 1.095rem);      /* √1.2 max */
+  --text-performance-h5: 1rem;                                            /* base */
+  --text-performance-h6: 0.913rem;                                        /* 1/√1.2 */
+  --text-performance-body-lg: 1.095rem;                                   /* √1.2 */
+  --text-performance-body-md: 1rem;
+  --text-performance-body: 1rem;                                          /* base */
+  --text-performance-body-sm: 0.913rem;                                   /* 1/√1.2 */
+  --text-performance-caption: 0.833rem;                                   /* 1/1.2 */
+  --text-performance-caption-xs: 0.625rem;
+  --text-performance-overline: 0.618rem;                                  /* 1/φ */
+  --text-performance-record: var(--text-performance-body-sm);
+  --text-performance-record-meta: var(--text-performance-caption);
+  --text-performance-operator-label: 0.72rem;
+  --text-performance-topology-label: 0.72rem;
+  --tracking-performance-record: 0;
+  --tracking-performance-operator-label: 0;
+  --tracking-performance-topology-label: 0;
+  --leading-performance-record: 1.35;
+  --leading-performance-topology-label: 1.2;
 
   /* Watermark typography - oversized decorative text
    * Used for background watermarks in editorial layouts.
@@ -491,11 +477,11 @@
    * | base | 8rem   | 25rem  | Standard watermarks         |
    * | lg   | 10rem  | 30rem  | Large watermarks            |
    */
-  --text-watermark: clamp(8rem, 25vw, 25rem);
-  --text-watermark-lg: clamp(10rem, 30vw, 30rem);
-  --text-watermark-md: clamp(6rem, 20vw, 20rem);
-  --text-watermark-sm: clamp(4rem, 15vw, 15rem);
-  --text-watermark-mobile: clamp(4rem, 20vw, 15rem);  /* Responsive mobile variant */
+  --text-performance-watermark: clamp(8rem, 25vw, 25rem);
+  --text-performance-watermark-lg: clamp(10rem, 30vw, 30rem);
+  --text-performance-watermark-md: clamp(6rem, 20vw, 20rem);
+  --text-performance-watermark-sm: clamp(4rem, 15vw, 15rem);
+  --text-performance-watermark-mobile: clamp(4rem, 20vw, 15rem);  /* Responsive mobile variant */
 
   /* ==========================================================================
      Spacing - Golden Ratio (φ = 1.618)
@@ -512,13 +498,13 @@
      | 3xl  | φ⁵    | 11.090  | φ⁵         |
      ========================================================================== */
 
-  --space-xs: 0.618rem;   /* φ⁻¹ */
-  --space-sm: 1rem;       /* φ⁰ (base) */
-  --space-md: 1.618rem;   /* φ¹ */
-  --space-lg: 2.618rem;   /* φ² */
-  --space-xl: 4.236rem;   /* φ³ */
-  --space-2xl: 6.854rem;  /* φ⁴ */
-  --space-3xl: 11.09rem;  /* φ⁵ */
+  --space-performance-xs: 0.618rem;   /* φ⁻¹ */
+  --space-performance-sm: 1rem;       /* φ⁰ (base) */
+  --space-performance-md: 1.618rem;   /* φ¹ */
+  --space-performance-lg: 2.618rem;   /* φ² */
+  --space-performance-xl: 4.236rem;   /* φ³ */
+  --space-performance-2xl: 6.854rem;  /* φ⁴ */
+  --space-performance-3xl: 11.09rem;  /* φ⁵ */
 
   /* ==========================================================================
      Border Radius - 4px Base Unit
@@ -538,12 +524,12 @@
      | full | ∞          | —           | 9999px | Pills, avatars      |
      ========================================================================== */
 
-  --radius-sm: 6px;    /* 4 × 1.5 */
-  --radius-md: 8px;    /* 4 × 2 */
-  --radius-lg: 12px;   /* 4 × 3 */
-  --radius-xl: 16px;   /* 4 × 4 */
-  --radius-2xl: 24px;  /* 4 × 6 */
-  --radius-full: 9999px;
+  --radius-performance-scale-sm: 6px;    /* 4 × 1.5 */
+  --radius-performance-scale-md: 8px;    /* 4 × 2 */
+  --radius-performance-scale-lg: 12px;   /* 4 × 3 */
+  --radius-performance-scale-xl: 16px;   /* 4 × 4 */
+  --radius-performance-scale-2xl: 24px;  /* 4 × 6 */
+  --radius-performance-scale-full: 9999px;
 
   /* ==========================================================================
      Shadows & Elevation
@@ -568,12 +554,12 @@
      | 2xl  | 25px     | 50px  | -12px  | Full overlay             |
      ========================================================================== */
 
-  --shadow-none: none;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+  --shadow-performance-scale-none: none;
+  --shadow-performance-scale-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-performance-scale-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-performance-scale-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-performance-scale-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-performance-scale-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
 
   /* Glow shadows - DERIVED: blur doubles per step (10, 20, 40)
    *
@@ -584,15 +570,15 @@
    * | md   | 20px | 0.10    | 10 × 2¹        |
    * | lg   | 40px | 0.15    | 10 × 2²        |
    */
-  --shadow-glow-sm: 0 0 10px rgba(255, 255, 255, 0.05);
-  --shadow-glow-md: 0 0 20px rgba(255, 255, 255, 0.1);
-  --shadow-glow-lg: 0 0 40px rgba(255, 255, 255, 0.15);
+  --shadow-performance-scale-glow-sm: 0 0 10px rgba(255, 255, 255, 0.05);
+  --shadow-performance-scale-glow-md: 0 0 20px rgba(255, 255, 255, 0.1);
+  --shadow-performance-scale-glow-lg: 0 0 40px rgba(255, 255, 255, 0.15);
 
   /* Inner shadows - DERIVED: base 2px, lg = 2× base
    * Used for inset effects, pressed states.
    */
-  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5);
-  --shadow-inner-lg: inset 0 4px 8px 0 rgba(0, 0, 0, 0.5);
+  --shadow-performance-scale-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5);
+  --shadow-performance-scale-inner-lg: inset 0 4px 8px 0 rgba(0, 0, 0, 0.5);
 
   /* ==========================================================================
      Animation & Motion
@@ -611,9 +597,9 @@
    *
    * See easing.ts for mathematical derivation of control points.
    */
-  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
-  --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
-  --ease-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+  --ease-performance-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-performance-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-performance-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
 
   /* Duration - perceptual thresholds
    *
@@ -633,12 +619,12 @@
    *
    * The 100ms base with ~1.5-2× increments balances perception with purpose.
    */
-  --duration-instant: 100ms;
-  --duration-micro: 200ms;
-  --duration-fast: 200ms;     /* Alias for --duration-micro (common naming expectation) */
-  --duration-standard: 300ms;
-  --duration-complex: 500ms;
-  --duration-slow: 700ms;
+  --duration-performance-instant: 100ms;
+  --duration-performance-micro: 200ms;
+  --duration-performance-fast: 200ms;     /* Alias for --duration-performance-micro (common naming expectation) */
+  --duration-performance-standard: 300ms;
+  --duration-performance-complex: 500ms;
+  --duration-performance-slow: 700ms;
 
   /* Cascade timing - DERIVED from perceptual grouping
    *
@@ -652,16 +638,16 @@
    * | step  | 50ms  | Between sibling items          |
    * | group | 100ms | Between logical groups         |
    *
-   * Usage: transition-delay: calc(var(--cascade-step) * var(--index));
+   * Usage: transition-delay: calc(var(--cascade-performance-step) * var(--index));
    */
-  --cascade-step: 50ms;
-  --cascade-group: 100ms;
+  --cascade-performance-step: 50ms;
+  --cascade-performance-group: 100ms;
 
   /* Loading animation duration - longer for continuous visual rhythm
    * Used for skeleton loaders, shimmer effects, pulse animations.
    * 2s is a UX best practice: visible but not distracting.
    */
-  --duration-loading: 2000ms;
+  --duration-performance-loading: 2000ms;
 
   /* Scale transforms - DERIVED for hover emphasis
    *
@@ -675,17 +661,17 @@
    * | small  | 1.05  | Emphasized hover states        |
    * | medium | 1.1   | Modal/overlay entrance         |
    *
-   * Usage: transform: scale(var(--scale-micro));
+   * Usage: transform: scale(var(--scale-performance-micro));
    */
-  --scale-subtle: 0.98;
-  --scale-micro: 1.02;
-  --scale-small: 1.05;
-  --scale-medium: 1.1;
+  --scale-performance-subtle: 0.98;
+  --scale-performance-micro: 1.02;
+  --scale-performance-small: 1.05;
+  --scale-performance-medium: 1.1;
 
   /* Opacity states */
-  --opacity-muted: 0.6;
-  --opacity-hover: 0.8;
-  --opacity-full: 1;
+  --opacity-performance-muted: 0.6;
+  --opacity-performance-hover: 0.8;
+  --opacity-performance-full: 1;
 
   /* ==========================================================================
      Z-Index Layers
@@ -714,13 +700,13 @@
      - 200, 300: Nested overlay hierarchy (popover in modal, tooltip over all)
      ========================================================================== */
 
-  --z-base: 0;
-  --z-dropdown: 10;
-  --z-sticky: 20;
-  --z-fixed: 50;
-  --z-modal: 100;
-  --z-popover: 200;
-  --z-tooltip: 300;
+  --z-performance-base: 0;
+  --z-performance-dropdown: 10;
+  --z-performance-sticky: 20;
+  --z-performance-fixed: 50;
+  --z-performance-modal: 100;
+  --z-performance-popover: 200;
+  --z-performance-tooltip: 300;
 
   /* ==========================================================================
      Layout Constants
@@ -730,24 +716,24 @@
    * Navigation component: py-4 (32px) + content (~40px) = 72px
    * Used for: fixed sidebars, skip-to-content, scroll offsets
    */
-  --header-height: 72px;
+  --height-performance-header: 72px;
 
   /* ==========================================================================
      Breakpoints & Containers
      ========================================================================== */
 
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1536px;
+  --breakpoint-performance-sm: 640px;
+  --breakpoint-performance-md: 768px;
+  --breakpoint-performance-lg: 1024px;
+  --breakpoint-performance-xl: 1280px;
+  --breakpoint-performance-2xl: 1536px;
 
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
-  --container-2xl: 1400px;
-  --container-prose: 65ch;
+  --container-performance-sm: 640px;
+  --container-performance-md: 768px;
+  --container-performance-lg: 1024px;
+  --container-performance-xl: 1280px;
+  --container-performance-2xl: 1400px;
+  --container-performance-prose: 65ch;
 
   /* Content widths - DERIVED from golden ratio (φ = 1.618)
 
@@ -772,17 +758,267 @@
      - 26 × φ = 42rem ≈ 66-75 chars (optimal reading)
      - 20rem = 320px, classic mobile viewport
      ========================================================================== */
-  --width-tight: 16.07rem;   /* 26 / φ - narrow sidebars */
-  --width-narrow: 32.36rem;  /* 20 × φ - narrow content */
-  --width-prose: 42rem;      /* 26 × φ - optimal reading (66-75 chars) */
-  --width-content: 52.36rem; /* 20 × φ² - content sections */
-  --width-wide: 68rem;       /* 26 × φ² - full-width content */
+  --width-performance-tight: 16.07rem;   /* 26 / φ - narrow sidebars */
+  --width-performance-narrow: 32.36rem;  /* 20 × φ - narrow content */
+  --width-performance-prose: 42rem;      /* 26 × φ - optimal reading (66-75 chars) */
+  --width-performance-content: 52.36rem; /* 20 × φ² - content sections */
+  --width-performance-wide: 68rem;       /* 26 × φ² - full-width content */
 
   /* ==========================================================================
      View Transitions
      ========================================================================== */
 
-  --view-transition-duration: var(--duration-standard);
+  --duration-performance-view-transition: var(--duration-performance-standard);
+
+  /* Legacy compatibility aliases. First-party consumers use Performance tokens. */
+
+  /* Legacy compatibility aliases. First-party consumers use Performance tokens. */
+
+  /* Legacy compatibility aliases. First-party consumers use Performance tokens. */
+
+  /* Legacy compatibility aliases. First-party consumers use Performance tokens. */
+  --liquid-glass-refraction-subtle: var(--liquid-glass-performance-refraction-subtle);
+  --liquid-glass-refraction-medium: var(--liquid-glass-performance-refraction-medium);
+  --liquid-glass-refraction-strong: var(--liquid-glass-performance-refraction-strong);
+  --liquid-glass-highlight-primary: var(--liquid-glass-performance-highlight-primary);
+  --liquid-glass-tint-mix-standard: var(--liquid-glass-performance-tint-mix-standard);
+  --color-shell-surface-secondary: var(--color-performance-shell-surface-secondary);
+  --liquid-glass-highlight-subtle: var(--liquid-glass-performance-highlight-subtle);
+  --liquid-glass-highlight-strong: var(--liquid-glass-performance-highlight-strong);
+  --color-shell-surface-tertiary: var(--color-performance-shell-surface-tertiary);
+  --color-shell-surface-elevated: var(--color-performance-shell-surface-elevated);
+  --liquid-glass-tint-mix-subtle: var(--liquid-glass-performance-tint-mix-subtle);
+  --color-shell-border-default: var(--color-performance-shell-border-default);
+  --color-brand-primary-border: var(--color-performance-brand-primary-border);
+  --color-clear-porcelain-soft: var(--color-performance-court);
+  --color-shell-surface-hover: var(--color-performance-shell-surface-hover);
+  --color-shell-border-subtle: var(--color-performance-shell-border-subtle);
+  --color-shell-border-strong: var(--color-performance-shell-border-strong);
+  --color-shell-shadow-strong: var(--color-performance-shell-shadow-strong);
+  --color-brand-primary-muted: var(--color-performance-brand-primary-muted);
+  --color-clear-border-strong: var(--color-performance-line-strong);
+  --liquid-glass-inner-shadow: var(--liquid-glass-performance-inner-shadow);
+  --liquid-glass-tint-emerald: var(--liquid-glass-performance-tint-emerald);
+  --color-brand-primary-soft: var(--color-performance-brand-primary-soft);
+  --color-clear-frosted-mint: var(--color-performance-growth-soft);
+  --color-clear-candy-purple: var(--color-performance-pressure-soft);
+  --liquid-glass-tint-purple: var(--liquid-glass-performance-tint-purple);
+  --view-transition-duration: var(--duration-performance-view-transition);
+  --color-clear-pastel-blue: var(--color-performance-signal-soft);
+  --color-clear-pill-active: var(--color-performance-signal-soft);
+  --liquid-glass-tint-amber: var(--liquid-glass-performance-tint-amber);
+  --color-rank-bronze-muted: var(--color-performance-rank-bronze-muted);
+  --tracking-operator-label: var(--tracking-performance-operator-label);
+  --tracking-topology-label: var(--tracking-performance-topology-label);
+  --color-clear-grey-quiet: var(--color-performance-muted);
+  --color-clear-link-green: var(--color-performance-growth);
+  --shadow-clear-restraint: var(--shadow-performance-panel);
+  --liquid-glass-edge-glow: var(--liquid-glass-performance-edge-glow);
+  --liquid-glass-tint-blue: var(--liquid-glass-performance-tint-blue);
+  --liquid-glass-tint-rose: var(--liquid-glass-performance-tint-rose);
+  --liquid-glass-tint-cyan: var(--liquid-glass-performance-tint-cyan);
+  --leading-topology-label: var(--leading-performance-topology-label);
+  --color-border-emphasis: var(--color-performance-border-emphasis);
+  --color-brand-secondary: var(--color-performance-brand-secondary);
+  --color-clear-porcelain: var(--color-performance-paper);
+  --color-clear-chocolate: var(--color-performance-pressure);
+  --color-clear-pistachio: var(--color-performance-growth-soft);
+  --color-rank-gold-muted: var(--color-performance-rank-gold-muted);
+  --text-watermark-mobile: var(--text-performance-watermark-mobile);
+  --color-border-default: var(--color-performance-border-default);
+  --color-success-border: var(--color-performance-success-border);
+  --color-warning-border: var(--color-performance-warning-border);
+  --color-border-strong: var(--color-performance-border-strong);
+  --color-shell-surface: var(--color-performance-shell-surface);
+  --color-brand-primary: var(--color-performance-brand-primary);
+  --color-success-muted: var(--color-performance-success-muted);
+  --color-warning-muted: var(--color-performance-warning-muted);
+  --content-width-clear: var(--content-width-performance);
+  --color-overlay-heavy: var(--color-performance-overlay-heavy);
+  --glass-border-subtle: var(--glass-performance-border-subtle);
+  --glass-border-medium: var(--glass-performance-border-medium);
+  --glass-border-strong: var(--glass-performance-border-strong);
+  --color-data-3-border: var(--color-performance-data-3-border);
+  --font-topology-label: var(--font-performance-topology-label);
+  --text-operator-label: var(--text-performance-operator-label);
+  --text-topology-label: var(--text-performance-topology-label);
+  --color-fg-secondary: var(--color-performance-fg-secondary);
+  --color-shell-shadow: var(--color-performance-shell-shadow);
+  --color-error-border: var(--color-performance-error-border);
+  --color-clear-border: var(--color-performance-line);
+  --glass-border-light: var(--glass-performance-border-light);
+  --color-data-1-muted: var(--color-performance-data-1-muted);
+  --color-data-2-muted: var(--color-performance-data-2-muted);
+  --color-data-3-muted: var(--color-performance-data-3-muted);
+  --color-data-4-muted: var(--color-performance-data-4-muted);
+  --color-data-5-muted: var(--color-performance-data-5-muted);
+  --color-data-6-muted: var(--color-performance-data-6-muted);
+  --color-bg-elevated: var(--color-performance-bg-elevated);
+  --color-fg-tertiary: var(--color-performance-fg-tertiary);
+  --color-error-muted: var(--color-performance-error-muted);
+  --color-info-border: var(--color-performance-info-border);
+  --color-clear-panel: var(--color-performance-panel);
+  --color-clear-ocean: var(--color-performance-signal);
+  --glass-saturate-sm: var(--glass-performance-saturate-sm);
+  --glass-saturate-md: var(--glass-performance-saturate-md);
+  --glass-saturate-lg: var(--glass-performance-saturate-lg);
+  --glass-saturate-xl: var(--glass-performance-saturate-xl);
+  --color-rank-bronze: var(--color-performance-rank-bronze);
+  --text-watermark-lg: var(--text-performance-watermark-lg);
+  --text-watermark-md: var(--text-performance-watermark-md);
+  --text-watermark-sm: var(--text-performance-watermark-sm);
+  --duration-standard: var(--duration-performance-standard);
+  --color-bg-surface: var(--color-performance-bg-surface);
+  --color-fg-primary: var(--color-performance-fg-primary);
+  --color-info-muted: var(--color-performance-info-muted);
+  --color-clear-onyx: var(--color-performance-ink);
+  --color-clear-grey: var(--color-performance-muted);
+  --color-clear-moss: var(--color-performance-growth);
+  --color-clear-fern: var(--color-performance-growth);
+  --color-clear-stop: var(--color-performance-risk);
+  --tracking-tighter: var(--tracking-performance-tighter);
+  --text-record-meta: var(--text-performance-record-meta);
+  --duration-instant: var(--duration-performance-instant);
+  --duration-complex: var(--duration-performance-complex);
+  --duration-loading: var(--duration-performance-loading);
+  --color-bg-subtle: var(--color-performance-bg-subtle);
+  --color-fg-subtle: var(--color-performance-fg-subtle);
+  --color-brand-ink: var(--color-performance-brand-ink);
+  --radius-clear-sm: var(--radius-performance-sm);
+  --radius-clear-md: var(--radius-performance-md);
+  --glass-bg-subtle: var(--glass-performance-bg-subtle);
+  --glass-bg-medium: var(--glass-performance-bg-medium);
+  --glass-bg-strong: var(--glass-performance-bg-strong);
+  --glass-shadow-sm: var(--glass-performance-shadow-sm);
+  --glass-shadow-md: var(--glass-performance-shadow-md);
+  --glass-shadow-lg: var(--glass-performance-shadow-lg);
+  --color-rank-gold: var(--color-performance-rank-gold);
+  --leading-relaxed: var(--leading-performance-relaxed);
+  --tracking-normal: var(--tracking-performance-normal);
+  --tracking-widest: var(--tracking-performance-widest);
+  --text-display-xl: var(--text-performance-display-xl);
+  --tracking-record: var(--tracking-performance-record);
+  --shadow-inner-lg: var(--shadow-performance-scale-inner-lg);
+  --ease-decelerate: var(--ease-performance-decelerate);
+  --ease-accelerate: var(--ease-performance-accelerate);
+  --container-prose: var(--container-performance-prose);
+  --color-fg-muted: var(--color-performance-fg-muted);
+  --glass-blur-2xl: var(--glass-performance-blur-2xl);
+  --glass-bg-light: var(--glass-performance-bg-light);
+  --font-interface: var(--font-performance-interface);
+  --leading-normal: var(--leading-performance-normal);
+  --tracking-tight: var(--tracking-performance-tight);
+  --tracking-wider: var(--tracking-performance-wider);
+  --leading-record: var(--leading-performance-record);
+  --text-watermark: var(--text-performance-watermark);
+  --shadow-glow-sm: var(--shadow-performance-scale-glow-sm);
+  --shadow-glow-md: var(--shadow-performance-scale-glow-md);
+  --shadow-glow-lg: var(--shadow-performance-scale-glow-lg);
+  --duration-micro: var(--duration-performance-micro);
+  --breakpoint-2xl: var(--breakpoint-performance-2xl);
+  --color-bg-pure: var(--color-performance-bg-pure);
+  --color-success: var(--color-performance-success);
+  --color-warning: var(--color-performance-warning);
+  --color-overlay: var(--color-performance-overlay);
+  --glass-blur-sm: var(--glass-performance-blur-sm);
+  --glass-blur-md: var(--glass-performance-blur-md);
+  --glass-blur-lg: var(--glass-performance-blur-lg);
+  --glass-blur-xl: var(--glass-performance-blur-xl);
+  --font-semibold: var(--font-performance-semibold);
+  --leading-tight: var(--leading-performance-tight);
+  --leading-loose: var(--leading-performance-loose);
+  --tracking-wide: var(--tracking-performance-wide);
+  --text-overline: var(--text-performance-overline);
+  --ease-standard: var(--ease-performance-standard);
+  --duration-fast: var(--duration-performance-fast);
+  --duration-slow: var(--duration-performance-slow);
+  --cascade-group: var(--cascade-performance-group);
+  --opacity-muted: var(--opacity-performance-muted);
+  --opacity-hover: var(--opacity-performance-hover);
+  --header-height: var(--height-performance-header);
+  --breakpoint-sm: var(--breakpoint-performance-sm);
+  --breakpoint-md: var(--breakpoint-performance-md);
+  --breakpoint-lg: var(--breakpoint-performance-lg);
+  --breakpoint-xl: var(--breakpoint-performance-xl);
+  --container-2xl: var(--container-performance-2xl);
+  --width-content: var(--width-performance-content);
+  --color-active: var(--color-performance-active);
+  --color-data-1: var(--color-performance-data-1);
+  --color-data-2: var(--color-performance-data-2);
+  --color-data-3: var(--color-performance-data-3);
+  --color-data-4: var(--color-performance-data-4);
+  --color-data-5: var(--color-performance-data-5);
+  --color-data-6: var(--color-performance-data-6);
+  --font-display: var(--font-performance-display);
+  --font-heading: var(--font-performance-heading);
+  --font-regular: var(--font-performance-regular);
+  --leading-snug: var(--leading-performance-snug);
+  --text-display: var(--text-performance-display);
+  --text-body-lg: var(--text-performance-body-lg);
+  --text-body-sm: var(--text-performance-body-sm);
+  --text-caption: var(--text-performance-caption);
+  --shadow-inner: var(--shadow-performance-scale-inner);
+  --cascade-step: var(--cascade-performance-step);
+  --scale-subtle: var(--scale-performance-subtle);
+  --scale-medium: var(--scale-performance-medium);
+  --opacity-full: var(--opacity-performance-full);
+  --container-sm: var(--container-performance-sm);
+  --container-md: var(--container-performance-md);
+  --container-lg: var(--container-performance-lg);
+  --container-xl: var(--container-performance-xl);
+  --width-narrow: var(--width-performance-narrow);
+  --color-error: var(--color-performance-error);
+  --color-hover: var(--color-performance-hover);
+  --color-focus: var(--color-performance-focus);
+  --font-record: var(--font-performance-record);
+  --font-medium: var(--font-performance-medium);
+  --text-record: var(--text-performance-record);
+  --radius-full: var(--radius-performance-scale-full);
+  --shadow-none: var(--shadow-performance-scale-none);
+  --scale-micro: var(--scale-performance-micro);
+  --scale-small: var(--scale-performance-small);
+  --width-tight: var(--width-performance-tight);
+  --width-prose: var(--width-performance-prose);
+  --color-info: var(--color-performance-info);
+  --font-serif: var(--font-performance-serif);
+  --font-prose: var(--font-performance-prose);
+  --font-light: var(--font-performance-light);
+  --radius-2xl: var(--radius-performance-scale-2xl);
+  --shadow-2xl: var(--shadow-performance-scale-2xl);
+  --z-dropdown: var(--z-performance-dropdown);
+  --width-wide: var(--width-performance-wide);
+  --font-sans: var(--font-performance-sans);
+  --font-mono: var(--font-performance-mono);
+  --font-code: var(--font-performance-code);
+  --font-bold: var(--font-performance-bold);
+  --text-body: var(--text-performance-body);
+  --space-2xl: var(--space-performance-2xl);
+  --space-3xl: var(--space-performance-3xl);
+  --radius-sm: var(--radius-performance-scale-sm);
+  --radius-md: var(--radius-performance-scale-md);
+  --radius-lg: var(--radius-performance-scale-lg);
+  --radius-xl: var(--radius-performance-scale-xl);
+  --shadow-sm: var(--shadow-performance-scale-sm);
+  --shadow-md: var(--shadow-performance-scale-md);
+  --shadow-lg: var(--shadow-performance-scale-lg);
+  --shadow-xl: var(--shadow-performance-scale-xl);
+  --z-popover: var(--z-performance-popover);
+  --z-tooltip: var(--z-performance-tooltip);
+  --space-xs: var(--space-performance-xs);
+  --space-sm: var(--space-performance-sm);
+  --space-md: var(--space-performance-md);
+  --space-lg: var(--space-performance-lg);
+  --space-xl: var(--space-performance-xl);
+  --z-sticky: var(--z-performance-sticky);
+  --text-h1: var(--text-performance-h1);
+  --text-h2: var(--text-performance-h2);
+  --text-h3: var(--text-performance-h3);
+  --text-h4: var(--text-performance-h4);
+  --text-h5: var(--text-performance-h5);
+  --text-h6: var(--text-performance-h6);
+  --z-fixed: var(--z-performance-fixed);
+  --z-modal: var(--z-performance-modal);
+  --z-base: var(--z-performance-base);
 }
 
 /* ==========================================================================
@@ -792,39 +1028,39 @@
 
 [data-theme="light"],
 .theme-light {
-  --color-bg-pure: #ffffff;
-  --color-bg-elevated: #fafafa;
-  --color-bg-surface: #f5f5f5;
-  --color-bg-subtle: #eeeeee;
+  --color-performance-bg-pure: #ffffff;
+  --color-performance-bg-elevated: #fafafa;
+  --color-performance-bg-surface: #f5f5f5;
+  --color-performance-bg-subtle: #eeeeee;
 
-  --color-fg-primary: #1a1a1a;
-  --color-fg-secondary: rgba(0, 0, 0, 0.8);
-  --color-fg-tertiary: rgba(0, 0, 0, 0.6);
-  --color-fg-muted: rgba(0, 0, 0, 0.46);
-  --color-fg-subtle: rgba(0, 0, 0, 0.2);
+  --color-performance-fg-primary: #1a1a1a;
+  --color-performance-fg-secondary: rgba(0, 0, 0, 0.8);
+  --color-performance-fg-tertiary: rgba(0, 0, 0, 0.6);
+  --color-performance-fg-muted: rgba(0, 0, 0, 0.46);
+  --color-performance-fg-subtle: rgba(0, 0, 0, 0.2);
 
-  --color-border-default: rgba(0, 0, 0, 0.1);
-  --color-border-emphasis: rgba(0, 0, 0, 0.15);
-  --color-border-strong: rgba(0, 0, 0, 0.25);
+  --color-performance-border-default: rgba(0, 0, 0, 0.1);
+  --color-performance-border-emphasis: rgba(0, 0, 0, 0.15);
+  --color-performance-border-strong: rgba(0, 0, 0, 0.25);
 
-  --color-shell-surface: #ffffff;
-  --color-shell-surface-secondary: #fafafa;
-  --color-shell-surface-tertiary: #f5f5f5;
-  --color-shell-surface-elevated: #eeeeee;
-  --color-shell-surface-hover: #e8e8e8;
-  --color-shell-border-subtle: rgba(0, 0, 0, 0.05);
-  --color-shell-border-default: rgba(0, 0, 0, 0.1);
-  --color-shell-border-strong: rgba(0, 0, 0, 0.16);
-  --color-shell-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  --color-shell-shadow-strong: 0 20px 50px rgba(0, 0, 0, 0.14);
+  --color-performance-shell-surface: #ffffff;
+  --color-performance-shell-surface-secondary: #fafafa;
+  --color-performance-shell-surface-tertiary: #f5f5f5;
+  --color-performance-shell-surface-elevated: #eeeeee;
+  --color-performance-shell-surface-hover: #e8e8e8;
+  --color-performance-shell-border-subtle: rgba(0, 0, 0, 0.05);
+  --color-performance-shell-border-default: rgba(0, 0, 0, 0.1);
+  --color-performance-shell-border-strong: rgba(0, 0, 0, 0.16);
+  --color-performance-shell-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --color-performance-shell-shadow-strong: 0 20px 50px rgba(0, 0, 0, 0.14);
 
-  --color-hover: rgba(0, 0, 0, 0.03);
-  --color-active: rgba(0, 0, 0, 0.06);
-  --color-focus: rgba(0, 0, 0, 0.2);
+  --color-performance-hover: rgba(0, 0, 0, 0.03);
+  --color-performance-active: rgba(0, 0, 0, 0.06);
+  --color-performance-focus: rgba(0, 0, 0, 0.2);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-performance-scale-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-performance-scale-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-performance-scale-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* ==========================================================================
@@ -833,28 +1069,28 @@
 
 @media (prefers-contrast: more) {
   :root {
-    --color-bg-elevated: #050505;
-    --color-bg-surface: #0a0a0a;
-    --color-bg-subtle: #121212;
+    --color-performance-bg-elevated: #050505;
+    --color-performance-bg-surface: #0a0a0a;
+    --color-performance-bg-subtle: #121212;
 
-    --color-fg-secondary: rgba(255, 255, 255, 0.95);
-    --color-fg-tertiary: rgba(255, 255, 255, 0.85);
-    --color-fg-muted: rgba(255, 255, 255, 0.75);
-    --color-fg-subtle: rgba(255, 255, 255, 0.5);
+    --color-performance-fg-secondary: rgba(255, 255, 255, 0.95);
+    --color-performance-fg-tertiary: rgba(255, 255, 255, 0.85);
+    --color-performance-fg-muted: rgba(255, 255, 255, 0.75);
+    --color-performance-fg-subtle: rgba(255, 255, 255, 0.5);
 
-    --color-border-default: rgba(255, 255, 255, 0.3);
-    --color-border-emphasis: rgba(255, 255, 255, 0.5);
-    --color-border-strong: rgba(255, 255, 255, 0.7);
+    --color-performance-border-default: rgba(255, 255, 255, 0.3);
+    --color-performance-border-emphasis: rgba(255, 255, 255, 0.5);
+    --color-performance-border-strong: rgba(255, 255, 255, 0.7);
 
-    --color-hover: rgba(255, 255, 255, 0.15);
-    --color-active: rgba(255, 255, 255, 0.25);
-    --color-focus: rgba(255, 255, 255, 0.9);
+    --color-performance-hover: rgba(255, 255, 255, 0.15);
+    --color-performance-active: rgba(255, 255, 255, 0.25);
+    --color-performance-focus: rgba(255, 255, 255, 0.9);
 
     /* Semantic colors - brighter for high contrast */
-    --color-success: #5ddb5d;
-    --color-error: #ff6b6b;
-    --color-warning: #ffc857;
-    --color-info: #7eb8ff;
+    --color-performance-success: #5ddb5d;
+    --color-performance-error: #ff6b6b;
+    --color-performance-warning: #ffc857;
+    --color-performance-info: #7eb8ff;
   }
 }
 
@@ -883,21 +1119,21 @@
      * Mobile display: 1.75rem (28px) min ensures comfortable reading
      * On 375px screen: 5vw = 18.75px, +0.5rem = 26.75px → clamps to 28px min
      */
-    --text-display-xl: clamp(2.25rem, 7vw + 0.75rem, 3.5rem);   /* 36px - 56px */
-    --text-display: clamp(1.75rem, 5vw + 0.5rem, 2.25rem);      /* 28px - 36px */
+    --text-performance-display-xl: clamp(2.25rem, 7vw + 0.75rem, 3.5rem);   /* 36px - 56px */
+    --text-performance-display: clamp(1.75rem, 5vw + 0.5rem, 2.25rem);      /* 28px - 36px */
     
     /* Heading text - slightly reduced for mobile hierarchy
      * H1 needs room to breathe on mobile without overwhelming
      */
-    --text-h1: clamp(1.375rem, 3.5vw + 0.5rem, 1.75rem);        /* 22px - 28px */
-    --text-h2: clamp(1.125rem, 2.5vw + 0.5rem, 1.375rem);       /* 18px - 22px */
+    --text-performance-h1: clamp(1.375rem, 3.5vw + 0.5rem, 1.75rem);        /* 22px - 28px */
+    --text-performance-h2: clamp(1.125rem, 2.5vw + 0.5rem, 1.375rem);       /* 18px - 22px */
     
     /* Small text - increased minimums for mobile readability
      * WCAG recommends 14px+ for body text
      * Original caption: 0.833rem (13.3px) - too small on mobile
      * Original overline: 0.618rem (9.9px) - much too small
      */
-    --text-caption: 0.875rem;                                   /* 14px - readable */
-    --text-overline: 0.75rem;                                   /* 12px - minimum readable */
+    --text-performance-caption: 0.875rem;                                   /* 14px - readable */
+    --text-performance-overline: 0.75rem;                                   /* 12px - minimum readable */
   }
 }

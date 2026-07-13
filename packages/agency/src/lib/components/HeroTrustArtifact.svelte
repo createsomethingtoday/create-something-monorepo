@@ -168,9 +168,9 @@
   .hero-trust-artifact__signal small {
     display: block;
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     letter-spacing: 0;
     line-height: 1.12;
     text-transform: uppercase;
@@ -182,7 +182,7 @@
     color: var(--color-performance-ink, #090909);
     max-width: 18ch;
     font-size: clamp(1.5rem, 1.85vw, 1.86rem);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.04;
     text-wrap: balance;
   }
@@ -196,9 +196,9 @@
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.68rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     line-height: 1.1;
     text-transform: uppercase;
     white-space: nowrap;
@@ -258,7 +258,7 @@
     margin-top: 0.24rem;
     color: var(--color-performance-ink, #090909);
     font-size: 1rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     line-height: 1.18;
   }
 
@@ -314,9 +314,9 @@
 
   .hero-trust-artifact__state strong {
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.9rem;
-    font-weight: var(--font-bold);
+    font-weight: var(--font-performance-bold);
     line-height: 1.1;
     text-transform: uppercase;
   }
@@ -352,7 +352,7 @@
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.78rem;
     line-height: 1.25;
     overflow-wrap: anywhere;

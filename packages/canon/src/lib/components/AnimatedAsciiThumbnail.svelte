@@ -247,9 +247,9 @@
 		font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
 		font-size: clamp(0.32rem, 1vw, 0.38rem);
 		line-height: 1.1;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		opacity: 0.9;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 		white-space: pre;
 		user-select: none;
 	}

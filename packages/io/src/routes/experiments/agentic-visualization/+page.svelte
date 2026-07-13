@@ -89,10 +89,10 @@
 
 	// Comparative sparklines data - Using Canon data visualization colors
 	const comparativeData = [
-		{ label: '.agency', data: propertyData.agency.dailyViews, color: 'var(--color-data-1)', opacity: 0.9 },
-		{ label: '.io', data: propertyData.io.dailyViews, color: 'var(--color-data-2)', opacity: 0.9 },
-		{ label: '.space', data: propertyData.space.dailyViews, color: 'var(--color-data-3)', opacity: 0.9 },
-		{ label: '.ltd', data: propertyData.ltd.dailyViews, color: 'var(--color-data-4)', opacity: 0.9 }
+		{ label: '.agency', data: propertyData.agency.dailyViews, color: 'var(--color-performance-data-1)', opacity: 0.9 },
+		{ label: '.io', data: propertyData.io.dailyViews, color: 'var(--color-performance-data-2)', opacity: 0.9 },
+		{ label: '.space', data: propertyData.space.dailyViews, color: 'var(--color-performance-data-3)', opacity: 0.9 },
+		{ label: '.ltd', data: propertyData.ltd.dailyViews, color: 'var(--color-performance-data-4)', opacity: 0.9 }
 	];
 </script>
 

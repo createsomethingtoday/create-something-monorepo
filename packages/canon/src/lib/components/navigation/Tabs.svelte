@@ -149,25 +149,25 @@
 	/* Tab button base */
 	.tabs-tab {
 		position: relative;
-		padding: var(--space-sm) var(--space-md);
+		padding: var(--space-performance-sm) var(--space-performance-md);
 		background: none;
 		border: none;
-		color: var(--color-fg-muted);
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body);
+		font-weight: var(--font-performance-medium);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 		white-space: nowrap;
 	}
 
 	.tabs-tab:hover:not(:disabled) {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.tabs-tab:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: -2px;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.tabs-tab:disabled {
@@ -176,7 +176,7 @@
 	}
 
 	.tabs-tab.active {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Default variant - underline indicator */
@@ -188,39 +188,39 @@
 		right: 0;
 		height: 2px;
 		background: transparent;
-		transition: background var(--duration-micro) var(--ease-standard);
+		transition: background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.tabs-default .tabs-tab.active::after {
-		background: var(--color-fg-primary);
+		background: var(--color-performance-fg-primary);
 	}
 
 	/* Pills variant */
 	.tabs-pills .tabs-list {
 		border-bottom: none;
-		gap: var(--space-xs);
-		background: var(--color-bg-subtle);
+		gap: var(--space-performance-xs);
+		background: var(--color-performance-bg-subtle);
 		padding: 4px;
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-performance-scale-md);
 		width: fit-content;
 	}
 
 	.tabs-pills .tabs-tab {
-		border-radius: var(--radius-sm);
-		padding: var(--space-xs) var(--space-sm);
+		border-radius: var(--radius-performance-scale-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
 	}
 
 	.tabs-pills .tabs-tab.active {
-		box-shadow: var(--shadow-sm);
+		box-shadow: var(--shadow-performance-scale-sm);
 	}
 
 	/* Underline variant - minimal */
 	.tabs-underline .tabs-list {
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.tabs-underline .tabs-tab {
-		padding: var(--space-sm) 0;
+		padding: var(--space-performance-sm) 0;
 	}
 
 	.tabs-underline .tabs-tab::after {
@@ -231,33 +231,33 @@
 		right: 0;
 		height: 2px;
 		background: transparent;
-		transition: background var(--duration-micro) var(--ease-standard);
+		transition: background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.tabs-underline .tabs-tab.active::after {
-		background: var(--color-fg-primary);
+		background: var(--color-performance-fg-primary);
 	}
 
 	/* Size variants */
 	.tabs-sm .tabs-tab {
-		padding: var(--space-xs) var(--space-sm);
-		font-size: var(--text-body-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.tabs-lg .tabs-tab {
-		padding: var(--space-md) var(--space-lg);
-		font-size: var(--text-body-lg);
+		padding: var(--space-performance-md) var(--space-performance-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	/* Panel */
 	.tabs-panel {
-		padding: var(--space-md) 0;
+		padding: var(--space-performance-md) 0;
 	}
 
 	.tabs-panel:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.tabs-panel[hidden] {

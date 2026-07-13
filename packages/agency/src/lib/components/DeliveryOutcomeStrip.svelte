@@ -89,9 +89,9 @@
   .delivery-outcome-strip__header span,
   .delivery-outcome-card span {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.76rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     letter-spacing: 0;
     line-height: 1.15;
     text-transform: uppercase;
@@ -102,7 +102,7 @@
     max-width: 15ch;
     color: var(--color-performance-ink, #090909);
     font-size: 3.1rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     letter-spacing: 0;
     line-height: 1.02;
     text-wrap: balance;
@@ -151,7 +151,7 @@
   .delivery-outcome-card strong {
     color: var(--color-performance-ink, #090909);
     font-size: 1.18rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.18;
     text-wrap: balance;
   }

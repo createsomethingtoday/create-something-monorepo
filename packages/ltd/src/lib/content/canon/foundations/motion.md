@@ -50,18 +50,18 @@ Five duration levels from instant feedback to deliberate reveals.
 
 | Token | Value | Use Case |
 |-------|-------|----------|
-| `--duration-instant` | 0ms | Immediate state changes |
-| `--duration-micro` | 100ms | Hover states, button feedback |
-| `--duration-fast` | 200ms | Tooltips, dropdowns |
+| `--duration-performance-instant` | 0ms | Immediate state changes |
+| `--duration-performance-micro` | 100ms | Hover states, button feedback |
+| `--duration-performance-fast` | 200ms | Tooltips, dropdowns |
 | `--duration-normal` | 300ms | Modal transitions, page elements |
-| `--duration-slow` | 500ms | Complex reveals, hero animations |
+| `--duration-performance-slow` | 500ms | Complex reveals, hero animations |
 
 ## Easing
 
 Canon uses a single easing curve for consistency:
 
 ```css
---ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+--ease-performance-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
 ```
 
 This is Material Design's standard easing—quick acceleration, gradual deceleration. It feels natural because it mimics physical motion.
@@ -88,7 +88,7 @@ Always respect user preferences:
 
 ```css
 .button {
-  transition: all var(--duration-micro) var(--ease-standard);
+  transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .button:hover {
@@ -100,7 +100,7 @@ Always respect user preferences:
 
 ```css
 .modal {
-  animation: fadeIn var(--duration-normal) var(--ease-standard);
+  animation: fadeIn var(--duration-normal) var(--ease-performance-standard);
 }
 
 @keyframes fadeIn {
@@ -113,8 +113,8 @@ Always respect user preferences:
 
 ```css
 .dropdown {
-  transition: opacity var(--duration-fast) var(--ease-standard),
-              transform var(--duration-fast) var(--ease-standard);
+  transition: opacity var(--duration-performance-fast) var(--ease-performance-standard),
+              transform var(--duration-performance-fast) var(--ease-performance-standard);
 }
 
 .dropdown[data-state="closed"] {

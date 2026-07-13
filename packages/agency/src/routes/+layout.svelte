@@ -434,7 +434,7 @@
 
   @media (max-height: 47.5rem) and (min-width: 48rem) {
     :global(.layout-root .mode-indicator) {
-      top: calc(72px + var(--space-md, 1rem));
+      top: calc(72px + var(--space-performance-md, 1rem));
       bottom: auto;
     }
   }

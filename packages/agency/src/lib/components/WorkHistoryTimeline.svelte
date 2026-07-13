@@ -72,15 +72,15 @@
     background:
       linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
       var(--color-performance-panel, #ffffff);
-    --color-bg-pure: transparent;
-    --color-bg-subtle: var(--color-performance-panel, #ffffff);
-    --color-fg-primary: var(--color-performance-ink, #090909);
-    --color-fg-secondary: var(--color-performance-muted, #5e6268);
-    --color-fg-muted: var(--color-performance-muted, #5e6268);
-    --color-fg-tertiary: var(--color-performance-muted, #5e6268);
-    --color-fg-subtle: var(--color-performance-line-strong, #9c9c96);
-    --color-border-default: var(--color-performance-line, #d7d7d2);
-    --color-border-emphasis: var(--color-performance-line-strong, #9c9c96);
+    --color-performance-bg-pure: transparent;
+    --color-performance-bg-subtle: var(--color-performance-panel, #ffffff);
+    --color-performance-fg-primary: var(--color-performance-ink, #090909);
+    --color-performance-fg-secondary: var(--color-performance-muted, #5e6268);
+    --color-performance-fg-muted: var(--color-performance-muted, #5e6268);
+    --color-performance-fg-tertiary: var(--color-performance-muted, #5e6268);
+    --color-performance-fg-subtle: var(--color-performance-line-strong, #9c9c96);
+    --color-performance-border-default: var(--color-performance-line, #d7d7d2);
+    --color-performance-border-emphasis: var(--color-performance-line-strong, #9c9c96);
   }
 
   .milestones-inner {
@@ -167,7 +167,7 @@
   .timeline-date {
     margin: 0 0 0.55rem;
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.76rem;
     line-height: 1.15;
   }
@@ -176,14 +176,14 @@
     margin: 0 0 0.5rem;
     color: var(--color-performance-ink, #090909);
     font-size: 1.12rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.2;
     letter-spacing: 0;
   }
 
   .timeline-org {
     color: var(--color-performance-muted, #5e6268);
-    font-weight: var(--font-regular, 400);
+    font-weight: var(--font-performance-regular, 400);
   }
 
   .timeline-subtitle {
@@ -213,7 +213,7 @@
 
   .timeline-bullets strong {
     color: var(--color-performance-ink, #090909);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
   }
 
   @media (max-width: 640px) {

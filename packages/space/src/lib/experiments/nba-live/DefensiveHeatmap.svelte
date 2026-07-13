@@ -46,11 +46,11 @@
 		const diff = pct - leagueAvg;
 
 		// For defense: below league average = good (green), above = bad (red)
-		if (diff <= -0.10) return 'var(--color-success)'; // Excellent defense
-		if (diff <= -0.05) return 'var(--color-data-2)';  // Good defense
-		if (diff <= 0.05) return 'var(--color-warning)';  // Average
-		if (diff <= 0.10) return 'var(--color-data-4)';   // Below average
-		return 'var(--color-error)';                       // Poor defense
+		if (diff <= -0.10) return 'var(--color-performance-success)'; // Excellent defense
+		if (diff <= -0.05) return 'var(--color-performance-data-2)';  // Good defense
+		if (diff <= 0.05) return 'var(--color-performance-warning)';  // Average
+		if (diff <= 0.10) return 'var(--color-performance-data-4)';   // Below average
+		return 'var(--color-performance-error)';                       // Poor defense
 	}
 
 	// Format percentage
@@ -80,21 +80,21 @@
 	<div class="court">
 		<svg viewBox="0 0 400 380" class="court-svg">
 			<!-- Court outline -->
-			<rect x="10" y="10" width="380" height="360" fill="none" stroke="var(--color-border-default)" stroke-width="2" rx="4" />
+			<rect x="10" y="10" width="380" height="360" fill="none" stroke="var(--color-performance-border-default)" stroke-width="2" rx="4" />
 
 			<!-- Three-point line (approximate) -->
 			<path
 				d="M 10 80 L 60 80 Q 200 60 340 80 L 390 80"
 				fill="none"
-				stroke="var(--color-border-default)"
+				stroke="var(--color-performance-border-default)"
 				stroke-width="1"
 			/>
 
 			<!-- Key/Paint area -->
-			<rect x="140" y="10" width="120" height="190" fill="none" stroke="var(--color-border-default)" stroke-width="1" />
+			<rect x="140" y="10" width="120" height="190" fill="none" stroke="var(--color-performance-border-default)" stroke-width="1" />
 
 			<!-- Restricted area (circle) -->
-			<circle cx="200" cy="60" r="40" fill="none" stroke="var(--color-border-default)" stroke-width="1" />
+			<circle cx="200" cy="60" r="40" fill="none" stroke="var(--color-performance-border-default)" stroke-width="1" />
 
 			<!-- Zone overlays -->
 			{#if shotsByZone.restricted_area}
@@ -227,15 +227,15 @@
 	<div class="heatmap-legend">
 		<span class="legend-label">Defense Rating:</span>
 		<span class="legend-item">
-			<span class="legend-dot" style="background: var(--color-success)"></span>
+			<span class="legend-dot" style="background: var(--color-performance-success)"></span>
 			Excellent
 		</span>
 		<span class="legend-item">
-			<span class="legend-dot" style="background: var(--color-warning)"></span>
+			<span class="legend-dot" style="background: var(--color-performance-warning)"></span>
 			Average
 		</span>
 		<span class="legend-item">
-			<span class="legend-dot" style="background: var(--color-error)"></span>
+			<span class="legend-dot" style="background: var(--color-performance-error)"></span>
 			Poor
 		</span>
 	</div>
@@ -243,22 +243,22 @@
 
 <style>
 	.heatmap-container {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.heatmap-title {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.court {
 		display: flex;
 		justify-content: center;
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.court-svg {
@@ -270,30 +270,30 @@
 	.zone-label {
 		font-size: 11px;
 		font-weight: 600;
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 		font-family: inherit;
 	}
 
 	.zone-breakdown {
-		margin-top: var(--space-md);
+		margin-top: var(--space-performance-md);
 	}
 
 	.zone-table {
 		width: 100%;
 		border-collapse: collapse;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.zone-table th {
 		text-align: left;
-		padding: var(--space-xs) var(--space-sm);
-		color: var(--color-fg-muted);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		color: var(--color-performance-fg-muted);
 		font-weight: 500;
 	}
 
 	.zone-table td {
-		padding: var(--space-xs) var(--space-sm);
-		color: var(--color-fg-secondary);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.zone-table tr:last-child td {
@@ -302,7 +302,7 @@
 
 	.zone-name {
 		font-weight: 500;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.delta-cell {
@@ -311,39 +311,39 @@
 	}
 
 	.delta-cell.positive {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.delta-cell.negative {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.heatmap-legend {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--space-md);
-		margin-top: var(--space-md);
-		padding-top: var(--space-sm);
+		gap: var(--space-performance-md);
+		margin-top: var(--space-performance-md);
+		padding-top: var(--space-performance-sm);
 		align-items: center;
 	}
 
 	.legend-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		font-weight: 500;
 	}
 
 	.legend-item {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		gap: var(--space-performance-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.legend-dot {
 		width: 8px;
 		height: 8px;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 	}
 </style>

@@ -101,20 +101,20 @@
 		font-weight: 600;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	h2 {
 		margin: 0 0 0.85rem;
 		font-size: clamp(1.75rem, 3vw, 2.5rem);
 		line-height: 1.1;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.summary {
 		margin: 0;
 		max-width: 38rem;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		font-size: 1.05rem;
 		line-height: 1.7;
 	}
@@ -130,9 +130,9 @@
 	.surface-card,
 	.artifact-card {
 		background:
-			linear-gradient(180deg, color-mix(in srgb, var(--color-bg-subtle) 70%, transparent), transparent),
-			var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
+			linear-gradient(180deg, color-mix(in srgb, var(--color-performance-bg-subtle) 70%, transparent), transparent),
+			var(--color-performance-bg-pure);
+		border: 1px solid var(--color-performance-border-default);
 		border-radius: 1.25rem;
 		opacity: 0;
 		transform: translateY(14px);
@@ -153,20 +153,20 @@
 		font-weight: 700;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.surface-card h3,
 	.artifact-card h3 {
 		margin: 0 0 0.7rem;
 		font-size: 1.15rem;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.surface-card ul {
 		margin: 0;
 		padding-left: 1rem;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.surface-card li {
@@ -227,7 +227,7 @@
 	.artifact-copy {
 		position: relative;
 		margin: 0 0 1rem;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.65;
 	}
 
@@ -255,15 +255,15 @@
 	}
 
 	.phase-pill {
-		background: color-mix(in srgb, var(--color-bg-subtle) 82%, transparent);
-		color: var(--color-fg-secondary);
-		border: 1px solid var(--color-border-default);
+		background: color-mix(in srgb, var(--color-performance-bg-subtle) 82%, transparent);
+		color: var(--color-performance-fg-secondary);
+		border: 1px solid var(--color-performance-border-default);
 	}
 
 	.result-chip {
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-default);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
+		border: 1px solid var(--color-performance-border-default);
 	}
 
 	@keyframes card-enter {

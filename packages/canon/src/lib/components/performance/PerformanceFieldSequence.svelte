@@ -81,14 +81,14 @@
 
 	.performance-field-sequence__header span,
 	.performance-field-sequence__header small {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-semibold, 600);
+		font-weight: var(--font-performance-semibold, 600);
 		text-transform: uppercase;
 	}
 
 	.performance-field-sequence__header small { color: rgba(255, 255, 255, 0.58); }
-	.performance-field-sequence__header h2 { max-width: 17ch; margin: 0; font-family: var(--font-performance-display, var(--font-display, var(--font-sans))); font-size: clamp(2rem, 4vw, 4rem); font-weight: var(--font-performance-display-weight, var(--font-medium, 500)); font-kerning: normal; font-feature-settings: "kern" 1, "liga" 1; letter-spacing: var(--tracking-performance-display, -0.03em); line-height: var(--leading-performance-display, 0.94); text-wrap: balance; }
+	.performance-field-sequence__header h2 { max-width: 17ch; margin: 0; font-family: var(--font-performance-display, var(--font-performance-display, var(--font-performance-sans))); font-size: clamp(2rem, 4vw, 4rem); font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500)); font-kerning: normal; font-feature-settings: "kern" 1, "liga" 1; letter-spacing: var(--tracking-performance-display, -0.03em); line-height: var(--leading-performance-display, 0.94); text-wrap: balance; }
 	.performance-field-sequence__header p { max-width: 44rem; margin: 0; color: var(--color-performance-muted, #5e6268); line-height: 1.45; }
 	.performance-field-sequence__studies { display: grid; gap: clamp(1.5rem, 4vw, 4rem); }
 	.performance-field-sequence__study { min-width: 0; }

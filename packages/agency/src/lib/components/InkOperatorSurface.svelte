@@ -154,7 +154,7 @@
 
   .ink-surface__copy p {
     margin: 0;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     line-height: 1.72;
     text-wrap: pretty;
   }
@@ -177,8 +177,8 @@
   }
 
   .ink-state-grid span {
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
+    color: var(--color-performance-fg-muted);
+    font-family: var(--font-performance-mono);
     font-size: 0.64rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -186,7 +186,7 @@
 
   .ink-state-grid strong {
     align-self: end;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     font-size: 0.9rem;
     line-height: 1.25;
   }
@@ -270,15 +270,15 @@
   }
 
   .ink-callout__label {
-    color: var(--color-fg-primary);
-    font-family: var(--font-mono);
+    color: var(--color-performance-fg-primary);
+    font-family: var(--font-performance-mono);
     font-size: 0.68rem;
     letter-spacing: 0.11em;
     text-transform: uppercase;
   }
 
   .ink-callout__detail {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
     font-size: 0.73rem;
     line-height: 1.45;
   }
@@ -326,7 +326,7 @@
 
   .ink-detail-card p {
     margin: 0.45rem 0 0;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     font-size: 0.9rem;
     line-height: 1.55;
   }

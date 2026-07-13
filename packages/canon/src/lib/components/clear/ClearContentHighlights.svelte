@@ -101,9 +101,9 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.76rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.15;
 		text-transform: uppercase;
@@ -113,7 +113,7 @@
 		margin: 0;
 		color: var(--color-performance-ink, #090909);
 		font-size: 3.1rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.02;
 		text-wrap: balance;
@@ -178,9 +178,9 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.68rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.12;
 		text-transform: uppercase;
 	}
@@ -189,7 +189,7 @@
 		max-width: 18ch;
 		color: var(--color-performance-ink, #090909);
 		font-size: 1.36rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.12;
 		text-wrap: balance;
 	}

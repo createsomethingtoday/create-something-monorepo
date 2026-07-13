@@ -120,38 +120,38 @@
 
 <style>
 	.page-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
 	}
 
 	.page-description {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.select-field {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.select-field:focus {
 		outline: none;
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.btn-secondary {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
-		transition: all var(--duration-micro) var(--ease-standard);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.btn-secondary:hover:not(:disabled) {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.btn-secondary:disabled {
@@ -159,25 +159,25 @@
 	}
 
 	.context-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.context-title {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.context-flow {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-caption);
 	}
 
 	.context-description {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 	}
 
 	.footer-section {
@@ -185,11 +185,11 @@
 	}
 
 	.footer-text {
-		color: var(--color-fg-subtle);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-subtle);
+		font-size: var(--text-performance-caption);
 	}
 
 	.footer-highlight {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 </style>

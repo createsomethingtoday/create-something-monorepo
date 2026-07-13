@@ -85,8 +85,8 @@
 	.palette-container {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
-		font-family: var(--font-sans, system-ui, sans-serif);
+		gap: var(--space-performance-sm);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		width: 100%;
 		max-width: 600px;
 	}
@@ -100,7 +100,7 @@
 	.palette-title {
 		font-size: 11px;
 		font-weight: 500;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		margin: 0;
@@ -109,18 +109,18 @@
 	.palette-grid {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.category-group {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.category-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -128,19 +128,19 @@
 	.materials {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.material-swatch {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.swatch {
 		width: 32px;
 		height: 32px;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		flex-shrink: 0;
 	}
 
@@ -151,24 +151,24 @@
 	}
 
 	.material-name {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
 
 	.material-location {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
 
 	.caption {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-align: center;
 		margin: 0;
 	}

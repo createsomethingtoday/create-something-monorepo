@@ -237,30 +237,30 @@
 <style>
 	.fluid-assembly {
 		display: inline-block;
-		font-family: var(--font-sans);
-		font-size: var(--text-display);
-		font-weight: var(--font-regular);
-		line-height: var(--leading-tight);
-		letter-spacing: var(--tracking-tight);
-		color: var(--color-fg-primary);
+		font-family: var(--font-performance-sans);
+		font-size: var(--text-performance-display);
+		font-weight: var(--font-performance-regular);
+		line-height: var(--leading-performance-tight);
+		letter-spacing: var(--tracking-performance-tight);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.word {
 		display: inline-block;
 		transition:
-			font-weight var(--duration-standard) var(--ease-standard),
-			opacity var(--duration-standard) var(--ease-standard);
+			font-weight var(--duration-performance-standard) var(--ease-performance-standard),
+			opacity var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.word.emphasis {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.char {
 		display: inline-block;
 		transition:
-			opacity var(--duration-micro) var(--ease-standard),
-			transform var(--duration-standard) var(--ease-standard);
+			opacity var(--duration-performance-micro) var(--ease-performance-standard),
+			transform var(--duration-performance-standard) var(--ease-performance-standard);
 		will-change: transform, opacity;
 	}
 
@@ -281,7 +281,7 @@
 	}
 
 	.fluid-assembly.reduced-motion .word.emphasis {
-		font-weight: var(--font-bold);
+		font-weight: var(--font-performance-bold);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
@@ -296,7 +296,7 @@
 		}
 
 		.word.emphasis {
-			font-weight: var(--font-semibold);
+			font-weight: var(--font-performance-semibold);
 		}
 	}
 </style>

@@ -91,29 +91,29 @@
 
 <style>
   /* Hero Section */
-  /* Entity title - uses --text-h1 for potentially long category names */
+  /* Entity title - uses --text-performance-h1 for potentially long category names */
   .hero-title {
-    font-size: var(--text-h1);
-    font-weight: var(--font-bold);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-h1);
+    font-weight: var(--font-performance-bold);
+    color: var(--color-performance-fg-primary);
   }
 
   .hero-subtitle {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Empty State */
   .empty-message {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Animation */
   .animate-reveal {
     opacity: 0;
     transform: translateY(20px);
-    animation: reveal var(--duration-complex) var(--ease-standard) forwards;
+    animation: reveal var(--duration-performance-complex) var(--ease-performance-standard) forwards;
     animation-delay: calc(var(--delay, 0) * 100ms);
   }
 

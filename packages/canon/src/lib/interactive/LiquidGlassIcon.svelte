@@ -94,17 +94,17 @@
 		font-weight: 500;
 		/* NO backdrop-filter on container - prevents Chrome flattening */
 		backdrop-filter: none;
-		transition: all var(--duration-standard, 300ms) var(--ease-standard);
+		transition: all var(--duration-performance-standard, 300ms) var(--ease-performance-standard);
 		overflow: visible; /* Allow blur to extend slightly */
 	}
 
 	/* Shape variants */
 	.liquid-glass-icon.shape-square {
-		border-radius: var(--radius-md, 8px);
+		border-radius: var(--radius-performance-scale-md, 8px);
 	}
 
 	.liquid-glass-icon.shape-pill {
-		border-radius: var(--radius-full, 9999px);
+		border-radius: var(--radius-performance-scale-full, 9999px);
 	}
 
 	/* Deep variant styling */

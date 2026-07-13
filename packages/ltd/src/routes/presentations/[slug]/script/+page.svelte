@@ -119,50 +119,50 @@
 <style>
   .script-viewer {
     min-height: 100vh;
-    background: var(--color-bg-pure);
-    color: var(--color-fg-primary);
-    padding: var(--space-lg);
+    background: var(--color-performance-bg-pure);
+    color: var(--color-performance-fg-primary);
+    padding: var(--space-performance-lg);
   }
 
   .header {
     max-width: 80ch;
-    margin: 0 auto var(--space-xl);
-    padding-bottom: var(--space-lg);
+    margin: 0 auto var(--space-performance-xl);
+    padding-bottom: var(--space-performance-lg);
   }
 
   .header-content {
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-performance-md);
   }
 
   .back-link {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
     text-decoration: none;
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     display: inline-block;
-    margin-bottom: var(--space-sm);
-    transition: color var(--duration-micro) var(--ease-standard);
+    margin-bottom: var(--space-performance-sm);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .back-link:hover {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   h1 {
-    font-size: var(--text-h1);
+    font-size: var(--text-performance-h1);
     font-weight: 700;
     letter-spacing: 0.02em;
-    margin: 0 0 var(--space-xs);
+    margin: 0 0 var(--space-performance-xs);
   }
 
   .subtitle {
-    color: var(--color-fg-secondary);
-    font-size: var(--text-body-lg);
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-performance-body-lg);
     margin: 0;
   }
 
   .actions {
     display: flex;
-    gap: var(--space-sm);
+    gap: var(--space-performance-sm);
     align-items: center;
     flex-wrap: wrap;
   }
@@ -170,8 +170,8 @@
   /* Removed local .btn and .btn-secondary styles as we use .button-primary and .button-secondary from canon */
 
   .copy-status {
-    color: var(--color-success);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-success);
+    font-size: var(--text-performance-body-sm);
   }
 
   .script-content {
@@ -180,16 +180,16 @@
   }
 
   .script-raw {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-md);
-    padding: var(--space-lg);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-md);
+    padding: var(--space-performance-lg);
     overflow-x: auto;
   }
 
   .script-raw pre {
     margin: 0;
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     line-height: 1.7;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -197,20 +197,20 @@
 
   .footer {
     max-width: 80ch;
-    margin: var(--space-xl) auto 0;
-    padding-top: var(--space-lg);
+    margin: var(--space-performance-xl) auto 0;
+    padding-top: var(--space-performance-lg);
     text-align: center;
   }
 
   .footer a {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
     text-decoration: none;
-    font-size: var(--text-body-sm);
-    transition: color var(--duration-micro) var(--ease-standard);
+    font-size: var(--text-performance-body-sm);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .footer a:hover {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   @media print {

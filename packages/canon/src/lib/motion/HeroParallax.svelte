@@ -82,7 +82,7 @@
 		height: 100vh;
 		height: 100dvh;
 		overflow: hidden;
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	/* Background layer */
@@ -102,7 +102,7 @@
 		height: 100%;
 		object-fit: cover;
 		opacity: 0;
-		animation: image-reveal 1.2s var(--ease-standard) 0.3s forwards;
+		animation: image-reveal 1.2s var(--ease-performance-standard) 0.3s forwards;
 	}
 
 	@keyframes image-reveal {
@@ -139,20 +139,20 @@
 	/* Caption */
 	.hero-caption {
 		position: absolute;
-		bottom: var(--space-xl);
-		left: var(--space-lg);
+		bottom: var(--space-performance-xl);
+		left: var(--space-performance-lg);
 		z-index: 1;
 	}
 
 	.caption-text {
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
-		letter-spacing: var(--tracking-wide);
+		font-size: var(--text-performance-caption);
+		font-weight: var(--font-performance-medium);
+		color: var(--color-performance-fg-primary);
+		letter-spacing: var(--tracking-performance-wide);
 		text-transform: uppercase;
 		text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 		opacity: 0;
-		animation: caption-fade 0.8s var(--ease-standard) 1s forwards;
+		animation: caption-fade 0.8s var(--ease-performance-standard) 1s forwards;
 	}
 
 	@keyframes caption-fade {
@@ -169,12 +169,12 @@
 	/* Scroll indicator */
 	.scroll-indicator {
 		position: absolute;
-		bottom: var(--space-xl);
+		bottom: var(--space-performance-xl);
 		left: 50%;
 		transform: translateX(-50%);
 		z-index: 1;
 		opacity: 0;
-		animation: indicator-fade 0.8s var(--ease-standard) 1.5s forwards;
+		animation: indicator-fade 0.8s var(--ease-performance-standard) 1.5s forwards;
 	}
 
 	@keyframes indicator-fade {
@@ -186,13 +186,13 @@
 	.scroll-line {
 		display: block;
 		width: 1px;
-		height: var(--space-lg);
+		height: var(--space-performance-lg);
 		background: linear-gradient(
 			to bottom,
-			var(--color-fg-primary) 0%,
+			var(--color-performance-fg-primary) 0%,
 			transparent 100%
 		);
-		animation: scroll-pulse 2.5s var(--ease-standard) infinite;
+		animation: scroll-pulse 2.5s var(--ease-performance-standard) infinite;
 		animation-delay: 2s;
 	}
 
@@ -211,8 +211,8 @@
 	/* Responsive */
 	@media (max-width: 768px) {
 		.hero-caption {
-			left: var(--space-md);
-			bottom: var(--space-lg);
+			left: var(--space-performance-md);
+			bottom: var(--space-performance-lg);
 		}
 	}
 

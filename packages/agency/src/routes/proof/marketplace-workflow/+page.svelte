@@ -241,20 +241,20 @@
   .acceptance-receipt span,
   .acceptance-receipt small {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
     line-height: 1.45;
   }
 
   .acceptance-receipt span {
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     text-transform: uppercase;
   }
 
   .acceptance-receipt strong {
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: clamp(1rem, 2vw, 1.35rem);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
   }
 
   .acceptance-receipt p {

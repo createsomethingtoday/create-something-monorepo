@@ -169,7 +169,7 @@
 	}
 
 	.roof-fill {
-		fill: var(--color-bg-elevated);
+		fill: var(--color-performance-bg-elevated);
 	}
 
 	.roof-edge {
@@ -178,28 +178,28 @@
 	}
 
 	.ridge-line {
-		stroke: var(--color-fg-muted);
+		stroke: var(--color-performance-fg-muted);
 		stroke-width: 0.5;
 		stroke-dasharray: 4 2;
 	}
 
 	.slope-arrow {
-		stroke: var(--color-fg-subtle);
+		stroke: var(--color-performance-fg-subtle);
 		stroke-width: 0.5;
 	}
 
 	.slope-arrow-head {
-		fill: var(--color-fg-subtle);
+		fill: var(--color-performance-fg-subtle);
 	}
 
 	.drain-outer {
 		fill: none;
-		stroke: var(--color-fg-muted);
+		stroke: var(--color-performance-fg-muted);
 		stroke-width: 0.5;
 	}
 
 	.drain-inner {
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 	}
 
 	.overhang {
@@ -210,16 +210,16 @@
 	}
 
 	.north-line {
-		stroke: var(--color-fg-muted);
+		stroke: var(--color-performance-fg-muted);
 		stroke-width: 0.75;
 	}
 
 	.north-arrow-head {
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 	}
 
 	.roof-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 7px;
 		fill: var(--arch-label-primary);
 		text-anchor: middle;
@@ -231,7 +231,7 @@
 	}
 
 	.overhang-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 5px;
 		fill: var(--arch-label-subtle);
 		text-anchor: middle;
@@ -239,7 +239,7 @@
 	}
 
 	.north-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 6px;
 		fill: var(--arch-label-subtle);
 		text-anchor: middle;
@@ -249,22 +249,22 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-top: var(--space-md, 1.5rem);
-		padding-top: var(--space-sm, 1rem);
-		border-top: 1px solid var(--color-hover);
-		font-family: var(--font-sans, system-ui, sans-serif);
+		margin-top: var(--space-performance-md, 1.5rem);
+		padding-top: var(--space-performance-sm, 1rem);
+		border-top: 1px solid var(--color-performance-hover);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.caption {
-		font-size: var(--text-body-sm, 11px);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm, 11px);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.area-hint {
-		font-size: var(--text-caption, 10px);
-		color: var(--color-fg-subtle);
+		font-size: var(--text-performance-caption, 10px);
+		color: var(--color-performance-fg-subtle);
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-widest, 0.1em);
+		letter-spacing: var(--tracking-performance-widest, 0.1em);
 	}
 
 	@media (max-width: 768px) {

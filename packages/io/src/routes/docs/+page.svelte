@@ -83,29 +83,29 @@
 	.docs-index {
 		max-width: 1200px;
 		margin: 0 auto;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.hero {
 		text-align: center;
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.hero h1 {
-		font-size: var(--text-display);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-display);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.tagline {
-		font-size: var(--text-h3);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.description {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-tertiary);
 		max-width: 600px;
 		margin: 0 auto;
 	}
@@ -113,16 +113,16 @@
 	.tools-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-		gap: var(--space-lg);
-		margin-bottom: var(--space-xl);
+		gap: var(--space-performance-lg);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.tool-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-lg);
 		text-decoration: none;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.tool-card:hover {
@@ -131,31 +131,31 @@
 	}
 
 	.tool-card h2 {
-		font-size: var(--text-h2);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-h2);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.tool-tagline {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.tool-description {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-md);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.npm-package {
 		display: inline-block;
-		background: var(--color-bg-subtle);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-md);
+		background: var(--color-performance-bg-subtle);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.features {
@@ -165,81 +165,81 @@
 	}
 
 	.features li {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		padding-left: var(--space-md);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
+		padding-left: var(--space-performance-md);
 		position: relative;
-		margin-bottom: var(--space-xs);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.features li::before {
 		content: '→';
 		position: absolute;
 		left: 0;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.quick-install {
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
-		margin-bottom: var(--space-xl);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-lg);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.quick-install h2 {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.install-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.install-option h3 {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.install-option pre {
-		background: var(--color-bg-pure);
-		padding: var(--space-sm);
-		border-radius: var(--radius-sm);
+		background: var(--color-performance-bg-pure);
+		padding: var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		overflow-x: auto;
 	}
 
 	.install-option code {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.supported-tools h2 {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.supported-tools p {
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-md);
+		color: var(--color-performance-fg-tertiary);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.tool-list {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 		list-style: none;
 		padding: 0;
 		margin: 0;
 	}
 
 	.tool-list li {
-		background: var(--color-bg-subtle);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		background: var(--color-performance-bg-subtle);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 </style>

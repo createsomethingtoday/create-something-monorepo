@@ -123,13 +123,13 @@ export const intelligenceScenarios: IntelligenceScenario[] = [
 
 // Particle colors by scenario
 export const particleColors = [
-	'var(--color-data-4)', // 0: entering - yellow/gold
+	'var(--color-performance-data-4)', // 0: entering - yellow/gold
 	'var(--color-accent)', // 1: VIP - accent
-	'var(--color-data-2)', // 2: halftime - green
-	'var(--color-data-3)', // 3: weather - blue
-	'var(--color-error)', // 4: emergency - red
-	'var(--color-data-1)', // 5: exiting - cyan
-	'var(--color-fg-muted)' // 6: overnight - gray
+	'var(--color-performance-data-2)', // 2: halftime - green
+	'var(--color-performance-data-3)', // 3: weather - blue
+	'var(--color-performance-error)', // 4: emergency - red
+	'var(--color-performance-data-1)', // 5: exiting - cyan
+	'var(--color-performance-fg-muted)' // 6: overnight - gray
 ];
 
 // AI Reasoning examples - showing how the system thinks, not just acts

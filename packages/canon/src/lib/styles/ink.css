@@ -9,10 +9,10 @@
  * Mobile gets touch-safe density. Both prioritize data over decoration.
  *
  * The 4-Value Constraint (aligned with WORKWAY):
- *   --space-sm: 1rem      (16px) - tight relationships
- *   --space-md: 1.618rem  (26px) - default breathing room  
- *   --space-lg: 2.618rem  (42px) - between related sections
- *   --space-xl: 4.236rem  (68px) - major landmarks, heroes
+ *   --space-performance-sm: 1rem      (16px) - tight relationships
+ *   --space-performance-md: 1.618rem  (26px) - default breathing room
+ *   --space-performance-lg: 2.618rem  (42px) - between related sections
+ *   --space-performance-xl: 4.236rem  (68px) - major landmarks, heroes
  *
  * @usage
  *   @import '@create-something/canon/styles/ink.css';
@@ -27,7 +27,7 @@
 
 :root {
 	/* Padding - mobile defaults (Tufte: minimize non-data-ink) */
-	--ink-pad-container: var(--space-sm); /* 16px */
+	--ink-pad-container: var(--space-performance-sm); /* 16px */
 	--ink-pad-component: 0.75rem; /* 12px - balanced touch/density */
 	--ink-pad-cell: 0.25rem; /* 4px */
 	--ink-touch-min: 44px;
@@ -44,8 +44,8 @@
 /* Tablet: standard density */
 @media (min-width: 768px) {
 	:root {
-		--ink-pad-container: var(--space-md); /* 26px */
-		--ink-pad-component: var(--space-sm); /* 16px */
+		--ink-pad-container: var(--space-performance-md); /* 26px */
+		--ink-pad-component: var(--space-performance-sm); /* 16px */
 		--ink-pad-cell: 0.375rem; /* 6px */
 		--ink-sparkline-width: 40px;
 		--ink-sparkline-height: 12px;
@@ -60,8 +60,8 @@
  */
 @media (min-width: 1024px) {
 	:root {
-		--ink-pad-container: var(--space-md); /* 26px (same as tablet - Tufte) */
-		--ink-pad-component: var(--space-sm); /* 16px (same as tablet - Tufte) */
+		--ink-pad-container: var(--space-performance-md); /* 26px (same as tablet - Tufte) */
+		--ink-pad-component: var(--space-performance-sm); /* 16px (same as tablet - Tufte) */
 		--ink-pad-cell: 0.375rem; /* 6px (same as tablet - Tufte) */
 		--ink-sparkline-width: 48px;
 		--ink-sparkline-height: 14px;
@@ -72,7 +72,7 @@
 
 /* ==========================================================================
    Data Density Classes - Progressive Disclosure
-   
+
    Tufte: "Maximize the data-ink ratio, within reason."
    Mobile shows essential data only; details appear on larger screens.
    ========================================================================== */
@@ -103,7 +103,7 @@
 
 /* ==========================================================================
    Ink Padding - Tufte-Aligned Spacing (All Viewports)
-   
+
    Principle: Padding is non-data-ink. Minimize everywhere to maximize data.
    Desktop gets same density as tablet - only layout expands, not spacing.
    ========================================================================== */
@@ -127,32 +127,32 @@
  * Desktop stays tight - same as tablet (Tufte everywhere)
  */
 .ink-pad-asymmetric {
-	padding: var(--space-sm) 0.75rem; /* 16px vert, 12px horiz on mobile */
+	padding: var(--space-performance-sm) 0.75rem; /* 16px vert, 12px horiz on mobile */
 }
 
 @media (min-width: 768px) {
 	.ink-pad-asymmetric {
-		padding: var(--space-md) var(--space-sm); /* 26px vert, 16px horiz */
+		padding: var(--space-performance-md) var(--space-performance-sm); /* 26px vert, 16px horiz */
 	}
 }
 
 /* Desktop: same as tablet (Tufte - tight everywhere) */
 @media (min-width: 1024px) {
 	.ink-pad-asymmetric {
-		padding: var(--space-md) var(--space-sm); /* 26px vert, 16px horiz (same as tablet) */
+		padding: var(--space-performance-md) var(--space-performance-sm); /* 26px vert, 16px horiz (same as tablet) */
 	}
 }
 
 /* ==========================================================================
    Small Multiples Grid - Tufte's Comparative Visualization
-   
+
    "Small multiples reveal, all at once, a scope of alternatives."
    Target: 4-9 small multiples visible on any screen size.
    ========================================================================== */
 
 .ink-grid {
 	display: grid;
-	gap: var(--space-xs);
+	gap: var(--space-performance-xs);
 	grid-template-columns: repeat(var(--ink-grid-cols), 1fr);
 }
 
@@ -191,13 +191,13 @@
 
 /* ==========================================================================
    Metric Grid - Dashboard Layouts
-   
+
    Adaptive grid for metric cards that maintains data density.
    ========================================================================== */
 
 .ink-metric-grid {
 	display: grid;
-	gap: var(--space-sm);
+	gap: var(--space-performance-sm);
 	grid-template-columns: repeat(var(--ink-metric-cols), 1fr);
 }
 
@@ -243,7 +243,7 @@
 
 /* ==========================================================================
    Table Scroll - Horizontal Overflow for Dense Data
-   
+
    Tufte: For comparison tables, preserve column relationships.
    ========================================================================== */
 
@@ -254,7 +254,7 @@
 
 /* ==========================================================================
    Table Card Transformation - Row-to-Card on Mobile
-   
+
    Research: Use ::before with data-label pattern for mobile.
    Converts table rows to stacked cards on small screens.
    ========================================================================== */
@@ -278,9 +278,9 @@
 
 	.ink-table-cards tr {
 		display: block;
-		border-bottom: 1px solid var(--color-border-default);
-		margin-bottom: var(--space-sm);
-		padding-bottom: var(--space-sm);
+		border-bottom: 1px solid var(--color-performance-border-default);
+		margin-bottom: var(--space-performance-sm);
+		padding-bottom: var(--space-performance-sm);
 	}
 
 	.ink-table-cards td {
@@ -294,15 +294,15 @@
 		content: attr(data-label);
 		float: left;
 		font-weight: 500;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		text-transform: uppercase;
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 }
 
 /* ==========================================================================
    SVG Container - Viewport Scaling for Architectural Drawings
-   
+
    Tufte: Maintain legibility of detailed graphics.
    ========================================================================== */
 
@@ -325,7 +325,7 @@
 
 /* ==========================================================================
    Container Query Support - Component-Level Responsiveness
-   
+
    Research (2025): Container queries now Baseline "Widely available".
    Use for component-level responsiveness instead of viewport queries.
    ========================================================================== */
@@ -358,7 +358,7 @@
 
 /* ==========================================================================
    Touch Targets - Accessibility Minimum
-   
+
    Tufte meets accessibility: 44px minimum for fat-finger targeting.
    ========================================================================== */
 
@@ -369,7 +369,7 @@
 
 /* ==========================================================================
    Sparkline Container - Word-Sized Graphics
-   
+
    Tufte: "Sparklines are datawords: data-intense, design-simple,
    word-sized graphics."
    ========================================================================== */

@@ -348,15 +348,15 @@
 	.hover-card {
 		position: fixed;
 		z-index: 1000;
-		background: var(--color-bg-elevated, #0a0a0a);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-lg, 12px);
-		box-shadow: var(--shadow-xl, 0 20px 60px rgba(0, 0, 0, 0.4));
+		background: var(--color-performance-bg-elevated, #0a0a0a);
+		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-lg, 12px);
+		box-shadow: var(--shadow-performance-scale-xl, 0 20px 60px rgba(0, 0, 0, 0.4));
 		opacity: 0;
 		transform: scale(0.96);
 		transition:
-			opacity var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-			transform var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+			opacity var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			transform var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 		pointer-events: none;
 	}
 
@@ -400,7 +400,7 @@
 	}
 
 	.hover-card-content {
-		padding: var(--space-md, 1.618rem);
+		padding: var(--space-performance-md, 1.618rem);
 	}
 
 	/* Arrow */
@@ -408,8 +408,8 @@
 		position: absolute;
 		width: 12px;
 		height: 12px;
-		background: var(--color-bg-elevated, #0a0a0a);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		background: var(--color-performance-bg-elevated, #0a0a0a);
+		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
 		transform: rotate(45deg);
 	}
 

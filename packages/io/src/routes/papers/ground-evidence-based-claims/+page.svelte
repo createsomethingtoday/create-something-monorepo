@@ -948,13 +948,13 @@ ignore:
 	}
 
 	.code-secondary {
-		color: var(--color-fg-secondary, #a3a3a3);
+		color: var(--color-performance-fg-secondary, #a3a3a3);
 		font-size: 0.875rem;
 	}
 
 	.blockquote {
-		border-left: 4px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.3));
-		color: var(--color-fg-tertiary, #a3a3a3);
+		border-left: 4px solid var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.3));
+		color: var(--color-performance-fg-tertiary, #a3a3a3);
 	}
 
 	.responsive-table-scroll {

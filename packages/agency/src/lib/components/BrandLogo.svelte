@@ -139,7 +139,7 @@
     flex: 0 0 auto;
     border-radius: 0.35rem;
     border: 1px solid currentColor;
-    font-family: var(--font-mono, monospace);
+    font-family: var(--font-performance-mono, monospace);
     font-weight: 600;
     line-height: 1;
     opacity: 0.92;

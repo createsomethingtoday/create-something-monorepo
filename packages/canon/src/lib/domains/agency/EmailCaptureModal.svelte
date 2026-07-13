@@ -121,12 +121,12 @@
 	.capture-form {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.form-description {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 		line-height: 1.6;
 	}
@@ -134,7 +134,7 @@
 	.form-field {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.sr-only {
@@ -151,22 +151,22 @@
 
 	.email-input {
 		width: 100%;
-		padding: var(--space-sm) var(--space-md);
-		font-size: var(--text-body);
-		color: var(--color-fg-primary);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		transition: all var(--duration-micro) var(--ease-standard);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.email-input:focus {
 		outline: none;
-		border-color: var(--color-fg-primary);
-		box-shadow: 0 0 0 3px var(--color-focus-ring);
+		border-color: var(--color-performance-fg-primary);
+		box-shadow: 0 0 0 3px var(--color-performance-focus-ring);
 	}
 
 	.email-input.error {
-		border-color: var(--color-error);
+		border-color: var(--color-performance-error);
 	}
 
 	.email-input:disabled {
@@ -175,8 +175,8 @@
 	}
 
 	.error-message {
-		font-size: var(--text-body-sm);
-		color: var(--color-error);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-error);
 		margin: 0;
 	}
 
@@ -184,17 +184,17 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		width: 100%;
-		padding: var(--space-sm) var(--space-md);
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
-		color: var(--color-bg-pure);
-		background: var(--color-fg-primary);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		font-size: var(--text-performance-body);
+		font-weight: var(--font-performance-medium);
+		color: var(--color-performance-bg-pure);
+		background: var(--color-performance-fg-primary);
 		border: none;
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-performance-scale-md);
 		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.submit-button:hover:not(:disabled) {
@@ -222,8 +222,8 @@
 	}
 
 	.privacy-note {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		margin: 0;
 		text-align: center;
 	}
@@ -234,14 +234,14 @@
 		flex-direction: column;
 		align-items: center;
 		text-align: center;
-		gap: var(--space-md);
-		padding: var(--space-md) 0;
+		gap: var(--space-performance-md);
+		padding: var(--space-performance-md) 0;
 	}
 
 	.success-icon {
 		width: 48px;
 		height: 48px;
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.success-icon svg {
@@ -250,29 +250,29 @@
 	}
 
 	.success-message {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-primary);
 		margin: 0;
 	}
 
 	.success-note {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 	}
 
 	.close-button {
-		padding: var(--space-sm) var(--space-lg);
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-sm) var(--space-performance-lg);
+		font-size: var(--text-performance-body);
+		font-weight: var(--font-performance-medium);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-md);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.close-button:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 </style>

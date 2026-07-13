@@ -230,7 +230,7 @@ Design utilities—avoid them. Use Canon tokens instead.
 
 [PAUSE]
 
-The table shows the mapping. `rounded-md` becomes `var(--radius-md)`. `bg-white/10` becomes `var(--color-bg-surface)`.
+The table shows the mapping. `rounded-md` becomes `var(--radius-performance-scale-md)`. `bg-white/10` becomes `var(--color-performance-bg-surface)`.
 
 [PAUSE 2s]
 

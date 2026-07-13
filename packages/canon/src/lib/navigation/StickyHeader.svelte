@@ -101,29 +101,29 @@
 		z-index: var(--z-index, 50);
 		background: transparent;
 		transition:
-			background var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-			border-color var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+			background var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			border-color var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.sticky-header.scrolled {
 		/* Glass Design System - "The Automation Layer" */
-		background-color: var(--glass-bg-light);
-		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		background-color: var(--glass-performance-bg-light);
+		backdrop-filter: blur(var(--glass-performance-blur-lg)) var(--glass-performance-saturate-lg);
 	}
 
 	.sticky-header.with-border.scrolled {
-		border-bottom: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-bottom: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
 	}
 
 	.header-container {
 		width: 100%;
 		max-width: 72rem;
 		margin: 0 auto;
-		padding: var(--space-sm, 1rem) var(--space-md, 1.618rem);
+		padding: var(--space-performance-sm, 1rem) var(--space-performance-md, 1.618rem);
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: var(--space-lg, 2.618rem);
+		gap: var(--space-performance-lg, 2.618rem);
 	}
 
 	.header-logo {
@@ -146,7 +146,7 @@
 		flex-shrink: 0;
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm, 1rem);
+		gap: var(--space-performance-sm, 1rem);
 	}
 
 	/* Reduced motion */

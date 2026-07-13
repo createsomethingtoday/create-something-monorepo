@@ -73,46 +73,46 @@
 
 <style>
   .page-container {
-    background: var(--color-bg-pure);
-    color: var(--color-fg-primary);
+    background: var(--color-performance-bg-pure);
+    color: var(--color-performance-fg-primary);
   }
 
   .logo {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     font-weight: 500;
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
 
   .page-title {
-    font-size: var(--text-h2);
+    font-size: var(--text-performance-h2);
     font-weight: 700;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .body-text {
-    font-size: var(--text-body);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-tertiary);
     line-height: 1.6;
   }
 
   .caption-text {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
   }
 
   .link {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
     text-decoration: underline;
-    transition: color var(--duration-micro) var(--ease-standard);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .link:hover {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .footer-link {
-    padding-top: var(--space-lg);
+    padding-top: var(--space-performance-lg);
   }
 </style>

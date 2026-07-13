@@ -133,13 +133,13 @@
 <style>
 	.overtime-page {
 		min-height: 100vh;
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.container {
 		max-width: 1400px;
 		margin: 0 auto;
-		padding: var(--space-xl);
+		padding: var(--space-performance-xl);
 	}
 
 	/* Page Header */
@@ -148,26 +148,26 @@
 		justify-content: space-between;
 		align-items: flex-start;
 		margin-bottom: 3rem;
-		padding-bottom: var(--space-xl);
+		padding-bottom: var(--space-performance-xl);
 	}
 
 	.title-section {
 		display: flex;
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 		align-items: flex-start;
 	}
 
 	.title-section h1 {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-sm);
+		color: var(--color-performance-fg-primary);
+		margin: 0 0 var(--space-performance-sm);
 		line-height: 1.2;
 	}
 
 	.subtitle {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 		max-width: 600px;
 	}
@@ -176,35 +176,35 @@
 	.summary-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 		margin-bottom: 3rem;
 	}
 
 	.summary-card {
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		padding: var(--space-performance-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.summary-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.summary-value {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.summary-value.warning {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	.summary-value.error {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	/* Overtime Section */
@@ -213,68 +213,68 @@
 	}
 
 	.section-title {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-xl);
+		color: var(--color-performance-fg-primary);
+		margin: 0 0 var(--space-performance-xl);
 	}
 
 	.overtime-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 	}
 
 	/* Methodology */
 	.methodology {
-		padding: var(--space-xl);
-		background: var(--color-bg-surface);
-		border-left: 3px solid var(--color-border-strong);
-		border-radius: var(--radius-sm);
+		padding: var(--space-performance-xl);
+		background: var(--color-performance-bg-surface);
+		border-left: 3px solid var(--color-performance-border-strong);
+		border-radius: var(--radius-performance-scale-sm);
 		margin-top: 3rem;
 	}
 
 	.methodology h3 {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-md);
+		color: var(--color-performance-fg-primary);
+		margin: 0 0 var(--space-performance-md);
 	}
 
 	.methodology p {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.6;
-		margin: 0 0 var(--space-md);
+		margin: 0 0 var(--space-performance-md);
 	}
 
 	.methodology ul {
-		margin: var(--space-md) 0;
-		padding-left: var(--space-xl);
-		color: var(--color-fg-secondary);
+		margin: var(--space-performance-md) 0;
+		padding-left: var(--space-performance-xl);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.methodology li {
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 		line-height: 1.6;
 	}
 
 	.methodology strong {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-weight: 600;
 	}
 
 	.data-note {
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		margin-bottom: var(--space-xl);
+		padding: var(--space-performance-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.data-note p {
 		margin: 0;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.6;
 	}
 
@@ -284,21 +284,21 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 6rem var(--space-xl);
+		padding: 6rem var(--space-performance-xl);
 		text-align: center;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.empty-state h2 {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin: var(--space-lg) 0 var(--space-md);
+		color: var(--color-performance-fg-primary);
+		margin: var(--space-performance-lg) 0 var(--space-performance-md);
 	}
 
 	.empty-state p {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		max-width: 500px;
 		line-height: 1.6;
 	}
@@ -306,16 +306,16 @@
 	/* Mobile Responsive */
 	@media (max-width: 768px) {
 		.container {
-			padding: var(--space-lg);
+			padding: var(--space-performance-lg);
 		}
 
 		.page-header {
 			flex-direction: column;
-			gap: var(--space-lg);
+			gap: var(--space-performance-lg);
 		}
 
 		.title-section h1 {
-			font-size: var(--text-h2);
+			font-size: var(--text-performance-h2);
 		}
 
 		.overtime-grid {

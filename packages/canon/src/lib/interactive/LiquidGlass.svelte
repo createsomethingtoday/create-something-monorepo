@@ -75,7 +75,7 @@
 		showGrid = false,
 		borderRadius = 'lg',
 		aspectRatio = 'auto',
-		padding = 'var(--space-lg)',
+		padding = 'var(--space-performance-lg)',
 		class: className = '',
 		children
 	}: Props = $props();
@@ -100,26 +100,26 @@
 
 	// Tint color mapping
 	const tintColors: Record<Exclude<Tint, 'none'>, string> = {
-		purple: 'var(--liquid-glass-tint-purple, #a78bfa)',
-		blue: 'var(--liquid-glass-tint-blue, #60a5fa)',
-		emerald: 'var(--liquid-glass-tint-emerald, #34d399)',
-		amber: 'var(--liquid-glass-tint-amber, #fbbf24)',
-		rose: 'var(--liquid-glass-tint-rose, #fb7185)',
-		cyan: 'var(--liquid-glass-tint-cyan, #22d3ee)'
+		purple: 'var(--liquid-glass-performance-tint-purple, #a78bfa)',
+		blue: 'var(--liquid-glass-performance-tint-blue, #60a5fa)',
+		emerald: 'var(--liquid-glass-performance-tint-emerald, #34d399)',
+		amber: 'var(--liquid-glass-performance-tint-amber, #fbbf24)',
+		rose: 'var(--liquid-glass-performance-tint-rose, #fb7185)',
+		cyan: 'var(--liquid-glass-performance-tint-cyan, #22d3ee)'
 	};
 
 	// Compute background color with tint
 	const bgColor = $derived(
 		tint !== 'none'
-			? `color-mix(in srgb, ${tintColors[tint]} var(--liquid-glass-tint-mix-standard, 12%), var(--glass-bg-light))`
-			: 'var(--glass-bg-light)'
+			? `color-mix(in srgb, ${tintColors[tint]} var(--liquid-glass-performance-tint-mix-standard, 12%), var(--glass-performance-bg-light))`
+			: 'var(--glass-performance-bg-light)'
 	);
 
 	// Compute border color with tint
 	const borderColor = $derived(
 		tint !== 'none'
-			? `color-mix(in srgb, ${tintColors[tint]} 25%, var(--glass-border-medium))`
-			: 'var(--glass-border-medium)'
+			? `color-mix(in srgb, ${tintColors[tint]} 25%, var(--glass-performance-border-medium))`
+			: 'var(--glass-performance-border-medium)'
 	);
 </script>
 
@@ -228,12 +228,12 @@
 
 	/* Smooth mode - clean blur without texture */
 	.liquid-glass.mode-smooth .glass-layer {
-		backdrop-filter: blur(var(--glass-blur-lg, 48px)) saturate(130%);
+		backdrop-filter: blur(var(--glass-performance-blur-lg, 48px)) saturate(130%);
 	}
 
 	/* Refraction mode - blur with SVG displacement */
 	.liquid-glass.mode-refraction .glass-layer {
-		backdrop-filter: blur(var(--glass-blur-lg, 48px)) var(--glass-saturate-lg, saturate(120%));
+		backdrop-filter: blur(var(--glass-performance-blur-lg, 48px)) var(--glass-performance-saturate-lg, saturate(120%));
 	}
 
 	/* Border layer */
@@ -249,7 +249,7 @@
 	.highlight-layer {
 		position: absolute;
 		inset: 0;
-		background: var(--liquid-glass-highlight-primary);
+		background: var(--liquid-glass-performance-highlight-primary);
 		border-radius: inherit;
 		pointer-events: none;
 	}
@@ -261,7 +261,7 @@
 		left: 0;
 		right: 0;
 		height: 1px;
-		background: var(--liquid-glass-edge-glow);
+		background: var(--liquid-glass-performance-edge-glow);
 		pointer-events: none;
 	}
 
@@ -269,7 +269,7 @@
 	.inner-shadow {
 		position: absolute;
 		inset: 0;
-		box-shadow: var(--liquid-glass-inner-shadow);
+		box-shadow: var(--liquid-glass-performance-inner-shadow);
 		border-radius: inherit;
 		pointer-events: none;
 	}
@@ -286,16 +286,16 @@
 
 	/* Border radius variants */
 	.liquid-glass.radius-sm {
-		border-radius: var(--radius-sm, 6px);
+		border-radius: var(--radius-performance-scale-sm, 6px);
 	}
 	.liquid-glass.radius-md {
-		border-radius: var(--radius-md, 8px);
+		border-radius: var(--radius-performance-scale-md, 8px);
 	}
 	.liquid-glass.radius-lg {
-		border-radius: var(--radius-lg, 12px);
+		border-radius: var(--radius-performance-scale-lg, 12px);
 	}
 	.liquid-glass.radius-xl {
-		border-radius: var(--radius-xl, 16px);
+		border-radius: var(--radius-performance-scale-xl, 16px);
 	}
 
 	/* Aspect ratio variants */
@@ -317,14 +317,14 @@
 	@media (prefers-reduced-transparency: reduce) {
 		.glass-layer {
 			backdrop-filter: none;
-			background-color: var(--color-bg-surface);
+			background-color: var(--color-performance-bg-surface);
 		}
 	}
 
 	/* High contrast mode */
 	@media (prefers-contrast: more) {
 		.glass-layer {
-			backdrop-filter: blur(var(--glass-blur-sm));
+			backdrop-filter: blur(var(--glass-performance-blur-sm));
 			background-color: rgba(0, 0, 0, 0.85);
 		}
 

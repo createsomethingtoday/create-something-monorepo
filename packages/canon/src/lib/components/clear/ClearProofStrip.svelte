@@ -109,9 +109,9 @@
 	.clear-proof-strip__item span {
 		display: block;
 		color: var(--color-performance-ink, #090909);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.95rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.15;
 	}

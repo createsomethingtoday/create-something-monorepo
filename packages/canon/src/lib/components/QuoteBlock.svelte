@@ -37,23 +37,23 @@
 
 <style>
 	.quote-block {
-		border-left: 2px solid var(--color-fg-primary);
-		padding-left: var(--space-md);
+		border-left: 2px solid var(--color-performance-fg-primary);
+		padding-left: var(--space-performance-md);
 	}
 
 	.quote-text {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	@media (min-width: 768px) {
 		.quote-text {
-			font-size: var(--text-h3);
+			font-size: var(--text-performance-h3);
 		}
 	}
 
 	.quote-context {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 </style>

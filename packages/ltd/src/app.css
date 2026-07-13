@@ -34,47 +34,47 @@
    ========================================================================== */
 
 :root {
-  --view-transition-duration: 500ms;
+  --duration-performance-view-transition: 500ms;
 
   /* Shared clear-shell typography */
-  --font-heading: var(--font-sans);
-  --font-display: var(--font-sans);
-  --font-serif: Georgia, "Times New Roman", serif;
-  --color-focus: rgba(167, 184, 255, 0.72);
+  --font-performance-heading: var(--font-performance-sans);
+  --font-performance-display: var(--font-performance-sans);
+  --font-performance-serif: Georgia, "Times New Roman", serif;
+  --color-performance-focus: rgba(167, 184, 255, 0.72);
 
   /* Performance Lab readability surface mapping for existing property routes */
-  --color-bg-pure: var(--color-performance-panel, #ffffff);
-  --color-bg-elevated: var(--color-performance-paper, #f3f3f0);
-  --color-bg-surface: var(--color-performance-court, #e6e6e0);
-  --color-bg-subtle: #eeeeee;
-  --color-fg-primary: var(--color-performance-ink, #090909);
-  --color-fg-secondary: rgba(10, 14, 25, 0.8);
-  --color-fg-tertiary: rgba(10, 14, 25, 0.62);
-  --color-fg-muted: var(--color-performance-muted, #5e6268);
-  --color-fg-subtle: rgba(10, 14, 25, 0.22);
-  --color-border-default: var(--color-performance-line, #d7d7d2);
-  --color-border-emphasis: var(--color-performance-line-strong, #9c9c96);
-  --color-border-strong: rgba(10, 14, 25, 0.24);
-  --color-shell-surface: var(--color-performance-panel, #ffffff);
-  --color-shell-surface-secondary: var(--color-performance-paper, #f3f3f0);
-  --color-shell-surface-tertiary: var(--color-performance-court, #e6e6e0);
-  --color-shell-surface-elevated: #eeeeee;
-  --color-shell-surface-hover: var(--color-performance-court, #e6e6e0);
-  --color-shell-border-subtle: rgba(10, 14, 25, 0.06);
-  --color-shell-border-default: var(--color-performance-line, #d7d7d2);
-  --color-shell-border-strong: var(--color-performance-line-strong, #9c9c96);
-  --color-shell-shadow: var(--shadow-performance-panel, none);
-  --color-shell-shadow-strong: 0 16px 44px rgba(0, 0, 0, 0.12);
-  --color-hover: rgba(10, 14, 25, 0.04);
-  --color-active: rgba(10, 14, 25, 0.08);
-  --glass-bg-subtle: rgba(255, 255, 255, 0.65);
-  --glass-bg-light: rgba(255, 255, 255, 0.72);
-  --glass-bg-medium: rgba(255, 255, 255, 0.82);
-  --glass-bg-strong: rgba(255, 255, 255, 0.92);
-  --glass-border-subtle: rgba(10, 14, 25, 0.06);
-  --glass-border-light: rgba(10, 14, 25, 0.1);
-  --glass-border-medium: rgba(10, 14, 25, 0.15);
-  --glass-border-strong: rgba(10, 14, 25, 0.22);
+  --color-performance-bg-pure: var(--color-performance-panel, #ffffff);
+  --color-performance-bg-elevated: var(--color-performance-paper, #f3f3f0);
+  --color-performance-bg-surface: var(--color-performance-court, #e6e6e0);
+  --color-performance-bg-subtle: #eeeeee;
+  --color-performance-fg-primary: var(--color-performance-ink, #090909);
+  --color-performance-fg-secondary: rgba(10, 14, 25, 0.8);
+  --color-performance-fg-tertiary: rgba(10, 14, 25, 0.62);
+  --color-performance-fg-muted: var(--color-performance-muted, #5e6268);
+  --color-performance-fg-subtle: rgba(10, 14, 25, 0.22);
+  --color-performance-border-default: var(--color-performance-line, #d7d7d2);
+  --color-performance-border-emphasis: var(--color-performance-line-strong, #9c9c96);
+  --color-performance-border-strong: rgba(10, 14, 25, 0.24);
+  --color-performance-shell-surface: var(--color-performance-panel, #ffffff);
+  --color-performance-shell-surface-secondary: var(--color-performance-paper, #f3f3f0);
+  --color-performance-shell-surface-tertiary: var(--color-performance-court, #e6e6e0);
+  --color-performance-shell-surface-elevated: #eeeeee;
+  --color-performance-shell-surface-hover: var(--color-performance-court, #e6e6e0);
+  --color-performance-shell-border-subtle: rgba(10, 14, 25, 0.06);
+  --color-performance-shell-border-default: var(--color-performance-line, #d7d7d2);
+  --color-performance-shell-border-strong: var(--color-performance-line-strong, #9c9c96);
+  --color-performance-shell-shadow: var(--shadow-performance-panel, none);
+  --color-performance-shell-shadow-strong: 0 16px 44px rgba(0, 0, 0, 0.12);
+  --color-performance-hover: rgba(10, 14, 25, 0.04);
+  --color-performance-active: rgba(10, 14, 25, 0.08);
+  --glass-performance-bg-subtle: rgba(255, 255, 255, 0.65);
+  --glass-performance-bg-light: rgba(255, 255, 255, 0.72);
+  --glass-performance-bg-medium: rgba(255, 255, 255, 0.82);
+  --glass-performance-bg-strong: rgba(255, 255, 255, 0.92);
+  --glass-performance-border-subtle: rgba(10, 14, 25, 0.06);
+  --glass-performance-border-light: rgba(10, 14, 25, 0.1);
+  --glass-performance-border-medium: rgba(10, 14, 25, 0.15);
+  --glass-performance-border-strong: rgba(10, 14, 25, 0.22);
 }
 
 /* ==========================================================================
@@ -82,7 +82,7 @@
    ========================================================================== */
 
 .nav-logo {
-  font-family: var(--font-display);
+  font-family: var(--font-performance-display);
 }
 
 /* ==========================================================================
@@ -123,7 +123,7 @@
 /* Links - Canonical CREATE SOMETHING micro-interactions 
    Skip opacity hover on buttons to preserve their specific interactive styles */
 a:not([class*="button"]):not(.btn) {
-  transition: opacity var(--duration-micro) var(--ease-standard);
+  transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 a:not([class*="button"]):not(.btn):hover {
@@ -132,7 +132,7 @@ a:not([class*="button"]):not(.btn):hover {
 
 /* Custom focus styles for accessibility */
 *:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--color-performance-focus);
   outline-offset: 2px;
   border-radius: 0px;
 }

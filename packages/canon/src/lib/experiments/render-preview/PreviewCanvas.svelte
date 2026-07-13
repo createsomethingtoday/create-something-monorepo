@@ -136,8 +136,8 @@
 <style>
 	.canvas-container {
 		position: relative;
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-md);
 		overflow: hidden;
 	}
 
@@ -153,19 +153,19 @@
 
 	.clear-crop {
 		position: absolute;
-		bottom: var(--space-sm);
-		right: var(--space-sm);
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-secondary);
-		font-size: var(--text-caption);
+		bottom: var(--space-performance-sm);
+		right: var(--space-performance-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-caption);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.clear-crop:hover {
-		background: var(--color-hover);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-hover);
+		color: var(--color-performance-fg-primary);
 	}
 </style>

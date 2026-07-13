@@ -209,165 +209,165 @@ lm done lm-abc --evidence "commit-abc123"</code></pre>
 	.docs-page {
 		max-width: 800px;
 		margin: 0 auto;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.breadcrumb {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-lg);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
+		margin-bottom: var(--space-performance-lg);
 	}
 
 	.breadcrumb a {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		text-decoration: none;
 	}
 
 	.breadcrumb a:hover {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.hero {
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.hero h1 {
-		font-size: var(--text-display);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-display);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.tagline {
-		font-size: var(--text-h3);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.description {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-md);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-tertiary);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.npm-package {
 		display: inline-block;
-		background: var(--color-bg-subtle);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		background: var(--color-performance-bg-subtle);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.section {
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.section h2 {
-		font-size: var(--text-h2);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
-		padding-bottom: var(--space-sm);
+		font-size: var(--text-performance-h2);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-md);
+		padding-bottom: var(--space-performance-sm);
 	}
 
 	.section h3 {
-		font-size: var(--text-h3);
-		color: var(--color-fg-secondary);
-		margin-top: var(--space-lg);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-secondary);
+		margin-top: var(--space-performance-lg);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.section p {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
+		margin-bottom: var(--space-performance-sm);
 		line-height: 1.6;
 	}
 
 	.section ul {
-		padding-left: var(--space-lg);
-		margin-bottom: var(--space-md);
+		padding-left: var(--space-performance-lg);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.section li {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	pre {
-		padding: var(--space-md);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
 		overflow-x: auto;
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	pre code {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.install-button {
 		display: inline-block;
-		background: var(--color-bg-surface);
-		padding: var(--space-sm) var(--space-md);
-		border-radius: var(--radius-md);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-surface);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-primary);
 		text-decoration: none;
-		font-size: var(--text-body);
-		transition: all var(--duration-micro) var(--ease-standard);
+		font-size: var(--text-performance-body);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.install-button:hover {
 		border-color: var(--color-border-hover);
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.comparison table {
 		width: 100%;
 		border-collapse: collapse;
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.comparison th,
 	.comparison td {
-		padding: var(--space-sm);
+		padding: var(--space-performance-sm);
 		text-align: left;
 	}
 
 	.comparison th {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		font-weight: 600;
 	}
 
 	.comparison td {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.tools-table {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
-		margin-bottom: var(--space-md);
+		gap: var(--space-performance-xs);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.tool-row {
 		display: grid;
 		grid-template-columns: 220px 1fr;
-		gap: var(--space-md);
-		padding: var(--space-sm);
-		border-radius: var(--radius-sm);
+		gap: var(--space-performance-md);
+		padding: var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.tool-name {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.tool-desc {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.links ul {
@@ -376,16 +376,16 @@ lm done lm-abc --evidence "commit-abc123"</code></pre>
 	}
 
 	.links li {
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.links a {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-decoration: none;
 	}
 
 	.links a:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		text-decoration: underline;
 	}
 

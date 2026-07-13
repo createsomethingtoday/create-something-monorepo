@@ -37,9 +37,9 @@
 	const elementStyles: Record<string, { stroke: string; width: number; dash?: string }> = {
 		wall: { stroke: 'var(--arch-wall-exterior)', width: 1.5 },
 		floor: { stroke: 'var(--arch-wall-exterior)', width: 1.5 },
-		ceiling: { stroke: 'var(--color-fg-tertiary)', width: 0.75 },
+		ceiling: { stroke: 'var(--color-performance-fg-tertiary)', width: 0.75 },
 		roof: { stroke: 'var(--arch-wall-exterior)', width: 1.5 },
-		grade: { stroke: 'var(--color-fg-muted)', width: 0.5, dash: '2 2' }
+		grade: { stroke: 'var(--color-performance-fg-muted)', width: 0.5, dash: '2 2' }
 	};
 </script>
 
@@ -54,7 +54,7 @@
 			width={svgWidth}
 			height={svgHeight - ty(section.groundLevel)}
 			class="ground-fill"
-			fill={expanded ? 'url(#earth-hatch)' : 'var(--color-bg-pure)'}
+			fill={expanded ? 'url(#earth-hatch)' : 'var(--color-performance-bg-pure)'}
 		/>
 
 		<!-- Section elements -->
@@ -197,12 +197,12 @@
 
 	/* Labels */
 	.section-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 7px;
 		fill: var(--arch-label-primary);
 		text-anchor: middle;
 		dominant-baseline: middle;
-		letter-spacing: var(--tracking-normal, 0.02em);
+		letter-spacing: var(--tracking-performance-normal, 0.02em);
 	}
 
 	.section-label.small {
@@ -211,19 +211,19 @@
 	}
 
 	.dimension-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 6px;
 		fill: var(--arch-label-subtle);
 		dominant-baseline: middle;
-		letter-spacing: var(--tracking-normal, 0.02em);
+		letter-spacing: var(--tracking-performance-normal, 0.02em);
 	}
 
 	.cut-line-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 8px;
-		fill: var(--color-fg-muted);
-		font-weight: var(--font-medium, 500);
-		letter-spacing: var(--tracking-wider, 0.05em);
+		fill: var(--color-performance-fg-muted);
+		font-weight: var(--font-performance-medium, 500);
+		letter-spacing: var(--tracking-performance-wider, 0.05em);
 	}
 
 	/* Caption */
@@ -231,23 +231,23 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-top: var(--space-md, 1.5rem);
-		padding-top: var(--space-sm, 1rem);
-		border-top: 1px solid var(--color-hover);
-		font-family: var(--font-sans, system-ui, sans-serif);
+		margin-top: var(--space-performance-md, 1.5rem);
+		padding-top: var(--space-performance-sm, 1rem);
+		border-top: 1px solid var(--color-performance-hover);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.caption {
-		font-size: var(--text-body-sm, 11px);
-		color: var(--color-fg-muted);
-		letter-spacing: var(--tracking-normal, 0.02em);
+		font-size: var(--text-performance-body-sm, 11px);
+		color: var(--color-performance-fg-muted);
+		letter-spacing: var(--tracking-performance-normal, 0.02em);
 	}
 
 	.cut-hint {
-		font-size: var(--text-caption, 10px);
-		color: var(--color-fg-subtle);
+		font-size: var(--text-performance-caption, 10px);
+		color: var(--color-performance-fg-subtle);
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-widest, 0.1em);
+		letter-spacing: var(--tracking-performance-widest, 0.1em);
 	}
 
 	@media (max-width: 768px) {
@@ -258,7 +258,7 @@
 		}
 
 		.caption {
-			font-size: var(--text-caption, 10px);
+			font-size: var(--text-performance-caption, 10px);
 		}
 	}
 </style>

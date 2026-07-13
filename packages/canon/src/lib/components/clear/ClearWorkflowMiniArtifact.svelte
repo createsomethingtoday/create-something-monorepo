@@ -164,9 +164,9 @@
 		width: 2.02rem;
 		height: 1.6rem;
 		color: var(--color-performance-ink, #090909);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.56rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		line-height: 1;
 		letter-spacing: 0;
 	}

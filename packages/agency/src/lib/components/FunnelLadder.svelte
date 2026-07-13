@@ -92,9 +92,9 @@
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.76rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     letter-spacing: 0;
     line-height: 1.15;
     text-transform: uppercase;
@@ -110,7 +110,7 @@
 
   .funnel-ladder h2 {
     font-size: 2.45rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.04;
   }
 
@@ -140,7 +140,7 @@
 
   .funnel-card span {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
     letter-spacing: 0;
     text-transform: uppercase;
@@ -148,7 +148,7 @@
 
   .funnel-card h3 {
     font-size: 1.22rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.14;
   }
 

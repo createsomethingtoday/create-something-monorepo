@@ -97,62 +97,62 @@
 
 <style>
 	.experiments-chart {
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.stat-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.stat-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
-		transition: all var(--duration-micro) var(--ease-standard);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.stat-card:hover {
-		border-color: var(--color-border-emphasis);
-		transform: scale(var(--scale-micro));
+		border-color: var(--color-performance-border-emphasis);
+		transform: scale(var(--scale-performance-micro));
 	}
 
 	.stat-card.highlight {
-		border-color: var(--color-success-border);
-		background: var(--color-success-muted);
+		border-color: var(--color-performance-success-border);
+		background: var(--color-performance-success-muted);
 	}
 
 	.stat-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin: 0 0 var(--space-sm) 0;
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
+		margin: 0 0 var(--space-performance-sm) 0;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.stat-value {
-		font-size: var(--text-h2);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h2);
+		color: var(--color-performance-fg-primary);
 		font-weight: 700;
 		margin: 0;
 	}
 
 	.stat-value.haiku {
-		color: var(--color-data-1);
+		color: var(--color-performance-data-1);
 	}
 
 	.stat-value.sonnet {
-		color: var(--color-data-3);
+		color: var(--color-performance-data-3);
 	}
 
 	.stat-value.opus {
-		color: var(--color-data-4);
+		color: var(--color-performance-data-4);
 	}
 
 	.stat-detail {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin-top: var(--space-xs);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		margin-top: var(--space-performance-xs);
 	}
 </style>

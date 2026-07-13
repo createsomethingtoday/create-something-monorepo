@@ -303,8 +303,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: color-mix(in srgb, var(--color-bg-pure) 50%, transparent);
-		color: var(--color-fg-tertiary);
+		background: color-mix(in srgb, var(--color-performance-bg-pure) 50%, transparent);
+		color: var(--color-performance-fg-tertiary);
 		font-size: 0.75rem;
 		z-index: 10;
 	}
@@ -321,13 +321,13 @@
 		stroke: currentColor;
 		stroke-width: 1.5;
 		opacity: calc(0.3 + var(--strength, 0) * 0.07);
-		transition: opacity var(--duration-standard) var(--ease-standard);
+		transition: opacity var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.edge.missing {
 		stroke-dasharray: 4 4;
 		opacity: 0.2;
-		stroke: color-mix(in srgb, var(--color-error) 50%, transparent);
+		stroke: color-mix(in srgb, var(--color-performance-error) 50%, transparent);
 	}
 
 	.edge.hidden {
@@ -346,7 +346,7 @@
 	/* Nodes */
 	.node {
 		cursor: default;
-		transition: transform var(--duration-micro) var(--ease-standard);
+		transition: transform var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.node.interactive {
@@ -362,52 +362,52 @@
 	}
 
 	.node.interactive:focus .node-circle {
-		stroke: var(--color-fg-secondary);
+		stroke: var(--color-performance-fg-secondary);
 		stroke-width: 2;
 	}
 
 	.node-circle {
-		fill: var(--color-bg-elevated);
-		stroke: var(--color-border-default);
+		fill: var(--color-performance-bg-elevated);
+		stroke: var(--color-performance-border-default);
 		stroke-width: 1;
 		transition:
-			fill var(--duration-micro) var(--ease-standard),
-			stroke var(--duration-micro) var(--ease-standard);
+			fill var(--duration-performance-micro) var(--ease-performance-standard),
+			stroke var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.node.active .node-circle {
-		fill: var(--color-bg-surface);
-		stroke: var(--color-border-strong);
+		fill: var(--color-performance-bg-surface);
+		stroke: var(--color-performance-border-strong);
 	}
 
 	.node.selected .node-circle {
-		stroke: var(--color-fg-secondary);
+		stroke: var(--color-performance-fg-secondary);
 		stroke-width: 2;
 	}
 
 	.node-count {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 10px;
 		font-weight: 600;
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 	}
 
 	.node-label {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 8px;
 		font-weight: 600;
-		fill: var(--color-fg-secondary);
+		fill: var(--color-performance-fg-secondary);
 	}
 
 	.node-sublabel {
 		font-size: 6px;
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 	}
 
 	/* Center text */
 	.center-text {
 		font-size: 8px;
-		fill: var(--color-fg-subtle);
+		fill: var(--color-performance-fg-subtle);
 	}
 
 	.center-empty {
@@ -418,8 +418,8 @@
 	.legend {
 		margin-top: 1rem;
 		padding: 0.5rem;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
 		font-size: 0.7rem;
 		display: flex;
 		flex-wrap: wrap;
@@ -428,25 +428,25 @@
 	}
 
 	.legend-title {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.gap-indicator {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 		padding: 0.125rem 0.375rem;
-		background: color-mix(in srgb, var(--color-error) 10%, transparent);
-		border-radius: var(--radius-sm);
-		font-family: var(--font-mono);
+		background: color-mix(in srgb, var(--color-performance-error) 10%, transparent);
+		border-radius: var(--radius-performance-scale-sm);
+		font-family: var(--font-performance-mono);
 	}
 
 	.legend.complete {
 		justify-content: center;
-		background: color-mix(in srgb, var(--color-success) 5%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-success) 20%, transparent);
+		background: color-mix(in srgb, var(--color-performance-success) 5%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-performance-success) 20%, transparent);
 	}
 
 	.legend-complete {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 		font-style: italic;
 	}
 </style>

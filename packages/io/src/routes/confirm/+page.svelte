@@ -48,58 +48,58 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.confirm-card {
 		max-width: 480px;
 		text-align: center;
-		padding: var(--space-xl);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		padding: var(--space-performance-xl);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.icon {
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.success-icon {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.error-icon {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.title {
-		font-size: var(--text-h2);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-h2);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.message {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.email {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		font-family: var(--font-mono);
-		margin-bottom: var(--space-md);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-family: var(--font-performance-mono);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.cta {
 		display: inline-block;
-		margin-top: var(--space-md);
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		margin-top: var(--space-performance-md);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 		text-decoration: none;
 		font-weight: 500;
-		border-radius: var(--radius-md);
-		transition: all var(--duration-micro) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-md);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.cta:hover {
@@ -108,11 +108,11 @@
 	}
 
 	.cta.secondary {
-		background: var(--color-bg-subtle);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-subtle);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.cta.secondary:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 </style>

@@ -59,7 +59,7 @@
 	.date-nav {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.nav-button {
@@ -68,36 +68,36 @@
 		justify-content: center;
 		width: 32px;
 		height: 32px;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-secondary);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-secondary);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.nav-button:hover {
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
+		border-color: var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.date-display {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
 		min-width: 140px;
 		justify-content: center;
 	}
 
 	.date-display :global(.date-icon) {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.date-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
 		font-weight: 500;
 		font-variant-numeric: tabular-nums;
 	}

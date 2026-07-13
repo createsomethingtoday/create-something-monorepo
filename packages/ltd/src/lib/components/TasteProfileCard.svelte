@@ -83,31 +83,31 @@
 
 <style>
 	.profile-card {
-		padding: var(--space-md);
-		border: 1px solid var(--color-border-emphasis);
-		background: var(--color-bg-surface);
+		padding: var(--space-performance-md);
+		border: 1px solid var(--color-performance-border-emphasis);
+		background: var(--color-performance-bg-surface);
 	}
 
 	.profile-card.compact {
-		padding: var(--space-sm);
+		padding: var(--space-performance-sm);
 	}
 
 	.profile-card.share {
 		background: linear-gradient(
 			135deg,
-			var(--color-bg-surface) 0%,
-			var(--color-bg-subtle) 100%
+			var(--color-performance-bg-surface) 0%,
+			var(--color-performance-bg-subtle) 100%
 		);
 	}
 
 	.profile-header {
 		display: flex;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 		align-items: center;
 	}
 
 	.compact .profile-header {
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.score-ring {
@@ -130,16 +130,16 @@
 
 	.score-bg {
 		fill: none;
-		stroke: var(--color-border-default);
+		stroke: var(--color-performance-border-default);
 		stroke-width: 8;
 	}
 
 	.score-fill {
 		fill: none;
-		stroke: var(--color-fg-primary);
+		stroke: var(--color-performance-fg-primary);
 		stroke-width: 8;
 		stroke-linecap: round;
-		transition: stroke-dasharray var(--duration-standard) var(--ease-standard);
+		transition: stroke-dasharray var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.score-value {
@@ -148,13 +148,13 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.compact .score-value {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 	}
 
 	.profile-info {
@@ -163,18 +163,18 @@
 	}
 
 	.profile-name {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 		margin-bottom: 0.125rem;
 	}
 
 	.profile-title {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		font-weight: 600;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin-bottom: var(--space-xs);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.compact .profile-title {
@@ -182,13 +182,13 @@
 	}
 
 	.profile-summary {
-		font-size: var(--text-body);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-primary);
 		line-height: 1.4;
 	}
 
 	.compact .profile-summary {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		display: -webkit-box;
 		line-clamp: 2;
 		-webkit-line-clamp: 2;
@@ -198,24 +198,24 @@
 
 	.focus-areas {
 		display: flex;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		flex-wrap: wrap;
-		margin-top: var(--space-sm);
-		padding-top: var(--space-sm);
+		margin-top: var(--space-performance-sm);
+		padding-top: var(--space-performance-sm);
 	}
 
 	.focus-tag {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		padding: 0.25rem 0.5rem;
-		background: var(--color-bg-subtle);
-		color: var(--color-fg-secondary);
+		background: var(--color-performance-bg-subtle);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.stats-row {
 		display: flex;
-		gap: var(--space-md);
-		margin-top: var(--space-sm);
-		padding-top: var(--space-sm);
+		gap: var(--space-performance-md);
+		margin-top: var(--space-performance-sm);
+		padding-top: var(--space-performance-sm);
 	}
 
 	.stat {
@@ -225,26 +225,26 @@
 
 	.stat-value {
 		display: block;
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.stat-label {
 		display: block;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.profile-footer {
-		margin-top: var(--space-sm);
-		padding-top: var(--space-sm);
+		margin-top: var(--space-performance-sm);
+		padding-top: var(--space-performance-sm);
 		text-align: center;
 	}
 
 	.footer-text {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		letter-spacing: 0.05em;
 	}
 </style>

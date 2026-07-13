@@ -157,8 +157,8 @@ interface PluginProvides {
 
 2. **Hero Section** (pt-8 pb-16)
    - Category badge, version badge, last updated date
-   - Plugin name (--text-display size)
-   - Description (--text-body-lg)
+   - Plugin name (--text-performance-display size)
+   - Description (--text-performance-body-lg)
    - Tag list
 
 3. **Features Section** (py-16)
@@ -197,7 +197,7 @@ interface PluginProvides {
 | `--space-*` | All spacing (golden ratio) |
 | `--text-*` | Typography scale |
 | `--duration-*` | Animation timing |
-| `--ease-standard` | Standard easing |
+| `--ease-performance-standard` | Standard easing |
 
 **Key Classes**:
 - `.page-title`: Display size, bold, primary color
@@ -209,9 +209,9 @@ interface PluginProvides {
 - `.animate-reveal`: Entrance animation with staggered delay
 
 **Motion**:
-- Category chips: `--duration-micro` (200ms) on hover
+- Category chips: `--duration-performance-micro` (200ms) on hover
 - Copy buttons: Color transition on hover
-- Related cards: `--duration-micro` transform on hover
+- Related cards: `--duration-performance-micro` transform on hover
 
 ## Query Functions
 
@@ -297,7 +297,7 @@ getRelatedPlugins(slug: string): Plugin[]
 
 - **Color Contrast**: All tokens meet WCAG AA (4.5:1+)
 - **Semantic HTML**: Proper heading hierarchy (h1 → h2 → h3)
-- **Focus States**: via Canon `--color-focus` token (WCAG AA compliant 5.28:1)
+- **Focus States**: via Canon `--color-performance-focus` token (WCAG AA compliant 5.28:1)
 - **Reduced Motion**: @media (prefers-reduced-motion: reduce) disables .animate-reveal
 - **Copy Buttons**: aria-label on all copy buttons
 - **Links**: Back navigation explicit, related plugin cards are links

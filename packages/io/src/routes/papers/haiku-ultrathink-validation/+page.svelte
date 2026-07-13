@@ -143,7 +143,7 @@
 				<div class="overflow-x-auto">
 					<table class="w-full mt-4 data-table">
 						<thead>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<th class="p-3 text-left">ID</th>
 								<th class="p-3 text-left">Type</th>
 								<th class="p-3 text-left">Complexity</th>
@@ -151,61 +151,61 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3 font-mono">T1</td>
 								<td class="p-3">Refactor</td>
 								<td class="p-3">Trivial</td>
 								<td class="p-3">Extract duplicate validation logic</td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3 font-mono">T2</td>
 								<td class="p-3">Feature</td>
 								<td class="p-3">Simple</td>
 								<td class="p-3">Add pagination to existing list</td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3 font-mono">T3</td>
 								<td class="p-3">Bug fix</td>
 								<td class="p-3">Simple</td>
 								<td class="p-3">Fix TypeScript type errors</td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3 font-mono">T4</td>
 								<td class="p-3">Refactor</td>
 								<td class="p-3">Standard</td>
 								<td class="p-3">Restructure auth module (DRY violations)</td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3 font-mono">T5</td>
 								<td class="p-3">Feature</td>
 								<td class="p-3">Standard</td>
 								<td class="p-3">Add caching layer to API</td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3 font-mono">T6</td>
 								<td class="p-3">Planning</td>
 								<td class="p-3">Standard</td>
 								<td class="p-3">Design database migration strategy</td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3 font-mono">T7</td>
 								<td class="p-3">Debug</td>
 								<td class="p-3">Standard</td>
 								<td class="p-3">Fix intermittent test failures</td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3 font-mono">T8</td>
 								<td class="p-3">Refactor</td>
 								<td class="p-3">Complex</td>
 								<td class="p-3">Extract shared business logic (5 files)</td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3 font-mono">T9</td>
 								<td class="p-3">Feature</td>
 								<td class="p-3">Complex</td>
 								<td class="p-3">Implement OAuth flow with PKCE</td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3 font-mono">T10</td>
 								<td class="p-3">Architecture</td>
 								<td class="p-3">Complex</td>
@@ -311,7 +311,7 @@
 				<div class="overflow-x-auto">
 					<table class="w-full mt-4 data-table">
 						<thead>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<th class="p-3 text-left">Complexity</th>
 								<th class="p-3 text-left">Model</th>
 								<th class="p-3 text-left">Cost</th>
@@ -319,7 +319,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3">Trivial</td>
 								<td class="p-3">Haiku</td>
 								<td class="p-3">~$0.001</td>
@@ -327,20 +327,20 @@
 							</tr>
 							<tr
 								class="border-b"
-								style="border-color: var(--color-border-default); background: var(--color-success-muted)"
+								style="border-color: var(--color-performance-border-default); background: var(--color-performance-success-muted)"
 							>
 								<td class="p-3"><strong>Simple-Standard</strong></td>
 								<td class="p-3"><strong>Haiku + ultrathink</strong></td>
 								<td class="p-3"><strong>~$0.001</strong></td>
 								<td class="p-3"><strong>Planning, refactoring, debugging</strong></td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3">Standard</td>
 								<td class="p-3">Sonnet</td>
 								<td class="p-3">~$0.01</td>
 								<td class="p-3">Multi-file coordination</td>
 							</tr>
-							<tr class="border-b" style="border-color: var(--color-border-default)">
+							<tr class="border-b" style="border-color: var(--color-performance-border-default)">
 								<td class="p-3">Complex</td>
 								<td class="p-3">Opus</td>
 								<td class="p-3">~$0.10</td>
@@ -532,115 +532,115 @@
 <style>
 	/* Paper Container */
 	.paper-container {
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Header */
 
 	.paper-id {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 		letter-spacing: 0.05em;
 	}
 
 	.paper-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.paper-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.6;
 	}
 
 	.paper-meta {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
-		font-family: var(--font-mono);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		font-family: var(--font-performance-mono);
 	}
 
 	/* Abstract */
 	.abstract-section {
-		border-left: 2px solid var(--color-border-emphasis);
+		border-left: 2px solid var(--color-performance-border-emphasis);
 	}
 
 	/* Sections */
 	.section-heading {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin-bottom: 1rem;
 	}
 
 	.subsection-heading {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.body-text {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body);
 	}
 
 	/* Quote Box */
 	.quote-box {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.stat-large {
-		font-size: var(--text-h2);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h2);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Comparison Cards */
 	.comparison-success {
-		background: var(--color-success-muted);
-		border: 1px solid var(--color-success-border);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-success-muted);
+		border: 1px solid var(--color-performance-success-border);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.comparison-warning {
-		background: var(--color-warning-muted);
-		border: 1px solid var(--color-warning-border);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-warning-muted);
+		border: 1px solid var(--color-performance-warning-border);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.comparison-heading {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.comparison-success-heading {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.comparison-warning-heading {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	.comparison-list {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Info Cards */
 	.info-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.card-heading {
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.card-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Tables */
@@ -650,24 +650,24 @@
 	}
 
 	.data-table {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	table th {
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-align: left;
 	}
 
 	table td {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Links */
 	a {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		text-decoration: none;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	a:hover {

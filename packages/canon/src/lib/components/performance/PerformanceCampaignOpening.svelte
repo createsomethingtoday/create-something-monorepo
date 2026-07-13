@@ -221,9 +221,9 @@
 
 	.performance-campaign-opening__eyebrow,
 	.performance-campaign-opening__proof span {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-semibold, 600);
+		font-weight: var(--font-performance-semibold, 600);
 		line-height: 1.25;
 		text-transform: uppercase;
 	}
@@ -236,9 +236,9 @@
 	.performance-campaign-opening h1 {
 		max-width: 13ch;
 		margin: 0;
-		font-family: var(--font-performance-display, var(--font-display, var(--font-sans)));
+		font-family: var(--font-performance-display, var(--font-performance-display, var(--font-performance-sans)));
 		font-size: clamp(3.25rem, 8vw, 7.5rem);
-		font-weight: var(--font-performance-display-weight, var(--font-medium, 500));
+		font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500));
 		font-kerning: normal;
 		font-feature-settings: "kern" 1, "liga" 1;
 		letter-spacing: var(--tracking-performance-display, -0.03em);
@@ -329,7 +329,7 @@
 
 	.performance-campaign-opening__proof strong {
 		font-size: 0.95rem;
-		font-weight: var(--font-medium, 500);
+		font-weight: var(--font-performance-medium, 500);
 	}
 
 	@media (max-width: 47.99rem) {

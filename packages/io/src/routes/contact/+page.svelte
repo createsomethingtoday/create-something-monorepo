@@ -130,70 +130,70 @@
 <style>
 	.hero-section {
 		position: relative;
-		padding: 6rem var(--space-md) var(--space-xl);
+		padding: 6rem var(--space-performance-md) var(--space-performance-xl);
 	}
 
 	.hero-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
+		line-height: var(--leading-performance-relaxed);
 	}
 
 	.contact-section {
-		padding: var(--space-xl) var(--space-md);
+		padding: var(--space-performance-xl) var(--space-performance-md);
 	}
 
 	.contact-card {
-		padding: var(--space-lg);
-		border-radius: var(--radius-md);
-		transition: border-color var(--duration-standard) var(--ease-standard);
+		padding: var(--space-performance-lg);
+		border-radius: var(--radius-performance-scale-md);
+		transition: border-color var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.contact-card:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.icon-container {
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.icon {
 		width: 2rem;
 		height: 2rem;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.card-title {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.card-description {
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-sm);
+		color: var(--color-performance-fg-tertiary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.contact-link {
-		color: var(--color-fg-secondary);
-		transition: color var(--duration-standard) var(--ease-standard);
+		color: var(--color-performance-fg-secondary);
+		transition: color var(--duration-performance-standard) var(--ease-performance-standard);
 		display: inline-flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.contact-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.social-link {
-		color: var(--color-fg-secondary);
-		transition: color var(--duration-standard) var(--ease-standard);
+		color: var(--color-performance-fg-secondary);
+		transition: color var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.social-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.animate-reveal {

@@ -24,12 +24,12 @@
    ========================================================================== */
 
 :root {
-  --text-display-xl: clamp(3.5rem, 5vw + 2rem, 7rem);   /* 56px → 112px */
-  --text-display: clamp(2.5rem, 4vw + 1.5rem, 5rem);     /* 40px → 80px */
-  --text-h1: clamp(2rem, 3vw + 1rem, 3.5rem);            /* 32px → 56px */
-  --text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem);      /* 24px → 36px */
-  --text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem);    /* 20px → 28px */
-  --text-h4: clamp(1.125rem, 1vw + 0.5rem, 1.5rem);      /* 18px → 24px */
+  --text-performance-display-xl: clamp(3.5rem, 5vw + 2rem, 7rem);   /* 56px → 112px */
+  --text-performance-display: clamp(2.5rem, 4vw + 1.5rem, 5rem);     /* 40px → 80px */
+  --text-performance-h1: clamp(2rem, 3vw + 1rem, 3.5rem);            /* 32px → 56px */
+  --text-performance-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem);      /* 24px → 36px */
+  --text-performance-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem);    /* 20px → 28px */
+  --text-performance-h4: clamp(1.125rem, 1vw + 0.5rem, 1.5rem);      /* 18px → 24px */
 
   /* Reveal animation duration */
   --duration-reveal: 400ms;
@@ -44,40 +44,40 @@
    ========================================================================== */
 
 h1 {
-  font-size: var(--text-display-xl);
-  font-weight: var(--font-semibold);
+  font-size: var(--text-performance-display-xl);
+  font-weight: var(--font-performance-semibold);
   line-height: 1.05;
-  letter-spacing: var(--tracking-tighter);
-  font-family: var(--font-heading, var(--font-display, var(--font-sans)));
+  letter-spacing: var(--tracking-performance-tighter);
+  font-family: var(--font-performance-heading, var(--font-performance-display, var(--font-performance-sans)));
   font-optical-sizing: auto;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
 }
 
 h2 {
-  font-size: var(--text-h1);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tighter);
-  font-family: var(--font-heading, var(--font-display, var(--font-sans)));
+  font-size: var(--text-performance-h1);
+  font-weight: var(--font-performance-semibold);
+  line-height: var(--leading-performance-tight);
+  letter-spacing: var(--tracking-performance-tighter);
+  font-family: var(--font-performance-heading, var(--font-performance-display, var(--font-performance-sans)));
   font-optical-sizing: auto;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
 }
 
 h3 {
-  font-size: var(--text-h2);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-  font-family: var(--font-heading, var(--font-display, var(--font-sans)));
+  font-size: var(--text-performance-h2);
+  font-weight: var(--font-performance-semibold);
+  line-height: var(--leading-performance-tight);
+  letter-spacing: var(--tracking-performance-tight);
+  font-family: var(--font-performance-heading, var(--font-performance-display, var(--font-performance-sans)));
   font-optical-sizing: auto;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
 }
 
 h4 {
-  font-size: var(--text-h3);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-snug);
-  font-family: var(--font-heading, var(--font-display, var(--font-sans)));
+  font-size: var(--text-performance-h3);
+  font-weight: var(--font-performance-semibold);
+  line-height: var(--leading-performance-snug);
+  font-family: var(--font-performance-heading, var(--font-performance-display, var(--font-performance-sans)));
   font-optical-sizing: auto;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
 }
@@ -101,9 +101,9 @@ section {
 /* Landing page hero headline - larger than standard h1 */
 .hero-headline {
   font-size: clamp(3rem, 8vw, 7rem) !important; /* 48px → 112px */
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-performance-semibold);
   line-height: 1.05;
-  letter-spacing: var(--tracking-tighter);
+  letter-spacing: var(--tracking-performance-tighter);
 }
 
 /* Small text refinement */

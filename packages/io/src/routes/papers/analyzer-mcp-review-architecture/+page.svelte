@@ -121,15 +121,15 @@ ${paper.content || ''}
 
 <style>
 	.page-container {
-		background-color: var(--color-bg-pure);
+		background-color: var(--color-performance-bg-pure);
 	}
 
 	.back-link {
-		color: var(--color-fg-tertiary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		color: var(--color-performance-fg-tertiary);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.back-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 </style>

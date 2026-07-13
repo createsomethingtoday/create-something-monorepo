@@ -45,10 +45,10 @@ export function getDuration(key: DurationKey): string {
  * CSS custom property names for animation
  */
 export const animationVars = {
-	ease: '--ease-standard',
-	durationMicro: '--duration-micro',
-	durationStandard: '--duration-standard',
-	durationComplex: '--duration-complex'
+	ease: '--ease-performance-standard',
+	durationMicro: '--duration-performance-micro',
+	durationStandard: '--duration-performance-standard',
+	durationComplex: '--duration-performance-complex'
 } as const;
 
 /**

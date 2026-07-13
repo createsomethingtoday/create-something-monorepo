@@ -31,8 +31,8 @@
 
 	const featureStyles: Record<string, { fill: string; stroke: string }> = {
 		building: { fill: 'var(--arch-site-building)', stroke: 'var(--arch-wall-exterior)' },
-		driveway: { fill: 'var(--arch-site-driveway)', stroke: 'var(--color-fg-muted)' },
-		patio: { fill: 'var(--color-bg-elevated)', stroke: 'var(--color-fg-subtle)' },
+		driveway: { fill: 'var(--arch-site-driveway)', stroke: 'var(--color-performance-fg-muted)' },
+		patio: { fill: 'var(--color-performance-bg-elevated)', stroke: 'var(--color-performance-fg-subtle)' },
 		pool: { fill: 'var(--arch-site-water)', stroke: 'var(--arch-hvac-supply)' },
 		garden: { fill: 'var(--arch-site-landscape)', stroke: 'var(--arch-site-landscape)' },
 		tree: { fill: 'var(--arch-site-landscape)', stroke: 'var(--arch-site-landscape)' }
@@ -162,11 +162,11 @@
 	}
 
 	.property-fill {
-		fill: var(--color-bg-pure);
+		fill: var(--color-performance-bg-pure);
 	}
 
 	.property-line {
-		stroke: var(--color-fg-secondary);
+		stroke: var(--color-performance-fg-secondary);
 		stroke-width: 1.5;
 		stroke-dasharray: 4 2;
 	}
@@ -178,26 +178,26 @@
 	}
 
 	.north-line {
-		stroke: var(--color-fg-muted);
+		stroke: var(--color-performance-fg-muted);
 		stroke-width: 0.75;
 	}
 
 	.north-arrow-head {
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 	}
 
 	.feature-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 6px;
 		fill: var(--arch-label-secondary);
 		text-anchor: middle;
 		dominant-baseline: middle;
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-wider, 0.05em);
+		letter-spacing: var(--tracking-performance-wider, 0.05em);
 	}
 
 	.site-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 7px;
 		fill: var(--arch-label-primary);
 		text-anchor: middle;
@@ -209,16 +209,16 @@
 	}
 
 	.setback-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 5px;
 		fill: var(--arch-label-subtle);
 		text-anchor: middle;
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-wider, 0.05em);
+		letter-spacing: var(--tracking-performance-wider, 0.05em);
 	}
 
 	.north-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 6px;
 		fill: var(--arch-label-subtle);
 		text-anchor: middle;
@@ -228,20 +228,20 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-top: var(--space-md, 1.5rem);
-		padding-top: var(--space-sm, 1rem);
-		border-top: 1px solid var(--color-hover);
-		font-family: var(--font-sans, system-ui, sans-serif);
+		margin-top: var(--space-performance-md, 1.5rem);
+		padding-top: var(--space-performance-sm, 1rem);
+		border-top: 1px solid var(--color-performance-hover);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.caption {
-		font-size: var(--text-body-sm, 11px);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm, 11px);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.area-hint {
-		font-size: var(--text-caption, 10px);
-		color: var(--color-fg-subtle);
+		font-size: var(--text-performance-caption, 10px);
+		color: var(--color-performance-fg-subtle);
 	}
 
 	@media (max-width: 768px) {

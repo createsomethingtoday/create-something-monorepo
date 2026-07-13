@@ -313,22 +313,22 @@
 		align-items: center;
 		justify-content: space-between;
 		width: 100%;
-		background: var(--color-bg-surface, #111);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-md, 8px);
-		padding: var(--space-sm, 1rem);
+		background: var(--color-performance-bg-surface, #111);
+		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-md, 8px);
+		padding: var(--space-performance-sm, 1rem);
 		cursor: pointer;
-		transition: border-color var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: border-color var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.datepicker-trigger:hover:not(:disabled) {
-		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		border-color: var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
 	}
 
 	.datepicker-trigger:focus-visible {
 		outline: none;
-		border-color: var(--color-border-strong, rgba(255, 255, 255, 0.3));
-		box-shadow: 0 0 0 3px var(--color-focus, rgba(255, 255, 255, 0.5));
+		border-color: var(--color-performance-border-strong, rgba(255, 255, 255, 0.3));
+		box-shadow: 0 0 0 3px var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 	}
 
 	.datepicker-trigger:disabled {
@@ -337,18 +337,18 @@
 	}
 
 	.datepicker-value {
-		font-size: var(--text-body, 1rem);
-		color: var(--color-fg-primary, #fff);
+		font-size: var(--text-performance-body, 1rem);
+		color: var(--color-performance-fg-primary, #fff);
 	}
 
 	.datepicker-value.placeholder {
-		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
 	}
 
 	.datepicker-icon {
 		width: 20px;
 		height: 20px;
-		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
 	}
 
 	.datepicker-calendar {
@@ -356,26 +356,26 @@
 		top: calc(100% + 4px);
 		left: 0;
 		z-index: 50;
-		background: var(--color-bg-elevated, #0a0a0a);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-lg, 12px);
-		box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.3));
-		padding: var(--space-md, 1.618rem);
+		background: var(--color-performance-bg-elevated, #0a0a0a);
+		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-lg, 12px);
+		box-shadow: var(--shadow-performance-scale-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.3));
+		padding: var(--space-performance-md, 1.618rem);
 		min-width: 280px;
-		animation: calendarIn var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		animation: calendarIn var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.calendar-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: var(--space-md, 1.618rem);
+		margin-bottom: var(--space-performance-md, 1.618rem);
 	}
 
 	.calendar-title {
-		font-size: var(--text-body, 1rem);
+		font-size: var(--text-performance-body, 1rem);
 		font-weight: 600;
-		color: var(--color-fg-primary, #fff);
+		color: var(--color-performance-fg-primary, #fff);
 	}
 
 	.nav-btn {
@@ -386,15 +386,15 @@
 		height: 28px;
 		background: transparent;
 		border: none;
-		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
 		cursor: pointer;
-		border-radius: var(--radius-sm, 6px);
-		transition: all var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		border-radius: var(--radius-performance-scale-sm, 6px);
+		transition: all var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.nav-btn:hover {
-		background: var(--color-bg-surface, #111);
-		color: var(--color-fg-primary, #fff);
+		background: var(--color-performance-bg-surface, #111);
+		color: var(--color-performance-fg-primary, #fff);
 	}
 
 	.nav-btn svg {
@@ -406,14 +406,14 @@
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
 		gap: 2px;
-		margin-bottom: var(--space-xs, 0.5rem);
+		margin-bottom: var(--space-performance-xs, 0.5rem);
 	}
 
 	.weekday {
-		font-size: var(--text-caption, 0.75rem);
-		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		font-size: var(--text-performance-caption, 0.75rem);
+		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
 		text-align: center;
-		padding: var(--space-xs, 0.5rem);
+		padding: var(--space-performance-xs, 0.5rem);
 	}
 
 	.calendar-grid {
@@ -427,35 +427,35 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: var(--text-body-sm, 0.875rem);
-		color: var(--color-fg-primary, #fff);
+		font-size: var(--text-performance-body-sm, 0.875rem);
+		color: var(--color-performance-fg-primary, #fff);
 		background: transparent;
 		border: none;
-		border-radius: var(--radius-sm, 6px);
+		border-radius: var(--radius-performance-scale-sm, 6px);
 		cursor: pointer;
-		transition: all var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: all var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.calendar-day:hover:not(:disabled) {
-		background: var(--color-bg-surface, #111);
+		background: var(--color-performance-bg-surface, #111);
 	}
 
 	.calendar-day:focus-visible {
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline: 2px solid var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 		outline-offset: -2px;
 	}
 
 	.calendar-day.outside {
-		color: var(--color-fg-subtle, rgba(255, 255, 255, 0.2));
+		color: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.2));
 	}
 
 	.calendar-day.today {
-		border: 1px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		border: 1px solid var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
 	}
 
 	.calendar-day.selected {
-		background: var(--color-fg-primary, #fff);
-		color: var(--color-bg-pure, #000);
+		background: var(--color-performance-fg-primary, #fff);
+		color: var(--color-performance-bg-pure, #000);
 		font-weight: 600;
 	}
 
@@ -467,25 +467,25 @@
 	.calendar-footer {
 		display: flex;
 		justify-content: center;
-		margin-top: var(--space-md, 1.618rem);
-		padding-top: var(--space-sm, 1rem);
-		border-top: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		margin-top: var(--space-performance-md, 1.618rem);
+		padding-top: var(--space-performance-sm, 1rem);
+		border-top: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
 	}
 
 	.today-btn {
-		font-size: var(--text-body-sm, 0.875rem);
-		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		font-size: var(--text-performance-body-sm, 0.875rem);
+		color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8));
 		background: transparent;
 		border: none;
 		cursor: pointer;
-		padding: var(--space-xs, 0.5rem) var(--space-sm, 1rem);
-		border-radius: var(--radius-sm, 6px);
-		transition: all var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		padding: var(--space-performance-xs, 0.5rem) var(--space-performance-sm, 1rem);
+		border-radius: var(--radius-performance-scale-sm, 6px);
+		transition: all var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.today-btn:hover {
-		background: var(--color-bg-surface, #111);
-		color: var(--color-fg-primary, #fff);
+		background: var(--color-performance-bg-surface, #111);
+		color: var(--color-performance-fg-primary, #fff);
 	}
 
 	@keyframes calendarIn {

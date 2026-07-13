@@ -99,11 +99,11 @@ Translate the private performance reference into owned workflow meaning:
 
 Use the Canon-owned local/system typography stack:
 
-- `--font-sans` and `--font-display` use Arial/Helvetica/system fallbacks for
+- `--font-performance-sans` and `--font-performance-display` use Arial/Helvetica/system fallbacks for
   product and public-page type.
-- `--font-mono` carries workflow state, IDs, files, policies, receipts, and
+- `--font-performance-mono` carries workflow state, IDs, files, policies, receipts, and
   timestamps through the platform mono stack.
-- `--font-serif` uses Georgia/Times fallbacks when an editorial voice is useful.
+- `--font-performance-serif` uses Georgia/Times fallbacks when an editorial voice is useful.
 - Display scale should feel decisive and campaign-capable on public editorial
   surfaces, while product and operator surfaces stay readable under pressure.
 - Do not introduce font hotlinks, new font files, or paid font dependencies
