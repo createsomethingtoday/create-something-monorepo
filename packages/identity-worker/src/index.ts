@@ -3927,37 +3927,42 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
-  <style>@import url('https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');</style>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2307162b'/%3E%3Cpath d='M20 20h24v24H20z' fill='none' stroke='%23f4efe3' stroke-width='4'/%3E%3C/svg%3E" />
+  <meta name="color-scheme" content="light" />
+  <style>@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');</style>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f3f3f0'/%3E%3Cpath d='M20 20h24v24H20z' fill='none' stroke='%23090909' stroke-width='4'/%3E%3C/svg%3E" />
   <title>Authorize CREATE SOMETHING MCP</title>
   <style>
     :root {
-      color-scheme: dark;
-      --bg-1: #050608;
-      --bg-2: #101215;
-      --card: rgba(15, 16, 20, 0.92);
-      --card-border: rgba(244, 239, 227, 0.09);
-      --text: #f4efe3;
-      --muted: rgba(244, 239, 227, 0.66);
-      --input: rgba(8, 10, 14, 0.92);
-      --input-border: rgba(244, 239, 227, 0.12);
-      --accent: #f4efe3;
-      --accent-ink: #081121;
-      --danger-bg: rgba(135, 34, 54, 0.26);
-      --danger-border: rgba(255, 143, 166, 0.22);
-      --danger-text: #ffd7df;
+      color-scheme: light;
+      /* Canon Performance Lab tokens. Keep this subset synchronized with
+         @create-something/canon/styles/tokens.css. */
+      --color-performance-paper: #f3f3f0;
+      --color-performance-panel: #ffffff;
+      --color-performance-ink: #090909;
+      --color-performance-ink-soft: #262626;
+      --color-performance-muted: #5e6268;
+      --color-performance-line: #d7d7d2;
+      --color-performance-line-strong: #9c9c96;
+      --color-performance-grid: rgb(9 9 9 / 0.055);
+      --color-performance-pressure: #e54800;
+      --color-performance-risk: #c62026;
+      --color-performance-risk-soft: #f3dadd;
+      --shadow-performance-panel: none;
+      --radius-performance-sm: 0;
+      --radius-performance-md: 4px;
+      --font-performance-display: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-performance-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
     }
     * { box-sizing: border-box; }
     body {
-      font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
-      color: var(--text);
+      font-family: var(--font-performance-display);
+      color: var(--color-performance-ink);
       margin: 0;
       min-height: 100vh;
       padding: 32px;
       background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.04), transparent 24%),
-        linear-gradient(180deg, var(--bg-2), var(--bg-1));
+        linear-gradient(90deg, var(--color-performance-grid) 1px, transparent 1px) 0 0 / 42px 42px,
+        var(--color-performance-paper);
       display: grid;
       place-items: center;
     }
@@ -3971,102 +3976,113 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
       display: flex;
       align-items: center;
       gap: 12px;
-      color: rgba(244, 239, 227, 0.88);
-      letter-spacing: 0.12em;
+      color: var(--color-performance-ink);
+      font-family: var(--font-performance-mono);
+      font-weight: 700;
+      letter-spacing: 0;
       text-transform: uppercase;
       font-size: 0.8rem;
     }
     .mark {
       width: 40px;
       height: 40px;
-      border-radius: 10px;
-      border: 1px solid rgba(244, 239, 227, 0.18);
-      background: rgba(255, 255, 255, 0.02);
+      border-radius: var(--radius-performance-sm);
+      border: 1px solid var(--color-performance-line-strong);
+      background: var(--color-performance-panel);
       display: grid;
       place-items: center;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      box-shadow: var(--shadow-performance-panel);
     }
     .mark::before {
       content: "";
       width: 18px;
       height: 18px;
-      border: 2px solid var(--accent);
+      border: 2px solid var(--color-performance-ink);
       display: block;
     }
     .card {
       width: 100%;
       max-width: 620px;
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 24px;
+      background: var(--color-performance-panel);
+      border: 1px solid var(--color-performance-line);
+      border-top: 4px solid var(--color-performance-pressure);
+      border-radius: var(--radius-performance-md);
       padding: 28px;
-      box-shadow: 0 28px 80px rgba(0,0,0,.38);
-      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-performance-panel);
     }
     .eyebrow {
       margin: 0 0 12px;
-      color: rgba(244, 239, 227, 0.64);
+      color: var(--color-performance-pressure);
+      font-family: var(--font-performance-mono);
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0;
       font-size: 0.74rem;
     }
     h1 {
-      font-family: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-family: var(--font-performance-display);
       font-size: clamp(2rem, 4vw, 2.7rem);
       line-height: 1.02;
       letter-spacing: -0.03em;
       margin: 0 0 12px;
     }
-    p { color: var(--muted); line-height: 1.65; margin: 0; }
+    p { color: var(--color-performance-muted); line-height: 1.65; margin: 0; }
     .lede { max-width: 52ch; }
     label { display: block; margin-top: 18px; font-weight: 600; font-size: 0.96rem; }
     input {
       width: 100%;
       margin-top: 8px;
-      border: 1px solid var(--input-border);
-      background: var(--input);
-      color: var(--text);
-      border-radius: 14px;
+      border: 1px solid var(--color-performance-line-strong);
+      background: var(--color-performance-panel);
+      color: var(--color-performance-ink);
+      border-radius: var(--radius-performance-sm);
       padding: 14px 16px;
-      font: inherit;
+      font-family: var(--font-performance-mono);
+      font-size: 0.92rem;
       outline: none;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+      box-shadow: none;
     }
     input:focus {
-      border-color: rgba(244, 239, 227, 0.42);
-      box-shadow: 0 0 0 3px rgba(244, 239, 227, 0.08);
+      border-color: var(--color-performance-ink);
+      box-shadow: 0 0 0 3px var(--color-performance-paper);
     }
     button {
       margin-top: 22px;
       width: 100%;
-      border: 0;
-      border-radius: 999px;
-      background: var(--accent);
-      color: var(--accent-ink);
+      border: 1px solid var(--color-performance-ink);
+      border-radius: var(--radius-performance-sm);
+      background: var(--color-performance-ink);
+      color: var(--color-performance-panel);
       padding: 14px 18px;
       font: inherit;
       font-weight: 700;
       cursor: pointer;
     }
+    button:hover { background: var(--color-performance-ink-soft); }
+    button:focus-visible { outline: 2px solid var(--color-performance-pressure); outline-offset: 3px; }
     .meta {
       margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid rgba(255,255,255,0.07);
+      padding: 14px;
+      border: 1px solid var(--color-performance-line);
+      border-inline-start: 4px solid var(--color-performance-pressure);
+      background: var(--color-performance-paper);
+      font-family: var(--font-performance-mono);
       font-size: .92rem;
-      color: rgba(244, 239, 227, 0.58);
+      color: var(--color-performance-muted);
       overflow-wrap: anywhere;
     }
     .error {
       margin: 18px 0 0;
-      background: var(--danger-bg);
-      border: 1px solid var(--danger-border);
-      color: var(--danger-text);
-      border-radius: 14px;
+      background: var(--color-performance-risk-soft);
+      border: 1px solid var(--color-performance-risk);
+      border-inline-start-width: 4px;
+      color: var(--color-performance-risk);
+      border-radius: var(--radius-performance-sm);
       padding: 12px 14px;
     }
     @media (max-width: 640px) {
       body { padding: 18px; }
-      .card { padding: 22px; border-radius: 22px; }
+      .card { padding: 22px; }
     }
   </style>
 </head>
