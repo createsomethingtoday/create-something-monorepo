@@ -13,12 +13,12 @@ They are not production approval; they are the local bridge between "mapped" and
 | --- | --- | --- | --- | --- | --- |
 | Automation worker Atlas coverage | Automation | worker | 125 | approval_required | pass: 7 |
 | Judgment policy Atlas coverage | Judgment | policy | 56 | approval_required | pass: 5 |
-| Mixed guide Atlas coverage | Mixed | guide | 56 | approval_required | pass: 5 |
+| Mixed guide Atlas coverage | Mixed | guide | 55 | approval_required | pass: 5 |
 | Automation MCP Atlas coverage | Automation | mcp | 52 | approval_required | pass: 5 |
 | Automation agent Atlas coverage | Automation | agent | 24 | approval_required | pass: 5 |
 | Automation config Atlas coverage | Automation | config | 24 | approval_required | pass: 5 |
 | Mixed package Atlas coverage | Mixed | package | 16 | approval_required | pass: 5 |
-| Automation package Atlas coverage | Automation | package | 14 | approval_required | pass: 5 |
+| Automation package Atlas coverage | Automation | package | 15 | approval_required | pass: 5 |
 | Judgment MCP Atlas coverage | Judgment | mcp | 11 | approval_required | pass: 5 |
 | Judgment package Atlas coverage | Judgment | package | 11 | approval_required | pass: 5 |
 | Judgment worker Atlas coverage | Judgment | worker | 11 | approval_required | pass: 7 |
@@ -41,12 +41,12 @@ They are not production approval; they are the local bridge between "mapped" and
 | --- | --- | --- | --- | --- | --- | --- |
 | Automation worker Atlas coverage | Automation | worker | review_ready | approval_required | 125 | pnpm --filter @create-something/database-layer runtime-bindings:generate; pnpm --filter @create-something/database-layer test |
 | Judgment policy Atlas coverage | Judgment | policy | review_ready | approval_required | 56 | pnpm --filter @create-something/database-layer atlas-coverage:generate; pnpm --filter @create-something/database-layer test |
-| Mixed guide Atlas coverage | Mixed | guide | review_ready | approval_required | 56 | pnpm --filter @create-something/database-layer atlas-coverage:generate; pnpm --filter @create-something/database-layer test |
+| Mixed guide Atlas coverage | Mixed | guide | review_ready | approval_required | 55 | pnpm --filter @create-something/database-layer atlas-coverage:generate; pnpm --filter @create-something/database-layer test |
 | Automation MCP Atlas coverage | Automation | mcp | review_ready | approval_required | 52 | pnpm --filter @create-something/database-layer agent-configs:generate; pnpm --filter @create-something/database-layer test |
 | Automation agent Atlas coverage | Automation | agent | review_ready | approval_required | 24 | pnpm --filter @create-something/database-layer agent-configs:generate; pnpm --filter @create-something/database-layer test |
 | Automation config Atlas coverage | Automation | config | review_ready | approval_required | 24 | pnpm --filter @create-something/database-layer agent-configs:generate; pnpm --filter @create-something/database-layer test |
 | Mixed package Atlas coverage | Mixed | package | review_ready | approval_required | 16 | pnpm --filter @create-something/database-layer test |
-| Automation package Atlas coverage | Automation | package | review_ready | approval_required | 14 | pnpm --filter @create-something/database-layer test |
+| Automation package Atlas coverage | Automation | package | review_ready | approval_required | 15 | pnpm --filter @create-something/database-layer test |
 | Judgment MCP Atlas coverage | Judgment | mcp | review_ready | approval_required | 11 | pnpm --filter @create-something/database-layer agent-configs:generate; pnpm --filter @create-something/database-layer test |
 | Judgment package Atlas coverage | Judgment | package | review_ready | approval_required | 11 | pnpm --filter @create-something/database-layer test |
 | Judgment worker Atlas coverage | Judgment | worker | review_ready | approval_required | 11 | pnpm --filter @create-something/database-layer runtime-bindings:generate; pnpm --filter @create-something/database-layer test |

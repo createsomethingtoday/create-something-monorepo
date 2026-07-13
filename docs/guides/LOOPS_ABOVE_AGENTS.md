@@ -47,7 +47,7 @@ A CREATE SOMETHING loop is a repeatable operating circuit with seven parts:
 | Signal        | What changed or needs attention?          | Linear, git history, tests, smoke checks, logs, docs drift              |
 | Context       | What must the worker read before acting?  | `AGENTS.md`, package docs, policy artifacts, issue body, prior evidence |
 | Policy        | What boundaries control the work?         | `docs/policies`, intent packets, approval rules, package `AGENTS.md`    |
-| Executor      | Who or what performs the work?            | Codex, Hermes, Symphony worker, script, human operator                  |
+| Executor      | Who or what performs the work?            | Codex, Ornith, Symphony worker, script, human operator                  |
 | Verification  | How do we know the result is real?        | package checks, smoke tests, browser proof, policy checks, live health  |
 | Proof         | Where does evidence persist?              | Linear comment, PR body, deploy note, proof artifact, local summary     |
 | Next decision | Continue, split, promote, block, or stop? | operator review, Linear status, PR/promotion gate                       |

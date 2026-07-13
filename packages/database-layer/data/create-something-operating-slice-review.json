@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-07-12T22:50:07.092Z",
+  "generatedAt": "2026-07-13T01:55:01.187Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -288,7 +288,6 @@
         "substrate:create-something:guide:docs-guides-first-party-auth-platform-md",
         "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
         "substrate:create-something:guide:docs-guides-git-light-agent-delivery-workflow-md",
-        "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
         "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
         "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
         "substrate:create-something:guide:docs-guides-loops-above-agents-md",
@@ -324,7 +323,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 56,
+      "nodeCount": 55,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -623,12 +622,13 @@
         "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
         "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
         "substrate:create-something:package:create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
-        "substrate:create-something:package:create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler"
+        "substrate:create-something:package:create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+        "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot"
       ],
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "package",
-      "nodeCount": 14,
+      "nodeCount": 15,
       "evidence": [
         "packages/auth-platform",
         "packages/half-dozen-youtube-sync",

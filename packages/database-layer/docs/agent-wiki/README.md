@@ -33,9 +33,9 @@ than inferred as a second documentation truth surface.
 | Topology ID | substrate:create-something:topology:internal |
 | Atlas canvas | create-something-internal-operating-topology |
 | Topology nodes | 453 |
-| Topology edges | 929 |
+| Topology edges | 930 |
 | Node status | mapped: 453 |
-| Tier counts | Automation: 245, Judgment: 93, Mixed: 90, Database: 25 |
+| Tier counts | Automation: 246, Judgment: 93, Mixed: 89, Database: 25 |
 | Management posture | agent_native |
 | Management resources | 522 |
 | Management operations | 29 |

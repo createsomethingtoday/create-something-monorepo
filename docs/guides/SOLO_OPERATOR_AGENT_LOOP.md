@@ -44,7 +44,7 @@ pnpm agent:solo-loop:check
 ```
 
 The default command is read-only. It reports checkout dirtiness, upstream
-divergence, Hermes/Codex command availability, and the recommended operating
+divergence, Codex command availability, and the recommended operating
 loop. It does not mutate git, Linear, deployments, secrets, or production
 state.
 
@@ -53,8 +53,7 @@ mutating anything:
 
 ```bash
 pnpm agent:solo-loop:starter
-pnpm agent:solo-loop -- --provider hermes --task "Fix the failing agency SEO smoke"
-pnpm agent:solo-loop -- --provider codex --task "Add a CLI smoke for the template sync path"
+pnpm agent:solo-loop -- --task "Add a CLI smoke for the template sync path"
 ```
 
 The starter output includes the provider launch shape plus the prompt to paste
@@ -121,14 +120,15 @@ execution, or cleanup guarantees.
 Use Linear when the work should be tracked across sessions, delegated to
 another agent, reported externally, or marked complete with durable evidence.
 
-## Hermes Use
+## Local Ornith Use
 
-Hermes can be used as the solo loop worker when it is installed and configured.
-For normal local repo tests it does not require E2B. Use a normal user-owned
-checkout path so Hermes file tools can write safely.
+Ornith is the local, open-weight execution lane for coding tasks that should not
+consume metered model-API tokens. Run it through the governed operator-agent or
+Zellij surfaces; Codex, Symphony, Linear, worktree contracts, and receipts retain
+loop ownership and done authority.
 
-Use E2B or another sandbox only when the task is untrusted, destructive,
-resource-heavy, or needs parallel disposable environments.
+"Tokenless" means no metered model-API tokens on the Ornith path. Local compute,
+electricity, storage, and operator time remain real costs.
 
 ## Quick Decision Table
 

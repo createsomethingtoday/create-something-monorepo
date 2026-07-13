@@ -29,21 +29,18 @@ test('parseArgs supports starter prompt options', () => {
   const options = parseArgs([
     'node',
     'scripts/agent-solo-loop.mjs',
-    '--provider',
-    'hermes',
     '--task',
     'Fix the failing smoke'
   ]);
 
-  assert.equal(options.provider, 'hermes');
   assert.equal(options.task, 'Fix the failing smoke');
   assert.equal(options.starter, true);
 });
 
-test('parseArgs rejects unknown providers', () => {
+test('parseArgs rejects provider selection', () => {
   assert.throws(
     () => parseArgs(['node', 'scripts/agent-solo-loop.mjs', '--provider', 'unknown']),
-    /Unknown provider: unknown/
+    /Unknown argument: --provider/
   );
 });
 
@@ -82,25 +79,17 @@ test('decideSoloPosture allows dirty current-checkout work unless strict', () =>
 test('buildStarterPrompt encodes solo-loop production boundaries', () => {
   const prompt = buildStarterPrompt({
     task: 'Repair the agency SEO smoke',
-    provider: 'hermes',
     branch: 'codex/CRE-778-agent-worktree',
     warnings: ['Checkout is behind upstream by 1 commit(s).']
   });
 
   assert.match(prompt, /Repair the agency SEO smoke/);
-  assert.match(prompt, /Use Hermes as the implementation worker/);
+  assert.match(prompt, /Use Codex as the implementation worker/);
   assert.match(prompt, /Do not mutate production/);
   assert.match(prompt, /branch, PR, merge, deploy, and rollback evidence/);
   assert.match(prompt, /Checkout is behind upstream by 1 commit/);
 });
 
 test('buildLaunchCommand returns inspectable provider launch shapes', () => {
-  assert.equal(
-    buildLaunchCommand({ provider: 'hermes', hermesCommand: 'hermes' }),
-    "hermes --cli -z '<paste the starter prompt here>'"
-  );
-  assert.equal(
-    buildLaunchCommand({ provider: 'codex' }),
-    'codex # paste the starter prompt into the session'
-  );
+  assert.equal(buildLaunchCommand(), 'codex # paste the starter prompt into the session');
 });

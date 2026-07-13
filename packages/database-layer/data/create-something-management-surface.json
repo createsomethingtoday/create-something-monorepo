@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-07-12T22:50:07.911Z",
+  "generatedAt": "2026-07-13T01:55:01.991Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -2960,6 +2960,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "kind": "topology_record",
+      "title": "@create-something/workflow-shadow-pilot",
+      "recordId": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-zendesk-mcp-packages-zendesk-mcp",
       "kind": "topology_record",
       "title": "@create-something/zendesk-mcp",
@@ -5599,20 +5613,6 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-git-light-agent-delivery-workflow-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-git-light-agent-delivery-workflow-md",
-      "agentCommand": "databaseLayer.topology.records.get",
-      "access": [
-        "read"
-      ],
-      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-    },
-    {
-      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-hermes-agent-loop-evaluation-md",
-      "kind": "topology_record",
-      "title": "HERMES_AGENT_LOOP_EVALUATION.md",
-      "recordId": "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
-      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-hermes-agent-loop-evaluation-md",
-      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-hermes-agent-loop-evaluation-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"

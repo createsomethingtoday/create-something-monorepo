@@ -23,10 +23,10 @@ writes remain approval-gated.
 
 | Lane | Tier | Status | Metric signal | Next action |
 | --- | --- | --- | --- | --- |
-| Promote Substrate as the CREATE SOMETHING database layer | Database | operationalized | databaseRecords: 25; automationRecords: 245; resourceCount: 522; operationCount: 29 | Use `/api/substrate/management`, `/api/substrate/capabilities`, and `/api/substrate/openapi.json` as the product entrypoints for agent-run CREATE SOMETHING operations. |
+| Promote Substrate as the CREATE SOMETHING database layer | Database | operationalized | databaseRecords: 25; automationRecords: 246; resourceCount: 522; operationCount: 29 | Use `/api/substrate/management`, `/api/substrate/capabilities`, and `/api/substrate/openapi.json` as the product entrypoints for agent-run CREATE SOMETHING operations. |
 | Review worker runtime slices before production claims | Automation | operationalized | workerSlices: 4; primaryWorkerSliceRecords: 125; runtimeConfigRecords: 101; bindingRefs: 493 | Review worker slices through runtime binding coverage before any Cloudflare mutation or production execution claim. |
 | Turn client overlays into repeatable delivery | Mixed | operationalized | clientOverlays: 4; clientPackages: 6; clientReceipts: 6; clientNextActions: 6 | Use client delivery packets as the repeatable proof path for mapping and operating client businesses with Atlas/Substrate receipts. |
-| Attach policy and guides to operating slices | Judgment | operationalized | operatingSlices: 23; attachedSlices: 23; policyRecords: 56; guideRecords: 56 | Treat missing policy/guide attachment as a review signal before promotion, and keep approval boundaries beside each operating slice. |
+| Attach policy and guides to operating slices | Judgment | operationalized | operatingSlices: 23; attachedSlices: 23; policyRecords: 56; guideRecords: 55 | Treat missing policy/guide attachment as a review signal before promotion, and keep approval boundaries beside each operating slice. |
 
 ## Delivery Packets
 
