@@ -66,7 +66,10 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.match(route, /32 live boundary scenarios/i);
   assert.match(route, /not production usage/i);
   assert.match(route, /Langfuse readback was not available/i);
-  assert.match(route, /One live packet cost about eleven cents/i);
+  assert.match(
+    route,
+    /One measured packet sets the cost\. The supplied baseline models the capacity\./i
+  );
   assert.match(route, /32\.7 seconds/i);
   assert.match(route, /45\.0 seconds/i);
   assert.match(route, /99\.5 seconds elapsed/i);
@@ -79,6 +82,26 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.doesNotMatch(route, /eight reviewer buckets/i);
   assert.doesNotMatch(route, /One method\. One map\. Three operating surfaces\./i);
   assert.doesNotMatch(route, /layoff|head[ -]?count|replace(?:d|ment)? people/i);
+});
+
+test('public Field Report places the failed judgment before one combined economics section', () => {
+  const route = readFileSync(
+    new URL('../src/routes/field-reports/template-review/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const syntheticRuntime = route.indexOf('Current runtime check / Synthetic');
+  const failedJudgment = route.indexOf('Automated judgment was not ready.');
+  const combinedEconomics = route.indexOf(
+    'One measured packet sets the cost. The supplied baseline models the capacity.'
+  );
+  const evidenceBasis = route.indexOf('Evidence basis');
+
+  assert.ok(syntheticRuntime >= 0, 'synthetic runtime section is present');
+  assert.ok(failedJudgment > syntheticRuntime, 'failed judgment follows the synthetic runtime');
+  assert.ok(combinedEconomics > failedJudgment, 'economics follows the failed judgment');
+  assert.ok(evidenceBasis > combinedEconomics, 'evidence index follows the combined economics');
+  assert.doesNotMatch(route, /One live packet cost about eleven cents\./i);
+  assert.doesNotMatch(route, /One observed packet models to about 36 an hour\./i);
 });
 
 test('public evidence records are inspectable and include the sanitized runtime audit', () => {
