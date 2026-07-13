@@ -126,8 +126,8 @@
       title: 'Where should people inspect it?',
       prompt: 'Choose where the decision should show up.',
       options: [
-        { value: 'notion', label: 'Notion', benefit: 'operator workspace' },
-        { value: 'dify', label: 'Dify', benefit: 'agent surface' },
+        { value: 'substrate', label: 'Substrate', benefit: 'owned operator surface' },
+        { value: 'client-app', label: 'Client app', benefit: 'existing team surface' },
         { value: 'linear', label: 'Linear', benefit: 'issue evidence' },
         { value: 'custom', label: 'Custom page', benefit: 'client-safe proof' }
       ]

@@ -1224,10 +1224,11 @@ provide reasoning and agent hosting when a workflow benefits from it.
 **Substrate is the owned database and operator layer.** It keeps source
 records, Atlas bindings, workflow actions, approvals, runs, receipts, and
 API/MCP access inside the system CREATE SOMETHING can inspect and evolve.
-**OpenAI, Dify, and Cloudflare are the active external stack:** OpenAI is the
-primary reasoning and agent environment, Dify is the visible agent application
-surface, and Cloudflare is the runtime. Each external platform has a clear job;
-none owns the workflow or its institutional memory.
+**CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI
+provides intelligence.** Cloudflare and OpenAI are the only primary external
+production runtime dependencies. Client integrations and temporary rollback
+artifacts remain behind owned contracts; none owns the workflow or its
+institutional memory.
 
 That statement is not an official OpenAI partnership, certification,
 affiliation, reseller, or endorsement claim. It describes how CREATE SOMETHING

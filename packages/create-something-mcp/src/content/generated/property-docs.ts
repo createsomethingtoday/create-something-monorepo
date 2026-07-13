@@ -27516,6 +27516,216 @@ Updated: 2026-05-25
 `
   },
   {
+    id: "agency:content/assets/brand/agency-performance-lab-hybrid.v20260710/metadata",
+    property: "agency",
+    title: "Agency Performance Lab Hybrid",
+    description: "Agency Performance Lab Hybrid",
+    section: "content",
+    path: "content/assets/brand/agency-performance-lab-hybrid.v20260710/metadata.md",
+    slug: "content/assets/brand/agency-performance-lab-hybrid.v20260710/metadata",
+    uri: "docs://agency/content/assets/brand/agency-performance-lab-hybrid.v20260710/metadata",
+    content: `# Agency Performance Lab Hybrid
+
+> Asset ID: \`brand.agency-performance-lab-hybrid.v20260710\`
+> Visual source folder: \`packages/agency/content/assets/brand/agency-performance-lab-hybrid.v20260710\`
+> Owner: CREATE SOMETHING
+> Updated: 2026-07-10
+> Refresh owner: CREATE SOMETHING
+
+## TASTE Packet
+
+The six screenshots below are private judgment inputs supplied by the operator. They are not
+repository assets, are not licensed for publication, and must never be copied into an export.
+
+| Reference | Local input | Adopt | Avoid |
+| --- | --- | --- | --- |
+| 01 | \`Screenshot 2026-07-10 at 12.52.02 AM.png\` | Lab reports, footprint/pressure traces, dotted systems, quiet measurement | Shoe tread, Swoosh, Nike typography, exact layouts |
+| 02 | \`Screenshot 2026-07-10 at 12.52.23 AM.png\` | Hard crops, motion blur, engineered objects, vivid signal color | Air Max framing, product silhouettes, campaign trade dress |
+| 03 | \`Screenshot 2026-07-10 at 12.52.18 AM.png\` | Athletes under load, editorial scale, repeated frames, technical data | Athlete likenesses, team marks, sports campaign copy |
+| 04 | \`Screenshot 2026-07-10 at 12.52.14 AM.png\` | Chronophotography, test rigs, modular identity studies, material behavior | Nike marks, recognizable footwear, exact compositions |
+| 05 | \`Screenshot 2026-07-10 at 12.52.10 AM.png\` | Optical energy, close material scans, archival ephemera, pressure color | Air branding, awards marks, patriotic campaign language |
+| 06 | \`Screenshot 2026-07-10 at 12.52.06 AM.png\` | Sequence grids, testing documentation, translucent prototypes, scan texture | Regional lockups, shoe renders, branded tickets and signage |
+
+Reference paths resolve under \`/Users/micahjohnson/Desktop/\` and intentionally remain local.
+The transferable grammar is summarized in \`docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md\`.
+
+### Water-system steering references
+
+| Reference | Local input | Adopt | Avoid |
+| --- | --- | --- | --- |
+| Water system board 01 | \`ChatGPT Image Jul 10, 2026 at 08_30_09 AM (2).png\` | Controlled flow, workflow map, black proof surface, hard crops | Fake readiness score, generated receipt data, rock as primary material |
+| Water system board 02 | \`ChatGPT Image Jul 10, 2026 at 08_30_09 AM (3).png\` | Flow/pressure/boundary/trace/clarity taxonomy, artifact family | Generated copy and logos, equal density across every surface |
+| Water system board 03 | \`ChatGPT Image Jul 10, 2026 at 08_30_09 AM (4).png\` | Strongest white/black constitution, engineered channels, issued objects, decorative water photography as the kinetic campaign subject | Generic ocean branding, static wave motifs, synthetic proof |
+
+These paths resolve under \`/Users/micahjohnson/Downloads/\` and remain private reference inputs.
+The original generated campaign pass from earlier in this goal is superseded by this water steer;
+none of those six variants is approved for publication.
+
+## Generation Brief
+
+| Family | Source prompt | Purpose | Required crop behavior |
+| --- | --- | --- | --- |
+| Controlled flow | \`source/controlled-flow--prompt--v20260710.txt\` | Homepage campaign field study | 16:9 and 4:5 hard crops keep the bifurcation and open annotation field |
+| Pressure boundary | \`source/pressure-boundary--prompt--v20260710.txt\` | Services material/performance study | Wide strip and square crops retain the impact and boundary |
+| Trace control plane | \`source/trace-control-plane--prompt--v20260710.txt\` | Dify/MCP control-plane article header | 16:9 and mobile portrait crops retain signal, gate, and settled trace |
+
+The earlier \`human-motion\`, \`material-study\`, and \`editorial-hybrid\` prompts are retained as rejected
+exploration history. They were not generated from image inputs and none is approved for public use.
+
+## Original Visuals
+
+| File | Family | Model | Owner | Review status | Intended surface | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| \`exports/performance-lab-controlled-flow--v20260710.png\` | Controlled flow | \`gpt-image-1.5\` | CREATE SOMETHING | approved after original-resolution inspection | \`/\` | Variant 01; bifurcation, dominant wake, and left annotation field remain legible |
+| \`exports/performance-lab-pressure-boundary--v20260710.png\` | Pressure boundary | \`gpt-image-1.5\` | CREATE SOMETHING | approved after original-resolution inspection | \`/services\` | Variant 02; pressure, transparent boundary, and downstream recovery are physically coherent |
+| \`exports/performance-lab-trace-control-plane--v20260710.png\` | Trace control plane | \`gpt-image-1.5\` | CREATE SOMETHING | approved after original-resolution inspection | \`/dify/mcp-control-plane\` | Variant 02; incoming flow, mechanical gate, and calm receipt channel remain distinct |
+
+## Public Exports
+
+The approved responsive exports are copied into Canon at
+\`packages/canon/src/lib/components/performance/media/\`. Canon is the delivery source for shared
+Performance campaign openings; the agency static paths remain compatible with existing article and
+field-study routes.
+
+| File | Source | Crop | Size | Intended surface |
+| --- | --- | --- | --- | --- |
+| \`static/images/performance-lab/controlled-flow.webp\` | Controlled flow 01 | Full 3:2 | 1536 x 1024 | Homepage desktop |
+| \`static/images/performance-lab/controlled-flow-mobile.webp\` | Controlled flow 01 | Right 4:5 | 819 x 1024 | Homepage mobile |
+| \`static/images/performance-lab/pressure-boundary.webp\` | Pressure boundary 02 | Full 3:2 | 1536 x 1024 | Services desktop |
+| \`static/images/performance-lab/pressure-boundary-mobile.webp\` | Pressure boundary 02 | Right 4:5 | 819 x 1024 | Services mobile |
+| \`static/images/performance-lab/trace-control-plane.webp\` | Trace control plane 02 | Full 3:2 | 1536 x 1024 | Article desktop |
+| \`static/images/performance-lab/trace-control-plane-mobile.webp\` | Trace control plane 02 | Center-right 4:5 | 819 x 1024 | Article mobile |
+
+### Cross-property campaign mapping
+
+| Property | Study | Campaign role |
+| --- | --- | --- |
+| \`.agency\` | Controlled flow | Delegated work accelerates through an explicit route |
+| \`.ltd\` | Pressure boundary | Governance gives force a designed limit |
+| \`.io\` | Trace control plane | Research follows intervention into an inspectable wake |
+| \`.space\` | Controlled flow | Runtime work is tested in visible motion |
+| \`.learn\` | Trace control plane | Learning follows a path and leaves evidence behind |
+
+## Rejections
+
+| File | Reason |
+| --- | --- |
+| \`exports/alternates/performance-lab-controlled-flow--rejected-02--v20260710.png\` | Strong image, but the full crop gives less quiet annotation space and the boundary converges too tightly at the right edge |
+| \`exports/alternates/performance-lab-pressure-boundary--rejected-01--v20260710.png\` | Plausible, but the boundary support reads more ambiguously and the impact is less crop-resilient |
+| \`exports/alternates/performance-lab-trace-control-plane--rejected-01--v20260710.png\` | Clear three-part sequence, but the isolated bins read more like a staged diagram than a continuous governed flow |
+
+## Rights and Provenance
+
+- Generated from CREATE SOMETHING-authored prompts on 2026-07-10 using the bundled OpenAI
+  Imagegen workflow and the account configured by the operator.
+- The user-supplied reference screenshots were used only to articulate visual traits. They were
+  not uploaded as image inputs, copied, traced, or included in generated prompts.
+- Generated imagery is illustrative campaign material, never proof of a real system run.
+- No third-party mark, slogan, layout, athlete likeness, product silhouette, or implied
+  affiliation may pass review.
+- Public exports must retain this metadata and their source prompt so they can be regenerated or
+  replaced without relying on chat history.
+
+## Review Gate
+
+- [x] TASTE packet is attached with adopt/avoid notes.
+- [x] References remain private judgment inputs and are not repository assets.
+- [x] Physical and fluid behavior plausibility passes at original resolution.
+- [x] No logo, watermark, brand text, fake UI, or accidental letterform appears.
+- [x] No recognizable athlete, sportswear, footwear, third-party structure, or campaign composition appears.
+- [x] Desktop and mobile crops preserve the intended focal point.
+- [x] Controlled flow, pressure boundary, and trace control plane each have one selected export.
+- [x] Rejection reasons and selected public paths are recorded.
+`
+  },
+  {
+    id: "agency:content/assets/brand/agency-performance-lab-natural-water.v20260710/metadata",
+    property: "agency",
+    title: "Agency Performance Lab — Natural Water",
+    description: "Agency Performance Lab — Natural Water",
+    section: "content",
+    path: "content/assets/brand/agency-performance-lab-natural-water.v20260710/metadata.md",
+    slug: "content/assets/brand/agency-performance-lab-natural-water.v20260710/metadata",
+    uri: "docs://agency/content/assets/brand/agency-performance-lab-natural-water.v20260710/metadata",
+    content: `# Agency Performance Lab — Natural Water
+
+> Asset ID: \`brand.agency-performance-lab-natural-water.v20260710\`
+> Owner: CREATE SOMETHING
+> Generated: 2026-07-10
+> Tracking issue: CRE-1183
+> Products extension: CRE-1185
+
+## Direction
+
+This library replaces the staged acrylic-apparatus photography with natural, full-scale water
+events. Water remains the kinetic campaign material, but the operating condition is the subject:
+flow is routed, pressure meets a boundary, and action leaves a trace.
+
+The user-supplied water-system board was used only to articulate general traits. It was not passed
+to the image model, copied, traced, or used as an image input.
+
+## Selected originals
+
+| File | Condition | Model | Review status |
+| --- | --- | --- | --- |
+| \`exports/performance-lab-controlled-flow-natural--v20260710.png\` | FLOW / DIRECTION | \`gpt-image-1.5\` | approved after original-resolution inspection |
+| \`exports/performance-lab-pressure-boundary-natural--v20260710.png\` | PRESSURE / BOUNDARY | \`gpt-image-1.5\` | approved after original-resolution inspection |
+| \`exports/performance-lab-trace-wake-natural--v20260710.png\` | TRACE / PROOF | \`gpt-image-1.5\` | approved after original-resolution inspection |
+| \`exports/product-system-natural.png\` | PRODUCT SYSTEM / THREE OPERATING SURFACES | \`gpt-image-1.5\` | approved after original-resolution inspection |
+
+Exact structured prompts and generation flags are preserved in
+\`source/generation-prompts--v20260710.jsonl\`.
+
+## Responsive exports
+
+| File | Crop | Size | Recommended role |
+| --- | --- | --- | --- |
+| \`static/images/performance-lab/controlled-flow-natural.webp\` | Full 3:2 | 1536 x 1024 | Controlled flow desktop |
+| \`static/images/performance-lab/controlled-flow-natural-mobile.webp\` | Right 4:5 | 819 x 1024 | Controlled flow mobile |
+| \`static/images/performance-lab/pressure-boundary-natural.webp\` | Full 3:2 | 1536 x 1024 | Pressure/boundary desktop |
+| \`static/images/performance-lab/pressure-boundary-natural-mobile.webp\` | Center-right 4:5 | 819 x 1024 | Pressure/boundary mobile |
+| \`static/images/performance-lab/trace-wake-natural.webp\` | Full 3:2 | 1536 x 1024 | Trace/wake desktop |
+| \`static/images/performance-lab/trace-wake-natural-mobile.webp\` | Center 4:5 | 819 x 1024 | Trace/wake mobile |
+| \`static/images/performance-lab/product-system-natural.webp\` | Full 3:2 | 1536 x 1024 | Products desktop |
+| \`static/images/performance-lab/product-system-natural-mobile.webp\` | Center-right 4:5 | 819 x 1024 | Products mobile |
+
+## Production slot mapping
+
+| Existing role | Recommended replacement | Current \`.agency\` consumers | Shared Canon overlay |
+| --- | --- | --- | --- |
+| \`controlled-flow\` | \`controlled-flow-natural\` | \`/dify/mcp-control-plane\` field study | \`.space\` opening via \`controlledFlowMedia\` |
+| \`pressure-boundary\` | \`pressure-boundary-natural\` | \`/\`, \`/services\`, \`/book\` | \`.ltd\` opening via \`pressureBoundaryMedia\` |
+| \`trace-control-plane\` | \`trace-wake-natural\` | \`/services\`, \`/atlas\`, \`/dify/mcp-control-plane\` | \`.io\` and \`.learn\` openings via \`traceControlPlaneMedia\` |
+| \`product-system\` | \`product-system-natural\` | \`/products\` opening | Products-specific campaign image; no shared Canon overlay |
+
+The static assets use new cache-safe names. Shared roles should update atomically across the
+\`.agency\` callers and their corresponding Canon media overlays. The Products-specific role remains
+property-owned so it can be distinct without changing another property's shared overlay.
+
+## Inspection record
+
+- [x] Original 1536 x 1024 outputs inspected at original resolution.
+- [x] Mobile 819 x 1024 hard crops inspected individually.
+- [x] Physical water behavior reads naturally at both crops.
+- [x] No blue/cyan cast, typography, logo, watermark, interface overlay, or third-party mark.
+- [x] Controlled flow retains the concrete lane and directional turbulence.
+- [x] Pressure boundary retains the impact, visible boundary, and protected downstream side.
+- [x] Trace retains the source craft, direction, and persistent wake.
+- [x] Products retains three distinct bounded channel behaviors within one connected hydraulic system.
+- [x] Products desktop preserves substantial dark negative space on the left for white campaign copy.
+- [x] Products mobile crop preserves all three channel behaviors without introducing text or marks.
+
+## Rights and use
+
+- Generated from CREATE SOMETHING-authored prompts with the bundled OpenAI Imagegen workflow.
+- No external image was uploaded as a generation or editing input.
+- The imagery is illustrative campaign material, not documentary evidence of a CREATE SOMETHING
+  system run.
+- Exact copy, state labels, and proof data must remain in the editable design layer, not inside the
+  photographs.
+`
+  },
+  {
     id: "agency:content/assets/brand/create-something-delegation-object.v20260630/metadata",
     property: "agency",
     title: "CREATE SOMETHING Delegation Object",
@@ -29100,6 +29310,92 @@ Based on Sprint 2 baselines:
 
 *Report generated: [Date]*
 *Next review: Sprint 3 Week 8*
+`
+  },
+  {
+    id: "agency:content/research/commercial-proof-inventory-v1",
+    property: "agency",
+    title: "`.agency` Commercial Proof Inventory v1",
+    description: "`.agency` Commercial Proof Inventory v1",
+    section: "content",
+    path: "content/research/commercial-proof-inventory-v1.md",
+    slug: "content/research/commercial-proof-inventory-v1",
+    uri: "docs://agency/content/research/commercial-proof-inventory-v1",
+    content: `# \`.agency\` Commercial Proof Inventory v1
+
+Linear: \`CRE-1222\`\u0020\u0020
+Reviewed: 2026-07-12\u0020\u0020
+Purpose: separate what CREATE SOMETHING can truthfully show now from claims that
+need fresh verification, client approval, or quarantine
+
+## Evidence classes
+
+- **Prototype:** representative fixtures or shadow behavior; no production or
+  customer outcome is implied.
+- **Operational:** a real owned runtime, workflow, check, or receipt has passed.
+- **Customer:** an attributable client delivery or outcome exists.
+- **Economic:** verified time, revenue, cost, risk, or conversion impact exists.
+
+An item may occupy more than one class, but a stronger class must never be
+inferred from a weaker one.
+
+## Inventory
+
+| Candidate | Class | What the evidence supports | What it does not support | Publication state | Owning evidence |
+| --- | --- | --- | --- | --- | --- |
+| Marketplace workflow compiler | Prototype | One versioned Marketplace workflow compiles into 15 content-hashed artifacts; five representative cases cover pass, approval-required, blocked, insufficient-evidence, and unknown-action behavior; two clean outputs are compared byte for byte. | Production review decisions, Webflow writes, customer ROI, reduced review time, or autonomous publishing. | Public-safe with the existing \`Prototype\`, \`Shadow only\`, and \`Writes: None\` labels. | \`packages/workflow-compiler/README.md\`, \`packages/workflow-compiler/scripts/acceptance.mjs\`, \`packages/agency/src/routes/proof/marketplace-workflow/+page.svelte\`, CRE-1191. |
+| First-party scheduler and commercial funnel | Operational candidate | The scheduler owns verified availability, fail-closed booking preparation/commit, receipts, and the \`/book\` handoff. CRE-1222 locally proves privacy-safe lifecycle messages and traffic classification. | A production booking-completion funnel until the scheduler and \`.agency\` bridge are promoted and live-read back; no lead volume or revenue lift. | Repo-owned; publish as operational proof only after coordinated deployment and a controlled non-customer verifier. | \`apps/create-something-scheduler\`, \`packages/agency/src/routes/book/+page.svelte\`, \`packages/agency/scripts/report-commercial-funnel.mjs\`, CRE-1213, CRE-1222. |
+| Abundance nurse staffing delivery | Operational + customer candidate | A client-safe delivery record documents a live concierge shape, production-smoked Staff and Jobs MCPs, NPG-scoped hub checks, read-only job discovery, Dify tool use, and human recruiter boundaries. It explicitly records that Jotform, Mailchimp, and WhatsApp authorization remained incomplete. | Customer ROI, autonomous staffing decisions, fully connected write automation, or a completed commercial outcome. | Existing client-summary artifacts may remain; promotion into a flagship public case requires explicit client-safe publication approval and a fresh smoke/readback. | \`docs/deliveries/abundance/2026-05-14-project-update.md\`, \`packages/agency/src/routes/delivery/abundance\`, \`evals/langfuse/dify/abundance-hub.eval.ts\`. |
+| Kickstand Subtractive Triad audit | Operational + customer | The published paper documents a production codebase audit, 155 scripts reduced to 13 active scripts, 30 TypeScript errors reduced to zero, and a health score change from 6.2 to 9.2. | Evidence that CREATE SOMETHING's current workflow-delegation offer improves a buyer's operational handoff; general claims that every deletion was safe without the underlying audit receipt. | Already public as a paper/product example. New homepage promotion or broader client attribution should receive an evidence and relationship review. | \`packages/io/content/papers/kickstand-triad-audit.md\`, \`packages/agency/src/routes/products/ground/+page.svelte\`. |
+| CREATE SOMETHING development infrastructure | Operational, repo-owned | Agent-legibility, policy-artifact, Canon overlay, codification, and component-depth checks provide inspectable internal operating proof without client attribution. | External customer value, revenue impact, or a domain workflow result. | Safe fallback when customer publication approval is unavailable; lower commercial relevance than a client delivery. | \`docs/CREATE_SOMETHING_SYSTEMS_THESIS.md\`, \`scripts/agent-legibility-check.mjs\`, \`scripts/policy-artifact-check.mjs\`, current check receipts. |
+| Public Atlas canvas | Prototype + product demonstration | A visitor can map owners, systems, handoffs, approval points, stop conditions, and evidence without touching production systems. | A completed pilot, saved production state, or customer outcome. | Public-safe when described as a read-only/prospect mapping surface. | \`packages/agency/src/routes/services/+page.svelte\`, \`packages/agency/src/lib/atlas/public.ts\`, \`packages/agency/test/public-atlas-route.test.ts\`. |
+| Dify Template Marketplace route | Plan / implementation guide | Repo checks, DSL/export expectations, client-safe boundaries, and manual Creator Center gates are documented. | A submitted, approved, or adopted Marketplace template. | Do not present as completed proof until live Dify import/run/export and Creator Center state are verified. | \`packages/agency/src/routes/dify/template-marketplace-proof/+page.svelte\`. |
+| Arc manual-review metrics | Claimed economic outcome, unverified | Marketing artifacts repeat 4.2 hours to 1.1 hours and a 73% reduction. | Any public economic or customer claim without the owning source data, dated measurement method, client approval, and current case artifact. | Quarantined from new public proof. Existing scheduled/generated copies require a separate audit before reuse. | \`packages/agency/content/social/linkedin-arc.md\`, \`packages/agency/scripts/schedule-posts.sql\`; no current owning delivery receipt found in this review. |
+
+## Recommended proof sequence
+
+1. Keep the Marketplace compiler as clearly labeled prototype proof.
+2. After approved coordinated deployment, add the first-party scheduler/funnel
+   as owned operational proof with a real receipt and explicit non-customer test
+   classification.
+3. Seek client-safe approval for Abundance as the first flagship customer case,
+   then rerun the public surface, MCP/API, Dify, and unresolved-connection checks
+   before writing the case.
+4. If Abundance approval is unavailable, use CREATE SOMETHING development
+   infrastructure as the repo-owned operational case and state that it is an
+   internal operating proof, not customer ROI.
+5. Keep Kickstand as supporting verification/subtraction evidence rather than
+   making it carry the current workflow-delegation offer.
+6. Do not use Arc metrics until their source and approval chain are restored.
+
+## Claim contract for a future case
+
+Every case must separate:
+
+- **Before:** a sourced operating condition, not a generalized pain claim.
+- **Boundary:** what could run, what waited, what stopped, and who owned it.
+- **Change:** the actual implemented system or artifact.
+- **Result:** a directly measured operational or customer outcome.
+- **Receipt:** the command, runtime readback, dated artifact, or approved customer
+  source that supports the result.
+- **Recovery:** what remained manual, incomplete, reversible, or approval-gated.
+
+If \`Result\` lacks a receipt, label the item prototype or operational evidence;
+do not write economic or customer outcome language.
+
+## Approval handoff for Abundance
+
+Before using Abundance as the flagship public case, obtain explicit approval for:
+
+- client name and relationship attribution;
+- which system details and screenshots are client-safe;
+- the exact current-status and unresolved-connection language;
+- any quote or economic result; and
+- the publication route and review owner.
+
+After approval, refresh the existing May 2026 evidence. Do not assume an older
+production smoke or connection state is still current.
+
 `
   },
   {
@@ -35483,10 +35779,10 @@ When call scheduled:
 
 ## Calendar Link Setup
 
-**SavvyCal settings for mapping sessions**:
-- Duration: 20 minutes (can extend if needed)
-- Buffer: 15 minutes after
-- Availability: Business hours + limited evenings
+**First-party scheduler settings for mapping sessions**:
+- Duration: 30 or 60 minutes
+- Start times: Hour or half-hour only
+- Availability: Verified CREATE SOMETHING openings
 - Questions:
   - "Which workflow is highest-cost when it fails?"
   - "Which systems must stay in sync?"
@@ -38715,7 +39011,10 @@ Validation:
 Public platform language follows
 [Conviction Without Dependence](https://createsomething.ltd/canon/concepts/conviction-without-dependence):
 
-> Built primarily with OpenAI Codex. Designed to outlast any model.
+> Built with OpenAI Codex. Designed to remain yours.
+
+On public decision routes, express this conviction in plain customer ownership
+language before listing the technical artifacts that make portability real.
 
 Apply the contract in this order:
 
@@ -38740,14 +39039,17 @@ surface test guards the required conviction and ownership language.
 
 The current operating boundary is:
 
-> Substrate is the owned database and operator layer. OpenAI, Dify, and
-> Cloudflare are the active external stack.
+Substrate is the owned database and operator layer.
+
+> CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI
+> provides intelligence.
 
 - **Substrate** owns source records, workflow state, human review, decisions,
   receipts, and API/MCP access.
-- **OpenAI** is the primary reasoning and agent environment.
-- **Dify** is the visible agent application surface.
-- **Cloudflare** is the runtime.
+- **CREATE SOMETHING** owns the API/MCP contracts, state, orchestration, policy,
+  operator surfaces, evals, and receipts.
+- **Cloudflare** provides network, security, compute, and storage infrastructure.
+- **OpenAI** provides model intelligence and the agent loop substrate.
 
 Historical client integrations may remain as delivery evidence or compatibility
 code, but they must not be presented as the current CREATE SOMETHING operating
@@ -38778,6 +39080,7 @@ The managed portfolio covers the high-intent public funnel:
 | Workflow tool stack | \`/partners\` | \`/cloudflare\` |
 | Dify | \`/dify\` | \`/dify/mcp-control-plane\`, \`/dify/agent-eval-gates\`, \`/dify/ship-dify-app-with-mcp-tools\`, \`/dify/template-marketplace-proof\` |
 | Products | \`/products\` | - |
+| Field Reports | \`/field-reports\` | \`/field-reports/template-review\` |
 | Business use case | \`/use-cases/business\` | - |
 | Enterprise use case | \`/use-cases/enterprise\` | - |
 
@@ -38818,11 +39121,49 @@ Validation:
 - \`pnpm seo:check\` includes the marketing portfolio check so sitemap, schema,
   copy, and route strength drift fail together.
 
-### Readable Control
+### Performance Lab And Readable Control
 
-The public brand system is **Readable Control**.
+The public identity is **Performance Lab**: intelligent workflows should feel
+engineered for pressure, trained in the lab, tested under load, and proven in the
+field.
 
-Use:
+**Readable Control** is the calm proof substrate inside Performance Lab. It keeps
+maps, policy, state, owners, receipts, and recovery legible when campaign surfaces
+introduce human motion, material study, kinetic composition, and decisive type.
+
+Use the hybrid boundary:
+
+- Homepage, services, editorial, case-study, and social surfaces may use
+  original human motion, material studies, technical annotation, and temporal
+  composition.
+- Products, Atlas, proof, booking, and operator surfaces keep workflow evidence
+  primary and use the same energy through hierarchy, state, measurement, and
+  semantic motion.
+
+Marketing development starts from the source-controlled pattern baseline in
+[\`docs/PERFORMANCE_LAB_FOUNDATION_AUDIT.md\`](../../docs/PERFORMANCE_LAB_FOUNDATION_AUDIT.md),
+not from a blank route or a copied template. The default composition grammar is:
+
+1. a campaign opening built around an original field study;
+2. one thesis paired with three inspectable conditions;
+3. a sequential field-test or operating-proof chapter;
+4. one high-contrast principle break;
+5. an evidence index with real content and explicit empty states; and
+6. a conversion handoff that preserves context, owner, authority, and proof.
+
+Those six patterns are implemented by Canon as \`PerformanceCampaignOpening\`,
+\`PerformanceThesisConditions\`, \`PerformanceFieldSequence\`,
+\`PerformanceContrastChapter\`, \`PerformanceEvidenceIndex\`, and
+\`PerformanceConversionHandoff\`. The homepage, services, Dify control-plane,
+products, Atlas, and booking routes are the \`.agency\` reference set. Their
+copy, media, canvases, and forms stay local; shared composition and responsive
+behavior do not.
+
+Fleet and Evermind are private pattern references only. Do not copy their marks,
+copy, imagery, fonts, class names, Webflow runtime, or interaction bundles. Build
+the validated pattern in Canon and keep route content property-owned.
+
+Readable Control uses:
 
 - white or neutral document surfaces
 - near-black type
@@ -38960,7 +39301,9 @@ Implementation surface:
   not a detached illustration. Its visible language should follow the
   Ona/UNA communication foundation: one clear operating claim, Signal /
   Decision / Proof vocabulary, and implementation details hidden until they are
-  useful evidence.
+  useful evidence. On the homepage, keep this live operating surface in the
+  \`PerformanceContrastChapter\` full-width artifact placement so the initial fit
+  remains legible; compact proof objects may continue to use the inline default.
 - \`src/lib/atlas/public-substrate-canvas.ts\` owns the public-safe operating
   projection for that live canvas: signal queue, Substrate graph, agent queue,
   decision gate, stop boundary, client delivery lane, receipt graph, and the
@@ -39167,6 +39510,37 @@ pnpm --filter=agency exec tsc --noEmit
 # Deploy
 pnpm --filter=agency build && wrangler pages deploy packages/agency/.svelte-kit/cloudflare --project-name=create-something-agency
 \`\`\`
+
+## Commercial clarity evidence
+
+Do not use CTA clicks as a proxy for completed bookings. The commercial funnel
+report classifies sessions as \`external\`, \`internal\`, \`preview\`, \`automated\`, or
+\`test\`, then reports the owned booking stages separately:
+
+\`\`\`bash
+# Inspect the read-only SQL before running it
+pnpm --filter @create-something/agency analytics:commercial-funnel -- --days 30
+
+# Execute the same SELECT-only report against remote D1
+CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a \\
+  pnpm --filter @create-something/agency analytics:commercial-funnel -- --days 30 --remote
+\`\`\`
+
+Use \`?traffic_class=internal\` or \`?traffic_class=test\` at the start of a
+controlled production session. The server derives preview and automated traffic
+from the host and user agent and stores the classification in unified event
+metadata. The first-party scheduler returns only allowlisted lifecycle actions
+and privacy-safe opaque lineage to the \`.agency\` parent; names and email
+addresses remain inside the scheduler booking boundary.
+
+Capture a deterministic snapshot of the five public decision routes with:
+
+\`\`\`bash
+pnpm --filter @create-something/agency research:clarity-capture
+\`\`\`
+
+The capture hashes visible copy, fails closed when a route is unavailable, and
+is useful for before/after review. It is not evidence of human comprehension.
 
 ## Auth0 And Infisical
 
@@ -40597,7 +40971,7 @@ This is where philosophy meets the market. Patterns validated in \`.space\` and 
 | Dependency | Why It Matters |
 |------------|----------------|
 | \`@create-something/canon\` | Shared UI for professional presentation |
-| View Transitions API | Platform-native animations (GSAP removed) |
+| View Transitions API + Canon motion runtime | Platform-native navigation plus scoped GSAP orchestration for coordinated Performance Lab sequences |
 | \`marked\` + \`highlight.js\` | Case study content rendering |
 | Cloudflare Pages | Edge deployment for global client access |
 | Validated patterns | Only deploy what's proven in .io/.space |

@@ -29,7 +29,7 @@ This package is the end-user conversation surface, not the control plane and not
 
 ```text
 src/
-├── routes/                   → public landing, apply entry, claim continuation, candidate chat/details, internal Dify agent shell, internal handoff/settings, control-plane bridge shells, and optional shared session/entitlement-aware layout
+├── routes/                   → public landing, apply entry, claim continuation, candidate chat/details, retired legacy agent redirects, internal handoff/settings, control-plane bridge shells, and optional shared session/entitlement-aware layout
 ├── routes/api/intake-verification/ → self-serve verification request/verify endpoints
 ├── routes/api/intake-claims/ → trusted inbound claim creation for sourced applicants
 ├── routes/api/threads/       → server mutation and attachment surface for the hosted prototype

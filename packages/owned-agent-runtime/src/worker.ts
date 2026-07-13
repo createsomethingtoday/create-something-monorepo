@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { getAgentDefinition, listAgentDefinitions } from './definitions.js';
-import type { AgentExecutor, AgentRunReceipt, AgentStore } from './types.js';
+import type { AgentAdmission, AgentExecutor, AgentRunReceipt, AgentStore } from './types.js';
 
 const messageInput = z.object({
   query: z.string().trim().min(1).max(20_000),
@@ -11,6 +11,7 @@ const messageInput = z.object({
 type WorkerDependencies = {
   store: AgentStore;
   executor: AgentExecutor;
+  admission?: AgentAdmission;
   id?: () => string;
   now?: () => Date;
 };
@@ -21,8 +22,8 @@ const corsHeaders = {
   'access-control-allow-headers': 'content-type'
 };
 
-function json(body: unknown, status = 200): Response {
-  return Response.json(body, { status, headers: corsHeaders });
+function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
+  return Response.json(body, { status, headers: { ...corsHeaders, ...headers } });
 }
 
 function sse(event: string, data: unknown): Uint8Array {
@@ -65,21 +66,38 @@ export function createOwnedAgentWorker(dependencies: WorkerDependencies) {
       if (!parsed.success)
         return json({ error: 'invalid_request', issues: parsed.error.issues }, 400);
 
-      const existing = parsed.data.conversation_id
-        ? await dependencies.store.getConversation(parsed.data.conversation_id)
-        : null;
-      if (existing && existing.agentId !== definition.id) {
-        return json({ error: 'conversation_agent_mismatch' }, 409);
+      if (dependencies.admission) {
+        try {
+          const decision = await dependencies.admission.check({ request, agentId: definition.id });
+          if (decision === 'rate_limited') {
+            return json({ error: 'rate_limited' }, 429, { 'retry-after': '60' });
+          }
+        } catch {
+          return json({ error: 'admission_unavailable' }, 503);
+        }
       }
 
-      const conversationId = existing?.id ?? parsed.data.conversation_id ?? id();
+      const conversationId = parsed.data.conversation_id ?? id();
       const runId = id();
+      let claim;
+      try {
+        claim = await dependencies.store.claimConversation({
+          id: conversationId,
+          agentId: definition.id,
+          runId
+        });
+      } catch {
+        return json({ error: 'state_unavailable' }, 503);
+      }
+      if (claim.status === 'agent_mismatch') {
+        return json({ error: 'conversation_agent_mismatch' }, 409);
+      }
+      if (claim.status === 'busy') {
+        return json({ error: 'conversation_busy' }, 409, { 'retry-after': '1' });
+      }
+
+      const existing = claim.conversation;
       const startedAt = now().toISOString();
-      await dependencies.store.saveConversation({
-        id: conversationId,
-        agentId: definition.id,
-        previousResponseId: existing?.previousResponseId
-      });
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
           controller.enqueue(
@@ -90,6 +108,7 @@ export function createOwnedAgentWorker(dependencies: WorkerDependencies) {
             })
           );
           try {
+            let completed = false;
             for await (const event of dependencies.executor.run({
               definition,
               query: parsed.data.query,
@@ -101,11 +120,6 @@ export function createOwnedAgentWorker(dependencies: WorkerDependencies) {
                 continue;
               }
 
-              await dependencies.store.saveConversation({
-                id: conversationId,
-                agentId: definition.id,
-                previousResponseId: event.providerResponseId
-              });
               const receipt: AgentRunReceipt = {
                 id: runId,
                 conversationId,
@@ -118,7 +132,15 @@ export function createOwnedAgentWorker(dependencies: WorkerDependencies) {
                 startedAt,
                 completedAt: now().toISOString()
               };
-              await dependencies.store.saveReceipt(receipt);
+              await dependencies.store.completeRun({
+                conversation: {
+                  id: conversationId,
+                  agentId: definition.id,
+                  previousResponseId: event.providerResponseId
+                },
+                runId,
+                receipt
+              });
               controller.enqueue(
                 sse('message.completed', {
                   run_id: runId,
@@ -127,9 +149,13 @@ export function createOwnedAgentWorker(dependencies: WorkerDependencies) {
                   receipt
                 })
               );
+              completed = true;
+              break;
             }
+            if (!completed) throw new Error('Agent executor ended without a completed event.');
           } catch (error) {
-            const message = error instanceof Error ? error.message : 'Agent execution failed.';
+            void error;
+            const publicError = 'agent_execution_failed';
             const receipt: AgentRunReceipt = {
               id: runId,
               conversationId,
@@ -141,11 +167,26 @@ export function createOwnedAgentWorker(dependencies: WorkerDependencies) {
               connectedServers: [],
               startedAt,
               completedAt: now().toISOString(),
-              error: message
+              error: publicError
             };
-            await dependencies.store.saveReceipt(receipt);
+            try {
+              await dependencies.store.failRun({ conversationId, runId, receipt });
+            } catch {
+              controller.enqueue(
+                sse('run.failed', {
+                  run_id: runId,
+                  conversation_id: conversationId,
+                  error: 'state_unavailable'
+                })
+              );
+              return;
+            }
             controller.enqueue(
-              sse('run.failed', { run_id: runId, conversation_id: conversationId, error: message })
+              sse('run.failed', {
+                run_id: runId,
+                conversation_id: conversationId,
+                error: publicError
+              })
             );
           } finally {
             controller.close();

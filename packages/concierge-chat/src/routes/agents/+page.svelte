@@ -23,8 +23,6 @@
     ])
   ]);
 
-  $: availableCount = data.agents.filter((agent) => agent.credentialState === 'available').length;
-  $: missingCount = data.agents.length - availableCount;
 </script>
 
 <svelte:head>
@@ -138,47 +136,21 @@
   </div>
 </section>
 
-{#if data.accessAllowed}
-  <section class="feature-blog-04 container-full abundance-staff-runtime">
-    <div class="container-fluid">
-      <div class="feature-blog-content-04">
-        <div class="abundance-section-head">
-          <h2 class="heading-01">Protected operator chat</h2>
-          <p class="p1-regular">
-            {availableCount} agents ready. {missingCount} credential checks remain.
-          </p>
-        </div>
-        <div class="abundance-runtime-list">
-          {#each data.agents as agent}
-            <a class="abundance-runtime-row" href={`/agents/${agent.id}`}>
-              <div>
-                <h3 class="heading-05">{agent.label}</h3>
-                <p class="p2-regular">{agent.operatorSummary}</p>
-              </div>
-              <span>{agent.credentialState === 'available' ? 'Key ready' : 'Needs key'}</span>
-            </a>
-          {/each}
-        </div>
+<section class="feature-blog-04 container-full abundance-staff-runtime">
+  <div class="container-fluid">
+    <div class="feature-blog-content-04">
+      <div class="abundance-section-head">
+        <h2 class="heading-01">Protected where staffing work needs protection.</h2>
+        <p class="p1-regular">Public pages explain the service. Documents, keys, and staffing actions stay behind staff access.</p>
+      </div>
+      <div class="abundance-rule-strip" aria-label="Trust rules">
+        {#each trustProof.slice(0, 4) as item}
+          <span>{item}</span>
+        {/each}
       </div>
     </div>
-  </section>
-{:else}
-  <section class="feature-blog-04 container-full abundance-staff-runtime">
-    <div class="container-fluid">
-      <div class="feature-blog-content-04">
-        <div class="abundance-section-head">
-          <h2 class="heading-01">Protected where staffing work needs protection.</h2>
-          <p class="p1-regular">Public pages explain the service. Documents, keys, and staffing actions stay behind staff access.</p>
-        </div>
-        <div class="abundance-rule-strip" aria-label="Trust rules">
-          {#each trustProof.slice(0, 4) as item}
-            <span>{item}</span>
-          {/each}
-        </div>
-      </div>
-    </div>
-  </section>
-{/if}
+  </div>
+</section>
 
 <style>
   .abundance-agent-thumb {
@@ -331,8 +303,7 @@
     line-height: 1.45;
   }
 
-  .abundance-rule-strip span,
-  .abundance-runtime-row span {
+  .abundance-rule-strip span {
     color: var(--secondary);
     font-size: 12px;
     line-height: 1;
@@ -383,30 +354,11 @@
     background: var(--secondary-12);
   }
 
-  .abundance-runtime-list {
-    display: grid;
-    gap: 14px;
-  }
-
-  .abundance-runtime-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 18px;
-    align-items: center;
-    padding: 20px;
-    border: 1px solid var(--black-10);
-    border-radius: 16px;
-    color: var(--black);
-    text-decoration: none;
-    background: var(--background);
-  }
-
   @media (max-width: 991px) {
     .hero-content-03,
     .support-head-02,
     .abundance-agent-roster-head,
-    .abundance-agent-grid,
-    .abundance-runtime-row {
+    .abundance-agent-grid {
       grid-template-columns: 1fr;
     }
 

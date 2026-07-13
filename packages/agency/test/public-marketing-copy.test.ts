@@ -209,7 +209,7 @@ test('commercial decision routes use one primary and one conversational action',
   assert.doesNotMatch(routes, /Start Workflow Map|Talk Through a Workflow|Map the workflow first|Map your workflow/);
 });
 
-test('public stack positioning names Substrate and the active OpenAI, Dify, Cloudflare stack', () => {
+test('public stack positioning names the owned Cloudflare and OpenAI boundary', () => {
   const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
   const partners = readFileSync(
@@ -223,12 +223,17 @@ test('public stack positioning names Substrate and the active OpenAI, Dify, Clou
   const dify = readFileSync(new URL('../src/routes/dify/+page.svelte', import.meta.url), 'utf8');
 
   assert.match(stack, /Substrate is the owned database and operator layer/i);
-  assert.match(partners, /OpenAI, Dify, and Cloudflare are the active external stack/i);
+  assert.match(partners, /CREATE SOMETHING owns the system/i);
+  assert.match(partners, /Cloudflare provides infrastructure/i);
+  assert.match(partners, /OpenAI provides intelligence/i);
+  assert.doesNotMatch(stack, /Dify .{0,80}(?:active|current|runtime)/i);
+  assert.doesNotMatch(partners, /Dify .{0,80}(?:active|current|runtime)/i);
   assert.doesNotMatch(stack, /\bNotion\b/);
   assert.doesNotMatch(partners, /\bNotion\b/);
   assert.doesNotMatch(cloudflare, /\bNotion\b/);
   assert.doesNotMatch(dify, /\bNotion\b/);
   assert.doesNotMatch(layout, /href:\s*['"]\/notion['"]/);
+  assert.doesNotMatch(layout, /href:\s*['"]\/dify(?:\/|['"])/);
 });
 
 test('the active product catalog leads with Substrate and keeps Notion only as client history', () => {
@@ -267,5 +272,7 @@ test('agency README documents the public copy contract', () => {
   assert.match(source, /plain customer ownership\s+language/);
   assert.match(source, /### Current System Stack Contract/);
   assert.match(source, /Substrate is the owned database and operator layer/);
-  assert.match(source, /OpenAI, Dify, and\s+> Cloudflare are the active external stack/);
+  assert.match(source, /CREATE SOMETHING owns the system/);
+  assert.match(source, /Cloudflare provides infrastructure/);
+  assert.match(source, /OpenAI[\s>]+provides intelligence/);
 });

@@ -233,10 +233,10 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Teams choosing the right tool path for one controlled workflow.',
     funnelStage: 'understand',
     intent:
-      'Explain Substrate as the owned operating layer and OpenAI, Dify, and Cloudflare as the active external stack.',
+      'Explain CREATE SOMETHING as the owned system, Cloudflare as infrastructure, and OpenAI as intelligence.',
     primaryAction: 'Map the workflow',
-    requiredTerms: ['Substrate', 'OpenAI', 'Dify', 'Cloudflare', 'workflow', 'evidence'],
-    requiredLinks: ['/products', '/dify', '/cloudflare', '/stack'],
+    requiredTerms: ['Substrate', 'OpenAI', 'Cloudflare', 'workflow', 'evidence'],
+    requiredLinks: ['/products', '/cloudflare', '/stack'],
     schema: 'faq',
     search: {
       changefreq: 'monthly',

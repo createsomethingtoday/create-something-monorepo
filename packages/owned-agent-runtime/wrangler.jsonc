@@ -13,6 +13,18 @@
       "migrations_dir": "migrations"
     }
   ],
+  "ratelimits": [
+    {
+      "name": "PUBLIC_AGENT_CLIENT_RATE_LIMITER",
+      "namespace_id": "123301",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "PUBLIC_AGENT_BUDGET_RATE_LIMITER",
+      "namespace_id": "123302",
+      "simple": { "limit": 120, "period": 60 }
+    }
+  ],
   "services": [
     { "binding": "CREATE_SOMETHING_MCP", "service": "create-something-mcp" },
     { "binding": "THREE_TIER_FRAMEWORK_MCP", "service": "three-tier-framework-mcp" },

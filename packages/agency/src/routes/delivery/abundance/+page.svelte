@@ -1,7 +1,6 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
   import type { PageData } from './$types';
-  import { abundanceJobAgentPrompts } from '$lib/delivery/abundance';
   import DeliveryOutcomeStrip, {
     type DeliveryOutcomeItem
   } from '$lib/components/DeliveryOutcomeStrip.svelte';
@@ -88,31 +87,6 @@
     error?: string;
   };
 
-  type JobAgentMessage = {
-    role: 'agent' | 'client';
-    body: string;
-    tools?: string[];
-  };
-
-  type JobAgentResponse = {
-    answer: string;
-    conversationId?: string;
-    tools?: string[];
-    error?: string;
-  };
-
-  let jobAgentMessages: JobAgentMessage[] = [
-    {
-      role: 'agent',
-      body: 'Ask for public nursing and healthcare roles. This panel can read public jobs; funnel writes stay outside the delivery page.'
-    }
-  ];
-
-  let jobAgentQuestion = '';
-  let jobAgentConversationId = '';
-  let isAskingJobAgent = false;
-  let jobAgentError = '';
-
   let deliveryMessages: DeliveryAgentMessage[] = context.agent.initialMessages.map((message) => ({
     role: 'agent' as const,
     body: message.body,
@@ -122,54 +96,6 @@
   let deliveryQuestion = '';
   let isAskingDeliveryAgent = false;
   let deliveryAgentError = '';
-
-  async function askJobAgent(prompt: string | undefined = undefined) {
-    const message = (prompt ?? jobAgentQuestion).trim();
-
-    if (!message || isAskingJobAgent) {
-      return;
-    }
-
-    jobAgentError = '';
-    jobAgentMessages = [...jobAgentMessages, { role: 'client', body: message }];
-    jobAgentQuestion = '';
-    isAskingJobAgent = true;
-
-    try {
-      const response = await fetch('/api/delivery/abundance/job-agent', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({ message, conversationId: jobAgentConversationId })
-      });
-
-      const payload = (await response.json()) as JobAgentResponse;
-
-      if (!response.ok) {
-        throw new Error(
-          payload?.error ?? 'The Abundance Jobs Agent could not answer that question.'
-        );
-      }
-
-      jobAgentConversationId = payload.conversationId ?? jobAgentConversationId;
-      jobAgentMessages = [
-        ...jobAgentMessages,
-        {
-          role: 'agent',
-          body: payload.answer,
-          tools: payload.tools ?? []
-        }
-      ];
-    } catch (error) {
-      jobAgentError =
-        error instanceof Error
-          ? error.message
-          : 'The Abundance Jobs Agent could not answer that question.';
-    } finally {
-      isAskingJobAgent = false;
-    }
-  }
 
   async function askDeliveryAgent(prompt: string | undefined = undefined) {
     const message = (prompt ?? deliveryQuestion).trim();
@@ -248,7 +174,7 @@
         >
           Open live intake
         </a>
-        <a class="delivery-action" href="#job-agent">Review job agent</a>
+        <a class="delivery-action" href="#delivery-agent">Review delivery notes</a>
       </div>
     </div>
 
@@ -311,74 +237,7 @@
   </div>
 </section>
 
-<section class="delivery-section" id="job-agent">
-  <div class="shell-inner-pad">
-    <div class="job-agent product-surface">
-      <div class="job-agent__intro">
-        <span class="product-kicker">Public role discovery</span>
-        <h2>Search jobs without opening the funnel.</h2>
-        <p>
-          This panel calls the production-smoked Abundance Hub agent from the server. It can answer
-          against public nursing roles while credentials and funnel writes stay out of the browser.
-        </p>
-      </div>
-
-      <div class="job-agent__guardrails" aria-label="Job agent guardrails">
-        <span>Read-only job discovery</span>
-        <span>Server-side job search path</span>
-        <span>No exposed keys</span>
-      </div>
-
-      <div class="suggested-prompts" aria-label="Suggested job agent prompts">
-        {#each abundanceJobAgentPrompts as prompt}
-          <button type="button" on:click={() => askJobAgent(prompt)} disabled={isAskingJobAgent}>
-            {prompt}
-          </button>
-        {/each}
-      </div>
-
-      <div class="job-chat-log" aria-live="polite">
-        {#each jobAgentMessages as message}
-          <article class:message-client={message.role === 'client'} class="chat-message">
-            <span>{message.role === 'client' ? 'Client prompt' : 'Abundance Jobs Agent'}</span>
-            {#each message.body.split('\n\n') as paragraph}
-              <p>{paragraph}</p>
-            {/each}
-
-            {#if message.tools?.length}
-              <div class="agent-meta">
-                <strong>Tools used</strong>
-                <span>{message.tools.join(', ')}</span>
-              </div>
-            {/if}
-          </article>
-        {/each}
-      </div>
-
-      <form class="delivery-agent__form" on:submit|preventDefault={() => askJobAgent()}>
-        <label for="job-agent-question">Search public jobs</label>
-        <div>
-          <textarea
-            id="job-agent-question"
-            bind:value={jobAgentQuestion}
-            rows="3"
-            maxlength="700"
-            placeholder="Try: Search for ICU travel nurse roles in Texas."
-          ></textarea>
-          <button type="submit" disabled={isAskingJobAgent || !jobAgentQuestion.trim()}>
-            {isAskingJobAgent ? 'Searching' : 'Search'}
-          </button>
-        </div>
-      </form>
-
-      {#if jobAgentError}
-        <p class="delivery-agent__error">{jobAgentError}</p>
-      {/if}
-    </div>
-  </div>
-</section>
-
-<section class="delivery-section">
+<section class="delivery-section" id="delivery-agent">
   <div class="shell-inner-pad">
     <div class="delivery-agent product-surface">
       <div class="delivery-agent__intro">

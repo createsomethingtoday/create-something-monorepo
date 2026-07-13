@@ -6,21 +6,21 @@ This package is the end-user conversation product. It is distinct from:
 
 - `.agency` control-plane UX
 - MCP App `ui://...` resources inside server packages
-- raw Dify web-app clients or browser-side Dify API calls
+- raw model-provider clients or browser-side model API calls
 
 ## Operator Chat Direction
 
-Use this package for the comprehensive operator chat shell around Dify-backed agents.
+Use this package for the comprehensive operator chat shell around CREATE SOMETHING-owned agent contracts.
 
 The internal operator UI can still use Ona's clear-communication design discipline: light operational surfaces, compact navigation, crisp borders, readable hierarchy, direct action language, and proof beside each claim. The public staffing website and client-facing agent roster use the Abundance brand system instead of Ona naming. CREATE SOMETHING still owns the product identity, governance copy, evidence model, and approval surface.
 
 The app should render three stable rails for staff/operator views:
 
 1. **Context rail**: client, lane, agent, credential state, blockers, and current operator state.
-2. **Chat rail**: Dify-backed conversation, inline widgets, and composer state.
+2. **Chat rail**: owned conversation state, inline widgets, and composer state.
 3. **Proof and actions rail**: artifacts, tool calls, approvals, handoff packets, eval evidence, and Linear references.
 
-Dify remains runtime plumbing. The browser must never receive a Dify API key or call the Dify Service API directly. Server orchestration resolves Dify app configuration, calls `chat-messages`, stores conversation IDs, maps stream/tool events into chat artifacts, and returns bounded widget/state payloads to the Svelte client.
+CREATE SOMETHING owns the runtime contract, conversation state, policy, and receipts. Cloudflare provides infrastructure and OpenAI provides intelligence. The browser never receives a provider key or calls a model provider directly; server orchestration returns only bounded widget and workflow state.
 
 ## Current Scope
 
@@ -38,7 +38,7 @@ Dify remains runtime plumbing. The browser must never receive a Dify API key or 
 - local `/control-plane/*` bridge routes that redirect Abundance control-plane actions into real `.agency` dashboard, MCP access, and security surfaces
 - Abundance public staffing website routes for nurses, jobs, facilities, branded agents, and the style guide
 - Abundance operator shell contract in `src/lib/operator/clear-shell.ts`, grounded in Ona's internal clarity pattern but presented with Abundance client-facing language
-- public `/agents` route for Abundance-branded agent roles plus staff-only `/agents/[agentId]` protected Dify operator chat, backed by server-side Dify `chat-messages` calls and bounded proof events
+- public `/agents` route for Abundance-branded agent roles; legacy `/agents/[agentId]` operator-chat URLs redirect to the public agent system while the owned runtime cutover is promoted separately
 - root layout now reads the optional shared `.agency` browser session and live `.agency` entitlement snapshot so the Abundance shell can show whether governed staffing access is active, blocked, or unavailable
 - governed recruiter, staffing, facility-response, and onboarding actions remain read-only until `.agency` reports an active entitlement decision for the current browser session
 - anonymous `/chat` and `/settings` access now routes back into `/apply` so the candidate path stays conversation-first
@@ -61,7 +61,6 @@ Dify remains runtime plumbing. The browser must never receive a Dify API key or 
 - set `ABUNDANCE_GEO_MAPBOX_ACCESS_TOKEN` to enable server-side external preferred-location recovery when the internal market catalog cannot normalize a nurse's location message confidently; this path stores normalized results in-thread, so it is intended for a Mapbox token allowed for permanent geocoding
 - the canonical Infisical path for that token is `/agency/abundance/geo`; once the secret exists there, run `pnpm --filter @create-something/concierge-chat geo:secret:sync` to promote it into the Pages project
 - set `ABUNDANCE_INTAKE_EMAIL_FROM` if the verification sender should differ from the runtime default
-- set Dify Service API keys as Cloudflare Pages secrets to enable `/agents` production calls. Use the checked-in Dify inventory names exactly, for example `DIFY_TEMPLATE_REVIEW_HUB_API_KEY`, `DIFY_PABLO_HUB_API_KEY`, `DIFY_ERIC_HUB_API_KEY`, `DIFY_NATALIA_HUB_API_KEY`, `DIFY_MARIANA_HUB_API_KEY`, `DIFY_VICKI_HUB_API_KEY`, and the other `DIFY_*_API_KEY` bindings listed in `wrangler.toml`
 - public write paths now enforce server-side rate limits for thread creation, candidate messaging, verification request/verify, uploads, and workflow actions; blocked requests return `429` with `Retry-After`
 - local non-production staff sessions can use the Settings `Preview Entitlement` controls to mint a cookie-scoped `.agency` access override for recruiter, staffing, and onboarding walkthroughs without a live `.agency` session
 - production mode disables the Settings preview override route and boots nurse sessions with no seeded demo threads

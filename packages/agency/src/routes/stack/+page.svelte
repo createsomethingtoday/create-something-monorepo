@@ -93,7 +93,7 @@
       eyebrow: 'Surface',
       icon: 'document',
       title: 'Operator brief',
-      detail: 'The visible state in Substrate, Dify, or a client-owned application.'
+      detail: 'The visible state in Substrate or a client-owned application.'
     }
   ];
 
@@ -157,14 +157,6 @@
       href: '/cloudflare'
     },
     {
-      eyebrow: 'Agent surface',
-      icon: 'document',
-      title: 'Dify',
-      detail:
-        'Visible agent surfaces, repeatable server cards, and operator-facing automation when the workflow needs packaging with approval states attached.',
-      href: '/dify'
-    },
-    {
       eyebrow: 'Reasoning',
       icon: 'info',
       title: 'OpenAI',
@@ -201,7 +193,7 @@
 <SEO
   title="What You Keep | CREATE SOMETHING .agency"
   description="CREATE SOMETHING separates what your team owns, what vendors provide, and what the workflow needs before delegated work becomes production work."
-  keywords="delegated work control, workflow control layer, Substrate database, transparent AI stack, MCP stack, vendor boundaries, Cloudflare, Dify, OpenAI"
+  keywords="delegated work control, workflow control layer, Substrate database, transparent AI stack, MCP stack, vendor boundaries, Cloudflare, OpenAI"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
@@ -291,15 +283,15 @@
 
 <PerformancePageSection
   variant="white"
-  eyebrow="Owned system and active stack"
-  title="Substrate owns the system. Three external platforms earn one role each."
-  description="Substrate is the owned database and operator layer. OpenAI provides the primary agent environment, Dify provides visible agent applications, and Cloudflare provides the runtime. Their contracts remain inspectable and replaceable."
+  eyebrow="Owned system and primary runtime"
+  title="CREATE SOMETHING owns the system. Two external platforms earn one role each."
+  description="CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence. Substrate is the owned database and operator layer; it keeps workflow state, policy, and receipts under CREATE SOMETHING control."
 >
   {#snippet after()}
     <PerformanceCardGrid
       items={stackRoles}
-      columns={4}
-      ariaLabel="Substrate and the active OpenAI, Dify, Cloudflare stack"
+      columns={3}
+      ariaLabel="Owned Substrate with Cloudflare infrastructure and OpenAI intelligence"
     />
   {/snippet}
 </PerformancePageSection>

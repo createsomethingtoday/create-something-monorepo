@@ -2,7 +2,7 @@
   "name": "@create-something/ona-agents",
   "version": "0.1.0",
   "private": true,
-  "description": "Standalone Performance Lab operator chat frontend for CREATE SOMETHING Dify agents.",
+  "description": "Retirement surface for the legacy standalone operator chat frontend.",
   "createSomething": {
     "agentLegibilityContract": true,
     "tier": "judgment",
@@ -10,8 +10,7 @@
     "entrypoints": [
       "src/routes/agents/+page.svelte",
       "src/routes/agents/[agentId]/+page.svelte",
-      "src/lib/server/auth/identity-access.ts",
-      "src/lib/server/dify/client.ts"
+      "src/lib/server/auth/identity-access.ts"
     ],
     "boot": "pnpm dev",
     "smoke": "pnpm check && pnpm test"

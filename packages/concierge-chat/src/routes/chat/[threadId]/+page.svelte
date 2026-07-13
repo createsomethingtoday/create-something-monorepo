@@ -857,9 +857,9 @@
 
 		{#if showInternalOperatorUi}
 			<section class="glass panel">
-				<div class="eyebrow">Dify Boundary</div>
+				<div class="eyebrow">Agent runtime boundary</div>
 				<ul class="rule-list">
-					{#each data.difyRuntimeBoundary.operator as rule}
+					{#each data.agentRuntimeBoundary.operator as rule}
 						<li>{rule}</li>
 					{/each}
 				</ul>

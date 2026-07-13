@@ -44,8 +44,6 @@ declare global {
 				WHATSAPP_APP_SECRET?: string;
 				WHATSAPP_ACCESS_TOKEN?: string;
 				WHATSAPP_PHONE_NUMBER_ID?: string;
-				DIFY_ABUNDANCE_HUB_API_KEY?: string;
-				DIFY_ABUNDANCE_HUB_BASE_URL?: string;
 				ABUNDANCE_STAFF_ONBOARDING_TOKEN?: string;
 				// Identity Worker (LMS provisioning)
 				IDENTITY_WORKER_URL?: string;

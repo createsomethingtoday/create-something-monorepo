@@ -1,8 +1,15 @@
 import { OpenAIAgentExecutor } from './openai.js';
+import { CloudflareAgentAdmission } from './admission.js';
 import { D1AgentStore } from './store.js';
 import { createOwnedAgentWorker } from './worker.js';
 
-export type { AgentExecutor, AgentStore } from './types.js';
+export type {
+  AgentAdmission,
+  AgentConversation,
+  AgentExecutor,
+  AgentRunReceipt,
+  AgentStore
+} from './types.js';
 export { createOwnedAgentWorker } from './worker.js';
 
 export type Env = {
@@ -11,6 +18,8 @@ export type Env = {
   CREATE_SOMETHING_MCP: Fetcher;
   THREE_TIER_FRAMEWORK_MCP: Fetcher;
   PLAYBOOK_MCP: Fetcher;
+  PUBLIC_AGENT_CLIENT_RATE_LIMITER: RateLimit;
+  PUBLIC_AGENT_BUDGET_RATE_LIMITER: RateLimit;
 };
 
 function serviceFetch(binding: Fetcher): typeof fetch {
@@ -28,7 +37,11 @@ export default {
         'create-something': serviceFetch(env.CREATE_SOMETHING_MCP),
         'three-tier-framework': serviceFetch(env.THREE_TIER_FRAMEWORK_MCP),
         playbook: serviceFetch(env.PLAYBOOK_MCP)
-      })
+      }),
+      admission: new CloudflareAgentAdmission(
+        env.PUBLIC_AGENT_CLIENT_RATE_LIMITER,
+        env.PUBLIC_AGENT_BUDGET_RATE_LIMITER
+      )
     }).fetch(request);
   }
 };

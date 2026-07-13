@@ -28,7 +28,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 	runtime: {
 		label: 'Abundance Delivery Runtime',
 		status: 'ok',
-		environment: 'Concierge app + Cloudflare + Dify + MCPs',
+		environment: 'Concierge app + Cloudflare + OpenAI + MCPs',
 		lastChecked: 'Production smoke pass',
 		checks: [
 			{
@@ -39,7 +39,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			{
 				label: 'Staff and Jobs MCPs',
 				status: 'ok',
-				detail: 'Staff headcount, Jobs public listing, and Dify jobs-tool usage passed production smoke checks.'
+				detail: 'Staff headcount and Jobs public-listing paths passed production smoke checks.'
 			},
 			{
 				label: 'NPG scoped hub',
@@ -68,8 +68,8 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			title: 'Staff, Jobs, and NPG Hub',
 			status: 'Production-smoked',
 			description:
-				'Staff MCP, Jobs MCP, the NPG scoped hub, and Dify Abundance Hub have passed production smoke checks. The public delivery page keeps job discovery read-only while credentials, funnel writes, and private traces stay outside the browser.',
-			evidence: ['Staff MCP', 'Jobs MCP', 'NPG scoped hub', 'Langfuse eval suite'],
+				'Staff MCP, Jobs MCP, and the NPG scoped hub are the serving automation paths. The public delivery page keeps job discovery read-only while credentials, funnel writes, and private traces stay outside the browser.',
+			evidence: ['Staff MCP', 'Jobs MCP', 'NPG scoped hub', 'Owned route checks'],
 			tone: 'success'
 		},
 		{
@@ -104,7 +104,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			label: 'Send job to funnel',
 			description: 'Push a discovered job into the candidate funnel after explicit confirmation.',
 			summary:
-				'Funnel writes require explicit confirmation and stay outside the public delivery page. The embedded jobs panel is read-only by guardrail.',
+				'Funnel writes require explicit confirmation and stay outside the public delivery page. Public job discovery remains read-only by guardrail.',
 			status: 'requires_approval',
 			risk: 'medium',
 			policyChecks: [
@@ -151,19 +151,11 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			tone: 'warning'
 		},
 		{
-			id: 'dify-hub-config',
-			label: 'Dify Abundance Hub configuration',
-			detail: 'Tracked as an external operational artifact and production-smoked through the Service API.',
-			source: 'External operational artifact',
-			visibility: 'private',
-			tone: 'info'
-		},
-		{
-			id: 'langfuse-evals',
-			label: 'Langfuse eval coverage',
+			id: 'owned-runtime-gates',
+			label: 'Owned runtime and route gates',
 			detail:
-				'Published under create-something-dify-agents / abundance_hub: verifies Dify API health, Jobs MCP tool routing, forbidden writes, secret refusal, latency, and trace IDs for Langfuse inspection.',
-			source: 'create-something-dify-agents / abundance_hub',
+				'Package checks cover the delivery context, read-only public surface, retired legacy endpoint, and provider-neutral runtime boundary.',
+			source: 'CRE-1233 verification packet',
 			visibility: 'private',
 			tone: 'success'
 		},
@@ -257,13 +249,6 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			tone: 'success'
 		},
 		{
-			title: 'Abundance Jobs Agent',
-			type: 'Embedded read-only Dify job discovery agent',
-			href: 'https://createsomething.agency/delivery/abundance#job-agent',
-			visibility: 'public',
-			tone: 'info'
-		},
-		{
 			title: 'Progress walkthrough',
 			type: 'Current job/database workflow walkthrough',
 			href: 'https://share.descript.com/view/RWYv3CqKbEC',
@@ -319,7 +304,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 		{ label: 'MCP surfaces smoked', value: '3', detail: 'Staff MCP, Jobs MCP, NPG scoped hub', tone: 'success' },
 		{ label: 'Open decisions', value: '6', detail: 'Secrets, reauthorization, mapping, access', tone: 'warning' },
 		{ label: 'Agent boundary', value: 'Recruiter-gated', detail: 'No autonomous staffing decisions', tone: 'info' },
-		{ label: 'Eval coverage', value: 'Published', detail: 'Langfuse suite with Langfuse trace keys', tone: 'success' }
+		{ label: 'Runtime boundary', value: 'Candidate green', detail: 'Owned route and dependency gates', tone: 'success' }
 	],
 	sourceStatuses: [
 		{

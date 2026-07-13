@@ -44,10 +44,27 @@ export type AgentRunReceipt = {
   error?: string;
 };
 
+export type ConversationClaim =
+  | { status: 'claimed'; conversation: AgentConversation }
+  | { status: 'busy' }
+  | { status: 'agent_mismatch' };
+
 export interface AgentStore {
-  getConversation(id: string): Promise<AgentConversation | null>;
-  saveConversation(conversation: AgentConversation): Promise<void>;
-  saveReceipt(receipt: AgentRunReceipt): Promise<void>;
+  claimConversation(input: {
+    id: string;
+    agentId: string;
+    runId: string;
+  }): Promise<ConversationClaim>;
+  completeRun(input: {
+    conversation: AgentConversation;
+    runId: string;
+    receipt: AgentRunReceipt;
+  }): Promise<void>;
+  failRun(input: {
+    conversationId: string;
+    runId: string;
+    receipt: AgentRunReceipt;
+  }): Promise<void>;
 }
 
 export type AgentExecutorInput = {
@@ -69,4 +86,10 @@ export type AgentExecutorEvent =
 
 export interface AgentExecutor {
   run(input: AgentExecutorInput): AsyncIterable<AgentExecutorEvent>;
+}
+
+export type AgentAdmissionDecision = 'allowed' | 'rate_limited';
+
+export interface AgentAdmission {
+  check(input: { request: Request; agentId: string }): Promise<AgentAdmissionDecision>;
 }

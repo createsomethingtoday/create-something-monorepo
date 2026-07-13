@@ -7,6 +7,9 @@
 
 **Policy OS** is the canonical paid CREATE SOMETHING package for governed AI execution.
 
+**CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI
+provides intelligence.**
+
 It packages the operating model described in
 [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md): agents run the
 work, receipts prove the work, and humans govern exceptions.
@@ -88,28 +91,27 @@ the governed package, not an implementation afterthought.
 
 Default surface roles:
 
-- **Dify** remains the preferred client and operator surface when the workflow
-  needs visual editing, app publishing, Service API access, MCP server cards,
-  non-engineer inspection, or client-facing chat/workflow UX.
-- **Cloudflare and repo-owned services** remain the preferred runtime surface
+- **CREATE SOMETHING-owned applications** are the client and operator surface
+  when a workflow needs review, publishing, non-engineer inspection, or
+  client-facing chat and workflow UX.
+- **Cloudflare and repo-owned services** are the runtime surface
   when the workflow needs auth, queues, D1 state, tenant boundaries, custom
   endpoints, durable recovery paths, or package-local validation.
-- **OpenAI Agents SDK** is a Policy OS graduation lane for workflows that now
-  need code-owned orchestration, explicit tool routing, approval pauses,
-  durable state, traces, evals, and CI-backed golden tasks.
+- **OpenAI Agents SDK** is the default agent loop when a workflow needs
+  code-owned orchestration, explicit tool routing, approval pauses, durable
+  state, traces, evals, and CI-backed golden tasks.
 
-Do not treat Agents SDK adoption as a blanket replacement for Dify. A workflow
-graduates from Dify-first delivery into an SDK-backed runtime only when the
-added control is worth the platform burden CREATE SOMETHING must now own:
-versioning, preview, rollback, team review, operator handoff, observability,
-and governance compatibility.
+CREATE SOMETHING owns versioning, preview, rollback, team review, operator
+handoff, observability, and governance compatibility. A retained Dify app is a
+temporary rollback artifact only when it previously owned a live path; it is
+not a current Policy OS delivery surface.
 
 Graduation requires:
 
 - a frozen Policy OS contract bundle for the workflow
 - a documented `runtime_surface` decision in the agent contract
-- golden-task parity between the Dify path and the SDK-backed path, when Dify
-  already owns the live surface
+- golden-task parity with any previously live provider path before that rollback
+  artifact is retired
 - explicit approval and rollback behavior for side-effecting tools
 - trace or eval evidence showing the SDK path improves governance, cost,
   latency, reliability, or operator visibility

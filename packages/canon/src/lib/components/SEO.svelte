@@ -105,7 +105,7 @@
       'Workflow Control Layer',
       'AI Workflow Systems',
       'Controlled Automation',
-      'Dify Agent Apps',
+      'Owned Agent Runtimes',
       'Cloudflare Workers',
       'Substrate Agent-native Data Layer',
       'API Integration',
