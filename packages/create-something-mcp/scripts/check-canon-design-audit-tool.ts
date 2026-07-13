@@ -47,8 +47,9 @@ assert.equal(result.isError, undefined);
 assert.equal(result.content[0]!.text, expected);
 assert.match(result.content[0]!.text, /## Canon Design Audit/);
 assert.match(result.content[0]!.text, /\*\*Section:\*\* colors/);
-assert.match(result.content[0]!.text, /--color-bg-surface/);
-assert.match(result.content[0]!.text, /--color-fg-primary/);
+assert.match(result.content[0]!.text, /--color-performance-bg-surface/);
+assert.match(result.content[0]!.text, /--color-performance-fg-primary/);
+assert.doesNotMatch(result.content[0]!.text, /Clear (?:surface|text) tokens/);
 assert.doesNotMatch(result.content[0]!.text, /--bg-primary/);
 assert.doesNotMatch(result.content[0]!.text, /--fg-primary/);
 

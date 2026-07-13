@@ -63,8 +63,8 @@ export const CANON_DESIGN_AUDIT_CHECKS: CanonDesignAuditCheckGroup[] = [
     area: 'Colors',
     section: 'colors',
     items: [
-      'Backgrounds use Canon tokens such as --color-performance-bg-pure, --color-bg-base, --color-performance-bg-surface, --color-performance-bg-elevated, or Clear surface tokens?',
-      'Text uses Canon foreground tokens such as --color-performance-fg-primary, --color-performance-fg-secondary, --color-performance-fg-tertiary, --color-performance-fg-muted, or Clear text tokens?',
+      'Backgrounds use Performance tokens such as --color-performance-bg-pure, --color-performance-bg-base, --color-performance-bg-surface, --color-performance-bg-elevated, or --color-performance-panel?',
+      'Text uses Performance foreground tokens such as --color-performance-fg-primary, --color-performance-fg-secondary, --color-performance-fg-tertiary, --color-performance-fg-muted, or --color-performance-ink?',
       'Semantic colors are reserved for success, error, warning, info, run, wait, stop, proof, or review states?',
       'Hierarchy comes from tokenized contrast, opacity, type, and spacing instead of one-off color values?',
       'WCAG AA contrast is maintained: 4.5:1 for body text and 3:1 for large text or non-text UI?'

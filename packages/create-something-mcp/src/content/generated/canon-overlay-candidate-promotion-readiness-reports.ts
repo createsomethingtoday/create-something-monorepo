@@ -45,7 +45,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
             "template.canon-project-overlay-manifest is a template candidate item with overlapping evidence.",
             "template.canon-extension-intake is a template candidate item with overlapping evidence.",
             "template.canon-project-overlay-template-pack is a template candidate item with overlapping evidence.",
-            "token.canon-core is a token stable item with overlapping evidence."
+            "token.performance-core is a token stable item with overlapping evidence."
           ],
           "requiredAction": "Choose whether to reuse, update, or create a Canon registry item id before editing implementation code."
         },
@@ -166,8 +166,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "reason": "Matches requested kind and overlaps 5 requested modalities."
         },
         {
-          "id": "token.canon-core",
-          "name": "Canon Core Tokens",
+          "id": "token.performance-core",
+          "name": "Performance Core Tokens",
           "kind": "token",
           "maturity": "stable",
           "modalities": [
@@ -303,11 +303,11 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "label": "Canon Registry Target",
           "status": "review",
           "evidence": [
+            "template.canon-project-overlay-template-pack is a template candidate item with overlapping evidence.",
             "template.canon-project-overlay-manifest is a template candidate item with overlapping evidence.",
             "template.canon-extension-intake is a template candidate item with overlapping evidence.",
             "template.atlas-development-handoff is a template candidate item with overlapping evidence.",
-            "template.canon-project-overlay-template-pack is a template candidate item with overlapping evidence.",
-            "token.canon-core is a token stable item with overlapping evidence."
+            "token.performance-core is a token stable item with overlapping evidence."
           ],
           "requiredAction": "Choose whether to reuse, update, or create a Canon registry item id before editing implementation code."
         },
@@ -364,6 +364,22 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
       ],
       "relatedRegistryItems": [
         {
+          "id": "template.canon-project-overlay-template-pack",
+          "name": "Canon Project Overlay Template Pack",
+          "kind": "template",
+          "maturity": "candidate",
+          "modalities": [
+            "web",
+            "chat",
+            "app",
+            "voice",
+            "glasses"
+          ],
+          "docsPath": "/canon/resources/registry",
+          "score": 32,
+          "reason": "Matches requested kind and overlaps 5 requested modalities."
+        },
+        {
           "id": "template.canon-project-overlay-manifest",
           "name": "Canon Project Overlay Manifest",
           "kind": "template",
@@ -412,24 +428,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "reason": "Matches requested kind and overlaps 5 requested modalities."
         },
         {
-          "id": "template.canon-project-overlay-template-pack",
-          "name": "Canon Project Overlay Template Pack",
-          "kind": "template",
-          "maturity": "candidate",
-          "modalities": [
-            "web",
-            "chat",
-            "app",
-            "voice",
-            "glasses"
-          ],
-          "docsPath": "/canon/resources/registry",
-          "score": 29,
-          "reason": "Matches requested kind and overlaps 5 requested modalities."
-        },
-        {
-          "id": "token.canon-core",
-          "name": "Canon Core Tokens",
+          "id": "token.performance-core",
+          "name": "Performance Core Tokens",
           "kind": "token",
           "maturity": "stable",
           "modalities": [
@@ -440,7 +440,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
             "glasses"
           ],
           "docsPath": "/canon/resources/tokens",
-          "score": 20,
+          "score": 23,
           "reason": "Overlaps 5 requested modalities."
         }
       ],
@@ -828,7 +828,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
             "template.canon-extension-intake is a template candidate item with overlapping evidence.",
             "template.atlas-development-handoff is a template candidate item with overlapping evidence.",
             "template.canon-project-overlay-template-pack is a template candidate item with overlapping evidence.",
-            "token.canon-core is a token stable item with overlapping evidence."
+            "token.performance-core is a token stable item with overlapping evidence."
           ],
           "requiredAction": "Choose whether to reuse, update, or create a Canon registry item id before editing implementation code."
         },
@@ -949,8 +949,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "reason": "Matches requested kind and overlaps 5 requested modalities."
         },
         {
-          "id": "token.canon-core",
-          "name": "Canon Core Tokens",
+          "id": "token.performance-core",
+          "name": "Performance Core Tokens",
           "kind": "token",
           "maturity": "stable",
           "modalities": [
@@ -1090,7 +1090,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
             "template.canon-extension-intake is a template candidate item with overlapping evidence.",
             "template.atlas-development-handoff is a template candidate item with overlapping evidence.",
             "template.canon-project-overlay-template-pack is a template candidate item with overlapping evidence.",
-            "token.canon-core is a token stable item with overlapping evidence."
+            "token.performance-core is a token stable item with overlapping evidence."
           ],
           "requiredAction": "Choose whether to reuse, update, or create a Canon registry item id before editing implementation code."
         },
@@ -1211,8 +1211,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "reason": "Matches requested kind and overlaps 5 requested modalities."
         },
         {
-          "id": "token.canon-core",
-          "name": "Canon Core Tokens",
+          "id": "token.performance-core",
+          "name": "Performance Core Tokens",
           "kind": "token",
           "maturity": "stable",
           "modalities": [
@@ -1867,7 +1867,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
             "template.canon-extension-intake is a template candidate item with overlapping evidence.",
             "template.canon-project-overlay-template-pack is a template candidate item with overlapping evidence.",
             "template.atlas-development-handoff is a template candidate item with overlapping evidence.",
-            "token.canon-core is a token stable item with overlapping evidence."
+            "token.performance-core is a token stable item with overlapping evidence."
           ],
           "requiredAction": "Choose whether to reuse, update, or create a Canon registry item id before editing implementation code."
         },
@@ -1988,8 +1988,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "reason": "Matches requested kind and overlaps 5 requested modalities."
         },
         {
-          "id": "token.canon-core",
-          "name": "Canon Core Tokens",
+          "id": "token.performance-core",
+          "name": "Performance Core Tokens",
           "kind": "token",
           "maturity": "stable",
           "modalities": [
@@ -2129,7 +2129,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
             "template.canon-extension-intake is a template candidate item with overlapping evidence.",
             "template.canon-project-overlay-template-pack is a template candidate item with overlapping evidence.",
             "template.atlas-development-handoff is a template candidate item with overlapping evidence.",
-            "token.canon-core is a token stable item with overlapping evidence."
+            "token.performance-core is a token stable item with overlapping evidence."
           ],
           "requiredAction": "Choose whether to reuse, update, or create a Canon registry item id before editing implementation code."
         },
@@ -2250,8 +2250,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "reason": "Matches requested kind and overlaps 5 requested modalities."
         },
         {
-          "id": "token.canon-core",
-          "name": "Canon Core Tokens",
+          "id": "token.performance-core",
+          "name": "Performance Core Tokens",
           "kind": "token",
           "maturity": "stable",
           "modalities": [
@@ -4189,7 +4189,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
             "template.canon-extension-intake is a template candidate item with overlapping evidence.",
             "template.atlas-development-handoff is a template candidate item with overlapping evidence.",
             "template.canon-project-overlay-template-pack is a template candidate item with overlapping evidence.",
-            "token.canon-core is a token stable item with overlapping evidence."
+            "token.performance-core is a token stable item with overlapping evidence."
           ],
           "requiredAction": "Choose whether to reuse, update, or create a Canon registry item id before editing implementation code."
         },
@@ -4310,8 +4310,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "reason": "Matches requested kind and overlaps 5 requested modalities."
         },
         {
-          "id": "token.canon-core",
-          "name": "Canon Core Tokens",
+          "id": "token.performance-core",
+          "name": "Performance Core Tokens",
           "kind": "token",
           "maturity": "stable",
           "modalities": [
@@ -4960,9 +4960,9 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "evidence": [
             "template.canon-project-overlay-manifest is a template candidate item with overlapping evidence.",
             "template.canon-extension-intake is a template candidate item with overlapping evidence.",
-            "template.atlas-development-handoff is a template candidate item with overlapping evidence.",
             "template.canon-project-overlay-template-pack is a template candidate item with overlapping evidence.",
-            "token.canon-core is a token stable item with overlapping evidence."
+            "template.atlas-development-handoff is a template candidate item with overlapping evidence.",
+            "token.performance-core is a token stable item with overlapping evidence."
           ],
           "requiredAction": "Choose whether to reuse, update, or create a Canon registry item id before editing implementation code."
         },
@@ -5051,6 +5051,22 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "reason": "Matches requested kind and overlaps 5 requested modalities."
         },
         {
+          "id": "template.canon-project-overlay-template-pack",
+          "name": "Canon Project Overlay Template Pack",
+          "kind": "template",
+          "maturity": "candidate",
+          "modalities": [
+            "web",
+            "chat",
+            "app",
+            "voice",
+            "glasses"
+          ],
+          "docsPath": "/canon/resources/registry",
+          "score": 30,
+          "reason": "Matches requested kind and overlaps 5 requested modalities."
+        },
+        {
           "id": "template.atlas-development-handoff",
           "name": "Atlas Development Handoff Template",
           "kind": "template",
@@ -5067,24 +5083,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "reason": "Matches requested kind and overlaps 5 requested modalities."
         },
         {
-          "id": "template.canon-project-overlay-template-pack",
-          "name": "Canon Project Overlay Template Pack",
-          "kind": "template",
-          "maturity": "candidate",
-          "modalities": [
-            "web",
-            "chat",
-            "app",
-            "voice",
-            "glasses"
-          ],
-          "docsPath": "/canon/resources/registry",
-          "score": 29,
-          "reason": "Matches requested kind and overlaps 5 requested modalities."
-        },
-        {
-          "id": "token.canon-core",
-          "name": "Canon Core Tokens",
+          "id": "token.performance-core",
+          "name": "Performance Core Tokens",
           "kind": "token",
           "maturity": "stable",
           "modalities": [
@@ -5095,7 +5095,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
             "glasses"
           ],
           "docsPath": "/canon/resources/tokens",
-          "score": 20,
+          "score": 21,
           "reason": "Overlaps 5 requested modalities."
         }
       ],
@@ -5224,7 +5224,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
             "template.canon-extension-intake is a template candidate item with overlapping evidence.",
             "template.atlas-development-handoff is a template candidate item with overlapping evidence.",
             "template.canon-project-overlay-template-pack is a template candidate item with overlapping evidence.",
-            "token.canon-core is a token stable item with overlapping evidence."
+            "token.performance-core is a token stable item with overlapping evidence."
           ],
           "requiredAction": "Choose whether to reuse, update, or create a Canon registry item id before editing implementation code."
         },
@@ -5345,8 +5345,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_READINESS_REPORTS: CanonOverlayCa
           "reason": "Matches requested kind and overlaps 5 requested modalities."
         },
         {
-          "id": "token.canon-core",
-          "name": "Canon Core Tokens",
+          "id": "token.performance-core",
+          "name": "Performance Core Tokens",
           "kind": "token",
           "maturity": "stable",
           "modalities": [
