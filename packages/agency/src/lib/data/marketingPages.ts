@@ -566,13 +566,13 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'evaluate',
     intent: 'Show what the governed template-review workflow proved, failed, and still needs measured.',
     primaryAction: 'Inspect the result',
-    requiredTerms: ['evidence', 'reviewer', 'measured', 'promotion blocked', 'savings'],
+    requiredTerms: ['evidence', 'reviewer', 'synthetic', 'promotion blocked', 'time savings'],
     requiredLinks: ['/field-reports'],
     schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.86',
-      lastmod: '2026-07-10'
+      lastmod: '2026-07-12'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
