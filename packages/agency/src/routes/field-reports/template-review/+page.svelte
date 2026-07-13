@@ -153,6 +153,35 @@
     {/snippet}
   </PerformancePageSection>
 
+  <PerformancePageSection
+    eyebrow="Paid provider pilot / One case"
+    title="One live packet cost about eleven cents."
+    description="On July 13, one blind private case ran through the direct evidence collector and GPT-5.5 reviewer. This is a one-case cost observation—not a human-time comparison, annual forecast, or savings claim."
+  >
+    {#snippet after()}
+      <div class="runtime-evidence" aria-label="Template Review single-case provider cost pilot">
+        <article>
+          <span>Evidence collector</span>
+          <strong>32.7 seconds</strong>
+          <p>Direct E2B collection measured USD 0.00121 in compute for this packet.</p>
+        </article>
+        <article>
+          <span>Model reviewer</span>
+          <strong>45.0 seconds</strong>
+          <p>GPT-5.5 used 8,118 total tokens and measured USD 0.11052 for this response.</p>
+        </article>
+        <article>
+          <span>Measured boundary</span>
+          <strong>USD 0.1117</strong>
+          <p>
+            Active stages totaled 77.6 seconds and the workflow took 99.5 seconds elapsed. Storage,
+            tools, maintenance, reviewer time saved, and annual cash savings remain unmeasured.
+          </p>
+        </article>
+      </div>
+    {/snippet}
+  </PerformancePageSection>
+
   <section class="failed-boundary" aria-labelledby="failed-boundary-title">
     <div class="failed-boundary__status">
       <span>Promotion blocked</span>

@@ -37,6 +37,21 @@ export type TemplateReviewFieldReport = {
     langfuseReadback: 'unverified';
     status: EvidenceStatus;
   };
+  providerPilot: {
+    checkedAt: string;
+    classification: 'live_single_case_cost';
+    sampleSize: 1;
+    collectorDurationMs: number;
+    reviewerDurationMs: number;
+    sequentialActiveRuntimeMs: number;
+    endToEndElapsedMs: number;
+    collectorProviderCostUsd: number;
+    reviewerProviderCostUsd: number;
+    totalMeasuredProviderCostUsd: number;
+    storageAndToolCost: 'unmeasured';
+    annualSavings: 'unmeasured';
+    status: EvidenceStatus;
+  };
   savings: {
     status: 'unmeasured';
     statement: string;
@@ -92,6 +107,21 @@ export const templateReviewFieldReport: TemplateReviewFieldReport = {
     langfuseReadback: 'unverified',
     status: 'measured'
   },
+  providerPilot: {
+    checkedAt: '2026-07-13',
+    classification: 'live_single_case_cost',
+    sampleSize: 1,
+    collectorDurationMs: 32_661,
+    reviewerDurationMs: 44_956,
+    sequentialActiveRuntimeMs: 77_617,
+    endToEndElapsedMs: 99_537,
+    collectorProviderCostUsd: 0.001208457,
+    reviewerProviderCostUsd: 0.110515,
+    totalMeasuredProviderCostUsd: 0.111723457,
+    storageAndToolCost: 'unmeasured',
+    annualSavings: 'unmeasured',
+    status: 'measured'
+  },
   savings: {
     status: 'unmeasured',
     statement:
@@ -136,6 +166,14 @@ export const templateReviewFieldReport: TemplateReviewFieldReport = {
       artifact: '2026-07-12-template-review-dify-eval-evidence.md',
       date: 'July 12, 2026',
       href: 'https://github.com/createsomethingtoday/create-something-monorepo/blob/1e32ebbfd1db06b98e3a6bf45c92120f06775115/docs/deliveries/webflow-marketplace/2026-07-12-template-review-dify-eval-evidence.md',
+      state: 'verified'
+    },
+    {
+      label: 'Single-case provider cost pilot',
+      kind: 'Delivery report',
+      artifact: '2026-07-13-template-review-unit-economics-pilot.md',
+      date: 'July 13, 2026',
+      href: 'https://github.com/createsomethingtoday/create-something-monorepo/blob/main/docs/deliveries/webflow-marketplace/2026-07-13-template-review-unit-economics-pilot.md',
       state: 'verified'
     }
   ]

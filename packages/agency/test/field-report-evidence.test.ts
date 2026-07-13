@@ -28,6 +28,18 @@ test('template review Field Report separates packet completion, synthetic bounda
   assert.equal(templateReviewFieldReport.runtime.centralLiveCases, 7);
   assert.equal(templateReviewFieldReport.runtime.langfuseReadback, 'unverified');
 
+  assert.equal(templateReviewFieldReport.providerPilot.classification, 'live_single_case_cost');
+  assert.equal(templateReviewFieldReport.providerPilot.sampleSize, 1);
+  assert.equal(templateReviewFieldReport.providerPilot.collectorDurationMs, 32_661);
+  assert.equal(templateReviewFieldReport.providerPilot.reviewerDurationMs, 44_956);
+  assert.equal(templateReviewFieldReport.providerPilot.sequentialActiveRuntimeMs, 77_617);
+  assert.equal(templateReviewFieldReport.providerPilot.endToEndElapsedMs, 99_537);
+  assert.equal(templateReviewFieldReport.providerPilot.collectorProviderCostUsd, 0.001208457);
+  assert.equal(templateReviewFieldReport.providerPilot.reviewerProviderCostUsd, 0.110515);
+  assert.equal(templateReviewFieldReport.providerPilot.totalMeasuredProviderCostUsd, 0.111723457);
+  assert.equal(templateReviewFieldReport.providerPilot.storageAndToolCost, 'unmeasured');
+  assert.equal(templateReviewFieldReport.providerPilot.annualSavings, 'unmeasured');
+
   assert.equal(templateReviewFieldReport.savings.status, 'unmeasured');
   assert.match(templateReviewFieldReport.savings.formula, /manual objective-check minutes/i);
   assert.match(templateReviewFieldReport.savings.formula, /reviewer verification minutes/i);
@@ -54,6 +66,12 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.match(route, /32 live boundary scenarios/i);
   assert.match(route, /not production usage/i);
   assert.match(route, /Langfuse readback was not available/i);
+  assert.match(route, /One live packet cost about eleven cents/i);
+  assert.match(route, /32\.7 seconds/i);
+  assert.match(route, /45\.0 seconds/i);
+  assert.match(route, /99\.5 seconds elapsed/i);
+  assert.match(route, /USD 0\.1117/i);
+  assert.match(route, /one-case cost observation/i);
   assert.match(route, /Reviewer time savings are not measured/i);
   assert.match(route, /Human reviewer/i);
   assert.doesNotMatch(route, /Evidence yield/i);
@@ -65,9 +83,10 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
 
 test('public evidence records are inspectable and include the sanitized runtime audit', () => {
   const sources = templateReviewFieldReport.sources;
-  assert.equal(sources.length, 4);
+  assert.equal(sources.length, 5);
   assert.ok(sources.every((source) => source.href.startsWith('https://github.com/')));
   assert.match(sources[3].artifact, /template-review-dify-eval-evidence/i);
+  assert.match(sources[4].artifact, /template-review-unit-economics-pilot/i);
 });
 
 test('Field Reports are a browsable proof chapter in the agency journey', () => {
