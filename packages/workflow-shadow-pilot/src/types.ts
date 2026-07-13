@@ -7,6 +7,7 @@ export interface WorkflowShadowPilotOptions extends WorkflowPilotDiscoveryOption
   corpusDir: string;
   outputDir: string;
   measurementStartedAt: string;
+  liveAdapterReceiptPath?: string;
 }
 
 export interface WorkflowPilotSource {
@@ -142,4 +143,5 @@ export interface WorkflowShadowPilotResult {
   scorecard: WorkflowPilotScorecard;
   artifactManifest: WorkflowPilotArtifactManifest;
   measurementReceipt: WorkflowPilotMeasurementReceipt;
+  liveAdapterReceipt?: import('./live-review-adapter.js').WorkflowPilotLiveAdapterReceipt;
 }

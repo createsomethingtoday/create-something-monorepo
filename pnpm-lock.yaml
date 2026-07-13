@@ -4436,6 +4436,9 @@ importers:
       '@create-something/workflow-receipt-reconciler':
         specifier: workspace:*
         version: link:../workflow-receipt-reconciler
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9

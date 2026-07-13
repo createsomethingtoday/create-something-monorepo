@@ -18,6 +18,16 @@ export {
 } from './operator-console.js';
 
 export type { WorkflowPilotOperatorConsoleData } from './operator-console.js';
+export {
+  loadWorkflowPilotLiveAdapterReceipt,
+  observeTemplateReviewQueue,
+  WorkflowPilotLiveAdapterError,
+} from './live-review-adapter.js';
+
+export type {
+  WorkflowPilotLiveAdapterReceipt,
+  WorkflowPilotToolTransport,
+} from './live-review-adapter.js';
 
 export type {
   WorkflowPilotAdapter,

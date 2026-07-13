@@ -4,6 +4,7 @@ import type {
   WorkflowPilotReconciliationSummary,
   WorkflowPilotScorecard,
 } from './types.js';
+import type { WorkflowPilotLiveAdapterReceipt } from './live-review-adapter.js';
 
 export interface WorkflowPilotOperatorConsoleData {
   schemaVersion: 'workflow_shadow_operator_console.v0.1';
@@ -18,6 +19,7 @@ export interface WorkflowPilotOperatorConsoleData {
   discovery: WorkflowPilotDiscoveryPack;
   cases: WorkflowPilotReconciliationSummary['cases'];
   compiledRuntime: WorkflowPilotCompiledRuntimeSummary;
+  liveAdapter?: WorkflowPilotLiveAdapterReceipt;
 }
 
 export function createWorkflowPilotOperatorConsoleData(input: {
@@ -25,6 +27,7 @@ export function createWorkflowPilotOperatorConsoleData(input: {
   reconciliationSummary: WorkflowPilotReconciliationSummary;
   compiledRuntime: WorkflowPilotCompiledRuntimeSummary;
   scorecard: WorkflowPilotScorecard;
+  liveAdapterReceipt?: WorkflowPilotLiveAdapterReceipt;
 }): WorkflowPilotOperatorConsoleData {
   return {
     schemaVersion: 'workflow_shadow_operator_console.v0.1',
@@ -39,6 +42,7 @@ export function createWorkflowPilotOperatorConsoleData(input: {
     discovery: input.discoveryPack,
     cases: input.reconciliationSummary.cases,
     compiledRuntime: input.compiledRuntime,
+    ...(input.liveAdapterReceipt ? { liveAdapter: input.liveAdapterReceipt } : {}),
   };
 }
 
@@ -123,6 +127,7 @@ export function renderWorkflowPilotOperatorConsole(): string {
         ['Cases replayed', data.scorecard.caseCount],
         ['Ambiguous', data.scorecard.ambiguousCount],
       ];
+      if (data.liveAdapter) metrics.push(['Live queue items', data.liveAdapter.observedItemCount]);
       for (const [label, value] of metrics) {
         const card = document.createElement('article'); card.className = 'metric';
         addText(card, 'span', label, 'label'); addText(card, 'strong', value); metricsEl.append(card);
@@ -132,6 +137,11 @@ export function renderWorkflowPilotOperatorConsole(): string {
       addDefinition(runtime, 'Manifest', data.compiledRuntime.manifestSha256);
       addDefinition(runtime, 'Compiler', data.compiledRuntime.compilerVersion);
       addDefinition(runtime, 'Artifacts', data.compiledRuntime.artifactCount);
+      if (data.liveAdapter) {
+        addDefinition(runtime, 'Live auth boundary', data.liveAdapter.authBoundary);
+        addDefinition(runtime, 'Live read tool', data.liveAdapter.toolName);
+        addDefinition(runtime, 'Live response', data.liveAdapter.rawResponseSha256);
+      }
       document.querySelector('#adapter-count').textContent = data.discovery.adapters.length + ' adapters';
       for (const adapter of data.discovery.adapters) {
         const card = document.createElement('article'); card.className = 'adapter adapter-grid';

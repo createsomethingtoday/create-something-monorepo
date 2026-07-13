@@ -87,11 +87,30 @@ test('joins the receipt and historical-context inputs into a sanitized corpus su
   try {
     await writeTestCorpus(corpusDir);
     const outputDir = path.join(corpusDir, 'pilot-output');
+    const liveAdapterReceiptPath = path.join(corpusDir, 'live-adapter-receipt.json');
+    const liveAdapterReceipt = {
+      schemaVersion: 'workflow_live_adapter_receipt.v0.1',
+      mode: 'shadow',
+      adapterId: 'review',
+      owner: 'Webflow Template Review MCP',
+      authBoundary: 'create-something-identity',
+      serviceName: 'webflow-template-review-mcp',
+      toolName: 'template_review_list_queue',
+      requestedLimit: 2,
+      observedItemCount: 2,
+      rawResponseSha256: `sha256:${'a'.repeat(64)}`,
+      discoveryVerified: true,
+      readScopeVerified: true,
+      mutationsPerformed: 0,
+      invokedTools: ['template_review_list_queue'],
+    };
+    await writeFile(liveAdapterReceiptPath, `${JSON.stringify(liveAdapterReceipt)}\n`);
     const result = await runWorkflowShadowPilot({
       repoRoot,
       corpusDir,
       outputDir,
       measurementStartedAt: '2026-07-12T03:02:56Z',
+      liveAdapterReceiptPath,
     });
 
     assert.equal(result.corpusSummary.schemaVersion, 'workflow_shadow_corpus_summary.v0.1');
@@ -135,7 +154,7 @@ test('joins the receipt and historical-context inputs into a sanitized corpus su
     assert.equal(result.measurementReceipt.startedAt, '2026-07-12T03:02:56Z');
     assert.ok(Date.parse(result.measurementReceipt.finishedAt) >= Date.parse(result.measurementReceipt.startedAt));
     assert.ok(result.measurementReceipt.elapsedMilliseconds >= 0);
-    assert.equal(result.measurementReceipt.deterministicArtifactCount, 18);
+    assert.equal(result.measurementReceipt.deterministicArtifactCount, 19);
     assert.equal(result.measurementReceipt.mutationsPerformed, 0);
 
     const compiledWorkflow = JSON.parse(
@@ -178,7 +197,7 @@ test('joins the receipt and historical-context inputs into a sanitized corpus su
     const manifest = JSON.parse(
       await readFile(path.join(outputDir, 'shadow-manifest.json'), 'utf8'),
     );
-    assert.equal(manifest.files.length, 8);
+    assert.equal(manifest.files.length, 9);
     assert.ok(manifest.files.every((entry) => /^sha256:[0-9a-f]{64}$/.test(entry.sha256)));
 
     const operatorData = JSON.parse(
@@ -196,6 +215,12 @@ test('joins the receipt and historical-context inputs into a sanitized corpus su
     assert.deepEqual(operatorData.discovery, result.discoveryPack);
     assert.deepEqual(operatorData.cases, result.reconciliationSummary.cases);
     assert.deepEqual(operatorData.compiledRuntime, result.compiledRuntime);
+    assert.deepEqual(operatorData.liveAdapter, liveAdapterReceipt);
+    assert.deepEqual(result.liveAdapterReceipt, liveAdapterReceipt);
+    assert.deepEqual(
+      JSON.parse(await readFile(path.join(outputDir, 'live-adapter-receipt.json'), 'utf8')),
+      liveAdapterReceipt,
+    );
 
     const operatorHtml = await readFile(
       path.join(outputDir, 'operator-console', 'index.html'),

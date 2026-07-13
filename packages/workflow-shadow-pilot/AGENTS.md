@@ -5,6 +5,7 @@
 - Start with `README.md` for the public runner and shadow boundary.
 - Read `.codex/marketplace-workflow-compiler-shadow-pilot/goal.md` and `plan.md` when the durable CRE-1219 experiment context is available.
 - Primary entrypoints: `src/index.ts`, `src/run.ts`, `src/operator-console.ts`, and `scripts/acceptance.mjs`.
+- Live read entrypoints: `src/live-review-adapter.ts` and `scripts/live-review-oauth.mjs`.
 
 ## Tier Ownership
 
@@ -27,8 +28,10 @@ pnpm --filter @create-something/workflow-shadow-pilot check
 pnpm --filter @create-something/workflow-shadow-pilot test
 WORKFLOW_PILOT_CORPUS_DIR="/absolute/path/to/authorized-corpus" \
   pnpm --filter @create-something/workflow-shadow-pilot test:acceptance
+WORKFLOW_PILOT_CORPUS_DIR="/absolute/path/to/authorized-corpus" \
+  pnpm --filter @create-something/workflow-shadow-pilot live:review:oauth
 ```
 
 ## Escalation
 
-Stop on source drift, private-value emission, sampling failure, attempted ambiguity resolution, external mutation, proposal application, or implied write authority.
+Stop on source drift, Identity OAuth failure, any tool other than `template_review_list_queue`, private-value emission, sampling failure, attempted ambiguity resolution, external mutation, proposal application, or implied write authority.

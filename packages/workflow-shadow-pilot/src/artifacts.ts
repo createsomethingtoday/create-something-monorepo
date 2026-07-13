@@ -6,6 +6,7 @@ import {
   renderWorkflowPilotOperatorConsole,
   type WorkflowPilotOperatorConsoleData,
 } from './operator-console.js';
+import type { WorkflowPilotLiveAdapterReceipt } from './live-review-adapter.js';
 
 import type {
   WorkflowPilotArtifactManifest,
@@ -35,6 +36,7 @@ export async function writeWorkflowShadowPilotArtifacts(
     compiledRuntime: WorkflowPilotCompiledRuntimeSummary;
     scorecard: WorkflowPilotScorecard;
     operatorConsole: WorkflowPilotOperatorConsoleData;
+    liveAdapterReceipt?: WorkflowPilotLiveAdapterReceipt;
   },
 ): Promise<WorkflowPilotArtifactManifest> {
   await mkdir(outputDir, { recursive: true });
@@ -47,6 +49,9 @@ export async function writeWorkflowShadowPilotArtifacts(
     { path: 'reconciliation-summary.json', value: artifacts.reconciliationSummary },
     { path: 'shadow-scorecard.json', value: artifacts.scorecard },
     { path: 'operator-console/data.json', value: artifacts.operatorConsole },
+    ...(artifacts.liveAdapterReceipt
+      ? [{ path: 'live-adapter-receipt.json', value: artifacts.liveAdapterReceipt }]
+      : []),
   ];
   const files = [];
   for (const entry of entries) {

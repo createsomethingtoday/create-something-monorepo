@@ -10,6 +10,7 @@ import {
 } from './measurement.js';
 import { assertWorkflowPilotPrivacy } from './privacy.js';
 import { createWorkflowPilotOperatorConsoleData } from './operator-console.js';
+import { loadWorkflowPilotLiveAdapterReceipt } from './live-review-adapter.js';
 import { createWorkflowPilotReconciliationSummary } from './reconciliation.js';
 import { compileWorkflowPilotRuntime } from './runtime.js';
 import { createWorkflowPilotScorecard } from './scorecard.js';
@@ -160,6 +161,9 @@ export async function runWorkflowShadowPilot(
   options: WorkflowShadowPilotOptions,
 ): Promise<WorkflowShadowPilotResult> {
   const corpus = await loadWorkflowPilotCorpus(options.corpusDir);
+  const liveAdapterReceipt = options.liveAdapterReceiptPath
+    ? await loadWorkflowPilotLiveAdapterReceipt(options.liveAdapterReceiptPath)
+    : undefined;
   const base = {
     discoveryPack: await createWorkflowPilotDiscoveryPack(options),
     corpusSummary: corpus.summary,
@@ -192,7 +196,9 @@ export async function runWorkflowShadowPilot(
       reconciliationSummary: base.reconciliationSummary,
       compiledRuntime,
       scorecard,
+      liveAdapterReceipt,
     }),
+    ...(liveAdapterReceipt ? { liveAdapterReceipt } : {}),
   };
   await assertWorkflowPilotPrivacy(options.corpusDir, artifacts);
   const artifactManifest = await writeWorkflowShadowPilotArtifacts(options.outputDir, artifacts);
@@ -213,5 +219,6 @@ export async function runWorkflowShadowPilot(
     ...artifacts,
     artifactManifest,
     measurementReceipt,
+    ...(liveAdapterReceipt ? { liveAdapterReceipt } : {}),
   };
 }

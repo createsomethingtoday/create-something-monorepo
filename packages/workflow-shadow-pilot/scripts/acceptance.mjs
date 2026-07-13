@@ -13,6 +13,7 @@ const packageDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const repoRoot = path.resolve(packageDir, '../..');
 const corpusDir = process.env.WORKFLOW_PILOT_CORPUS_DIR;
 if (!corpusDir) throw new Error('WORKFLOW_PILOT_CORPUS_DIR is required');
+const liveAdapterReceiptPath = process.env.WORKFLOW_PILOT_LIVE_RECEIPT?.trim();
 
 const startedAt = process.env.WORKFLOW_PILOT_STARTED_AT ?? '2026-07-12T03:02:56Z';
 const stableOutput = path.resolve(
@@ -41,12 +42,14 @@ try {
     corpusDir,
     outputDir: firstDir,
     measurementStartedAt: startedAt,
+    ...(liveAdapterReceiptPath ? { liveAdapterReceiptPath } : {}),
   });
   const second = await runWorkflowShadowPilot({
     repoRoot,
     corpusDir,
     outputDir: secondDir,
     measurementStartedAt: startedAt,
+    ...(liveAdapterReceiptPath ? { liveAdapterReceiptPath } : {}),
   });
 
   const firstFiles = (await filesUnder(firstDir)).filter(
@@ -106,10 +109,17 @@ try {
   assert.equal(first.discoveryPack.sources.length, 6);
   assert.equal(first.discoveryPack.adapters.length, 6);
   assert.equal(first.compiledRuntime.artifactCount, 10);
-  assert.equal(first.artifactManifest.files.length, 8);
-  assert.equal(first.measurementReceipt.deterministicArtifactCount, 18);
+  assert.equal(first.artifactManifest.files.length, liveAdapterReceiptPath ? 9 : 8);
+  assert.equal(first.measurementReceipt.deterministicArtifactCount, liveAdapterReceiptPath ? 19 : 18);
   assert.equal(first.measurementReceipt.mutationsPerformed, 0);
   assert.equal(first.scorecard.langfuseUsed, false);
+  if (liveAdapterReceiptPath) {
+    assert.ok(first.liveAdapterReceipt);
+    assert.equal(first.liveAdapterReceipt.mutationsPerformed, 0);
+    assert.deepEqual(first.liveAdapterReceipt.invokedTools, [
+      'template_review_list_queue',
+    ]);
+  }
 
   const operatorData = JSON.parse(
     await readFile(path.join(firstDir, 'operator-console', 'data.json'), 'utf8'),
