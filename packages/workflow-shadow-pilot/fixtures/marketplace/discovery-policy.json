@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "workflow_shadow_discovery_policy.v0.1",
+  "sources": [
+    {
+      "id": "atlas",
+      "tier": "database",
+      "relativePath": "packages/database-layer/data/create-something-internal-operating-topology.atlas-session.json",
+      "owner": "Atlas Studio",
+      "expectedSha256": "sha256:9c0ceca1ec7494d46910c78b01f1206dd86dc0662f63238b3551df4941ac71fc",
+      "evidence": "atlas_session_export_hash",
+      "receipt": "atlas_readback_receipt",
+      "escalation": "operator_topology_review"
+    },
+    {
+      "id": "intake",
+      "tier": "automation",
+      "relativePath": "apps/marketplace-template-submission-cloud/vendor/core/submission.ts",
+      "owner": "Marketplace Submission Cloud",
+      "expectedSha256": "sha256:d45748e758b2d62d758f6a6dbdf66beb802df067d3faf49087d3c16b4d11b953",
+      "evidence": "submission_envelope_hash",
+      "receipt": "intake_observation_receipt",
+      "escalation": "marketplace_intake_owner"
+    },
+    {
+      "id": "policy",
+      "tier": "judgment",
+      "relativePath": "packages/policy-os-engine/src/compile.ts",
+      "owner": "Policy OS",
+      "expectedSha256": "sha256:d269a6981e53009a54d024b353b1a37c191ba11acb1dfaac1c1a4c7da8a092fa",
+      "evidence": "compiled_policy_hash",
+      "receipt": "policy_selection_receipt",
+      "escalation": "policy_owner_review"
+    },
+    {
+      "id": "review",
+      "tier": "automation",
+      "relativePath": "packages/webflow-template-review-mcp/src/tools.ts",
+      "owner": "Webflow Template Review MCP",
+      "expectedSha256": "sha256:3df0f677e2b2997ef58bcd1ac0901e2c11a7b77b8a14d0156072f91a8e0326fa",
+      "evidence": "review_contract_hash",
+      "receipt": "review_observation_receipt",
+      "escalation": "review_lead"
+    },
+    {
+      "id": "substrate",
+      "tier": "database",
+      "relativePath": "packages/database-layer/data/create-something-business-operating-recommendations.json",
+      "owner": "Substrate",
+      "expectedSha256": "sha256:bd2598c4e754ab79fd5a4b0ab99ec59c07d43e0197c7147dc53b12bc7f9470c9",
+      "evidence": "topology_resource_hash",
+      "receipt": "substrate_readback_receipt",
+      "escalation": "substrate_operator"
+    },
+    {
+      "id": "validation",
+      "tier": "automation",
+      "relativePath": "packages/webflow-template-validation/src/app/api/validate/route.ts",
+      "owner": "Webflow Template Validation",
+      "expectedSha256": "sha256:fed1004c22e0d6734425b82839dd5a371c1a583d699172757b78b8870bf07099",
+      "evidence": "validation_contract_hash",
+      "receipt": "validation_observation_receipt",
+      "escalation": "validation_owner"
+    }
+  ]
+}

@@ -4425,6 +4425,28 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/workflow-shadow-pilot:
+    dependencies:
+      '@create-something/workflow-compiler':
+        specifier: workspace:*
+        version: link:../workflow-compiler
+      '@create-something/workflow-historical-context-reconciler':
+        specifier: workspace:*
+        version: link:../workflow-historical-context-reconciler
+      '@create-something/workflow-receipt-reconciler':
+        specifier: workspace:*
+        version: link:../workflow-receipt-reconciler
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/zendesk-mcp:
     dependencies:
       '@create-something/mcp-core':
