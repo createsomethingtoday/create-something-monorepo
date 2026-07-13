@@ -2,6 +2,8 @@ import { access, readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { createReviewerReceiptFromOpenAiUsage } from '../src/unit-economics.js';
+
 type CliOptions = {
   inputDir: string;
   outDir: string;
@@ -639,7 +641,13 @@ async function callOpenAi(args: {
   instructions: string;
   promptText: string;
   screenshotPaths: string[];
-}): Promise<{ output: RubricReviewerOutput; raw: OpenAiResponse; latency_ms: number }> {
+}): Promise<{
+  output: RubricReviewerOutput;
+  raw: OpenAiResponse;
+  latency_ms: number;
+  started_at: string;
+  completed_at: string;
+}> {
   if (!process.env.OPENAI_API_KEY?.trim()) throw new Error('OPENAI_API_KEY is required for --provider openai.');
   const startedAt = Date.now();
   const controller = new AbortController();
@@ -697,10 +705,13 @@ async function callOpenAi(args: {
         const raw = JSON.parse(rawText) as OpenAiResponse;
         const outputText = extractResponseText(raw);
         if (!outputText) throw new Error('OpenAI Responses API returned no output text.');
+        const completedAt = Date.now();
         return {
           output: parseOutput(outputText),
           raw,
-          latency_ms: Date.now() - startedAt,
+          latency_ms: completedAt - startedAt,
+          started_at: new Date(startedAt).toISOString(),
+          completed_at: new Date(completedAt).toISOString(),
         };
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') throw error;
@@ -768,6 +779,8 @@ async function main() {
 
   let output: RubricReviewerOutput;
   let rawResponse: OpenAiResponse | undefined;
+  let providerStartedAt: string | undefined;
+  let providerCompletedAt: string | undefined;
   let latencyMs = 0;
   if (options.provider === 'dry-run') {
     output = dryRunOutput(selected, imageInputAttached);
@@ -777,6 +790,8 @@ async function main() {
       output = response.output;
       rawResponse = response.raw;
       latencyMs = response.latency_ms;
+      providerStartedAt = response.started_at;
+      providerCompletedAt = response.completed_at;
     } catch (error) {
       output = failedProviderOutput(selected, imageInputAttached, error);
     }
@@ -820,6 +835,26 @@ async function main() {
         2,
       )}\n`,
     );
+    if (!providerStartedAt || !providerCompletedAt) {
+      throw new Error('Successful OpenAI response is missing provider timing metadata.');
+    }
+    const receiptPath = path.join(options.outDir, 'rubric-reviewer-unit-economics-receipt.json');
+    await writeFile(
+      receiptPath,
+      `${JSON.stringify(
+        createReviewerReceiptFromOpenAiUsage({
+          packetId: selected.case_id,
+          model: typeof rawResponse.model === 'string' ? rawResponse.model : options.model,
+          startedAt: providerStartedAt,
+          completedAt: providerCompletedAt,
+          usage: rawResponse.usage,
+          evidenceNote:
+            'Observed successful OpenAI Responses API usage. Failed-retry usage, storage, and external tool costs are not inferred.',
+        }),
+        null,
+        2,
+      )}\n`,
+    );
   }
 
   const summary = {
@@ -840,6 +875,10 @@ async function main() {
     private_expected_review_status: privateOutcome?.actual_review_status,
     private_expected_quality_rating: privateOutcome?.actual_quality_rating,
     out_dir: options.outDir,
+    unit_economics_receipt:
+      rawResponse && providerStartedAt && providerCompletedAt
+        ? path.join(options.outDir, 'rubric-reviewer-unit-economics-receipt.json')
+        : undefined,
   };
   await writeFile(path.join(options.outDir, 'rubric-reviewer-summary.json'), `${JSON.stringify(summary, null, 2)}\n`);
   console.log(JSON.stringify(summary, null, 2));

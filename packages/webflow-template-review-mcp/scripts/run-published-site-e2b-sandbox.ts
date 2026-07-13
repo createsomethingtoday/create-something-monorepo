@@ -8,6 +8,8 @@ import process from 'node:process';
 
 import { Sandbox } from '@e2b/code-interpreter';
 
+import { createCollectorReceipt } from '../src/unit-economics.js';
+
 type CliOptions = {
   bundleDir?: string;
   outDir: string;
@@ -342,7 +344,9 @@ async function main() {
   const runId = job.run_id ?? `direct-e2b-${randomUUID()}`;
 
   let sandbox: Sandbox | undefined;
+  let sandboxInfo: { startedAt: Date; cpuCount: number; memoryMB: number } | undefined;
   let sandboxKilled = false;
+  let runCompleted = false;
   let bootstrapResult: CommandResultLike | undefined;
   let normalizerResult: unknown;
   const stdout: string[] = [];
@@ -365,6 +369,12 @@ async function main() {
     sandbox = options.template
       ? await Sandbox.create(options.template, sandboxOptions)
       : await Sandbox.create(sandboxOptions);
+    const observedInfo = await sandbox.getInfo({ requestTimeoutMs: options.requestTimeoutMs });
+    sandboxInfo = {
+      startedAt: observedInfo.startedAt,
+      cpuCount: observedInfo.cpuCount,
+      memoryMB: observedInfo.memoryMB,
+    };
 
     if (options.bootstrapBrowser) {
       const bootstrapCommand = stripRunnerFromBootstrap(await optionalRead(bootstrapFile));
@@ -407,6 +417,7 @@ async function main() {
       path.join(options.outDir, 'html-snapshot.html'),
     );
     const downloadedScreenshots = await downloadScreenshots(sandbox, job.artifacts?.screenshot_dir, path.join(options.outDir, 'screenshots'));
+    runCompleted = Boolean(downloadedOutput);
 
     if (downloadedOutput && options.normalize) {
       normalizerResult = await runNormalizer(options, downloadedOutput, options.outDir);
@@ -431,6 +442,10 @@ async function main() {
         html_snapshot_file: downloadedHtmlSnapshot,
         screenshots: downloadedScreenshots,
         normalized_out_dir: options.normalize ? path.join(options.outDir, 'normalized') : undefined,
+        unit_economics_receipt:
+          downloadedOutput && !options.keepSandbox
+            ? path.join(options.outDir, 'published-site-sandbox-unit-economics-receipt.json')
+            : undefined,
       },
     };
     await writeJson(path.join(options.outDir, 'published-site-sandbox-e2b-run-summary.json'), summary);
@@ -445,6 +460,21 @@ async function main() {
           sandbox_id: sandbox.sandboxId,
           killed: sandboxKilled,
         });
+      }
+      if (runCompleted && sandboxKilled && sandboxInfo) {
+        const completedAt = new Date().toISOString();
+        await writeJson(
+          path.join(options.outDir, 'published-site-sandbox-unit-economics-receipt.json'),
+          createCollectorReceipt({
+            packetId: runId,
+            startedAt: sandboxInfo.startedAt.toISOString(),
+            completedAt,
+            cpuCount: sandboxInfo.cpuCount,
+            memoryMiB: sandboxInfo.memoryMB,
+            evidenceNote:
+              'Completed direct E2B evidence collection. Sandbox resources came from Sandbox.getInfo; duration ends after coordinator kill completed. Storage and tool costs require separate observed inputs.',
+          }),
+        );
       }
     }
   }

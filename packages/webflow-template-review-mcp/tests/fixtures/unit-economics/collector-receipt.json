@@ -1,0 +1,28 @@
+{
+  "schema_version": "template-review-unit-economics.v1",
+  "packet_id": "synthetic-packet-001",
+  "lane": "evidence_collection",
+  "status": "completed",
+  "provider": "e2b",
+  "started_at": "2026-07-13T12:00:00.000Z",
+  "completed_at": "2026-07-13T12:02:00.000Z",
+  "duration_ms": 120000,
+  "sandbox": {
+    "vcpu": 2,
+    "memory_gib": 0.5,
+    "duration_basis": "coordinator_observed_sandbox_runtime"
+  },
+  "tokens": {
+    "status": "not_applicable",
+    "input_tokens": 0,
+    "cached_input_tokens": 0,
+    "output_tokens": 0,
+    "reasoning_tokens": 0,
+    "total_tokens": 0
+  },
+  "other_costs_usd": {
+    "storage": { "status": "synthetic", "usd": 0.0005 },
+    "tools": { "status": "synthetic", "usd": 0.0002 }
+  },
+  "evidence_note": "Synthetic completed collector receipt for deterministic tests."
+}
