@@ -46,7 +46,7 @@ WORKFLOW_PILOT_LIVE_RECEIPT="/tmp/workflow-live-review/live-review-adapter-recei
 pnpm --filter @create-something/workflow-shadow-pilot test:acceptance
 ```
 
-The receipt loader rejects extra fields, nonzero mutations, unknown tools, malformed hashes, widened limits, or any deviation from the exact read-only schema. Legacy bearer references and Clerk OAuth are not used: the production resource advertises `https://id.createsomething.space` through protected-resource metadata, and Identity retains signed, resource-bound token issuance and validation authority.
+The receipt loader rejects extra fields, nonzero mutations, unknown tools, malformed hashes, widened limits, or any deviation from the exact read-only schema. Legacy bearer references and retired third-party OAuth are not used: the production resource advertises `https://id.createsomething.space` through protected-resource metadata, and Identity retains signed, resource-bound token issuance and validation authority.
 
 ## Agent Legibility Contract
 

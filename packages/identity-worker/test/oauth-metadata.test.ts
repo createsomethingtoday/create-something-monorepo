@@ -45,6 +45,14 @@ test('identity worker renders oauth authorize page', async () => {
   const text = await response.text();
   assert.match(text, /Authorize MCP Access/);
   assert.match(text, /name="client_id" value="chatgpt"/);
+  assert.match(text, /--color-performance-paper:\s*#f3f3f0/);
+  assert.match(text, /--color-performance-panel:\s*#ffffff/);
+  assert.match(text, /--color-performance-ink:\s*#090909/);
+  assert.match(text, /--color-performance-pressure:\s*#e54800/);
+  assert.match(text, /--radius-performance-sm:\s*0/);
+  assert.match(text, /background:\s*var\(--color-performance-paper\)/);
+  assert.match(text, /border-radius:\s*var\(--radius-performance-sm\)/);
+  assert.doesNotMatch(text, /--bg-1|--card-border|backdrop-filter/);
 });
 
 test('Template Review authorize page describes the resource-bound application grant', async () => {
