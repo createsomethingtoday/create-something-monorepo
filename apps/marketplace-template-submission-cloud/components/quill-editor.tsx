@@ -18,6 +18,8 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
   const containerRef = useRef<HTMLDivElement | null>(null);
   const quillRef = useRef<Quill | null>(null);
   const onChangeRef = useRef(onChange);
+  const valueRef = useRef(value);
+  const lastEmittedValueRef = useRef<string | null>(null);
   const emitTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -25,12 +27,21 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
   }, [onChange]);
 
   useEffect(() => {
+    valueRef.current = value;
+
     const quill = quillRef.current;
     if (!quill) return;
 
     const sanitizedValue = sanitizeLongDescriptionHtml(value);
-    if (sanitizedValue !== quill.root.innerHTML) {
-      quill.root.innerHTML = sanitizedValue;
+    if (sanitizedValue === lastEmittedValueRef.current) {
+      lastEmittedValueRef.current = null;
+      return;
+    }
+    lastEmittedValueRef.current = null;
+
+    const currentValue = sanitizeLongDescriptionHtml(quill.getSemanticHTML());
+    if (sanitizedValue !== currentValue) {
+      syncEditorHtml(quill, sanitizedValue);
     }
   }, [value]);
 
@@ -55,6 +66,7 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
           if (!quill) return;
           normalizeEditorImages(quill.root);
           const sanitizedHtml = sanitizeLongDescriptionHtml(quill.root.innerHTML);
+          lastEmittedValueRef.current = sanitizedHtml;
           onChangeRef.current(sanitizedHtml);
         };
 
@@ -118,9 +130,9 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
         });
         labelToolbarControls(containerRef.current);
 
-        if (value) {
-          const sanitizedValue = sanitizeLongDescriptionHtml(value);
-          quill.root.innerHTML = sanitizedValue;
+        if (valueRef.current) {
+          const sanitizedValue = sanitizeLongDescriptionHtml(valueRef.current);
+          syncEditorHtml(quill, sanitizedValue);
         }
 
         handler = scheduleEmit;
@@ -151,6 +163,12 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
   }, []);
 
   return <div id={id} ref={containerRef} className="submission-quill" />;
+}
+
+function syncEditorHtml(quill: Quill, value: string): void {
+  // Values reach this boundary only after sanitization. Use Quill's public
+  // import path so its Delta model stays aligned with the rendered document.
+  quill.clipboard.dangerouslyPasteHTML(value, 'silent');
 }
 
 function normalizeExternalImageUrl(value: string): string {

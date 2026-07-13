@@ -233,6 +233,9 @@ importers:
       '@opennextjs/cloudflare':
         specifier: 1.8.0
         version: 1.8.0(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@playwright/test':
+        specifier: 1.58.2
+        version: 1.58.2
       '@types/node':
         specifier: 24.10.9
         version: 24.10.9
