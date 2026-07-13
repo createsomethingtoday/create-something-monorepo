@@ -25,6 +25,10 @@ import { schedulerOpenApi } from './http/openapi.js';
 import { createSchedulerMcpServer } from './mcp/server.js';
 import { GoogleCalendarPort } from './providers/google-calendar.js';
 import { ResendNotificationPort } from './providers/resend.js';
+import {
+  bookingActionExpiresAt,
+  buildBookingManageUrl
+} from './notifications/manage-link.js';
 import { RealtimeKitProvider } from './providers/realtimekit.js';
 import { DurableObjectBookingStore } from './storage/durable-booking-store.js';
 import { DurableAvailabilityOverrideStore } from './storage/durable-availability-overrides.js';
@@ -86,6 +90,7 @@ const HOST_OBJECT_NAME = 'micah-johnson';
 const eventCalendarDefault = 'micah@createsomething.io';
 const accountId = '9645bd52e640b8a4f40a3a55ff1dd75a';
 const publicOriginDefault = 'https://create-something-scheduler.createsomething.workers.dev';
+const bookingPublicOrigin = 'https://createsomething.agency';
 const clock = { now: () => new Date().toISOString() };
 
 export class SchedulerDurableObject extends DurableObject<Env> {
@@ -263,13 +268,35 @@ export class SchedulerDurableObject extends DurableObject<Env> {
   }
 
   async alarm(): Promise<void> {
+    const store = new DurableObjectBookingStore(this.ctx);
+    const actionSigner = new HmacActionTokenSigner(
+      required(this.env.ACTION_SIGNING_SECRET, 'ACTION_SIGNING_SECRET')
+    );
     const resend = new ResendNotificationPort({
       apiKey: required(this.env.RESEND_API_KEY, 'RESEND_API_KEY'),
       ...(this.env.RESEND_FROM ? { from: this.env.RESEND_FROM } : {})
     });
-    await new DurableObjectBookingStore(this.ctx).processDueReminders(
+    await store.processDueNotifications(
       clock.now(),
-      (job) => resend.sendReminder(job)
+      async (job) => {
+        const booking = await store.getBooking(job.bookingId);
+        if (!booking || booking.status === 'cancelled') {
+          throw new Error('resend_failed:booking_unavailable');
+        }
+        if (booking.slot.start !== job.slotStart) {
+          throw new Error('resend_failed:notification_stale');
+        }
+        const actionToken = await actionSigner.issue({
+          bookingId: booking.bookingId,
+          expiresAt: bookingActionExpiresAt(booking.slot)
+        });
+        const manageUrl = buildBookingManageUrl({
+          publicOrigin: bookingPublicOrigin,
+          bookingId: booking.bookingId,
+          actionToken
+        });
+        return resend.sendNotification(job, { booking, manageUrl });
+      }
     );
   }
 
@@ -582,9 +609,9 @@ export default {
       const service = serviceProxy(stub);
       try {
         return await handleApiRequest(request, service, scope, env.ACTION_SIGNING_SECRET ? {
-          issueActionToken: async (bookingId) => new HmacActionTokenSigner(env.ACTION_SIGNING_SECRET!).issue({
-                bookingId,
-                expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+          issueActionToken: async (booking) => new HmacActionTokenSigner(env.ACTION_SIGNING_SECRET!).issue({
+                bookingId: booking.bookingId,
+                expiresAt: bookingActionExpiresAt(booking.slot)
               })
         } : {});
       } catch {

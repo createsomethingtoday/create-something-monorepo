@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
 	buildFirstPartySchedulerUrl,
 	normalizeSchedulerLifecycleMessage,
+	normalizeSchedulerAccessUrl,
 	schedulerHandoffContext
 } from '../src/lib/scheduling/first-party.ts';
 
@@ -100,6 +101,25 @@ test('direct booking does not invent zero-valued Atlas attribution', () => {
 	assert.deepEqual(schedulerHandoffContext(), {});
 });
 
+test('emailed management access crosses the owned page only through a stripped fragment', () => {
+	const publicUrl =
+		'https://createsomething.agency/book?booking=booking_controlled#access=controlled.action-token';
+	assert.deepEqual(normalizeSchedulerAccessUrl(publicUrl), {
+		bookingId: 'booking_controlled',
+		actionToken: 'controlled.action-token',
+		cleanPath: '/book?booking=booking_controlled'
+	});
+	const iframe = new URL(buildFirstPartySchedulerUrl('?booking=booking_controlled&access=drop-me'));
+	assert.equal(iframe.searchParams.get('booking'), 'booking_controlled');
+	assert.equal(iframe.searchParams.has('access'), false);
+	assert.equal(normalizeSchedulerAccessUrl(
+		'https://createsomething.agency/book?booking=booking_controlled&access=must-not-be-query'
+	), null);
+	assert.equal(normalizeSchedulerAccessUrl(
+		'https://createsomething.agency/book?booking=../booking#access=controlled.action-token'
+	), null);
+});
+
 test('explicit test traffic survives the owned scheduler handoff without forwarding arbitrary query data', () => {
 	const iframe = new URL(
 		buildFirstPartySchedulerUrl('?traffic_class=test&source=homepage&secret=do-not-forward')
@@ -154,6 +174,18 @@ test('scheduler and parent wire the allowlisted lifecycle bridge across the exac
 	assert.ok(schedulerPage.includes("notifyParent('booking_initiated'"));
 	assert.ok(schedulerPage.includes("notifyParent('booking_completed'"));
 	assert.ok(schedulerPage.includes("'create-something:scheduler-lifecycle'"));
+});
+
+test('the parent strips emailed access before handing it to the exact scheduler frame', () => {
+	assert.ok(bookRoute.includes('normalizeSchedulerAccessUrl(window.location.href)'));
+	assert.ok(bookRoute.includes('window.history.replaceState'));
+	assert.ok(bookRoute.includes("type: 'create-something:scheduler-access'"));
+	assert.ok(bookRoute.includes('schedulerFrame?.contentWindow?.postMessage'));
+	assert.ok(schedulerPage.includes("event.data?.type === 'create-something:scheduler-access'"));
+	assert.ok(schedulerPage.includes("event.source !== parent"));
+	assert.ok(schedulerPage.includes("event.origin !== 'https://createsomething.agency'"));
+	assert.ok(schedulerPage.includes('sessionStorage.setItem(tokenKey(access.bookingId),access.actionToken)'));
+	assert.equal(bookRoute.includes('location.hash.slice'), false);
 });
 
 test('the client updates iframe attribution only after hydration', () => {

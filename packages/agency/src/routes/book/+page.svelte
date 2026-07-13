@@ -6,19 +6,32 @@
 	import {
 		buildFirstPartySchedulerUrl,
 		FIRST_PARTY_SCHEDULER_ORIGIN,
+		normalizeSchedulerAccessUrl,
 		normalizeSchedulerLifecycleMessage,
-		schedulerHandoffContext
+		schedulerHandoffContext,
+		type SchedulerAccess
 	} from '$lib/scheduling/first-party';
 
 	let schedulerHref = buildFirstPartySchedulerUrl();
 	let schedulerFrame: HTMLIFrameElement;
 	let handoffContext = schedulerHandoffContext();
+	let schedulerAccess: SchedulerAccess | null = null;
 
 	function sendSchedulerContext() {
 		schedulerFrame?.contentWindow?.postMessage(
 			{ type: 'create-something:scheduler-context', context: handoffContext },
 			FIRST_PARTY_SCHEDULER_ORIGIN
 		);
+		if (schedulerAccess) {
+			schedulerFrame?.contentWindow?.postMessage(
+				{
+					type: 'create-something:scheduler-access',
+					bookingId: schedulerAccess.bookingId,
+					actionToken: schedulerAccess.actionToken
+				},
+				FIRST_PARTY_SCHEDULER_ORIGIN
+			);
+		}
 	}
 
 	function receiveSchedulerLifecycle(event: MessageEvent) {
@@ -37,6 +50,10 @@
 
 	onMount(() => {
 		window.addEventListener('message', receiveSchedulerLifecycle);
+		schedulerAccess = normalizeSchedulerAccessUrl(window.location.href);
+		if (schedulerAccess) {
+			window.history.replaceState(window.history.state, '', schedulerAccess.cleanPath);
+		}
 		schedulerHref = buildFirstPartySchedulerUrl(window.location.search);
 		const warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
 		handoffContext = schedulerHandoffContext(window.location.search, warmupNotes);

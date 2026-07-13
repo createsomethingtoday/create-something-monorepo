@@ -55,7 +55,6 @@ Stop for explicit operator approval before:
 2. Deploying the new public preview Worker or creating its Durable Object migration.
 3. Registering or changing a public/custom domain, DNS, or Turnstile hostname.
 4. Sending a real booking invitation or reminder to any identity other than the specifically approved controlled test identity.
-5. Revoking the SavvyCal migration token or canceling SavvyCal.
 
 ## Controlled conferencing cutover
 
@@ -70,6 +69,6 @@ Stop for explicit operator approval before:
 ## Rollback
 
 - Set `vars.CONFERENCING_PROVIDER` back to `google_meet`, rerun package gates, deploy, and require operator status to report `google_meet`. This changes new booking commits only; existing first-party rooms remain readable/endable so lifecycle receipts and cleanup are preserved.
-- If the public scheduling link itself is unhealthy, restore the previous SavvyCal destination while preserving the Worker, Durable Object records, first-party receipts, and Google event identifiers for diagnosis.
+- If the public scheduling link itself is unhealthy, roll back Agency and Worker to the last green first-party deployments while preserving Durable Object records, first-party receipts, and Google event identifiers for diagnosis.
 - Do not delete RealtimeKit meetings or revoke the App token as part of an ordinary rollback. End active controlled rooms through `RoomService` first.
 - Rotate scheduler-specific secrets if a preview credential or action token is exposed. Do not rotate shared Resend or Turnstile credentials without confirming their other consumers.

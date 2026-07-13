@@ -86,6 +86,10 @@
 			"types": "./dist/performance/scheduler-document.d.ts",
 			"default": "./dist/performance/scheduler-document.js"
 		},
+		"./performance/scheduler-email": {
+			"types": "./dist/performance/scheduler-email.d.ts",
+			"default": "./dist/performance/scheduler-email.js"
+		},
 		"./components": {
 			"types": "./dist/components/index.d.ts",
 			"svelte": "./dist/components/index.js"

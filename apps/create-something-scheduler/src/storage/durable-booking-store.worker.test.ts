@@ -6,9 +6,99 @@ import type {
 } from '../application/booking-service.js';
 import { DurableObjectBookingStore } from './durable-booking-store.js';
 
+const isolatedObjectName = (name: string): string => `${name}-${crypto.randomUUID()}`;
+
 describe('DurableObjectBookingStore', () => {
+  it('queues immediate confirmation and scheduled reminder intent without an action credential', async () => {
+    const stub = env.SCHEDULER.get(env.SCHEDULER.idFromName(isolatedObjectName('notification-intent-test')));
+    const booking: Booking = {
+      bookingId: 'booking_notification_intent',
+      proposalId: 'proposal_notification_intent',
+      status: 'committed',
+      slot: { start: '2030-07-14T16:00:00Z', end: '2030-07-14T16:30:00Z' },
+      scheduler: { name: 'Controlled Test', email: 'controlled@example.com' },
+      provider: {
+        eventId: 'event_notification_intent',
+        meetUrl: 'https://meet.google.com/notification-intent'
+      }
+    };
+    const base = {
+      bookingId: booking.bookingId,
+      slotStart: booking.slot.start,
+      policyVersion: 'createsomething-together.v1',
+      status: 'pending' as const
+    };
+    const notifications = [
+      {
+        ...base,
+        notificationId: 'notification_confirmation_controlled',
+        receiptId: 'receipt_confirmation_controlled',
+        kind: 'confirmation' as const,
+        runAt: '2030-07-13T15:00:00Z'
+      },
+      {
+        ...base,
+        notificationId: 'notification_reminder_controlled',
+        receiptId: 'receipt_reminder_controlled',
+        kind: 'reminder' as const,
+        runAt: '2030-07-14T15:00:00Z'
+      }
+    ];
+
+    const readback = await runInDurableObject(stub, async (_instance, state) => {
+      const store = new DurableObjectBookingStore(state);
+      await store.commitExactlyOnce({
+        proposalId: booking.proposalId,
+        slot: booking.slot,
+        idempotencyKey: 'notification-intent-key',
+        receipt: {
+          receiptId: 'receipt_notification_intent',
+          status: 'committed',
+          policyVersion: base.policyVersion,
+          occurredAt: '2030-07-13T15:00:00Z',
+          nextActions: ['get_booking'],
+          bookingId: booking.bookingId
+        }
+      }, async () => ({ status: 'committed', booking, notifications }));
+      return {
+        alarm: await state.storage.getAlarm(),
+        rows: state.storage.sql.exec<{ payload_json: string }>(
+          'SELECT payload_json FROM reminders ORDER BY run_at, reminder_id'
+        ).toArray().map((row) => row.payload_json)
+      };
+    });
+
+    expect(readback.alarm).toBe(Date.parse('2030-07-13T15:00:00Z'));
+    expect(readback.rows).toHaveLength(2);
+    expect(readback.rows.join('\n')).not.toMatch(/actionToken|access=|controlled\.token/i);
+    expect(readback.rows.join('\n')).not.toContain(booking.scheduler.email);
+    expect(readback.rows.join('\n')).not.toContain(booking.provider.meetUrl);
+    expect(readback.rows.map((row) => JSON.parse(row))).toEqual(notifications);
+
+    const delivered: string[] = [];
+    const firstDelivery = await runInDurableObject(stub, async (_instance, state) => {
+      const store = new DurableObjectBookingStore(state);
+      return store.processDueNotifications('2030-07-13T15:00:00Z', async (job) => {
+        delivered.push(job.kind);
+        return { messageId: `message_${job.kind}` };
+      });
+    });
+    expect(firstDelivery).toEqual({ sent: 1, retryable: 0, failed: 0 });
+    expect(delivered).toEqual(['confirmation']);
+
+    const reminderDelivery = await runInDurableObject(stub, async (_instance, state) => {
+      const store = new DurableObjectBookingStore(state);
+      return store.processDueNotifications('2030-07-14T15:00:00Z', async (job) => {
+        delivered.push(job.kind);
+        return { messageId: `message_${job.kind}` };
+      });
+    });
+    expect(reminderDelivery).toEqual({ sent: 1, retryable: 0, failed: 0 });
+    expect(delivered).toEqual(['confirmation', 'reminder']);
+  });
+
   it('persists a committed booking and replays its idempotency key after a new store instance', async () => {
-    const objectId = env.SCHEDULER.idFromName('durable-idempotency-test');
+    const objectId = env.SCHEDULER.idFromName(isolatedObjectName('durable-idempotency-test'));
     const stub = env.SCHEDULER.get(objectId);
     const booking: Booking = {
       bookingId: 'booking_durable',
@@ -83,12 +173,12 @@ describe('DurableObjectBookingStore', () => {
   });
 
   it('binds idempotency keys to exact operations and treats rescheduled slots as claimed', async () => {
-    const stub = env.SCHEDULER.get(env.SCHEDULER.idFromName('durable-operation-binding-test'));
+    const stub = env.SCHEDULER.get(env.SCHEDULER.idFromName(isolatedObjectName('durable-operation-binding-test')));
     const original: Booking = {
       bookingId: 'booking_binding_a',
       proposalId: 'proposal_binding_a',
       status: 'committed',
-      slot: { start: '2026-07-14T16:00:00Z', end: '2026-07-14T16:30:00Z' },
+      slot: { start: '2030-07-14T16:00:00Z', end: '2030-07-14T16:30:00Z' },
       scheduler: { name: 'Binding A', email: 'binding-a@example.com' },
       provider: { eventId: 'event-binding-a', meetUrl: 'https://meet.google.com/binding-a' }
     };
@@ -216,7 +306,7 @@ describe('DurableObjectBookingStore', () => {
   });
 
   it('runs a due reminder once and records its delivery receipt', async () => {
-    const stub = env.SCHEDULER.get(env.SCHEDULER.idFromName('reminder-queue-test'));
+    const stub = env.SCHEDULER.get(env.SCHEDULER.idFromName(isolatedObjectName('reminder-queue-test')));
     const reminder = {
       reminderId: 'reminder_controlled',
       receiptId: 'receipt_reminder_controlled',
@@ -295,7 +385,7 @@ describe('DurableObjectBookingStore', () => {
   });
 
   it('retries failed reminder delivery twice, then records terminal failure without another alarm', async () => {
-    const stub = env.SCHEDULER.get(env.SCHEDULER.idFromName('reminder-retry-test'));
+    const stub = env.SCHEDULER.get(env.SCHEDULER.idFromName(isolatedObjectName('reminder-retry-test')));
     const booking: Booking = {
       bookingId: 'booking_retry',
       proposalId: 'proposal_retry',
@@ -388,5 +478,68 @@ describe('DurableObjectBookingStore', () => {
       alarm: null,
       receipt: { status: 'reminder_failed' }
     });
+  });
+
+  it('retries a booking notification without storing provider details in its receipt', async () => {
+    const stub = env.SCHEDULER.get(env.SCHEDULER.idFromName(isolatedObjectName('notification-retry-test')));
+    const booking: Booking = {
+      bookingId: 'booking_notification_retry',
+      proposalId: 'proposal_notification_retry',
+      status: 'committed',
+      slot: { start: '2026-07-14T16:00:00Z', end: '2026-07-14T16:30:00Z' },
+      scheduler: { name: 'Controlled Retry', email: 'retry@example.com' },
+      provider: {
+        eventId: 'event_notification_retry',
+        meetUrl: 'https://meet.google.com/notification-retry'
+      }
+    };
+    const notification = {
+      notificationId: 'notification_confirmation_retry',
+      receiptId: 'receipt_notification_confirmation_retry',
+      bookingId: booking.bookingId,
+      slotStart: booking.slot.start,
+      kind: 'confirmation' as const,
+      policyVersion: 'createsomething-together.v1',
+      runAt: '2030-07-13T15:00:00Z',
+      status: 'pending' as const
+    };
+    await runInDurableObject(stub, async (_instance, state) => {
+      await new DurableObjectBookingStore(state).commitExactlyOnce({
+        proposalId: booking.proposalId,
+        slot: booking.slot,
+        idempotencyKey: 'notification-retry-key',
+        receipt: {
+          receiptId: 'receipt_notification_retry_booking',
+          status: 'committed',
+          policyVersion: notification.policyVersion,
+          occurredAt: notification.runAt,
+          nextActions: ['get_booking'],
+          bookingId: booking.bookingId
+        }
+      }, async () => ({ status: 'committed', booking, notifications: [notification] }));
+    });
+    const fail = async () => { throw new Error('resend_retryable:503'); };
+    for (const now of [
+      '2030-07-13T15:00:00Z',
+      '2030-07-13T15:01:00Z',
+      '2030-07-13T15:02:00Z'
+    ]) {
+      await runInDurableObject(stub, async (_instance, state) =>
+        new DurableObjectBookingStore(state).processDueNotifications(now, fail)
+      );
+    }
+    const terminal = await runInDurableObject(stub, async (_instance, state) => ({
+      alarm: await state.storage.getAlarm(),
+      receipt: await new DurableObjectBookingStore(state).getReceipt(notification.receiptId)
+    }));
+    expect(terminal).toMatchObject({
+      alarm: null,
+      receipt: {
+        status: 'notification_failed',
+        bookingId: booking.bookingId,
+        reason: 'resend_retryable:503'
+      }
+    });
+    expect(JSON.stringify(terminal.receipt)).not.toMatch(/retry@example|notification-retry|access=/i);
   });
 });

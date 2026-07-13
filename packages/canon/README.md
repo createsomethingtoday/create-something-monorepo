@@ -203,6 +203,12 @@ coupling application markup or behavior to Svelte. Satoshi remains hosted by
 Fontshare; IBM Plex Mono is loaded from the pinned official package through
 jsDelivr for standalone documents.
 
+Transactional email uses the narrower
+`@create-something/canon/performance/scheduler-email` export. It provides
+literal colors, spacing, widths, and Satoshi/IBM Plex Mono system-fallback
+stacks for inline styles. Email copy and document composition remain owned by
+the product sending the message.
+
 Readable Control is the proof/readability substrate inside both modes. It is not
 a separate public identity.
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   BookingService,
   InMemoryBookingStore,
@@ -114,6 +114,9 @@ describe('scheduler HTTP API v1', () => {
       proposalSigner: signer,
       bookingStore: new InMemoryBookingStore()
     });
+    const issueActionToken = vi.fn(async (booking: { slot: { start: string } }) =>
+      `action:${booking.slot.start}`
+    );
     const prepareResponse = await handleApiRequest(
       new Request('https://scheduler.local/api/v1/bookings/prepare', {
         method: 'POST',
@@ -161,15 +164,18 @@ describe('scheduler HTTP API v1', () => {
         body: commitBody
       }),
       service,
-      { role: 'operator' }
+      { role: 'operator' },
+      { issueActionToken }
     );
     expect(operatorCommit.status).toBe(200);
     const committed = await operatorCommit.json() as {
       status?: string;
       booking?: { bookingId?: string };
       receiptId?: string;
+      actionToken?: string;
     };
     expect(committed).toMatchObject({ status: 'committed' });
+    expect(committed.actionToken).toBe('action:2026-07-14T16:00:00Z');
     expect(eventCount).toBe(1);
 
     const bookingId = committed.booking?.bookingId;
@@ -194,9 +200,14 @@ describe('scheduler HTTP API v1', () => {
         })
       }),
       service,
-      { role: 'operator' }
+      { role: 'operator' },
+      { issueActionToken }
     );
-    expect(await reschedule.json()).toMatchObject({ status: 'rescheduled' });
+    expect(await reschedule.json()).toMatchObject({
+      status: 'rescheduled',
+      actionToken: 'action:2026-07-16T18:00:00Z'
+    });
+    expect(issueActionToken).toHaveBeenCalledTimes(2);
     const cancel = await handleApiRequest(
       new Request(`https://scheduler.local/api/v1/bookings/${bookingId}/cancel`, {
         method: 'POST',

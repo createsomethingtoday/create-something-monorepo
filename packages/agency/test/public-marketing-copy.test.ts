@@ -22,6 +22,11 @@ test('public agency copy guard discovers every visitor-facing route', () => {
   assert.ok(files.includes('src/routes/cloudflare/+page.svelte'));
   assert.ok(files.includes('src/routes/products/ground/+page.svelte'));
   assert.ok(files.includes('src/routes/terms/+page.svelte'));
+  assert.ok(
+    files.some((file) =>
+      file.endsWith('apps/create-something-scheduler/src/notifications/booking-email.ts')
+    )
+  );
   assert.ok(!files.includes('src/routes/admin/funnel/+page.svelte'));
   assert.ok(!files.includes('src/routes/login/+page.svelte'));
 });

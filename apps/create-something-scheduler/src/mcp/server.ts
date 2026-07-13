@@ -139,11 +139,11 @@ const bookingReadOutputSchema = z.object({
 });
 const receiptReadOutputSchema = z.object({
   ...lifecycleMetadataSchema,
-  status: z.enum(['proposed', 'committed', 'rescheduled', 'cancelled', 'rejected', 'retryable', 'operator_required', 'reminder_sent', 'reminder_retryable', 'reminder_failed', 'override_applied', 'override_deleted']),
+  status: z.enum(['proposed', 'committed', 'rescheduled', 'cancelled', 'rejected', 'retryable', 'operator_required', 'reminder_sent', 'reminder_retryable', 'reminder_failed', 'notification_sent', 'notification_retryable', 'notification_failed', 'override_applied', 'override_deleted']),
   reason: z.string().optional(),
   receipt: z.object({
     receiptId: z.string(),
-    status: z.enum(['proposed', 'committed', 'rescheduled', 'cancelled', 'rejected', 'retryable', 'operator_required', 'reminder_sent', 'reminder_retryable', 'reminder_failed', 'override_applied', 'override_deleted']),
+    status: z.enum(['proposed', 'committed', 'rescheduled', 'cancelled', 'rejected', 'retryable', 'operator_required', 'reminder_sent', 'reminder_retryable', 'reminder_failed', 'notification_sent', 'notification_retryable', 'notification_failed', 'override_applied', 'override_deleted']),
     policyVersion: z.string(),
     occurredAt: z.string(),
     nextActions: z.array(z.string()),
