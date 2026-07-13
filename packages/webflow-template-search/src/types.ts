@@ -1,5 +1,5 @@
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
-export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+export type TemplateSort = 'popular' | 'best_selling' | 'newest' | 'price_asc' | 'price_desc';
 export type TemplateSearchView = 'full' | 'grid';
 export type AliasType = 'child_category';
 

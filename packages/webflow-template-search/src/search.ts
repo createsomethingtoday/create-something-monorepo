@@ -39,6 +39,8 @@ function orderTieBreaker(includeTextRank: boolean): string {
 function sortClause(sort: TemplateSort, options: { textRankTieBreaker?: boolean } = {}): string {
   const tieBreaker = orderTieBreaker(options.textRankTieBreaker === true);
   switch (sort) {
+    case 'best_selling':
+      return `COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.popularity_score, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
     case 'newest':
       return `COALESCE(d.published_date, '') DESC, COALESCE(d.popularity_score, 0) DESC, ${tieBreaker}`;
     case 'price_asc':

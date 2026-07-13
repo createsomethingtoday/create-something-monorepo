@@ -286,7 +286,8 @@ function candidateScore(candidate: WebflowTemplateImageCandidate, purpose: 'prim
   if (purpose === 'primary') {
     if (/\b(hover|secondary|alternate|alt|rollover|2)\b/i.test(name)) score -= 20;
     if (/\b(thumbnail|thumb)\b/i.test(name)) score += 10;
-    if (/\b(primary|main|default)\b/i.test(name)) score += 5;
+    if (/\bmain\b/i.test(name)) score += 6;
+    else if (/\b(primary|default)\b/i.test(name)) score += 5;
   } else {
     if (/\b(hover|secondary|alternate|alt|rollover|2)\b/i.test(name)) score += 20;
     if (/\b(primary|main|default)\b/i.test(name)) score -= 5;
@@ -295,7 +296,9 @@ function candidateScore(candidate: WebflowTemplateImageCandidate, purpose: 'prim
 }
 
 function chooseCandidate(candidates: WebflowTemplateImageCandidate[], purpose: 'primary' | 'secondary') {
-  return [...candidates].sort((a, b) => candidateScore(b, purpose) - candidateScore(a, purpose))[0]?.hostedUrl ?? null;
+  const candidate = [...candidates].sort((a, b) => candidateScore(b, purpose) - candidateScore(a, purpose))[0];
+  if (!candidate || (purpose === 'secondary' && candidateScore(candidate, purpose) < 0)) return null;
+  return candidate.hostedUrl;
 }
 
 function decodeHtmlAttribute(value: string) {
@@ -436,11 +439,10 @@ async function resolveTemplateCollectionIds(env: Env, siteId: string, token: str
   }
 }
 
-function explicitCmsImageRole(fieldName: string): 'main thumbnail' | 'secondary thumbnail' | 'carousel image' | null {
+function explicitCmsImageRole(fieldName: string): 'main thumbnail' | 'primary thumbnail' | 'secondary thumbnail' | 'carousel image' | null {
   const normalized = fieldName.trim().toLowerCase();
-  if (['main-thumbnail', 'main-thumbnail-image', 'thumbnail', 'thumbnail-image'].includes(normalized)) {
-    return 'main thumbnail';
-  }
+  if (['main-thumbnail', 'main-thumbnail-image'].includes(normalized)) return 'main thumbnail';
+  if (['thumbnail', 'thumbnail-image'].includes(normalized)) return 'primary thumbnail';
   if (['thumbnail-secondary', 'thumbnail-image-secondary'].includes(normalized)) return 'secondary thumbnail';
   if (['slider-images', 'carousel-images'].includes(normalized)) return 'carousel image';
   return null;

@@ -50,6 +50,9 @@ export function clamp(value: number, min: number, max: number): number {
 
 export function normalizeSort(value: string | null | undefined): TemplateSort {
   switch ((value ?? '').trim()) {
+    case 'best_selling':
+    case 'best-selling':
+      return 'best_selling';
     case 'newest':
     case 'approval-date-desc':
       return 'newest';
