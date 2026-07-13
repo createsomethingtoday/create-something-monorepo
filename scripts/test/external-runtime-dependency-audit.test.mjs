@@ -8,6 +8,11 @@ test('classifies every tracked Dify and Notion reference without current-stack b
   const second = buildInventory();
 
   assert.deepEqual(second, first);
+  assert.deepEqual(
+    Object.keys(first.summary.counts),
+    [...Object.keys(first.summary.counts)].sort(),
+    'serialized category counts must be stable across tracked and untracked file ordering'
+  );
   assert.equal(first.summary.blockerCount, 0);
   assert.ok(first.summary.trackedReferenceCount > 0);
   assert.equal(first.summary.counts.unclassified ?? 0, 0);

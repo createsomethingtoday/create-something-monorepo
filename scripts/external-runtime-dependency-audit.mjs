@@ -29,7 +29,8 @@ function trackedFiles() {
   })
     .split('\0')
     .filter(Boolean)
-    .filter((path) => !EXCLUDED.has(path));
+    .filter((path) => !EXCLUDED.has(path))
+    .sort((a, b) => a.localeCompare(b));
 }
 
 function classify(policy, path, term) {
@@ -138,10 +139,13 @@ export function buildInventory(policy = readPolicy()) {
   const entries = [...grouped.values()].sort((a, b) =>
     `${a.path}:${a.term}:${a.category}`.localeCompare(`${b.path}:${b.term}:${b.category}`)
   );
-  const counts = references.reduce((result, reference) => {
+  const unsortedCounts = references.reduce((result, reference) => {
     result[reference.category] = (result[reference.category] ?? 0) + 1;
     return result;
   }, {});
+  const counts = Object.fromEntries(
+    Object.entries(unsortedCounts).sort(([left], [right]) => left.localeCompare(right))
+  );
 
   return {
     policyVersion: policy.version,

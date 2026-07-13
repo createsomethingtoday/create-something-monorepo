@@ -5,9 +5,9 @@
     "trackedReferenceCount": 15893,
     "trackedFileCount": 773,
     "counts": {
+      "approved_rollback": 846,
       "client_compatibility": 13630,
-      "historical_evidence": 1417,
-      "approved_rollback": 846
+      "historical_evidence": 1417
     },
     "blockerCount": 0
   },
