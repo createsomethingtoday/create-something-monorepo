@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "check": "tsc --noEmit",
+    "test:browser": "playwright test",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
@@ -22,6 +23,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
     "@opennextjs/cloudflare": "1.8.0",
+    "@playwright/test": "1.58.2",
     "@types/node": "^24.10.9",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
