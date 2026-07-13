@@ -3027,7 +3027,7 @@ describe('webflow-template-search worker', () => {
     }
   });
 
-  it('prefers a main CMS thumbnail over a generic thumbnail field', async () => {
+  it('prefers a main CMS thumbnail without promoting a generic primary to secondary', async () => {
     const ecovoltAsset = {
       ...PUBLISHED_ASSETS[0],
       id: 'recEcovolt',
@@ -3058,7 +3058,6 @@ describe('webflow-template-search worker', () => {
               name: 'Ecovolt',
               thumbnail: { url: 'https://cdn.prod.website-files.com/site/ecovolt-generic.webp' },
               'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/ecovolt-main.webp' },
-              'thumbnail-image-secondary': { url: 'https://cdn.prod.website-files.com/site/ecovolt-secondary.webp' },
             },
           },
         ],
@@ -3084,9 +3083,7 @@ describe('webflow-template-search worker', () => {
       };
 
       expect(payload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-main.webp');
-      expect(payload.items[0]?.thumbnail_image_secondary_url).toBe(
-        'https://cdn.prod.website-files.com/site/ecovolt-secondary.webp',
-      );
+      expect(payload.items[0]?.thumbnail_image_secondary_url).toBeNull();
     } finally {
       fetchMock.mockRestore();
       close();
