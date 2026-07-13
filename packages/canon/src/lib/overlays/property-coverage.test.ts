@@ -22,7 +22,7 @@ describe('Canon property overlay coverage', () => {
 			mismatchedSourcePackage: 0,
 			missingModalities: 0,
 			excludedPropertySurfaces: 2,
-			excludedCanonConsumers: 7
+			excludedCanonConsumers: 8
 		});
 		expect(report.requiredPackages.map((entry) => entry.packageName)).toEqual([
 			'@create-something/atlas-studio-desktop',

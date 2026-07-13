@@ -22,6 +22,7 @@
 		handoff: PerformanceHandoff;
 		steps?: PerformanceHandoffStep[];
 		artifactPlacement?: PerformanceHandoffArtifactPlacement;
+		headingLevel?: 'h1' | 'h2';
 		actions?: Snippet;
 		aside?: Snippet;
 		ariaLabel?: string;
@@ -34,6 +35,7 @@
 		handoff,
 		steps = [],
 		artifactPlacement = 'sidecar',
+		headingLevel = 'h2',
 		actions,
 		aside,
 		ariaLabel = eyebrow
@@ -48,7 +50,7 @@
 >
 	<div class="performance-conversion-handoff__copy">
 		<span class="performance-conversion-handoff__eyebrow">{eyebrow}</span>
-		<h2>{title}</h2>
+		<svelte:element this={headingLevel}>{title}</svelte:element>
 		{#if description}<p>{description}</p>{/if}
 		{#if actions}<div class="performance-conversion-handoff__actions">{@render actions()}</div>{/if}
 	</div>
@@ -101,7 +103,7 @@
 	.performance-conversion-handoff__eyebrow,
 	.performance-conversion-handoff dt { font-family: var(--font-mono); font-size: 0.72rem; font-weight: var(--font-semibold, 600); text-transform: uppercase; }
 	.performance-conversion-handoff__eyebrow { padding: 0.42rem 0.62rem; border: 1px solid rgba(255,255,255,.44); }
-	.performance-conversion-handoff h2 { max-width: 13ch; margin: 0; font-family: var(--font-performance-display, var(--font-display, var(--font-sans))); font-size: clamp(3rem, 6vw, 6rem); font-weight: var(--font-performance-display-weight, var(--font-medium, 500)); font-kerning: normal; font-feature-settings: "kern" 1, "liga" 1; letter-spacing: var(--tracking-performance-display, -0.03em); line-height: var(--leading-performance-display, 0.94); text-wrap: balance; }
+	.performance-conversion-handoff :is(h1, h2) { max-width: 13ch; margin: 0; font-family: var(--font-performance-display, var(--font-display, var(--font-sans))); font-size: clamp(3rem, 6vw, 6rem); font-weight: var(--font-performance-display-weight, var(--font-medium, 500)); font-kerning: normal; font-feature-settings: "kern" 1, "liga" 1; letter-spacing: var(--tracking-performance-display, -0.03em); line-height: var(--leading-performance-display, 0.94); text-wrap: balance; }
 	.performance-conversion-handoff__copy p { max-width: 40rem; margin: 0; color: rgba(255,255,255,.7); font-size: 1.08rem; line-height: 1.5; }
 	.performance-conversion-handoff__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.75rem; }
 	.performance-conversion-handoff__boundary { display: grid; align-content: space-between; gap: 3rem; border-left: 1px solid rgba(255,255,255,.32); background: color-mix(in srgb, var(--handoff-accent) 18%, #090909); }
@@ -126,7 +128,7 @@
 	.performance-conversion-handoff[data-artifact-placement='full-width'] .performance-conversion-handoff__copy { grid-area: copy; min-height: auto; padding-block: clamp(3.5rem, 7vw, 6rem); }
 	.performance-conversion-handoff[data-artifact-placement='full-width'] .performance-conversion-handoff__boundary { grid-area: boundary; align-content: center; }
 	.performance-conversion-handoff[data-artifact-placement='full-width'] .performance-conversion-handoff__artifact { grid-area: artifact; }
-	.performance-conversion-handoff[data-artifact-placement='full-width'] h2 { max-width: 12ch; font-size: clamp(3rem, 5.4vw, 5.5rem); }
+	.performance-conversion-handoff[data-artifact-placement='full-width'] :is(h1, h2) { max-width: 12ch; font-size: clamp(3rem, 5.4vw, 5.5rem); }
 
 	@media (max-width: 50rem) {
 		.performance-conversion-handoff { grid-template-columns: 1fr; }

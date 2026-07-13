@@ -106,7 +106,8 @@ test('booking carries the Field Report handoff into the owned mapping scheduler'
   const book = readFileSync(new URL('../src/routes/book/+page.svelte', import.meta.url), 'utf8');
 
   assert.match(book, /Map the workflow before the build decision/);
-  assert.match(book, /30 \/ 60 min/);
+  assert.match(book, /30- or 60-minute/);
+  assert.match(book, /Choose 30 or 60 minutes/);
   assert.match(book, /first-party scheduler/);
   assert.match(book, /schedulerHandoffContext/);
 });

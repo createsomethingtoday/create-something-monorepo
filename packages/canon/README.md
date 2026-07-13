@@ -196,6 +196,13 @@ Performance Lab has two coordinated surface modes:
   receipts, and recovery primary on Atlas, product, proof, booking, and operator
   surfaces.
 
+Standalone HTML products such as Workers consume the narrow
+`@create-something/canon/performance/scheduler-document` export. It supplies the
+versioned Performance font links, design tokens, and typography roles without
+coupling application markup or behavior to Svelte. Satoshi remains hosted by
+Fontshare; IBM Plex Mono is loaded from the pinned official package through
+jsDelivr for standalone documents.
+
 Readable Control is the proof/readability substrate inside both modes. It is not
 a separate public identity.
 

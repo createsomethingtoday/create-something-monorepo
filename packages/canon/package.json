@@ -80,6 +80,10 @@
 		"./styles/tokens.dtcg.json": "./dist/styles/tokens.dtcg.json",
 		"./styles/tokens.figma.json": "./dist/styles/tokens.figma.json",
 		"./styles/canon.json": "./dist/styles/canon.json",
+		"./performance/scheduler-document": {
+			"types": "./dist/performance/scheduler-document.d.ts",
+			"default": "./dist/performance/scheduler-document.js"
+		},
 		"./components": {
 			"types": "./dist/components/index.d.ts",
 			"svelte": "./dist/components/index.js"
