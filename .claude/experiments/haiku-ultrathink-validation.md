@@ -328,7 +328,7 @@ All issues labeled with `experiment:haiku-ultrathink` and appropriate complexity
 
 **T9: Implement OAuth flow with PKCE**
 - ✅ Haiku verified: OAuth already implemented (N/A)
-- ✅ Found: LinkedIn OAuth, Stripe Connect, Clerk integration
+- ✅ Found: LinkedIn OAuth, Stripe Connect, CREATE SOMETHING Identity integration
 - ✅ Security: All use proper state parameters and HTTPS
 - 📊 Haiku time: ~2 minutes verification
 
@@ -755,7 +755,7 @@ All issues labeled with `experiment:haiku-ultrathink` and appropriate complexity
 - Found OAuth already implemented in multiple locations:
   - LinkedIn OAuth (packages/io/src/routes/api/linkedin/auth)
   - Stripe OAuth/Connect flow
-  - Identity worker with Clerk integration
+  - CREATE SOMETHING Identity Worker with owned OAuth and JWKS
 - All existing implementations use proper security patterns
 
 **Results**:

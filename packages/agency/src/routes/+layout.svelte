@@ -46,9 +46,10 @@
   });
 
   const navLinks = [
-    { label: 'How I Work', href: '/services' },
-    { label: 'Stack Boundary', href: '/stack' },
-    { label: 'Products', href: '/products' }
+    { label: 'How It Works', href: '/services' },
+    { label: 'What You Keep', href: '/stack' },
+    { label: 'Products', href: '/products' },
+    { label: 'Field Reports', href: '/field-reports' }
   ];
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
@@ -59,9 +60,10 @@
       title: 'Commercial',
       ariaLabel: 'Commercial paths',
       links: [
-        { label: 'How I Work', href: '/services' },
-        { label: 'Stack Boundary', href: '/stack' },
+        { label: 'How It Works', href: '/services' },
+        { label: 'What You Keep', href: '/stack' },
         { label: 'Products', href: '/products' },
+        { label: 'Field Reports', href: '/field-reports' },
         { label: 'About', href: '/about' }
       ]
     },
@@ -82,7 +84,6 @@
         { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
         { label: 'Dify Agent Eval Gates', href: '/dify/agent-eval-gates' },
         { label: 'Ship Dify With MCP', href: '/dify/ship-dify-app-with-mcp-tools' },
-        { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
         {
           label: agencyCoreMessaging.governanceChecklistLabel,
           href: agencyCoreMessaging.governanceChecklistHref
@@ -117,7 +118,7 @@
   const quickAccessItems = [
     {
       id: 'nav-services',
-      label: 'How I Work',
+      label: 'How It Works',
       description: 'Workflow maps, controlled pilots, and operating evidence',
       href: '/services',
       icon: '🔨',
@@ -134,8 +135,8 @@
     },
     {
       id: 'nav-stack',
-      label: 'Stack Boundary',
-      description: 'Vendor boundaries, ownership, and the control layer around the workflow',
+      label: 'What You Keep',
+      description: 'Your accounts, data, approval rights, and operating record',
       href: '/stack',
       icon: '🧭',
       keywords: [
@@ -230,28 +231,20 @@
       ]
     },
     {
-      id: 'nav-dify-n8n',
-      label: 'Dify vs n8n',
-      description: 'How n8n workflows Cloudflare runtime and Dify agent apps fit together',
-      href: '/dify/n8n-vs-dify',
-      icon: 'DN',
-      keywords: [
-        'dify',
-        'n8n',
-        'workflow automation',
-        'agent apps',
-        'cloudflare',
-        'mcp',
-        'comparison'
-      ]
-    },
-    {
       id: 'nav-products',
       label: 'Products',
       description: 'Atlas, Signal, Decision, and Proof surfaces for controlled AI workflows',
       href: '/products',
       icon: '📦',
       keywords: ['portfolio', 'tools', 'integrations', 'product surfaces', 'proof surfaces']
+    },
+    {
+      id: 'nav-field-reports',
+      label: 'Field Reports',
+      description: 'Measured workflow results, failed gates, evidence, and human decision boundaries',
+      href: '/field-reports',
+      icon: 'FR',
+      keywords: ['field reports', 'case studies', 'evidence', 'results', 'proof']
     },
     {
       id: 'nav-self-map',
@@ -437,5 +430,12 @@
 <style>
   .layout-root {
     background: var(--color-performance-paper, #f3f3f0);
+  }
+
+  @media (max-height: 47.5rem) and (min-width: 48rem) {
+    :global(.layout-root .mode-indicator) {
+      top: calc(72px + var(--space-md, 1rem));
+      bottom: auto;
+    }
   }
 </style>

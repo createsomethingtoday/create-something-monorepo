@@ -9,6 +9,7 @@
     type PerformanceCampaignProof,
     type PerformanceCondition
   } from '$canon/components/performance';
+  import { traceControlPlaneMedia } from '$canon/components/performance/media/trace-control-plane';
 
   const featuredCourse = PATHS[0] ?? null;
   const featuredLessons = featuredCourse?.lessons ?? [];
@@ -65,10 +66,7 @@
     eyebrow="CREATE SOMETHING Learn"
     title="Build workflows operators can run and explain"
     lede="Practical paths for business owners becoming operators. Start in the OpenAI ecosystem with the Codex app, create a RapidAPI-backed MCP, then use Canon image rules to make boundaries, policy, proof, and handoff visible."
-    media={{
-      src: '/learning/codex-mcp/codex-mcp-loop.png',
-      alt: 'An operator learning loop connecting the Codex app, a local MCP package, and evidence results'
-    }}
+    media={traceControlPlaneMedia}
     proof={proofItems}
   >
     {#snippet actions()}

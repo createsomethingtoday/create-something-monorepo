@@ -38,6 +38,8 @@ pnpm-debug.log*
 coverage
 .vitest
 output/playwright/
+output/guard-auth-adoption/
+.playwright-cli/
 
 # Temporary files
 *.tmp
@@ -47,6 +49,14 @@ output/playwright/
 # Client apps (in development)
 # Keep apps ignored by default, but track Meeting Capture.
 apps/*
+!apps/create-something-scheduler/
+!apps/create-something-scheduler/**
+!apps/guard-performance-lab/
+!apps/guard-performance-lab/**
+apps/guard-performance-lab/.data/
+apps/guard-performance-lab/.svelte-kit/
+apps/guard-performance-lab/build/
+apps/guard-performance-lab/node_modules/
 !apps/meeting-capture/
 !apps/meeting-capture/**
 !apps/atlas-studio-desktop/

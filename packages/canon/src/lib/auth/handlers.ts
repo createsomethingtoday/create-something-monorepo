@@ -10,7 +10,7 @@ import { json } from '@sveltejs/kit';
 import { setSessionCookies } from './cookies.js';
 import { getAuth0Config } from './auth0.js';
 import type { TokenResponse, User } from './types.js';
-import { generateCorrelationId, logError } from '../utils/index.js';
+import { generateCorrelationId, logError } from '../utils/errors.js';
 import type { ApiResponse } from '../types/index.js';
 import type { IdentityUser } from '../api/identity-client.js';
 
@@ -108,6 +108,10 @@ interface AuthHandlerConfig {
 	transformBody?: (body: unknown) => unknown;
 	/** Optional domain override for cookies (e.g., '.createsomething.space') */
 	cookieDomain?: string;
+	/** Optional identity service base URL (runtime platform env remains the default). */
+	identityBaseUrl?: string;
+	/** Optional cookie security override for controlled local integration tests. */
+	isProduction?: boolean;
 }
 
 interface AuthResponse {
@@ -133,12 +137,28 @@ interface AuthResponse {
  * ```
  */
 export function createAuthHandler(config: AuthHandlerConfig) {
-	return async ({ request, cookies }: { request: Request; cookies: Cookies }) => {
+	return async ({ request, cookies, fetch: runtimeFetch, platform }: {
+		request: Request;
+		cookies: Pick<Cookies, 'set'>;
+		fetch?: typeof globalThis.fetch;
+		platform?: { env?: { ENVIRONMENT?: string; IDENTITY_API_URL?: string } };
+	}) => {
 		try {
 			const rawBody = await request.json();
 			const body = config.transformBody ? config.transformBody(rawBody) : rawBody;
+			const processEnvironment =
+				typeof process !== 'undefined' ? process.env : undefined;
+			const identityWorker = (
+				config.identityBaseUrl ??
+				platform?.env?.IDENTITY_API_URL ??
+				processEnvironment?.IDENTITY_API_URL ??
+				IDENTITY_WORKER
+			).replace(/\/+$/, '');
+			const environment = platform?.env?.ENVIRONMENT ?? processEnvironment?.ENVIRONMENT;
+			const secureCookies =
+				config.isProduction ?? (environment === undefined || environment === 'production');
 
-			const response = await fetch(`${IDENTITY_WORKER}${config.endpoint}`, {
+			const response = await (runtimeFetch ?? globalThis.fetch)(`${identityWorker}${config.endpoint}`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(body),
@@ -154,7 +174,7 @@ export function createAuthHandler(config: AuthHandlerConfig) {
 			const cookieOptions = {
 				path: '/',
 				httpOnly: true,
-				secure: true,
+				secure: secureCookies,
 				sameSite: 'lax' as const,
 			};
 
@@ -180,22 +200,35 @@ export function createAuthHandler(config: AuthHandlerConfig) {
 /**
  * Pre-configured login handler
  */
-export function createLoginHandler(options?: { cookieDomain?: string }) {
+export function createLoginHandler(options?: {
+	cookieDomain?: string;
+	identityBaseUrl?: string;
+	isProduction?: boolean;
+}) {
 	return createAuthHandler({
 		endpoint: '/v1/auth/login',
 		action: 'Login',
 		cookieDomain: options?.cookieDomain,
+		identityBaseUrl: options?.identityBaseUrl,
+		isProduction: options?.isProduction,
 	});
 }
 
 /**
  * Pre-configured signup handler
  */
-export function createSignupHandler(options?: { source?: string; cookieDomain?: string }) {
+export function createSignupHandler(options?: {
+	source?: string;
+	cookieDomain?: string;
+	identityBaseUrl?: string;
+	isProduction?: boolean;
+}) {
 	return createAuthHandler({
 		endpoint: '/v1/auth/signup',
 		action: 'Signup',
 		cookieDomain: options?.cookieDomain,
+		identityBaseUrl: options?.identityBaseUrl,
+		isProduction: options?.isProduction,
 		transformBody: (body) => ({
 			...(body as object),
 			...(options?.source && { source: options.source }),

@@ -16,6 +16,7 @@
     type PerformanceCondition,
     type PerformanceDecisionItem
   } from '@create-something/canon';
+  import { traceControlPlaneMedia } from '@create-something/canon/components/performance/media/trace-control-plane';
   import type { Paper } from '@create-something/canon/types';
 
   let { data }: { data: PageData } = $props();
@@ -239,7 +240,7 @@
   eyebrow="CREATE SOMETHING .io"
   title="Research for automation you can defend."
   lede="CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer for operators. The goal is evidence you can carry into the next build, review, or production decision."
-  media={{ src: '/og-image.svg', alt: 'A terminal-native research artifact showing the CREATE SOMETHING research system' }}
+  media={traceControlPlaneMedia}
   proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
 >
   {#snippet actions()}

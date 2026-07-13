@@ -8,9 +8,9 @@
 
 | Metric | Value |
 |--------|-------|
-| **Total Apps Scanned** | 590 |
-| **Apps Accessible** | 590 |
-| **Unique Client IDs** | 572 |
+| **Total Apps Scanned** | 589 |
+| **Apps Accessible** | 589 |
+| **Unique Client IDs** | 571 |
 | **Duplicate Client ID Groups** | 8 |
 | **Apps with Duplicate IDs** | 26 |
 | **Errors** | 0 |
@@ -157,7 +157,7 @@ The following apps share the same Client ID, which may cause authentication conf
 
 | Issue | Apps Affected |
 |-------|---------------|
-| Unique Client IDs | 564 apps |
+| Unique Client IDs | 563 apps |
 
 ---
 
@@ -178,7 +178,7 @@ The following apps share the same Client ID, which may cause authentication conf
 ## Appendix: All Apps by Client ID
 
 <details>
-<summary>Click to expand full list (590 apps)</summary>
+<summary>Click to expand full list (589 apps)</summary>
 
 ### Sample of first 50 apps (alphabetically by name)
 
@@ -226,7 +226,6 @@ The following apps share the same Client ID, which may cause authentication conf
 | 40 | Journalist AI SEO Writer v1 | `cf129fda...` | `65956fcc...` |
 | 41 | LILT Connector | `8435ebe0...` | `681d31ed...` |
 | 42 | LottieFiles for Webflow | `12c123c3...` | `637825ca...` |
-| 43 | n8n Cloud | `7a70d745...` | `63881938...` |
 | 44 | old older Optibase - A/B testing for Webflows | `bf25dd81...` ⚠️ | `633b3aa7...` |
 | 45 | old quizell - test | `48810e17...` | `65b39c23...` |
 | 46 | Quizell Product Quiz | `48810e17...` | `65b39c23...` |

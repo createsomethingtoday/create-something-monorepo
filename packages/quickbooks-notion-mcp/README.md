@@ -241,7 +241,7 @@ This is a custom MCP integration built by [CREATE SOMETHING Agency](https://crea
 - **+ 1 AI platform configured**: $250
 - **Managed hosting**: Starting at $99/mo
 
-[Book a Discovery Call](https://savvycal.com/createsomething/together)
+[Book a Mapping Session](https://createsomething.agency/book)
 
 ## License
 

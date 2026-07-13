@@ -108,7 +108,10 @@ Validation:
 Public platform language follows
 [Conviction Without Dependence](https://createsomething.ltd/canon/concepts/conviction-without-dependence):
 
-> Built primarily with OpenAI Codex. Designed to outlast any model.
+> Built with OpenAI Codex. Designed to remain yours.
+
+On public decision routes, express this conviction in plain customer ownership
+language before listing the technical artifacts that make portability real.
 
 Apply the contract in this order:
 
@@ -169,8 +172,9 @@ The managed portfolio covers the high-intent public funnel:
 | Core services | `/services` | - |
 | Stack boundary | `/stack` | - |
 | Workflow tool stack | `/partners` | `/cloudflare` |
-| Dify | `/dify` | `/dify/mcp-control-plane`, `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`, `/dify/template-marketplace-proof`, `/dify/n8n-vs-dify` |
+| Dify | `/dify` | `/dify/mcp-control-plane`, `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`, `/dify/template-marketplace-proof` |
 | Products | `/products` | - |
+| Field Reports | `/field-reports` | `/field-reports/template-review` |
 | Business use case | `/use-cases/business` | - |
 | Enterprise use case | `/use-cases/enterprise` | - |
 
@@ -183,7 +187,6 @@ The Dify cluster is the first multi-page content system:
 | `/dify/agent-eval-gates` | Operations | Show the gates that prove a Dify workflow can operate safely. |
 | `/dify/ship-dify-app-with-mcp-tools` | Implementation | Give a practical shipping checklist for Dify plus MCP systems. |
 | `/dify/template-marketplace-proof` | Implementation | Package the first Dify marketplace template as public proof without leaking private delivery evidence. |
-| `/dify/n8n-vs-dify` | Comparison | Capture comparison intent and route it toward the governed Dify workflow path. |
 
 The durable SEO/AEO strategy is:
 
@@ -601,6 +604,37 @@ pnpm --filter=agency exec tsc --noEmit
 # Deploy
 pnpm --filter=agency build && wrangler pages deploy packages/agency/.svelte-kit/cloudflare --project-name=create-something-agency
 ```
+
+## Commercial clarity evidence
+
+Do not use CTA clicks as a proxy for completed bookings. The commercial funnel
+report classifies sessions as `external`, `internal`, `preview`, `automated`, or
+`test`, then reports the owned booking stages separately:
+
+```bash
+# Inspect the read-only SQL before running it
+pnpm --filter @create-something/agency analytics:commercial-funnel -- --days 30
+
+# Execute the same SELECT-only report against remote D1
+CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a \
+  pnpm --filter @create-something/agency analytics:commercial-funnel -- --days 30 --remote
+```
+
+Use `?traffic_class=internal` or `?traffic_class=test` at the start of a
+controlled production session. The server derives preview and automated traffic
+from the host and user agent and stores the classification in unified event
+metadata. The first-party scheduler returns only allowlisted lifecycle actions
+and privacy-safe opaque lineage to the `.agency` parent; names and email
+addresses remain inside the scheduler booking boundary.
+
+Capture a deterministic snapshot of the five public decision routes with:
+
+```bash
+pnpm --filter @create-something/agency research:clarity-capture
+```
+
+The capture hashes visible copy, fails closed when a route is unavailable, and
+is useful for before/after review. It is not evidence of human comprehension.
 
 ## Auth0 And Infisical
 

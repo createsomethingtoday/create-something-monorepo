@@ -9,6 +9,10 @@ export default declareComponent(TestimonialSection, {
   group: 'Half Dozen',
   options: { ssr: true },
   props: {
-    testimonialPhoto: props.Text({ name: 'Testimonial photo URL', defaultValue: '/assets/testimonial-crowd.png' })
+    assetBaseUrl: props.Text({ name: 'Asset base URL', defaultValue: 'https://halfdozen-landing.pages.dev' }),
+    testimonialPhoto: props.Text({
+      name: 'Primary testimonial photo path',
+      defaultValue: '/assets/testimonials/stereo-punks-photo.webp'
+    })
   }
 });

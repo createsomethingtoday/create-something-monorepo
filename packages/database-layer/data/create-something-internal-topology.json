@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-07-10T20:32:17.251Z",
+    "generatedAt": "2026-07-13T01:55:01.026Z",
     "rootPath": ".",
-    "packageCount": 185,
-    "appCount": 6,
-    "workerCount": 99,
+    "packageCount": 194,
+    "appCount": 8,
+    "workerCount": 101,
     "clientOverlayCount": 6,
     "policyCount": 56,
-    "guideCount": 54,
+    "guideCount": 55,
     "configCount": 40
   },
   "nodes": [
@@ -89,6 +89,24 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
+      "atlasNodeId": "atlas_create-something_app_create-something-create-something-scheduler-apps-create-something-scheduler",
+      "title": "@create-something/create-something-scheduler",
+      "path": "apps/create-something-scheduler",
+      "tier": "Automation",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at apps/create-something-scheduler.",
+      "tags": [
+        "package",
+        "app",
+        "mixed"
+      ],
+      "packageName": "@create-something/create-something-scheduler",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:app:create-something-even-operator-brief-apps-even-operator-brief",
       "atlasNodeId": "atlas_create-something_app_create-something-even-operator-brief-apps-even-operator-brief",
       "title": "@create-something/even-operator-brief",
@@ -104,6 +122,24 @@
       ],
       "packageName": "@create-something/even-operator-brief",
       "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab",
+      "atlasNodeId": "atlas_create-something_app_create-something-guard-performance-lab-apps-guard-performance-lab",
+      "title": "@create-something/guard-performance-lab",
+      "path": "apps/guard-performance-lab",
+      "tier": "Judgment",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at apps/guard-performance-lab.",
+      "tags": [
+        "package",
+        "app",
+        "mixed"
+      ],
+      "packageName": "@create-something/guard-performance-lab",
+      "runtime": "cloudflare, node"
     },
     {
       "id": "substrate:create-something:app:create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud",
@@ -542,6 +578,23 @@
         "canvas"
       ],
       "packageName": "@create-something/ascii-renderer",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-auth-platform-packages-auth-platform",
+      "atlasNodeId": "atlas_create-something_package_create-something-auth-platform-packages-auth-platform",
+      "title": "@create-something/auth-platform",
+      "path": "packages/auth-platform",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Framework-neutral machine contract and integration validator for the CREATE SOMETHING auth platform.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/auth-platform",
       "runtime": "node"
     },
     {
@@ -3647,6 +3700,114 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "atlasNodeId": "atlas_create-something_package_create-something-workflow-compiler-packages-workflow-compiler",
+      "title": "@create-something/workflow-compiler",
+      "path": "packages/workflow-compiler",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "Compile versioned operating workflows into governed runtime, replay, and operator-console artifacts.",
+      "tags": [
+        "package",
+        "package",
+        "automation"
+      ],
+      "packageName": "@create-something/workflow-compiler",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "atlasNodeId": "atlas_create-something_package_create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "title": "@create-something/workflow-evidence-extractor",
+      "path": "packages/workflow-evidence-extractor",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "Extract provenance-backed workflow-definition proposals from bounded operating evidence.",
+      "tags": [
+        "package",
+        "package",
+        "automation"
+      ],
+      "packageName": "@create-something/workflow-evidence-extractor",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
+      "atlasNodeId": "atlas_create-something_package_create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
+      "title": "@create-something/workflow-historical-context-reconciler",
+      "path": "packages/workflow-historical-context-reconciler",
+      "tier": "Judgment",
+      "surface": "package",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "Reconcile sanitized historical workflow context without exposing private feedback or reviewer identity.",
+      "tags": [
+        "package",
+        "package",
+        "judgment"
+      ],
+      "packageName": "@create-something/workflow-historical-context-reconciler",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
+      "atlasNodeId": "atlas_create-something_package_create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
+      "title": "@create-something/workflow-observation-reconciler",
+      "path": "packages/workflow-observation-reconciler",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "Reconcile documented workflows with committed historical observation reports.",
+      "tags": [
+        "package",
+        "package",
+        "automation"
+      ],
+      "packageName": "@create-something/workflow-observation-reconciler",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "atlasNodeId": "atlas_create-something_package_create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "title": "@create-something/workflow-receipt-reconciler",
+      "path": "packages/workflow-receipt-reconciler",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "Reconcile immutable case-level workflow receipts with governed workflow definitions.",
+      "tags": [
+        "package",
+        "package",
+        "automation"
+      ],
+      "packageName": "@create-something/workflow-receipt-reconciler",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "atlasNodeId": "atlas_create-something_package_create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "title": "@create-something/workflow-shadow-pilot",
+      "path": "packages/workflow-shadow-pilot",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "Compose workflow discovery, compilation, reconciliation, privacy proof, measurement, and operator evidence in read-only shadow mode.",
+      "tags": [
+        "package",
+        "package",
+        "automation"
+      ],
+      "packageName": "@create-something/workflow-shadow-pilot",
+      "runtime": "node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-zendesk-mcp-packages-zendesk-mcp",
       "atlasNodeId": "atlas_create-something_package_create-something-zendesk-mcp-packages-zendesk-mcp",
       "title": "@create-something/zendesk-mcp",
@@ -3694,6 +3855,40 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at apps/bettermode-marketplace-creator-agent/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:apps-create-something-scheduler-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_apps-create-something-scheduler-wrangler-jsonc",
+      "title": "apps/create-something-scheduler/wrangler.jsonc",
+      "path": "apps/create-something-scheduler/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at apps/create-something-scheduler/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_apps-guard-performance-lab-wrangler-toml",
+      "title": "apps/guard-performance-lab/wrangler.toml",
+      "path": "apps/guard-performance-lab/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at apps/guard-performance-lab/wrangler.toml.",
       "tags": [
         "worker",
         "cloudflare",
@@ -6613,6 +6808,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-first-party-auth-platform-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-first-party-auth-platform-md",
+      "title": "FIRST_PARTY_AUTH_PLATFORM.md",
+      "path": "docs/guides/FIRST_PARTY_AUTH_PLATFORM.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-g2-cloudflare-codex-access-md",
       "title": "G2_CLOUDFLARE_CODEX_ACCESS.md",
@@ -7771,11 +7981,25 @@
       "evidence": "apps/bettermode-marketplace-creator-agent is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
+      "relation": "contains",
+      "evidence": "apps/create-something-scheduler is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-even-operator-brief-apps-even-operator-brief",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:app:create-something-even-operator-brief-apps-even-operator-brief",
       "relation": "contains",
       "evidence": "apps/even-operator-brief is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-guard-performance-lab-apps-guard-performance-lab",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab",
+      "relation": "contains",
+      "evidence": "apps/guard-performance-lab is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud",
@@ -7937,6 +8161,13 @@
       "target": "substrate:create-something:package:create-something-ascii-renderer-packages-ascii-renderer",
       "relation": "contains",
       "evidence": "packages/ascii-renderer is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-auth-platform-packages-auth-platform",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-auth-platform-packages-auth-platform",
+      "relation": "contains",
+      "evidence": "packages/auth-platform is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-bettermode-creator-mcp-packages-bettermode-creator-mcp",
@@ -9031,6 +9262,48 @@
       "evidence": "packages/wf-search-category is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "relation": "contains",
+      "evidence": "packages/workflow-compiler is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "relation": "contains",
+      "evidence": "packages/workflow-evidence-extractor is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
+      "relation": "contains",
+      "evidence": "packages/workflow-historical-context-reconciler is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
+      "relation": "contains",
+      "evidence": "packages/workflow-observation-reconciler is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "relation": "contains",
+      "evidence": "packages/workflow-receipt-reconciler is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "relation": "contains",
+      "evidence": "packages/workflow-shadow-pilot is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-zendesk-mcp-packages-zendesk-mcp",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-zendesk-mcp-packages-zendesk-mcp",
@@ -9050,6 +9323,20 @@
       "target": "substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
       "relation": "contains",
       "evidence": "apps/bettermode-marketplace-creator-agent/wrangler.jsonc is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-apps-create-something-scheduler-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:apps-create-something-scheduler-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "apps/create-something-scheduler/wrangler.jsonc is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-apps-guard-performance-lab-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
+      "relation": "contains",
+      "evidence": "apps/guard-performance-lab/wrangler.toml is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-apps-marketplace-template-submission-cloud-wrangler-json",
@@ -10319,6 +10606,13 @@
       "evidence": "docs/guides/EXAMPLES.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-first-party-auth-platform-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-first-party-auth-platform-md",
+      "relation": "contains",
+      "evidence": "docs/guides/FIRST_PARTY_AUTH_PLATFORM.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-g2-cloudflare-codex-access-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
@@ -10837,6 +11131,20 @@
       "evidence": "@create-something/components declares @create-something/tufte."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-app-create-something-guard-performance-lab-apps-guard-performance-lab-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+      "source": "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab",
+      "target": "substrate:create-something:package:create-something-canon-packages-canon",
+      "relation": "depends_on",
+      "evidence": "@create-something/guard-performance-lab declares @create-something/canon."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-app-create-something-guard-performance-lab-apps-guard-performance-lab-runs-substrate-create-something-worker-apps-guard-performance-lab-wrangler-toml",
+      "source": "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab",
+      "target": "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for apps/guard-performance-lab."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-app-create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud-runs-substrate-create-something-worker-apps-marketplace-template-submission-cloud-wrangler-json",
       "source": "substrate:create-something:app:create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud",
       "target": "substrate:create-something:worker:apps-marketplace-template-submission-cloud-wrangler-json",
@@ -11185,6 +11493,13 @@
       "target": "substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/concierge-chat."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mcp-packages-create-something-mcp-depends-on-substrate-create-something-package-create-something-auth-platform-packages-auth-platform",
+      "source": "substrate:create-something:package:create-something-mcp-packages-create-something-mcp",
+      "target": "substrate:create-something:package:create-something-auth-platform-packages-auth-platform",
+      "relation": "depends_on",
+      "evidence": "@create-something/mcp declares @create-something/auth-platform."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mcp-packages-create-something-mcp-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
@@ -11619,6 +11934,13 @@
       "target": "substrate:create-something:worker:packages-hydra-db-recall-mcp-worker-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/hydra-db-recall-mcp/worker."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-identity-worker-packages-identity-worker-depends-on-substrate-create-something-package-create-something-auth-platform-packages-auth-platform",
+      "source": "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
+      "target": "substrate:create-something:package:create-something-auth-platform-packages-auth-platform",
+      "relation": "depends_on",
+      "evidence": "@create-something/identity-worker declares @create-something/auth-platform."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-identity-worker-packages-identity-worker-depends-on-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
@@ -12433,6 +12755,76 @@
       "evidence": "wrangler.toml configures runtime for packages/wf-search-category."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "source": "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-evidence-extractor declares @create-something/workflow-compiler."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "source": "substrate:create-something:package:create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
+      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-historical-context-reconciler declares @create-something/workflow-compiler."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler-depends-on-substrate-create-something-package-create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "source": "substrate:create-something:package:create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
+      "target": "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-historical-context-reconciler declares @create-something/workflow-evidence-extractor."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "source": "substrate:create-something:package:create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
+      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-observation-reconciler declares @create-something/workflow-compiler."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler-depends-on-substrate-create-something-package-create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "source": "substrate:create-something:package:create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
+      "target": "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-observation-reconciler declares @create-something/workflow-evidence-extractor."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "source": "substrate:create-something:package:create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-receipt-reconciler declares @create-something/workflow-compiler."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler-depends-on-substrate-create-something-package-create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "source": "substrate:create-something:package:create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "target": "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-receipt-reconciler declares @create-something/workflow-evidence-extractor."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "source": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-shadow-pilot declares @create-something/workflow-compiler."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot-depends-on-substrate-create-something-package-create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
+      "source": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "target": "substrate:create-something:package:create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-shadow-pilot declares @create-something/workflow-historical-context-reconciler."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot-depends-on-substrate-create-something-package-create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "source": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "target": "substrate:create-something:package:create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-shadow-pilot declares @create-something/workflow-receipt-reconciler."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-zendesk-mcp-packages-zendesk-mcp-depends-on-substrate-create-something-package-create-something-mcp-core-packages-mcp-core",
       "source": "substrate:create-something:package:create-something-zendesk-mcp-packages-zendesk-mcp",
       "target": "substrate:create-something:package:create-something-mcp-core-packages-mcp-core",
@@ -12998,6 +13390,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/EXAMPLES.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-first-party-auth-platform-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-first-party-auth-platform-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/FIRST_PARTY_AUTH_PLATFORM.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-g2-cloudflare-codex-access-md-documents-substrate-create-something-root",
@@ -13665,11 +14064,11 @@
       "evidence": "docs/policies/v1/policy.user-bearer-token-governance.v1.md governs packages/app-governance-db through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-article-image-workflow-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-article-image-workflow-md-documents-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
       "source": "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
       "relation": "documents",
-      "evidence": "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md documents packages/substrate-mcp through the stable guide platform anchor."
+      "evidence": "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md documents packages/workflow-compiler through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-governance-products-operations-runbook-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
@@ -13700,11 +14099,11 @@
       "evidence": "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md documents packages/substrate-mcp through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-workflow-intent-article-workflow-md-documents-substrate-create-something-package-create-something-database-layer-packages-database-layer",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-workflow-intent-article-workflow-md-documents-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
       "source": "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
-      "target": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
       "relation": "documents",
-      "evidence": "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md documents packages/database-layer through the stable guide platform anchor."
+      "evidence": "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md documents packages/workflow-compiler through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agent-legibility-contract-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
@@ -13810,6 +14209,13 @@
       "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "relation": "documents",
       "evidence": "docs/guides/EXAMPLES.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-first-party-auth-platform-md-documents-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
+      "source": "substrate:create-something:guide:docs-guides-first-party-auth-platform-md",
+      "target": "substrate:create-something:package:create-something-mcp-authz-packages-mcp-authz",
+      "relation": "documents",
+      "evidence": "docs/guides/FIRST_PARTY_AUTH_PLATFORM.md documents packages/mcp-authz through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-g2-cloudflare-codex-access-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",

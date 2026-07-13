@@ -1,0 +1,135 @@
+import { createAcceptanceSummary, type WorkflowReplayArtifacts } from './replay.js';
+import type { CompiledWorkflowBundle } from './types.js';
+
+export function createOperatorConsoleData(
+  bundle: CompiledWorkflowBundle,
+  replay: WorkflowReplayArtifacts,
+) {
+  return {
+    schemaVersion: 'workflow_operator_console.v0.1',
+    workflowId: bundle.workflowId,
+    workflowVersion: bundle.workflowVersion,
+    definitionHash: bundle.definitionHash,
+    compilerVersion: bundle.compilerVersion,
+    title: bundle.title,
+    businessObjective: bundle.businessObjective,
+    owners: bundle.owners,
+    workflowMap: bundle.workflowMap,
+    decisionInventory: bundle.decisionInventory,
+    approvalSurfaces: bundle.approvalSurfaces,
+    replayReport: replay.report,
+    acceptanceSummary: createAcceptanceSummary(bundle, replay.report),
+  };
+}
+
+export const OPERATOR_CONSOLE_HTML = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Workflow Compiler Operator Console</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111318'/%3E%3Cpath d='M8 10h16M8 16h10M8 22h16' stroke='%2363d297' stroke-width='2.5'/%3E%3C/svg%3E" />
+    <style>
+      :root { color-scheme: dark; --bg:#0a0b0d; --panel:#111318; --line:#272b33; --text:#f2f4f7; --muted:#9aa3b2; --pass:#63d297; --wait:#f0bb5b; --block:#ee7777; }
+      * { box-sizing: border-box; }
+      body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+      button { font:inherit; }
+      .shell { max-width:1400px; margin:0 auto; padding:32px; }
+      .eyebrow { color:var(--muted); font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
+      h1 { font-size:clamp(30px,5vw,58px); line-height:1.02; margin:12px 0; max-width:900px; }
+      h2,h3,p { margin-top:0; }
+      .objective { max-width:820px; color:#c7ced9; font-size:17px; }
+      .hash { color:var(--muted); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; overflow-wrap:anywhere; }
+      .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:28px 0; }
+      .metric,.panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; }
+      .metric { padding:18px; }
+      .metric strong { display:block; font-size:30px; }
+      .metric span { color:var(--muted); }
+      .workspace { display:grid; grid-template-columns:minmax(280px,.8fr) minmax(0,1.5fr); gap:16px; }
+      .panel { padding:18px; min-width:0; }
+      .case-list { display:grid; gap:8px; }
+      .case { width:100%; text-align:left; background:#0d0f13; color:var(--text); border:1px solid var(--line); border-radius:10px; padding:12px; cursor:pointer; }
+      .case:hover,.case[aria-current="true"] { border-color:#687386; background:#171a20; }
+      .case small { display:block; color:var(--muted); margin-top:4px; }
+      .badge { display:inline-flex; align-items:center; border:1px solid currentColor; border-radius:999px; padding:3px 8px; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+      .pass { color:var(--pass); } .approval_required { color:var(--wait); } .blocked { color:var(--block); }
+      .detail-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:18px 0; }
+      .field { background:#0d0f13; border:1px solid var(--line); border-radius:10px; padding:12px; }
+      .field dt { color:var(--muted); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+      .field dd { margin:5px 0 0; overflow-wrap:anywhere; }
+      .list { margin:8px 0 0; padding-left:18px; }
+      .policy { border-left:3px solid currentColor; padding:10px 12px; background:#0d0f13; }
+      .topology { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; color:var(--muted); }
+      .topology span { border:1px solid var(--line); border-radius:999px; padding:5px 9px; }
+      .error { color:var(--block); white-space:pre-wrap; }
+      @media (max-width:800px) { .shell{padding:20px}.metrics{grid-template-columns:repeat(2,1fr)}.workspace{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr} }
+    </style>
+  </head>
+  <body>
+    <main id="app" class="shell"><p>Loading compiled workflow…</p></main>
+    <script type="module">
+      const app = document.querySelector('#app');
+      const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+      const list = (values, empty = 'None') => values?.length ? '<ul class="list">' + values.map((value) => '<li>' + escapeHtml(value) + '</li>').join('') + '</ul>' : '<p>' + empty + '</p>';
+      const field = (label, value) => '<div class="field"><dt>' + escapeHtml(label) + '</dt><dd>' + value + '</dd></div>';
+
+      function renderDetail(entry) {
+        const statusCopy = entry.observedOutcome === 'pass'
+          ? 'Replay permits this transition. The console remains read-only.'
+          : entry.observedOutcome === 'approval_required'
+            ? 'Awaiting explicit approval from ' + entry.owner + '.'
+            : 'Execution unavailable. Follow the recovery path before another attempt.';
+        const detail = document.querySelector('#case-detail');
+        detail.innerHTML = '<div class="eyebrow">Historical replay case</div>' +
+          '<h2>' + escapeHtml(entry.title) + '</h2>' +
+          '<span class="badge ' + escapeHtml(entry.observedOutcome) + '">' + escapeHtml(entry.observedOutcome.replaceAll('_',' ')) + '</span>' +
+          '<div class="detail-grid">' +
+            field('Decision reason', escapeHtml(entry.reasonCode)) +
+            field('State', escapeHtml(entry.stateBefore) + ' → ' + escapeHtml(entry.stateAfter)) +
+            field('Authority', escapeHtml(entry.authority)) +
+            field('Owner', escapeHtml(entry.owner)) +
+            field('Evidence references', list(entry.evidenceReferences)) +
+            field('Missing evidence', list(entry.missingEvidence, 'Complete')) +
+          '</div>' +
+          '<h3>Recovery</h3><p>' + escapeHtml(entry.recovery.path) + '</p>' +
+          '<h3>Receipt</h3><div class="hash">' + escapeHtml(JSON.stringify(entry.receipt.receiptFields)) + '</div>' +
+          '<p class="policy ' + escapeHtml(entry.observedOutcome) + '">' + escapeHtml(statusCopy) + '</p>';
+      }
+
+      function render(data) {
+        const counts = data.acceptanceSummary.counts;
+        const cases = data.replayReport.cases;
+        app.innerHTML = '<div class="eyebrow">CREATE SOMETHING / Workflow Compiler</div>' +
+          '<h1>' + escapeHtml(data.title) + '</h1>' +
+          '<p class="objective">' + escapeHtml(data.businessObjective) + '</p>' +
+          '<p class="hash">' + escapeHtml(data.definitionHash) + '</p>' +
+          '<section class="metrics" aria-label="Replay summary">' +
+            '<div class="metric"><strong data-testid="count-total">' + cases.length + '</strong><span>Historical cases</span></div>' +
+            '<div class="metric pass"><strong data-testid="count-pass">' + counts.pass + '</strong><span>Passed</span></div>' +
+            '<div class="metric approval_required"><strong data-testid="count-approval">' + counts.approval_required + '</strong><span>Approval required</span></div>' +
+            '<div class="metric blocked"><strong data-testid="count-blocked">' + counts.blocked + '</strong><span>Blocked</span></div>' +
+          '</section>' +
+          '<section class="workspace">' +
+            '<aside class="panel"><h2>Replay cases</h2><div class="case-list">' + cases.map((entry, index) =>
+              '<button class="case" data-case-id="' + escapeHtml(entry.caseId) + '" aria-current="' + (index === 0 ? 'true' : 'false') + '">' +
+                escapeHtml(entry.title) + '<small><span class="badge ' + escapeHtml(entry.observedOutcome) + '">' + escapeHtml(entry.observedOutcome.replaceAll('_',' ')) + '</span> · ' + escapeHtml(entry.reasonCode) + '</small></button>'
+            ).join('') + '</div></aside>' +
+            '<article id="case-detail" class="panel"></article>' +
+          '</section>' +
+          '<div class="topology"><span>' + data.workflowMap.nodes.length + ' map nodes</span><span>' + data.workflowMap.edges.length + ' map edges</span><span>' + data.decisionInventory.decisions.length + ' decisions</span><span>' + data.approvalSurfaces.actions.length + ' controlled actions</span></div>';
+        document.querySelectorAll('.case').forEach((button) => button.addEventListener('click', () => {
+          document.querySelectorAll('.case').forEach((candidate) => candidate.setAttribute('aria-current','false'));
+          button.setAttribute('aria-current','true');
+          renderDetail(cases.find((entry) => entry.caseId === button.dataset.caseId));
+        }));
+        renderDetail(cases[0]);
+      }
+
+      fetch('./data.json')
+        .then((response) => { if (!response.ok) throw new Error('Console data failed: ' + response.status); return response.json(); })
+        .then(render)
+        .catch((error) => { app.innerHTML = '<pre class="error">' + escapeHtml(error.stack || error) + '</pre>'; console.error(error); });
+    </script>
+  </body>
+</html>
+`;

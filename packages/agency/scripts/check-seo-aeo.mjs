@@ -37,13 +37,10 @@ const requiredFaqRoutes = new Set([
 const requiredDedicatedOgImages = new Map([
   ['/dify', '/og/dify-lane.png'],
   ['/dify/mcp-control-plane', '/og/dify-mcp-control-plane.png'],
-  ['/dify/n8n-vs-dify', '/og/dify-vs-n8n.png'],
   ['/cloudflare', '/og/cloudflare-lane.png'],
   ['/use-cases/enterprise', '/og/policy-os.png']
 ]);
-const requiredInPageArticleVisuals = new Map([
-  ['/dify/n8n-vs-dify', '/images/articles/dify-vs-n8n/dify-n8n-layer-map.png']
-]);
+const requiredInPageArticleVisuals = new Map([]);
 
 for (const entry of routeEntries) {
   if (!entry.path || !entry.path.startsWith('/')) {

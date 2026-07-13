@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:business-operating-recommendations:internal",
-  "generatedAt": "2026-07-10T20:32:18.352Z",
+  "generatedAt": "2026-07-13T01:55:01.947Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceOrganizationReviewId": "substrate:create-something:organization-review:internal",
@@ -10,14 +10,14 @@
   "summary": {
     "recommendedMoves": 4,
     "operationalizedLanes": 4,
-    "topologyNodes": 441,
-    "topologyEdges": 902,
-    "managementResources": 508,
+    "topologyNodes": 453,
+    "topologyEdges": 930,
+    "managementResources": 522,
     "managementOperations": 29,
-    "operatingSlices": 22,
+    "operatingSlices": 23,
     "workerSlices": 4,
     "clientDeliveryPackets": 4,
-    "policyGuideAttachments": 22,
+    "policyGuideAttachments": 23,
     "approvalRequiredForExternalWrites": true
   },
   "lanes": [
@@ -30,7 +30,7 @@
       "operatingLane": "substrate_product_surface",
       "summary": "The healthiest next move is to make the database layer a first-class product surface rather than a hidden app-governance implementation detail.",
       "evidence": [
-        "25 Database records currently support 237 Automation records",
+        "25 Database records currently support 246 Automation records",
         "Management surface exposes stable API/MCP/agent access",
         "Atlas UI projects the same records instead of becoming a separate source of truth"
       ],
@@ -85,8 +85,8 @@
       ],
       "metrics": {
         "databaseRecords": 25,
-        "automationRecords": 237,
-        "resourceCount": 508,
+        "automationRecords": 246,
+        "resourceCount": 522,
         "operationCount": 29,
         "readOperations": 26
       },
@@ -114,8 +114,8 @@
       "operatingLane": "worker_runtime_review",
       "summary": "The worker surface is the largest concentration of operational risk and should be the first ongoing review lane.",
       "evidence": [
-        "Worker records=146",
-        "123 records in the primary worker slice"
+        "Worker records=148",
+        "125 records in the primary worker slice"
       ],
       "sourceArtifacts": [
         "packages/database-layer/data/create-something-operating-slice-readiness.json",
@@ -129,8 +129,8 @@
           "surface": "worker",
           "status": "review_ready",
           "productionStatus": "approval_required",
-          "recordCount": 123,
-          "mappedRecordCount": 123,
+          "recordCount": 125,
+          "mappedRecordCount": 125,
           "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
           "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness",
           "validationCommands": [
@@ -142,19 +142,19 @@
       ],
       "metrics": {
         "workerSlices": 4,
-        "primaryWorkerSliceRecords": 123,
-        "runtimeConfigRecords": 99,
-        "bindingRefs": 466,
+        "primaryWorkerSliceRecords": 125,
+        "runtimeConfigRecords": 101,
+        "bindingRefs": 493,
         "routeRefs": 21,
         "bindingKinds": {
-          "assets": 6,
-          "d1": 79,
-          "durable_object": 38,
+          "assets": 7,
+          "d1": 80,
+          "durable_object": 39,
           "kv": 35,
           "queue": 16,
           "r2": 21,
           "route": 42,
-          "var": 248,
+          "var": 272,
           "vectorize": 2
         },
         "secretValuesCaptured": false
@@ -268,8 +268,8 @@
       "summary": "Policy is already present; the improvement is to make every critical workflow show its policy, guide, approval boundary, and receipt path in context.",
       "evidence": [
         "Policy records=56",
-        "Guide records=54",
-        "22 operating slices are review-ready"
+        "Guide records=55",
+        "23 operating slices are review-ready"
       ],
       "sourceArtifacts": [
         "packages/database-layer/data/create-something-operating-slice-readiness.json",
@@ -362,10 +362,10 @@
         }
       ],
       "metrics": {
-        "operatingSlices": 22,
-        "attachedSlices": 22,
+        "operatingSlices": 23,
+        "attachedSlices": 23,
         "policyRecords": 56,
-        "guideRecords": 54,
+        "guideRecords": 55,
         "docRecords": 6
       },
       "relatedSliceIds": [
@@ -376,24 +376,25 @@
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-agent",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-config",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-package-surface-mixed-package",
-        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
-        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-worker",
-        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-package",
+        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
+        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-worker",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-database-mcp",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-worker",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-doc",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-mixed-app",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker",
+        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-automation-app",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-client",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-agent",
         "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
-        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-automation-app",
-        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent"
+        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
+        "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-judgment-app"
       ],
       "deliveryPacketIds": [],
-      "policyAttachmentCount": 22,
+      "policyAttachmentCount": 23,
       "apiPath": "/api/substrate/business/recommendations#attach_policy_to_slices",
       "mcpUri": "substrate://business/recommendations/attach-policy-to-slices",
       "agentCommand": "databaseLayer.business.recommendations.get",
@@ -415,8 +416,8 @@
       "surface": "worker",
       "status": "review_ready",
       "productionStatus": "approval_required",
-      "recordCount": 123,
-      "mappedRecordCount": 123,
+      "recordCount": 125,
+      "mappedRecordCount": 125,
       "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
       "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness",
       "validationCommands": [
@@ -433,8 +434,8 @@
         "surface": "worker",
         "status": "review_ready",
         "productionStatus": "approval_required",
-        "recordCount": 123,
-        "mappedRecordCount": 123,
+        "recordCount": 125,
+        "mappedRecordCount": 125,
         "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
         "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness",
         "validationCommands": [
@@ -497,18 +498,18 @@
     ],
     "runtime": {
       "runtime": "cloudflare",
-      "runtimeConfigRecords": 99,
-      "bindingRefs": 466,
+      "runtimeConfigRecords": 101,
+      "bindingRefs": 493,
       "routeRefs": 21,
       "bindingKinds": {
-        "assets": 6,
-        "d1": 79,
-        "durable_object": 38,
+        "assets": 7,
+        "d1": 80,
+        "durable_object": 39,
         "kv": 35,
         "queue": 16,
         "r2": 21,
         "route": 42,
-        "var": 248,
+        "var": 272,
         "vectorize": 2
       },
       "secretHandling": "Runtime recommendation uses binding names, route refs, and environment variable keys from repo config. It does not capture secret values."
@@ -1050,6 +1051,60 @@
       "attachmentStatus": "attached"
     },
     {
+      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-package",
+      "title": "Automation package Atlas coverage",
+      "tier": "Automation",
+      "surface": "package",
+      "productionStatus": "approval_required",
+      "policyRecordIds": [
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-hub-route-authorization-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-judgment-baseline-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-credential-delivery-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-session-self-service-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-partner-auth-governance-v1-json"
+      ],
+      "guideRecordIds": [
+        "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
+        "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
+        "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
+        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
+        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+      ],
+      "docRecordIds": [
+        "substrate:create-something:doc:docs-canon-database-layer-design-md",
+        "substrate:create-something:doc:docs-create-something-database-layer-md",
+        "substrate:create-something:doc:docs-mcp-first-thesis-md",
+        "substrate:create-something:doc:docs-mcp-hub-control-plane-md"
+      ],
+      "policyPaths": [
+        "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
+        "docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
+        "docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json",
+        "docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json",
+        "docs/policies/generated/fallback/policy.mcp-session-self-service.v1.json",
+        "docs/policies/generated/fallback/policy.partner-auth-governance.v1.json"
+      ],
+      "guidePaths": [
+        "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
+        "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
+        "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
+        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
+        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+      ],
+      "docPaths": [
+        "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "docs/CREATE_SOMETHING_DATABASE_LAYER.md",
+        "docs/MCP_FIRST_THESIS.md",
+        "docs/MCP_HUB_CONTROL_PLANE.md"
+      ],
+      "approvalBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "receiptPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-package/readiness",
+      "attachmentStatus": "attached"
+    },
+    {
       "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
       "title": "Judgment MCP Atlas coverage",
       "tier": "Judgment",
@@ -1101,60 +1156,6 @@
       ],
       "approvalBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
       "receiptPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp/readiness",
-      "attachmentStatus": "attached"
-    },
-    {
-      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-worker",
-      "title": "Judgment worker Atlas coverage",
-      "tier": "Judgment",
-      "surface": "worker",
-      "productionStatus": "approval_required",
-      "policyRecordIds": [
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-hub-route-authorization-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-judgment-baseline-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-credential-delivery-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-session-self-service-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-partner-auth-governance-v1-json"
-      ],
-      "guideRecordIds": [
-        "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
-        "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
-        "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
-      ],
-      "docRecordIds": [
-        "substrate:create-something:doc:docs-canon-database-layer-design-md",
-        "substrate:create-something:doc:docs-create-something-database-layer-md",
-        "substrate:create-something:doc:docs-mcp-first-thesis-md",
-        "substrate:create-something:doc:docs-mcp-hub-control-plane-md"
-      ],
-      "policyPaths": [
-        "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
-        "docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
-        "docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json",
-        "docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json",
-        "docs/policies/generated/fallback/policy.mcp-session-self-service.v1.json",
-        "docs/policies/generated/fallback/policy.partner-auth-governance.v1.json"
-      ],
-      "guidePaths": [
-        "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
-        "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
-        "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
-      ],
-      "docPaths": [
-        "docs/CANON_DATABASE_LAYER_DESIGN.md",
-        "docs/CREATE_SOMETHING_DATABASE_LAYER.md",
-        "docs/MCP_FIRST_THESIS.md",
-        "docs/MCP_HUB_CONTROL_PLANE.md"
-      ],
-      "approvalBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "receiptPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-judgment-worker/readiness",
       "attachmentStatus": "attached"
     },
     {
@@ -1212,10 +1213,10 @@
       "attachmentStatus": "attached"
     },
     {
-      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-package",
-      "title": "Automation package Atlas coverage",
-      "tier": "Automation",
-      "surface": "package",
+      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-worker",
+      "title": "Judgment worker Atlas coverage",
+      "tier": "Judgment",
+      "surface": "worker",
       "productionStatus": "approval_required",
       "policyRecordIds": [
         "substrate:create-something:policy:docs-policies-generated-fallback-policy-hub-route-authorization-v1-json",
@@ -1262,7 +1263,7 @@
         "docs/MCP_HUB_CONTROL_PLANE.md"
       ],
       "approvalBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "receiptPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-package/readiness",
+      "receiptPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-judgment-worker/readiness",
       "attachmentStatus": "attached"
     },
     {
@@ -1590,6 +1591,60 @@
       "attachmentStatus": "attached"
     },
     {
+      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-automation-app",
+      "title": "Automation app Atlas coverage",
+      "tier": "Automation",
+      "surface": "app",
+      "productionStatus": "approval_required",
+      "policyRecordIds": [
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-hub-route-authorization-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-judgment-baseline-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-credential-delivery-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-session-self-service-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-partner-auth-governance-v1-json"
+      ],
+      "guideRecordIds": [
+        "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
+        "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
+        "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
+        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
+        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+      ],
+      "docRecordIds": [
+        "substrate:create-something:doc:docs-canon-database-layer-design-md",
+        "substrate:create-something:doc:docs-create-something-database-layer-md",
+        "substrate:create-something:doc:docs-mcp-first-thesis-md",
+        "substrate:create-something:doc:docs-mcp-hub-control-plane-md"
+      ],
+      "policyPaths": [
+        "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
+        "docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
+        "docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json",
+        "docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json",
+        "docs/policies/generated/fallback/policy.mcp-session-self-service.v1.json",
+        "docs/policies/generated/fallback/policy.partner-auth-governance.v1.json"
+      ],
+      "guidePaths": [
+        "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
+        "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
+        "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
+        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
+        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+      ],
+      "docPaths": [
+        "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "docs/CREATE_SOMETHING_DATABASE_LAYER.md",
+        "docs/MCP_FIRST_THESIS.md",
+        "docs/MCP_HUB_CONTROL_PLANE.md"
+      ],
+      "approvalBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "receiptPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-automation-app/readiness",
+      "attachmentStatus": "attached"
+    },
+    {
       "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-client",
       "title": "Automation client Atlas coverage",
       "tier": "Automation",
@@ -1752,60 +1807,6 @@
       "attachmentStatus": "attached"
     },
     {
-      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-automation-app",
-      "title": "Automation app Atlas coverage",
-      "tier": "Automation",
-      "surface": "app",
-      "productionStatus": "approval_required",
-      "policyRecordIds": [
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-hub-route-authorization-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-judgment-baseline-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-credential-delivery-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-session-self-service-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-partner-auth-governance-v1-json"
-      ],
-      "guideRecordIds": [
-        "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
-        "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
-        "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
-      ],
-      "docRecordIds": [
-        "substrate:create-something:doc:docs-canon-database-layer-design-md",
-        "substrate:create-something:doc:docs-create-something-database-layer-md",
-        "substrate:create-something:doc:docs-mcp-first-thesis-md",
-        "substrate:create-something:doc:docs-mcp-hub-control-plane-md"
-      ],
-      "policyPaths": [
-        "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
-        "docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
-        "docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json",
-        "docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json",
-        "docs/policies/generated/fallback/policy.mcp-session-self-service.v1.json",
-        "docs/policies/generated/fallback/policy.partner-auth-governance.v1.json"
-      ],
-      "guidePaths": [
-        "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
-        "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
-        "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
-      ],
-      "docPaths": [
-        "docs/CANON_DATABASE_LAYER_DESIGN.md",
-        "docs/CREATE_SOMETHING_DATABASE_LAYER.md",
-        "docs/MCP_FIRST_THESIS.md",
-        "docs/MCP_HUB_CONTROL_PLANE.md"
-      ],
-      "approvalBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "receiptPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-automation-app/readiness",
-      "attachmentStatus": "attached"
-    },
-    {
       "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
       "title": "Database agent Atlas coverage",
       "tier": "Database",
@@ -1858,6 +1859,60 @@
       "approvalBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
       "receiptPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent/readiness",
       "attachmentStatus": "attached"
+    },
+    {
+      "sliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
+      "title": "Judgment app Atlas coverage",
+      "tier": "Judgment",
+      "surface": "app",
+      "productionStatus": "approval_required",
+      "policyRecordIds": [
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-hub-route-authorization-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-judgment-baseline-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-credential-delivery-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-session-self-service-v1-json",
+        "substrate:create-something:policy:docs-policies-generated-fallback-policy-partner-auth-governance-v1-json"
+      ],
+      "guideRecordIds": [
+        "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
+        "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
+        "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
+        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
+        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+      ],
+      "docRecordIds": [
+        "substrate:create-something:doc:docs-canon-database-layer-design-md",
+        "substrate:create-something:doc:docs-create-something-database-layer-md",
+        "substrate:create-something:doc:docs-mcp-first-thesis-md",
+        "substrate:create-something:doc:docs-mcp-hub-control-plane-md"
+      ],
+      "policyPaths": [
+        "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
+        "docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
+        "docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json",
+        "docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json",
+        "docs/policies/generated/fallback/policy.mcp-session-self-service.v1.json",
+        "docs/policies/generated/fallback/policy.partner-auth-governance.v1.json"
+      ],
+      "guidePaths": [
+        "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
+        "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
+        "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
+        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
+        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+      ],
+      "docPaths": [
+        "docs/CANON_DATABASE_LAYER_DESIGN.md",
+        "docs/CREATE_SOMETHING_DATABASE_LAYER.md",
+        "docs/MCP_FIRST_THESIS.md",
+        "docs/MCP_HUB_CONTROL_PLANE.md"
+      ],
+      "approvalBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "receiptPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app/readiness",
+      "attachmentStatus": "attached"
     }
   ],
   "receipts": [
@@ -1866,32 +1921,32 @@
       "recordId": "business:promote_database_layer_as_product_surface",
       "type": "proof",
       "summary": "Promote Substrate as the CREATE SOMETHING database layer is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-07-10T20:32:18.352Z.",
-      "createdAt": "2026-07-10T20:32:18.352Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-07-13T01:55:01.947Z.",
+      "createdAt": "2026-07-13T01:55:01.947Z"
     },
     {
       "id": "receipt:business:review_worker_runtime_slice_first",
       "recordId": "business:review_worker_runtime_slice_first",
       "type": "proof",
       "summary": "Review worker runtime slices before production claims is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-07-10T20:32:18.352Z.",
-      "createdAt": "2026-07-10T20:32:18.352Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-07-13T01:55:01.947Z.",
+      "createdAt": "2026-07-13T01:55:01.947Z"
     },
     {
       "id": "receipt:business:turn_client_overlays_into_repeatable_delivery",
       "recordId": "business:turn_client_overlays_into_repeatable_delivery",
       "type": "proof",
       "summary": "Turn client overlays into repeatable delivery is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-07-10T20:32:18.352Z.",
-      "createdAt": "2026-07-10T20:32:18.352Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-07-13T01:55:01.947Z.",
+      "createdAt": "2026-07-13T01:55:01.947Z"
     },
     {
       "id": "receipt:business:attach_policy_to_slices",
       "recordId": "business:attach_policy_to_slices",
       "type": "proof",
       "summary": "Attach policy and guides to operating slices is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-07-10T20:32:18.352Z.",
-      "createdAt": "2026-07-10T20:32:18.352Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-07-13T01:55:01.947Z.",
+      "createdAt": "2026-07-13T01:55:01.947Z"
     }
   ],
   "approvalBoundary": "This artifact completes local business operating recommendations only. Production, third-party, client, Cloudflare, Dify, Slack, Airtable, Webflow, and external writes remain approval-gated."

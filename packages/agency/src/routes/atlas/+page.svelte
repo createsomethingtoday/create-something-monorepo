@@ -46,7 +46,7 @@
 		eyebrow="Atlas canvas"
 		title="Map the workflow before the call."
 		lede="Use the constrained public canvas to name the owner, data, approvals, systems, risks, and inspection points. The agent can only edit this prospect map; production tools and private systems stay outside the public surface."
-		media={{ src: '/images/performance-lab/trace-control-plane.webp', mobileSrc: '/images/performance-lab/trace-control-plane-mobile.webp', alt: 'A controlled channel leaving a visible trace through the system' }}
+		media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
 		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Summary + context' }]}
 	>
 		{#snippet actions()}

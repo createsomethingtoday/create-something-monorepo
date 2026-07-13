@@ -5,16 +5,18 @@ declare global {
     interface Platform {
       env?: {
         ENVIRONMENT?: string;
-        ALLOW_CLERK_ACCESS_PREVIEW?: string;
-        CLERK_ALLOW_ANY_AUTHENTICATED?: string;
-        CLERK_ALLOWED_EMAIL_DOMAINS?: string;
-        CLERK_ALLOWED_EMAILS?: string;
-        CLERK_ALLOWED_ORGANIZATION_IDS?: string;
-        CLERK_ALLOWED_ORGANIZATION_ROLES?: string;
-        CLERK_ISSUER?: string;
-        CLERK_JWKS_URL?: string;
-        CLERK_SESSION_COOKIE_NAME?: string;
-        CLERK_SIGN_IN_URL?: string;
+        ALLOW_CS_AUTH_PREVIEW?: string;
+        CS_AUTH_ALLOW_ANY_AUTHENTICATED?: string;
+        CS_AUTH_ALLOWED_EMAIL_DOMAINS?: string;
+        CS_AUTH_ALLOWED_EMAILS?: string;
+        CS_AUTH_ALLOWED_ROLES?: string;
+        CS_AUTH_ALLOWED_SUBJECTS?: string;
+        CS_AUTH_ALLOWED_TENANT_IDS?: string;
+        CS_AUTH_SIGN_IN_URL?: string;
+        CS_IDENTITY_AUDIENCE?: string;
+        CS_IDENTITY_ISSUER?: string;
+        CS_IDENTITY_JWKS_URL?: string;
+        IDENTITY_API_URL?: string;
         DIFY_CREATE_SOMETHING_GUIDE_AGENT_API_KEY?: string;
         DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT_API_KEY?: string;
         DIFY_BLONDISH_HUB_API_KEY?: string;

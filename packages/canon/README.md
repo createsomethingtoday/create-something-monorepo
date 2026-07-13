@@ -59,6 +59,19 @@ import { Dialog, Toast, Spinner } from '@create-something/canon/components/feedb
 import { Tabs, Breadcrumbs, Drawer } from '@create-something/canon/components/navigation';
 ```
 
+## First-Party Authentication
+
+Canon is the reusable application layer for CREATE SOMETHING Identity. Server consumers use narrow subpath exports so authentication code does not import the visual component graph:
+
+```ts
+import { resolveApplicationAccess } from '@create-something/canon/auth/access';
+import { createLoginHandler } from '@create-something/canon/auth/handlers';
+import { clearSessionCookies } from '@create-something/canon/auth/cookies';
+import { verifyIdentityToken } from '@create-something/canon/auth/server';
+```
+
+Identity Worker owns users, credentials, tokens, and signing keys. Canon owns login/session adaptation, cryptographic verification, and normalized access evaluation. Each application still owns its explicit allow policy and promotion approval. See [`docs/guides/FIRST_PARTY_AUTH_PLATFORM.md`](../../docs/guides/FIRST_PARTY_AUTH_PLATFORM.md) for the complete contract.
+
 ### Domain-Specific Components
 
 ```typescript

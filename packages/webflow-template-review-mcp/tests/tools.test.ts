@@ -1037,6 +1037,24 @@ test('read-only access registers no write tools', () => {
   assert.notEqual(names.indexOf('template_review_format_agent_review_feedback'), -1);
 });
 
+test('workflow shadow pilot access registers exactly the queue read tool', () => {
+  const { server, names } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+    {},
+    {
+      allowWrites: false,
+      allowedToolNames: new Set(['template_review_list_queue']),
+    },
+  );
+
+  assert.deepEqual(names, ['template_review_list_queue']);
+});
+
 test('default access keeps the full write surface', () => {
   const { server, names } = createServerHarness();
   const client = {} as AirtableClient;

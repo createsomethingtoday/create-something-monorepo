@@ -261,15 +261,18 @@
   @media (max-width: 640px) {
     .privacy-choice {
       right: max(0.5rem, env(safe-area-inset-right));
-      bottom: max(0.5rem, env(safe-area-inset-bottom));
+      top: max(4.5rem, calc(4rem + env(safe-area-inset-top)));
+      bottom: auto;
+      left: auto;
+      max-width: max-content;
+    }
+
+    .privacy-choice:has(.privacy-panel) {
       left: max(0.5rem, env(safe-area-inset-left));
       max-width: none;
     }
 
     .privacy-choice--compact {
-      top: max(4.5rem, calc(4rem + env(safe-area-inset-top)));
-      bottom: auto;
-      left: auto;
       max-width: max-content;
     }
 
@@ -322,9 +325,26 @@
     }
 
     .privacy-pill {
-      min-height: 1.9rem;
-      padding: 0.36rem 0.5rem;
+      min-height: 2.75rem;
+      padding: 0 0.4rem;
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+      color: var(--color-performance-muted, #5e6268);
+      font-family: var(--font-mono);
       font-size: 0.68rem;
+    }
+
+    .privacy-pill:hover {
+      border-color: transparent;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .privacy-pill:focus-visible {
+      outline: 2px solid var(--color-performance-ink, #090909);
+      outline-offset: 2px;
     }
 
     .privacy-pill > span:first-child {
@@ -338,7 +358,7 @@
 
     .privacy-pill--compact > span:first-child::before {
       content: 'Privacy';
-      font-size: 0.68rem;
+      font-size: 0.62rem;
     }
 
     .privacy-pill__sub {

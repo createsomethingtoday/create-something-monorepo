@@ -199,7 +199,7 @@
 </script>
 
 <SEO
-  title="Stack Boundary | CREATE SOMETHING .agency"
+  title="What You Keep | CREATE SOMETHING .agency"
   description="CREATE SOMETHING separates what your team owns, what vendors provide, and what the workflow needs before delegated work becomes production work."
   keywords="delegated work control, workflow control layer, Substrate database, transparent AI stack, MCP stack, vendor boundaries, Cloudflare, Dify, OpenAI"
   ogImage="/og-image.png"
@@ -211,9 +211,9 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Stack Boundary"
+  eyebrow="What You Keep"
   title="Know what you own before any tool acts."
-  description="Your team should be able to see who owns the accounts, where secrets live, which actions can run, which decisions need approval, what stops, and what evidence travels with the handoff."
+  description="You keep the accounts, data, approval rights, and operating history. Vendors provide replaceable infrastructure, and the workflow makes every boundary visible."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>

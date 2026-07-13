@@ -1,0 +1,402 @@
+import { createHash } from 'node:crypto';
+
+import type {
+  AgentContractsArtifact,
+  ApprovalSurfacesArtifact,
+  CompiledWorkflowBundle,
+  DecisionInventoryArtifact,
+  EvaluationManifestArtifact,
+  EventSchemasArtifact,
+  ObjectSchemasArtifact,
+  RuntimeTargetsArtifact,
+  ToolContractsArtifact,
+  WorkflowDefinition,
+  WorkflowCompilationDiagnostic,
+  WorkflowMapEdge,
+  WorkflowMapNode,
+} from './types.js';
+
+export const WORKFLOW_COMPILER_VERSION = 'workflow-compiler-v0.1';
+
+const REQUIRED_RECEIPT_FIELDS = ['workflow_id', 'action_id', 'correlation_id', 'outcome'];
+
+export class WorkflowCompilationError extends Error {
+  readonly diagnostics: WorkflowCompilationDiagnostic[];
+
+  constructor(diagnostics: WorkflowCompilationDiagnostic[]) {
+    super(`Workflow compilation failed with ${diagnostics.length} diagnostic(s)`);
+    this.name = 'WorkflowCompilationError';
+    this.diagnostics = diagnostics;
+  }
+}
+
+function byId<T extends { id: string }>(left: T, right: T): number {
+  return left.id.localeCompare(right.id);
+}
+
+function byActionId<T extends { actionId: string }>(left: T, right: T): number {
+  return left.actionId.localeCompare(right.actionId);
+}
+
+function sorted(values: string[]): string[] {
+  return [...values].sort((left, right) => left.localeCompare(right));
+}
+
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, entry]) => [key, canonicalize(entry)]),
+    );
+  }
+  return value;
+}
+
+function definitionHash(definition: WorkflowDefinition): string {
+  const canonical = JSON.stringify(canonicalize(definition));
+  return `sha256:${createHash('sha256').update(canonical).digest('hex')}`;
+}
+
+function artifactHeader(definition: WorkflowDefinition, hash: string) {
+  return {
+    workflowId: definition.workflowId,
+    workflowVersion: definition.version,
+    definitionHash: hash,
+  };
+}
+
+function validateGovernance(definition: WorkflowDefinition): WorkflowCompilationDiagnostic[] {
+  const diagnostics: WorkflowCompilationDiagnostic[] = [];
+
+  definition.actions.forEach((action, index) => {
+    if (action.kind === 'read') return;
+
+    const path = `actions[${index}]`;
+    if (action.systemsTouched.length === 0) {
+      diagnostics.push({
+        code: 'CONSEQUENTIAL_ACTION_MISSING_SYSTEM',
+        path: `${path}.systemsTouched`,
+        message: `Consequential action ${action.id} must name at least one owning system.`,
+      });
+    }
+    if (action.requiredEvidence.length === 0) {
+      diagnostics.push({
+        code: 'CONSEQUENTIAL_ACTION_MISSING_EVIDENCE',
+        path: `${path}.requiredEvidence`,
+        message: `Consequential action ${action.id} must declare required evidence.`,
+      });
+    }
+    if (
+      action.autonomy === 'approval_required' &&
+      (!action.approval.required || !action.approval.owner?.trim())
+    ) {
+      diagnostics.push({
+        code: 'APPROVAL_CONTRACT_REQUIRED',
+        path: `${path}.approval`,
+        message: `Approval-required action ${action.id} must name an approval owner.`,
+      });
+    }
+    if (!REQUIRED_RECEIPT_FIELDS.every((field) => action.receipt.requiredFields.includes(field))) {
+      diagnostics.push({
+        code: 'RECEIPT_FIELDS_REQUIRED',
+        path: `${path}.receipt.requiredFields`,
+        message: `Consequential action ${action.id} must emit the base receipt fields.`,
+      });
+    }
+    if (!action.recovery.owner.trim()) {
+      diagnostics.push({
+        code: 'RECOVERY_OWNER_REQUIRED',
+        path: `${path}.recovery.owner`,
+        message: `Consequential action ${action.id} must name a recovery owner.`,
+      });
+    }
+    if (!action.recovery.path.trim()) {
+      diagnostics.push({
+        code: 'RECOVERY_PATH_REQUIRED',
+        path: `${path}.recovery.path`,
+        message: `Consequential action ${action.id} must provide a recovery path.`,
+      });
+    }
+  });
+
+  return diagnostics;
+}
+
+function validateReferences(definition: WorkflowDefinition): WorkflowCompilationDiagnostic[] {
+  const diagnostics: WorkflowCompilationDiagnostic[] = [];
+  const actorIds = new Set(definition.actors.map((actor) => actor.id));
+  const systemIds = new Set(definition.systems.map((system) => system.id));
+  const objectIds = new Set(definition.objects.map((object) => object.id));
+  const stateIds = new Set(definition.states.map((state) => state.id));
+  const actionIds = new Set(definition.actions.map((action) => action.id));
+  const agentIds = new Set(definition.agents.map((agent) => agent.id));
+
+  definition.objects.forEach((object, index) => {
+    if (!systemIds.has(object.sourceSystemId)) {
+      diagnostics.push({
+        code: 'UNKNOWN_OBJECT_SOURCE_SYSTEM',
+        path: `objects[${index}].sourceSystemId`,
+        message: `Object ${object.id} references unknown system ${object.sourceSystemId}.`,
+      });
+    }
+  });
+  definition.events.forEach((event, index) => {
+    if (!objectIds.has(event.objectId)) {
+      diagnostics.push({
+        code: 'UNKNOWN_EVENT_OBJECT',
+        path: `events[${index}].objectId`,
+        message: `Event ${event.id} references unknown object ${event.objectId}.`,
+      });
+    }
+  });
+  definition.actions.forEach((action, index) => {
+    if (!actorIds.has(action.authority)) {
+      diagnostics.push({
+        code: 'UNKNOWN_ACTION_AUTHORITY',
+        path: `actions[${index}].authority`,
+        message: `Action ${action.id} references unknown authority ${action.authority}.`,
+      });
+    }
+    action.systemsTouched.forEach((systemId, systemIndex) => {
+      if (!systemIds.has(systemId)) {
+        diagnostics.push({
+          code: 'UNKNOWN_ACTION_SYSTEM',
+          path: `actions[${index}].systemsTouched[${systemIndex}]`,
+          message: `Action ${action.id} references unknown system ${systemId}.`,
+        });
+      }
+    });
+    if (action.tool && !systemIds.has(action.tool.targetSystemId)) {
+      diagnostics.push({
+        code: 'UNKNOWN_TOOL_TARGET_SYSTEM',
+        path: `actions[${index}].tool.targetSystemId`,
+        message: `Tool ${action.tool.name} references unknown system ${action.tool.targetSystemId}.`,
+      });
+    }
+    if (action.agentId && !agentIds.has(action.agentId)) {
+      diagnostics.push({
+        code: 'UNKNOWN_ACTION_AGENT',
+        path: `actions[${index}].agentId`,
+        message: `Action ${action.id} references unknown agent ${action.agentId}.`,
+      });
+    }
+  });
+  definition.transitions.forEach((transition, index) => {
+    if (!stateIds.has(transition.from)) {
+      diagnostics.push({
+        code: 'UNKNOWN_TRANSITION_FROM_STATE',
+        path: `transitions[${index}].from`,
+        message: `Transition ${transition.id} references unknown state ${transition.from}.`,
+      });
+    }
+    if (!stateIds.has(transition.to)) {
+      diagnostics.push({
+        code: 'UNKNOWN_TRANSITION_TO_STATE',
+        path: `transitions[${index}].to`,
+        message: `Transition ${transition.id} references unknown state ${transition.to}.`,
+      });
+    }
+    if (!actionIds.has(transition.actionId)) {
+      diagnostics.push({
+        code: 'UNKNOWN_TRANSITION_ACTION',
+        path: `transitions[${index}].actionId`,
+        message: `Transition ${transition.id} references unknown action ${transition.actionId}.`,
+      });
+    }
+  });
+  definition.agents.forEach((agent, index) => {
+    agent.allowedActionIds.forEach((actionId, actionIndex) => {
+      if (!actionIds.has(actionId)) {
+        diagnostics.push({
+          code: 'UNKNOWN_AGENT_ACTION',
+          path: `agents[${index}].allowedActionIds[${actionIndex}]`,
+          message: `Agent ${agent.id} references unknown action ${actionId}.`,
+        });
+      }
+    });
+  });
+  definition.evaluations.forEach((evaluation, index) => {
+    if (!actionIds.has(evaluation.actionId)) {
+      diagnostics.push({
+        code: 'UNKNOWN_EVALUATION_ACTION',
+        path: `evaluations[${index}].actionId`,
+        message: `Evaluation ${evaluation.id} references unknown action ${evaluation.actionId}.`,
+      });
+    }
+  });
+
+  return diagnostics;
+}
+
+export function compileWorkflowDefinition(definition: WorkflowDefinition): CompiledWorkflowBundle {
+  const diagnostics = [...validateGovernance(definition), ...validateReferences(definition)];
+  if (diagnostics.length > 0) throw new WorkflowCompilationError(diagnostics);
+
+  const hash = definitionHash(definition);
+  const header = artifactHeader(definition, hash);
+
+  const nodes: WorkflowMapNode[] = [
+    ...definition.actors.map((actor) => ({
+      id: `actor:${actor.id}`,
+      kind: 'actor' as const,
+      title: actor.title,
+    })),
+    ...definition.states.map((state) => ({
+      id: `state:${state.id}`,
+      kind: 'state' as const,
+      title: state.title,
+    })),
+    ...definition.actions.map((action) => ({
+      id: `action:${action.id}`,
+      kind: 'action' as const,
+      title: action.title,
+    })),
+  ].sort(byId);
+
+  const edges: WorkflowMapEdge[] = [
+    ...definition.actions.map((action) => ({
+      id: `authority:${action.authority}:${action.id}`,
+      kind: 'authorizes' as const,
+      from: `actor:${action.authority}`,
+      to: `action:${action.id}`,
+    })),
+    ...definition.transitions.flatMap((transition) => [
+      {
+        id: `transition:${transition.id}:action`,
+        kind: 'transitions' as const,
+        from: `state:${transition.from}`,
+        to: `action:${transition.actionId}`,
+      },
+      {
+        id: `transition:${transition.id}:state`,
+        kind: 'transitions' as const,
+        from: `action:${transition.actionId}`,
+        to: `state:${transition.to}`,
+      },
+    ]),
+  ].sort(byId);
+
+  const runtimeTargets: RuntimeTargetsArtifact = {
+    schemaVersion: 'runtime_targets.v0.1',
+    ...header,
+    systems: [...definition.systems].sort(byId),
+  };
+  const objectSchemas: ObjectSchemasArtifact = {
+    schemaVersion: 'object_schemas.v0.1',
+    ...header,
+    objects: definition.objects
+      .map((object) => ({ ...object, requiredFields: sorted(object.requiredFields) }))
+      .sort(byId),
+  };
+  const eventSchemas: EventSchemasArtifact = {
+    schemaVersion: 'event_schemas.v0.1',
+    ...header,
+    events: definition.events
+      .map((event) => ({ ...event, requiredEvidence: sorted(event.requiredEvidence) }))
+      .sort(byId),
+  };
+  const decisionInventory: DecisionInventoryArtifact = {
+    schemaVersion: 'decision_inventory.v0.1',
+    ...header,
+    decisions: definition.actions
+      .map((action) => ({
+        actionId: action.id,
+        title: action.title,
+        kind: action.kind,
+        authority: action.authority,
+        autonomy: action.autonomy,
+        systemsTouched: sorted(action.systemsTouched),
+        requiredEvidence: sorted(action.requiredEvidence),
+        ...(action.approval.owner ? { approvalOwner: action.approval.owner } : {}),
+        receiptFields: sorted(action.receipt.requiredFields),
+        recovery: { ...action.recovery },
+      }))
+      .sort(byActionId),
+  };
+  const toolContracts: ToolContractsArtifact = {
+    schemaVersion: 'tool_contracts.v0.1',
+    ...header,
+    tools: definition.actions
+      .filter((action) => action.tool)
+      .map((action) => ({
+        actionId: action.id,
+        name: action.tool!.name,
+        targetSystemId: action.tool!.targetSystemId,
+        authority: action.authority,
+        autonomy: action.autonomy,
+        requiredEvidence: sorted(action.requiredEvidence),
+        receiptFields: sorted(action.receipt.requiredFields),
+      }))
+      .sort(byActionId),
+  };
+  const actionsById = new Map(definition.actions.map((action) => [action.id, action]));
+  const agentContracts: AgentContractsArtifact = {
+    schemaVersion: 'agent_contracts.v0.1',
+    ...header,
+    agents: definition.agents
+      .map((agent) => ({
+        ...agent,
+        allowedActionIds: sorted(agent.allowedActionIds),
+        actionAutonomy: agent.allowedActionIds
+          .map((actionId) => ({
+            actionId,
+            autonomy: actionsById.get(actionId)?.autonomy ?? 'blocked',
+          }))
+          .sort(byActionId),
+      }))
+      .sort(byId),
+  };
+  const approvalSurfaces: ApprovalSurfacesArtifact = {
+    schemaVersion: 'approval_surfaces.v0.1',
+    ...header,
+    actions: definition.actions
+      .filter((action) => action.autonomy !== 'auto_allow')
+      .map((action) => ({
+        actionId: action.id,
+        title: action.title,
+        mode: action.autonomy as Exclude<typeof action.autonomy, 'auto_allow'>,
+        owner: action.approval.owner ?? action.recovery.owner,
+        requiredEvidence: sorted(action.requiredEvidence),
+        recovery: { ...action.recovery },
+      }))
+      .sort(byActionId),
+  };
+  const evaluationManifest: EvaluationManifestArtifact = {
+    schemaVersion: 'evaluation_manifest.v0.1',
+    ...header,
+    evaluations: definition.evaluations
+      .map((evaluation) => ({
+        ...evaluation,
+        requiredEvidence: sorted(evaluation.requiredEvidence),
+      }))
+      .sort(byId),
+  };
+
+  return {
+    schemaVersion: 'compiled_workflow_bundle.v0.1',
+    compilerVersion: WORKFLOW_COMPILER_VERSION,
+    workflowId: definition.workflowId,
+    workflowVersion: definition.version,
+    title: definition.title,
+    businessObjective: definition.businessObjective,
+    owners: { ...definition.owners },
+    definitionHash: hash,
+    workflowMap: {
+      schemaVersion: 'workflow_map.v0.1',
+      workflowId: definition.workflowId,
+      workflowVersion: definition.version,
+      nodes,
+      edges,
+    },
+    runtimeTargets,
+    objectSchemas,
+    eventSchemas,
+    decisionInventory,
+    toolContracts,
+    agentContracts,
+    approvalSurfaces,
+    evaluationManifest,
+  };
+}

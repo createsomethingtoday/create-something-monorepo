@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRawSnippet, flushSync, mount, unmount } from 'svelte';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import PerformanceCampaignOpening from './PerformanceCampaignOpening.svelte';
 import PerformanceThesisConditions from './PerformanceThesisConditions.svelte';
@@ -20,6 +20,7 @@ afterEach(() => {
 		instance = undefined;
 	}
 	document.body.innerHTML = '';
+	vi.unstubAllGlobals();
 });
 
 describe('PerformanceCampaignOpening', () => {
@@ -79,6 +80,87 @@ describe('PerformanceCampaignOpening', () => {
 		);
 	});
 
+	it('progressively enhances static campaign media with silent looping video', () => {
+		vi.stubGlobal('matchMedia', () => ({
+			matches: false,
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn()
+		}));
+
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceCampaignOpening, {
+			target,
+			props: {
+				eyebrow: 'AI Performance Lab',
+				title: 'Make one workflow safe to delegate.',
+				media: {
+					src: '/images/controlled-flow.webp',
+					mobileSrc: '/images/controlled-flow-mobile.webp',
+					alt: 'Water moving through a concrete spillway',
+					video: {
+						mp4: '/video/controlled-flow.mp4',
+						webm: '/video/controlled-flow.webm',
+						poster: '/images/controlled-flow-motion-poster.webp'
+					}
+				}
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const opening = target.querySelector('section.performance-campaign-opening');
+		const video = opening?.querySelector('video');
+		expect(video).not.toBeNull();
+		expect(video?.hasAttribute('autoplay')).toBe(true);
+		expect(video?.muted).toBe(true);
+		expect(video?.hasAttribute('loop')).toBe(true);
+		expect(video?.hasAttribute('playsinline')).toBe(true);
+		expect(video?.getAttribute('poster')).toBe('/images/controlled-flow-motion-poster.webp');
+		expect(video?.querySelector('source[type="video/webm"]')?.getAttribute('src')).toBe(
+			'/video/controlled-flow.webm'
+		);
+		expect(video?.querySelector('source[type="video/mp4"]')?.getAttribute('src')).toBe(
+			'/video/controlled-flow.mp4'
+		);
+		expect(opening?.querySelector('picture img')?.getAttribute('src')).toBe(
+			'/images/controlled-flow.webp'
+		);
+	});
+
+	it('keeps campaign video absent when the operator prefers reduced motion', () => {
+		vi.stubGlobal('matchMedia', () => ({
+			matches: true,
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn()
+		}));
+
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceCampaignOpening, {
+			target,
+			props: {
+				eyebrow: 'AI Performance Lab',
+				title: 'Make one workflow safe to delegate.',
+				media: {
+					src: '/images/controlled-flow.webp',
+					mobileSrc: '/images/controlled-flow-mobile.webp',
+					alt: 'Water moving through a concrete spillway',
+					video: {
+						mp4: '/video/controlled-flow.mp4',
+						webm: '/video/controlled-flow.webm'
+					}
+				}
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const opening = target.querySelector('section.performance-campaign-opening');
+		expect(opening?.querySelector('video')).toBeNull();
+		expect(opening?.querySelector('picture img')?.getAttribute('src')).toBe(
+			'/images/controlled-flow.webp'
+		);
+	});
+
 	it('owns a high-contrast directional scrim for image-backed copy', () => {
 		const source = readFileSync(
 			join(process.cwd(), 'src/lib/components/performance/PerformanceCampaignOpening.svelte'),
@@ -86,7 +168,8 @@ describe('PerformanceCampaignOpening', () => {
 		);
 
 		expect(source).toContain('--performance-campaign-scrim-copy: rgba(9, 9, 9, 0.94)');
-		expect(source).toContain('--performance-campaign-scrim-mid: rgba(9, 9, 9, 0.76)');
+		expect(source).toContain('--performance-campaign-scrim-mid: rgba(9, 9, 9, 0.24)');
+		expect(source).toContain('--performance-campaign-scrim-edge: rgba(9, 9, 9, 0)');
 		expect(source).toContain('linear-gradient(90deg,');
 		expect(source).toContain('linear-gradient(0deg,');
 		expect(source).toContain('@media (max-width: 47.99rem)');
@@ -121,7 +204,10 @@ describe('Performance composition typography', () => {
 
 		const tokens = readFileSync(join(process.cwd(), 'src/lib/styles/tokens.css'), 'utf8');
 		expect(tokens).toContain(
-			'--font-performance-display: "Helvetica Neue", Helvetica, Arial, system-ui'
+			'--font-performance-display: "Satoshi", "Helvetica Neue", Helvetica, Arial, system-ui'
+		);
+		expect(tokens).toContain(
+			'--font-performance-mono: "IBM Plex Mono", "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace'
 		);
 		expect(tokens).toContain('--font-performance-display-weight: 500');
 		expect(tokens).toContain('--tracking-performance-display: -0.03em');
@@ -138,6 +224,15 @@ describe('Performance composition typography', () => {
 			expect(source, component).toContain('font-kerning: normal');
 			expect(source, component).toContain('font-feature-settings: "kern" 1, "liga" 1');
 		}
+	});
+
+	it('loads the approved Performance font sources without importing a client font asset', () => {
+		const source = readFileSync(join(process.cwd(), 'src/lib/styles/performance.css'), 'utf8');
+
+		expect(source).toContain('api.fontshare.com/v2/css');
+		expect(source).toContain('@ibm/plex-mono/css/ibm-plex-mono-all.css');
+		expect(source).toContain('font-family: var(--font-performance-display');
+		expect(source).toContain('--font-mono: var(--font-performance-mono)');
 	});
 
 	it('keeps the shared PerformancePageSection foundation on the same display contract', () => {

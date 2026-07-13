@@ -131,6 +131,12 @@ For new worktrees, run `pnpm bootstrap:worktree` before type checks, smoke scrip
 
 Do not guess code symbols, import paths, or public exports.
 
+CREATE SOMETHING Identity is the paved road for new authentication and OAuth
+work. Start with `docs/guides/FIRST_PARTY_AUTH_PLATFORM.md`, Identity Worker's
+machine-readable discovery, and the owning application's explicit access
+policy. Do not introduce another identity provider SDK or hosted authorization
+server. Run `pnpm auth:retired-provider:check` before closing auth-related work.
+
 Use:
 
 ```bash

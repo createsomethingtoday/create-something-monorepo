@@ -247,7 +247,7 @@
   titleLevel="h1"
   eyebrow="Dify Agent Eval Gates"
   title="The evals that make Dify safer to operate."
-  description="A Dify app becomes production-worthy when Langfuse can explain the runtime trace and score the MCP contract before the workflow gets more autonomy."
+  description="A Dify app becomes production-worthy when Langfuse can preserve an eval trace, explain the runtime, and score the MCP contract before the workflow gets more autonomy."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -348,6 +348,7 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
     <Button href="/dify" variant="secondary">Back To Dify</Button>
+    <Button href="/dify/ship-dify-app-with-mcp-tools" variant="secondary">See the shipping path</Button>
     <Button href="/dify/content-engine" variant="secondary">See Dify Page Portfolio</Button>
     <Button href="https://createsomething.io/papers/eval-evidence-layer" variant="secondary">
       Read Eval Evidence Paper

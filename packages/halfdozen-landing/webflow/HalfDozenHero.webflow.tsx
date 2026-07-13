@@ -9,8 +9,9 @@ export default declareComponent(HeroSection, {
   group: 'Half Dozen',
   options: { ssr: true },
   props: {
-    heroMotion: props.Text({ name: 'Hero motion video URL', defaultValue: '/assets/hero-motion.mp4' }),
-    heroMotionPoster: props.Text({ name: 'Hero motion poster URL', defaultValue: '/assets/hero-motion-poster.jpg' }),
+    assetBaseUrl: props.Text({ name: 'Asset base URL', defaultValue: 'https://halfdozen-landing.pages.dev' }),
+    heroMotion: props.Text({ name: 'Hero motion video path', defaultValue: '/media/hero-motion.mp4' }),
+    heroMotionPoster: props.Text({ name: 'Hero motion poster path', defaultValue: '/assets/hero-motion-poster.jpg' }),
     eyebrow: props.Text({
       name: 'Left quote',
       defaultValue:

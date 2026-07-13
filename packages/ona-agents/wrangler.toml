@@ -6,16 +6,22 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 
 [vars]
 ENVIRONMENT = "production"
-ALLOW_CLERK_ACCESS_PREVIEW = "false"
-CLERK_ALLOW_ANY_AUTHENTICATED = "false"
-CLERK_SIGN_IN_URL = "https://createsomething.agency/sign-in"
+IDENTITY_API_URL = "https://id.createsomething.space"
+CS_IDENTITY_ISSUER = "https://id.createsomething.space"
+CS_IDENTITY_JWKS_URL = "https://id.createsomething.space/.well-known/jwks.json"
+CS_IDENTITY_AUDIENCE = "ona-agents"
+CS_AUTH_SIGN_IN_URL = "/sign-in"
+CS_AUTH_ALLOWED_EMAIL_DOMAINS = "createsomething.io"
+ALLOW_CS_AUTH_PREVIEW = "false"
+CS_AUTH_ALLOW_ANY_AUTHENTICATED = "false"
 
-# Required before production operator access:
-# - CLERK_JWKS_URL or CLERK_ISSUER
-# - one or more allow rules:
-#   CLERK_ALLOWED_ORGANIZATION_IDS, CLERK_ALLOWED_ORGANIZATION_ROLES,
-#   CLERK_ALLOWED_EMAILS, CLERK_ALLOWED_EMAIL_DOMAINS, or
-#   CLERK_ALLOW_ANY_AUTHENTICATED=true for a private Clerk instance.
+# Production operator access preserves the approved staff-domain policy. If a
+# narrower subject/email rule replaces it later, promote that as a separate
+# reviewed policy change.
+# Other supported allow rules:
+#   CS_AUTH_ALLOWED_SUBJECTS, CS_AUTH_ALLOWED_EMAILS,
+#   CS_AUTH_ALLOWED_TENANT_IDS,
+#   CS_AUTH_ALLOWED_ROLES, or CS_AUTH_ALLOW_ANY_AUTHENTICATED=true.
 #
 # Dify Service API keys remain server-side Pages secrets:
 # DIFY_TEMPLATE_REVIEW_HUB_API_KEY, DIFY_ERIC_HUB_API_KEY, DIFY_NATALIA_HUB_API_KEY,

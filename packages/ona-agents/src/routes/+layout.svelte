@@ -5,15 +5,15 @@
   export let data: LayoutData;
 
   $: accessTone =
-    data.clerkAccess.status === 'allowed'
+    data.authAccess.status === 'allowed'
       ? 'ready'
-      : data.clerkAccess.status === 'anonymous'
+      : data.authAccess.status === 'anonymous'
         ? 'review'
         : 'stop';
   $: accessLabel =
-    data.clerkAccess.status === 'allowed'
-      ? 'Clerk active'
-      : data.clerkAccess.status === 'anonymous'
+    data.authAccess.status === 'allowed'
+      ? 'Identity active'
+      : data.authAccess.status === 'anonymous'
         ? 'Sign in'
         : 'Access blocked';
 </script>
@@ -34,16 +34,14 @@
       </nav>
 
       <a
-        class={`session-link ${data.clerkAccess.status === 'allowed' ? '' : 'public'}`}
-        href={data.clerkAccess.signInUrl}
+        class={`session-link ${data.authAccess.status === 'allowed' ? '' : 'public'}`}
+        href={data.authAccess.source === 'identity' ? '/api/auth/logout' : data.authAccess.signInUrl}
         rel="noreferrer"
       >
         <span class={`status-pill ${accessTone}`}>{accessLabel}</span>
-        {#if data.clerkAccess.status === 'allowed'}
+        {#if data.authAccess.status === 'allowed'}
           <span class="session-meta">
-            {data.clerkAccess.email ??
-              data.clerkAccess.organizationRole ??
-              data.clerkAccess.subject}
+            {data.authAccess.email ?? data.authAccess.roles[0] ?? data.authAccess.subject}
           </span>
         {/if}
       </a>

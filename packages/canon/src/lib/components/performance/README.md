@@ -6,7 +6,7 @@ The Performance design system is one Canon-owned namespace for presenting and op
 
 | Pattern | Component | Owns |
 |---|---|---|
-| Campaign opening | `PerformanceCampaignOpening` | Media-first first viewport, responsive image source, claim hierarchy, actions, and campaign proof rail |
+| Campaign opening | `PerformanceCampaignOpening` | Static-first first viewport, optional progressive video enhancement, responsive image source, claim hierarchy, actions, and campaign proof rail |
 | Thesis + conditions | `PerformanceThesisConditions` | One governing proposition paired with explicit signal, pressure, growth, risk, or neutral conditions |
 | Sequential field tests | `PerformanceFieldSequence` | Ordered studies, figure numbering, alternating media, optional sticky progression, and reduced-motion fallback |
 | Contrast chapter | `PerformanceContrastChapter` | The black/white principle-to-intervention break and an inline or full-width slot for a real route-owned artifact |
@@ -23,15 +23,17 @@ Properties own words, route data, original media, domain-specific artifacts, app
 
 Campaign actions inherit a mode-aware surface from `PerformanceCampaignOpening`: ink openings provide a light primary action and a translucent, light-bordered secondary action; paper openings reverse that relationship. Properties may supply the action destination and label, but they must not reintroduce page-surface button colors over image-backed media.
 
+Campaign video is a progressive enhancement, never the only media surface. Supply the canonical responsive `src`, `mobileSrc`, and `alt` first, then optionally add `video.mp4`, `video.webm`, and a matching `video.poster`. Canon renders the still during SSR and first paint, adds silent autoplaying loop media only after hydration when motion is allowed, and keeps the video element absent when `prefers-reduced-motion: reduce` applies. Text, actions, proof, scrims, and grid overlays remain live DOM; never bake them into video. The static image is also the rollback when video delivery or motion quality fails.
+
 Keep ordinary proof artifacts inline. Use `artifactPlacement="full-width"` on `PerformanceContrastChapter` when the artifact is itself an operating surface, such as a live canvas whose nodes, controls, and inspector need enough width to remain legible. The property still owns the renderer and projection; Canon only owns its placement in the chapter.
 
 The same placement rule applies to conversion. Keep a compact receipt or object in the default `sidecar` position. Set `artifactPlacement="full-width"` on `PerformanceConversionHandoff` when a delegation object, workflow map, or approval surface needs horizontal room. Canon then pairs the narrative with a compact authority ledger and promotes the route-owned artifact to a shared proof row below them.
 
 ## Typography contract
 
-Performance display copy uses a system-safe Helvetica family stack: `Helvetica Neue`, `Helvetica`, `Arial`, then platform sans fallbacks. Canon sets display weight `500`, tracking `-0.03em`, line-height `0.94`, normal kerning, and standard kerning and ligature features. This replaces route-specific weight and tracking decisions while keeping paragraph and interface copy on the existing Canon sans and mono stacks.
+Performance uses Satoshi for commands, conclusions, interface prose, and display copy. Canon sets display weight `500`, tracking `-0.03em`, line-height `0.94`, normal kerning, and standard kerning and ligature features. IBM Plex Mono owns labels, evidence, numbers, metadata, states, timestamps, identifiers, topology labels, and code. Tabular values should continue to use tabular numerals.
 
-Do not pull Satoshi or another client, template, remote, or unlicensed face into the shared system. A property may supply original media and content, but typography remains a Canon-owned contract. `PerformanceThesisConditions` defaults to an `h2`; set `headingLevel="h1"` when it is the primary product or operator opening.
+Satoshi is loaded from Fontshare's official hosted service under the ITF Free Font License; do not copy the client-owned Satoshi files elsewhere in this repository. IBM Plex Mono is bundled from the official `@ibm/plex-mono` package under the SIL Open Font License. The fallback stacks remain explicit so the system stays readable if a hosted font is unavailable. A property may supply original media and content, but typography remains a Canon-owned contract. `PerformanceThesisConditions` defaults to an `h2`; set `headingLevel="h1"` when it is the primary product or operator opening.
 
 ## Composition example
 

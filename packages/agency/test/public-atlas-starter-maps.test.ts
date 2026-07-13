@@ -63,8 +63,9 @@ test('agency public Atlas intake policy owns local limits and storage keys', () 
 	assert.equal(agencyPublicAtlasModule.includes('export const PUBLIC_ATLAS_LIMITS'), false);
 });
 
-test('public Atlas UI and API import intake policy directly', () => {
+test('public Atlas UI and API import intake policy while booking delegates context to the scheduler', () => {
 	assert.ok(agencyPublicAtlasCanvas.includes("from '$lib/atlas/intake-policy'"));
+	assert.ok(agencyBookingRoute.includes('buildFirstPartySchedulerUrl'));
 	assert.ok(agencyBookingRoute.includes("from '$lib/atlas/intake-policy'"));
 	assert.ok(agencyPublicAgentRoute.includes("from '$lib/atlas/intake-policy'"));
 	assert.equal(

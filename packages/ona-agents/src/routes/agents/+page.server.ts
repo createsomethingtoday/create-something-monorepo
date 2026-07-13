@@ -3,12 +3,12 @@ import { getDifyOperatorAgentViews } from '$lib/server/dify/agent-registry';
 
 export const load: PageServerLoad = async ({ parent, platform }) => {
   const parentData = await parent();
-  const accessAllowed = parentData.clerkAccess.status === 'allowed';
+  const accessAllowed = parentData.authAccess.status === 'allowed';
 
   return {
     accessAllowed,
-    signInUrl: parentData.clerkAccess.signInUrl,
-    accessDetail: parentData.clerkAccess.detail,
+    signInUrl: parentData.authAccess.signInUrl,
+    accessDetail: parentData.authAccess.detail,
     agents: accessAllowed ? getDifyOperatorAgentViews(platform) : []
   };
 };

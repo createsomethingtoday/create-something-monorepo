@@ -9,7 +9,9 @@ export type MarketingPageCluster =
   | 'dify'
   | 'methodology'
   | 'products'
+  | 'field-reports'
   | 'proof-lab'
+  | 'workflow-proof'
   | 'trust'
   | 'business-use-case'
   | 'enterprise-use-case'
@@ -77,9 +79,9 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Teams looking for a plain explanation of AI workflow systems.',
     funnelStage: 'discover',
     intent: 'Introduce the category and route readers toward workflow mapping.',
-    primaryAction: 'Start Workflow Map',
+    primaryAction: 'Map one workflow',
     requiredTerms: ['workflow', 'business operations', 'Signal', 'Decision', 'Proof'],
-    requiredLinks: ['/services', '/partners', '/products'],
+    requiredLinks: ['/services', '/partners', '/products', '/field-reports/template-review'],
     schema: 'faq',
     search: {
       changefreq: 'weekly',
@@ -181,6 +183,26 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       changefreq: 'monthly',
       priority: '0.6',
       lastmod: '2026-06-21'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
+    path: '/proof/marketplace-workflow',
+    cluster: 'workflow-proof',
+    role: 'pillar',
+    decision: 'index',
+    audience: 'Operators evaluating a complete governed workflow before mapping their own.',
+    funnelStage: 'evaluate',
+    intent:
+      'Show one complete Marketplace workflow from versioned map through compiled contracts, representative replay, and deterministic proof.',
+    primaryAction: 'Map your workflow',
+    requiredTerms: ['workflow', 'Atlas', 'Marketplace', 'approval', 'proof'],
+    requiredLinks: ['/products'],
+    schema: 'article',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.82',
+      lastmod: '2026-07-11'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
@@ -351,8 +373,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'evaluate',
     intent: 'Show the gates that prove a Dify workflow can operate safely.',
     primaryAction: 'Request workflow teardown',
-    requiredTerms: ['Dify', 'Langfuse', 'eval trace', 'forbidden tool', 'secret refusal'],
-    requiredLinks: ['/dify', '/dify/ship-dify-app-with-mcp-tools'],
+    requiredTerms: ['Dify', 'Langfuse', 'runtime trace', 'forbidden tool', 'secret refusal'],
+    requiredLinks: ['/dify', '/dify/mcp-control-plane'],
     schema: 'article',
     search: {
       changefreq: 'weekly',
@@ -401,25 +423,6 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
   {
-    path: '/dify/n8n-vs-dify',
-    cluster: 'dify',
-    role: 'comparison',
-    decision: 'index',
-    audience: 'Teams comparing workflow automation with agent app surfaces.',
-    funnelStage: 'evaluate',
-    intent: 'Capture comparison intent and route it toward the governed Dify workflow path.',
-    primaryAction: 'Request workflow teardown',
-    requiredTerms: ['Dify', 'n8n', 'Cloudflare', 'agent app', 'automation'],
-    requiredLinks: ['/dify', '/dify/mcp-control-plane'],
-    schema: 'article',
-    search: {
-      changefreq: 'weekly',
-      priority: '0.85',
-      lastmod: '2026-06-22'
-    },
-    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
-  },
-  {
     path: '/products',
     cluster: 'products',
     role: 'pillar',
@@ -428,7 +431,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'evaluate',
     intent:
       'Explain Atlas, Signal, Decision, and Proof as one product system for inspectable workflows.',
-    primaryAction: 'Start Workflow Map',
+    primaryAction: 'Map one workflow',
     requiredTerms: ['workflow', 'Atlas', 'Signal', 'Decision', 'Proof'],
     requiredLinks: [],
     schema: 'faq',
@@ -466,7 +469,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Teams that need proactive notification when product, API, or process updates affect reviewers.',
     funnelStage: 'evaluate',
     intent: 'Explain Signal as the app governance inbox that routes updates into Atlas, Decision, and Proof.',
-    primaryAction: 'Start Workflow Map',
+    primaryAction: 'Map one workflow',
     requiredTerms: ['Signal', 'inbox', 'API updates', 'Atlas', 'Proof'],
     requiredLinks: ['/atlas', '/products/decision', '/products/proof', '/products'],
     schema: 'faq',
@@ -485,7 +488,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Teams designing human-in-the-loop review queues for agents and governed workflow actions.',
     funnelStage: 'evaluate',
     intent: 'Explain Decision as the queue that turns Signals into approval, policy action, stop states, and Proof.',
-    primaryAction: 'Start Workflow Map',
+    primaryAction: 'Map one workflow',
     requiredTerms: ['Decision', 'queue', 'human-in-the-loop', 'Signal', 'Proof'],
     requiredLinks: ['/products/signal', '/atlas', '/products/proof', '/products'],
     schema: 'faq',
@@ -504,7 +507,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Teams that need an inspectable ledger for app governance decisions and workflow outcomes.',
     funnelStage: 'evaluate',
     intent: 'Explain Proof as the ledger surface that records evidence, outcomes, receipts, and rollback notes.',
-    primaryAction: 'Start Workflow Map',
+    primaryAction: 'Map one workflow',
     requiredTerms: ['Proof', 'ledger', 'audit trail', 'Atlas', 'Decision'],
     requiredLinks: ['/products/signal', '/products/decision', '/atlas', '/products'],
     schema: 'faq',
@@ -534,6 +537,44 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       lastmod: '2026-06-28'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'archive-route:review']
+  },
+  {
+    path: '/field-reports',
+    cluster: 'field-reports',
+    role: 'pillar',
+    decision: 'index',
+    audience: 'Teams evaluating whether CREATE SOMETHING workflow claims survive inspection.',
+    funnelStage: 'evaluate',
+    intent: 'Index measured workflow results, failed gates, evidence sources, and remaining questions.',
+    primaryAction: 'Read the first report',
+    requiredTerms: ['Field Reports', 'measured', 'evidence', 'human', 'result'],
+    requiredLinks: ['/field-reports/template-review'],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.82',
+      lastmod: '2026-07-10'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
+    path: '/field-reports/template-review',
+    cluster: 'field-reports',
+    role: 'support',
+    decision: 'index',
+    audience: 'Operations and review teams evaluating evidence-assisted human judgment.',
+    funnelStage: 'evaluate',
+    intent: 'Show what the governed template-review workflow proved, failed, and still needs measured.',
+    primaryAction: 'Inspect the result',
+    requiredTerms: ['evidence', 'reviewer', 'synthetic', 'promotion blocked', 'time savings'],
+    requiredLinks: ['/field-reports'],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.86',
+      lastmod: '2026-07-12'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
   {
     path: '/use-cases/business',

@@ -1,5 +1,4 @@
 export const AGENCY_DIFY_ARTICLE_PATHS = [
-  '/dify/n8n-vs-dify',
   '/dify/ship-dify-app-with-mcp-tools',
   '/dify/agent-eval-gates',
   '/dify/mcp-control-plane'
@@ -11,12 +10,19 @@ export const AGENCY_ATLAS_PROOF_PATHS = [
   '/methodology',
   '/stack',
   '/products',
+  '/proof/marketplace-workflow',
   '/products/signal',
   '/products/decision',
   '/products/proof'
 ] as const;
 
-export const AGENCY_COMPACT_PRIVACY_PATHS = ['/', ...AGENCY_ATLAS_PROOF_PATHS] as const;
+export const AGENCY_COMPACT_PRIVACY_PATHS = [
+  '/',
+  '/book',
+  '/field-reports',
+  '/field-reports/template-review',
+  ...AGENCY_ATLAS_PROOF_PATHS
+] as const;
 
 function normalizeAgencyPathname(pathname: string): string {
   const normalized = pathname.split(/[?#]/)[0]?.replace(/\/+$/, '') || '/';

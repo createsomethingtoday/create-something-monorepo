@@ -200,7 +200,7 @@ export const PUBLIC_COPY_RULES = [
   {
     id: 'official-openai-partner',
     pattern: /\bofficial\s+OpenAI\s+partner\b/gi,
-    replacement: 'built primarily with OpenAI Codex'
+    replacement: 'built with OpenAI Codex and designed to remain client-owned'
   },
   {
     id: 'certified-openai-provider',

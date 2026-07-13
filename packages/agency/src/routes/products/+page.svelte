@@ -6,21 +6,14 @@
     PerformanceContrastChapter,
     PerformanceConversionHandoff,
     PerformancePageSection,
-    PerformanceProofStrip,
-    PerformanceThesisConditions,
     PerformanceWorkflowMiniArtifact,
     SEO,
-    type PerformanceCardItem,
-    type PerformanceCondition,
-    type PerformanceProofItem
+    type PerformanceCardItem
   } from '@create-something/canon';
   import { listGovernanceProducts, type GovernanceProduct } from '@create-something/canon/governance';
-  import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
   import { products, type Product } from '$lib/data/services';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  type ProofStateIconName = 'objects' | 'actions' | 'states' | 'receipts';
-  type ProofStateItem = PerformanceProofItem & { icon: ProofStateIconName };
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
   const featured = products.filter((product) => product.category === 'featured');
@@ -44,29 +37,6 @@
     }
   ];
 
-  const proofStripItems: ProofStateItem[] = [
-    {
-      icon: 'actions',
-      value: 'Signal',
-      label: 'Slack posts, API changes, PRs, schema diffs, tool calls, and exceptions enter one queue.'
-    },
-    {
-      icon: 'states',
-      value: 'Decision',
-      label: 'Human, agent, or policy judgment routes the next action before risk moves downstream.'
-    },
-    {
-      icon: 'objects',
-      value: 'Map',
-      label: 'Atlas shows where the decision sits, which systems it touches, and who owns the path.'
-    },
-    {
-      icon: 'receipts',
-      value: 'Proof',
-      label: 'Evidence, policy, owner, outcome, receipt, and rollback notes stay with the work.'
-    }
-  ];
-
   const productSurfaceItems: Array<{
     kind?: ProductSurfaceKind;
     label: string;
@@ -80,46 +50,6 @@
     detail: product.description,
     href: product.id === 'atlas' ? '/atlas' : `/products/${product.id}`
   }));
-
-  const proofPathItems = [
-    {
-      label: 'Signal',
-      detail: 'Name the source, change, account owner, and authority boundary.'
-    },
-    {
-      label: 'Decision',
-      detail: 'Route the judgment to the right human, agent, policy, or workflow state.'
-    },
-    {
-      label: 'Map',
-      detail: 'Show the affected systems, downstream impact, and review owner before action.'
-    },
-    {
-      label: 'Proof',
-      detail: 'Record the evidence, outcome, receipt, and recovery path the operator can inspect.'
-    }
-  ];
-
-  const productProtocol: PerformanceCondition[] = [
-    {
-      label: 'Map',
-      title: 'Objects / owners / gates',
-      detail: 'Atlas holds the workflow boundary before an operating surface acts.',
-      tone: 'signal'
-    },
-    {
-      label: 'State',
-      title: 'Run / Wait / Stop',
-      detail: 'Signal and Decision keep intervention legible without collapsing authority.',
-      tone: 'pressure'
-    },
-    {
-      label: 'Proof',
-      title: 'Receipt + recovery',
-      detail: 'Proof preserves outcome, owner, evidence, and the path back.',
-      tone: 'growth'
-    }
-  ];
 
   function productCard(product: Product): PerformanceCardItem {
     const points = [product.tagline, product.npmPackage, product.client, product.timeline].filter(
@@ -142,14 +72,6 @@
       href: product.href,
       points: points.length ? points : undefined
     };
-  }
-
-  function proofStateIcon(icon: string | undefined): ProofStateIconName {
-    if (icon === 'objects' || icon === 'actions' || icon === 'states' || icon === 'receipts') {
-      return icon;
-    }
-
-    return 'receipts';
   }
 
   function miniArtifactKind(product: GovernanceProduct): ProductSurfaceKind | undefined {
@@ -179,9 +101,9 @@
 
 <PerformanceCampaignOpening
   eyebrow="Product system"
-  title="One map. Three operating surfaces."
-  lede="Atlas maps the workflow. Signal watches what changes. Decision routes the judgment. Proof preserves the record. Together they make AI work inspectable before it becomes autonomous."
-  media={{ src: '/images/performance-lab/controlled-flow.webp', mobileSrc: '/images/performance-lab/controlled-flow-mobile.webp', alt: 'Controlled water flow splitting into visible operating paths' }}
+  title="One workflow map. Three places to operate."
+  lede="Atlas maps the workflow. Signal watches changes. Decision routes judgment. Proof keeps the record. The map defines the boundary; the three operating surfaces keep responsibility visible."
+  media={{ src: '/images/performance-lab/product-system-natural.webp', mobileSrc: '/images/performance-lab/product-system-natural-mobile.webp', alt: 'Aerial black-and-white view of one water-control structure dividing flow across three channels' }}
   proof={[{ label: 'Atlas', value: 'Map' }, { label: 'Signal', value: 'Watch' }, { label: 'Decision', value: 'Route' }, { label: 'Proof', value: 'Record' }]}
 >
   {#snippet actions()}
@@ -196,9 +118,9 @@
 
 <PerformanceContrastChapter
   eyebrow="System anatomy"
-  title="One governed flow. Four inspectable surfaces."
-  description="The product system stays cohesive because every surface owns one part of the operating path."
-  intervention={{ label: 'Product system', title: 'Atlas / Signal / Decision / Proof', detail: 'Map the work, watch the change, route the judgment, preserve the record.' }}
+  title="One map coordinates three operating surfaces."
+  description="Atlas holds the map. Signal watches, Decision routes, and Proof records. Substrate is the Foundation underneath; Map / Pilot / Operate is the delivery method."
+  intervention={{ label: 'Product system', title: 'Atlas → Signal / Decision / Proof', detail: 'Map the work once, then watch the change, route the judgment, and preserve the record.' }}
 >
   {#snippet artifact()}
     <aside class="product-system-artifact" aria-label="CREATE SOMETHING product system">
@@ -229,14 +151,6 @@
   {/snippet}
 </PerformanceContrastChapter>
 
-<PerformanceThesisConditions
-  eyebrow="Product protocol"
-  title="One governed flow. Four inspectable surfaces."
-  description="The product system directs work through a map, signal, decision, and receipt without hiding ownership inside one interface."
-  conditions={productProtocol}
-  ariaLabel="Product system protocol"
-/>
-
 <PerformancePageSection
   variant="white"
   eyebrow="Product overview"
@@ -262,33 +176,6 @@
           <strong>{item.title}</strong>
           <p>{item.detail}</p>
         </a>
-      {/each}
-    </div>
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Operating sequence"
-  title="The surfaces stay useful because they stay separate."
-  description="Signal, Decision, Map, and Proof are not decorative categories. They are the sequence that keeps a workflow legible while tools and agents do bounded work."
->
-  {#snippet after()}
-    <PerformanceProofStrip items={proofStripItems} ariaLabel="Workflow proof states">
-      {#snippet icon(item)}
-        <WorkflowSignalIcon name={proofStateIcon(item.icon)} />
-      {/snippet}
-    </PerformanceProofStrip>
-
-    <div class="proof-path" aria-label="Inspectable workflow path">
-      {#each proofPathItems as step, index}
-        <article class="proof-path__item">
-          <span class="proof-path__index">{String(index + 1).padStart(2, '0')}</span>
-          <div>
-            <strong>{step.label}</strong>
-            <p>{step.detail}</p>
-          </div>
-        </article>
       {/each}
     </div>
   {/snippet}
@@ -527,62 +414,6 @@
     line-height: 1.43;
   }
 
-  .proof-path {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0;
-    margin-top: 0.85rem;
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-performance-sm, 4px);
-    background: var(--color-performance-panel, #ffffff);
-    overflow: hidden;
-  }
-
-  .proof-path__item {
-    display: grid;
-    grid-template-columns: 2.35rem minmax(0, 1fr);
-    gap: 0.8rem;
-    min-height: 7.25rem;
-    align-items: start;
-    padding: 0.95rem;
-    border-right: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .proof-path__item:last-child {
-    border-right: 0;
-  }
-
-  .proof-path__index {
-    display: inline-grid;
-    place-items: center;
-    width: 2.35rem;
-    height: 2.35rem;
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-performance-sm, 4px);
-    background: var(--color-performance-paper, #f3f3f0);
-    color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
-    font-size: 0.74rem;
-    font-weight: var(--font-semibold);
-    letter-spacing: 0;
-    line-height: 1;
-  }
-
-  .proof-path strong {
-    display: block;
-    color: var(--color-performance-ink, #090909);
-    font-size: 1rem;
-    font-weight: var(--font-medium);
-    line-height: 1.18;
-  }
-
-  .proof-path p {
-    margin: 0.38rem 0 0;
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.88rem;
-    line-height: 1.4;
-  }
-
   @media (max-width: 980px) {
     .product-surface-list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -596,17 +427,6 @@
       border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
-    .proof-path {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .proof-path__item:nth-child(2n) {
-      border-right: 0;
-    }
-
-    .proof-path__item:nth-child(-n + 2) {
-      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-    }
   }
 
   @media (max-width: 640px) {
@@ -655,20 +475,5 @@
       min-height: 6.5rem;
     }
 
-    .proof-path {
-      grid-template-columns: 1fr;
-    }
-
-    .proof-path__item,
-    .proof-path__item:nth-child(2n),
-    .proof-path__item:nth-child(-n + 2) {
-      min-height: auto;
-      border-right: 0;
-      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-    }
-
-    .proof-path__item:last-child {
-      border-bottom: 0;
-    }
   }
 </style>

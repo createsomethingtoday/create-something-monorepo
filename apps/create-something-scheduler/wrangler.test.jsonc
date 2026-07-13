@@ -1,0 +1,43 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "create-something-scheduler-test",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-07-11",
+  "vars": {
+    "GOOGLE_CLIENT_ID": "controlled-client-id",
+    "GOOGLE_CLIENT_SECRET": "controlled-client-secret",
+    "GOOGLE_REDIRECT_URI": "https://scheduler.local/oauth/google/callback",
+    "GOOGLE_EVENT_CALENDAR_ID": "micah@createsomething.io",
+    "GOOGLE_SELECTED_CALENDAR_IDS": "micah@createsomething.io",
+    "OAUTH_ENCRYPTION_SECRET": "controlled-oauth-encryption-secret",
+    "PROPOSAL_SIGNING_SECRET": "controlled-proposal-signing-secret",
+    "ACTION_SIGNING_SECRET": "controlled-action-signing-secret",
+    "OPERATOR_API_TOKEN": "controlled-operator-token",
+    "RESEND_API_KEY": "controlled-resend-key",
+    "RESEND_FROM": "CREATE SOMETHING <noreply@createsomething.io>",
+    "TURNSTILE_SECRET_KEY": "controlled-turnstile-secret",
+    "TURNSTILE_SITE_KEY": "controlled-turnstile-site-key",
+    "TURNSTILE_EXPECTED_HOSTNAME": "scheduler.local",
+    "REALTIMEKIT_API_TOKEN": "controlled-realtimekit-token",
+    "REALTIMEKIT_APP_ID": "controlled-realtimekit-app",
+    "REALTIMEKIT_HOST_PRESET_ID": "controlled-host-preset",
+    "REALTIMEKIT_GUEST_PRESET_ID": "controlled-guest-preset",
+    "ROOM_CAPABILITY_SIGNING_SECRET": "controlled-room-capability-signing-secret",
+    "SCHEDULER_PUBLIC_ORIGIN": "https://scheduler.local",
+    "CONFERENCING_PROVIDER": "google_meet"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SCHEDULER",
+        "class_name": "SchedulerDurableObject"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["SchedulerDurableObject"]
+    }
+  ]
+}

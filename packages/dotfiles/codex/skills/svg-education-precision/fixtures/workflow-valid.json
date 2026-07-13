@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "canvas": {
+    "width": 1200,
+    "height": 720,
+    "background": "#f9f9f9"
+  },
+  "metadata": {
+    "title": "Signal to proof education workflow",
+    "description": "A deterministic CREATE SOMETHING workflow showing a signal, decision, governed action, and proof receipt."
+  },
+  "elements": [
+    {
+      "id": "signal-card",
+      "type": "rect",
+      "x": 72,
+      "y": 210,
+      "width": 260,
+      "height": 210,
+      "radius": 8,
+      "fill": "#ffffff",
+      "stroke": "#e1e1e1",
+      "contains": ["signal-label", "signal-detail"]
+    },
+    {
+      "id": "signal-label",
+      "type": "text",
+      "x": 96,
+      "y": 246,
+      "width": 212,
+      "height": 30,
+      "lines": ["SIGNAL"],
+      "fontSize": 14,
+      "fontWeight": 700,
+      "fill": "#0048ff"
+    },
+    {
+      "id": "signal-detail",
+      "type": "text",
+      "x": 96,
+      "y": 300,
+      "width": 212,
+      "height": 64,
+      "lines": ["A workflow event", "needs a governed route."],
+      "fontSize": 18,
+      "lineHeight": 26,
+      "fill": "#0a0e19"
+    },
+    {
+      "id": "signal-to-decision",
+      "type": "connector",
+      "x1": 332,
+      "y1": 315,
+      "x2": 470,
+      "y2": 315,
+      "stroke": "#255f85",
+      "strokeWidth": 2,
+      "markerEnd": true
+    },
+    {
+      "id": "decision-card",
+      "type": "rect",
+      "x": 470,
+      "y": 210,
+      "width": 260,
+      "height": 210,
+      "radius": 8,
+      "fill": "#ffffff",
+      "stroke": "#e1e1e1",
+      "contains": ["decision-label", "decision-detail"]
+    },
+    {
+      "id": "decision-label",
+      "type": "text",
+      "x": 494,
+      "y": 246,
+      "width": 212,
+      "height": 30,
+      "lines": ["DECISION"],
+      "fontSize": 14,
+      "fontWeight": 700,
+      "fill": "#1e3c2c"
+    },
+    {
+      "id": "decision-detail",
+      "type": "text",
+      "x": 494,
+      "y": 300,
+      "width": 212,
+      "height": 64,
+      "lines": ["Policy chooses allowed,", "ask, or blocked."],
+      "fontSize": 18,
+      "lineHeight": 26,
+      "fill": "#0a0e19"
+    },
+    {
+      "id": "decision-to-proof",
+      "type": "connector",
+      "x1": 730,
+      "y1": 315,
+      "x2": 868,
+      "y2": 315,
+      "stroke": "#636363",
+      "strokeWidth": 2,
+      "markerEnd": true
+    },
+    {
+      "id": "proof-card",
+      "type": "rect",
+      "x": 868,
+      "y": 210,
+      "width": 260,
+      "height": 210,
+      "radius": 8,
+      "fill": "#ffffff",
+      "stroke": "#e1e1e1",
+      "contains": ["proof-label", "proof-detail"]
+    },
+    {
+      "id": "proof-label",
+      "type": "text",
+      "x": 892,
+      "y": 246,
+      "width": 212,
+      "height": 30,
+      "lines": ["PROOF"],
+      "fontSize": 14,
+      "fontWeight": 700,
+      "fill": "#c41e3a"
+    },
+    {
+      "id": "proof-detail",
+      "type": "text",
+      "x": 892,
+      "y": 300,
+      "width": 212,
+      "height": 64,
+      "lines": ["Receipt records owner,", "result, and next action."],
+      "fontSize": 18,
+      "lineHeight": 26,
+      "fill": "#0a0e19"
+    }
+  ]
+}

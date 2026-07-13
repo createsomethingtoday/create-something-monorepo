@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
 	AGENCY_ATLAS_PROOF_PATHS,
@@ -23,6 +23,15 @@ const methodologyRoute = readFileSync(
 const stackRoute = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
 const productsRoute = readFileSync(
 	new URL('../src/routes/products/+page.svelte', import.meta.url),
+	'utf8'
+);
+const marketplaceWorkflowRoute = readFileSync(
+	new URL('../src/routes/proof/marketplace-workflow/+page.svelte', import.meta.url),
+	'utf8'
+);
+const bookRoute = readFileSync(new URL('../src/routes/book/+page.svelte', import.meta.url), 'utf8');
+const difyControlPlaneRoute = readFileSync(
+	new URL('../src/routes/dify/mcp-control-plane/+page.svelte', import.meta.url),
 	'utf8'
 );
 const signalProductRoute = readFileSync(
@@ -86,18 +95,23 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 		'/methodology',
 		'/stack',
 		'/products',
+		'/proof/marketplace-workflow',
 		'/products/signal',
 		'/products/decision',
 		'/products/proof'
 	]);
 	assert.ok(AGENCY_COMPACT_PRIVACY_PATHS.includes('/'));
-	assert.equal(AGENCY_DIFY_ARTICLE_PATHS.length, 4);
+	assert.equal(AGENCY_DIFY_ARTICLE_PATHS.length, 3);
 	assert.equal(isAgencyAtlasProofPath('/atlas/'), true);
 	assert.equal(isAgencyAtlasProofPath('/book'), false);
 	assert.equal(isAgencyDifyArticlePath('/dify/content-engine'), false);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/services'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/dify/mcp-control-plane/'), true);
+	assert.equal(usesCompactAgencyPrivacyPrompt('/proof/marketplace-workflow'), true);
+	assert.equal(usesCompactAgencyPrivacyPrompt('/book'), true);
+	assert.equal(usesCompactAgencyPrivacyPrompt('/field-reports'), true);
+	assert.equal(usesCompactAgencyPrivacyPrompt('/field-reports/template-review/'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/contact'), false);
 });
 
@@ -122,11 +136,46 @@ test('atlas route labels the story and mapping surfaces distinctly', () => {
 
 test('services route keeps one public Atlas map and removes the example canvas', () => {
 	assert.ok(servicesRoute.includes('<PublicAtlasCanvas'));
+	assert.match(
+		servicesRoute,
+		/<PerformanceContrastChapter[\s\S]*?artifactPlacement="full-width"[\s\S]*?<PublicAtlasCanvas \/>/
+	);
 	assert.equal(servicesRoute.includes('<PublicAtlasStoryCanvas'), false);
 	assert.equal(servicesRoute.includes('storyId="services-marketplace-review-story"'), false);
 	assert.equal(servicesRoute.includes('<PerformanceDecisionPanel'), false);
 	assert.equal(servicesRoute.includes('<PerformanceCtaBand'), false);
 	assert.equal(servicesRoute.includes('<PerformanceCardGrid'), false);
+});
+
+test('public Atlas gives the booking warmup a distinct label and deliberate copy rhythm', () => {
+	assert.ok(agencyEditableCanvas.includes('<span>Mapping warmup</span>'));
+	assert.ok(agencyEditableCanvas.includes('gap: clamp(1.5rem, 3vw, 2.5rem)'));
+	assert.ok(agencyEditableCanvas.includes('max-width: 46rem'));
+	assert.ok(agencyEditableCanvas.includes('font-family: var(--font-mono)'));
+});
+
+test('public Performance routes use the natural water image series', () => {
+	for (const route of [homeRoute, servicesRoute, productsRoute, bookRoute, atlasRoute, difyControlPlaneRoute]) {
+		assert.equal(route.includes('/images/performance-lab/controlled-flow.webp'), false);
+		assert.equal(route.includes('/images/performance-lab/pressure-boundary.webp'), false);
+		assert.equal(route.includes('/images/performance-lab/trace-control-plane.webp'), false);
+	}
+
+	assert.ok(homeRoute.includes('/images/performance-lab/pressure-boundary-natural.webp'));
+	assert.ok(servicesRoute.includes('/images/performance-lab/trace-wake-natural.webp'));
+	assert.ok(productsRoute.includes('/images/performance-lab/product-system-natural.webp'));
+	assert.ok(productsRoute.includes('/images/performance-lab/product-system-natural-mobile.webp'));
+	assert.equal(productsRoute.includes('/images/performance-lab/controlled-flow-natural.webp'), false);
+	assert.equal(
+		existsSync(new URL('../static/images/performance-lab/product-system-natural.webp', import.meta.url)),
+		true
+	);
+	assert.equal(
+		existsSync(
+			new URL('../static/images/performance-lab/product-system-natural-mobile.webp', import.meta.url)
+		),
+		true
+	);
 });
 
 test('home route uses the shared canvas kernel as a transparent proof object', () => {
@@ -173,6 +222,20 @@ test('products route exposes the governance product contract surfaces', () => {
 	assert.ok(productsRoute.includes('Atlas maps the workflow.'));
 	assert.ok(productsRoute.includes("href: product.id === 'atlas' ? '/atlas' : `/products/${product.id}`"));
 	assert.equal(productsRoute.includes('<PublicAtlasCanvas'), false);
+});
+
+test('public proof path distinguishes the workflow compiler prototype from live operation', () => {
+	assert.ok(homeRoute.includes('href="/proof/marketplace-workflow"'));
+	assert.ok(homeRoute.includes('Stop watching the workflow. Keep the judgment.'));
+	assert.ok(productsRoute.includes('Foundation'));
+	assert.ok(productsRoute.includes('Substrate'));
+	assert.ok(productsRoute.includes('Map / Pilot / Operate'));
+	assert.ok(marketplaceWorkflowRoute.includes('Active development'));
+	assert.ok(marketplaceWorkflowRoute.includes('representative local fixtures'));
+	assert.ok(marketplaceWorkflowRoute.includes('no production writes'));
+	assert.ok(marketplaceWorkflowRoute.includes('deterministic: true'));
+	assert.ok(marketplaceWorkflowRoute.includes("{ value: '15'"));
+	assert.ok(marketplaceWorkflowRoute.includes("{ value: '5'"));
 });
 
 test('Signal Decision and Proof product pages attach back to Atlas and each other', () => {
@@ -266,7 +329,7 @@ test('agency public Substrate canvas mounts the shared canvas kernel', () => {
 	assert.ok(agencySubstrateCanvasWrapper.includes('The canvas is the proof object.'));
 	assert.ok(agencySubstrateCanvasWrapper.includes('Signal / Decision / Proof'));
 	assert.ok(agencySubstrateCanvasWrapper.includes('shared kernel'));
-	assert.ok(agencySubstrateCanvasWrapper.includes('Show receipts'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('Trace proof'));
 	assert.ok(agencySubstrateCanvasModule.includes("from '@create-something/canvas-kernel'"));
 	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROJECTION'));
 	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_MOBILE_PROJECTION'));
@@ -274,6 +337,24 @@ test('agency public Substrate canvas mounts the shared canvas kernel', () => {
 	assert.ok(agencySubstrateCanvasModule.includes("'receipt_graph'"));
 	assert.ok(agencySubstrateCanvasModule.includes('Public proof surface'));
 	assert.ok(agencySubstrateCanvasModule.includes('Stop condition'));
+});
+
+test('agency public Substrate canvas turns receipt selection into an accessible proof trace', () => {
+	assert.ok(agencySubstrateCanvasWrapper.includes('Trace proof'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('aria-pressed={proofModeActive}'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('aria-controls="public-substrate-receipt"'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('on:keydown={handleProofKeydown}'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('PUBLIC_SUBSTRATE_CANVAS_PROOF_EMPHASIS'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('id="public-substrate-receipt"'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('href="/products/proof"'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('Representative public receipt'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Source</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Decision</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Action</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Result</dt>'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('<dt>Rollback</dt>'));
+	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROOF_NODE_IDS'));
+	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROOF_EDGE_IDS'));
 });
 
 test('agency public Substrate canvas keeps a readable mobile projection', () => {
@@ -333,5 +414,21 @@ test('compact mobile privacy prompt stays below navigation and away from campaig
 	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice--compact'));
 	assert.ok(agencyPrivacyAnalytics.includes('top: max(4.5rem, calc(4rem + env(safe-area-inset-top)))'));
 	assert.ok(agencyPrivacyAnalytics.includes('bottom: auto'));
+	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice:has(.privacy-panel)'));
 	assert.ok(agencyPrivacyAnalytics.includes("content: 'Privacy'"));
+	assert.match(
+		agencyPrivacyAnalytics,
+		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill \{[\s\S]*?min-height: 2\.75rem;[\s\S]*?border-color: transparent;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/
+	);
+	assert.match(
+		agencyPrivacyAnalytics,
+		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill--compact > span:first-child::before \{[\s\S]*?font-size: 0\.62rem;/
+	);
+});
+
+test('short desktop campaigns keep the property switcher away from primary actions', () => {
+	assert.ok(layoutRoute.includes('@media (max-height: 47.5rem) and (min-width: 48rem)'));
+	assert.ok(layoutRoute.includes(':global(.layout-root .mode-indicator)'));
+	assert.ok(layoutRoute.includes('top: calc(72px + var(--space-md, 1rem))'));
+	assert.ok(layoutRoute.includes('bottom: auto'));
 });

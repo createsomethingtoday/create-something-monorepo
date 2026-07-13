@@ -9,8 +9,23 @@ export default declareComponent(HalfDozenLanding, {
   group: 'Half Dozen',
   options: { ssr: true },
   props: {
-    heroCard: props.Text({ name: 'Hero image URL', defaultValue: '/assets/hero-motion-card.png' }),
-    eventPhoto: props.Text({ name: 'Event photo URL', defaultValue: '/assets/live-event-photo.png' }),
-    testimonialPhoto: props.Text({ name: 'Testimonial photo URL', defaultValue: '/assets/testimonial-crowd.png' })
+    assetBaseUrl: props.Text({
+      name: 'Asset base URL',
+      defaultValue: 'https://halfdozen-landing.pages.dev'
+    }),
+    heroMotion: props.Text({ name: 'Hero motion video path', defaultValue: '/media/hero-motion.mp4' }),
+    heroMotionPoster: props.Text({ name: 'Hero motion poster path', defaultValue: '/assets/hero-motion-poster.jpg' }),
+    heroFullbleedMotion: props.Text({
+      name: 'Full-bleed motion video path',
+      defaultValue: '/media/hero-fullbleed-motion.mp4'
+    }),
+    heroFullbleedPoster: props.Text({
+      name: 'Full-bleed motion poster path',
+      defaultValue: '/assets/hero-fullbleed-poster.jpg'
+    }),
+    testimonialPhoto: props.Text({
+      name: 'Primary testimonial photo path',
+      defaultValue: '/assets/testimonials/stereo-punks-photo.webp'
+    })
   }
 });

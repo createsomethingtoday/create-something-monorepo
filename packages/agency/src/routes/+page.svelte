@@ -4,16 +4,17 @@
     PerformanceCampaignOpening,
     PerformanceContrastChapter,
     PerformanceConversionHandoff,
+    PerformanceEvidenceIndex,
     PerformanceFieldSequence,
     PerformancePageSection,
-    PerformanceThesisConditions,
     PerformanceWorkflowMiniArtifact,
     SEO,
     type PerformanceCampaignProof,
-    type PerformanceCondition,
+    type PerformanceEvidenceItem,
     type PerformanceFieldStudyMetric,
     type PerformanceFieldStudyProof
   } from '@create-something/canon';
+  import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -122,27 +123,6 @@
     }
   ] as const;
 
-  const labReadinessItems: PerformanceCondition[] = [
-    {
-      label: 'Mapped',
-      title: '7/7 coverage',
-      detail: 'Actor, AI task, human task, system, artifact, constraint, touchpoint',
-      tone: 'signal'
-    },
-    {
-      label: 'Decision pressure',
-      title: 'Run / Wait / Stop',
-      detail: 'Every action has an owner, approval pause, or stop condition',
-      tone: 'pressure'
-    },
-    {
-      label: 'Proof attached',
-      title: '3 receipts',
-      detail: 'Workflow map, owner approval, proof record before build commitment',
-      tone: 'growth'
-    }
-  ];
-
   const flowStudyMetrics: PerformanceFieldStudyMetric[] = [
     { label: 'Flow boundary', value: '1 controlled path', detail: 'Scope the first lane before adding authority.' },
     { label: 'Decision gates', value: 'Run / Wait / Stop', detail: 'Every branch names who decides.' },
@@ -157,6 +137,31 @@
     version: 'v1',
     classification: 'Public method'
   };
+
+  const operatorOutcomes = [
+    {
+      state: 'Before',
+      title: 'The operator watches the handoff.',
+      detail: 'Routine work waits across tools, and exceptions arrive without enough context.'
+    },
+    {
+      state: 'After',
+      title: 'The operator returns when judgment matters.',
+      detail: 'Safe work moves, exceptions reach a named owner, and unsafe actions stop with a reason.'
+    }
+  ] as const;
+
+  const fieldReportProof: PerformanceEvidenceItem[] = [
+    {
+      id: '#FR-2026-01',
+      kind: 'Review operations',
+      title: 'Automation prepared the evidence. Human judgment still decided.',
+      detail: 'Evidence collection completed for 49 of 50 selected cases. Automated judgment remains blocked, and reviewer time savings are not yet measured.',
+      state: 'verified',
+      date: 'May–June 2026',
+      href: '/field-reports/template-review'
+    }
+  ];
 </script>
 
 <SEO
@@ -173,37 +178,50 @@
   <PerformanceCampaignOpening
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Make one workflow safe to delegate."
-    lede="CREATE SOMETHING turns one messy handoff into work that is mapped, tested, governed, and proven: Signals enter from the tools, Decisions route to the right owner, and Proof records approvals, stops, and outcomes."
-    media={{ src: '/images/performance-lab/controlled-flow.webp', mobileSrc: '/images/performance-lab/controlled-flow-mobile.webp', alt: 'Water moving through a controlled bifurcation in a transparent test channel' }}
+    lede="Choose one handoff your team still checks manually. We map what can run automatically, what must wait for a person, what must stop, and what record proves what happened."
+    media={controlledFlowMedia}
     proof={heroProofItems}
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>Map one workflow</Button>
-      <Button href="/products" variant="secondary">See proof</Button>
+      <Button href="/proof/marketplace-workflow" variant="secondary">See a worked example</Button>
     {/snippet}
   </PerformanceCampaignOpening>
 
+  <PerformancePageSection
+    variant="white"
+    eyebrow="Business outcome"
+    title="Stop watching the workflow. Keep the judgment."
+    description="The goal is not more autonomous activity. It is less manual monitoring without giving away consequential authority."
+  >
+    {#snippet after()}
+      <div class="operator-outcomes" aria-label="Workflow before and after controlled delegation">
+        {#each operatorOutcomes as outcome}
+          <article class="operator-outcome operator-outcome--{outcome.state.toLowerCase()}">
+            <span>{outcome.state}</span>
+            <h3>{outcome.title}</h3>
+            <p>{outcome.detail}</p>
+          </article>
+        {/each}
+      </div>
+    {/snippet}
+  </PerformancePageSection>
+
   <PerformanceFieldSequence
     eyebrow="Performance principle"
-    title="Train the workflow under pressure."
-    description="One ordered field sequence keeps the operating principle, measured conditions, and receipt together."
+    title="Test the boundary before work moves."
+    description="One ordered review keeps the operating principle, measured conditions, and receipt together."
     studies={[{
-      image: '/images/performance-lab/pressure-boundary.webp',
-      mobileImage: '/images/performance-lab/pressure-boundary-mobile.webp',
+      image: '/images/performance-lab/pressure-boundary-natural.webp',
+      mobileImage: '/images/performance-lab/pressure-boundary-natural-mobile.webp',
       alt: 'Black-and-white field study of water meeting a designed boundary.',
-      title: 'Train the system before it runs.',
-      description: 'Work moves. Governance gives it a channel: map the signal, route the decision, define the stop, and preserve the trace before authority expands.',
+      title: 'Decide what can move before it runs.',
+      description: 'Map the change, route the decision, define the stop, and preserve the record before authority expands.',
       principle: 'Governance directs flow.',
       metrics: flowStudyMetrics,
       proof: flowStudyProof,
       stage: 'metrics-moved'
     }]}
-  />
-
-  <PerformanceThesisConditions
-    title="Train the workflow before it runs."
-    description="A workflow earns delegation through explicit coverage, decision pressure, and attached proof."
-    conditions={labReadinessItems}
   />
 
   <PerformanceContrastChapter
@@ -252,17 +270,25 @@
     {/snippet}
   </PerformancePageSection>
 
+  <PerformanceEvidenceIndex
+    eyebrow="Field result"
+    title="See what passed—and what did not."
+    description="The first Field Report connects a governed template-review map to measured evidence, a failed promotion gate, and the reviewer-time question that remains unmeasured."
+    items={fieldReportProof}
+    ariaLabel="Featured CREATE SOMETHING Field Report"
+  />
+
   <PerformancePageSection
     variant="soft"
-    eyebrow="Current agent environment"
-    title="Built primarily with OpenAI Codex. Designed to outlast any model."
-    description="We choose OpenAI deliberately for Codex and agent reasoning. The durable client system remains yours: workflow data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts, routing, fallback, and recovery."
+    eyebrow="How we build"
+    title="Built with OpenAI Codex. Designed to remain yours."
+    description="We use Codex to map, build, and maintain the workflow. Your team keeps the data, connections, approval rules, tests, operating history, and recovery path. If the model or agent environment changes, the system does not have to start over."
   >
     {#snippet actions()}
-      <Button href="/stack">See the stack boundary</Button>
+      <Button href="/stack">See what you keep</Button>
       <Button
         href="https://createsomething.ltd/canon/concepts/conviction-without-dependence"
-        variant="secondary">Read the Canon</Button
+        variant="secondary">Why we build this way</Button
       >
     {/snippet}
   </PerformancePageSection>
@@ -294,6 +320,49 @@
 
   .home-pilot :global(.home-process-section) {
     padding-block: 3.35rem;
+  }
+
+  .operator-outcomes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-block: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .operator-outcome {
+    display: grid;
+    gap: 0.7rem;
+    min-height: 13rem;
+    padding: clamp(1.25rem, 3vw, 2.2rem);
+  }
+
+  .operator-outcome + .operator-outcome {
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .operator-outcome span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+  }
+
+  .operator-outcome h3,
+  .operator-outcome p {
+    margin: 0;
+  }
+
+  .operator-outcome h3 {
+    max-width: 22ch;
+    font-size: clamp(1.45rem, 2.5vw, 2.15rem);
+    font-weight: var(--font-medium);
+    line-height: 1.05;
+  }
+
+  .operator-outcome p {
+    max-width: 34rem;
+    color: var(--color-performance-muted, #5e6268);
+    line-height: 1.55;
   }
 
   .home-pilot :global(.home-process-section .clear-page-section__copy) {
@@ -406,6 +475,15 @@
   }
 
   @media (max-width: 640px) {
+    .operator-outcomes {
+      grid-template-columns: 1fr;
+    }
+
+    .operator-outcome + .operator-outcome {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+      border-left: 0;
+    }
+
     .service-flow-artifacts {
       grid-template-columns: 1fr;
       border-bottom: 0;

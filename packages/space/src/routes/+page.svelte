@@ -14,6 +14,7 @@
     type PerformanceCondition,
     type PerformanceDecisionItem
   } from '@create-something/canon';
+  import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
 
   const proofMetrics = [
     { value: '5', label: 'live tools and surfaces' },
@@ -243,7 +244,7 @@
   eyebrow="CREATE SOMETHING .space"
   title="A public workbench for testing runtime ideas."
   lede="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
-  media={{ src: '/og-image.svg', alt: 'A terminal-native workbench artifact representing interactive runtime practice' }}
+  media={controlledFlowMedia}
   proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
 >
   {#snippet actions()}

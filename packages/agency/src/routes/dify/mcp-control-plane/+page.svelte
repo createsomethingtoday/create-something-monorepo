@@ -177,7 +177,7 @@
   eyebrow="Dify + MCP Control Plane"
   title="Dify is the surface. MCP is the boundary. Policy OS is the operating rule."
   lede="The fastest path to serious Dify adoption is not another generic chatbot. It is a visible Dify app with scoped MCP tools, repo-owned manifests, eval gates, and an approval layer the operator can inspect."
-  media={{ src: '/images/performance-lab/trace-control-plane.webp', mobileSrc: '/images/performance-lab/trace-control-plane-mobile.webp', alt: 'Water moving through clear channels, a mechanical gate, and a settled trace' }}
+  media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
   proof={[{ label: 'Surface', value: 'Dify' }, { label: 'Boundary', value: 'MCP' }, { label: 'Rule', value: 'Policy OS' }]}
 >
   {#snippet actions()}
@@ -193,9 +193,9 @@
   eyebrow="Control-plane field study"
   title="Every action leaves a wake."
   studies={[{
-    image: '/images/performance-lab/controlled-flow.webp',
-    mobileImage: '/images/performance-lab/controlled-flow-mobile.webp',
-    alt: 'Water moving through a controlled laboratory channel.',
+    image: '/images/performance-lab/controlled-flow-natural.webp',
+    mobileImage: '/images/performance-lab/controlled-flow-natural-mobile.webp',
+    alt: 'Aerial black-and-white view of water routed through a concrete sluice.',
     title: 'Flow. Gate. Trace.',
     description: 'The app surface, capability boundary, and operating rule stay distinct. Work can move through the system because every intervention and outcome remains inspectable.',
     principle: 'Every intervention remains inspectable.',
@@ -266,7 +266,6 @@
       >Read Shipping Guide</Button
     >
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
-    <Button href="/dify/n8n-vs-dify" variant="secondary">Read Dify vs n8n</Button>
     <Button href="https://createsomething.io/papers/policy-os-contract-bundle" variant="secondary">
       Read Contract Bundle Paper
     </Button>

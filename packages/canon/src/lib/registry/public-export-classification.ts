@@ -363,6 +363,27 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
       'Root components barrel mixes stable primitives and review candidates; individual symbols keep explicit policy.'
   },
   {
+    exportPath: './components/performance/media/controlled-flow',
+    classification: 'brand-surface',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Responsive campaign photography is an expression asset, not an agent-default UI primitive.'
+  },
+  {
+    exportPath: './components/performance/media/pressure-boundary',
+    classification: 'brand-surface',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Responsive campaign photography is an expression asset, not an agent-default UI primitive.'
+  },
+  {
+    exportPath: './components/performance/media/trace-control-plane',
+    classification: 'brand-surface',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Responsive campaign photography is an expression asset, not an agent-default UI primitive.'
+  },
+  {
     exportPath: './components/form',
     classification: 'stable-foundation-candidate',
     registryPolicy: 'registry-covered',
@@ -517,6 +538,27 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
     registryPolicy: 'classified-out',
     rationale:
       'Server auth surface is security-sensitive platform code, not a UI registry primitive.'
+  },
+  {
+    exportPath: './auth/access',
+    classification: 'auth-surface',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Application access policy is security-sensitive platform code, not a UI registry primitive.'
+  },
+  {
+    exportPath: './auth/cookies',
+    classification: 'auth-surface',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Session cookie handling is security-sensitive platform code, not a UI registry primitive.'
+  },
+  {
+    exportPath: './auth/handlers',
+    classification: 'auth-surface',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Authentication request handlers are security-sensitive platform code, not UI registry primitives.'
   },
   {
     exportPath: './gdpr',

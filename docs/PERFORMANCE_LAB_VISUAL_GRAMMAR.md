@@ -1,7 +1,7 @@
 # Performance Lab Visual Grammar
 
 > Status: active judgment and asset contract
-> Scope: CREATE SOMETHING `.agency` campaign, editorial, product, proof, and operator surfaces
+> Scope: all CREATE SOMETHING Performance campaign, editorial, product, proof, and operator surfaces
 
 ## Definition
 
@@ -59,10 +59,13 @@ sequence, caption, trace, or receipt.
 
 ### Material identity: controlled water
 
-CREATE SOMETHING uses water under designed conditions as its primary natural-material metaphor.
+CREATE SOMETHING uses water under designed conditions as its primary natural-material subject.
 Flow, channel, pressure, boundary, wake, trace, clarity, turbulence, and settlement map directly to
 governed delegation. Prefer flumes, spillways, wave tanks, test basins, refraction rigs, droplets,
-and measured surface studies over generic oceans or decorative wave motifs.
+and measured surface studies over generic oceans or static wave motifs. On campaign surfaces, the
+water photography is intentionally decorative and kinetic: it plays the role that the runner plays
+in a performance campaign by making motion, force, and recovery felt before the operating artifact
+explains them. The photograph is never presented as evidence of a real workflow run.
 
 Water carries the material story in black and white. Semantic color remains thin and functional:
 an index rail, node edge, state mark, or intervention line. The full boundary and Evermind
@@ -129,9 +132,10 @@ Every generated or commissioned asset must store:
 - rights note and confirmation that no reference image was copied into the asset;
 - refresh or replacement condition.
 
-Store public assets under `packages/agency/static/images/performance-lab/` and
-their metadata under `packages/agency/content/assets/brand/` or the owning
-article asset record.
+Store cross-property public assets under
+`packages/canon/src/lib/components/performance/media/`. Keep generation metadata under
+`packages/agency/content/assets/brand/` or the owning article asset record so the selected image,
+source prompt, crop history, and rejection history remain traceable.
 
 ## Browser Gate
 
