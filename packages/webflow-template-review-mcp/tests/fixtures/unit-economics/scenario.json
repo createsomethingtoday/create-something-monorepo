@@ -1,0 +1,18 @@
+{
+  "schema_version": "template-review-annual-scenario.v1",
+  "generated_at": "2026-07-13T12:30:00.000Z",
+  "classification": "synthetic_verification_only",
+  "annual_submissions": 1000,
+  "eligible_share": 0.5,
+  "projected_completed_packets": 500,
+  "human_minutes_saved": {
+    "low": 4,
+    "high": 22,
+    "evidence_status": "hypothesis_unverified"
+  },
+  "hourly_cost_scenario": {
+    "usd_per_hour": 60,
+    "classification": "synthetic_not_finance_actual"
+  },
+  "annual_maintenance_usd": 100
+}

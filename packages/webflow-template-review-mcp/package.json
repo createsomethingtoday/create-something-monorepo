@@ -23,6 +23,8 @@
     "rubric:reviewer:dry-run": "node --import tsx scripts/run-rubric-reviewer-dry-run.ts",
     "rubric:reviewer:eval": "node --import tsx scripts/run-rubric-reviewer-shadow-eval.ts",
     "rubric:reviewer:score": "node --import tsx scripts/score-rubric-reviewer-batch.ts",
+    "unit-economics:report": "node --import tsx scripts/report-template-review-unit-economics.ts",
+    "unit-economics:typecheck": "tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --lib ES2022,DOM --types node scripts/report-template-review-unit-economics.ts scripts/run-published-site-e2b-sandbox.ts scripts/run-rubric-reviewer-dry-run.ts",
     "exceptional:lane:run": "node --import tsx scripts/run-exceptional-candidate-lane.ts",
     "exceptional:lane:score": "node --import tsx scripts/score-exceptional-candidate-lane.ts",
     "coordinator:exposure-policy": "node --import tsx scripts/derive-coordinator-exposure-policy.ts",

@@ -1,0 +1,24 @@
+{
+  "schema_version": "template-review-unit-economics.v1",
+  "packet_id": "synthetic-packet-001",
+  "lane": "reviewer_agent",
+  "status": "completed",
+  "provider": "openai",
+  "model": "gpt-synthetic",
+  "started_at": "2026-07-13T12:02:00.000Z",
+  "completed_at": "2026-07-13T12:02:08.000Z",
+  "duration_ms": 8000,
+  "tokens": {
+    "status": "observed_successful_response",
+    "input_tokens": 1000,
+    "cached_input_tokens": 400,
+    "output_tokens": 200,
+    "reasoning_tokens": 50,
+    "total_tokens": 1200
+  },
+  "other_costs_usd": {
+    "storage": { "status": "synthetic", "usd": 0.0003 },
+    "tools": { "status": "synthetic", "usd": 0.0004 }
+  },
+  "evidence_note": "Synthetic successful reviewer receipt; reasoning tokens are included in output tokens."
+}

@@ -142,6 +142,25 @@ infisical run --env=prod --path=/ --include-imports=true -- \
 
 The calibration command writes `manifest.blind.jsonl`, `outcomes.private.jsonl`, `sandbox-results.jsonl`, `status-alignment.jsonl`, and `summary.json`. The joined alignment files are private diagnostics only; they compare sandbox evidence to human review status without writing Airtable, D1, R2, Dify, approvals, rejections, ratings, or feedback.
 
+## Unit economics receipts
+
+Completed direct-E2B runs write `published-site-sandbox-unit-economics-receipt.json` after the coordinator kills the sandbox. The receipt uses the E2B-observed CPU count, memory, start time, and coordinator-observed completion time. It records model tokens as `not_applicable`. Runs using `--keep-sandbox` do not produce a completed receipt because the billable duration is still open.
+
+Successful OpenAI rubric-reviewer runs write `rubric-reviewer-unit-economics-receipt.json`. The receipt preserves input tokens, cached input tokens, output tokens, and reasoning tokens from Responses API metadata. Reasoning tokens are included in output tokens and are not priced twice. Storage, external-tool, and failed-retry costs remain explicitly `unmeasured` unless an owning system supplies observed amounts.
+
+Combine one completed collector receipt and one completed reviewer receipt with an explicit dated rate card and annual scenario:
+
+```bash
+pnpm unit-economics:report -- \
+  --collector /tmp/template-review-sandbox-e2b/published-site-sandbox-unit-economics-receipt.json \
+  --reviewer /tmp/template-review-rubric/rubric-reviewer-unit-economics-receipt.json \
+  --rate-card /secure/path/template-review-rate-card.json \
+  --scenario /secure/path/template-review-annual-scenario.json \
+  --out /tmp/template-review-unit-economics
+```
+
+Provider prices are never embedded in the runner; the report requires dated rate-card input with source URLs. Annual output separates operating cost, capacity hours, and optional scenario-only capacity value. `cash_savings.status` remains `unmeasured` until actual human handle time, fully loaded cost, utilization, an approved displaced-cost counterfactual, finance actuals, and finance sign-off exist. Budgeted team spend, SLA/turnaround, ARR/GMV, implementation-agent tokens, and one-time research-agent cost are not per-review savings.
+
 Draft reviewer-approved creator guidance from sandbox evidence:
 
 ```bash
