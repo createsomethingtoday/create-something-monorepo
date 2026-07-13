@@ -63,6 +63,7 @@
 	let starterState = '';
 	let hydrated = false;
 	let addMenuOpen = false;
+	let mobileSurface: 'map' | 'agent' = 'map';
 	let activeFocusId: PublicAtlasFocusGroupId = 'owner';
 	let agentSuggestions = ['Name the owner', 'Find the approval point', 'Mark the riskiest handoff'];
 	let usage: AgentResponse['usage'] = {
@@ -105,6 +106,17 @@
 			dailyMessagesUsed: 0,
 			dailyMessagesLimit: limits.dailyMessagesPerVisitor
 		};
+	}
+
+	function handleMobileSurfaceKeydown(event: KeyboardEvent) {
+		if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+		event.preventDefault();
+		mobileSurface = event.key === 'ArrowLeft' || event.key === 'Home' ? 'map' : 'agent';
+		requestAnimationFrame(() => {
+			document
+				.querySelector<HTMLButtonElement>(`#public-atlas-${mobileSurface}-tab`)
+				?.focus();
+		});
 	}
 
 	$: selectedNode = canvas.nodes.find((node) => node.id === selectedNodeId) ?? canvas.nodes[0];
@@ -385,8 +397,40 @@
 		</p>
 	</div>
 
+	<div class="mobile-surface-tabs" role="tablist" aria-label="Atlas workspace view">
+		<button
+			id="public-atlas-map-tab"
+			type="button"
+			role="tab"
+			aria-selected={mobileSurface === 'map'}
+			aria-controls="public-atlas-map-panel"
+			tabindex={mobileSurface === 'map' ? 0 : -1}
+			onclick={() => (mobileSurface = 'map')}
+			onkeydown={handleMobileSurfaceKeydown}
+		>
+			Map
+		</button>
+		<button
+			id="public-atlas-agent-tab"
+			type="button"
+			role="tab"
+			aria-selected={mobileSurface === 'agent'}
+			aria-controls="public-atlas-agent-panel"
+			tabindex={mobileSurface === 'agent' ? 0 : -1}
+			onclick={() => (mobileSurface = 'agent')}
+			onkeydown={handleMobileSurfaceKeydown}
+		>
+			Agent
+		</button>
+	</div>
+
 	<div class="atlas-layout">
-		<div class="atlas-main">
+		<div
+			class="atlas-main"
+			id="public-atlas-map-panel"
+			data-mobile-active={mobileSurface === 'map'}
+			aria-label="Atlas map"
+		>
 			<div class="canvas-shell">
 				<div class="canvas-header">
 					<div class="canvas-status">
@@ -489,7 +533,12 @@
 			</div>
 		</div>
 
-		<aside class="atlas-side">
+		<aside
+			class="atlas-side"
+			id="public-atlas-agent-panel"
+			data-mobile-active={mobileSurface === 'agent'}
+			aria-label="Atlas agent and inspector"
+		>
 			<section class="agent-panel">
 				<div class="agent-hero">
 					<div>
@@ -516,7 +565,7 @@
 					</span>
 				</div>
 				<label class="email-field">
-					<span>{leadTierLabel}</span>
+					<span>Email</span>
 					<input bind:value={visitorEmail} type="email" placeholder="you@example.com" />
 				</label>
 				<div class="chat-log" aria-live="polite">
@@ -714,6 +763,10 @@
 		grid-template-columns: minmax(0, 1.5fr) minmax(23rem, 0.7fr);
 		gap: 1.1rem;
 		align-items: start;
+	}
+
+	.mobile-surface-tabs {
+		display: none;
 	}
 
 	.atlas-main,
@@ -1361,6 +1414,55 @@
 	}
 
 	@media (max-width: 720px) {
+		.mobile-surface-tabs {
+			position: sticky;
+			top: calc(4.5rem + env(safe-area-inset-top, 0px));
+			z-index: 20;
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 0.25rem;
+			border: 1px solid var(--color-performance-line, #d7d7d2);
+			border-radius: 999px;
+			background: color-mix(in srgb, var(--color-performance-panel, #ffffff) 92%, transparent);
+			box-shadow: 0 10px 30px rgba(10, 14, 25, 0.1);
+			padding: 0.25rem;
+			backdrop-filter: blur(12px);
+		}
+
+		.mobile-surface-tabs button {
+			min-height: 2.75rem;
+			border: 0;
+			border-radius: 999px;
+			background: transparent;
+			color: var(--color-performance-muted, #5e6268);
+			font: 700 0.78rem/1 var(--font-mono);
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+		}
+
+		.mobile-surface-tabs button[aria-selected='true'] {
+			background: var(--color-performance-ink, #090909);
+			color: var(--color-performance-panel, #ffffff);
+		}
+
+		.mobile-surface-tabs button:focus-visible {
+			outline: 3px solid var(--color-performance-signal-soft, #a7b8ff);
+			outline-offset: 2px;
+		}
+
+		.atlas-main[data-mobile-active='false'],
+		.atlas-side[data-mobile-active='false'] {
+			display: none;
+		}
+
+		.atlas-main,
+		.atlas-side {
+			height: calc(100svh - 9.5rem);
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			scrollbar-gutter: stable;
+		}
+
 		.canvas-header {
 			display: grid;
 		}

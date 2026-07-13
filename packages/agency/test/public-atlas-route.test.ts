@@ -115,16 +115,30 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 	assert.equal(usesCompactAgencyPrivacyPrompt('/contact'), false);
 });
 
-test('atlas route presents the story canvas before the editable canvas', () => {
+test('atlas route presents the editable canvas before the long story', () => {
 	const storyCanvasIndex = atlasRoute.indexOf('<PublicAtlasStoryCanvas');
 	const editableCanvasIndex = atlasRoute.indexOf('<PublicAtlasCanvas');
 
 	assert.notEqual(storyCanvasIndex, -1);
 	assert.notEqual(editableCanvasIndex, -1);
-	assert.ok(storyCanvasIndex < editableCanvasIndex);
+	assert.ok(editableCanvasIndex < storyCanvasIndex);
 	assert.ok(atlasRoute.includes('starterId="marketplace-review-queue"'));
 	assert.ok(atlasRoute.includes('storyId="atlas-page-marketplace-review-story"'));
 	assert.ok(atlasRoute.includes('bookingHref="/book"'));
+});
+
+test('atlas route relies on the site layout for its main landmark', () => {
+	assert.equal(atlasRoute.includes('<main class="atlas-page">'), false);
+	assert.equal(atlasRoute.includes('<div class="atlas-page">'), true);
+});
+
+test('editable Atlas exposes explicit email and mobile Map Agent controls', () => {
+	assert.ok(agencyEditableCanvas.includes('<span>Email</span>'));
+	assert.ok(agencyEditableCanvas.includes('role="tablist"'));
+	assert.ok(agencyEditableCanvas.includes('role="tab"'));
+	assert.ok(agencyEditableCanvas.includes('aria-selected={mobileSurface'));
+	assert.ok(agencyEditableCanvas.includes("mobileSurface = 'map'"));
+	assert.ok(agencyEditableCanvas.includes("mobileSurface = 'agent'"));
 });
 
 test('atlas route labels the story and mapping surfaces distinctly', () => {
@@ -293,13 +307,18 @@ test('editable Atlas flow uses stable overridable ids instead of fixed DOM ids',
 	assert.ok(canonFlowComponent.includes('export let focusedNodeIds'));
 	assert.ok(canonFlowComponent.includes('export let focusedEdgeIds'));
 	assert.ok(canonFlowComponent.includes('export let dimUnfocused'));
-	assert.ok(canonFlowComponent.includes("from '@xyflow/svelte'"));
-	assert.ok(canonFlowComponent.includes('<SvelteFlow'));
-	assert.ok(canonFlowComponent.includes('id={flowId}'));
-	assert.ok(canonFlowComponent.includes('{initialViewport}'));
-	assert.ok(canonFlowComponent.includes('proOptions'));
-	assert.ok(canonFlowComponent.includes('hideAttribution: true'));
+	assert.ok(canonFlowComponent.includes("from '@create-something/canvas-kernel'"));
+	assert.ok(canonFlowComponent.includes("import('@create-something/canvas-kernel')"));
+	assert.ok(canonFlowComponent.includes('data-flow-id={flowId}'));
+	assert.ok(canonFlowComponent.includes('fitRequest'));
+	assert.ok(canonFlowComponent.includes('focusedNodeIds'));
+	assert.ok(canonFlowComponent.includes('focusedEdgeIds'));
+	assert.ok(canonFlowComponent.includes('dimUnfocused'));
 	assert.ok(canonFlowComponent.includes('aria-label="Atlas workflow map"'));
+	assert.equal(canonFlowComponent.includes("from '@xyflow/svelte'"), false);
+	assert.equal(canonFlowComponent.includes('<SvelteFlow'), false);
+	assert.equal(canonFlowComponent.includes('proOptions'), false);
+	assert.equal(canonFlowComponent.includes('hideAttribution: true'), false);
 	assert.equal(canonFlowComponent.includes('public-atlas-flow__surface'), false);
 	assert.equal(canonFlowComponent.includes('<svg'), false);
 	assert.equal(canonFlowComponent.includes('\n\t\t\tfitView\n'), false);
@@ -383,17 +402,18 @@ test('agency README documents story canvas route usage contract', () => {
 	assert.ok(agencyReadme.includes('Story-canvas usage contract'));
 	assert.ok(agencyReadme.includes('Pass an explicit `storyId`'));
 	assert.ok(agencyReadme.includes('Pass an explicit `flowId`'));
-	assert.ok(agencyReadme.includes('Keep the story canvas before the editable canvas'));
+	assert.ok(agencyReadme.includes('Put the editable canvas before the long story'));
 	assert.ok(agencyReadme.includes('`@create-something/canon/atlas/headless` owns'));
 	assert.ok(agencyReadme.includes('`@create-something/canon/atlas` owns the Svelte'));
 	assert.ok(agencyReadme.includes('`AtlasFlow`'));
-	assert.ok(agencyReadme.includes('`/`, `/atlas`, and'));
+	assert.ok(agencyReadme.includes('`/atlas` puts the editable'));
+	assert.ok(agencyReadme.includes('`/services` keeps one editable map'));
 	assert.ok(agencyReadme.includes('`/methodology`, `/stack`, and `/products` can use the'));
 	assert.ok(agencyReadme.includes('`data-motion-cue` attributes'));
 });
 
 test('agency README documents the current interactive Atlas renderer contract', () => {
-	assert.ok(agencyReadme.includes('interactive Svelte Atlas flow'));
+	assert.ok(agencyReadme.includes('interactive Svelte Atlas adapter'));
 	assert.ok(agencyReadme.includes('`PublicSubstrateCanvas.svelte`'));
 	assert.ok(agencyReadme.includes('`@create-something/canvas-kernel` renderer'));
 	assert.ok(agencyReadme.includes('transparent operating canvas'));

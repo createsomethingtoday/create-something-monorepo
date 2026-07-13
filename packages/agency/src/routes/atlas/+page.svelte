@@ -41,7 +41,7 @@
 	propertyName="agency"
 />
 
-<main class="atlas-page">
+<div class="atlas-page">
 	<PerformanceCampaignOpening
 		eyebrow="Atlas canvas"
 		title="Map the workflow before the call."
@@ -57,6 +57,19 @@
 		{/snippet}
 	</PerformanceCampaignOpening>
 
+	<PerformancePageSection
+		variant="white"
+		eyebrow="Public mapping surface"
+		title="The canvas turns curiosity into booking context."
+		description="Cold readers can test the method without exposing credentials. Warm teams leave with a summary, readiness signal, and booking metadata that make the first session sharper."
+	>
+		{#snippet after()}
+			<div id="canvas" class="atlas-canvas-anchor">
+				<PublicAtlasCanvas bookingHref="/book" />
+			</div>
+		{/snippet}
+	</PerformancePageSection>
+
 	<PerformanceThesisConditions
 		eyebrow="Atlas protocol"
 		title="Map the channel before work enters it."
@@ -69,7 +82,7 @@
 		eyebrow="Atlas story"
 		title="See the workflow as a story before editing the map."
 		description="The static Atlas story uses the same graph contract as the interactive canvas. It explains what can run, what waits for judgment, where execution must stop, and where proof lands."
-		intervention={{ label: 'Shared graph contract', title: 'Story before mutation', detail: 'The explanatory view and interactive canvas render the same operating model.' }}
+		intervention={{ label: 'Shared graph contract', title: 'One model, two views', detail: 'The explanatory view and interactive canvas render the same operating model.' }}
 	>
 		{#snippet artifact()}
 			<PublicAtlasStoryCanvas
@@ -78,16 +91,10 @@
 			/>
 		{/snippet}
 	</PerformanceContrastChapter>
+</div>
 
-	<PerformancePageSection
-		id="canvas"
-		variant="white"
-		eyebrow="Public mapping surface"
-		title="The canvas turns curiosity into booking context."
-		description="Cold readers can test the method without exposing credentials. Warm teams leave with a summary, readiness signal, and booking metadata that make the first session sharper."
-	>
-		{#snippet after()}
-			<PublicAtlasCanvas bookingHref="/book" />
-		{/snippet}
-	</PerformancePageSection>
-</main>
+<style>
+	.atlas-canvas-anchor {
+		scroll-margin-top: 4.5rem;
+	}
+</style>
