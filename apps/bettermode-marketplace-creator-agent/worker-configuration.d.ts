@@ -23,8 +23,6 @@ declare namespace Cloudflare {
 		OPENAI_API_BASE: "https://api.openai.com/v1";
 		OPENAI_MODEL_DEFAULT: "gpt-4o-mini";
 		OPENAI_MODEL_RICH: "gpt-4o";
-		DIFY_API_BASE: "https://api.dify.ai/v1";
-		DIFY_AGENT_USER: "bettermode-marketplace-creator-agent";
 		ALLOWED_ORIGINS: "https://app.bettermode.com,https://community.webflow.com,https://webflow.com,https://www.webflow.com";
 	}
 }
@@ -33,7 +31,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "ENVIRONMENT" | "BETTERMODE_GRAPHQL_ENDPOINT" | "BETTERMODE_DEFAULT_NETWORK_ID" | "BETTERMODE_MARKETPLACE_SPACE_SLUG" | "BETTERMODE_MARKETPLACE_SPACE_ID" | "BETTERMODE_ADMIN_USER_IDS" | "BETTERMODE_STAFF_AUTHOR_DOMAINS" | "AIRTABLE_API_BASE" | "AIRTABLE_BASE_ID" | "AIRTABLE_CREATORS_TABLE" | "AIRTABLE_ASSETS_TABLE" | "AIRTABLE_CREATORS_EMAIL_FIELD" | "AIRTABLE_CREATORS_ASSETS_LINK_FIELD" | "OPENAI_API_BASE" | "OPENAI_MODEL_DEFAULT" | "OPENAI_MODEL_RICH" | "DIFY_API_BASE" | "DIFY_AGENT_USER" | "ALLOWED_ORIGINS">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "ENVIRONMENT" | "BETTERMODE_GRAPHQL_ENDPOINT" | "BETTERMODE_DEFAULT_NETWORK_ID" | "BETTERMODE_MARKETPLACE_SPACE_SLUG" | "BETTERMODE_MARKETPLACE_SPACE_ID" | "BETTERMODE_ADMIN_USER_IDS" | "BETTERMODE_STAFF_AUTHOR_DOMAINS" | "AIRTABLE_API_BASE" | "AIRTABLE_BASE_ID" | "AIRTABLE_CREATORS_TABLE" | "AIRTABLE_ASSETS_TABLE" | "AIRTABLE_CREATORS_EMAIL_FIELD" | "AIRTABLE_CREATORS_ASSETS_LINK_FIELD" | "OPENAI_API_BASE" | "OPENAI_MODEL_DEFAULT" | "OPENAI_MODEL_RICH" | "ALLOWED_ORIGINS">> {}
 }
 
 // Begin runtime types

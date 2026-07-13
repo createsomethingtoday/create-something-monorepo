@@ -62,7 +62,7 @@ Use this concise application summary:
 | Deployed MCP fleet | `config/mcp-hub/fleet.json` | Shows deployed Cloudflare-hosted MCP endpoints with tenant boundaries and bearer-token auth. |
 | Policy OS runtime | `packages/agency/src/lib/canon/control.ts`, `packages/agency/src/lib/canon/workflow-context.ts` | Shows Cloudflare routes and action previews as governed execution surfaces. |
 | Abundance delivery | `docs/deliveries/abundance/2026-05-14-project-update.md` | Shows a Cloudflare-backed client delivery with database, MCP/API surface, matching logic, and validation evidence. |
-| Dify and Notion lanes | `/dify`, `/notion` | Shows Cloudflare as the substrate under partner-visible Dify and Notion operating systems. |
+| Historical and client-compatibility lanes | `/dify`, `/notion` | Preserves labeled migration and client evidence without making either vendor part of the current CREATE SOMETHING runtime. |
 
 ## Repeatable Runtime Pattern
 
@@ -182,8 +182,9 @@ Prepare these before submitting:
   support path, privacy/security review, and usage proof exist.
 - `Public proof`: share only sanitized diagrams, generated catalogs, delivery
   summaries, and public pages.
-- `Partner stack`: keep Cloudflare as runtime, Dify as agent surface, Notion as
-  operator workspace, and `/stack` as the ownership-boundary page.
+- `Partner stack`: keep Cloudflare as infrastructure, OpenAI as intelligence,
+  CREATE SOMETHING as the owned system, and `/stack` as the ownership-boundary
+  page.
 
 ## Validation
 

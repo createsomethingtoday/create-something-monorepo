@@ -15,13 +15,14 @@ declare namespace Cloudflare {
     OPENAI_API_KEY?: string;
     AIRTABLE_API_KEY?: string;
     IGNORE_SIGNATURE?: string;
-    // Dify agent (drafting brain — Option B)
-    DIFY_API_BASE?: string;
-    DIFY_AGENT_API_KEY?: string;
-    DIFY_AGENT_USER?: string;
     // Comma-separated email domains whose posts the agent should NOT draft
     // replies for (typically Webflow staff announcements). Defaults to
     // `webflow.com` when unset.
     BETTERMODE_STAFF_AUTHOR_DOMAINS?: string;
   }
 }
+
+// Wrangler 4.110 emits the global worker environment separately from
+// `Cloudflare.Env`. Merge the secret augmentation into both surfaces so local
+// type generation cannot drop server-only bindings.
+interface Env extends Cloudflare.Env {}

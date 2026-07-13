@@ -38,7 +38,11 @@ test('Canon publishes conviction without dependence as a discoverable operating 
 	assert.match(concept, /builds primarily with (?:\*\*)?OpenAI Codex(?:\*\*)?/i);
 	assert.match(concept, /not (?:an? )?official OpenAI partnership/i);
 	assert.match(concept, /Substrate is the owned database and operator layer/i);
-	assert.match(concept, /OpenAI, Dify, and Cloudflare are the active external stack/i);
+	assert.match(
+		concept,
+		/CREATE SOMETHING owns the system\. Cloudflare provides infrastructure\. OpenAI\s+provides intelligence\./i
+	);
+	assert.doesNotMatch(concept, /Dify .{0,80}(?:active|current|runtime)/i);
 	assert.doesNotMatch(concept, /\bNotion\b/);
 
 	for (const ownedLayer of [
@@ -86,10 +90,9 @@ test('Canon publishes conviction without dependence as a discoverable operating 
 	for (const currentStackUrl of strategyUrls.slice(0, 2)) {
 		const currentStackSource = readFileSync(currentStackUrl, 'utf8');
 		assert.match(currentStackSource, /Substrate is\s+the owned database and operator layer/i);
-		assert.match(
-			currentStackSource,
-			/OpenAI, Dify,\s+and Cloudflare are the active external stack/i
-		);
+		assert.match(currentStackSource, /CREATE\s+SOMETHING owns the system/i);
+		assert.match(currentStackSource, /Cloudflare provides infrastructure/i);
+		assert.match(currentStackSource, /OpenAI provides\s+intelligence/i);
 	}
 });
 
@@ -102,12 +105,14 @@ test('generated MCP knowledge preserves the Canon doctrine and agency claim boun
 	assert.match(generatedCanon, /Built primarily with OpenAI Codex\. Designed to outlast any model\./);
 	assert.match(generatedCanon, /not an official OpenAI partnership/i);
 	assert.match(generatedCanon, /Substrate is the owned database and operator layer/i);
-	assert.match(generatedCanon, /OpenAI, Dify, and Cloudflare are the active external stack/i);
+	assert.match(generatedCanon, /CREATE SOMETHING owns the system/i);
+	assert.match(generatedCanon, /Cloudflare provides infrastructure/i);
+	assert.match(generatedCanon, /OpenAI\s+provides intelligence/i);
 
 	assert.match(generatedPropertyDocs, /Conviction Without Dependence/);
 	assert.match(
 		generatedPropertyDocs,
-		/Built primarily with OpenAI Codex\. Designed to outlast any model\./
+		/Built with OpenAI Codex\. Designed to remain yours\./
 	);
 	assert.match(
 		generatedPropertyDocs,

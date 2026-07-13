@@ -136,14 +136,17 @@ surface test guards the required conviction and ownership language.
 
 The current operating boundary is:
 
-> Substrate is the owned database and operator layer. OpenAI, Dify, and
-> Cloudflare are the active external stack.
+Substrate is the owned database and operator layer.
+
+> CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI
+> provides intelligence.
 
 - **Substrate** owns source records, workflow state, human review, decisions,
   receipts, and API/MCP access.
-- **OpenAI** is the primary reasoning and agent environment.
-- **Dify** is the visible agent application surface.
-- **Cloudflare** is the runtime.
+- **CREATE SOMETHING** owns the API/MCP contracts, state, orchestration, policy,
+  operator surfaces, evals, and receipts.
+- **Cloudflare** provides network, security, compute, and storage infrastructure.
+- **OpenAI** provides model intelligence and the agent loop substrate.
 
 Historical client integrations may remain as delivery evidence or compatibility
 code, but they must not be presented as the current CREATE SOMETHING operating

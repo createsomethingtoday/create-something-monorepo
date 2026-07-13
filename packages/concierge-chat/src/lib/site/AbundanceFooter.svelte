@@ -242,9 +242,19 @@
   }
 
   @media (max-width: 991px) {
-    .abundance-footer .footer-wrap,
+    .abundance-footer .footer-wrap {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
     .abundance-footer .footer-right {
-      grid-template-columns: 1fr;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      width: 100%;
+    }
+
+    .abundance-footer .footer-right .footer-body {
+      width: auto;
+      max-width: none;
     }
 
     .abundance-footer .footer-left,

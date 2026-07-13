@@ -17,7 +17,9 @@ const deprecatedRedirects: Record<string, string> = {
 	'/categories': '/services',
 	'/category': '/services',
 	'/work': '/',
-	'/discover': '/'
+	'/discover': '/',
+	'/dify': '/stack',
+	'/notion': '/stack'
 };
 
 const redirectHandle: Handle = async ({ event, resolve }) => {

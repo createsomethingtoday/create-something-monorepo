@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import { CONCIERGE_SESSION_DEPENDENCY } from '$chat/api-contract';
 import {
 	clearCommunicationRules,
-	difyRuntimeBoundary,
+	agentRuntimeBoundary,
 	operatorMode,
 	operatorShellPlanes,
 	operatorStateDefinitions
@@ -23,6 +23,6 @@ export const load: PageServerLoad = async ({ depends, cookies, platform }) => {
 		operatorShellPlanes,
 		operatorStateDefinitions,
 		clearCommunicationRules,
-		difyRuntimeBoundary
+		agentRuntimeBoundary
 	};
 };

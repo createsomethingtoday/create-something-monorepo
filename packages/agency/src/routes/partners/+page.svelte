@@ -30,15 +30,6 @@
       points: ['Reasoning layer', 'Agent delivery', 'Portable contracts']
     },
     {
-      eyebrow: 'Agent surface',
-      icon: 'settings',
-      title: 'Dify shows the work.',
-      detail:
-        'Use Dify when people need a visible agent app with a clear task, tool boundary, and eval gates.',
-      href: '/dify',
-      points: ['Visible task', 'MCP boundary', 'Eval gates']
-    },
-    {
       eyebrow: 'Runtime',
       icon: 'folder',
       title: 'Cloudflare runs the route.',
@@ -84,12 +75,6 @@
       detail: 'Primary reasoning and agent delivery.'
     },
     {
-      label: 'Agent surface',
-      icon: 'settings',
-      title: 'Dify',
-      detail: 'Visible workflow app.'
-    },
-    {
       label: 'Runtime',
       icon: 'folder',
       title: 'Cloudflare',
@@ -101,7 +86,7 @@
     {
       question: 'What is the workflow tool stack?',
       answer:
-        'Substrate is the owned operating layer. OpenAI, Dify, and Cloudflare are the active external stack for agent work, visible workflow surfaces, and runtime.'
+        'CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence. Substrate keeps workflow state, policy, review, and receipts in the owned operating layer.'
     },
     {
       question: 'Why not lead with vendor badges?',
@@ -111,15 +96,15 @@
     {
       question: 'How does this help a team choose the right path?',
       answer:
-        'The page starts with the workflow, puts its operating state and review path in Substrate, then assigns a narrow job to OpenAI, Dify, or Cloudflare before implementation begins.'
+        'The page starts with the workflow, puts its operating state and review path in Substrate, then assigns a narrow job to OpenAI or Cloudflare before implementation begins.'
     }
   ];
 </script>
 
 <SEO
   title="Workflow Tool Stack | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING maps one controlled workflow across its owned Substrate layer and the active OpenAI, Dify, and Cloudflare stack."
-  keywords="workflow tool stack, AI workflow systems, Substrate database, OpenAI agents, Dify workflow systems, Cloudflare workflow runtime, MCP tool boundary"
+  description="CREATE SOMETHING maps one controlled workflow across its owned Substrate layer, Cloudflare infrastructure, and OpenAI intelligence."
+  keywords="workflow tool stack, AI workflow systems, Substrate database, OpenAI agents, Cloudflare workflow runtime, MCP tool boundary"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
@@ -131,7 +116,7 @@
   titleLevel="h1"
   eyebrow="Workflow Tool Stack"
   title="Choose the right tool path for one controlled workflow."
-  description="Start with the workflow your team wants to delegate. CREATE SOMETHING maps the owned operating state in Substrate, then the agent environment, visible app surface, runtime, approval path, and evidence before any external tool gets more authority."
+  description="Start with the workflow your team wants to delegate. CREATE SOMETHING maps the owned operating state in Substrate, then the agent environment, runtime, approval path, and evidence before any external tool gets more authority."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -146,11 +131,11 @@
 <PerformancePageSection
   variant="white"
   eyebrow="Tool fit"
-  title="Substrate owns the record. Each external platform gets one job."
-  description="OpenAI, Dify, and Cloudflare are the active external stack. Substrate keeps the workflow state, operator review, decisions, and evidence under CREATE SOMETHING control."
+  title="CREATE SOMETHING owns the record. Each external platform gets one job."
+  description="CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence. Substrate keeps workflow state, operator review, decisions, and evidence under CREATE SOMETHING control."
 >
   {#snippet after()}
-    <PerformanceCardGrid items={fitCards} columns={4} ariaLabel="Workflow tool fit" />
+    <PerformanceCardGrid items={fitCards} columns={3} ariaLabel="Workflow tool fit" />
   {/snippet}
 </PerformancePageSection>
 

@@ -3,7 +3,7 @@ import { CONCIERGE_SESSION_DEPENDENCY } from '$chat/api-contract';
 import {
 	buildOperatorCommandCenter,
 	clearCommunicationRules,
-	difyRuntimeBoundary,
+	agentRuntimeBoundary,
 	operatorMode,
 	operatorShellPlanes,
 	selectOperatorState
@@ -45,6 +45,6 @@ export const load: PageServerLoad = async ({ depends, cookies, params, platform,
 		operatorState,
 		operatorCommandCenter,
 		clearCommunicationRules,
-		difyRuntimeBoundary
+		agentRuntimeBoundary
 	};
 };

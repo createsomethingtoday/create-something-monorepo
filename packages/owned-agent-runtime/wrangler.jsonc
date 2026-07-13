@@ -1,0 +1,34 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "create-something-agent-runtime",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "AGENT_RUNTIME_DB",
+      "database_name": "create-something-agent-runtime",
+      "database_id": "1ea45279-a1d4-4c5d-93b1-b72c2f5bdd3e",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "PUBLIC_AGENT_CLIENT_RATE_LIMITER",
+      "namespace_id": "123301",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "PUBLIC_AGENT_BUDGET_RATE_LIMITER",
+      "namespace_id": "123302",
+      "simple": { "limit": 120, "period": 60 }
+    }
+  ],
+  "services": [
+    { "binding": "CREATE_SOMETHING_MCP", "service": "create-something-mcp" },
+    { "binding": "THREE_TIER_FRAMEWORK_MCP", "service": "three-tier-framework-mcp" },
+    { "binding": "PLAYBOOK_MCP", "service": "playbook-mcp" }
+  ],
+  "observability": { "enabled": true }
+}

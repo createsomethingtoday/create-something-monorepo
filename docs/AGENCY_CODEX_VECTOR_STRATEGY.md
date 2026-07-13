@@ -1,7 +1,7 @@
 # Agency Codex Vector Strategy
 
 > Date: February 16, 2026
-> Updated: July 9, 2026 (Substrate and active external stack)
+> Updated: July 12, 2026 (owned Cloudflare/OpenAI runtime boundary)
 > Scope: CREATE SOMETHING `.agency` packaging and delivery model
 > Priority: Max differentiation
 
@@ -30,14 +30,13 @@ The commercial default remains **Policy OS** (**Skills + MCP**), with
 - Outcomes are the product: execution quality, escalation policy, and continuous tuning.
 - OpenAI Codex is the primary setup, demo, repository, and agent-operable delivery environment.
 - MCP contracts and policy artifacts stay portable across all agent harnesses.
-- Dify is the client/operator surface when visual workflow
-  editing, app publishing, MCP server cards, or non-engineer inspection matter.
 - Cloudflare is the runtime for Workers, Pages, D1, queues, state, and governed
   tool routes.
-- **OpenAI, Dify, and Cloudflare are the active external stack.** Substrate
-  keeps operating state, human review, decisions, and evidence inside the owned
-  system rather than an external workspace.
-- OpenAI Agents SDK is a graduation lane for workflows that require code-owned
+- **CREATE SOMETHING owns the system. Cloudflare provides infrastructure.
+  OpenAI provides intelligence.** They are the only primary external production
+  runtime dependencies; all customer-facing contracts, workflow state, policy,
+  receipts, and operator surfaces remain owned.
+- OpenAI Agents SDK is the default agent loop for workflows that require code-owned
   orchestration, approval pauses, durable state, traces, evals, and CI-backed
   golden tasks.
 - Canonical phrasing for delivery vector is now **Skills on MCP**.
@@ -143,13 +142,12 @@ See `packages/pi-three-tier-framework/`, `packages/pi-policy-os/`, `packages/pi-
    - Commodity connectivity via `@create-something/composio-bridge`.
    - Deep-domain logic and intelligence layer are always custom.
 6. Runtime graduation is explicit:
-   - Dify-first delivery remains valid for client-facing agent surfaces.
-   - Agents SDK is introduced only when the Policy OS contract needs code-owned
-     orchestration, tool routing, approval pauses, state, traces, evals, or
-     repeatable cost controls.
-   - The migration must not silently drop platform affordances such as visual
-     review, publish/update flow, operator handoff, rollback, or team-compatible
-     governance.
+   - The owned Cloudflare runtime and OpenAI Agents SDK are the production
+     default for agent execution.
+   - Historical Dify applications may remain only as named rollback artifacts
+     during a verified observation window; they are not a current delivery lane.
+   - Client-specific integrations remain behind owned API/MCP contracts and do
+     not become CREATE SOMETHING runtime dependencies.
 
 ## Offer architecture
 

@@ -86,11 +86,12 @@ learning.
 
 The current operating expression makes that ownership concrete. **Substrate is
 the owned database and operator layer** for source records, Atlas bindings,
-workflow actions, approvals, runs, receipts, and API/MCP access. **OpenAI, Dify,
-and Cloudflare are the active external stack:** OpenAI supplies the primary
-reasoning and agent environment, Dify supplies visible agent applications, and
-Cloudflare supplies the runtime. These platform roles can evolve without moving
-the operating record or human review boundary out of the owned system.
+workflow actions, approvals, runs, receipts, and API/MCP access. **CREATE
+SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides
+intelligence.** Those are the only primary external production runtime
+dependencies. Client integrations and retained rollback artifacts remain behind
+owned contracts; they do not own the operating record, orchestration, policy,
+or human review boundary.
 
 The category hierarchy is:
 
@@ -205,10 +206,10 @@ The CREATE SOMETHING method is:
    `outcome_contract.md`, `golden_tasks.yaml`, and `runbook.md`.
 
 5. **Choose the runtime as a governance decision.**
-   Use Dify when operator editing and inspection matter. Use Cloudflare or
-   repo-owned services when auth, state, queues, tenant boundaries, or recovery
-   paths matter. Use OpenAI Agents SDK only when code-owned orchestration,
-   approval pauses, traces, evals, and CI-backed golden tasks justify the burden.
+   Use CREATE SOMETHING-owned operator surfaces for editing and inspection. Use
+   Cloudflare for auth, state, queues, tenant boundaries, and recovery paths.
+   Use OpenAI Agents SDK for code-owned orchestration, approval pauses, traces,
+   evals, and CI-backed golden tasks.
 
 6. **Add proof before autonomy expands.**
    A workflow must show what can run, what waits, what stops, and what proves

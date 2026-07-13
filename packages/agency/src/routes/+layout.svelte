@@ -73,17 +73,13 @@
       links: [
         { label: 'Workflow Tool Stack', href: '/partners' },
         { label: 'OpenAI', href: '/stack' },
-        { label: 'Cloudflare', href: '/cloudflare' },
-        { label: 'Dify', href: '/dify' }
+        { label: 'Cloudflare', href: '/cloudflare' }
       ]
     },
     {
-      title: 'Guides',
+      title: 'Guide',
       ariaLabel: 'Guides and articles',
       links: [
-        { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
-        { label: 'Dify Agent Eval Gates', href: '/dify/agent-eval-gates' },
-        { label: 'Ship Dify With MCP', href: '/dify/ship-dify-app-with-mcp-tools' },
         {
           label: agencyCoreMessaging.governanceChecklistLabel,
           href: agencyCoreMessaging.governanceChecklistHref
@@ -146,7 +142,6 @@
         'composio',
         'cloudflare',
         'webflow',
-        'dify',
         'openai',
         'control layer'
       ]
@@ -162,7 +157,6 @@
         'workflow tool stack',
         'tool stack',
         'substrate',
-        'dify',
         'cloudflare',
         'openai',
         'workflow systems',
@@ -186,48 +180,6 @@
         'durable objects',
         'remote mcp',
         'workflow routes'
-      ]
-    },
-    {
-      id: 'nav-dify',
-      label: 'Dify',
-      description: 'Dify workflow systems with MCP boundaries, eval gates, and readable evidence',
-      href: '/dify',
-      icon: 'D',
-      keywords: ['dify', 'workflow systems', 'mcp', 'eval gates', 'agent runtime', 'control layer']
-    },
-    {
-      id: 'nav-dify-eval-gates',
-      label: 'Dify Agent Eval Gates',
-      description:
-        'Eval gates for API health, expected tool use, blocked actions, approvals, secret refusal, and cost limits',
-      href: '/dify/agent-eval-gates',
-      icon: 'DG',
-      keywords: [
-        'dify',
-        'eval gates',
-        'agent evals',
-        'mcp testing',
-        'approval gates',
-        'secret refusal',
-        'policy os'
-      ]
-    },
-    {
-      id: 'nav-dify-ship-mcp',
-      label: 'Ship Dify With MCP',
-      description:
-        'Field guide for shipping one Dify app with scoped MCP tools, approvals, eval gates, and proof',
-      href: '/dify/ship-dify-app-with-mcp-tools',
-      icon: 'DS',
-      keywords: [
-        'dify',
-        'mcp tools',
-        'ship dify app',
-        'implementation guide',
-        'policy os',
-        'agent governance',
-        'approval gates'
       ]
     },
     {

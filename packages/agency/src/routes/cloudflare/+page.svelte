@@ -119,11 +119,11 @@
 
   const ecosystemCards: PerformanceCardItem[] = [
     {
-      eyebrow: 'Agent runtime',
+      eyebrow: 'Intelligence',
       icon: 'settings',
-      title: 'Dify',
-      detail: 'Client-facing agent workflows and marketplace-ready agent packaging.',
-      href: '/dify'
+      title: 'OpenAI',
+      detail: 'Model intelligence and agent execution behind CREATE SOMETHING-owned contracts.',
+      href: '/stack'
     },
     {
       eyebrow: 'Owned operating layer',
@@ -137,7 +137,7 @@
       icon: 'check',
       title: 'Stack',
       detail:
-        'Ownership boundaries across Substrate, OpenAI, Dify, Cloudflare, client tools, account data, billing, tokens, and public proof.',
+        'Ownership boundaries across Substrate, OpenAI, Cloudflare, client tools, account data, billing, tokens, and public proof.',
       href: '/stack'
     }
   ];

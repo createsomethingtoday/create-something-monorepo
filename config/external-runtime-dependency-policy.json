@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "canonicalStatement": "CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence.",
+  "requiredCanonicalPaths": [
+    "docs/CREATE_SOMETHING_SYSTEMS_THESIS.md",
+    "docs/AGENCY_CODEX_VECTOR_STRATEGY.md",
+    "docs/POLICY_OS_PRODUCT_DEFINITION.md",
+    "packages/agency/src/routes/stack/+page.svelte",
+    "packages/agency/src/routes/partners/+page.svelte"
+  ],
+  "currentStackPaths": [
+    "^docs/CREATE_SOMETHING_SYSTEMS_THESIS\\.md$",
+    "^docs/AGENCY_CODEX_VECTOR_STRATEGY\\.md$",
+    "^docs/(?:CLOUDFLARE|PARTNER)_.*(?:PACKET|STRATEGY).*\\.md$",
+    "^packages/agency/src/routes/(?:stack|partners)/\\+page\\.svelte$",
+    "^packages/agency/src/lib/data/marketingPages\\.ts$",
+    "^packages/create-something-mcp/src/content/generated/canon\\.ts$",
+    "^packages/canon/src/lib/components/SEO\\.svelte$"
+  ],
+  "activeRuntimePaths": [
+    "^packages/agency/src/app\\.d\\.ts$",
+    "^packages/agency/src/lib/delivery/abundance-context\\.ts$",
+    "^packages/agency/src/routes/api/delivery/abundance/job-agent/\\+server\\.ts$",
+    "^packages/agency/src/routes/delivery/abundance/\\+page\\.svelte$",
+    "^packages/agency/migrations/0034_abundance_owned_runtime_context\\.sql$",
+    "^packages/canon/src/lib/components/SEO\\.svelte$",
+    "^packages/concierge-chat/src/(?:app\\.d\\.ts|routes/.*|lib/operator/clear-shell\\.ts)$",
+    "^packages/concierge-chat/wrangler\\.toml$",
+    "^packages/ona-agents/src/app\\.d\\.ts$",
+    "^packages/ona-agents/src/routes/.*$",
+    "^packages/ona-agents/wrangler\\.toml$",
+    "^apps/bettermode-marketplace-creator-agent/src/(?:index|env\\.d)\\.ts$",
+    "^apps/bettermode-marketplace-creator-agent/wrangler\\.jsonc$"
+  ],
+  "prohibitedActiveRuntimePatterns": [
+    "https?://api\\.dify",
+    "https?://api\\.notion\\.com",
+    "/chat-messages",
+    "\\bDIFY_[A-Z0-9_]+\\b",
+    "\\bNOTION_[A-Z0-9_]+\\b",
+    "@notionhq/client",
+    "from ['\"][^'\"]*dify[^'\"]*['\"]",
+    "Dify (?:agent|runtime|Service API|proxy|operator)"
+  ],
+  "prohibitedCurrentStackPatterns": [
+    "OpenAI,?\\s+Dify,?\\s+and Cloudflare (?:are|as) the active external stack",
+    "active OpenAI,?\\s+Dify,?\\s+(?:and )?Cloudflare stack",
+    "Dify (?:is|supplies|provides)[\\s\\S]{0,80}(?:runtime|visible agent applications)",
+    "Dify-first (?:delivery|operating model)",
+    "keep Cloudflare as runtime, Dify as agent surface, Notion"
+  ],
+  "rules": [
+    {
+      "id": "unreachable-provider-rollback-source",
+      "category": "approved_rollback",
+      "owner": "CRE-1233",
+      "reason": "Provider clients and tests retained temporarily without any import from an active production entrypoint; delete after the approved observation window.",
+      "path": "^(?:packages/(?:concierge-chat|ona-agents)/(?:src/lib/server/dify/|test/dify-)|apps/bettermode-marketplace-creator-agent/src/dify-agent\\.ts$)",
+      "terms": ["dify"]
+    },
+    {
+      "id": "guide-rollback",
+      "category": "approved_rollback",
+      "owner": "CRE-1233",
+      "reason": "Temporary Guide parity, migration, and rollback evidence pending an approved retirement window.",
+      "path": "^(?:config/dify(?:-agents)?/|evals/langfuse/dify/|scripts/dify|docs/internal/DIFY_EXIT_RUNTIME_MIGRATION\\.md$|packages/owned-agent-runtime/)",
+      "terms": ["dify"]
+    },
+    {
+      "id": "root-client-commands",
+      "category": "client_compatibility",
+      "owner": "client-delivery",
+      "reason": "Root Notion commands operate client-specific connector packages behind owned MCP and deployment contracts.",
+      "path": "^package\\.json$",
+      "terms": ["notion"]
+    },
+    {
+      "id": "workspace-resolution",
+      "category": "client_compatibility",
+      "owner": "repo-platform",
+      "reason": "The lockfile records client connector workspace resolution and is not a runtime stack declaration.",
+      "path": "^pnpm-lock\\.yaml$",
+      "terms": ["dify", "notion"]
+    },
+    {
+      "id": "root-rollback-commands",
+      "category": "approved_rollback",
+      "owner": "CRE-1233",
+      "reason": "Root Dify commands remain operable only for parity and rollback until destructive retirement is approved.",
+      "path": "^package\\.json$",
+      "terms": ["dify"]
+    },
+    {
+      "id": "notion-client-compatibility",
+      "category": "client_compatibility",
+      "owner": "client-delivery",
+      "reason": "Client-owned Notion data and connector packages are integrations behind CREATE SOMETHING contracts, not primary CREATE SOMETHING runtime dependencies.",
+      "path": "(?:^|/)(?:[^/]*notion[^/]*|halfdozen-[^/]*|gmail-notion-mcp|quickbooks-notion-mcp)(?:/|$)",
+      "terms": ["notion"]
+    },
+    {
+      "id": "client-delivery-evidence",
+      "category": "client_compatibility",
+      "owner": "client-delivery",
+      "reason": "Delivery records and client-specific surfaces describe customer systems or compatibility boundaries.",
+      "path": "^(?:config/delivery/|docs/deliveries/|packages/agency/clients/|packages/agency/src/lib/delivery/)",
+      "terms": ["dify", "notion"]
+    },
+    {
+      "id": "legacy-coordination-evidence",
+      "category": "historical_evidence",
+      "owner": "linear-migration",
+      "reason": "Legacy Loom records are retained only as migrated historical coordination evidence; Linear is authoritative.",
+      "path": "^\\.loom/",
+      "terms": ["dify", "notion"]
+    },
+    {
+      "id": "runtime-compatibility-config",
+      "category": "client_compatibility",
+      "owner": "mcp-fleet",
+      "reason": "Fleet and policy configuration retains named client or host compatibility; it is not the primary owned agent runtime.",
+      "path": "^(?:config/|\\.mcp\\.json$|\\.pi/)",
+      "terms": ["dify", "notion"]
+    },
+    {
+      "id": "operator-compatibility-code",
+      "category": "client_compatibility",
+      "owner": "mcp-fleet",
+      "reason": "Scripts and non-primary packages implement client, host, migration, or operator compatibility behind owned interfaces.",
+      "path": "^(?:scripts/|automation/|apps/|packages/)",
+      "terms": ["dify", "notion"]
+    },
+    {
+      "id": "historical-and-research",
+      "category": "historical_evidence",
+      "owner": "docs",
+      "reason": "Research, historical delivery evidence, guides, archived artifacts, and generated knowledge may preserve vendor context without defining the current stack.",
+      "path": "^(?:docs/|specs/|templates/|evals/|\\.archive/|\\.claude/|CLAUDE\\.md$|AGENTS\\.md$|STANDARDS\\.md$|\\.github/)",
+      "terms": ["dify", "notion"]
+    }
+  ]
+}

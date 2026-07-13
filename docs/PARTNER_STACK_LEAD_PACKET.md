@@ -1,33 +1,29 @@
 # Partner Stack Lead Packet
 
-Status: application-ready positioning, not approved-partner status.
+Status: superseded partner exploration; Dify and Notion lanes are inactive.
 
 ## Summary
 
-CREATE SOMETHING should apply with one partner-stack story:
+The current boundary is:
 
-- **Dify** carries the visible agent runtime, workflow templates, marketplace assets, and self-serve adoption lane.
-- **Cloudflare** carries the runtime substrate: Workers, Pages, D1, queues, remote MCP endpoints, and delivery surfaces.
-- **Notion** carries the operator workspace: PM visibility, client-readable evidence, templates, and human review.
-- **OpenAI** carries ecosystem readiness: reasoning and agent-host proof through scoped MCP tools, evals, ChatGPT-compatible credential delivery, and Policy OS controls.
+- **CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence.**
+- Dify application material is historical migration and rollback evidence, not a current runtime lane.
+- Notion material is retained only for client compatibility and historical delivery evidence, not as CREATE SOMETHING's operator system.
 
 The differentiated offer is not any single vendor badge. It is **Policy OS plus governed delivery**: MCP boundaries, approval rules, runbooks, eval gates, client-safe evidence, and recurring tuning.
 
 ## Application Order
 
-1. **Dify Service Partner**
-   - Primary lane because CREATE SOMETHING already has Dify-first delivery proof, MCP coverage, eval gates, and public agent examples.
-   - Secondary Dify lanes: Marketplace Partner for reusable templates/plugins, Affiliate for disclosed self-serve acquisition after acceptance.
+1. **Dify programs — paused**
+   - Preserve prior application research as historical evidence only. Do not submit or describe Dify as an active CREATE SOMETHING runtime lane.
 
 2. **Cloudflare PowerUP Consult**
    - Primary lane because the repo already uses Cloudflare as runtime infrastructure for Workers, Pages, D1, remote MCPs, and review surfaces.
    - Secondary lane: Self-Serve Agency when client account count, billing, or tenant administration justifies it.
    - Later lane: Technology Alliance only after a public integration, docs, demo, support path, and usage proof exist.
 
-3. **Notion Solutions Partner**
-   - Primary lane because Notion is strongest as the operator workspace and consulting implementation surface.
-   - Proof lane: public templates and builder examples after sanitization.
-   - Later lane: Technology Partner only after a public OAuth integration and support model exist.
+3. **Notion programs — paused**
+   - Preserve client connector and application research as compatibility evidence only. Do not describe Notion as CREATE SOMETHING's operator workspace.
 
 4. **OpenAI ecosystem readiness**
    - Do not lead with this as a partner or affiliate application until a concrete current program path is selected.
@@ -107,9 +103,9 @@ Exclude:
 The public site should use:
 
 - `/partners` as the unified partner-stack entry point.
-- `/dify` for agent-runtime, Dify Service Partner, Marketplace Partner, and affiliate funnel detail.
+- `/dify` only for clearly labeled historical migration or compatibility material.
 - `/cloudflare` for runtime substrate and Cloudflare consult/agency readiness.
-- `/notion` for operator workspace, Solutions Partner, template, and builder proof.
+- `/notion` only for clearly labeled client compatibility and historical proof.
 - `/stack` for vendor role boundaries and portability.
 - No standalone `/openai` page until there is an accepted program, a live case study, or a specific OpenAI application target.
 

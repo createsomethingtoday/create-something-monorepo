@@ -64,7 +64,7 @@ export interface OperatorCommandCenter {
 export const operatorMode = {
 	label: 'Abundance Operator Chat',
 	productLine: 'CREATE SOMETHING concierge-chat',
-	runtime: 'Dify Service API through a CREATE SOMETHING server proxy',
+	runtime: 'Owned state on Cloudflare with OpenAI intelligence',
 	promise: 'Clear state, clear next action, clear proof before any governed write.'
 } as const;
 
@@ -124,7 +124,7 @@ export const operatorShellPlanes = [
 	{
 		id: 'conversation',
 		label: 'Chat rail',
-		owner: 'Dify-backed agent',
+		owner: 'Owned agent runtime',
 		purpose: 'Keeps the primary conversation focused while widgets interrupt only for confirmation, consent, or evidence.',
 		requiredSignals: ['assistant response', 'inline widget', 'composer state']
 	},
@@ -142,24 +142,24 @@ export const clearCommunicationRules = [
 	'Put proof beside the claim, not in a separate report.',
 	'Show inferred fields as inferred until a user or operator confirms them.',
 	'Disable governed writes until consent, credential health, and policy checks are visible.',
-	'Translate Dify runtime events into operator states instead of exposing raw provider mechanics.'
+	'Translate provider events into owned operator states instead of exposing raw model mechanics.'
 ] as const;
 
-export const difyRuntimeBoundary = {
+export const agentRuntimeBoundary = {
 	browser: [
-		'No Dify API key in public env vars.',
-		'No direct browser calls to Dify Service API.',
+		'No model-provider key in public env vars.',
+		'No direct browser calls to a model provider.',
 		'Only bounded widgets and operator states reach the client.'
 	],
 	server: [
-		'Resolve app id, app key, and API URL from server-side configuration.',
-		'Call Dify chat-messages through the orchestration layer.',
-		'Persist Dify conversation ids and map stream/tool events to chat artifacts.'
+		'Resolve agent policy, model access, and tool contracts from server-side configuration.',
+		'Call the owned agent runtime through CREATE SOMETHING contracts.',
+		'Persist owned conversation ids and map stream/tool events to chat artifacts.'
 	],
 	operator: [
 		'See agent state, proof, and next action in CREATE SOMETHING language.',
 		'Approve, reconnect, hand off, or retry from governed UI controls.',
-		'Use Dify as runtime plumbing, not as the operator-facing product.'
+		'Keep Cloudflare infrastructure and OpenAI intelligence behind the owned workflow boundary.'
 	]
 } as const;
 
