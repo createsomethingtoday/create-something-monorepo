@@ -6,7 +6,10 @@
 
 **Cloudflare Worker:** `https://create-something-agent-runtime.createsomething.workers.dev`
 
-**Rollback:** Keep each provider app and credential intact but unreachable until the approved candidate is deployed and the observation window passes.
+**Observation window:** 24 hours from the final production deployment receipt.
+
+**Rollback:** Keep each provider app and credential intact but unreachable until
+the approved candidate is deployed and the 24-hour observation window passes.
 
 ## Decision
 
@@ -52,6 +55,25 @@ separate approval-gated operation after deploying and observing the candidate.
 
 Never print secret values. Read back names only, delete one project at a time,
 and attach sanitized Wrangler receipts to `CRE-1233`.
+
+## Observation and cleanup eligibility
+
+Start the 24-hour window only after all five production dispositions have a
+successful deployment receipt: owned agent runtime, Agency, Abundance
+Concierge, Ona Agents, and Bettermode creator worker. Capture live HTTP/SSE and
+route readback immediately after deployment, again after at least one hour, and
+at or after 24 hours.
+
+Cleanup is eligible only when all required readbacks pass, normalized runtime
+receipts contain no unexplained failure, the retired routes remain retired or
+redirected as declared, and the Bettermode health/direct-OpenAI path remains
+healthy. A failed check stops cleanup and keeps every rollback credential and
+provider app intact.
+
+After eligibility, delete bindings one Cloudflare project at a time in the
+manifest order. Re-read binding names and rerun the owning health/route smoke
+after each project before continuing. Archive the corresponding remote provider
+apps only after all four Cloudflare projects pass their post-deletion smoke.
 
 ## Promotion gates
 
