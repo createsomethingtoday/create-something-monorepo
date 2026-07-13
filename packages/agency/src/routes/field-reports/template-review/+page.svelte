@@ -171,6 +171,64 @@
     </div>
   </section>
 
+  <PerformancePageSection
+    eyebrow="Timing / Measured + estimated"
+    title="We can time the preparation—not the human savings."
+    description="A 50-case sequential shadow run gives us machine elapsed time. The human baseline and possible savings below are planning estimates from the current eight-step workflow, not observed reviewer timing."
+  >
+    {#snippet after()}
+      <div class="timing-evidence" aria-label="Template review timing evidence and estimates">
+        <article data-status="measured">
+          <span>Measured / Evidence collection</span>
+          <strong
+            >~{templateReviewFieldReport.timing.evidenceCollection.roundedElapsedMinutes} min /
+            {templateReviewFieldReport.timing.evidenceCollection.selectedCases} cases</strong
+          >
+          <p>
+            About
+            {templateReviewFieldReport.timing.evidenceCollection.roundedSecondsPerSelectedCase} seconds
+            of machine elapsed time per selected case. One published page, desktop and mobile, run sequentially—not
+            a complete review.
+          </p>
+        </article>
+        <article data-status="estimated">
+          <span>Estimated / Full human baseline</span>
+          <strong
+            >{templateReviewFieldReport.timing.humanBaseline
+              .minActiveMinutes}–{templateReviewFieldReport.timing.humanBaseline.maxActiveMinutes} active
+            min</strong
+          >
+          <p>
+            Derived step by step from the current eight-step reviewer workflow. No reviewer
+            time-on-task study has validated this planning range.
+          </p>
+        </article>
+        <article data-status="hypothesis">
+          <span>Hypothesis / Eligible objective work</span>
+          <strong
+            >{templateReviewFieldReport.timing.savingsHypothesis
+              .minActiveMinutes}–{templateReviewFieldReport.timing.savingsHypothesis
+              .maxActiveMinutes} active min</strong
+          >
+          <p>
+            Potential time freed after an estimated
+            {templateReviewFieldReport.timing.savingsHypothesis
+              .verificationMinutes[0]}–{templateReviewFieldReport.timing.savingsHypothesis
+              .verificationMinutes[1]} minutes of human verification. This has not been observed.
+          </p>
+        </article>
+        <article data-status="unmeasured">
+          <span>Outcome / Actual time saved</span>
+          <strong>Unmeasured</strong>
+          <p>
+            A matched before-and-after pilot is still required. Reviewer judgment and the final
+            action remain human-owned.
+          </p>
+        </article>
+      </div>
+    {/snippet}
+  </PerformancePageSection>
+
   <PerformanceEvidenceIndex
     eyebrow="Evidence basis"
     title="The claims stay attached to dated records."
@@ -256,7 +314,8 @@
   .failed-boundary span,
   .failed-boundary small,
   .measurement-plan span,
-  .runtime-evidence span {
+  .runtime-evidence span,
+  .timing-evidence span {
     font-family: var(--font-performance-mono);
     font-size: 0.72rem;
     font-weight: var(--font-performance-semibold, 600);
@@ -378,6 +437,49 @@
     line-height: 1.5;
   }
 
+  .timing-evidence {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+  }
+  .timing-evidence article {
+    display: grid;
+    align-content: start;
+    gap: 0.8rem;
+    min-height: 14rem;
+    padding: clamp(1.25rem, 3vw, 2.5rem);
+  }
+  .timing-evidence article:nth-child(even) {
+    border-left: 1px solid var(--color-performance-line-strong, #9c9c96);
+  }
+  .timing-evidence article:nth-child(n + 3) {
+    border-top: 1px solid var(--color-performance-line-strong, #9c9c96);
+  }
+  .timing-evidence article[data-status='measured'] {
+    background: var(--color-performance-growth, #007a4d);
+    color: #fff;
+  }
+  .timing-evidence article[data-status='unmeasured'] {
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+  .timing-evidence strong {
+    max-width: 18ch;
+    font-family: var(--font-performance-mono);
+    font-size: clamp(1.6rem, 3.3vw, 3rem);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+  }
+  .timing-evidence p {
+    max-width: 42rem;
+    margin: auto 0 0;
+    color: var(--color-performance-muted, #5e6268);
+    line-height: 1.5;
+  }
+  .timing-evidence article[data-status='measured'] p {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
   .measurement-plan {
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -452,7 +554,8 @@
 
     .field-result > header,
     .failed-boundary,
-    .measurement-plan {
+    .measurement-plan,
+    .timing-evidence {
       grid-template-columns: 1fr;
     }
     .field-result {
@@ -473,6 +576,12 @@
     .measurement-plan__formula {
       border-right: 0;
       border-bottom: 1px solid var(--color-performance-ink, #090909);
+    }
+    .timing-evidence article:nth-child(even) {
+      border-left: 0;
+    }
+    .timing-evidence article + article {
+      border-top: 1px solid var(--color-performance-line-strong, #9c9c96);
     }
   }
 </style>

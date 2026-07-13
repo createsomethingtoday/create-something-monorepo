@@ -28,6 +28,35 @@ test('template review Field Report separates packet completion, synthetic bounda
   assert.equal(templateReviewFieldReport.runtime.centralLiveCases, 7);
   assert.equal(templateReviewFieldReport.runtime.langfuseReadback, 'unverified');
 
+  assert.equal(templateReviewFieldReport.timing.evidenceCollection.status, 'measured');
+  assert.equal(templateReviewFieldReport.timing.evidenceCollection.selectedCases, 50);
+  assert.equal(templateReviewFieldReport.timing.evidenceCollection.usablePackets, 49);
+  assert.equal(templateReviewFieldReport.timing.evidenceCollection.elapsedSeconds, 1_950.845);
+  assert.equal(templateReviewFieldReport.timing.evidenceCollection.roundedElapsedMinutes, 32);
+  assert.equal(
+    templateReviewFieldReport.timing.evidenceCollection.roundedSecondsPerSelectedCase,
+    39
+  );
+  assert.equal(templateReviewFieldReport.timing.evidenceCollection.execution, 'sequential');
+  assert.equal(templateReviewFieldReport.timing.evidenceCollection.pagesPerCase, 1);
+  assert.deepEqual(templateReviewFieldReport.timing.evidenceCollection.viewports, [
+    'desktop',
+    'mobile'
+  ]);
+
+  assert.equal(templateReviewFieldReport.timing.humanBaseline.status, 'derived');
+  assert.equal(templateReviewFieldReport.timing.humanBaseline.minActiveMinutes, 30);
+  assert.equal(templateReviewFieldReport.timing.humanBaseline.maxActiveMinutes, 60);
+  assert.equal(templateReviewFieldReport.timing.savingsHypothesis.status, 'derived');
+  assert.deepEqual(
+    templateReviewFieldReport.timing.savingsHypothesis.eligibleObjectiveMinutes,
+    [12, 25]
+  );
+  assert.deepEqual(templateReviewFieldReport.timing.savingsHypothesis.verificationMinutes, [3, 8]);
+  assert.equal(templateReviewFieldReport.timing.savingsHypothesis.minActiveMinutes, 4);
+  assert.equal(templateReviewFieldReport.timing.savingsHypothesis.maxActiveMinutes, 22);
+  assert.equal(templateReviewFieldReport.timing.actualSavings.status, 'unmeasured');
+
   assert.equal(templateReviewFieldReport.savings.status, 'unmeasured');
   assert.match(templateReviewFieldReport.savings.formula, /manual objective-check minutes/i);
   assert.match(templateReviewFieldReport.savings.formula, /reviewer verification minutes/i);
@@ -55,19 +84,29 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.match(route, /not production usage/i);
   assert.match(route, /Langfuse readback was not available/i);
   assert.match(route, /Reviewer time savings are not measured/i);
+  assert.match(route, /We can time the preparation—not the human savings/i);
+  assert.match(route, /seconds\s+of machine elapsed time per selected case/i);
+  assert.match(route, /Estimated \/ Full human baseline/i);
+  assert.match(route, /Hypothesis \/ Eligible objective work/i);
+  assert.match(route, /Outcome \/ Actual time saved/i);
+  assert.match(route, /matched before-and-after pilot/i);
   assert.match(route, /Human reviewer/i);
   assert.doesNotMatch(route, /Evidence yield/i);
   assert.doesNotMatch(route, /2 \/ 2 missed/i);
   assert.doesNotMatch(route, /eight reviewer buckets/i);
   assert.doesNotMatch(route, /One method\. One map\. Three operating surfaces\./i);
   assert.doesNotMatch(route, /layoff|head[ -]?count|replace(?:d|ment)? people/i);
+  assert.doesNotMatch(route, /cost per template|blended hourly|\$349,?960/i);
 });
 
 test('public evidence records are inspectable and include the sanitized runtime audit', () => {
   const sources = templateReviewFieldReport.sources;
-  assert.equal(sources.length, 4);
+  assert.equal(sources.length, 6);
   assert.ok(sources.every((source) => source.href.startsWith('https://github.com/')));
   assert.match(sources[3].artifact, /template-review-dify-eval-evidence/i);
+  assert.match(sources[4].artifact, /template-review-timing-evidence/i);
+  assert.equal(sources[4].state, 'review');
+  assert.match(sources[5].artifact, /reviewer-playbook/i);
 });
 
 test('Field Reports are a browsable proof chapter in the agency journey', () => {

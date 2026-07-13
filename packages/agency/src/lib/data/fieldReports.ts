@@ -37,6 +37,41 @@ export type TemplateReviewFieldReport = {
     langfuseReadback: 'unverified';
     status: EvidenceStatus;
   };
+  timing: {
+    evidenceCollection: {
+      status: 'measured';
+      startedAt: string;
+      completedAt: string;
+      selectedCases: number;
+      usablePackets: number;
+      elapsedSeconds: number;
+      roundedElapsedMinutes: number;
+      roundedSecondsPerSelectedCase: number;
+      execution: 'sequential';
+      pagesPerCase: number;
+      viewports: ['desktop', 'mobile'];
+      statement: string;
+    };
+    humanBaseline: {
+      status: 'derived';
+      minActiveMinutes: number;
+      maxActiveMinutes: number;
+      basis: string;
+      statement: string;
+    };
+    savingsHypothesis: {
+      status: 'derived';
+      minActiveMinutes: number;
+      maxActiveMinutes: number;
+      eligibleObjectiveMinutes: [number, number];
+      verificationMinutes: [number, number];
+      statement: string;
+    };
+    actualSavings: {
+      status: 'unmeasured';
+      statement: string;
+    };
+  };
   savings: {
     status: 'unmeasured';
     statement: string;
@@ -45,7 +80,12 @@ export type TemplateReviewFieldReport = {
   };
   sources: Array<{
     label: string;
-    kind: 'Calibration record' | 'Delivery report' | 'Runtime eval record';
+    kind:
+      | 'Calibration record'
+      | 'Delivery report'
+      | 'Runtime eval record'
+      | 'Timing evidence record'
+      | 'Reviewer playbook';
     artifact: string;
     date: string;
     href: string;
@@ -92,6 +132,45 @@ export const templateReviewFieldReport: TemplateReviewFieldReport = {
     langfuseReadback: 'unverified',
     status: 'measured'
   },
+  timing: {
+    evidenceCollection: {
+      status: 'measured',
+      startedAt: '2026-05-27T17:38:09.600Z',
+      completedAt: '2026-05-27T18:10:40.445Z',
+      selectedCases: 50,
+      usablePackets: 49,
+      elapsedSeconds: 1_950.845,
+      roundedElapsedMinutes: 32,
+      roundedSecondsPerSelectedCase: 39,
+      execution: 'sequential',
+      pagesPerCase: 1,
+      viewports: ['desktop', 'mobile'],
+      statement:
+        'The sequential shadow run spent about 32 minutes collecting evidence for 50 selected cases—about 39 seconds of machine elapsed time per selected case.'
+    },
+    humanBaseline: {
+      status: 'derived',
+      minActiveMinutes: 30,
+      maxActiveMinutes: 60,
+      basis: 'Current eight-step reviewer playbook, estimated by workflow step',
+      statement:
+        'A complete human review is estimated at 30–60 active minutes. This is a planning baseline derived from the current reviewer workflow, not observed reviewer timing.'
+    },
+    savingsHypothesis: {
+      status: 'derived',
+      minActiveMinutes: 4,
+      maxActiveMinutes: 22,
+      eligibleObjectiveMinutes: [12, 25],
+      verificationMinutes: [3, 8],
+      statement:
+        'If the estimates hold, prepared evidence may free 4–22 active minutes of eligible objective-review work after human verification. This hypothesis has not been measured.'
+    },
+    actualSavings: {
+      status: 'unmeasured',
+      statement:
+        'Actual reviewer time saved remains unmeasured and requires a matched before-and-after pilot.'
+    }
+  },
   savings: {
     status: 'unmeasured',
     statement:
@@ -136,6 +215,22 @@ export const templateReviewFieldReport: TemplateReviewFieldReport = {
       artifact: '2026-07-12-template-review-dify-eval-evidence.md',
       date: 'July 12, 2026',
       href: 'https://github.com/createsomethingtoday/create-something-monorepo/blob/1e32ebbfd1db06b98e3a6bf45c92120f06775115/docs/deliveries/webflow-marketplace/2026-07-12-template-review-dify-eval-evidence.md',
+      state: 'verified'
+    },
+    {
+      label: 'Template review timing evidence',
+      kind: 'Timing evidence record',
+      artifact: '2026-07-13-template-review-timing-evidence.md',
+      date: 'July 13, 2026',
+      href: 'https://github.com/createsomethingtoday/create-something-monorepo/blob/main/docs/deliveries/webflow-marketplace/2026-07-13-template-review-timing-evidence.md',
+      state: 'review'
+    },
+    {
+      label: 'Template Review Hub reviewer playbook',
+      kind: 'Reviewer playbook',
+      artifact: 'reviewer-playbook.md',
+      date: 'March 9, 2026',
+      href: 'https://github.com/createsomethingtoday/create-something-monorepo/blob/main/specs/webflow-marketplace/delivery/template-review-hub/reviewer-playbook.md',
       state: 'verified'
     }
   ]
