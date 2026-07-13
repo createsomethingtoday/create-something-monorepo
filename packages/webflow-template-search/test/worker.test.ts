@@ -4716,6 +4716,7 @@ describe('webflow-template-search worker', () => {
           '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/1.webp"></head></html>',
       },
     });
+    const cache = installSearchCacheStub();
     const { env, close } = createTestEnv();
 
     try {
@@ -4728,9 +4729,18 @@ describe('webflow-template-search worker', () => {
       );
       expect(rebuild.status).toBe(200);
 
-      const beforeResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
-      const beforePayload = (await beforeResponse.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
-      expect(beforePayload.items[0]?.thumbnail_image_url).toBe('https://example.com/agentflow.png');
+      const publicSearchRequest = new Request(
+        'https://templates.test/api/templates/search?include=items&view=grid&page=1&page_size=24',
+      );
+      const beforeResponse = await callWorker(publicSearchRequest, env);
+      const beforePayload = (await beforeResponse.json()) as {
+        items: Array<{ name: string; thumbnail_image_url: string | null }>;
+      };
+      expect(beforeResponse.headers.get('x-template-search-cache')).toBe('MISS');
+      expect(beforePayload.items.find((item) => item.name === 'Agentflow')?.thumbnail_image_url).toBe(
+        'https://example.com/agentflow.png',
+      );
+      expect((await callWorker(publicSearchRequest, env)).headers.get('x-template-search-cache')).toBe('HIT');
 
       env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
       const backfill = await callWorker(
@@ -4753,11 +4763,15 @@ describe('webflow-template-search worker', () => {
         updated_records: 1,
       });
 
-      const afterResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
-      const afterPayload = (await afterResponse.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
-      expect(afterPayload.items[0]?.thumbnail_image_url).toBe(
+      const afterResponse = await callWorker(publicSearchRequest, env);
+      const afterPayload = (await afterResponse.json()) as {
+        items: Array<{ name: string; thumbnail_image_url: string | null }>;
+      };
+      expect(afterResponse.headers.get('x-template-search-cache')).toBe('MISS');
+      expect(afterPayload.items.find((item) => item.name === 'Agentflow')?.thumbnail_image_url).toBe(
         'https://cdn.prod.website-files.com/site/Thamnail_2.webp',
       );
+      expect(cache.put).toHaveBeenCalledTimes(2);
     } finally {
       fetchMock.mockRestore();
       close();

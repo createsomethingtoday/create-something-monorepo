@@ -1347,6 +1347,9 @@ export async function backfillTemplateImages(
       image_source_stats: imageSourceStats,
     };
 
+    if (summary.updated_records > 0) {
+      await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+    }
     await recordSyncSummary(env.DB, summary, 'last_image_backfill');
     return summary;
   });
