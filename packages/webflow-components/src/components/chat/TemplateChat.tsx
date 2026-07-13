@@ -11,6 +11,7 @@ import {
 } from '../marketplace/templateAttribution';
 import {
   fetchAuthorizedAgentRequest,
+  prepareAgentMessages,
   requestTemplateAgentSession,
 } from './templateAgentSession';
 import { completeTurnstileChallenge, type TurnstileApi } from './turnstileChallenge';
@@ -1390,25 +1391,28 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           clearSessionToken: () => {
             sessionTokenRef.current = null;
           },
-          init: {
+          clearContextToken: () => {
+            contextTokenRef.current = null;
+          },
+          init: () => ({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             signal: controller.signal,
             body: JSON.stringify({
-            messages: history.map((message) => ({ role: message.role, content: message.content })),
-            context: {
-              context_token: contextTokenRef.current ?? undefined,
-              // Highlight failures from the previous turn (cards not rendered
-              // under the page's current filters) — keeps the agent honest.
-              highlight_misses: pendingHighlightMisses.size > 0 ? Array.from(pendingHighlightMisses) : undefined,
-              // Wide canvases (immersive, or an inline panel rendered wide)
-              // fit larger galleries; the agent sizes displays accordingly.
-              surface: immersive || (panelRef.current?.clientWidth ?? 0) >= 720 ? 'immersive' : 'compact',
-              // Whether the agent can drive this page's grid via update_page.
-              has_page_grid: pageHasTemplateGrid(),
-            },
+              messages: prepareAgentMessages(history),
+              context: {
+                context_token: contextTokenRef.current ?? undefined,
+                // Highlight failures from the previous turn (cards not rendered
+                // under the page's current filters) — keeps the agent honest.
+                highlight_misses: pendingHighlightMisses.size > 0 ? Array.from(pendingHighlightMisses) : undefined,
+                // Wide canvases (immersive, or an inline panel rendered wide)
+                // fit larger galleries; the agent sizes displays accordingly.
+                surface: immersive || (panelRef.current?.clientWidth ?? 0) >= 720 ? 'immersive' : 'compact',
+                // Whether the agent can drive this page's grid via update_page.
+                has_page_grid: pageHasTemplateGrid(),
+              },
+            }),
           }),
-          },
         });
         if (!response.ok || !response.body) throw new Error(`Agent unavailable (${response.status}).`);
         pendingHighlightMisses.clear();

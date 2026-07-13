@@ -6,6 +6,7 @@ import { TemplateChat } from '../src/components/chat/TemplateChat';
 import { completeTurnstileChallenge, type TurnstileApi } from '../src/components/chat/turnstileChallenge';
 import {
   fetchAuthorizedAgentRequest,
+  prepareAgentMessages,
   requestTemplateAgentSession,
   type FetchLike,
 } from '../src/components/chat/templateAgentSession';
@@ -59,6 +60,67 @@ test('authorized chat remints and retries exactly once after an expired session'
   assert.equal(response.status, 200);
   assert.deepEqual(authorizations, ['Bearer session-1', 'Bearer session-2']);
   assert.equal(cleared, 1);
+});
+
+test('authorized chat clears expired continuity and retries once with a rebuilt body', async () => {
+  const bodies: unknown[] = [];
+  let contextToken: string | null = 'expired-context';
+  let cleared = 0;
+  const response = await fetchAuthorizedAgentRequest({
+    url: 'https://example.com/api/templates/agent/chat',
+    init: () => ({
+      method: 'POST',
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'Compare those templates' }],
+        context: { context_token: contextToken ?? undefined },
+      }),
+    }),
+    getSessionToken: async () => 'valid-session',
+    clearSessionToken: () => assert.fail('session is still valid'),
+    clearContextToken: () => {
+      cleared += 1;
+      contextToken = null;
+    },
+    fetchImpl: async (_input, init) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return bodies.length === 1
+        ? new Response(
+            JSON.stringify({
+              code: 'invalid_context',
+              error: 'Template Finder continuity is invalid or expired.',
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } },
+          )
+        : new Response(null, { status: 200 });
+    },
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(cleared, 1);
+  assert.deepEqual(bodies, [
+    {
+      messages: [{ role: 'user', content: 'Compare those templates' }],
+      context: { context_token: 'expired-context' },
+    },
+    {
+      messages: [{ role: 'user', content: 'Compare those templates' }],
+      context: {},
+    },
+  ]);
+});
+
+test('agent message preparation stays inside the worker request contract', () => {
+  const messages = Array.from({ length: 30 }, (_, index) => ({
+    role: index % 2 === 0 ? ('user' as const) : ('assistant' as const),
+    content: `${index}:`.padEnd(5_000, 'x'),
+  }));
+
+  const prepared = prepareAgentMessages(messages);
+  assert.equal(prepared.length, 10);
+  assert.equal(prepared.at(-1)?.role, 'assistant');
+  assert.ok(prepared.every((message) => message.content.length <= 4_000));
+  assert.ok(prepared.reduce((total, message) => total + message.content.length, 0) <= 40_000);
+  assert.ok(JSON.stringify({ messages: prepared }).length < 64 * 1024);
 });
 
 test('authorized chat never retries non-authentication failures', async () => {
