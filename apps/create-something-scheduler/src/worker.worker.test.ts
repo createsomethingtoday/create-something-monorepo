@@ -32,8 +32,12 @@ describe('scheduler Worker transport', () => {
     expect(page.headers.get('content-security-policy')).toContain(
       'frame-ancestors https://createsomething.agency'
     );
+    expect(page.headers.get('content-security-policy')).toContain('https://api.fontshare.com');
+    expect(page.headers.get('content-security-policy')).toContain('https://cdn.fontshare.com');
+    expect(page.headers.get('content-security-policy')).toContain('https://cdn.jsdelivr.net');
     const pageHtml = await page.text();
-    expect(pageHtml).toContain('Create Something Together');
+    expect(pageHtml).toContain('Workflow Mapping Session | CREATE SOMETHING');
+    expect(pageHtml).toContain('Map One Workflow');
     expect(pageHtml).toContain("type:'create-something:scheduler-lifecycle'");
     expect(pageHtml).toContain("notifyParent('booking_form_started'");
     expect(pageHtml).toContain("notifyParent('booking_initiated'");

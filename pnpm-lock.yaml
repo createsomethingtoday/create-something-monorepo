@@ -103,6 +103,9 @@ importers:
       '@cloudflare/realtimekit-virtual-background':
         specifier: 0.0.2
         version: 0.0.2
+      '@create-something/canon':
+        specifier: workspace:*
+        version: link:../../packages/canon
       '@js-temporal/polyfill':
         specifier: ^0.5.1
         version: 0.5.1

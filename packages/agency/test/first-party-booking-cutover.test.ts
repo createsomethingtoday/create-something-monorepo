@@ -31,6 +31,15 @@ test('owned /book route embeds the first-party scheduler and remains the Atlas d
 	assert.equal(bookRoute.toLowerCase().includes('savvycal'), false);
 });
 
+test('owned /book route uses the Canon product-mode handoff with the scheduler as its proof artifact', () => {
+	assert.ok(bookRoute.includes('PerformanceConversionHandoff'));
+	assert.ok(bookRoute.includes('artifactPlacement="full-width"'));
+	assert.ok(bookRoute.includes('{#snippet aside()}'));
+	assert.ok(bookRoute.includes('id="first-party-scheduler"'));
+	assert.equal(bookRoute.includes('PerformanceCampaignOpening'), false);
+	assert.equal(bookRoute.includes('pressure-boundary-natural.webp'), false);
+});
+
 test('shared scheduling CTA is provider-neutral and preserves the owned route', () => {
 	assert.ok(existsSync(new URL('../../canon/src/lib/domains/agency/ScheduleButton.svelte', import.meta.url)));
 	assert.equal(existsSync(new URL('../../canon/src/lib/domains/agency/SavvyCalButton.svelte', import.meta.url)), false);

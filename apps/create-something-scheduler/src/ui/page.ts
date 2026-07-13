@@ -1,3 +1,9 @@
+import {
+  PERFORMANCE_DOCUMENT_STYLE_VERSION,
+  performanceDocumentCss,
+  performanceDocumentFontLinks
+} from '@create-something/canon/performance/scheduler-document';
+
 export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string }): string {
   const configuration = JSON.stringify({
     turnstileSiteKey: input.turnstileSiteKey ?? null
@@ -11,13 +17,14 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Schedule a 30- or 60-minute Create Something Together meeting with Micah Johnson.">
-  <title>Create Something Together</title>
+  <meta name="description" content="Schedule a verified 30- or 60-minute workflow mapping session with Micah Johnson.">
+  <title>Workflow Mapping Session | CREATE SOMETHING</title>
+  ${performanceDocumentFontLinks}
   ${turnstileScript}
   <style nonce="${input.nonce}">
-    :root { color-scheme:light; --color-performance-paper:#f3f3f0; --color-performance-panel:#ffffff; --color-performance-ink:#090909; --color-performance-ink-soft:#262626; --color-performance-muted:#5e6268; --color-performance-line:#d7d7d2; --color-performance-line-strong:#9c9c96; --color-performance-signal:#0057b8; --color-performance-signal-soft:#dce8f5; --color-performance-pressure:#e54800; --color-performance-ready:#007a4d; --color-performance-ready-soft:#dcece5; --color-performance-review:#8b6b00; --color-performance-review-soft:#eee6cc; --color-performance-stop:#c62026; --color-performance-stop-soft:#f3dadd; --font-display:Arial,Helvetica,system-ui,sans-serif; --font-sans:Arial,Helvetica,system-ui,sans-serif; --font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; }
+    ${performanceDocumentCss}
     * { box-sizing:border-box; }
-    body { margin:0; min-width:320px; min-height:100vh; background-color:var(--color-performance-paper); background-image:linear-gradient(rgb(9 9 9 / .035) 1px,transparent 1px),linear-gradient(90deg,rgb(9 9 9 / .035) 1px,transparent 1px); background-size:40px 40px; color:var(--color-performance-ink); font:16px/1.5 var(--font-sans); }
+    body { margin:0; min-width:320px; min-height:100vh; background-color:var(--color-performance-paper); background-image:linear-gradient(var(--color-performance-grid) 1px,transparent 1px),linear-gradient(90deg,var(--color-performance-grid) 1px,transparent 1px); background-size:40px 40px; color:var(--color-performance-ink); font-size:16px; line-height:1.5; }
     main { width:min(1360px,100%); margin:0 auto; padding:clamp(16px,4vw,56px); }
     .system-bar { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--color-performance-line); background:var(--color-performance-panel); }
     .system-bar > div { display:grid; gap:7px; min-width:0; padding:13px 16px; border-right:1px solid var(--color-performance-line); }
@@ -28,7 +35,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     .state-controlled::before { width:8px; height:8px; background:var(--color-performance-signal); content:""; }
     header { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(280px,.55fr); gap:clamp(28px,6vw,80px); align-items:end; margin:20px 0 32px; padding:clamp(28px,5vw,64px); border-bottom:5px solid var(--color-performance-signal); background:var(--color-performance-ink); color:white; }
     .eyebrow { color:#8fc1f2; font:700 10px/1 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; }
-    h1 { margin:16px 0 0; max-width:850px; font:800 clamp(2.7rem,7.4vw,6.7rem)/.88 var(--font-display); letter-spacing:-.065em; text-transform:uppercase; }
+    h1 { margin:16px 0 0; max-width:850px; font-size:clamp(2.7rem,7.4vw,6.7rem); text-transform:uppercase; }
     .hero-spec { display:grid; gap:22px; align-self:stretch; padding-left:22px; border-left:1px solid rgba(255,255,255,.24); }
     .lede { margin:0; max-width:460px; color:rgba(255,255,255,.72); font-size:clamp(1rem,1.8vw,1.25rem); }
     .spec-grid { display:grid; border-top:1px solid rgba(255,255,255,.24); }
@@ -40,7 +47,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     .details { display:grid; position:sticky; top:24px; border:1px solid var(--color-performance-line); border-top:4px solid var(--color-performance-ink); background:var(--color-performance-panel); }
     .detail { display:grid; grid-template-columns:92px 1fr; gap:14px; padding:16px 18px; border-bottom:1px solid var(--color-performance-line); }
     .detail:last-child { border-bottom:0; }
-    h2 { margin:0 0 18px; font:800 clamp(1.35rem,2.4vw,2rem)/1 var(--font-display); letter-spacing:-.025em; text-transform:uppercase; }
+    h2 { margin:0 0 18px; font-size:clamp(1.35rem,2.4vw,2rem); text-transform:uppercase; }
     .steps { display:grid; grid-template-columns:repeat(3,1fr); margin:0 0 24px; border:1px solid var(--color-performance-line); background:var(--color-performance-paper); }
     .steps span { padding:11px 12px; border-right:1px solid var(--color-performance-line); color:var(--color-performance-muted); font:700 9px/1.2 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; }
     .steps span:last-child { border-right:0; }
@@ -80,7 +87,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     input { width:100%; min-height:48px; padding:11px 12px; border:1px solid var(--color-performance-line-strong); border-radius:0; background:var(--color-performance-panel); color:var(--color-performance-ink); font:16px/1.3 var(--font-sans); }
     .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
     .confirmation { display:grid; gap:18px; }
-    .confirmation h2 { margin:0; font:800 clamp(2rem,5vw,4rem)/.95 var(--font-display); letter-spacing:-.05em; text-transform:uppercase; }
+    .confirmation h2 { margin:0; font-size:clamp(2rem,5vw,4rem); text-transform:uppercase; }
     .receipt { overflow-wrap:anywhere; padding:16px; border:1px solid var(--color-performance-line); border-left:5px solid var(--color-performance-signal); background:var(--color-performance-paper); font:12px/1.6 var(--font-mono); text-transform:uppercase; }
     .proof-footer { display:grid; grid-template-columns:repeat(4,1fr); margin-top:24px; border:1px solid var(--color-performance-line); border-top:4px solid var(--color-performance-ready); background:var(--color-performance-panel); }
     .proof-footer > div { display:grid; gap:7px; min-width:0; padding:15px 18px; border-right:1px solid var(--color-performance-line); }
@@ -92,17 +99,17 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     @media (prefers-reduced-motion:no-preference) { button { transition:background-color .14s,color .14s,border-color .14s; } }
   </style>
 </head>
-<body data-performance-surface="booking">
+<body data-performance-surface="booking" data-performance-contract="${PERFORMANCE_DOCUMENT_STYLE_VERSION}">
 <main>
   <section class="system-bar" aria-label="Scheduler control state">
     <div><span>Surface</span><strong>Booking / 01</strong></div>
     <div><span>Mode</span><strong class="state-controlled">Controlled</strong></div>
     <div><span>Interfaces</span><strong>API + MCP</strong></div>
-    <div><span>Proof</span><strong>Receipted</strong></div>
+    <div><span>Proof</span><strong>Receipt issued</strong></div>
   </section>
   <header>
-    <div><div class="eyebrow">CREATE SOMETHING · PERFORMANCE LAB · SCHEDULER</div><h1>Create Something Together</h1></div>
-    <div class="hero-spec"><p class="lede">Choose an open time for a focused, 30- or 60-minute conversation with Micah Johnson.</p><div class="spec-grid"><div class="spec-row"><span>Policy</span><strong>Createsomething Together / V2</strong></div><div class="spec-row"><span>Window</span><strong>28 Days / Live Conflicts</strong></div><div class="spec-row"><span>Authority</span><strong>Google Calendar</strong></div></div></div>
+    <div><div class="eyebrow">CREATE SOMETHING · PERFORMANCE LAB · SCHEDULER</div><h1>Map One Workflow</h1></div>
+    <div class="hero-spec"><p class="lede">Choose an open time for a focused, 30- or 60-minute workflow mapping session with Micah Johnson. Bring one real handoff, its decision owner, and the proof your team needs next.</p><div class="spec-grid"><div class="spec-row"><span>Policy</span><strong>Workflow Mapping / V2</strong></div><div class="spec-row"><span>Window</span><strong>28 Days / Live Conflicts</strong></div><div class="spec-row"><span>Calendar</span><strong>Google Calendar</strong></div></div></div>
   </header>
   <div class="layout">
     <section class="panel" aria-labelledby="booking-heading">

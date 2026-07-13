@@ -429,6 +429,7 @@ describe('PerformanceConversionHandoff', () => {
 			target,
 			props: {
 				title: 'Bring one workflow your team is ready to delegate.',
+				headingLevel: 'h1',
 				handoff: { owner: 'CREATE SOMETHING', authority: 'Operator approval', proof: 'Workflow map', state: 'ready' },
 				artifactPlacement: 'full-width',
 				aside
@@ -438,6 +439,9 @@ describe('PerformanceConversionHandoff', () => {
 
 		const handoff = target.querySelector('section.performance-conversion-handoff');
 		expect(handoff?.getAttribute('data-artifact-placement')).toBe('full-width');
+		expect(handoff?.querySelector('h1')?.textContent).toBe(
+			'Bring one workflow your team is ready to delegate.'
+		);
 		expect(handoff?.querySelector(':scope > .performance-conversion-handoff__artifact [data-testid="delegation-artifact"]')).not.toBeNull();
 		expect(handoff?.querySelector('.performance-conversion-handoff__boundary [data-testid="delegation-artifact"]')).toBeNull();
 	});

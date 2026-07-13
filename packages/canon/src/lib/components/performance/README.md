@@ -29,6 +29,9 @@ Keep ordinary proof artifacts inline. Use `artifactPlacement="full-width"` on `P
 
 The same placement rule applies to conversion. Keep a compact receipt or object in the default `sidecar` position. Set `artifactPlacement="full-width"` on `PerformanceConversionHandoff` when a delegation object, workflow map, or approval surface needs horizontal room. Canon then pairs the narrative with a compact authority ledger and promotes the route-owned artifact to a shared proof row below them.
 
+`PerformanceConversionHandoff` defaults to an `h2`; set `headingLevel="h1"`
+when it is the primary product or operator opening for the page.
+
 ## Typography contract
 
 Performance uses Satoshi for commands, conclusions, interface prose, and display copy. Canon sets display weight `500`, tracking `-0.03em`, line-height `0.94`, normal kerning, and standard kerning and ligature features. IBM Plex Mono owns labels, evidence, numbers, metadata, states, timestamps, identifiers, topology labels, and code. Tabular values should continue to use tabular numerals.

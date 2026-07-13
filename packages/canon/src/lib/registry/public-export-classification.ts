@@ -269,6 +269,13 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
       'Performance stylesheet bundle supports product surfaces without separate registry discovery.'
   },
   {
+    exportPath: './performance/scheduler-document',
+    classification: 'style-artifact',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Standalone Performance document tokens and font links are a narrow consumption artifact governed by Canon typography and token contracts.'
+  },
+  {
     exportPath: './styles/glass.css',
     classification: 'style-artifact',
     registryPolicy: 'classified-out',

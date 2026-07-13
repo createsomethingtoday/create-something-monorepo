@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
+	import { Button, PerformanceConversionHandoff, SEO } from '@create-something/canon';
 	import { getAnalytics } from '@create-something/canon/analytics';
 	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
 	import {
@@ -52,54 +52,60 @@
 />
 
 <main class="booking-page" data-performance-surface="booking">
-	<PerformanceCampaignOpening
+	<PerformanceConversionHandoff
 		eyebrow="Workflow mapping session"
 		title="Map the workflow before the build decision."
-		lede="Choose a verified opening through the owned CREATE SOMETHING scheduler. Bring one real handoff, its decision owner, and the proof your team needs next."
-		media={{
-			src: '/images/performance-lab/pressure-boundary-natural.webp',
-			mobileSrc: '/images/performance-lab/pressure-boundary-natural-mobile.webp',
-			alt: 'Black-and-white wave impact against a concrete boundary'
+		description="Choose a verified 30- or 60-minute opening through the owned scheduler. Use this controlled path to bring one real handoff, its decision owner, and the audit trail your team needs next."
+		handoff={{
+			owner: 'Micah Johnson',
+			authority: 'Conflict-checked scheduling policy',
+			proof: 'Calendar event and booking receipt',
+			state: 'ready'
 		}}
-		proof={[
-			{ label: 'Duration', value: '30 / 60 min' },
-			{ label: 'Calendar', value: 'Conflict checked' },
-			{ label: 'Conferencing', value: 'Included' }
+		steps={[
+			{
+				label: 'Time',
+				title: 'Choose 30 or 60 minutes',
+				detail: 'Every opening is checked against the live calendar before it is offered.'
+			},
+			{
+				label: 'Details',
+				title: 'Name the people in the handoff',
+				detail: 'Your name and email are used to create the calendar event and meeting receipt.'
+			},
+			{
+				label: 'Confirm',
+				title: 'Commit with explicit intent',
+				detail: 'The booking is created only after confirmation, with Google Meet included.'
+			}
 		]}
+		headingLevel="h1"
+		artifactPlacement="full-width"
 	>
 		{#snippet actions()}
 			<Button href="#first-party-scheduler">Choose a time</Button>
 			<Button href="/atlas" variant="secondary">Map one workflow first</Button>
 		{/snippet}
-	</PerformanceCampaignOpening>
+		{#snippet aside()}
+			<section id="first-party-scheduler" class="scheduler-shell" aria-label="Choose a verified opening">
+				<iframe
+					bind:this={schedulerFrame}
+					src={schedulerHref}
+					title="Schedule a CREATE SOMETHING mapping session"
+					loading="eager"
+					referrerpolicy="no-referrer"
+					sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
+					onload={sendSchedulerContext}
+				></iframe>
 
-	<section id="first-party-scheduler" class="scheduler-shell" aria-labelledby="scheduler-title">
-		<header class="scheduler-shell__header">
-			<span>CREATE SOMETHING / SCHEDULER</span>
-			<h2 id="scheduler-title">Choose a verified opening.</h2>
-			<p>
-				Availability, conflict checks, booking state, and receipts come from the same API- and
-				MCP-first scheduling service. Use this controlled path to bring one workflow handoff, its
-				owner, and the audit trail needed for a scoped decision.
-			</p>
-		</header>
-
-		<iframe
-			bind:this={schedulerFrame}
-			src={schedulerHref}
-			title="Schedule a CREATE SOMETHING mapping session"
-			loading="eager"
-			referrerpolicy="no-referrer"
-			sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
-			onload={sendSchedulerContext}
-		></iframe>
-
-		<p class="scheduler-shell__fallback">
-			If the embedded scheduler is unavailable,
-			<a href={schedulerHref} target="_blank" rel="noopener noreferrer">open the first-party scheduler</a>.
-			Review <a href="/services">the workflow mapping service</a> before choosing a time.
-		</p>
-	</section>
+				<p class="scheduler-shell__fallback">
+					If the embedded scheduler is unavailable,
+					<a href={schedulerHref} target="_blank" rel="noopener noreferrer">open the first-party scheduler</a>.
+					Review <a href="/services">the workflow mapping service</a> before choosing a time.
+				</p>
+			</section>
+		{/snippet}
+	</PerformanceConversionHandoff>
 </main>
 
 <style>
@@ -109,45 +115,8 @@
 	}
 
 	.scheduler-shell {
-		width: min(var(--content-width-performance, 85rem), calc(100% - 2rem));
-		margin-inline: auto;
-		padding-block: clamp(2rem, 5vw, 5rem);
+		width: 100%;
 		scroll-margin-top: 5rem;
-	}
-
-	.scheduler-shell__header {
-		display: grid;
-		gap: 0.6rem;
-		margin-bottom: 1rem;
-		padding: 1rem;
-		border: 1px solid var(--color-performance-line, #d7d7d2);
-		border-left: 5px solid var(--color-performance-signal, #0057b8);
-		background: var(--color-performance-panel, #ffffff);
-	}
-
-	.scheduler-shell__header span {
-		font-family: var(--font-performance-mono, var(--font-mono));
-		font-size: 0.75rem;
-		font-weight: 700;
-		text-transform: uppercase;
-	}
-
-	.scheduler-shell__header h2,
-	.scheduler-shell__header p {
-		margin: 0;
-	}
-
-	.scheduler-shell__header h2 {
-		font-family: var(--font-performance-display, var(--font-sans));
-		font-size: clamp(2rem, 5vw, 4rem);
-		font-weight: var(--font-performance-display-weight, 500);
-		letter-spacing: -0.03em;
-		line-height: 0.96;
-	}
-
-	.scheduler-shell__header p {
-		max-width: 62ch;
-		color: var(--color-performance-muted, #5e6268);
 	}
 
 	iframe {
@@ -175,10 +144,6 @@
 	}
 
 	@media (max-width: 720px) {
-		.scheduler-shell {
-			width: min(100% - 1rem, var(--content-width-performance, 85rem));
-		}
-
 		iframe {
 			min-height: 940px;
 		}
