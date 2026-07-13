@@ -190,7 +190,7 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
     // that budget. buildPageAction validates every field defensively instead.
     name: 'update_page',
     description:
-      'Update the marketplace page hosting this chat: set its template grid search/filters/sort, and/or highlight specific template cards in the grid. Omit any field to leave it unchanged. Use when the user asks to see results on the page, wants the page filtered, or when pointing at specific templates helps. Only slugs from earlier tool results will highlight, and only cards currently rendered in the grid can pulse/scroll into view: if the active page filters/sort would exclude the targets, set matching filters (q/category/styles/types/sort) in the same call so their cards render. Only call this when the page context says a template grid is present.',
+      'Update the marketplace page hosting this chat: set its template grid search/filters/sort, and/or request a highlight for verified template cards. Omit any field to leave it unchanged. A single valid highlight is normalized server-side to clear conflicting filters and search the verified template exact name before the browser requests the pulse. Dispatch does not confirm that the browser rendered or highlighted the card. Only call this when the page context says a template grid is present.',
     input_schema: {
       type: 'object',
       properties: {
@@ -412,7 +412,26 @@ export class TemplateToolExecutor {
     if (input.free_only != null) payload.free_only = input.free_only;
     if (input.sort != null && (SORT_VALUES as readonly string[]).includes(input.sort)) payload.sort = input.sort;
     if (input.clear_filters) payload.clear_filters = true;
-    if (highlights.length > 0) payload.highlight_slugs = highlights;
+    if (highlights.length > 0) {
+      payload.highlight_slugs = highlights;
+
+      // A single-card highlight must first make that card render. Treat this
+      // as an executor invariant rather than prompt advice: clear any stale
+      // page filters and search the verified template's exact display name.
+      // The host grid applies clear_filters first, then reapplies fields in
+      // this payload before it retries the slug highlight.
+      if (highlights.length === 1) {
+        const known = this.knownItems.get(highlights[0]);
+        if (known?.name) {
+          payload.clear_filters = true;
+          payload.q = known.name;
+          delete payload.category_group_slug;
+          delete payload.styles;
+          delete payload.types;
+          delete payload.free_only;
+        }
+      }
+    }
 
     return { payload: Object.keys(payload).length > 0 ? payload : null, unknownSlugs };
   }

@@ -308,6 +308,30 @@ describe('ranking policy', () => {
 });
 
 describe('page actions', () => {
+  it('does not let the agent describe an unverified client highlight as complete', () => {
+    expect(SYSTEM_PROMPT).toContain('describe the exact-name search as applied and the highlight as requested, not confirmed');
+  });
+
+  it('forces an exact-name search and clears conflicting filters before a single highlight', () => {
+    const executor = new TemplateToolExecutor(ENV);
+    executor.seedFromContext({
+      known_templates: [searchItem('archscale-website-template', { name: 'Archscale' })],
+    });
+
+    const { payload, unknownSlugs } = executor.buildPageAction({
+      category_group_slug: 'real-estate-websites',
+      types: ['Multi Layout'],
+      highlight_slugs: ['archscale-website-template'],
+    });
+
+    expect(payload).toEqual({
+      q: 'Archscale',
+      clear_filters: true,
+      highlight_slugs: ['archscale-website-template'],
+    });
+    expect(unknownSlugs).toEqual([]);
+  });
+
   it('filters highlight slugs against the verified registry', () => {
     const executor = new TemplateToolExecutor(ENV);
     executor.seedFromContext({ known_templates: [searchItem('known')] });
@@ -323,9 +347,9 @@ describe('page actions', () => {
     });
 
     expect(payload).toEqual({
-      q: 'portfolio',
-      styles: ['dark-websites'],
+      q: 'known',
       sort: 'best_selling',
+      clear_filters: true,
       highlight_slugs: ['known'],
     });
     expect(unknownSlugs).toEqual(['made-up']);

@@ -171,8 +171,8 @@ async function executeTool(
         emit({ type: 'page_action', payload });
         return JSON.stringify({
           applied: true,
-          highlighted: payload.highlight_slugs?.length ?? 0,
-          note: 'Dispatched to the page. If the user is not on a template listing page it has no visible effect.',
+          highlight_requested: payload.highlight_slugs?.length ?? 0,
+          note: 'Search/filter changes were dispatched. A highlight request is not confirmation that the browser rendered or pulsed the card.',
           ...(unknownSlugs.length > 0 ? { ignored_unknown_slugs: unknownSlugs } : {}),
         });
       }
