@@ -2198,6 +2198,21 @@ describe('webflow-template-search worker', () => {
         { name: 'Agentflow', published_date: '2026-03-01' },
       ]);
 
+      const bestSellingSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?sort=best_selling&page_size=10'),
+        env,
+      );
+      const bestSellingPayload = (await bestSellingSearch.json()) as {
+        sort: string;
+        items: Array<{ name: string; cumulative_purchases: number | null }>;
+      };
+      expect(bestSellingPayload.sort).toBe('best_selling');
+      expect(bestSellingPayload.items.map((item) => ({ name: item.name, purchases: item.cumulative_purchases }))).toEqual([
+        { name: 'Agentflow', purchases: 21 },
+        { name: 'Setrex', purchases: 18 },
+        { name: 'Catalis', purchases: 9 },
+      ]);
+
       const defaultQuerySearch = await callWorker(new Request('https://templates.test/api/templates/search?q=technology&page_size=10'), env);
       const defaultQueryPayload = (await defaultQuerySearch.json()) as { items: Array<{ name: string }> };
       expect(defaultQueryPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow', 'Catalis']);
@@ -3078,7 +3093,7 @@ describe('webflow-template-search worker', () => {
     }
   });
 
-  it('prefers the public detail thumbnail during targeted record thumbnail repairs', async () => {
+  it('keeps the CMS primary during targeted record thumbnail repairs', async () => {
     const ecovoltAsset = {
       ...PUBLISHED_ASSETS[0],
       id: 'recEcovolt',
@@ -3136,17 +3151,17 @@ describe('webflow-template-search worker', () => {
       expect(response.status).toBe(200);
 
       const payload = (await response.json()) as { image_refreshed_records: number };
-      expect(payload.image_refreshed_records).toBe(1);
+      expect(payload.image_refreshed_records).toBe(0);
 
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=ecovolt'), env);
       const searchPayload = (await search.json()) as {
         items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
       };
 
-      expect(searchPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-public.webp');
+      expect(searchPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-stale-cms.webp');
       expect(searchPayload.items[0]?.thumbnail_image_secondary_url).toBeNull();
       expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'webflow.com')).toBe(
-        true,
+        false,
       );
     } finally {
       fetchMock.mockRestore();

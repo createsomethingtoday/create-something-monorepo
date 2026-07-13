@@ -436,11 +436,10 @@ async function resolveTemplateCollectionIds(env: Env, siteId: string, token: str
   }
 }
 
-function explicitCmsImageRole(fieldName: string): 'main thumbnail' | 'secondary thumbnail' | 'carousel image' | null {
+function explicitCmsImageRole(fieldName: string): 'main thumbnail' | 'thumbnail' | 'secondary thumbnail' | 'carousel image' | null {
   const normalized = fieldName.trim().toLowerCase();
-  if (['main-thumbnail', 'main-thumbnail-image', 'thumbnail', 'thumbnail-image'].includes(normalized)) {
-    return 'main thumbnail';
-  }
+  if (['main-thumbnail', 'main-thumbnail-image'].includes(normalized)) return 'main thumbnail';
+  if (['thumbnail', 'thumbnail-image'].includes(normalized)) return 'thumbnail';
   if (['thumbnail-secondary', 'thumbnail-image-secondary'].includes(normalized)) return 'secondary thumbnail';
   if (['slider-images', 'carousel-images'].includes(normalized)) return 'carousel image';
   return null;
