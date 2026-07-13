@@ -357,10 +357,12 @@ async function resolveAndUpdateTemplateImages(
           templateSlug: row.templateSlug,
           name: row.name,
         });
-        const publishedImages = await resolvePublishedTemplateImages({
-          templateSlug: row.templateSlug,
-          listingUrl: row.listingUrl,
-        });
+        const publishedImages = webflowImages?.thumbnailImageUrl
+          ? null
+          : await resolvePublishedTemplateImages({
+              templateSlug: row.templateSlug,
+              listingUrl: row.listingUrl,
+            });
         return { row, webflowImages, publishedImages };
       }),
     );
@@ -368,7 +370,7 @@ async function resolveAndUpdateTemplateImages(
     for (const { row, webflowImages, publishedImages } of resolvedRows) {
       const currentThumbnailUrl = stableAttachmentUrl(row.thumbnailImageUrl);
       const currentSecondaryThumbnailUrl = stableAttachmentUrl(row.thumbnailImageSecondaryUrl);
-      const nextThumbnailUrl = publishedImages?.thumbnailImageUrl ?? webflowImages?.thumbnailImageUrl ?? currentThumbnailUrl;
+      const nextThumbnailUrl = webflowImages?.thumbnailImageUrl ?? publishedImages?.thumbnailImageUrl ?? currentThumbnailUrl;
       const nextSecondaryThumbnailUrl =
         webflowImages?.thumbnailImageSecondaryUrl ??
         (currentSecondaryThumbnailUrl === nextThumbnailUrl ? null : currentSecondaryThumbnailUrl);

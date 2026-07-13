@@ -436,6 +436,16 @@ async function resolveTemplateCollectionIds(env: Env, siteId: string, token: str
   }
 }
 
+function explicitCmsImageRole(fieldName: string): 'main thumbnail' | 'secondary thumbnail' | 'carousel image' | null {
+  const normalized = fieldName.trim().toLowerCase();
+  if (['main-thumbnail', 'main-thumbnail-image', 'thumbnail', 'thumbnail-image'].includes(normalized)) {
+    return 'main thumbnail';
+  }
+  if (['thumbnail-secondary', 'thumbnail-image-secondary'].includes(normalized)) return 'secondary thumbnail';
+  if (['slider-images', 'carousel-images'].includes(normalized)) return 'carousel image';
+  return null;
+}
+
 function appendCollectionItemImages(
   byTemplateKey: WebflowTemplateImageIndex['byTemplateKey'],
   offerByTemplateKey: WebflowTemplateImageIndex['offerByTemplateKey'],
@@ -453,10 +463,11 @@ function appendCollectionItemImages(
 
   let added = 0;
   for (const [fieldName, value] of Object.entries(fieldData)) {
+    const explicitRole = explicitCmsImageRole(fieldName);
     for (const hostedUrl of extractImageUrls(value)) {
       appendTemplateCandidate(byTemplateKey, templateSlug, name, {
         hostedUrl,
-        scoreName: normalizeScoreName(`${fieldName} ${basenameFromUrl(hostedUrl)}`),
+        scoreName: normalizeScoreName(explicitRole ?? `${fieldName} ${basenameFromUrl(hostedUrl)}`),
       });
       added += 1;
     }
@@ -485,20 +496,20 @@ export function buildWebflowTemplateImageIndexFromRecords(records: WebflowTempla
     if (isImageUrl(record.thumbnailImageUrl ?? undefined)) {
       appendTemplateCandidate(byTemplateKey, templateSlug, name, {
         hostedUrl: record.thumbnailImageUrl as string,
-        scoreName: normalizeScoreName(`main thumbnail ${basenameFromUrl(record.thumbnailImageUrl as string)}`),
+        scoreName: normalizeScoreName('main thumbnail'),
       });
     }
     if (isImageUrl(record.thumbnailImageSecondaryUrl ?? undefined)) {
       appendTemplateCandidate(byTemplateKey, templateSlug, name, {
         hostedUrl: record.thumbnailImageSecondaryUrl as string,
-        scoreName: normalizeScoreName(`secondary thumbnail ${basenameFromUrl(record.thumbnailImageSecondaryUrl as string)}`),
+        scoreName: normalizeScoreName('secondary thumbnail'),
       });
     }
     for (const imageUrl of record.carouselImageUrls) {
       if (!isImageUrl(imageUrl)) continue;
       appendTemplateCandidate(byTemplateKey, templateSlug, name, {
         hostedUrl: imageUrl,
-        scoreName: normalizeScoreName(`carousel image ${basenameFromUrl(imageUrl)}`),
+        scoreName: normalizeScoreName('carousel image'),
       });
     }
   }
